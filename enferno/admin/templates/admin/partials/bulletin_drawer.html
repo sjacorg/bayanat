@@ -1,0 +1,22 @@
+<v-navigation-drawer
+      v-model="bulletinDrawer"
+      clipped
+      fixed
+      right
+      temporary
+      width="520"
+      app
+      disable-route-watcher
+
+
+    >
+      <v-container v-if="bulletinLoader" fluid fill-height>
+        <v-layout justify-center align-center>
+          <v-progress-circular indeterminate size="44"></v-progress-circular>
+        </v-layout>
+      </v-container>
+
+      
+       <bulletin-card v-if="bulletinDrawer" :show-edit="true" @edit="editItem" v-if="bulletin" :log="true"  @thumb-click="viewImage" @close="bulletinDrawer=false" :bulletin="bulletin"></bulletin-card>
+      <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
+    </v-navigation-drawer>  

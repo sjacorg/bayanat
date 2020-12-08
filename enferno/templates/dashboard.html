@@ -1,0 +1,75 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<v-app id="app" v-cloak>
+    {% include 'nav-drawer.html' %}
+    {% include 'nav-bar.html' %}
+    <v-content>
+        <v-container fluid fill-height>
+            <v-layout align-top justify-center>
+                <v-container grid-list-sm>
+                    <v-container>
+                        <v-row>
+                            <v-col cols="12">
+
+                                <v-card>
+                                    <v-card-text>
+                                        {% include "security/_messages.html" %}
+                                    </v-card-text>
+                                    <v-card-title>
+                                        {{ _('Welcome') }},
+                                    </v-card-title>
+                                    <v-card-text>
+                                        <p>
+                                            {{ g.user.email }}
+                                        </p>
+                                        {% if g.user.last_login_at %}
+                                        <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
+                                        {% endif %}
+
+
+                                    </v-card-text>
+
+
+                                </v-card>
+
+
+                            </v-col>
+                        </v-row>
+                    </v-container>
+
+                </v-container>
+
+
+            </v-layout>
+        </v-container>
+    </v-content>
+
+    {% include 'footer.html' %}
+</v-app>
+{% endblock  %}
+
+{% block js %}
+<script>
+    new Vue({
+        el: '#app',
+        vuetify: vuetify,
+        delimiters: delimiters,
+
+
+        methods: {},
+
+
+        data: () => ({
+            search: '',
+            dialog: dialog,
+            drawer: drawer,
+            sideNav: sideNav
+
+        }),
+
+
+    })
+</script>
+{% endblock %}

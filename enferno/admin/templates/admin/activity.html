@@ -1,0 +1,185 @@
+{% extends 'layout.html' %} {% block content %}
+
+<div id="app">
+  <v-app id="activity" v-cloak>
+    {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+    <v-content>
+      <v-container fluid fill-height>
+        <v-layout align-top justify-center>
+          <v-container grid-list-sm>
+            <v-container>
+              <v-row>
+                <v-col cols="12">
+                  <v-card>
+                    <v-card-title>
+                      <div class="flex-grow-1"></div>
+                    </v-card-title>
+
+                    <v-card-text>
+                      <v-data-table
+                        :headers="headers"
+                        :items="items"
+                        :options.sync="options"
+                        :footer-props.sync="footerProps"
+                        :loading="loading"
+                        :server-items-length="itemsLength"
+                        class="elevation-1"
+                      >
+                        <template v-slot:top>
+                          <v-toolbar flat color="white">
+                            <v-toolbar-title>System Activity</v-toolbar-title>
+
+                            <v-divider class="mx-4" inset vertical></v-divider>
+                            <v-spacer></v-spacer>
+                           
+                         
+                          </v-toolbar>
+                          <v-toolbar flat>
+
+                            <v-chip-group @change="refresh" v-model="tag">
+                              <v-chip  :value="item" v-for="item in tagFilters" filter >${item}</v-chip>
+                            </v-chip-group>
+
+                          </v-toolbar>
+                        </template>
+                       <template v-slot:item.subject="{item}">
+                          ${item.subject | formatSubject}
+
+                       </template>
+                        <template v-slot:no-data> </template>
+                      </v-data-table>
+
+                      <v-snackbar v-model="snackbar">
+                        ${snackMessage}
+                        <v-btn color="pink" text @click="snackbar = false">
+                          Close
+                        </v-btn>
+                      </v-snackbar>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-container>
+        </v-layout>
+      </v-container>
+    </v-content>
+      {% include 'footer.html' %}
+  </v-app>
+</div>
+
+{% endblock %} {% block js %}
+<script>
+  
+
+  
+const app =   new Vue({
+    el: "#app",
+    vuetify: vuetify,
+    delimiters: delimiters,
+    data: () => ({
+      dialog: dialog,
+      imDialog: false,
+      drawer: drawer,
+      sideNav: sideNav,
+      parents: [],
+      snackbar: false,
+      snackMessage: '',
+      loading: true,
+      parentLoading: false,
+      tagFilters: ['bulletin', 'actor','incident','user'],
+      csvFile: null,
+      tag: '',
+      options: {},
+      footerProps: {
+        itemsPerPageOptions: itemsPerPageOptions,
+          itemsPerPageText: "{{ _('Rows per page')}}"
+      },
+
+      headers: [
+        { text: "Date", value: "created_at",width:200 },
+        { text: "User", value: "user_id" },
+        { text: "Action", value: "action" },
+        { text: "Subject", value: "subject" },
+        { text: "Tag", value: "tag" },
+
+
+        
+        
+      ],
+
+      items: [],
+      itemsLength: 10,
+      editedIndex: -1,
+      editedItem: {
+        title: "",
+        parent: {
+          'id': null
+        }
+      },
+      defaultItem: {
+        title: ""
+      }
+    }),
+
+    filters: {
+      formatSubject: function(val){
+        if (val.length > 1){
+          return val.map(x=> x.class + '-' + x.id)
+          
+        }
+        else {
+          return (val.class + '-'+val.id);
+        }
+        
+      }
+    },
+
+    computed: {
+      
+    },
+
+    watch: {
+      dialog(val) {
+        val || this.close();
+      },
+
+      options: {
+        handler: "refresh",
+        immdiate: true
+      }
+    },
+
+    methods: {
+      refresh() {
+        this.loading = true;
+              axios.post(`/admin/api/activity?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {tag: this.tag}).then(res => {
+                    this.items = res.data.items;
+                    this.itemsLength = res.data.total;
+                    this.loading = false;
+
+                });
+
+
+      },
+
+        
+      
+        
+     
+
+     
+
+      close() {
+        this.dialog = false;
+        setTimeout(() => {
+          this.editedItem = Object.assign({}, this.defaultItem);
+          this.editedIndex = -1;
+        }, 300);
+      },
+
+      
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+<v-navigation-drawer
+      v-model="incidentDrawer"
+
+      clipped
+      fixed
+      right
+      temporary
+      width="520"
+      app
+      disable-route-watcher
+    >
+      <v-container v-if="incidentLoader" fluid fill-height>
+        <v-layout justify-center align-center>
+          <v-progress-circular indeterminate size="44"></v-progress-circular>
+        </v-layout>
+      </v-container>
+
+      
+      <incident-card v-if="incidentDrawer" :show-edit="true" @edit="editItem" v-if="incident" :log="true" @close="incidentDrawer=false" :incident="incident"></incident-card>
+      <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
+    </v-navigation-drawer>  

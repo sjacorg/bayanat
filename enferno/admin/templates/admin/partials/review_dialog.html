@@ -1,0 +1,103 @@
+<v-dialog persistent v-model="reviewDialog" fullscreen>
+    <v-card class="overflow-hidden">
+
+        <v-app-bar
+                absolute
+                color="pv"
+                dark
+
+                class="card-header"
+
+        >
+            <v-toolbar-title>Add Review</v-toolbar-title>
+            <v-spacer></v-spacer>
+
+
+            <v-btn :disabled="!reviewItem.review_action" @click="saveReview" dark color="primary darken-1" small class="mx-2" depressed>Save Review</v-btn>
+            <v-btn @click="reviewDialog=false" icon>
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </v-app-bar
+        >
+
+
+        <v-sheet
+                id="card-content"
+                max-height="100vh"
+                class="overflow-y-auto pt-11">
+
+            <bulletin-card v-if="reviewItem.class=='Bulletin'" :close="false" :bulletin="reviewItem"></bulletin-card>
+            <actor-card v-if="reviewItem.class=='Actor'" :close="false" :actor="reviewItem"></actor-card>
+            <incident-card v-if="reviewItem.class=='Incident'" :close="false" :incident="reviewItem"></incident-card>
+
+
+            <v-card-text class="mt-5">
+
+                <tinymce-editor  :init="tinyConfig" v-model="reviewItem.review"> </tinymce-editor>
+
+
+            </v-card-text>
+
+            <v-card outline elevation="0" color="ma-3">
+                <v-card-text>
+                    <h3 class="title black--text">Data Assistant</h3>
+
+                    <div class="d-flex align-center">
+                        <div class="pa-4">
+
+                            <search-field
+                                    api="/admin/api/locations/"
+                                    item-text="full_string"
+                                    item-value="id"
+                                    :multiple="true"
+                                    label="Locations"
+                            ></search-field>
+
+                        </div>
+                        <div class="pa-4">
+
+                            <search-field
+                                    api="/admin/api/labels/"
+                                    item-text="title"
+                                    item-value="id"
+                                    :multiple="true"
+                                    label="Labels"
+                            ></search-field>
+
+
+                        </div>
+                        <div class="pa-4">
+
+                            <search-field
+                                    api="/admin/api/sources/"
+                                    item-text="title"
+                                    item-value="id"
+                                    :multiple="true"
+                                    label="Sources"
+                            ></search-field>
+
+                        </div>
+                    </div>
+
+                </v-card-text>
+                <v-card-text>
+                    <div class="d-flex justify-space-around">
+                        <v-btn class="mx-3" depressed @click="searchRelatedBulletins" > <v-icon left>mdi-magnify</v-icon> Related Bulletins</v-btn>
+                        <v-btn class="mx-3" depressed @click="searchRelatedActors" > <v-icon left>mdi-magnify</v-icon> Related Actors</v-btn>
+                        <v-btn class="mx-3" depressed @click="searchRelatedIncidents" > <v-icon left>mdi-magnify</v-icon> Related Incidents</v-btn>
+                    </div>
+                </v-card-text>
+            </v-card>
+
+
+            <v-card-text class="text-center">
+
+                <v-btn-toggle  borderless v-model="reviewItem.review_action">
+                    <v-btn small outlined color="red darken-2 " value="Needs Review">Needs Review</v-btn>
+                    <v-btn small outlined color="lime darken-2 " value="No Review Needed">No Review Needed</v-btn>
+                </v-btn-toggle>
+
+            </v-card-text>
+        </v-sheet>
+    </v-card>
+</v-dialog>

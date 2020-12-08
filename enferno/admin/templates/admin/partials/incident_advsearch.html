@@ -1,0 +1,12 @@
+<v-dialog v-model="advSearchExpand" width="770">
+    <incident-search-box
+            :i18n="translations"
+            :extra-filters="true"
+            @close="advSearchExpand=false"
+            close-btn="true"
+            v-model="search"
+            @search="doSearch"
+            :users="users"></incident-search-box>
+</v-dialog>
+
+

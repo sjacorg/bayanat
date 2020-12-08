@@ -1,0 +1,109 @@
+<v-dialog  persistent v-model="videoDialog" scrollable max-width="700px">
+  <v-card class="pt-9">
+    <v-btn
+      v-if="close"
+      @click="closeVideo"
+      fab
+
+      absolute
+      top
+      right
+      x-small
+      text
+      class="mt-6"
+      ><v-icon>mdi-close</v-icon></v-btn
+    >
+   
+    <v-card-text id="pp" class="pt-2">
+      
+      <div class="text-center pa-2">
+         <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+
+        <v-btn v-on="on" @click="snapshot" small fab class="ma-1"
+          ><v-icon small>mdi-camera</v-icon>
+        </v-btn>
+      </template>
+      <span>Take Snapshot</span>
+    </v-tooltip>
+
+
+
+
+      <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn v-on="on" @click="crop" small fab class="ma-1"
+          ><v-icon small>mdi-crop-square</v-icon>
+        </v-btn>
+      </template>
+      <span>Crop Image</span>
+    </v-tooltip>
+
+
+      </div>
+
+      <v-expand-y-transition>
+      <div class="crop" v-show="cropper.active">
+        <v-btn @click="attachCrop" fab icon ><v-icon>mdi-crop</v-icon></v-btn>
+      </div>
+    </v-expand-y-transition>
+
+      <div id="screenshots">
+
+        <v-card v-for="(media, index) in screenshots" :key="index" class="sc-wrap" v-if="!media.deleted">
+          <canvas  :class="'screenshot canvas' +index  " :width="media.width" :height="media.height"  crossOrigin="anonymous"></canvas>
+
+                <div  class="d-flex" >
+                  <v-text-field
+                  v-model="screenshots[index].title"  
+                  v-if="media.sw"
+                    label="Title"
+                  ></v-text-field>
+                  
+
+                  <v-text-field
+                    v-else
+                    v-model="screenshots[index].title_ar"
+                    label="Title (AR)"
+                    background-color="lime lighten-5"
+                  ></v-text-field>
+
+                  <v-btn
+                    color="grey lighten-2"
+                    outlined
+                    x-small
+                    fab
+                    class="swh d-inline"
+                    @click="media.sw = !media.sw"
+                    ><v-icon>mdi-web</v-icon></v-btn
+                  >
+                </div>
+          
+
+                  <!-- cagtegory -->
+                  <v-select
+                    v-model="screenshots[index].category"
+                    :items="mediaCats"
+                    label="Media Category"
+                  ></v-select>
+
+                  <v-btn v-if="!screenshots[index].ready"  @click="removeSnapshot($event,index)" fab small dark icon color="error"><v-icon>mdi-close</v-icon></v-btn>
+                  <v-btn v-if="!screenshots[index].ready" @click="uploadSnapshot($event,index)" fab small dark icon color="primary"><v-icon>mdi-upload</v-icon></v-btn>
+                  <v-icon v-if="screenshots[index].ready" color="gv " >mdi-check-circle</v-icon>
+                  
+                  <v-overlay
+                  :value="screenshots[index].overlay"
+                  absolute
+                  >
+                  </v-overlay>
+        </v-card>
+
+      </div>
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn @click="attachSnapshots" color="primary">Attach Media</v-btn>
+      <v-spacer></v-spacer>
+    </v-card-actions>
+  </v-card>
+</v-dialog>

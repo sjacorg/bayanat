@@ -1,0 +1,21 @@
+<v-navigation-drawer
+      v-model="actorDrawer"
+
+      clipped
+      fixed
+      right
+      temporary
+      width="520"
+      app
+      disable-route-watcher
+    >
+      <v-container v-if="actorLoader" fluid fill-height>
+        <v-layout justify-center align-center>
+          <v-progress-circular indeterminate size="44"></v-progress-circular>
+        </v-layout>
+      </v-container>
+
+      
+      <actor-card v-if="actorDrawer" :show-edit="true" @edit="editItem" :active="actorDrawer" v-if="actor" :log="true" @thumb-click="viewImage" @close="actorDrawer=false" :actor="actor"></actor-card>
+      <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
+    </v-navigation-drawer>  
