@@ -83,4 +83,4 @@ Werkzeug==0.16.0
 WTForms==2.2.1
 zipp==0.6.0
 PyQRCode==1.2.1
-cryptography==3.0
+cryptography==3.2
