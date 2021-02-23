@@ -100,7 +100,7 @@ Vue.component('bulletin-search-box', {
                     </v-col>
                 </v-row>
                 <v-row>
-                    <v-col>
+                    <v-col md="6">
                         <div class="d-flex">
                             <pop-date-field :label="i18n.publishDate_" v-model="q.pubdate"></pop-date-field>
                             <v-select
@@ -112,9 +112,8 @@ Vue.component('bulletin-search-box', {
                             ></v-select>
                         </div>
                     </v-col>
-                </v-row>
-                <v-row>
-                    <v-col>
+            
+                    <v-col md="6">
                         <div class="d-flex">
                             <pop-date-field :label="i18n.documentationDate_" v-model="q.docdate"></pop-date-field>
                             <v-select
@@ -129,6 +128,40 @@ Vue.component('bulletin-search-box', {
                         </div>
                     </v-col>
                 </v-row>
+              
+              <v-row>
+                    <v-col md="6">
+                        <div class="d-flex">
+                            <pop-date-field :label="i18n.createdDate_" v-model="q.created"></pop-date-field>
+                            <v-select
+                                    dense
+                                    v-model="q.createdwithin"
+                                    :label="i18n.within_"
+                                    :items="dateWithin"
+                                    class="mx-2"
+                            ></v-select>
+                        </div>
+                    </v-col>
+            
+                    <v-col md="6">
+                        <div class="d-flex">
+                            <pop-date-field :label="i18n.updatedDate_" v-model="q.updated"></pop-date-field>
+                            <v-select
+                                    class="mx-2"
+                                    dense
+
+                                    v-model="q.updatedwithin"
+                                    :label="i18n.within_"
+                                    :items="dateWithin"
+
+                            ></v-select>
+                        </div>
+                    </v-col>
+                </v-row>
+              
+              
+              
+              
                 <v-row>
                     <v-col>
                         <div class="d-flex">
@@ -198,6 +231,18 @@ Vue.component('bulletin-search-box', {
                         </v-chip-group>
 
                     </v-col>
+                </v-row>
+              
+                <v-row>
+                  <v-col cols="12">
+                    <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
+                    <v-chip-group column v-model="q.reviewAction">
+                      <v-chip value="No Review Needed" label small filter outlined >No Review Needed</v-chip>
+                      <v-chip value="Needs Review" label small filter outlined>Needs Review</v-chip>
+                      
+                    </v-chip-group>
+                    
+                  </v-col>
                 </v-row>
                 <v-row>
 

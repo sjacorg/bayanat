@@ -1,6 +1,6 @@
 {% extends 'layout.html' %} {% block content %}
 <v-app id="app" v-cloak>
-  <v-content>
+  <v-main>
     <v-container class="fill-height" fluid>
       <v-row class="align-center" justify="center">
         <v-col cols="12" sm="8" md="4">
@@ -12,6 +12,7 @@
             <v-card-text>
                 
               <v-form
+
                 action="{{ url_for_security('login') }}"
                 method="post"
                 id="loginForm"
@@ -19,6 +20,7 @@
               >
                 {{ login_user_form.hidden_tag() }}
                 <v-text-field
+                  autocomplete="chrome-off"
                   label="Login"
                   name="email"
                   prepend-icon="mdi-account"
@@ -30,6 +32,8 @@
     
                 <v-text-field
                   id="password"
+                  autocomplete="chrome-off"
+
                   label="Password"
                   name="password"
                   prepend-icon="mdi-lock-question"
@@ -79,7 +83,7 @@
 
     </v-container>
     
-  </v-content>
+  </v-main>
 </v-app>
 
 {% endblock %} {% block js %}

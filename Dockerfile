@@ -1,6 +1,6 @@
 FROM python:3.7.2-slim
 
-MAINTAINER SJAC "info@syriaaccountability.org"
+MAINTAINER SJAC "tech@syriaaccountability.org"
 
 RUN apt-get update -y && \
     apt-get install -y python-pip python-dev apt-utils libjpeg62-turbo-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev  libncurses5-dev python-setuptools libpq-dev git
@@ -30,4 +30,3 @@ RUN echo 'alias ee="export FLASK_APP=run.py && export FLASK_DEBUG=0"' >> ~/.bash
 CMD [ "uwsgi", "--http", "0.0.0.0:5000", \
                "--protocol", "uwsgi", \
                "--wsgi", "run:app" ]
-

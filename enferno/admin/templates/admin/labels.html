@@ -323,7 +323,7 @@
 
     methods: {
       refresh(options) {
-        axios.get(`/admin/api/labels/${options.page}?fltr=for_actor`).then(response => {
+        axios.get(`/admin/api/labels/${options.page}`).then(response => {
           this.loading = false;
           this.itemsLength = response.data.total;
           this.items = response.data.items;

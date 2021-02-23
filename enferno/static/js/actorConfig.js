@@ -50,5 +50,14 @@ const actorConfig = {
     "Appeared",
     "Participant",
     "Other"
+  ],
+
+  itoaRelateAs: [
+    "Victim",
+    "Witness",
+    "Perpetrator",
+    "Appeared",
+    "Participant",
+    "Other"
   ]
 };

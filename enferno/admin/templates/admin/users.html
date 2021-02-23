@@ -20,10 +20,12 @@
                     :headers="headers"
                     :items="items"
                     :options.sync="options"
-                    hide-default-footer
+                    :footer-props.sync="footerProps"
+
 
                     :loading="loading"
-                    :server-items-length="1000"
+                    :server-items-length="itemsLength"
+
                     class="elevation-1"
                   >
                     <template v-slot:top>
@@ -81,7 +83,7 @@
                             </v-col>
                             <v-col cols="12" md="4">
                             
-                            <validation-provider name="Email" rules="required|email" v-slot="{ errors }">
+                            <validation-provider name="Email" rules="required" v-slot="{ errors }">
 
                               <v-text-field
                                 autocomplete="chrome-off"
@@ -183,7 +185,10 @@ Vue.component('password', Password);
       snackMessage: '',
       loading: true,
       csvFile: null,
-      options: {},
+       options: {
+                page: 1,
+                itemsPerPage: 10
+            },
       footerProps: {
         itemsPerPageOptions: itemsPerPageOptions,
           itemsPerPageText: "{{ _('Rows per page')}}"
@@ -246,11 +251,14 @@ Vue.component('password', Password);
 
       },
      
-      refresh(options) {
-        axios.get(`/admin/api/users/${options.page}/`).then(response => {
-          this.loading = false;
-          this.items = response.data.items;
-        });
+      refresh() {
+            this.loading = true;
+        axios.get(`/admin/api/users?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
+                    this.items = res.data.items;
+                    this.itemsLength = res.data.total;
+                    this.loading = false;
+
+                });
       },
 
     createItem(){

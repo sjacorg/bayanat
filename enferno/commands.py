@@ -37,7 +37,7 @@ def install():
         try:
             db.session.add(r)
             db.session.commit()
-            u = click.prompt('Admin Email?', default='admin@example.com')
+            u = click.prompt('Admin Email?', default='admin@enferno.io')
             p = click.prompt('Admin Password (min 6 characters)?', default='enferno')
             user = User(email=u, password=hash_password(p), active=1)
             user.name = 'Admin'
@@ -58,7 +58,7 @@ def create(email, password):
     """
 
     a = User.query.filter(User.email == email).first()
-    if a is not None:
+    if a != None:
         print('User already exists!')
     else:
         user = User(email=email, password=hash_password(password), active=1)

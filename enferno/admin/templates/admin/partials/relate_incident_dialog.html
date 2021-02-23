@@ -1,50 +1,47 @@
 <v-dialog v-model="relateIncidentDialog" max-width="770px">
-  
-  <v-card outlined color="grey lighten-3">
-    
-    <v-card-title class="handle">
-      
-      <v-icon left>mdi-library-books </v-icon>
-      Search Incidents
-      <v-spacer></v-spacer>
 
-      <v-text-field
-        class="mx-5"
-        v-model="relateIncidentTerm"
-        label="Search & Relate Incidents"
-        @keydown.enter="searchRelatedIncidents"
-        append-icon="mdi-magnify"
-      ></v-text-field>
-      <v-spacer></v-spacer>
-      <v-btn @click="relateIncidentDialog = false" small text fab><v-icon>mdi-close</v-icon></v-btn>
-    </v-card-title>
+    <v-card outlined color="grey lighten-3">
 
-    <v-divider></v-divider>
+        <v-card-title class="handle">
 
-    <v-card-text v-if="relateIncidentLoader" class="d-flex pa-5" justify-center align-center>
-      <v-progress-circular class="ma-auto" indeterminate color="primary"></v-progress-circular>
-    </v-card-text>
+            <v-icon left>mdi-library-books</v-icon>
+            Search Incidents
+            <v-spacer></v-spacer>
 
-    <v-card-text class="mt-2"  v-for="(item, i) in relateIncidentResults" :key="i">
-      
-        
-          
-      
-      <incident-result :incident="item">
+            <v-text-field
+                    class="mx-5"
+                    v-model="relateIncidentTerm"
+                    label="Search & Relate Incidents"
+                    @keydown.enter="searchRelatedIncidents"
+                    append-icon="mdi-magnify"
+            ></v-text-field>
+            <v-spacer></v-spacer>
+            <v-btn @click="relateIncidentDialog = false" small text fab>
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </v-card-title>
+
+        <v-divider></v-divider>
+
+        <v-card-text v-if="relateIncidentLoader" class="d-flex pa-5" justify-center align-center>
+            <v-progress-circular class="ma-auto" indeterminate color="primary"></v-progress-circular>
+        </v-card-text>
+
+        <v-card-text class="mt-2" v-for="(item, i) in relateIncidentResults" :key="i">
+
+            <incident-result :incident="item">
                 <template v-slot:actions>
-                <v-btn @click="relateIncident($event,item)"  small  depressed color="primary">relate</v-btn>
-                <v-btn @click="viewIncident($event,item)" small depressed  color="grey lighten-3">Preview</v-btn>
+                    <v-btn @click="relateIncident($event,item)" small depressed color="primary">relate</v-btn>
+                    <v-btn @click="viewIncident($event,item)" small depressed color="grey lighten-3">Preview</v-btn>
                 </template>
-              </incident-result>
-            
-        
-       
-    </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" text @click="relateIncidentDialog=false">Done</v-btn>
-      
-      <v-spacer></v-spacer>
-    </v-card-actions>
-  </v-card>
+            </incident-result>
+
+        </v-card-text>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="relateIncidentDialog=false">Done</v-btn>
+
+            <v-spacer></v-spacer>
+        </v-card-actions>
+    </v-card>
 </v-dialog>

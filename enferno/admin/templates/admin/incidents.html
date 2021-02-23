@@ -10,7 +10,7 @@
 
     {% include
       'admin/partials/bulk_incident_drawer.html' %}
-    <v-content>
+    <v-main>
       <v-container fluid fill-height>
         <v-layout align-top justify-center>
           <v-container grid-list-sm>
@@ -60,8 +60,10 @@
                                 @keydown.enter="searchIncidents"
 
                                 hide-details
-                                append-icon="mdi-ballot"
-                                @click:append="toggleAdvSearch"
+                                append-outer-icon="mdi-ballot"
+                                append-icon="mdi-close"
+                                @click:append-outer="toggleAdvSearch"
+                                @click:append="resetSearch"
                                 prepend-inner-icon="mdi-magnify"
                                 label="{{_('Search')}}"
                                 class="hidden-sm-and-down"
@@ -186,7 +188,7 @@
           </v-container>
         </v-layout>
       </v-container>
-    </v-content>
+    </v-main>
       {% include 'footer.html' %}
   </v-app>
 </div>
@@ -247,6 +249,7 @@
       dialog: dialog,
       eventDialog: false,
       reviewDialog: false,
+      reviewKey : 0,
       videoDialog: false,
       playerOptions: {},
 
@@ -561,6 +564,11 @@ toggleAdvSearch() {
           this.searchIncidents();
         },
 
+        resetSearch(){
+           this.search = {};
+           this.doSearch();
+        },
+
       searchIncidents() {
 
         this.loading = true;
@@ -743,6 +751,10 @@ toggleAdvSearch() {
             this.loading = false;
             this.$nextTick(() => {
               this.reviewItem = response.data;
+              this.reviewKey += 1;
+              if (!response.data.review){
+                  this.reviewItem.review = '';
+              }
             })
 
 
@@ -768,7 +780,8 @@ toggleAdvSearch() {
         
 
         if(!item.id)     {
-          this.editedItem = Object.assign({}, this.defaultItem);
+          this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+          this.source_alt = null;
           this.dialog = true;
           this.handleStatus(item);
         }
@@ -897,8 +910,10 @@ toggleAdvSearch() {
       searchRelatedIncidents() {
 
        this.$refs.relateIncidents.open();
+
         this.$nextTick(()=> {
           this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
+
           this.$refs.relateIncidents.reSearch();
         });
 
@@ -907,13 +922,11 @@ toggleAdvSearch() {
       relateIncident(incident) {
         // get list of existing attached incidents
         let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-        console.log('----before error');
-        
+
         if (!ex.includes(incident.id)) {
           relation = {
             incident: incident
           };
-          console.log('after error ---------')
           this.editedItem.incident_relations.push(relation);
           
           this.relateIncidentResults.removeById(incident.id);

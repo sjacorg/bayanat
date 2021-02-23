@@ -198,6 +198,17 @@ Vue.component('actor-search-box', {
 
                     </v-col>
                 </v-row>
+              <v-row>
+                  <v-col cols="12">
+                    <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
+                    <v-chip-group column v-model="q.reviewAction">
+                      <v-chip value="No Review Needed" label small filter outlined >No Review Needed</v-chip>
+                      <v-chip value="Needs Review" label small filter outlined>Needs Review</v-chip>
+                      
+                    </v-chip-group>
+                    
+                  </v-col>
+                </v-row>
                 <v-row>
 
                     <v-col>

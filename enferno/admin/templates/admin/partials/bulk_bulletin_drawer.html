@@ -62,13 +62,18 @@
                 ></v-select>
             </v-card-text>
             <v-card-text>
+                <div class="d-flex">
                    <v-combobox
 
                     small-chips
                   multiple
                   v-model="bulk.ref"
                   label="Bulletin Ref"
+                    class="mr-2"
                 ></v-combobox>
+
+                    <v-checkbox small v-model="bulk.refReplace" label="Replace Existing"></v-checkbox>
+                    </div>
 
             </v-card-text>
 

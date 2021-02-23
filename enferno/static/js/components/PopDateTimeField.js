@@ -33,8 +33,12 @@ Vue.component('pop-date-time-field', {
             if (newV != null ) {
 
                 this.dt = dateFns.format(newV, 'YYYY-MM-DD');
-
+                
                 this.tm = dateFns.format(newV, 'HH:mm')
+            }
+            else {
+                this.dt = null;
+                this.tm = null;
             }
 
 

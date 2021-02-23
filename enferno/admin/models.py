@@ -417,6 +417,35 @@ class Location(db.Model, BaseMixin):
 
     full_location = db.Column(db.String)
 
+    def find_children(self, include_self=True):
+        """
+        Helper method to find all child location
+        :return: list of ids for all child locations
+        """
+        if self.loc_type == 'G':
+            childs = self.query.filter_by(parent_g_id=self.id)
+
+        elif self.loc_type == 'D':
+            childs = self.query.filter_by(parent_d_id=self.id)
+
+        elif self.loc_type == 'S':
+            childs = self.query.filter_by(parent_s_id=self.id)
+
+        elif self.loc_type == 'C':
+            childs = self.query.filter_by(parent_c_id=self.id)
+
+        else:
+            if include_self:
+                return [self.id]
+            else:
+                return []
+        if include_self:
+
+            return [c.id for c in childs] + [self.id]
+        else:
+            return [c.id for c in childs]
+
+
     # custom serialization method
     def to_dict(self):
         parent_g = None
@@ -992,13 +1021,17 @@ class Bulletin(db.Model, BaseMixin):
 
     tsv = db.Column(TSVECTOR)
 
-    __table_args__ = (
-        db.Index("ix_bulletin_tsv", tsv, postgresql_using="gin"),
-        db.Index('ix_bulletin_title', 'title', postgresql_using="gin", postgresql_ops={'title': 'gin_trgm_ops'}),
-        db.Index('ix_bulletin_description', 'description', postgresql_using="gin",
-                 postgresql_ops={'description': 'gin_trgm_ops'}),
+    search = db.Column(db.Text, db.Computed("""
+    coalesce(bulletin.title,'') || ' ' || coalesce(bulletin.title_ar,'') || ' ' ||  coalesce(bulletin.description,'')
+    || ' ' ||  bulletin.sjac_title::text || ' ' || coalesce(bulletin.sjac_title_ar,'') 
+     || ' ' ||  bulletin.id::text || ' ' || coalesce(bulletin.originid,'') 
+     || ' ' || coalesce(bulletin.comments,'')
+    """))
 
-    )
+
+    __table_args__ = (
+        db.Index('ix_bulletin_search', 'search', postgresql_using="gin", postgresql_ops={'search': 'gin_trgm_ops'}),
+        )
 
     # custom method to create new revision in history table
     def create_revision(self, user_id=None, created=None):
@@ -1094,7 +1127,7 @@ class Bulletin(db.Model, BaseMixin):
                     e.from_json(event)
                     e.save()
                 new_events.append(e)
-                self.events = new_events
+            self.events = new_events
 
         # Related Media
         if "medias" in json:
@@ -1637,15 +1670,14 @@ class Actor(db.Model, BaseMixin):
 
     tsv = db.Column(TSVECTOR)
 
+    search = db.Column(db.Text, db.Computed("""
+        coalesce(actor.name,'') || ' ' ||  coalesce(actor.name_ar,'') || ' ' ||  coalesce(actor.description,'')
+         || ' ' ||  actor.id::text || ' ' || coalesce(actor.originid,'') 
+         || ' ' || coalesce(actor.comments,'')
+        """))
+
     __table_args__ = (
-        db.Index("ix_actor_tsv", tsv, postgresql_using="gin"),
-        db.Index('actor_fulltext',
-                 'name', 'name_ar', 'description', postgresql_using='gin',
-                 postgresql_ops={
-                     'name': 'gin_trgm_ops',
-                     'name_ar': 'gin_trgm_ops',
-                     'description': 'gin_trgm_ops'
-                 })
+        db.Index('ix_actor_search', 'search', postgresql_using="gin", postgresql_ops={'search': 'gin_trgm_ops'}),
     )
 
     # helper method to create a revision
@@ -1774,7 +1806,7 @@ class Actor(db.Model, BaseMixin):
                     e.from_json(event)
                     e.save()
                 new_events.append(e)
-                self.events = new_events
+            self.events = new_events
 
         # Related Media
         if "medias" in json:
@@ -2200,7 +2232,7 @@ class Itoa(db.Model, BaseMixin):
     incident_id = db.Column(db.Integer, db.ForeignKey("incident.id"), primary_key=True)
 
     # Relationship extra fields
-    # related_as = db.Column(db.Integer)
+    related_as = db.Column(db.Integer)
     probability = db.Column(db.Integer)
     comment = db.Column(db.Text)
 
@@ -2215,7 +2247,7 @@ class Itoa(db.Model, BaseMixin):
         return {
             "actor": self.actor.to_compact(),
             "incident": self.incident.to_compact(),
-
+            "related_as": self.related_as,
             "probability": self.probability,
             "comment": self.comment,
             "user_id": self.user_id,
@@ -2227,9 +2259,9 @@ class Itoa(db.Model, BaseMixin):
             self.probability = (
                 relation["probability"] if "probability" in relation else None
             )
-            # self.related_as = (
-            #     relation["related_as"] if "related_as" in relation else None
-            # )
+            self.related_as = (
+                 relation["related_as"] if "related_as" in relation else None
+             )
             self.comment = relation["comment"] if "comment" in relation else None
             print("Relation has been updated.")
         else:
@@ -2556,7 +2588,15 @@ class Incident(db.Model, BaseMixin):
 
     tsv = db.Column(TSVECTOR)
 
-    __table_args__ = (db.Index("ix_incident_tsv", tsv, postgresql_using="gin"),)
+    search = db.Column(db.Text, db.Computed("""
+            coalesce(incident.title,'') || ' ' ||  coalesce(incident.title_ar,'') || ' ' ||  coalesce(incident.description,'')
+             || ' ' ||  incident.id::text 
+             || ' ' || coalesce(incident.comments,'')
+            """))
+
+    __table_args__ = (
+        db.Index('ix_incident_search', 'search', postgresql_using="gin", postgresql_ops={'search': 'gin_trgm_ops'}),
+    )
 
     # helper method to create a revision
     def create_revision(self, user_id=None, created=None):
@@ -2936,7 +2976,7 @@ class BulletinHistory(db.Model, BaseMixin):
     SQL Alchemy model for bulletin revisions
     """
     id = db.Column(db.Integer, primary_key=True)
-    bulletin_id = db.Column(db.Integer, db.ForeignKey("bulletin.id"))
+    bulletin_id = db.Column(db.Integer, db.ForeignKey("bulletin.id"), index=True)
     bulletin = db.relationship(
         "Bulletin", backref="history", foreign_keys=[bulletin_id]
     )
@@ -2958,21 +2998,6 @@ class BulletinHistory(db.Model, BaseMixin):
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
-# register an event listener to generate a tokenized field for full text search
-@event.listens_for(Bulletin, "before_insert")
-@event.listens_for(Bulletin, "before_update")
-def index_trigger(mapper, connection, bulletin: Bulletin):
-    title = bulletin.title or ""
-    description = bulletin.description or ""
-    title_ar = bulletin.title_ar or ""
-    originid = bulletin.originid or ""
-    sjac = bulletin.sjac_title or ""
-    sjac_ar = bulletin.sjac_title_ar or ""
-    try:
-        bulletin.tsv = func.to_tsvector(
-            " ".join([title, title_ar, description, str(bulletin.id), originid, sjac, sjac_ar]))
-    except Exception as e:
-        print(e)
 
 
 # how to search
@@ -3002,7 +3027,7 @@ class ActorHistory(db.Model, BaseMixin):
     SQL Alchemy model for actor revisions
     """
     id = db.Column(db.Integer, primary_key=True)
-    actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"))
+    actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"), index=True)
     actor = db.relationship("Actor", backref="history", foreign_keys=[actor_id])
     data = db.Column(JSON)
     # user tracking
@@ -3022,18 +3047,6 @@ class ActorHistory(db.Model, BaseMixin):
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
-# register an event listener to generate a tokenized field for full text search
-@event.listens_for(Actor, "before_insert")
-@event.listens_for(Actor, "before_update")
-def index_trigger(mapper, connection, actor: Actor):
-    name = actor.name or ""
-    name_ar = actor.name_ar or ""
-    description = actor.description or ""
-    originid = actor.originid or ""
-    try:
-        actor.tsv = func.to_tsvector(" ".join([name, name_ar, description, str(actor.id), originid]))
-    except Exception as e:
-        print(e)
 
 
 # how to search
@@ -3057,7 +3070,7 @@ class IncidentHistory(db.Model, BaseMixin):
     SQL Alchemy model for incident revisions
     """
     id = db.Column(db.Integer, primary_key=True)
-    incident_id = db.Column(db.Integer, db.ForeignKey("incident.id"))
+    incident_id = db.Column(db.Integer, db.ForeignKey("incident.id"), index=True)
     incident = db.relationship(
         "Incident", backref="history", foreign_keys=[incident_id]
     )
@@ -3077,20 +3090,6 @@ class IncidentHistory(db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict(), sort_keys=True)
-
-
-# register an event listener to generate a tokenized field for full text search
-@event.listens_for(Incident, "before_insert")
-@event.listens_for(Incident, "before_update")
-def index_trigger(mapper, connection, incident: Incident):
-    title = incident.title or ""
-    title_ar = incident.title_ar or ""
-    description = incident.description or ""
-    try:
-        incident.tsv = func.to_tsvector(" ".join([title, title_ar, description, str(incident.id)]))
-    except Exception as e:
-        print(e)
-
 
 
 
@@ -3164,7 +3163,11 @@ class Settings(db.Model, BaseMixin):
             return ''
 
 
-
+class Etl(db.Model, BaseMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
+    bulletin = db.relationship('Bulletin', backref='etl')
+    meta = db.Column(JSON)
 
 
 class Query(db.Model, BaseMixin):

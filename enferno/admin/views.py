@@ -14,7 +14,7 @@ from enferno.extensions import bouncer, rds, babel
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents
 from enferno.user.models import User, Role
 from enferno.utils.search_utils import SearchUtils
-
+from enferno.extensions import cache
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
                   template_folder=os.path.join(root, 'templates'),
@@ -45,7 +45,7 @@ def before_request():
     :return: None
     """
     g.user = current_user
-    g.version = '2'
+    g.version = '4'
 
 
 @admin.app_context_processor
@@ -54,7 +54,7 @@ def ctx():
     passes all users to the application, based on the current user's permissions.
     :return: None
     """
-    users = User.query.all()
+    users = User.query.order_by(User.email).all()
     if current_user.is_authenticated:
         if current_user.has_role('Admin') or current_user.view_usernames:
             hide_name = False
@@ -125,10 +125,16 @@ def api_labels(page):
             getattr(Label, typ) == True
         )
     fltr = request.args.get('fltr', None)
-    if fltr and fltr in ['verified']:
-        query.append(
-            getattr(Label, fltr) == True
+    if fltr:
+        if fltr in ['verified']:
+            query.append(
+            Label.verified == True
         )
+        else:
+            query.append(
+            Label.verified == False
+            )
+
     else:
         query.append(
             Label.verified == False
@@ -687,7 +693,13 @@ def bulletins(id):
     return render_template('admin/bulletins.html')
 
 
+def make_cache_key(*args, **kwargs):
+    json_key = str(hash(str(request.json)))
+    args_key = request.args.get('page') + request.args.get('per_page')
+    return json_key + args_key
+
 @admin.route('/api/bulletins/', methods=['POST', 'GET'])
+@cache.cached(15, make_cache_key)
 def api_bulletins():
     """Returns bulletins in JSON format, allows search and paging."""
     query = []
@@ -695,20 +707,21 @@ def api_bulletins():
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
 
+    nested = False
     if len(queries) > 0:
-            while queries:
-                nextOp = ops.pop(0)
-                nextQuery = queries.pop(0)
-                if nextOp == 'union':
-                    result = result.union(Bulletin.query.filter(*nextQuery))
-                elif nextOp == 'intersect':
-                    result = result.intersect(Bulletin.query.filter(*nextQuery))
+        nested = True
+        while queries:
+            nextOp = ops.pop(0)
+            nextQuery = queries.pop(0)
+            if nextOp == 'union':
+                result = result.union(Bulletin.query.filter(*nextQuery))
+            elif nextOp == 'intersect':
+                result = result.intersect(Bulletin.query.filter(*nextQuery))
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
     # handle sort
     #default
     sort = '-id'
-
 
     options = request.json.get('options')
     if options:
@@ -719,9 +732,11 @@ def api_bulletins():
             if sort_desc and sort_desc[0]:
                 sort = '{} desc'.format(sort)
 
-
-    result = result.order_by(text(sort)).paginate(
-        page, per_page, True)
+    # can't sort nested queries
+    if nested:
+        result = result.paginate(page, per_page, True)
+    else:
+        result = result.order_by(text(sort)).paginate(page,per_page, True)
 
     # Select json encoding type
     mode = request.args.get('mode', '1')
@@ -789,16 +804,26 @@ def api_bulletin_review_update(id):
             bulletin.review_action = request.json['item']['review_action'] if 'review_action' in request.json[
                 'item'] else ''
 
+            if bulletin.status == 'Peer Review Assigned':
+                bulletin.comments = 'Added Peer Review'
+            if bulletin.status == 'Peer Reviewed':
+                bulletin.comments = 'Updated Peer Review'
+
             bulletin.status = 'Peer Reviewed'
 
+            #append refs
+            refs = request.json.get('item',{}).get('revrefs',[])
+
+            bulletin.ref = bulletin.ref + refs
+
             # Create a revision using latest values
-            # this method automatically commi
+            # this method automatically commits
             #  bulletin changes (referenced)           
             bulletin.create_revision()
 
             # Record Activity
             Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
-            return 'Buulletin review updated ... # {}'.format(bulletin.id), 200
+            return 'Bulletin review updated ... # {}'.format(bulletin.id), 200
         else:
             return 'Not Found!'
 
@@ -1295,17 +1320,18 @@ def api_users(page):
     :param page: db query offset
     :return: success and json feed of items or error
     """
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+    q = request.args.get('q')
     query = []
-    q = request.args.get('q', None)
     if q is not None:
         query.append(User.name.ilike('%' + q + '%'))
     result = User.query.filter(
-        *query).order_by(User.id).paginate(
-        page, 100, True)
-
-    response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
+        *query).order_by(User.email).paginate(
+        page, per_page, True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json'), 200
+                    content_type='application/json')
 
 
 @admin.route('/users/')
@@ -1595,7 +1621,7 @@ def api_incident_review_update(id):
             incident.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-            return 'Buulletin review updated ... # {}'.format(incident.id), 200
+            return 'Bulletin review updated ... # {}'.format(incident.id), 200
         else:
             return 'Not Found!'
 
@@ -1723,10 +1749,14 @@ def bulk_status():
         else:
             abort(404)
 
+        # handle job failure
+        if status == 'FAILURE':
+            rds.delete(key)
         if status != 'SUCCESS':
             result['id'] = id
             result['status'] = status
             tasks.append(result)
+
         else:
             rds.delete(key)
     return json.dumps(tasks)

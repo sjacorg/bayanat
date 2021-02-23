@@ -32,6 +32,7 @@ Vue.component('relate-incidents', {
         },
 
         value: function (val) {
+
             this.$emit('input', val);
         }
     },
@@ -69,7 +70,6 @@ Vue.component('relate-incidents', {
 
         search(q = {}) {
              this.loading = true;
-
             axios.post(`/admin/api/incidents/?page=${this.page}&per_page=${this.perPage}&mode=2`, {q: this.q}).then(response => {
                 this.exid = this.exid || -1;
                 this.loading = false;
@@ -110,7 +110,7 @@ Vue.component('relate-incidents', {
                     <v-row>
                         <v-col cols="12" md="4">
                             <v-card outlined>
-                                <incident-search-box v-model="q" @search="reSearch"></incident-search-box>
+                                <incident-search-box v-model="q" @search="reSearch" :i18n="$root.translations"></incident-search-box>
                             </v-card>
                         </v-col>
                         <v-col cols="12" md="8">

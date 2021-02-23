@@ -11,6 +11,7 @@ from oauthlib.oauth2 import WebApplicationClient
 from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import User
 from enferno.user.forms import ExtendedLoginForm
+from flask_security.forms import LoginForm
 
 bp_user = Blueprint('users', __name__, static_folder='../static')
 
@@ -28,22 +29,23 @@ def before_request():
     Attach user object to global context, display custom captcha form after certain failed attempts
     """
     g.user = current_user
-    if session.get('failed',0) > 1:
+
+    if session.get('failed',0) > 1 and cfg.RECAPTCHA_ENABLED:
         current_app.extensions['security'].login_form = ExtendedLoginForm
+    else:
+        current_app.extensions['security'].login_form = LoginForm
 
 @bp_user.after_app_request
 def after_app_request(response):
     """
-    Record failed login attemps into the session
+    Record failed login attempts into the session
     """
     if request.path == '/login' and request.method == 'POST':
         #failed login
         if g.identity.id == None:
             session['failed'] = session.get('failed', 0) + 1
-        else:
-            # successful login - clear all failed counts
-            if session.get('failed', None):
-                session.pop('failed')
+
+
     return response
 
 
@@ -122,9 +124,8 @@ def auth_callback():
         users_name = userinfo_response.json()["name"]
     else:
         return "User email not available or not verified by Google.", 400
-    # restrict access to specific Google Domain
-    #if not users_email.endswith('yourdomain.org'):
-    #    return "User email rejected!  ", 403
+    if not users_email.endswith('syriaaccountability.org'):
+        return "User email rejected!  ", 403
 
     # Create a user in our db with the information provided
     # by Google

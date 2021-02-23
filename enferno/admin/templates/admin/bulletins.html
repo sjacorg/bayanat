@@ -8,7 +8,7 @@
     {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
     'admin/partials/bulletin_drawer.html' %} {% include
     'admin/partials/bulk_bulletin_drawer.html' %}
-    <v-content>
+    <v-main>
       {% include 'admin/partials/bulletin_advsearch.html' %}
       <v-container class="fluid fill-height">
         <v-layout class="align-top justify-center">
@@ -60,8 +60,10 @@
                               v-model.trim="search[0].tsv"
                               @keydown.enter="doSearch()"
                               hide-details
-                              append-icon="mdi-ballot"
-                              @click:append="toggleAdvSearch"
+                              append-outer-icon="mdi-ballot"
+                              append-icon="mdi-close"
+                              @click:append="resetSearch"
+                              @click:append-outer="toggleAdvSearch"
                               prepend-inner-icon="mdi-magnify"
                               label="{{_('Search')}}"
                               class="hidden-sm-and-down"
@@ -212,7 +214,7 @@
           </v-container>
         </v-layout>
       </v-container>
-    </v-content>
+    </v-main>
       {% include 'footer.html' %}
   </v-app>
 </div>
@@ -294,6 +296,8 @@
         eventDialog: false,
 
         reviewDialog: false,
+        reviewKey : 0,
+        descKey : 0,
 
 
 
@@ -460,8 +464,8 @@
         },
         defaultEvent: {
           title: "",
-                  from_date: null,
-                  to_date:null
+                  from_date: '',
+                  to_date:''
         },
 
 
@@ -581,10 +585,17 @@
 
             axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
               this.jobs = res.data;
+
               if (!this.jobs.length) {
                 clearInterval(this.bulkTimer);
                 this.refresh();
                 this.showSnack('Bulk Update is finished!')
+              }
+              else {
+                  console.log(this.jobs)
+                  for (job of this.jobs) {
+                      console.log(job.status)
+                  }
               }
             });
 
@@ -684,6 +695,7 @@
         },
         resetSearch(){
           this.search = [{}];
+          this.doSearch()
         },
 
         loadSearches(){
@@ -879,10 +891,20 @@
 
           this.loading = true;
           this.reviewDialog = true;
+
+
           axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
             this.loading = false;
             this.$nextTick(() => {
               this.reviewItem = response.data;
+              this.reviewKey += 1;
+              // fix bug in vue reactivity with nested object attribs
+
+              if (!response.data.review){
+                  this.reviewItem.review = '';
+              }
+
+
             })
 
 
@@ -931,9 +953,10 @@
 
 
           if(!item.id)     {
-
-            this.editedItem = Object.assign({}, this.defaultItem);
-
+            // hack to invoke deep copy and avoid passing attributes by reference
+            // (resolves data the persists across dialogs)
+            this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+            this.source_alt = null;
             this.dialog = true;
             this.handleStatus(item);
           }
@@ -946,6 +969,8 @@
               this.$nextTick(()=>{
                 this.loading= false
               this.editedItem = response.data;
+                //reload tinymce component hack
+                this.descKey += 1;
                 if (this.editedItem.source_link == 'NA') {
                   this.source_alt = true;
                 }

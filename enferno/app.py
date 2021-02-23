@@ -50,6 +50,12 @@ def register_extensions(app):
 def register_signals(app):
     @user_logged_in.connect_via(app)
     def _after_login_hook(sender, user, **extra):
+        #clear login counter
+        from flask import session
+        if session.get('failed'):
+            session.pop('failed')
+            print ('login counter cleared')
+
         Activity.create(user, Activity.ACTION_LOGIN, user.to_mini(), 'user')
 
 
@@ -104,7 +110,6 @@ def register_shellcontext(app):
             'Itoa': Itoa,
             'Activity': Activity,
             'Settings': Settings,
-
         }
 
     app.shell_context_processor(shell_context)
@@ -119,3 +124,4 @@ def register_commands(app):
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
+

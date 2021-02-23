@@ -26,17 +26,36 @@
                 max-height="100vh"
                 class="overflow-y-auto pt-11">
 
-            <bulletin-card v-if="reviewItem.class=='Bulletin'" :close="false" :bulletin="reviewItem"></bulletin-card>
-            <actor-card v-if="reviewItem.class=='Actor'" :close="false" :actor="reviewItem"></actor-card>
+            <bulletin-card v-if="reviewItem.class=='Bulletin'" @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
+            <actor-card v-if="reviewItem.class=='Actor'" @thumb-click="viewImage" :close="false" :actor="reviewItem"></actor-card>
             <incident-card v-if="reviewItem.class=='Incident'" :close="false" :incident="reviewItem"></incident-card>
 
 
             <v-card-text class="mt-5">
 
-                <tinymce-editor  :init="tinyConfig" v-model="reviewItem.review"> </tinymce-editor>
+                <tinymce-editor :key="reviewKey"  :init="tinyConfig" v-model="reviewItem.review"> </tinymce-editor>
+
+            <v-card class="elevation-0 mt-6 mx-auto" max-width="500" v-if="reviewItem.class=='Bulletin'">
+                <v-combobox
+
+
+                    chips
+                  multiple
+                  v-model="reviewItem.revrefs"
+                  label="Ref"
+                    hint="Appends the reference to the bulletin (does not remove existing refs)"
+                ></v-combobox>
+            </v-card>
 
 
             </v-card-text>
+
+
+
+
+
+
+
 
             <v-card outline elevation="0" color="ma-3">
                 <v-card-text>
@@ -69,6 +88,19 @@
                         <div class="pa-4">
 
                             <search-field
+                                    api="/admin/api/labels/"
+                                    query-params="&fltr=verified"
+                                    item-text="title"
+                                    item-value="id"
+                                    :multiple="true"
+                                    label="Verified Labels"
+                            ></search-field>
+
+
+                        </div>
+                        <div class="pa-4">
+
+                            <search-field
                                     api="/admin/api/sources/"
                                     item-text="title"
                                     item-value="id"
@@ -85,6 +117,7 @@
                         <v-btn class="mx-3" depressed @click="searchRelatedBulletins" > <v-icon left>mdi-magnify</v-icon> Related Bulletins</v-btn>
                         <v-btn class="mx-3" depressed @click="searchRelatedActors" > <v-icon left>mdi-magnify</v-icon> Related Actors</v-btn>
                         <v-btn class="mx-3" depressed @click="searchRelatedIncidents" > <v-icon left>mdi-magnify</v-icon> Related Incidents</v-btn>
+
                     </div>
                 </v-card-text>
             </v-card>

@@ -10,7 +10,7 @@
     {% include
       'admin/partials/bulk_actor_drawer.html' %}
 
-    <v-content>
+    <v-main>
       {% include 'admin/partials/actor_advsearch.html' %}
       <v-container fluid fill-height>
         <v-layout align-top justify-center>
@@ -57,8 +57,10 @@
                             @keydown.enter="doSearch"
 
                             hide-details
-                            append-icon="mdi-ballot"
-                            @click:append="toggleAdvSearch"
+                            append-outer-icon="mdi-ballot"
+                            append-icon="mdi-close"
+                            @click:append-outer="toggleAdvSearch"
+                            @click:append="resetSearch"
                             prepend-inner-icon="mdi-magnify"
                             label="{{_('Search')}}"
                             class="hidden-sm-and-down"
@@ -180,7 +182,7 @@
           </v-container>
         </v-layout>
       </v-container>
-    </v-content>
+    </v-main>
       {% include 'footer.html' %}
   </v-app>
 </div>
@@ -257,6 +259,7 @@
 
       eventDialog: false,
       reviewDialog: false,
+      reviewKey : 0,
       videoDialog: false,
       playerOptions: {},
 
@@ -406,7 +409,10 @@
         title: ""
       },
       defaultEvent: {
-        title: ""
+       title: "",
+       from_date: '',
+       to_date:''
+
       },
 
 
@@ -618,6 +624,13 @@
         },
 
 
+         resetSearch(){
+          this.search = [{}];
+          this.doSearch()
+        },
+
+
+
 
       // ---------------- end advanced search -----------------------
 
@@ -794,6 +807,11 @@
             this.loading = false;
             this.$nextTick(() => {
               this.reviewItem = response.data;
+              this.reviewKey += 1;
+              if (!response.data.review){
+                  this.reviewItem.review = '';
+              }
+
             })
 
 
@@ -820,7 +838,8 @@
         this.actorDrawer = false;
 
         if(!item.id)     {
-          this.editedItem = Object.assign({}, this.defaultItem);
+          this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+          this.source_alt = null;
           this.dialog = true;
           this.handleStatus(item);
         }    

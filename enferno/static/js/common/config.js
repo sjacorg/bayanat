@@ -212,7 +212,7 @@ var tinyConfig = {
 
     menubar: false,
     toolbar:
-        "undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright | ltr rtl | fullscreen | code",
+        "undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright | ltr rtl | removeformat |  code | fullscreen",
 
     style_formats: [
         {title: "Heading 2", format: "h2"},
@@ -230,7 +230,9 @@ if (__settings__.dark) {
 // define static data contants for different fields
 var mediaCats = ["Generic", "Humans", "Signs/Text"];
 var probs = ["Maybe", "Likely", "Certain"];
-var btobRelateAs = ["Duplicate", "Other", "Part of a Series", "Same Object", "Same Person"]
+var btobRelateAs = ["Duplicate", "Other", "Part of a Series", "Same Object", "Same Person"];
+var itobRelateAs = ["default"];
+var itoiRelateAs = ["Default"];
 var statuses = [
     "Machine Created",
     "Human Created",

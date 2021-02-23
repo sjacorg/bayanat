@@ -1,177 +1,45 @@
-Bayanat v1.0
-=====================
+<p align="center">
+  <a href="https://bayanat.org" target="_blank">
+    <img alt="Bayanat" width="250" src="enferno/static/img/bayanat-h-v2.svg">
+  </a>
+</p>
 
-Manual Installation
--------------------
-Install the latest version of [Nginx](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/).
+Bayanat is an open source data management solution for processing huge amounts of data relevant to human rights abuses and war crimes, developed and maintained by Syrian talents at the [Syria Justice and Accountability Centre](https://syriaaccountability.org/) (SJAC). You can watch this [video](https://www.youtube.com/watch?v=thCkihoXAk0) for a quick introduction into Bayanat.
 
-Install the following packages: 
+Installation and Documentation
+------------------------------
+Installation guidelines and user manual are available at [docs.bayanat.org](https://docs.bayanat.org/).
 
-```
-# apt install build-essential python3-dev libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools postgresql postgresql-contrib python3-pip libpq-dev git redis-server
-```
+Live Demo
+---------
+You can access a demo instance of Bayanat on [demo.bayanat.org](https://demo.bayanat.org/). You can use the following credentials to log in:
 
-Install virtualenv:
+- `demo@bayanat.org`/`demo` for [Data Analyst](https://docs.bayanat.org/en/users-groups#data-analyst-da) access level.
+- `admin@bayanat.org`/`admin` for [Administrator](https://docs.bayanat.org/en/users-groups#administrator) access level. 
 
-```
-$ pip3 install virtualenv
-```
+Please note:
+- This server will be reset every 15 minutes. Feel free to make changes to items in the database.
+- Upload feature is disabled on this server to prevent abuse.
+- Please avoid changing the passwords or setting up two factor authentication as this will deny other users access to the server until it's reset.
 
-Clone the repository:
+Updates
+-------
+The main purpose of this project is to support the work of SJAC's [Data Analysis team](https://syriaaccountability.org/what-we-do/) as well as partner organizations currently using Bayanat. SJAC is looking for additional resources in order to develop extra features and tools that make it easier for other human rights organizations and activists to use Bayanat and load existing data.
 
-```
-$ git clone git@github.com:sjacorg/bayanat.git
-```
+Stable releases will be pushed to this repository every few weeks and critical updates will be pushed sooner.
 
-Install the rest of the dependencies:
+In most cases updates can be implemented by pulling the new code and restarting the services. However, in some cases where changes to the database have been introduced, migrations might be needed. We'll provide instructions to carry out those migrations if they are required.
 
-```    
-$ cd bayanat 
+It's critical to understand that, in all cases, **backups must be taken before pulling any new updates**. For production environments with important data, it's advised to use two backup methods with at least one taking daily backups.
 
-$ virtualenv env  -p python3
+Support
+-------
+You can use [Issues](https://github.com/sjacorg/bayanat/issues) in this repository to report bugs in Bayanat.
 
-$ source env/bin/activate 
-
-$ pip3 install -r requirements.txt
-```
-
-Edit the settings.py and change the values to suit your needs, specifically you can change Flask security settings, security keys, Redis DB, Postgres settings, password salts, and Flask mail.
-
-Next, Postgres user and database can be created:
-
-```
-$ sudo -u postgres createuser --interactive
-$ createdb user
-```
-
-After that, you should create your admin user, run the following command:
-
-```
-$ export FLASK_APP=run.py
-$ flask create-db
-$ flask install 
-```
-
-and follow the instructions, this will create your first user and first admin role.
-
-To run the system locally, you can use a management command:
-
-```
-$ flask run
-```
-
-Example Nginx config file:
-
-```
-/etc/nginx/conf.d/test.conf
-
-server {
-listen 80 ssl;
-server_name example.com;
-# set based on your required media upload size
-client_max_body_size 100M;
-root /path/to/bayanat;
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-location /static {
-    alias /path/to/bayahat/enferno/static;
-    expires max;
-    }
-#deny access to git and dot files
-location ~ /\. {
-deny all;
-return 404;
-}
-#deny direct access to script and sensitive files
-location ~* \.(pl|cgi|py|sh|lua|log|md5)$ {
-    return 444;
-    }
-location / {
-
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    proxy_set_header X-Forward-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host $http_host;
-    proxy_redirect off;
-    proxy_pass http://127.0.0.1:5000;
-}
-```
-
-The following service can be created to run the app as a daemon:
-
-```
-/etc/systemd/system/bayanat.service
-
-[Unit]
-Description=UWSGI instance to serve Bayanat
-After=syslog.target
-[Service]
-User=<user>
-Group=<user>
-WorkingDirectory=/path/to/bayanat
-Environment="FLASK_DEBUG=0"
-ExecStart=/path/to/bayanat/env/bin/uwsgi --master --enable-threads --threads 2  --processes 4 --http 127.0.0.1:5000  -w run:app --home env
-Restart=always
-KillSignal=SIGQUIT
-Type=notify
-StandardError=syslog
-NotifyAccess=all
-[Install]
-WantedBy=multi-user.target
-```
-
-[Certbot](https://certbot.eff.org/) can be used to easily setup HTTPS with Nginx.
-
-Once Nginx and the service is correctly configured, the app can be started:
-
-Running Celery
--------------
-
-`celery -A enfenro.tasks worker`
-
-you can add `-b` to activate Celery heartbeat (periodic tasks) 
-
-A sample task that runs within the app context has been prepared for you within the `enfenro/tasks/__init__.py` file, this is helpful if you have background tasks that interact with your SQLAlchemy models. 
-
-Celery can also be run as a service:
-
-```
-[Unit]
-Description=Celery Service
-After=network.target
-[Service]
-User={{user_name}}
-Group={{user_name}}
-WorkingDirectory=/path/to/bayanat/
-Environment="PATH=/path/to/bayanat/env/bin"
-Environment="FLASK_DEBUG=0"
-ExecStart=/home/path/to/bayanat/env/bin/celery -A enferno.tasks -c 4  worker -B
-[Install]
-WantedBy=multi-user.target
-```
-
-Using S3 for media uploads
--------------
-By default media uploads will go into a private "media" directory, to use S3 instead, change the 
-`FILESYSTEM_LOCAL` setting to false within the settings.py file, don't forget to update your s3 key/secret and bucket name. 
-
-Running the system using Docker
--------------
-Adjust the configuration inside the ".env" and "Dockerfile" files, then simply run the following command: 
-
-```
-docker-compose up --build
-```
-
-When all system components are built and show a running status, you will need to create the database structure and the admin user
-using the following commands: 
-```
-$ docker exec -it <container> flask create-db
-```
-
-```
-$ docker exec -it <container> flask install
-```
+Donate
+-------
+If you like our work please consider making a donation at [donate.syriaaccountability.org](https://donate.syriaaccountability.org/).
 
 License
 -------------
-This system is distributed WITHOUT ANY WARRANTY under the GNU Affero General Public License v3.0. 
-
+This system is distributed WITHOUT ANY WARRANTY under the GNU Affero General Public License v3.0.

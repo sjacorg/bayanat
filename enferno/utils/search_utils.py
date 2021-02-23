@@ -71,27 +71,20 @@ class SearchUtils:
     def bulletin_query(self, q):
         query = []
 
-        tsv = q.get('tsv', None)
-        if tsv and tsv != '':
-            search = '%' + tsv.replace(' ', '%') + '%'
-            query.append(
-                or_(
-                    Bulletin.tsv.op('@@')(db.func.plainto_tsquery(tsv)),
-                    Bulletin.title.ilike(search),
-                    Bulletin.title_ar.ilike(search),
-                    Bulletin.description.ilike(search),
-                    Bulletin.comments.ilike(search)
-                )
-            )
+        tsv = q.get('tsv')
+        if tsv:
+            words = tsv.split(' ')
+            qsearch = [Bulletin.search.ilike('%{}%'.format(word)) for word in words]
+            query.extend(qsearch)
 
         # exclude  filter
-        extsv = q.get('extsv', None)
-        if extsv is not None and extsv != '':
-            search = '%' + extsv.replace(' ', '%') + '%'
-            query.append(not_(Bulletin.title.ilike('%' + search + '%')))
-            query.append(not_(Bulletin.description.ilike('%' + search + '%')))
-        # ref
+        extsv = q.get('extsv')
+        if extsv:
+            words = extsv.split(' ')
+            for word in words:
+                query.append(not_(Bulletin.search.ilike('%{}%'.format(word))))
 
+        # ref
         ref = q.get('ref', None)
         if ref is not None and ref != '':
             search = '%' + ref + '%'
@@ -143,11 +136,17 @@ class SearchUtils:
         locations = q.get('locations', [])
         if len(locations):
             ids = [item.get('id') for item in locations]
+            all_ids = []
+            for id in ids:
+                all_ids += Location.query.get(id).find_children()
             if q.get('oplocations'):
-                query.append(Bulletin.locations.any(Location.id.in_(ids)))
+                query.append(Bulletin.locations.any(Location.id.in_(all_ids)))
             else:
-                query.extend([Bulletin.locations.any(Location.id == id) for id in ids])
+                for id in ids:
+                    location = Location.query.get(id)
+                    query.append(Bulletin.locations.any(Location.id.in_(location.find_children())))
 
+                    
         # Excluded sources
         exlocations = q.get('exlocations', [])
         if len(exlocations):
@@ -191,6 +190,25 @@ class SearchUtils:
                 docdate = parse(docdate)
                 query.append(Bulletin.documentation_date.between(docdate - diff, docdate + diff))
 
+        # creation date
+        created = q.get('created', None)
+        created_within = q.get('createdwithin', '1d')
+        if created:
+            if created_within in self.ACCEPTED_DATE_RANGES:
+                diff = timedelta(days=int(created_within[:-1]))
+                created = parse(created)
+                query.append(Bulletin.created_at.between(created - diff, created + diff))
+
+        # modified date
+        updated = q.get('updated', None)
+        updated_within = q.get('updatedwithin', '1d')
+        if updated:
+            if updated_within in self.ACCEPTED_DATE_RANGES:
+                diff = timedelta(days=int(updated_within[:-1]))
+                updated = parse(updated)
+                query.append(Bulletin.updated_at.between(updated - diff, updated + diff))
+                
+
         # assigned user(s)
         assigned = q.get('assigned', [])
         if (assigned):
@@ -211,30 +229,29 @@ class SearchUtils:
         if status:
             query.append(Bulletin.status == status)
 
+        # review status
+        review_action = q.get('reviewAction', None)
+        if review_action:
+            query.append(Bulletin.review_action == review_action)
+
         return query
 
     def actor_query(self, q):
         query = []
 
-        tsv = q.get('tsv', None)
-        if tsv and tsv != '':
-            search = '%' + tsv.replace(' ', '%') + '%'
-            query.append(
-                or_(
-                    Actor.tsv.op('@@')(db.func.plainto_tsquery(tsv)),
-                    Actor.name.ilike(search),
-                    Actor.name_ar.ilike(search),
-                    Actor.description.ilike(search),
-                    Actor.comments.ilike(search)
-                )
-            )
+        tsv = q.get('tsv')
+        if tsv:
+            words = tsv.split(' ')
+            qsearch = [Actor.search.ilike('%{}%'.format(word)) for word in words]
+            query.extend(qsearch)
 
         # exclude  filter
-        extsv = q.get('extsv', None)
-        if extsv is not None and extsv != '':
-            search = '%' + extsv.replace(' ', '%') + '%'
-            query.append(not_(Actor.title.ilike('%' + search + '%')))
-            query.append(not_(Actor.description.ilike('%' + search + '%')))
+        extsv = q.get('extsv')
+        if extsv:
+            words = extsv.split(' ')
+            for word in words:
+                query.append(not_(Actor.search.ilike('%{}%'.format(word))))
+
 
         labels = q.get('labels', [])
         if len(labels):
@@ -345,6 +362,11 @@ class SearchUtils:
         if status:
             query.append(Actor.status == status)
 
+        # review status
+        review_action = q.get('reviewAction', None)
+        if review_action:
+            query.append(Actor.review_action == review_action)
+
         # ---------- Extra fields -------------
 
         # Occupation
@@ -417,24 +439,19 @@ class SearchUtils:
     def incident_query(self, q):
         query = []
 
-        tsv = q.get('tsv', None)
-        if tsv and tsv != '':
-            search = '%' + tsv.replace(' ', '%') + '%'
-            query.append(
-                or_(
-                    Incident.tsv.op('@@')(db.func.plainto_tsquery(tsv)),
-                    Incident.title.ilike(search),
-                    Incident.description.ilike(search),
-                    Incident.comments.ilike(search)
-                )
-            )
+        tsv = q.get('tsv')
+        if tsv:
+            words = tsv.split(' ')
+            qsearch = [Incident.search.ilike('%{}%'.format(word)) for word in words]
+            query.extend(qsearch)
 
         # exclude  filter
-        extsv = q.get('extsv', None)
-        if extsv is not None and extsv != '':
-            search = '%' + extsv.replace(' ', '%') + '%'
-            query.append(not_(Incident.title.ilike('%' + search + '%')))
-            query.append(not_(Incident.description.ilike('%' + search + '%')))
+        extsv = q.get('extsv')
+        if extsv:
+            words = extsv.split(' ')
+            for word in words:
+                query.append(not_(Incident.search.ilike('%{}%'.format(word))))
+
 
         labels = q.get('labels', [])
         if len(labels):
@@ -535,5 +552,10 @@ class SearchUtils:
         status = q.get('status', None)
         if status:
             query.append(Incident.status == status)
+
+        # review status
+        review_action = q.get('reviewAction', None)
+        if review_action:
+            query.append(Incident.review_action == review_action)
 
         return query

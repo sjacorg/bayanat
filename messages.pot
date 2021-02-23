@@ -1,0 +1,1155 @@
+# Translations template for PROJECT.
+# Copyright (C) 2020 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2020-12-08 16:23+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.7.0\n"
+
+#: enferno/admin/templates/nav-bar.html:44
+msgid "Account Settings"
+msgstr ""
+
+#: enferno/admin/templates/nav-bar.html:67
+msgid "Logout"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:45
+msgid "All Actors"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:47
+#: enferno/admin/templates/admin/bulletins.html:48
+#: enferno/admin/templates/admin/incidents.html:47
+msgid "Assigned to me"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:49
+#: enferno/admin/templates/admin/bulletins.html:52
+#: enferno/admin/templates/admin/incidents.html:49
+msgid "My Review List"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:63
+#: enferno/admin/templates/admin/bulletins.html:66
+#: enferno/admin/templates/admin/i18n.jinja2:31
+#: enferno/admin/templates/admin/incidents.html:66
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:35
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:52
+msgid "Search"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:72
+#: enferno/admin/templates/admin/i18n.jinja2:4
+msgid "New Actor"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:103
+#: enferno/admin/templates/admin/bulletins.html:121
+#: enferno/admin/templates/admin/incidents.html:115
+msgid "About"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:103
+#: enferno/admin/templates/admin/bulletins.html:121
+#: enferno/admin/templates/admin/incidents.html:115
+msgid "results"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:103
+#: enferno/admin/templates/admin/bulletins.html:121
+#: enferno/admin/templates/admin/incidents.html:115
+msgid "seconds"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:109
+#: enferno/admin/templates/admin/bulletins.html:132
+#: enferno/admin/templates/admin/incidents.html:120
+msgid "Selected items"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:361
+#: enferno/admin/templates/admin/bulletins.html:394
+#: enferno/admin/templates/admin/incidents.html:341
+msgid "Rows per page"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:365
+#: enferno/admin/templates/admin/bulletins.html:398
+#: enferno/admin/templates/admin/eventtypes.html:216
+#: enferno/admin/templates/admin/incidents.html:345
+#: enferno/admin/templates/admin/labels.html:276
+#: enferno/admin/templates/admin/locations.html:337
+#: enferno/admin/templates/admin/roles.html:185
+#: enferno/admin/templates/admin/users.html:192
+msgid "ID"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:366
+#: enferno/admin/templates/admin/partials/actor_dialog.html:48
+#: enferno/admin/templates/admin/roles.html:186
+#: enferno/admin/templates/admin/users.html:194
+msgid "Name"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:368
+#: enferno/admin/templates/admin/bulletins.html:401
+#: enferno/admin/templates/admin/incidents.html:348
+msgid "Assigned To"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:369
+#: enferno/admin/templates/admin/bulletins.html:402
+#: enferno/admin/templates/admin/incidents.html:349
+msgid "1st Reviewer"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:371
+#: enferno/admin/templates/admin/bulletins.html:404
+#: enferno/admin/templates/admin/incidents.html:351
+#: enferno/admin/templates/admin/partials/actor_dialog.html:882
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:585
+#: enferno/admin/templates/admin/partials/incident_dialog.html:481
+msgid "Status"
+msgstr ""
+
+#: enferno/admin/templates/admin/actors.html:372
+#: enferno/admin/templates/admin/bulletins.html:408
+#: enferno/admin/templates/admin/eventtypes.html:223
+#: enferno/admin/templates/admin/incidents.html:355
+#: enferno/admin/templates/admin/labels.html:286
+#: enferno/admin/templates/admin/locations.html:344
+#: enferno/admin/templates/admin/roles.html:188
+#: enferno/admin/templates/admin/sources.html:236
+#: enferno/admin/templates/admin/users.html:199
+msgid "Actions"
+msgstr ""
+
+#: enferno/admin/templates/admin/bulletins.html:44
+msgid "All Bulletins"
+msgstr ""
+
+#: enferno/admin/templates/admin/bulletins.html:79
+#: enferno/admin/templates/admin/i18n.jinja2:2
+msgid "New Bulletin"
+msgstr ""
+
+#: enferno/admin/templates/admin/bulletins.html:399
+#: enferno/admin/templates/admin/eventtypes.html:58
+#: enferno/admin/templates/admin/eventtypes.html:217
+#: enferno/admin/templates/admin/incidents.html:346
+#: enferno/admin/templates/admin/labels.html:57
+#: enferno/admin/templates/admin/labels.html:277
+#: enferno/admin/templates/admin/locations.html:60
+#: enferno/admin/templates/admin/locations.html:338
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:49
+#: enferno/admin/templates/admin/partials/event_dialog.html:70
+#: enferno/admin/templates/admin/partials/incident_dialog.html:48
+#: enferno/admin/templates/admin/sources.html:58
+#: enferno/admin/templates/admin/sources.html:229
+msgid "Title"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:30
+#: enferno/templates/nav-drawer.html:94
+msgid "Event Types"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:64
+#: enferno/admin/templates/admin/labels.html:63
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:56
+#: enferno/admin/templates/admin/partials/event_dialog.html:76
+msgid "Title (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:70
+#: enferno/admin/templates/admin/eventtypes.html:219
+msgid "For Actors"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:76
+#: enferno/admin/templates/admin/eventtypes.html:220
+msgid "For Bulletins"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:83
+#: enferno/admin/templates/admin/eventtypes.html:221
+#: enferno/admin/templates/admin/labels.html:71
+#: enferno/admin/templates/admin/labels.html:278
+#: enferno/admin/templates/admin/partials/actor_dialog.html:590
+#: enferno/admin/templates/admin/partials/actor_dialog.html:687
+#: enferno/admin/templates/admin/partials/actor_dialog.html:774
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:269
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:373
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:463
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:571
+#: enferno/admin/templates/admin/partials/event_dialog.html:97
+#: enferno/admin/templates/admin/partials/incident_dialog.html:231
+#: enferno/admin/templates/admin/partials/incident_dialog.html:333
+#: enferno/admin/templates/admin/partials/incident_dialog.html:422
+#: enferno/admin/templates/admin/partials/incident_dialog.html:468
+#: enferno/admin/templates/admin/sources.html:93
+#: enferno/admin/templates/admin/sources.html:232
+msgid "Comments"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:136
+#: enferno/admin/templates/admin/labels.html:191
+#: enferno/admin/templates/admin/locations.html:253
+#: enferno/admin/templates/admin/roles.html:104
+#: enferno/admin/templates/admin/sources.html:144
+msgid "Select CSV File"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:149
+#: enferno/admin/templates/admin/labels.html:154
+#: enferno/admin/templates/admin/locations.html:216
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:65
+#: enferno/admin/templates/admin/roles.html:117
+msgid "Cancel"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:218
+#: enferno/admin/templates/admin/locations.html:340
+msgid "Title (ar)"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:240
+#: enferno/admin/templates/admin/labels.html:42
+#: enferno/admin/templates/admin/labels.html:308
+#: enferno/admin/templates/admin/locations.html:44
+#: enferno/admin/templates/admin/locations.html:370
+#: enferno/admin/templates/admin/sources.html:43
+#: enferno/admin/templates/admin/sources.html:257
+#: enferno/admin/templates/admin/users.html:217
+msgid "New Item"
+msgstr ""
+
+#: enferno/admin/templates/admin/eventtypes.html:240
+#: enferno/admin/templates/admin/labels.html:308
+#: enferno/admin/templates/admin/locations.html:370
+#: enferno/admin/templates/admin/sources.html:257
+#: enferno/admin/templates/admin/users.html:217
+msgid "Edit Item"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:3
+msgid "Edit Bulletin"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:5
+msgid "Edit Actor"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:7
+msgid "Query"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:8
+msgid "contains"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:9
+msgid "Does not contain"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:10
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:110
+msgid "Ref"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:11
+msgid "Publish date"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:12
+msgid "Documentation date"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:13
+msgid "Event date"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:14
+msgid "Within"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:15
+msgid "Assigned user"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:16
+msgid "Unassigned"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:17
+msgid "reviewer"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:18
+msgid "Workflow Status"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:19
+msgid "Include sources"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:20
+msgid "Exclude sources (All)"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:21
+msgid "Any"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:22
+msgid "Include labels"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:23
+msgid "Exclude labels (All)"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:24
+msgid "Include verified labels"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:25
+msgid "Exclude verified labels (All)"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:26
+msgid "Include locations"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:27
+msgid "Exclude locations (All)"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:28
+msgid "Include event locations"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:29
+msgid "Event type"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:30
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:33
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:50
+msgid "Clear Search"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:32
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:34
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:51
+msgid "Save Search"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:33
+msgid "Refine/Extend Search"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:34
+msgid "Load existing search"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:35
+#: enferno/admin/templates/admin/i18n.jinja2:36
+#: enferno/admin/templates/admin/partials/actor_dialog.html:370
+msgid "Occupation"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:37
+#: enferno/admin/templates/admin/partials/actor_dialog.html:398
+msgid "Position"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:38
+msgid "Spoken dialects"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:39
+#: enferno/admin/templates/admin/partials/actor_dialog.html:454
+msgid "Family Status"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:40
+#: enferno/admin/templates/admin/partials/actor_dialog.html:279
+msgid "Sex"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:41
+#: enferno/admin/templates/admin/partials/actor_dialog.html:287
+msgid "Minor/Adult"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:42
+#: enferno/admin/templates/admin/partials/actor_dialog.html:295
+msgid "Civilian/Non Civilian"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:43
+#: enferno/admin/templates/admin/partials/actor_dialog.html:303
+msgid "Actor Type"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:44
+msgid "Ethnography"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:45
+#: enferno/admin/templates/admin/partials/actor_dialog.html:495
+msgid "Nationality"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:46
+msgid "Place of birth"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:47
+msgid "Date of birth"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:48
+#: enferno/admin/templates/admin/partials/actor_dialog.html:501
+msgid "National ID Card"
+msgstr ""
+
+#: enferno/admin/templates/admin/incidents.html:45
+msgid "All Incidents"
+msgstr ""
+
+#: enferno/admin/templates/admin/incidents.html:77
+#: enferno/admin/templates/admin/incidents.html:416
+msgid "New Incident"
+msgstr ""
+
+#: enferno/admin/templates/admin/incidents.html:416
+msgid "Edit Incident"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:30
+#: enferno/admin/templates/admin/partials/actor_dialog.html:247
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:165
+#: enferno/admin/templates/admin/partials/incident_dialog.html:130
+#: enferno/templates/nav-drawer.html:82
+msgid "Labels"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:77
+#: enferno/admin/templates/admin/partials/event_dialog.html:103
+msgid "Comments (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:85
+#: enferno/admin/templates/admin/labels.html:89
+#: enferno/admin/templates/admin/labels.html:279
+#: enferno/admin/templates/admin/locations.html:100
+#: enferno/admin/templates/admin/sources.html:65
+#: enferno/admin/templates/admin/sources.html:68
+#: enferno/admin/templates/admin/sources.html:233
+msgid "Parent"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:108
+#: enferno/admin/templates/admin/labels.html:280
+msgid "Verified"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:115
+#: enferno/admin/templates/admin/labels.html:281
+msgid "Bulletin"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:123
+#: enferno/admin/templates/admin/labels.html:282
+msgid "Actor"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:131
+#: enferno/admin/templates/admin/labels.html:283
+msgid "Incident"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:139
+#: enferno/admin/templates/admin/labels.html:284
+msgid "Offline"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:160
+#: enferno/admin/templates/admin/locations.html:222
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:66
+#: enferno/admin/templates/admin/partials/event_dialog.html:168
+#: enferno/admin/templates/admin/roles.html:123
+#: enferno/admin/templates/admin/users.html:142
+msgid "Save"
+msgstr ""
+
+#: enferno/admin/templates/admin/labels.html:177
+#: enferno/admin/templates/admin/labels.html:184
+#: enferno/admin/templates/admin/locations.html:239
+#: enferno/admin/templates/admin/locations.html:246
+#: enferno/admin/templates/admin/sources.html:130
+#: enferno/admin/templates/admin/sources.html:137
+msgid "Import CSV"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:31
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:150
+#: enferno/admin/templates/admin/partials/incident_dialog.html:141
+#: enferno/templates/nav-drawer.html:54
+msgid "Locations"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:66
+msgid "Title (Ar)"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:74
+#: enferno/admin/templates/admin/locations.html:341
+msgid "Full Location"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:84
+msgid "Latitude"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:91
+msgid "Longitude"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:128
+msgid "Parent (G)"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:148
+msgid "Parent (D)"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:170
+msgid "Parent (S)"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:190
+msgid "Parent (C)"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:339
+msgid "Location Type"
+msgstr ""
+
+#: enferno/admin/templates/admin/roles.html:30
+msgid "Role Groups"
+msgstr ""
+
+#: enferno/admin/templates/admin/roles.html:40
+#: enferno/admin/templates/admin/roles.html:205
+msgid "New Group"
+msgstr ""
+
+#: enferno/admin/templates/admin/roles.html:56
+msgid "Group Name"
+msgstr ""
+
+#: enferno/admin/templates/admin/roles.html:205
+msgid "Edit Group"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:233
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:126
+#: enferno/admin/templates/admin/sources.html:30
+#: enferno/templates/nav-drawer.html:68
+msgid "Sources"
+msgstr ""
+
+#: enferno/admin/templates/admin/sources.html:81
+#: enferno/admin/templates/admin/sources.html:230
+msgid "ETL ID"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:31
+msgid "System Users"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:37
+msgid "New User"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:48
+msgid "Edit"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:77
+msgid "Full Name"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:88
+#: enferno/admin/templates/admin/users.html:193
+msgid "Email"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:112
+#: enferno/admin/templates/admin/users.html:196
+msgid "Roles"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:119
+msgid "Active"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:125
+msgid "Can view usernames"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:129
+msgid "Can view simple history"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:133
+msgid "Can view Full History"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:167
+#: enferno/admin/templates/admin/users.html:141
+msgid "Close"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:195
+msgid "Google ID"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:55
+#: enferno/admin/templates/admin/partials/incident_dialog.html:55
+msgid "Name (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:76
+msgid "Nickname"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:82
+msgid "Nickname (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:105
+msgid "First Name"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:111
+msgid "First Name (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:134
+msgid "Middle/Father's Name"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:140
+msgid "Middle/Father's Name (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:163
+msgid "Last Name"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:169
+msgid "Last Name (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:190
+msgid "Mother's Name"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:196
+msgid "Mother's Name (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:262
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:180
+msgid "Verified Labels"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:328
+msgid "Place of Birth"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:341
+msgid "Place of Residence"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:376
+msgid "Occupation (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:404
+msgid "Position (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:427
+msgid "Spoken Dialects"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:433
+msgid "Spoken Dialects (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:460
+msgid "Family Status (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:485
+msgid "Ethnographic Information"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:530
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:307
+msgid "Related Actors"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:536
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:313
+#: enferno/admin/templates/admin/partials/incident_dialog.html:179
+msgid "Search & Relate Actors"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:565
+#: enferno/admin/templates/admin/partials/actor_dialog.html:663
+#: enferno/admin/templates/admin/partials/actor_dialog.html:760
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:240
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:344
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:448
+msgid "Probability"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:576
+#: enferno/admin/templates/admin/partials/actor_dialog.html:674
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:251
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:355
+msgid "Related As"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:626
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:203
+msgid "Related Bulletins"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:632
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:209
+#: enferno/admin/templates/admin/partials/incident_dialog.html:274
+msgid "Search & Relate Bulletins"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:658
+#: enferno/admin/templates/admin/partials/actor_dialog.html:755
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:338
+msgid "Relationship Information"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:724
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:411
+msgid "Related Incidents"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:730
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:417
+#: enferno/admin/templates/admin/partials/incident_dialog.html:377
+msgid "Search & Relate Incidents"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:832
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:525
+msgid "Source Link"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:61
+msgid "Name this search"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:81
+msgid "SJAC Title"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:87
+msgid "Sjac Title (AR)"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:530
+msgid "Not Available"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:533
+msgid "Private"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:543
+msgid "Publish Date"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:543
+msgid "Time"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:551
+msgid "Documentation Date"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:6
+msgid "Events"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:60
+msgid "Event"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:128
+msgid "Location"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:142
+msgid "Event Type"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:151
+msgid "From"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:154
+msgid "To"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:158
+msgid "Estimated Time"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:20
+msgid "Save Incident"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:97
+msgid "Potential violation categories"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:111
+msgid "Claimed Violations Categories"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/media_dialog.html:6
+msgid "Media"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/media_dialog.html:12
+msgid "Search & Relate Media"
+msgstr ""
+
+#: enferno/templates/dashboard.html:21
+#: enferno/templates/security/email/two_factor_instructions.html:1
+#: enferno/templates/security/email/us_instructions.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/two_factor_instructions.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/us_instructions.html:1
+msgid "Welcome"
+msgstr ""
+
+#: enferno/templates/dashboard.html:28
+msgid "Last login"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:16
+msgid "Bulletins"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:28
+msgid "Actors"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:40
+msgid "Incidents"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:109
+msgid "Activity"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:123
+msgid "Users Management"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:136
+msgid "Groups & Permissions"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:147 enferno/templates/settings.html:18
+msgid "Settings"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:163
+msgid "Feedback"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:174
+msgid "Report a Bug"
+msgstr ""
+
+#: enferno/templates/settings.html:23
+msgid "User Interface"
+msgstr ""
+
+#: enferno/templates/settings.html:25
+msgid "Dark Mode"
+msgstr ""
+
+#: enferno/templates/settings.html:30
+msgid "Profile Settings"
+msgstr ""
+
+#: enferno/templates/settings.html:32
+msgid "Change Password"
+msgstr ""
+
+#: enferno/templates/settings.html:38
+msgid "Security"
+msgstr ""
+
+#: enferno/templates/settings.html:40
+msgid "Setup Two-Factor Auth"
+msgstr ""
+
+#: enferno/templates/security/two_factor_setup.html:24
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_setup.html:6
+msgid "Two-factor authentication adds an extra layer of security to your account"
+msgstr ""
+
+#: enferno/templates/security/two_factor_setup.html:27
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_setup.html:7
+msgid ""
+"In addition to your username and password, you'll need to use a code that"
+" we will send you"
+msgstr ""
+
+#: enferno/templates/security/two_factor_setup.html:46
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_setup.html:18
+msgid "To complete logging in, please enter the code sent to your mail"
+msgstr ""
+
+#: enferno/templates/security/two_factor_setup.html:49
+#: enferno/templates/security/us_setup.html:28
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_setup.html:21
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_setup.html:28
+msgid ""
+"Open your authenticator app on your device and scan the following qrcode "
+"to start receiving codes:"
+msgstr ""
+
+#: enferno/templates/security/two_factor_setup.html:50
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_setup.html:22
+msgid "Two factor authentication code"
+msgstr ""
+
+#: enferno/templates/security/two_factor_setup.html:53
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_setup.html:25
+msgid "To Which Phone Number Should We Send Code To?"
+msgstr ""
+
+#: enferno/templates/security/two_factor_verify_code.html:6
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_verify_code.html:6
+msgid "Two-factor Authentication"
+msgstr ""
+
+#: enferno/templates/security/two_factor_verify_code.html:7
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_verify_code.html:7
+msgid "Please enter your authentication code"
+msgstr ""
+
+#: enferno/templates/security/two_factor_verify_code.html:20
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_verify_code.html:18
+msgid "The code for authentication was sent to your email address"
+msgstr ""
+
+#: enferno/templates/security/two_factor_verify_code.html:23
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_verify_code.html:21
+msgid "A mail was sent to us in order to reset your application account"
+msgstr ""
+
+#: enferno/templates/security/two_factor_verify_password.html:7
+#: enferno/templates/security/verify.html:12
+#: env/lib/python3.8/site-packages/flask_security/templates/security/two_factor_verify_password.html:6
+#: env/lib/python3.8/site-packages/flask_security/templates/security/verify.html:6
+msgid "Please Enter Your Password"
+msgstr ""
+
+#: enferno/templates/security/us_setup.html:6
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_setup.html:6
+msgid "Setup Unified Sign In options"
+msgstr ""
+
+#: enferno/templates/security/us_setup.html:29
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_setup.html:29
+msgid "Passwordless QRCode"
+msgstr ""
+
+#: enferno/templates/security/us_setup.html:32
+#: enferno/templates/security/us_signin.html:23
+#: enferno/templates/security/us_verify.html:22
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_setup.html:32
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_signin.html:23
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_verify.html:21
+msgid "Code has been sent"
+msgstr ""
+
+#: enferno/templates/security/us_setup.html:36
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_setup.html:36
+msgid "No methods have been enabled - nothing to setup"
+msgstr ""
+
+#: enferno/templates/security/email/us_instructions.html:8
+#: enferno/templates/security/us_signin.html:6
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/us_instructions.html:8
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_signin.html:6
+msgid "Sign In"
+msgstr ""
+
+#: enferno/templates/security/us_signin.html:15
+#: enferno/templates/security/us_verify.html:14
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_signin.html:15
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_verify.html:13
+msgid "Request one-time code be sent"
+msgstr ""
+
+#: enferno/templates/security/us_verify.html:7
+#: env/lib/python3.8/site-packages/flask_security/templates/security/us_verify.html:6
+msgid "Please re-authenticate"
+msgstr ""
+
+#: enferno/templates/security/email/change_notice.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/change_notice.html:1
+msgid "Your password has been changed."
+msgstr ""
+
+#: enferno/templates/security/email/change_notice.html:3
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/change_notice.html:3
+msgid "If you did not change your password,"
+msgstr ""
+
+#: enferno/templates/security/email/change_notice.html:3
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/change_notice.html:3
+msgid "click here to reset it"
+msgstr ""
+
+#: enferno/templates/security/email/confirmation_instructions.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/confirmation_instructions.html:1
+msgid "Please confirm your email through the link below:"
+msgstr ""
+
+#: enferno/templates/security/email/confirmation_instructions.html:3
+#: enferno/templates/security/email/welcome.html:6
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/confirmation_instructions.html:3
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/welcome.html:6
+msgid "Confirm my account"
+msgstr ""
+
+#: enferno/templates/security/email/login_instructions.html:1
+#: enferno/templates/security/email/welcome.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/login_instructions.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/welcome.html:1
+#, python-format
+msgid "Welcome %(email)s!"
+msgstr ""
+
+#: enferno/templates/security/email/login_instructions.html:3
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/login_instructions.html:3
+msgid "You can log into your account through the link below:"
+msgstr ""
+
+#: enferno/templates/security/email/login_instructions.html:5
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/login_instructions.html:5
+msgid "Login now"
+msgstr ""
+
+#: enferno/templates/security/email/reset_instructions.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/reset_instructions.html:1
+msgid "Click here to reset your password"
+msgstr ""
+
+#: enferno/templates/security/email/reset_notice.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/reset_notice.html:1
+msgid "Your password has been reset"
+msgstr ""
+
+#: enferno/templates/security/email/two_factor_instructions.html:3
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/two_factor_instructions.html:3
+msgid "You can log into your account using the following code:"
+msgstr ""
+
+#: enferno/templates/security/email/two_factor_rescue.html:1
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/two_factor_rescue.html:1
+msgid "can not access mail account"
+msgstr ""
+
+#: enferno/templates/security/email/us_instructions.html:3
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/us_instructions.html:3
+msgid "You can sign into your account using the following code:"
+msgstr ""
+
+#: enferno/templates/security/email/us_instructions.html:6
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/us_instructions.html:6
+msgid "Or use the the link below:"
+msgstr ""
+
+#: enferno/templates/security/email/welcome.html:4
+#: env/lib/python3.8/site-packages/flask_security/templates/security/email/welcome.html:4
+msgid "You can confirm your email through the link below:"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/_menu.html:2
+msgid "Menu"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/_menu.html:5
+#: env/lib/python3.8/site-packages/flask_security/templates/security/login_user.html:6
+#: env/lib/python3.8/site-packages/flask_security/templates/security/send_login.html:6
+msgid "Login"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/_menu.html:8
+msgid "Unified Sign In"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/_menu.html:11
+#: env/lib/python3.8/site-packages/flask_security/templates/security/register_user.html:6
+msgid "Register"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/_menu.html:14
+msgid "Forgot password"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/_menu.html:17
+msgid "Confirm account"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/change_password.html:6
+msgid "Change password"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/forgot_password.html:6
+msgid "Send password reset instructions"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/reset_password.html:6
+msgid "Reset password"
+msgstr ""
+
+#: env/lib/python3.8/site-packages/flask_security/templates/security/send_confirmation.html:6
+msgid "Resend confirmation instructions"
+msgstr ""
+
