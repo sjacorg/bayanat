@@ -1,43 +1,45 @@
 Vue.component("media-card", {
-  props: {
-      media: {}, 
-  },
-  data: function() {
-    return {
-      s3url : '', 
-    };
-  },
-  mounted(){
-    this.init()
-  },
-
-
-
-  methods: {
-    init (){
-      axios.get(`/admin/api/media/${this.media.filename}`).then(response => {
-      console.log('media path set', response.data)
-        this.s3url = response.data;
-        this.media.s3url = response.data;
-
-  });
+    props: {
+        media: {},
+    },
+    data: function () {
+        return {
+            s3url: '',
+        };
+    },
+    mounted() {
+        this.init()
     },
 
-    
-   
-    mediaType(mediaItem) {
-      if (['image/jpeg','image/png','image/gif'].includes(mediaItem.fileType)) {
-        return 'image'
-      }
-      else if (['video/webm','video/mp4'].includes(mediaItem.fileType)){
-      return 'video'
-      }
-      else {
-        return 'unknown'
-      }
+
+    methods: {
+        init() {
+            axios.get(`/admin/api/media/${this.media.filename}`).then(response => {
+                console.log('media path set', response.data)
+                this.s3url = response.data;
+                this.media.s3url = response.data;
+
+            });
+        },
+
+
+        mediaType(mediaItem) {
+            if (['image/jpeg', 'image/png', 'image/gif'].includes(mediaItem.fileType)) {
+                return 'image'
+            } else if (['video/webm', 'video/mp4'].includes(mediaItem.fileType)) {
+                return 'video'
+            } else if (['application/pdf'].includes(mediaItem.fileType)) {
+                return 'pdf'
+
+            } else {
+
+                return 'unknown'
+            }
+        },
+
+
     },
-  },
-  template: `
+    template: `
 
   
      <!--  Image Media Card -->
@@ -85,6 +87,29 @@ Vue.component("media-card", {
       >
         <v-icon size="52" color="#666">mdi-play-circle-outline</v-icon>
       </v-avatar>
+      <div class="caption pa-2">
+        {{media.title}}  
+      </div>
+      
+      <v-chip x-small label class="caption pa-1 " color="yellow lighten-5 grey--text" >
+        {{media.etag}}
+      </v-chip>
+      <v-card-text class="pa-2 d-flex"> 
+        <slot name="actions"></slot>
+      </v-card-text>
+    </v-card>
+    
+    
+     <v-card :disabled="!s3url"  class="media-card" v-else-if="mediaType(media) == 'pdf'">
+      
+        <form method="post" target="_blank" action="/admin/api/media/pdf">
+        <v-btn type="submit" class="mt-2" text><v-icon left  color="red" size="32">mdi-file-pdf-box</v-icon> PDF</v-btn>
+        <input type="hidden" name="url" :value="s3url">
+        </form>
+
+        
+        
+      
       <div class="caption pa-2">
         {{media.title}}  
       </div>

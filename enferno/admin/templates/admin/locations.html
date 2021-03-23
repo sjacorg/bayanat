@@ -3,7 +3,7 @@
 <div id="app">
   <v-app id="locations" v-cloak>
     {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-    <v-content>
+    <v-main>
       <v-container fluid fill-height>
         <v-layout align-top justify-center>
           <v-container grid-list-sm>
@@ -93,9 +93,9 @@
                                     </v-col>
                                     <v-col cols="12" md="6">
                                       <v-combobox
-                                              no-filter
-                                              auto-select-first
-                                              prepend-inner-icon="mdi-magnify"
+                                            no-filter
+                                            auto-select-first
+                                             prepend-inner-icon="mdi-magnify"
                                             hide-no-data
                                             label="{{_('Parent')}}"
                                             v-model="editedItem.parent"
@@ -107,14 +107,20 @@
                                             :clearable="true"
                                             @input.native="searchParents"
                                               @focus="searchParents"
-
                                           >
-
-
-
                                       </v-combobox>
                                     </v-col>
                                   </v-row>
+
+                                      <v-row>
+                                          <v-col cols="12" md="5">
+
+                                              <v-text-field label="Location type" v-model="editedItem.loc_type"></v-text-field>
+                                          </v-col>
+                                          <v-col md="5" class="offset-md-1">
+                                                    <v-text-field readonly label="Location type Name" v-model="editedItem.loc_type_name"></v-text-field>
+                                          </v-col>
+                                      </v-row>
 
                                     <v-row>
 
@@ -146,7 +152,7 @@
                                               prepend-inner-icon="mdi-magnify"
                                             hide-no-data
                                             label="{{_('Parent (D)')}}"
-                                            v-model="editedItem.parent_d_id"
+                                            v-model="editedItem.parent_d"
                                             :items="parentList"
                                             item-text="full_string"
                                             item-value="id"
@@ -168,7 +174,7 @@
                                               prepend-inner-icon="mdi-magnify"
                                             hide-no-data
                                             label="{{_('Parent (S)')}}"
-                                            v-model="editedItem.parent_s_id"
+                                            v-model="editedItem.parent_s"
                                             :items="parentList"
                                             item-text="full_string"
                                             item-value="id"
@@ -188,7 +194,7 @@
                                               prepend-inner-icon="mdi-magnify"
                                             hide-no-data
                                             label="{{_('Parent (C)')}}"
-                                            v-model="editedItem.parent_c_id"
+                                            v-model="editedItem.parent_c"
                                             :items="parentList"
                                             item-text="full_string"
                                             item-value="id"
@@ -303,7 +309,7 @@
           </v-container>
         </v-layout>
       </v-container>
-    </v-content>
+    </v-main>
       {% include 'footer.html' %}
   </v-app>
 </div>
@@ -314,7 +320,7 @@
 
   
     
-  new Vue({
+  let app = new Vue({
     el: "#app",
     vuetify: vuetify,
     delimiters: delimiters,
@@ -382,6 +388,9 @@
         immdiate: true
       }
     },
+  mounted() {
+
+  },
 
     methods: {
       preprocess(items){
@@ -395,11 +404,14 @@
 
       refresh(options) {
         //console.log(options);
-        axios.get(`/admin/api/locations/${options.page}`).then(response => {
-          this.loading = false;
+          this.loading = true;
+        axios.get(`/admin/api/locations/?page=${options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+
           
           this.itemsLength = response.data.total;
           this.items = this.preprocess(response.data.items);
+        }).finally(()=>{
+            this.loading = false;
         });
       },
 

@@ -41,7 +41,9 @@ class Source(db.Model, BaseMixin):
             self.comments = json["comments"]
         if "comments_ar" in json:
             self.comments = json["comments_ar"]
-        self.parent_id = json["parent"]["id"] if "parent" in json else None
+        parent = json.get('parent')
+        if parent:
+            self.parent_id = parent.get("id")
         return self
 
     # custom serialization method
@@ -497,7 +499,7 @@ class Location(db.Model, BaseMixin):
             "parent": {"id": self.parent.id, "title": self.parent.title, }
             if self.parent
             else None,
-            "full_string": '{} | {}'.format(self.full_location, self.title_ar),
+            "full_string": '{} | {}'.format(self.full_location or '', self.title_ar or ''),
         }
 
     # custom compact serialization method
@@ -511,9 +513,19 @@ class Location(db.Model, BaseMixin):
         return json.dumps(self.to_dict())
 
     # populate model from json dict
-    def from_json(self, json):
-        self.title = json["title"]
-        self.parent_location_id = json["parent"]["id"] if "parent" in json else None
+    def from_json(self, jsn):
+        self.title = jsn.get('title')
+        self.title_ar = jsn.get('title_ar')
+        self.loc_type = jsn.get('loc_type')
+        self.longitude = jsn.get('longitude')
+        self.latitude = jsn.get('latitude')
+        self.parent_g_id = jsn.get('parent_g').get('id') if jsn.get('parent_g') else None
+        self.parent_s_id = jsn.get('parent_s').get('id') if jsn.get('parent_s') else None
+        self.parent_d_id = jsn.get('parent_d').get('id') if jsn.get('parent_d') else None
+        self.parent_c_id = jsn.get('parent_c').get('id') if jsn.get('parent_c') else None
+        parent = jsn.get('parent')
+        if parent:
+            self.parent_location_id = parent.get('id')
 
         return self
 
@@ -772,7 +784,8 @@ class Atob(db.Model, BaseMixin):
     actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"), primary_key=True)
 
     # Relationship extra fields
-    related_as = db.Column(db.Integer)
+    # enabling multiple relationship types
+    related_as = db.Column(ARRAY(db.Integer))
     probability = db.Column(db.Integer)
     comment = db.Column(db.Text)
 
@@ -1192,11 +1205,11 @@ class Bulletin(db.Model, BaseMixin):
             for r in self.actor_relations:
                 # get related bulletin (in or out)
                 if not (r.actor_id in rel_ids):
-                    print("deleting", r)
+                    rel_actor = r.actor
                     r.delete()
 
                     # --revision relation
-                    r.actor.create_revision()
+                    rel_actor.create_revision()
 
         # Related Incidents (incidents_relations)
         if "incident_relations" in json:
@@ -1215,11 +1228,11 @@ class Bulletin(db.Model, BaseMixin):
             for r in self.incident_relations:
                 # get related bulletin (in or out)
                 if not (r.incident_id in rel_ids):
-                    print("deleting", r)
+                    rel_incident = r.incident
                     r.delete()
 
                     # --revision relation
-                    r.incident.create_revision()
+                    rel_incident.create_revision()
 
         self.publish_date = json.get('publish_date', None)
         if self.publish_date == '':
@@ -1879,10 +1892,11 @@ class Actor(db.Model, BaseMixin):
             for r in self.bulletin_relations:
                 if not (r.bulletin_id in rel_ids):
                     # print ('deleting', r)
+                    rel_bulletin = r.bulletin
                     r.delete()
 
                     # -revision related
-                    r.bulletin.create_revision()
+                    rel_bulletin.create_revision()
 
         # Related Incidents (incidents_relations)
         if "incident_relations" in json:
@@ -1901,11 +1915,11 @@ class Actor(db.Model, BaseMixin):
             for r in self.incident_relations:
                 # get related bulletin (in or out)
                 if not (r.incident_id in rel_ids):
-                    print("deleting", r)
+                    rel_incident = r.incident
                     r.delete()
 
                     # -revision related incident
-                    r.incident.create_revision()
+                    rel_incident.create_revision()
 
         if "comments" in json:
             self.comments = json["comments"]
@@ -2695,11 +2709,14 @@ class Incident(db.Model, BaseMixin):
 
             for r in self.actor_relations:
                 if not (r.actor_id in rel_ids):
+                    rel_actor = r.actor
                     # print ('deleting', r)
                     r.delete()
 
+
+
                     # -revision related actor
-                    r.actor.create_revision()
+                    rel_actor.create_revision()
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json:
@@ -2719,10 +2736,11 @@ class Incident(db.Model, BaseMixin):
             for r in self.bulletin_relations:
                 if not (r.bulletin_id in rel_ids):
                     # print ('deleting', r)
+                    rel_bulletin = r.bulletin
                     r.delete()
 
                     # -revision related bulletin
-                    r.bulletin.create_revision()
+                    rel_bulletin.create_revision()
 
         # Related Incidnets (incident_relations)
         if "incident_relations" in json:

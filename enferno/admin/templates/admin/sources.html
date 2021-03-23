@@ -273,7 +273,7 @@
     methods: {
       refresh(options) {
         
-        axios.get(`/admin/api/sources/${options.page}`).then(response => {
+        axios.get(`/admin/api/sources/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
           this.loading = false;
           
           this.itemsLength = response.data.total;

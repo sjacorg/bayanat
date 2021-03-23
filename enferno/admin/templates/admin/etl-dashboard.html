@@ -1,0 +1,310 @@
+{% extends 'layout.html' %} {% block content %}
+
+    <div id="app">
+        <v-app v-cloak>
+            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+            <v-main class="align-start ma-3">
+                <v-container fluid fill-height>
+                    <v-row>
+                        <v-col cols="12">
+                            <v-card>
+                                <v-card-title>
+                                    <div class="flex-grow-1"></div>
+                                </v-card-title>
+
+                                <v-card-text>
+                                    <v-data-table
+                                            :headers="headers"
+                                            :items="items"
+                                            :options.sync="options"
+                                            :footer-props.sync="footerProps"
+                                            :loading="loading"
+                                            class="elevation-1"
+                                            show-select
+                                            v-model="selectedItems"
+
+                                            hide-default-footer
+                                    >
+                                        <template v-slot:top="{item}">
+                                            <v-toolbar flat color="white">
+                                                <v-toolbar-title>Data Import Dashboard</v-toolbar-title>
+
+                                                <v-divider class="mx-4" inset vertical></v-divider>
+
+
+                                                <input id="dirSelector" type="file" name="Select Folder" class="d-none"
+                                                       @change="getFiles" webkitdirectory directory multiple/>
+
+                                            </v-toolbar>
+
+                                            <v-toolbar color="grey lighten-4" flat>
+
+                                                <v-btn class="mx-2" @click="pickFolder" color="success"
+                                                >
+                                                    <v-icon left>mdi-folder-open</v-icon>
+                                                    Open a Folder
+                                                </v-btn>
+
+                                                <v-btn class="mx-2" @click="processFiles" :disabled="!selectedItems.length"
+                                                       :dark="selectedItems.length?true:false" color="green" elevation="1">
+                                                    <v-icon left color="white">mdi-play-circle</v-icon>
+                                                    Process
+                                                </v-btn>
+
+
+                                            </v-toolbar>
+                                            <v-card class="pa-3" color="yellow lighten-4">
+                                                <v-card-title>
+                                                    Attach data to files
+                                                </v-card-title>
+
+                                                <v-card-text>
+
+                                                    <v-row>
+                                                        <v-col cols="12" md="6">
+                                                            <search-field
+                                                                    api="/admin/api/labels/"
+                                                                    item-text="title"
+                                                                    item-value="id"
+                                                                    :multiple="true"
+                                                                    label="Labels"
+                                                                    v-model="labels"
+                                                            ></search-field>
+                                                        </v-col>
+
+                                                        <v-col cols="12" md="6">
+                                                            <search-field
+                                                                    api="/admin/api/locations/"
+                                                                    item-text="full_string"
+                                                                    item-value="id"
+                                                                    :multiple="true"
+                                                                    label="Locations"
+                                                                    v-model="locations"
+                                                            ></search-field>
+                                                        </v-col>
+                                                    </v-row>
+                                                    <v-row>
+                                                         <v-col cols="12" md="6">
+                                                           <search-field
+                                                                    api="/admin/api/sources/"
+                                                                    item-text="title"
+                                                                    item-value="id"
+                                                                    :multiple="true"
+                                                                    label="Sources"
+                                                                    v-model="sources"
+                                                            ></search-field>
+
+                                                        </v-col>
+
+                                                        <v-col cols="12" md="6">
+                                                            <v-combobox
+                                                                    small-chips
+                                                                    multiple
+                                                                    label="Refs"
+                                                                    v-model="refs"
+
+                                                            ></v-combobox>
+
+                                                        </v-col>
+                                                    </v-row>
+
+
+                                                </v-card-text>
+
+                                            </v-card>
+                                        </template>
+
+                                        <template v-slot:item.progress="{item}">
+                                            <v-progress-linear :indeterminate="item.loading" color="green"
+                                                               v-model="item.progress"></v-progress-linear>
+
+
+                                        </template>
+
+
+                                        <template v-slot:no-data=""></template>
+                                    </v-data-table>
+
+
+                                    <v-snackbar v-model="snackbar" class="">
+                                        <div class="d-flex justify-space-between align-center">
+                                        ${snackMessage}
+
+                                        <v-btn icon fab small color="white" text @click="snackbar = false">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                            </div>
+                                    </v-snackbar>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-main>
+            {% include 'footer.html' %}
+        </v-app>
+    </div>
+
+{% endblock %} {% block js %}
+    <script>
+
+        const app = new Vue({
+            el: "#app",
+            vuetify: vuetify,
+            delimiters: delimiters,
+            data: () => ({
+                drawer: drawer,
+                sideNav: sideNav,
+                snackbar: false,
+                snackMessage: '',
+                loading: false,
+                options: {
+                    page: 1,
+                    itemsPerPage: 100
+                },
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
+
+                headers: [
+                    {text: 'Name', value: 'name', sortable: false},
+                    {text: 'Size', value: 'size', sortable: false},
+                    {text: 'Progress', value: 'progress', sortable: false},
+
+
+                ],
+                //etl additional tags
+                labels : [],
+                sources: [],
+                locations:[],
+                refs: [],
+                files: [],
+                items: [],
+                selectedItems: [],
+                itemsLength: 100,
+                editedIndex: -1,
+                roles: [],
+                editedItem: {
+                    title: ""
+                },
+                defaultItem: {
+                    title: "",
+                    active: false
+                }
+            }),
+
+            computed: {},
+
+
+            watch: {
+
+
+                options: {
+                    handler: "refresh",
+                    immdiate: true
+                }
+            },
+
+            methods: {
+                showSnack(message){
+                this.snackbar = true;
+                this.snackMessage = message
+                },
+                refresh() {
+
+                },
+
+                validFile(filename) {
+                    if (
+                        //images
+                        filename.toLowerCase().endsWith('.jpg') ||
+                        filename.toLowerCase().endsWith('.jpeg') ||
+                        filename.toLowerCase().endsWith('.png') ||
+                        filename.toLowerCase().endsWith('.gif') ||
+                        //videos
+                        filename.toLowerCase().endsWith('.mp4') ||
+                        filename.toLowerCase().endsWith('.mov') ||
+                        filename.toLowerCase().endsWith('.mkv') ||
+                        //documents
+                        filename.toLowerCase().endsWith('.doc') ||
+                        filename.toLowerCase().endsWith('.pdf') ||
+                        filename.toLowerCase().endsWith('.txt') ||
+                        filename.toLowerCase().endsWith('.docx') ||
+                        filename.toLowerCase().endsWith('.ttf')
+                    ) {
+                        return true;
+                    }
+                    return false
+
+                },
+                processFiles() {
+
+
+                    // batch send the data
+                    for (const [i, file] of this.selectedItems.entries()) {
+                        let self = this;
+                        let formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('labels', JSON.stringify(this.labels));
+                        formData.append('sources', JSON.stringify(this.sources));
+                        formData.append('locations', JSON.stringify(this.locations));
+                        formData.append('refs', JSON.stringify(this.refs));
+
+                        this.items.splice(i, 1, file);
+                        file.loading = true;
+                        axios.post('/admin/etl/process', formData, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'multipart/form-data'
+                            },
+                            onUploadProgress: function (progressEvent) {
+                                let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                                file.progress = percentCompleted;
+                                self.items.splice(i, 1, file);
+
+
+                            }
+
+                        }).then(response => {
+
+
+                        }).catch(error => {
+                            this.showSnack(error.response.data)
+
+                        }).finally(() => {
+                            file.loading = false;
+                            self.items.splice(i, 1, file);
+                        })
+
+
+                    }
+
+
+                },
+
+                getFiles(event) {
+                    let files = Array.from(event.target.files);
+
+                    files = files.filter(x => this.validFile(x.name));
+
+                    // attach virtual sequential ids, fixes the single-select bug
+
+                    for (i=1; i< files.length; i++){
+                        files[i].id = i;
+                    }
+                    this.items = files;
+
+                },
+
+                pickFolder() {
+
+                    this.$el.querySelector('#dirSelector').click();
+
+                }
+
+
+            }
+        });
+    </script>
+{% endblock %}

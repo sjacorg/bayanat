@@ -194,7 +194,7 @@ def load_settings():
 def change_password():
     """API Endpoint to handle user password change"""
     if request.method == 'POST':
-        user = User.query.get(session.get('user_id'))
+        user = User.query.get(current_user.id)
         oldpass = request.form.get("oldpass")
         if not verify_password(oldpass, user.password):
             flash('Wrong password entered.')
@@ -204,6 +204,7 @@ def change_password():
                 user.password = hash_password(password)
                 user.save()
                 flash('Password changed successfully. ')
+                return redirect('/dashboard')
     return render_template('change-password.html')
 
 

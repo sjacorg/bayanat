@@ -15,6 +15,8 @@ from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update
 from enferno.user.models import User, Role
 from enferno.utils.search_utils import SearchUtils
 from enferno.extensions import cache
+from enferno.utils.data_import import DataImport
+
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
                   template_folder=os.path.join(root, 'templates'),
@@ -105,9 +107,9 @@ def labels():
     return render_template('admin/labels.html')
 
 
-@admin.route('/api/labels/', defaults={'page': 1})
-@admin.route('/api/labels/<int:page>/')
-def api_labels(page):
+
+@admin.route('/api/labels/')
+def api_labels():
     """
     API endpoint feed and filter labels with paging
     :param page: db query offset
@@ -139,11 +141,14 @@ def api_labels(page):
         query.append(
             Label.verified == False
         )
+
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
     result = Label.query.filter(
         *query).order_by(Label.id).paginate(
-        page, PER_PAGE, True)
+        page, per_page, True)
 
-    response = {'items': [item.to_dict(request.args.get('mode', 1)) for item in result.items], 'perPage': PER_PAGE,
+    response = {'items': [item.to_dict(request.args.get('mode', 1)) for item in result.items], 'perPage': per_page,
                 'total': result.total}
     return Response(json.dumps(response),
                     content_type='application/json')
@@ -228,9 +233,8 @@ def eventtypes():
     return render_template('admin/eventtypes.html')
 
 
-@admin.route('/api/eventtypes/', defaults={'page': 1})
-@admin.route('/api/eventtypes/<int:page>/')
-def api_eventtypes(page):
+@admin.route('/api/eventtypes/')
+def api_eventtypes():
     """
     API endpoint to serve json feed of even types with paging support
     :param page: db query offset
@@ -238,6 +242,9 @@ def api_eventtypes(page):
     """
     query = []
     q = request.args.get('q', None)
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
     if q is not None:
         query.append(Eventtype.title.ilike('%' + q + '%'))
 
@@ -248,8 +255,8 @@ def api_eventtypes(page):
         )
     result = Eventtype.query.filter(
         *query).order_by(Eventtype.id).paginate(
-        page, PER_PAGE, True)
-    response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
+        page, per_page, True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
                     content_type='application/json')
 
@@ -504,9 +511,8 @@ def sources():
     return render_template('admin/sources.html')
 
 
-@admin.route('/api/sources/', defaults={'page': 1})
-@admin.route('/api/sources/<int:page>')
-def api_sources(page):
+@admin.route('/api/sources/')
+def api_sources():
     """
     API Endpoint to feed json data of sources, supports paging and search
     :param page: db query offset
@@ -514,12 +520,15 @@ def api_sources(page):
     """
     query = []
     q = request.args.get('q', None)
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
     if q is not None:
         query.append(Source.title.ilike('%' + q + '%'))
     result = Source.query.filter(
         *query).order_by(-Source.id).paginate(
-        page, PER_PAGE, True)
-    response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
+        page, per_page, True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
                     content_type='application/json'), 200
 
@@ -598,12 +607,13 @@ def locations():
     return render_template('admin/locations.html')
 
 
-@admin.route('/api/locations/', defaults={'page': 1})
-@admin.route('/api/locations/<int:page>')
-def api_locations(page):
+
+@admin.route('/api/locations/')
+def api_locations():
     """Returns locations in JSON format, allows search and paging."""
     query = []
     q = request.args.get('q', None)
+    page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
     typ = request.args.get('typ', None)
     if q is not None:
@@ -640,6 +650,7 @@ def api_location_create():
     if request.method == 'POST':
         location = Location()
         created = location.from_json(request.json['item'])
+        created.full_location = created.get_full_string()
         if created.save():
             return 'Created !'
         else:
@@ -654,6 +665,7 @@ def api_location_update(id):
         location = Location.query.get(id)
         if location is not None:
             location = location.from_json(request.json['item'])
+            location.full_location = location.get_full_string()
             location.save()
             return 'Saved !', 200
         else:
@@ -969,7 +981,10 @@ def serve_media(filename):
         s3 = boto3.client('s3',
                           aws_access_key_id=current_app.config['AWS_ACCESS_KEY_ID'],
                           aws_secret_access_key=current_app.config['AWS_SECRET_ACCESS_KEY'])
-        url = s3.generate_presigned_url('get_object', Params={'Bucket': current_app.config['S3_BUCKET'], 'Key': filename},                            ExpiresIn=36000)
+        params = {'Bucket': current_app.config['S3_BUCKET'], 'Key': filename}
+        if filename.lower().endswith('pdf'):
+            params['ResponseContentType'] = 'application/pdf'
+        url = s3.generate_presigned_url('get_object', Params=params, ExpiresIn=36000)
         return url
 
 
@@ -1000,6 +1015,13 @@ def api_local_serve_media(filename):
     """
     return send_from_directory('media', filename)
 
+@admin.route('/api/media/pdf', methods=['POST'])
+def api_media_pdf():
+    """
+    PDF Viewer for pdf file types
+    :return: HTML that handles PDF rendering
+    """
+    return render_template('admin/partials/pdf_viewer.html')
 
 
 # Medias routes
@@ -1311,10 +1333,9 @@ def api_incidenthistory(incidentid):
 # user management routes
 
 
-@admin.route('/api/users/', defaults={'page': 1})
-@admin.route('/api/users/<int:page>/')
+@admin.route('/api/users/')
 @roles_required('Admin')
-def api_users(page):
+def api_users():
     """
     API endpoint to feed users data in json format , supports paging and search
     :param page: db query offset
@@ -1813,3 +1834,47 @@ def api_query_create():
         return 'Query successfully saved!', 200
     else:
         return 'Error parsing query data', 417
+
+
+
+
+# Data Import Backend API
+
+@admin.route('/etl/')
+@roles_required('Admin')
+def etl_dashboard():
+    """
+    Endpoint to render the etl backend
+    :return: html page of the users backend.
+    """
+    return render_template('admin/etl-dashboard.html')
+
+
+@admin.route('/etl/process',methods=['POST'])
+@roles_required('Admin')
+def etl_process():
+    """
+    process a single file
+    :return: response contains the processing result
+    """
+
+    if not current_app.config['FILESYSTEM_LOCAL']:
+        return 'Please use a local file system for data import', 417
+
+    file = request.files.get('file')
+
+    meta = {}
+    meta['sources'] = json.loads(request.form.get('sources'))
+    meta['locations'] = json.loads(request.form.get('locations'))
+    meta['labels'] = json.loads(request.form.get('labels'))
+    meta['refs'] = json.loads(request.form.get('refs'))
+    #print (meta)
+
+
+    if not file:
+        return 'Error - no file specified', 417
+
+    etl = DataImport(file, meta=meta)
+    result = etl.process()
+
+    return 'success', 200

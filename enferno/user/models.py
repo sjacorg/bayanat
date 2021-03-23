@@ -50,8 +50,8 @@ class Role(db.Model, RoleMixin, BaseMixin):
         self.name = json.get('name','')
         return self
 
-    def __unicode__(self):
-        return '%s' % self.name
+    def __repr__(self):
+        return '{} - {}'.format(self.id, self.name)
 
 
 class User(UserMixin, db.Model, BaseMixin):

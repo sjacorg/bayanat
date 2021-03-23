@@ -253,7 +253,7 @@ Vue.component('password', Password);
      
       refresh() {
             this.loading = true;
-        axios.get(`/admin/api/users?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
+        axios.get(`/admin/api/users/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
                     this.items = res.data.items;
                     this.itemsLength = res.data.total;
                     this.loading = false;

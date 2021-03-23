@@ -256,7 +256,7 @@
     methods: {
       refresh(options) {
         
-        axios.get(`/admin/api/eventtypes/${options.page}`).then(response => {
+        axios.get(`/admin/api/eventtypes/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
           this.loading = false;
           
           this.itemsLength = response.data.total;

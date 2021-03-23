@@ -26,8 +26,8 @@ Vue.component("bulletin-card", {
         probability(item) {
             return probs[item.probability]
         },
-        actor_related_as(item) {
-            return actorConfig.btoaRelateAs[item.related_as];
+        actor_related_as(id) {
+            return actorConfig.btoaRelateAs[id];
         },
         bulletin_related_as(item) {
             return btobRelateAs[item.related_as];
@@ -256,9 +256,9 @@ Vue.component("bulletin-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">Relationship Info</div>
-                <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ actor_related_as(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+                <v-chip class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small label>{{ actor_related_as(r) }}</v-chip>
+                <v-chip class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 

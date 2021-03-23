@@ -327,7 +327,19 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
         tmp['id'] = bid
         # indicate a bulk operation in the log
         tmp['comments'] = tmp.get('comments', '') + '*'
-        tmp['ref'] = tmp.get('ref', [])
+
+        # ----- handle refs update without losing existing values -------
+        # grab existing refs (list)
+        refs = Bulletin.query.with_entities(Bulletin.ref).filter_by(id=bid).first().ref
+        if not refs:
+            refs = []
+        replace = tmp.get('refReplace')
+        if replace:
+            tmp['ref'] = tmp.get('ref', [])
+
+        else:
+            # append to existing refs
+            tmp['ref'] = refs + tmp.get('ref',[])
 
         # handle automatic status assignement
         if not 'status' in tmp:

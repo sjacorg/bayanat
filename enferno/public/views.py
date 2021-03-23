@@ -12,10 +12,6 @@ def add_header(response):
 def index():
     return redirect('/dashboard')
 
-@bp_public.route('/feedback/')
-def feedback():
-    return render_template('feedback.html')
-
 
 @bp_public.route('/robots.txt')
 def static_from_root():
