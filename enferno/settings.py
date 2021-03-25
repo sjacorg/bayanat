@@ -5,14 +5,13 @@ os_env = os.environ
 
 
 class Config(object):
-    SECRET_KEY = 'r@nd0mS3cr3t1'
+    SECRET_KEY = 'r@nd0mS3cr3t1' # Generate a new secret key
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
     DEBUG_TB_INTERCEPT_REDIRECTS = False
     CACHE_TYPE = 'simple'  # Can be "memcached", "redis", etc.
-    # SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/enferno.db'
-    # for postgres
+    # database uri
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'SQLALCHEMY_DATABASE_URI', 'postgresql:///sjac')
     SQLALCHEMY_TRACK_MODIFICATIONS = True
@@ -30,21 +29,22 @@ class Config(object):
     SECURITY_CONFIRMABLE = False
     SECURITY_TRACKABLE = True
     SECURITY_PASSWORD_HASH = 'bcrypt'
-    SECURITY_PASSWORD_SALT = 'nd0mS3cr3t2'
+    SECURITY_PASSWORD_SALT = 'nd0mS3cr3t2' # Generate a new password salt
 
     SECURITY_POST_LOGIN_VIEW = '/dashboard/'
     SECURITY_POST_CONFIRM_VIEW = '/dashboard/'
 
     SECURITY_TWO_FACTOR_ENABLED_METHODS= ['authenticator']  # 'sms' also valid but requires an sms provider
     SECURITY_TWO_FACTOR = True
-    SECURITY_TWO_FACTOR_RESCUE_MAIL = 'put_your_mail@gmail.com'
+    SECURITY_TWO_FACTOR_RESCUE_MAIL = ''
 
 
     # Generate a good totp secret using: passlib.totp.generate_secret()
-    SECURITY_TOTP_SECRETS = {"1": "nd0mS3cr3t3"}
+    SECURITY_TOTP_SECRETS = {"1": "nd0mS3cr3t3"} # Generate a new totp secret
     SECURITY_TOTP_ISSUER = 'Bayanat'
 
     # get from https://www.google.com/recaptcha/admin
+    RECAPTCHA_ENABLED = False
     RECAPTCHA_PUBLIC_KEY = 'ReCaptchaKey'
     RECAPTCHA_PRIVATE_KEY = 'ReCaptchaSecret'
 
