@@ -1,21 +1,27 @@
-import os
-import boto3
+import glob
 import hashlib
+import os
+from pathlib import Path
+
+import boto3
+import shortuuid
 from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
 from flask.templating import render_template
 from flask_bouncer import requires
 from flask_security.decorators import roles_required, login_required, current_user
-from sqlalchemy import desc, or_, distinct, text
 from flask_security.utils import hash_password
+from sqlalchemy import desc, or_, distinct, text
+
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
                                   IncidentHistory, BulletinHistory, ActorHistory, PotentialViolation, ClaimedViolation,
-                                  Activity, Settings, Query)
+                                  Activity, Query)
 from enferno.extensions import bouncer, rds, babel
-from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents
-from enferno.user.models import User, Role
-from enferno.utils.search_utils import SearchUtils
 from enferno.extensions import cache
+from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file
+from enferno.user.models import User, Role
 from enferno.utils.data_import import DataImport
+from enferno.utils.search_utils import SearchUtils
+
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
@@ -37,6 +43,7 @@ def get_locale():
     if override:
         session['lang'] = override
     return session.get('lang', 'en')
+
 
 @admin.before_request
 @login_required
@@ -107,7 +114,6 @@ def labels():
     return render_template('admin/labels.html')
 
 
-
 @admin.route('/api/labels/')
 def api_labels():
     """
@@ -127,16 +133,13 @@ def api_labels():
             getattr(Label, typ) == True
         )
     fltr = request.args.get('fltr', None)
-    if fltr:
-        if fltr in ['verified']:
-            query.append(
+
+    if fltr == 'verified':
+        query.append(
             Label.verified == True
         )
-        else:
-            query.append(
-            Label.verified == False
-            )
-
+    elif fltr == 'all':
+        pass
     else:
         query.append(
             Label.verified == False
@@ -205,8 +208,6 @@ def api_label_delete(id):
         return 'Deleted !'
     else:
         return 'Error', 417
-
-
 
 
 @roles_required(['Admin', 'Mod'])
@@ -311,7 +312,7 @@ def api_eventtype_delete(id):
         eventtype.delete()
         return 'Deleted !'
     else:
-        return 'Error',417
+        return 'Error', 417
 
 
 @roles_required(['Admin', 'Mod'])
@@ -326,7 +327,6 @@ def api_eventtype_import():
         return 'Success', 200
     else:
         return 'Error', 400
-
 
 
 @admin.route('/api/potentialviolation/', defaults={'page': 1})
@@ -584,7 +584,6 @@ def api_source_delete(id):
         return 'Deleted !'
 
 
-
 @roles_required(['Admin', 'Mod'])
 @admin.route('/api/source/import/', methods=['POST'])
 def api_source_import():
@@ -605,7 +604,6 @@ def api_source_import():
 def locations():
     """Endpoint for locations management."""
     return render_template('admin/locations.html')
-
 
 
 @admin.route('/api/locations/')
@@ -636,8 +634,10 @@ def api_locations():
 
     result = Location.query.filter(*query).order_by(Location.id).paginate(
         page, per_page, True)
-    items = [item.to_dict() for item in result.items if item.id != 0] if res_type == 0 else [item.min_json() for item in result.items if item.id != 0]
-    response = {'items':items, 'perPage': per_page,
+    items = [item.to_dict() for item in result.items if item.id != 0] if res_type == 0 else [item.min_json() for item in
+                                                                                             result.items if
+                                                                                             item.id != 0]
+    response = {'items': items, 'perPage': per_page,
                 'total': result.total}
     return Response(json.dumps(response),
                     content_type='application/json'), 200
@@ -710,6 +710,7 @@ def make_cache_key(*args, **kwargs):
     args_key = request.args.get('page') + request.args.get('per_page')
     return json_key + args_key
 
+
 @admin.route('/api/bulletins/', methods=['POST', 'GET'])
 @cache.cached(15, make_cache_key)
 def api_bulletins():
@@ -732,7 +733,7 @@ def api_bulletins():
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
     # handle sort
-    #default
+    # default
     sort = '-id'
 
     options = request.json.get('options')
@@ -748,7 +749,7 @@ def api_bulletins():
     if nested:
         result = result.paginate(page, per_page, True)
     else:
-        result = result.order_by(text(sort)).paginate(page,per_page, True)
+        result = result.order_by(text(sort)).paginate(page, per_page, True)
 
     # Select json encoding type
     mode = request.args.get('mode', '1')
@@ -823,8 +824,8 @@ def api_bulletin_review_update(id):
 
             bulletin.status = 'Peer Reviewed'
 
-            #append refs
-            refs = request.json.get('item',{}).get('revrefs',[])
+            # append refs
+            refs = request.json.get('item', {}).get('revrefs', [])
 
             bulletin.ref = bulletin.ref + refs
 
@@ -966,6 +967,7 @@ def api_media_file_delete():
         return 'Error', 417
 '''
 
+
 # return signed url from s3 valid for some time
 @admin.route('/api/media/<filename>')
 def serve_media(filename):
@@ -988,7 +990,6 @@ def serve_media(filename):
         return url
 
 
-
 def api_local_medias_upload(request):
     # file pond sends multiple requests for multiple files (handle each request as a separate file )
     try:
@@ -998,7 +999,7 @@ def api_local_medias_upload(request):
         filepath = (Media.media_dir / filename).as_posix()
         f.save(filepath)
         # get md5 hash
-        f = open(filepath,'rb').read()
+        f = open(filepath, 'rb').read()
         etag = hashlib.md5(f).hexdigest()
 
         response = {'etag': etag, 'filename': filename}
@@ -1015,13 +1016,6 @@ def api_local_serve_media(filename):
     """
     return send_from_directory('media', filename)
 
-@admin.route('/api/media/pdf', methods=['POST'])
-def api_media_pdf():
-    """
-    PDF Viewer for pdf file types
-    :return: HTML that handles PDF rendering
-    """
-    return render_template('admin/partials/pdf_viewer.html')
 
 
 # Medias routes
@@ -1097,7 +1091,6 @@ def api_media_delete(id):
         media = Media.query.get(id)
         media.delete()
         return 'Deleted !'
-
 
 
 # Actor routes
@@ -1375,8 +1368,8 @@ def api_user_create():
     if request.method == 'POST':
         # validate existing
         u = request.json['item']
-        email = u.get('email',None)
-        exists = User.query.filter(User.email==email).first()
+        email = u.get('email', None)
+        exists = User.query.filter(User.email == email).first()
         if exists:
             return 'Error, Email Already Exists', 417
         user = User()
@@ -1437,7 +1430,6 @@ def api_user_delete(id):
         # Record activity
         Activity.create(current_user, Activity.ACTION_DELETE, user.to_mini(), 'user')
         return 'Deleted !'
-
 
 
 # Roles routes
@@ -1566,7 +1558,7 @@ def api_incidents():
 
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
-    print(*query)
+
     result = Incident.query.filter(
         *query).order_by(Incident.id.desc()).paginate(
         page, per_page, True)
@@ -1576,7 +1568,6 @@ def api_incidents():
 
     return Response(json.dumps(response),
                     content_type='application/json'), 200
-
 
 
 @roles_required(['Admin', 'DA'])
@@ -1728,7 +1719,6 @@ def activity():
     return render_template('admin/activity.html')
 
 
-
 @admin.route('/api/activity', methods=['POST', 'GET'])
 @roles_required('Admin')
 def api_activity():
@@ -1739,7 +1729,7 @@ def api_activity():
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
     query = []
-    tag = request.json.get('tag',None)
+    tag = request.json.get('tag', None)
     if tag:
         query.append(Activity.tag == tag)
 
@@ -1782,6 +1772,7 @@ def bulk_status():
             rds.delete(key)
     return json.dumps(tasks)
 
+
 """ 
 # Unused 
 @roles_required('Admin')
@@ -1802,6 +1793,7 @@ def get_api_key():
     return Settings.get_api_key(), 200
 
 """
+
 
 # Saved Searches
 @admin.route('/api/queries/')
@@ -1836,8 +1828,6 @@ def api_query_create():
         return 'Error parsing query data', 417
 
 
-
-
 # Data Import Backend API
 
 @admin.route('/etl/')
@@ -1850,7 +1840,37 @@ def etl_dashboard():
     return render_template('admin/etl-dashboard.html')
 
 
-@admin.route('/etl/process',methods=['POST'])
+@admin.route('/etl/status')
+@roles_required('Admin')
+def etl_status():
+    """
+    Endpoint to render etl tasks monitoring
+    :return: html page of the users backend.
+    """
+    return render_template('admin/etl-status.html')
+
+
+
+@admin.route('/etl/path/',methods=['POST'])
+@roles_required('Admin')
+def path_process():
+    path = request.json.get('path')
+    recursive = request.json.get('recursive', False)
+    if not path or not os.path.isdir(path):
+        return "invalid path specified ", 417
+    p = Path(path)
+
+    if recursive:
+        items = p.rglob('*')
+    else:
+        items = p.glob('*')
+    files = [str(file) for file in items]
+
+    output = [{'file': {'name': os.path.basename(file), 'path': file }} for file in files]
+
+    return json.dumps(output) ,200
+
+@admin.route('/etl/process', methods=['POST'])
 @roles_required('Admin')
 def etl_process():
     """
@@ -1861,20 +1881,33 @@ def etl_process():
     if not current_app.config['FILESYSTEM_LOCAL']:
         return 'Please use a local file system for data import', 417
 
-    file = request.files.get('file')
+    files = request.json.pop('files')
+    meta = request.json
+    results = []
+    batch_id = 'ETL' + shortuuid.uuid()[:9]
+    batch_log = batch_id + '.log'
+    open(batch_log,'a')
 
-    meta = {}
-    meta['sources'] = json.loads(request.form.get('sources'))
-    meta['locations'] = json.loads(request.form.get('locations'))
-    meta['labels'] = json.loads(request.form.get('labels'))
-    meta['refs'] = json.loads(request.form.get('refs'))
-    #print (meta)
+    for file in files:
+
+        results.append(etl_process_file.delay(batch_id, file, meta, user_id=current_user.id, log=batch_log))
+
+    ids = [r.id for r in results]
+    session['etl-tasks'] = ids
+    return 'ETL operation queued successfully.', 200
 
 
-    if not file:
-        return 'Error - no file specified', 417
 
-    etl = DataImport(file, meta=meta)
-    result = etl.process()
 
-    return 'success', 200
+@admin.route('/api/etl/status/')
+@roles_required('Admin')
+def etl_task_status():
+    """
+    API endpoing for ETL task status
+    :return: response contains every task with status
+    """
+    ids = session['etl-tasks']
+    results = [etl_process_file.AsyncResult(i) for i in ids]
+    output = [r.state for r in results ]
+    return json.dumps(output), 200
+

@@ -91,36 +91,14 @@
                                           label="{{_('Longitude')}}"
                                         ></v-text-field>
                                     </v-col>
-                                    <v-col cols="12" md="6">
-                                      <v-combobox
-                                            no-filter
-                                            auto-select-first
-                                             prepend-inner-icon="mdi-magnify"
-                                            hide-no-data
-                                            label="{{_('Parent')}}"
-                                            v-model="editedItem.parent"
-                                            :items="parentList"
-                                            item-text="title"
-                                            item-value="id"
-                                            prepend-inner-icon="mdi-magnify"
-                                            :multiple="false"
-                                            :clearable="true"
-                                            @input.native="searchParents"
-                                              @focus="searchParents"
-                                          >
-                                      </v-combobox>
-                                    </v-col>
+                                      <v-col cols="12" md="3">
+
+                                              <v-select :items="['S','D','N','C','G']" label="Location type" v-model="editedItem.loc_type"></v-select>
+                                          </v-col>
+
                                   </v-row>
 
-                                      <v-row>
-                                          <v-col cols="12" md="5">
 
-                                              <v-text-field label="Location type" v-model="editedItem.loc_type"></v-text-field>
-                                          </v-col>
-                                          <v-col md="5" class="offset-md-1">
-                                                    <v-text-field readonly label="Location type Name" v-model="editedItem.loc_type_name"></v-text-field>
-                                          </v-col>
-                                      </v-row>
 
                                     <v-row>
 

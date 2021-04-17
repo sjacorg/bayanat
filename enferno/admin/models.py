@@ -1034,12 +1034,18 @@ class Bulletin(db.Model, BaseMixin):
 
     tsv = db.Column(TSVECTOR)
 
-    search = db.Column(db.Text, db.Computed("""
-    coalesce(bulletin.title,'') || ' ' || coalesce(bulletin.title_ar,'') || ' ' ||  coalesce(bulletin.description,'')
-    || ' ' ||  bulletin.sjac_title::text || ' ' || coalesce(bulletin.sjac_title_ar,'') 
-     || ' ' ||  bulletin.id::text || ' ' || coalesce(bulletin.originid,'') 
-     || ' ' || coalesce(bulletin.comments,'')
-    """))
+    search = db.Column(db.Text, db.Computed(
+        '''
+         ((((((((((((((((((id)::text || ' '::text) || (COALESCE(title, ''::character varying))::text) || ' '::text) ||
+                        (COALESCE(title_ar, ''::character varying))::text) || ' '::text) ||
+                      COALESCE(description, ''::text)) || ' '::text) ||
+                    (COALESCE(originid, ''::character varying))::text) || ' '::text) ||
+                  (COALESCE(sjac_title, ''::character varying))::text) || ' '::text) ||
+                (COALESCE(sjac_title_ar, ''::character varying))::text) || ' '::text) ||
+                (COALESCE(source_link, ''::character varying))::text) || ' '::text) ||
+              COALESCE(description, ''::text)) || ' '::text) || COALESCE(comments, ''::text)
+      '''
+    ))
 
 
     __table_args__ = (
@@ -1684,9 +1690,10 @@ class Actor(db.Model, BaseMixin):
     tsv = db.Column(TSVECTOR)
 
     search = db.Column(db.Text, db.Computed("""
-        coalesce(actor.name,'') || ' ' ||  coalesce(actor.name_ar,'') || ' ' ||  coalesce(actor.description,'')
-         || ' ' ||  actor.id::text || ' ' || coalesce(actor.originid,'') 
-         || ' ' || coalesce(actor.comments,'')
+         ((((((((((id)::text || ' '::text) || (COALESCE(name, ''::character varying))::text) || ' '::text) ||
+                  (COALESCE(name_ar, ''::character varying))::text) || ' '::text) ||
+                (COALESCE(originid, ''::character varying))::text) || ' '::text) || COALESCE(description, ''::text)) ||
+             ' '::text) || COALESCE(comments, ''::text)
         """))
 
     __table_args__ = (
@@ -2603,9 +2610,9 @@ class Incident(db.Model, BaseMixin):
     tsv = db.Column(TSVECTOR)
 
     search = db.Column(db.Text, db.Computed("""
-            coalesce(incident.title,'') || ' ' ||  coalesce(incident.title_ar,'') || ' ' ||  coalesce(incident.description,'')
-             || ' ' ||  incident.id::text 
-             || ' ' || coalesce(incident.comments,'')
+             ((((((((id)::text || ' '::text) || (COALESCE(title, ''::character varying))::text) || ' '::text) ||
+                (COALESCE(title_ar, ''::character varying))::text) || ' '::text) || COALESCE(description, ''::text)) ||
+             ' '::text) || COALESCE(comments, ''::text)
             """))
 
     __table_args__ = (

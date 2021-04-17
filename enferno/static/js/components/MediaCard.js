@@ -22,6 +22,10 @@ Vue.component("media-card", {
             });
         },
 
+        showPDF(){
+            this.$root.$refs.pdfViewer.openPDF(this.s3url)
+        },
+
 
         mediaType(mediaItem) {
             if (['image/jpeg', 'image/png', 'image/gif'].includes(mediaItem.fileType)) {
@@ -102,13 +106,29 @@ Vue.component("media-card", {
     
      <v-card :disabled="!s3url"  class="media-card" v-else-if="mediaType(media) == 'pdf'">
       
-        <form method="post" target="_blank" action="/admin/api/media/pdf">
-        <v-btn type="submit" class="mt-2" text><v-icon left  color="red" size="32">mdi-file-pdf-box</v-icon> PDF</v-btn>
-        <input type="hidden" name="url" :value="s3url">
-        </form>
-
+        
+        <v-btn  @click="showPDF" class="mt-2" text><v-icon left  color="red" size="32">mdi-file-pdf-box</v-icon> PDF</v-btn>
         
         
+      
+      <div class="caption pa-2">
+        {{media.title}}  
+      </div>
+      
+      <v-chip x-small label class="caption pa-1 " color="yellow lighten-5 grey--text" >
+        {{media.etag}}
+      </v-chip>
+      <v-card-text class="pa-2 d-flex"> 
+        <slot name="actions"></slot>
+      </v-card-text>
+    </v-card>
+    
+    
+    
+     <!-- Other mime types   -->
+    <v-card :disabled="!s3url"   class="media-card" v-else-if="mediaType(media) == 'unknown'">
+     
+        <v-btn class="ma-3 py-6" :href="s3url" text target="_blank"><v-icon size="32" color="#666">mdi-file</v-icon> </v-btn>
       
       <div class="caption pa-2">
         {{media.title}}  

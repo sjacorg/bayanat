@@ -1,5 +1,7 @@
 {% extends 'layout.html' %} {% block content %}
-
+    {% block css %}
+        <link rel="stylesheet" href="/static/js/filepond/dist/filepond.min.css"/>
+    {% endblock %}
     <div id="app">
         <v-app v-cloak>
             {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
@@ -7,136 +9,253 @@
                 <v-container fluid fill-height>
                     <v-row>
                         <v-col cols="12">
-                            <v-card>
-                                <v-card-title>
-                                    <div class="flex-grow-1"></div>
-                                </v-card-title>
 
-                                <v-card-text>
-                                    <v-data-table
-                                            :headers="headers"
-                                            :items="items"
-                                            :options.sync="options"
-                                            :footer-props.sync="footerProps"
-                                            :loading="loading"
-                                            class="elevation-1"
-                                            show-select
-                                            v-model="selectedItems"
+                            <v-stepper v-model="step">
+                                <v-stepper-header>
+                                    <v-stepper-step step="1">Upload or Select</v-stepper-step>
+                                    <v-divider></v-divider>
 
-                                            hide-default-footer
-                                    >
-                                        <template v-slot:top="{item}">
-                                            <v-toolbar flat color="white">
-                                                <v-toolbar-title>Data Import Dashboard</v-toolbar-title>
+                                    <v-stepper-step step="2">Add Data</v-stepper-step>
+                                    <v-divider></v-divider>
+                                    <v-stepper-step step="3">Stats</v-stepper-step>
+                                </v-stepper-header>
 
-                                                <v-divider class="mx-4" inset vertical></v-divider>
+                                <v-stepper-items>
+                                    <v-stepper-content step="1">
 
-
-                                                <input id="dirSelector" type="file" name="Select Folder" class="d-none"
-                                                       @change="getFiles" webkitdirectory directory multiple/>
-
-                                            </v-toolbar>
-
-                                            <v-toolbar color="grey lighten-4" flat>
-
-                                                <v-btn class="mx-2" @click="pickFolder" color="success"
-                                                >
-                                                    <v-icon left>mdi-folder-open</v-icon>
-                                                    Open a Folder
-                                                </v-btn>
-
-                                                <v-btn class="mx-2" @click="processFiles" :disabled="!selectedItems.length"
-                                                       :dark="selectedItems.length?true:false" color="green" elevation="1">
-                                                    <v-icon left color="white">mdi-play-circle</v-icon>
-                                                    Process
-                                                </v-btn>
+                                        <v-data-table
+                                                :headers="headers"
+                                                :items="items"
+                                                :options.sync="options"
+                                                :footer-props.sync="footerProps"
+                                                :loading="loading"
+                                                class="elevation-1"
+                                                show-select
+                                                v-model="selectedItems"
 
 
-                                            </v-toolbar>
-                                            <v-card class="pa-3" color="yellow lighten-4">
-                                                <v-card-title>
-                                                    Attach data to files
-                                                </v-card-title>
-
-                                                <v-card-text>
-
-                                                    <v-row>
-                                                        <v-col cols="12" md="6">
-                                                            <search-field
-                                                                    api="/admin/api/labels/"
-                                                                    item-text="title"
-                                                                    item-value="id"
-                                                                    :multiple="true"
-                                                                    label="Labels"
-                                                                    v-model="labels"
-                                                            ></search-field>
-                                                        </v-col>
-
-                                                        <v-col cols="12" md="6">
-                                                            <search-field
-                                                                    api="/admin/api/locations/"
-                                                                    item-text="full_string"
-                                                                    item-value="id"
-                                                                    :multiple="true"
-                                                                    label="Locations"
-                                                                    v-model="locations"
-                                                            ></search-field>
-                                                        </v-col>
-                                                    </v-row>
-                                                    <v-row>
-                                                         <v-col cols="12" md="6">
-                                                           <search-field
-                                                                    api="/admin/api/sources/"
-                                                                    item-text="title"
-                                                                    item-value="id"
-                                                                    :multiple="true"
-                                                                    label="Sources"
-                                                                    v-model="sources"
-                                                            ></search-field>
-
-                                                        </v-col>
-
-                                                        <v-col cols="12" md="6">
-                                                            <v-combobox
-                                                                    small-chips
-                                                                    multiple
-                                                                    label="Refs"
-                                                                    v-model="refs"
-
-                                                            ></v-combobox>
-
-                                                        </v-col>
-                                                    </v-row>
+                                        >
+                                            <template v-slot:top="{item}">
+                                                <v-toolbar color="grey lighten-4" flat>
+                                                    <v-tooltip top>
+                                                        <template v-slot:activator="{on, attrs}">
+                                                            <v-btn :disabled="mode==2" small v-on="on" class="mx-2"
+                                                                   @click="uploadFiles"
+                                                                   color="primary"
+                                                            >
+                                                                <v-icon left>mdi-upload</v-icon>
+                                                                Upload files
+                                                            </v-btn>
+                                                        </template>
+                                                        <span>Manual web upload</span>
+                                                    </v-tooltip>
+                                                    <v-tooltip top>
+                                                        <template v-slot:activator="{on}">
+                                                            <v-btn :disabled="mode==1" @click="selectPath" small
+                                                                   v-on="on" color="primary">
+                                                                <v-icon left> mdi-folder-open</v-icon>
+                                                                Process path
+                                                            </v-btn>
+                                                        </template>
+                                                        <span>
+                                                        Process existing files at path,  server side (Faster)
+                                                    </span>
+                                                    </v-tooltip>
 
 
-                                                </v-card-text>
+                                                    <v-spacer></v-spacer>
 
-                                            </v-card>
-                                        </template>
-
-                                        <template v-slot:item.progress="{item}">
-                                            <v-progress-linear :indeterminate="item.loading" color="green"
-                                                               v-model="item.progress"></v-progress-linear>
-
-
-                                        </template>
+                                                    <v-btn small class="mx-2" @click="stepTwo"
+                                                           :disabled="!selectedItems.length"
+                                                           :dark="selectedItems.length?true:false" color="green"
+                                                           elevation="1">
+                                                        <v-icon left color="white">mdi-play-circle</v-icon>
+                                                        Next >
+                                                    </v-btn>
 
 
-                                        <template v-slot:no-data=""></template>
-                                    </v-data-table>
+                                                </v-toolbar>
+
+                                            </template>
 
 
-                                    <v-snackbar v-model="snackbar" class="">
-                                        <div class="d-flex justify-space-between align-center">
-                                        ${snackMessage}
+                                            <template v-slot:no-data=""></template>
+                                        </v-data-table>
 
-                                        <v-btn icon fab small color="white" text @click="snackbar = false">
+
+                                    </v-stepper-content>
+
+
+                                    <v-stepper-content step="2">
+                                        <v-toolbar>
+                                            <v-btn small class="mx-2" @click="step=1"
+
+                                                   elevation="1">
+                                                < Previous
+                                            </v-btn>
+                                            <v-spacer></v-spacer>
+                                            <v-btn small class="mx-2" @click="processFiles"
+
+                                                   color="success"
+                                                   elevation="1">
+                                                <v-icon left color="white">mdi-play-circle</v-icon>
+                                                Process
+                                            </v-btn>
+                                        </v-toolbar>
+
+                                        <v-card class="pa-3" color="yellow lighten-4">
+                                            <v-card-title>
+                                                Attach data to files
+                                            </v-card-title>
+
+                                            <v-card-text>
+
+                                                <v-row>
+                                                    <v-col cols="12" md="4">
+                                                        <search-field
+                                                                api="/admin/api/labels/"
+                                                                query-params="&typ=for_bulletin"
+                                                                item-text="title"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                label="Labels"
+                                                                v-model="labels"
+                                                        ></search-field>
+                                                    </v-col>
+                                                    <v-col cols="12" md="4">
+                                                        <search-field
+                                                                api="/admin/api/labels/"
+                                                                query-params="&fltr=verified&typ=for_bulletin"
+                                                                item-text="title"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                label="Verified Labels"
+                                                                v-model="verLabels"
+                                                        ></search-field>
+                                                    </v-col>
+
+                                                    <v-col cols="12" md="4">
+                                                        <search-field
+                                                                api="/admin/api/locations/"
+                                                                item-text="full_string"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                label="Locations"
+                                                                v-model="locations"
+                                                        ></search-field>
+                                                    </v-col>
+                                                </v-row>
+                                                <v-row>
+                                                    <v-col cols="12" md="6">
+                                                        <search-field
+                                                                api="/admin/api/sources/"
+                                                                item-text="title"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                label="Sources"
+                                                                v-model="sources"
+                                                        ></search-field>
+
+                                                    </v-col>
+
+                                                    <v-col cols="12" md="6">
+                                                        <v-combobox
+                                                                small-chips
+                                                                multiple
+                                                                label="Refs"
+                                                                v-model="refs"
+                                                                hint="Type and enter free tags"
+
+                                                        ></v-combobox>
+
+                                                    </v-col>
+                                                </v-row>
+
+
+                                            </v-card-text>
+
+                                        </v-card>
+
+                                    </v-stepper-content>
+
+                                    <v-stepper-content step="3">
+                                        <v-card class="pa-5">
+                                    <v-card-text>
+                                                ${ status }
+                        </v-card-text>
+                                        </v-card>
+                                    </v-stepper-content>
+                                </v-stepper-items>
+                            </v-stepper>
+
+                            <v-dialog persistent v-model="selectDlg" max-width="900">
+                                <v-card class="pa-3" v-if="selectDlg">
+                                    <v-card-title>
+                                        <v-spacer></v-spacer>
+                                        <v-btn fab text @click="selectDlg=false">
                                             <v-icon>mdi-close</v-icon>
                                         </v-btn>
-                                            </div>
-                                    </v-snackbar>
-                                </v-card-text>
-                            </v-card>
+                                    </v-card-title>
+                                    <v-card-text class="align-center">
+                                        <v-text-field v-model="selectedPath" value="/home/media/"
+                                                      label="Input path to files"></v-text-field>
+                                        <v-switch v-model="recursive" label="Search Subfolders"> </v-switch>
+                                    </v-card-text>
+
+                                    <v-card-actions class="pb-3">
+                                        <v-spacer></v-spacer>
+                                        <v-btn @click="selectDlg=false" class="mx-2" text>Cancel</v-btn>
+                                        <v-btn @click="processPath" class="mx-2" color="primary">Scan</v-btn>
+                                        <v-spacer></v-spacer>
+                                    </v-card-actions>
+                                </v-card>
+                            </v-dialog>
+
+
+                            <v-dialog persistent v-model="uploadDlg" max-width="900">
+                                <v-card class="" v-if="uploadDlg">
+                                    <v-card-title>
+                                        <v-spacer></v-spacer>
+                                        <v-btn fab text @click="cancelAppend">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-card-title>
+                                    <v-card-text class="align-center">
+
+                                        <file-pond class="ma-auto"
+                                                   name="media"
+                                                   ref="media"
+                                                   label-idle="Click/Drop files here to Upload..."
+                                                   v-bind:allow-multiple="true"
+{#                                                   accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"#}
+                                                   server="/admin/api/media/upload/"
+                                                   v-model="files"
+                                                   v-bind:files="files"
+                                                   v-on:processfile="onFileUploaded"
+
+                                        ></file-pond>
+
+                                    </v-card-text>
+                                    <v-card-actions>
+                                        <v-spacer></v-spacer>
+                                        <v-btn @click="cancelAppend" text>Cancel</v-btn>
+                                        <v-btn @click="appendFiles" color="primary">Add</v-btn>
+                                        <v-spacer></v-spacer>
+                                    </v-card-actions>
+                                </v-card>
+
+                            </v-dialog>
+                            <v-snackbar v-model="snackbar" class="">
+                                <div class="d-flex justify-space-between align-center">
+                                    ${snackMessage}
+
+                                    <v-btn icon fab small color="white" text @click="snackbar = false">
+                                        <v-icon>mdi-close</v-icon>
+                                    </v-btn>
+                                </div>
+                            </v-snackbar>
+
+
                         </v-col>
                     </v-row>
                 </v-container>
@@ -146,6 +265,9 @@
     </div>
 
 {% endblock %} {% block js %}
+
+    <script src="/static/js/filepond/dist/filepond.min.js"></script>
+    <script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
     <script>
 
         const app = new Vue({
@@ -154,10 +276,20 @@
             delimiters: delimiters,
             data: () => ({
                 drawer: drawer,
+                mode: null,
                 sideNav: sideNav,
                 snackbar: false,
                 snackMessage: '',
                 loading: false,
+                status: '',
+
+                ploader: true,
+                step: 1,
+                uploadDlg: null,
+                selectDlg: null,
+                selectedPath: '/home/bayanat/data/',
+                recursive: false,
+                files: [],
                 options: {
                     page: 1,
                     itemsPerPage: 100
@@ -168,16 +300,15 @@
                 },
 
                 headers: [
-                    {text: 'Name', value: 'name', sortable: false},
-                    {text: 'Size', value: 'size', sortable: false},
-                    {text: 'Progress', value: 'progress', sortable: false},
+                    {text: 'Name', value: 'file.name', sortable: false},
 
 
                 ],
                 //etl additional tags
-                labels : [],
+                labels: [],
+                verLabels: [],
                 sources: [],
-                locations:[],
+                locations: [],
                 refs: [],
                 files: [],
                 items: [],
@@ -193,6 +324,9 @@
                     active: false
                 }
             }),
+            components: {
+                FilePond: vueFilePond.default(),
+            },
 
             computed: {},
 
@@ -207,9 +341,58 @@
             },
 
             methods: {
-                showSnack(message){
-                this.snackbar = true;
-                this.snackMessage = message
+                preprocess(files) {
+                    files = files.filter(x => this.validFile(x.file.name))
+                    for (i = 1; i < files.length; i++) {
+                        files[i].id = i;
+
+                    }
+                    return files;
+
+                },
+
+                cancelAppend() {
+                    this.uploadDlg = false;
+                    this.files = [];
+                },
+
+                appendFiles() {
+                    this.items = this.preprocess(this.files);
+                    this.uploadDlg = false;
+                    this.files = [];
+                    this.mode = 1;
+                },
+
+                processPath() {
+                    // get all files from the specified path via server side
+                    if (!this.selectedPath) {
+                        this.selectDlg = false;
+                        this.showSnack('No valid path selected');
+                        return;
+                    }
+                    // else
+
+                    axios.post('/admin/etl/path/', {path: this.selectedPath, recursive: this.recursive}).then(res => {
+                        this.items = this.preprocess(res.data);
+                        this.mode = 2;
+
+                    }).catch(error => {
+                        this.showSnack(error.response.data)
+                    }).finally(() => {
+                        this.selectDlg = false;
+                    })
+
+
+                },
+
+                onFileUploaded(error, file) {
+
+                    //pass for now
+                },
+
+                showSnack(message) {
+                    this.snackbar = true;
+                    this.snackMessage = message
                 },
                 refresh() {
 
@@ -238,68 +421,57 @@
                     return false
 
                 },
+
+                stepTwo() {
+                    this.step = 2;
+                },
                 processFiles() {
 
+                    this.step = 3;
 
-                    // batch send the data
-                    for (const [i, file] of this.selectedItems.entries()) {
-                        let self = this;
-                        let formData = new FormData();
-                        formData.append('file', file);
-                        formData.append('labels', JSON.stringify(this.labels));
-                        formData.append('sources', JSON.stringify(this.sources));
-                        formData.append('locations', JSON.stringify(this.locations));
-                        formData.append('refs', JSON.stringify(this.refs));
+                        let files;
+                        if (this.mode == 1) {
+                            files = this.selectedItems.map(x=> {
+                                let f = JSON.parse(x.serverId)
+                                f.name = x.file.name;
+                                return f
+                            })
 
-                        this.items.splice(i, 1, file);
-                        file.loading = true;
-                        axios.post('/admin/etl/process', formData, {
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'multipart/form-data'
-                            },
-                            onUploadProgress: function (progressEvent) {
-                                let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                                file.progress = percentCompleted;
-                                self.items.splice(i, 1, file);
+                        }
+                        else {
+                            files = this.selectedItems;
+                        }
+                        let data = {
+                            files: files,
+                            labels: this.labels,
+                            ver_labels: this.verLabels,
+                            sources: this.sources,
+                            locations: this.locations,
+                            refs: this.refs,
+                            mode: this.mode
+                        }
 
-
-                            }
-
-                        }).then(response => {
-
+                        axios.post('/admin/etl/process', data).then(res => {
+                                this.showSnack(res.data);
+                                this.status = 'You may check the status of this ETL on the status page'
 
                         }).catch(error => {
-                            this.showSnack(error.response.data)
+
 
                         }).finally(() => {
-                            file.loading = false;
-                            self.items.splice(i, 1, file);
-                        })
 
-
-                    }
+                        });
 
 
                 },
 
-                getFiles(event) {
-                    let files = Array.from(event.target.files);
+                selectPath() {
+                    this.selectDlg = true;
+                }
+                ,
+                uploadFiles() {
 
-                    files = files.filter(x => this.validFile(x.name));
-
-                    // attach virtual sequential ids, fixes the single-select bug
-
-                    for (i=1; i< files.length; i++){
-                        files[i].id = i;
-                    }
-                    this.items = files;
-
-                },
-
-                pickFolder() {
-
-                    this.$el.querySelector('#dirSelector').click();
+                    this.uploadDlg = true;
 
                 }
 

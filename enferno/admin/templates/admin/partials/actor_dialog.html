@@ -1,897 +1,934 @@
 <validation-observer v-slot="{invalid}">
-<v-dialog  persistent v-model="dialog" fullscreen>
-       
+    <v-dialog persistent v-model="dialog" fullscreen>
+
         <v-card class="overflow-hidden">
 
-          <v-app-bar
-          absolute
-          color="pv"
-          dark
-        
-        class="card-header"
- 
-          >
-          <v-toolbar-title>${formTitle} <span  class="gv--text" v-if="editedItem.id"> ${editedItem.id}</span>
-
-              <v-chip v-if="editedItem.originid" :href="editedItem.source_link" target="_blank"  pill label color="primary darken-1" class="white--text ml-1">
-                    # ${editedItem.originid}</v-chip>
-          </v-toolbar-title>
-          <v-spacer></v-spacer>
-          
-          
-          <v-btn @click="save" :disabled="invalid"  dark color="primary darken-1" small class="mx-2" depressed >Save Actor</v-btn>
-          <v-btn @click="confirmClose" icon><v-icon>mdi-close</v-icon></v-btn>
-          
-
-            
-          </v-app-bar
-          >
-
-          <v-sheet
-          id="card-content"
-          max-height="100vh"
-          class="overflow-y-auto pt-11">
-          
-      
-          <v-card-text>
-            <v-container>
-
-              <v-row>
-                <v-col cols="12" md="6">
-                  
-                  <v-card class="d-flex" flat>
-                    
-                    
-                    <v-text-field
-                      v-if="name__"
-                      v-model="editedItem.name"
-                      label="{{_('Name')}}"
-                    ></v-text-field>
-                
-                
-                    <v-text-field
-                      v-else
-                      v-model="editedItem.name_ar"
-                      label="{{_('Name (AR)')}}"
-                      background-color="lime lighten-5"
-                    ></v-text-field>
-
-                    <v-btn
-                      color="grey lighten-2"
-                      outlined
-                      x-small
-                      fab
-                      class="swh d-inline"
-                      @click="name__=!name__"
-                      ><v-icon>mdi-web</v-icon></v-btn
-                    >
-                  </v-card>
-                
-                </v-col>
-                <v-col cols="12" md="6">
-                  <v-card class="d-flex" flat>
-                    <v-text-field
-                      v-if="nickname__"
-                      v-model="editedItem.nickname"
-                      label="{{_('Nickname')}}"
-                    ></v-text-field>
-
-                    <v-text-field
-                      v-else
-                      v-model="editedItem.nickname_ar"
-                      label="{{_('Nickname (AR)')}}"
-                      background-color="lime lighten-5"
-                    ></v-text-field>
-
-                    <v-btn
-                      color="grey lighten-2"
-                      outlined
-                      x-small
-                      fab
-                      class="swh d-inline"
-                      @click="nickname__=!nickname__"
-                      ><v-icon>mdi-web</v-icon></v-btn
-                    >
-                  </v-card>
-                </v-col>
-              </v-row>
-              <v-row>
-                
-                 <v-col cols="12" md="3">
-                  <v-card class="d-flex" flat>
-                    <v-text-field
-                      v-if="first_name__"
-                      v-model="editedItem.first_name"
-                      label="{{_('First Name')}}"
-                    ></v-text-field>
-
-                    <v-text-field
-                      v-else
-                      v-model="editedItem.first_name_ar"
-                      label="{{_('First Name (AR)')}}"
-                      background-color="lime lighten-5"
-                    ></v-text-field>
-
-                    <v-btn
-                      color="grey lighten-2"
-                      outlined
-                      x-small
-                      fab
-                      class="swh d-inline"
-                      @click="first_name__=!first_name__"
-                      ><v-icon>mdi-web</v-icon></v-btn
-                    >
-                  </v-card>
-                </v-col>
-
-
-
-                 <v-col cols="12" md="3">
-                  <v-card class="d-flex" flat>
-                    <v-text-field
-                      v-if="middle_name__"
-                      v-model="editedItem.middle_name"
-                      label="{{_('Middle/Father\'s Name')}}"
-                    ></v-text-field>
-
-                    <v-text-field
-                      v-else
-                      v-model="editedItem.middle_name_ar"
-                      label="{{_('Middle/Father\'s Name (AR)')}}"
-                      background-color="lime lighten-5"
-                    ></v-text-field>
-
-                    <v-btn
-                      color="grey lighten-2"
-                      outlined
-                      x-small
-                      fab
-                      class="swh d-inline"
-                      @click="middle_name__=!middle_name__"
-                      ><v-icon>mdi-web</v-icon></v-btn
-                    >
-                  </v-card>
-                </v-col>
-              
-              
-
-                <v-col cols="12" md="3">
-                  <v-card class="d-flex" flat>
-                    <v-text-field
-                      v-if="last_name__"
-                      v-model="editedItem.last_name"
-                      label="{{_('Last Name')}}"
-                    ></v-text-field>
-
-                    <v-text-field
-                      v-else
-                      v-model="editedItem.last_name_ar"
-                      label="{{_('Last Name (AR)')}}"
-                      background-color="lime lighten-5"
-                    ></v-text-field>
-
-                    <v-btn
-                      color="grey lighten-2"
-                      outlined
-                      x-small
-                      fab
-                      class="swh d-inline"
-                      @click="last_name__=!last_name__"
-                      ><v-icon>mdi-web</v-icon></v-btn
-                    >
-                  </v-card>
-                </v-col>
-
-                <v-col cols="12" md="3">
-                  <v-card class="d-flex" flat>
-                    <v-text-field
-                      v-if="mother_name__"
-                      v-model="editedItem.mother_name"
-                      label="{{_('Mother\'s Name')}}"
-                    ></v-text-field>
-
-                    <v-text-field
-                      v-else
-                      v-model="editedItem.mother_name_ar"
-                      label="{{_('Mother\'s Name (AR)')}}"
-                      background-color="lime lighten-5"
-                    ></v-text-field>
-
-                    <v-btn
-                      color="grey lighten-2"
-                      outlined
-                      x-small
-                      fab
-                      class="swh d-inline"
-                      @click="mother_name__=!mother_name__"
-                      ><v-icon>mdi-web</v-icon></v-btn
-                    >
-                  </v-card>
-                </v-col>
-              
-              </v-row>
-
-              <v-row>
-                <v-col cols="12" md="12">
-                  <div class="body-1 pa-1 grey--text">Description</div>
-                  <tinymce-editor
-                    :init="tinyConfig"
-                    v-model="editedItem.description"
-                  ></tinymce-editor>
-                </v-col>
-              </v-row>
-              
-              
-              <v-row>
-                <v-col cols="12" md="12">
-                   <search-field
-                    v-model="editedItem.sources"
-                    api="/admin/api/sources/"
-                    item-text="title"
-                    item-value="id"
-                    :multiple="true"
-                    label="{{_('Sources')}}"
-                    ></search-field>
-                </v-col>
-              </v-row>
-                <v-row>
-
-                <v-col cols="12" md="12">
-                  <search-field
-                    v-model="editedItem.labels"
-                    api="/admin/api/labels/"
-                    query-params="&typ=for_actor"
-                    item-text="title"
-                    item-value="id"
-                    :multiple="true"
-                    label="{{_('Labels')}}"
-                    ></search-field>
-                </v-col>
-                </v-row>
-                <v-row>
-
-                <v-col cols="12" md="12">
-
-                  <search-field
-                    v-model="editedItem.verLabels"
-                    api="/admin/api/labels/"
-                    query-params="&fltr=verified&typ=for_actor"
-                    item-text="title"
-                    item-value="id"
-                    :multiple="true"
-                    label="{{_('Verified Labels')}}"
-                    ></search-field>
-
-                </v-col>
-
-               
-
-
-              </v-row>
-
-              <v-row>
-
-
-                <v-col cols="12" md="2">
-                  <v-select
-                    :items="actorConfig.actorSex"
-                    v-model="editedItem.sex"
-                    label="{{_('Sex')}}"
-                  ></v-select>
-                </v-col>     
-
-                <v-col cols="12" md="2">
-                  <v-select
-                    :items="actorConfig.actorAge"
-                    v-model="editedItem.age"
-                    label="{{_('Minor/Adult')}}"
-                  ></v-select>
-                </v-col>     
-
-                <v-col cols="12" md="3">
-                  <v-select
-                    :items="actorConfig.actorCivilian"
-                    v-model="editedItem.civilian"
-                    label="{{_('Civilian/Non Civilian')}}"
-                  ></v-select>
-                </v-col>  
-                
-                <v-col md="2">
-                  <v-select
-                  :items="actorConfig.actorTypes"
-                  v-model="editedItem.actor_type"
-                  label="{{_('Actor Type')}}"
-                ></v-select>
-                </v-col>
-
-
-                <v-col cols="3" class="align-center d-flex">
-                 <pop-date-field label="Date of Birth" v-model="editedItem.birth_date"></pop-date-field>
-
-                  
-                </v-col>
-              </v-row>
-           
-
-              <v-row>
-              
-
-
-                <v-col cols="12" md="6">
-
-                   <search-field
-                    v-model="editedItem.birth_place"
-                    api="/admin/api/locations/"
-                    item-text="full_string"
-                    item-value="id"
-                    :multiple="false"
-                    label="{{_('Place of Birth')}}"
-                    ></search-field>
-
-
-                </v-col>
-
-                <v-col cols="12" md="6">
-                    <search-field
-                    v-model="editedItem.residence_place"
-                    api="/admin/api/locations/"
-                    item-text="full_string"
-                    item-value="id"
-                    :multiple="false"
-                    label="{{_('Place of Residence')}}"
-                    ></search-field>
-                </v-col>
-
-
-               
-              </v-row>
-
-
-                 <!-- events  -->
-
-                 <v-row>
-                  <v-col col="12">
-  
-                      {% include 'admin/partials/event_dialog.html' %}
-  
-  
-                  </v-col>
-                </v-row>
-
-                <!-- End Event -->
-
-                <v-row>
-                
-                  <v-col cols="12" md="3">
-                   <v-card class="d-flex" flat>
-                     <v-text-field
-                       v-if="occupation__"
-                       v-model="editedItem.occupation"
-                       label="{{_('Occupation')}}"
-                     ></v-text-field>
- 
-                     <v-text-field
-                       v-else
-                       v-model="editedItem.occupation_ar"
-                       label="{{_('Occupation (AR)')}}"
-                       background-color="lime lighten-5"
-                     ></v-text-field>
- 
-                     <v-btn
-                       color="grey lighten-2"
-                       outlined
-                       x-small
-                       fab
-                       class="swh d-inline"
-                       @click="occupation__=!occupation__"
-                       ><v-icon>mdi-web</v-icon></v-btn
-                     >
-                   </v-card>
-                 </v-col>
- 
-                    </v-col>
-                  <v-col cols="12" md="3">
-                   <v-card class="d-flex" flat>
-                     <v-text-field
-                       v-if="position__"
-                       v-model="editedItem.position"
-                       label="{{_('Position')}}"
-                     ></v-text-field>
- 
-                     <v-text-field
-                       v-else
-                       v-model="editedItem.position_ar"
-                       label="{{_('Position (AR)')}}"
-                       background-color="lime lighten-5"
-                     ></v-text-field>
- 
-                     <v-btn
-                       color="grey lighten-2"
-                       outlined
-                       x-small
-                       fab
-                       class="swh d-inline"
-                       @click="position__=!position__"
-                       ><v-icon>mdi-web</v-icon></v-btn
-                     >
-                   </v-card>
-                 </v-col>
-               
-               
- 
-                 <v-col cols="12" md="3">
-                   <v-card class="d-flex" flat>
-                     <v-text-field
-                       v-if="dialects__"
-                       v-model="editedItem.dialects"
-                       label="{{_('Spoken Dialects')}}"
-                     ></v-text-field>
- 
-                     <v-text-field
-                       v-else
-                       v-model="editedItem.dialects_ar"
-                       label="{{_('Spoken Dialects (AR)')}}"
-                       background-color="lime lighten-5"
-                     ></v-text-field>
- 
-                     <v-btn
-                       color="grey lighten-2"
-                       outlined
-                       x-small
-                       fab
-                       class="swh d-inline"
-                       @click="dialects__=!dialects__"
-                       ><v-icon>mdi-web</v-icon></v-btn
-                     >
-                   </v-card>
-                 </v-col>
- 
-                 <v-col cols="12" md="3">
-                   <v-card class="d-flex" flat>
-                     <v-text-field
-                       v-if="family_status__"
-                       v-model="editedItem.family_status"
-                       label="{{_('Family Status')}}"
-                     ></v-text-field>
- 
-                     <v-text-field
-                       v-else
-                       v-model="editedItem.family_status_ar"
-                       label="{{_('Family Status (AR)')}}"
-                       background-color="lime lighten-5"
-                     ></v-text-field>
- 
-                     <v-btn
-                       color="grey lighten-2"
-                       outlined
-                       x-small
-                       fab
-                       class="swh d-inline"
-                       @click="family_status__=!family_status__"
-                       ><v-icon>mdi-web</v-icon></v-btn
-                     >
-                   </v-card>
-                 </v-col>
-               
-               </v-row>
-
-               <v-row>
-                 <v-col cols="12" md="4" >
-                  <v-autocomplete
-                    
-                  :items="actorConfig.actorEthno"
-                  multiple
-                  v-model="editedItem.ethnography"
-                  label="{{_('Ethnographic Information')}}"
-                ></v-autocomplete>
-                 </v-col>
-
-                 <v-col cols="12" md="4" >
-                  <v-autocomplete
-                   multiple
-                  :items="countries"
-                  value=""
-                  v-model="editedItem.nationality"
-                  label="{{_('Nationality')}}"
-                ></v-autocomplete>
-                 </v-col>
-                 <v-col cols="12" md="4">
-                  <v-text-field
-                  v-model="editedItem.national_id_card"
-                  label="{{_('National ID Card')}}"
-                ></v-text-field>
-
-                 </v-col>
-
-                 
-
-
-               </v-row>
-
-
-
-              <v-row>
-                  <v-col col="12">
-  
-
-  
-                  </v-col>
-                </v-row>
-
-              <v-row>
-                  <v-col col="12">
-
-
-         <!-- Relate Actors Base Card -->         
-
-        <v-card outlined class="my-5">
-      <v-card-title class="handle">
-        <v-icon left>mdi-library-books </v-icon>
-          {{_('Related Actors')}}
-        <v-spacer></v-spacer>
-
-        <v-text-field
-          class="mx-5"
-          v-model="relateActorTerm"
-          label="{{_('Search & Relate Actors')}}"
-          @keydown.enter="searchRelatedActors"
-          @click:append="searchRelatedActors"
-          append-icon="mdi-magnify"
-        ></v-text-field>
-       
-
-      
-      <!--  Grid of Actors Items -->
-
-
-      <v-card-text>
-        <v-layout wrap>
-          <v-flex
-            class="pa-1"
-            md6
-            v-for="(item,index) in editedItem.actor_relations"
-            :key="index"
-          >
-            <!--  Related Actor  Card -->
-           <actor-result  :actor="item.actor">
-            <!--  attach relationship form -->
-            <template v-slot:header>
-              <v-card  outlined color="lime lighten-5" >
-                <v-card-title class="subtitle-2"><v-icon left>mdi-link</v-icon> Relationship Information</v-card-title>
+            <v-app-bar
+                    absolute
+                    color="pv"
+                    dark
+
+                    class="card-header"
+
+            >
+                <v-toolbar-title>${formTitle} <span class="gv--text" v-if="editedItem.id"> ${editedItem.id}</span>
+
+                    <v-chip v-if="editedItem.originid" :href="editedItem.source_link" target="_blank" pill label
+                            color="primary darken-1" class="white--text ml-1">
+                        # ${editedItem.originid}
+                    </v-chip>
+                </v-toolbar-title>
+                <v-spacer></v-spacer>
+
+
+                <v-btn @click="save" :disabled="invalid" dark color="primary darken-1" small class="mx-2" depressed>Save
+                    Actor
+                </v-btn>
+                <v-btn @click="confirmClose" icon>
+                    <v-icon>mdi-close</v-icon>
+                </v-btn>
+
+
+            </v-app-bar
+            >
+
+            <v-sheet
+                    id="card-content"
+                    max-height="100vh"
+                    class="overflow-y-auto pt-11">
 
 
                 <v-card-text>
-                    <div>
-                      <div class="caption">{{_('Probability')}}</div>
-                      <v-chip-group
-                      v-model="editedItem.actor_relations[index].probability"
-                      column
-                      active-class="primary dark"
-                    >
-                      <v-chip small> Maybe</v-chip>
-                      <v-chip small> Likely</v-chip>
-                      <v-chip small> Certain</v-chip>
-                    </v-chip-group>
+                    <v-container>
 
-                    <div class="caption">{{_('Related As')}}</div>
-                      <v-chip-group
-                      v-model="editedItem.actor_relations[index].related_as"
-                      column
-                      active-class="primary dark"
-                    >
-                      <v-chip v-for="r in actorConfig.atoaRelateAs" small> ${ detectDirection(editedItem, editedItem.actor_relations[index].actor) ? r.text: r.revtext }  </v-chip>
-                      
-                    </v-chip-group>
-                    
-              
-                    </div>
+                        <v-row>
+                            <v-col cols="12" md="6">
 
-                  <v-text-field class="mt-2" v-model="editedItem.actor_relations[index].comment" dense outlined
-                  label="{{_('Comments')}}"
-                ></v-text-field>
+                                <v-card class="d-flex" flat>
+
+
+                                    <v-text-field
+                                            v-if="name__"
+                                            v-model="editedItem.name"
+                                            label="{{ _('Name') }}"
+                                    ></v-text-field>
+
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.name_ar"
+                                            label="{{ _('Name (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="name__=!name__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="nickname__"
+                                            v-model="editedItem.nickname"
+                                            label="{{ _('Nickname') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.nickname_ar"
+                                            label="{{ _('Nickname (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="nickname__=!nickname__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                        <v-row>
+
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="first_name__"
+                                            v-model="editedItem.first_name"
+                                            label="{{ _('First Name') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.first_name_ar"
+                                            label="{{ _('First Name (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="first_name__=!first_name__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="middle_name__"
+                                            v-model="editedItem.middle_name"
+                                            label="{{ _('Middle/Father\'s Name') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.middle_name_ar"
+                                            label="{{ _('Middle/Father\'s Name (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="middle_name__=!middle_name__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="last_name__"
+                                            v-model="editedItem.last_name"
+                                            label="{{ _('Last Name') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.last_name_ar"
+                                            label="{{ _('Last Name (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="last_name__=!last_name__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="mother_name__"
+                                            v-model="editedItem.mother_name"
+                                            label="{{ _('Mother\'s Name') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.mother_name_ar"
+                                            label="{{ _('Mother\'s Name (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="mother_name__=!mother_name__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+                        </v-row>
+
+                        <v-row>
+                            <v-col cols="12" md="12">
+                                <div class="body-1 pa-1 grey--text">Description</div>
+                                <tinymce-editor
+                                        :init="tinyConfig"
+                                        v-model="editedItem.description"
+                                ></tinymce-editor>
+                            </v-col>
+                        </v-row>
+
+
+                        <v-row>
+                            <v-col cols="12" md="12">
+                                <search-field
+                                        v-model="editedItem.sources"
+                                        api="/admin/api/sources/"
+                                        item-text="title"
+                                        item-value="id"
+                                        :multiple="true"
+                                        label="{{ _('Sources') }}"
+                                ></search-field>
+                            </v-col>
+                        </v-row>
+                        <v-row>
+
+                            <v-col cols="12" md="12">
+                                <search-field
+                                        v-model="editedItem.labels"
+                                        api="/admin/api/labels/"
+                                        query-params="&typ=for_actor"
+                                        item-text="title"
+                                        item-value="id"
+                                        :multiple="true"
+                                        label="{{ _('Labels') }}"
+                                ></search-field>
+                            </v-col>
+                        </v-row>
+                        <v-row>
+
+                            <v-col cols="12" md="12">
+
+                                <search-field
+                                        v-model="editedItem.verLabels"
+                                        api="/admin/api/labels/"
+                                        query-params="&fltr=verified&typ=for_actor"
+                                        item-text="title"
+                                        item-value="id"
+                                        :multiple="true"
+                                        label="{{ _('Verified Labels') }}"
+                                ></search-field>
+
+                            </v-col>
+
+
+                        </v-row>
+
+                        <v-row>
+
+
+                            <v-col cols="12" md="2">
+                                <v-select
+                                        :items="actorConfig.actorSex"
+                                        v-model="editedItem.sex"
+                                        label="{{ _('Sex') }}"
+                                ></v-select>
+                            </v-col>
+
+                            <v-col cols="12" md="2">
+                                <v-select
+                                        :items="actorConfig.actorAge"
+                                        v-model="editedItem.age"
+                                        label="{{ _('Minor/Adult') }}"
+                                ></v-select>
+                            </v-col>
+
+                            <v-col cols="12" md="3">
+                                <v-select
+                                        :items="actorConfig.actorCivilian"
+                                        v-model="editedItem.civilian"
+                                        label="{{ _('Civilian/Non Civilian') }}"
+                                ></v-select>
+                            </v-col>
+
+                            <v-col md="2">
+                                <v-select
+                                        :items="actorConfig.actorTypes"
+                                        v-model="editedItem.actor_type"
+                                        label="{{ _('Actor Type') }}"
+                                ></v-select>
+                            </v-col>
+
+
+                            <v-col cols="3" class="align-center d-flex">
+                                <pop-date-field label="Date of Birth" v-model="editedItem.birth_date"></pop-date-field>
+
+
+                            </v-col>
+                        </v-row>
+
+
+                        <v-row>
+
+
+                            <v-col cols="12" md="4">
+
+                                <search-field
+                                        v-model="editedItem.birth_place"
+                                        api="/admin/api/locations/"
+                                        item-text="full_string"
+                                        item-value="id"
+                                        :multiple="false"
+                                        label="{{ _('Place of Birth') }}"
+                                ></search-field>
+
+
+                            </v-col>
+
+                            <v-col cols="12" md="4">
+                                <search-field
+                                        v-model="editedItem.residence_place"
+                                        api="/admin/api/locations/"
+                                        item-text="full_string"
+                                        item-value="id"
+                                        :multiple="false"
+                                        label="{{ _('Place of Residence') }}"
+                                ></search-field>
+                            </v-col>
+
+                            <v-col cols="12" md="4">
+                                <search-field
+                                        v-model="editedItem.origin_place"
+                                        api="/admin/api/locations/"
+                                        item-text="full_string"
+                                        item-value="id"
+                                        :multiple="false"
+                                        label="{{ _('Place of Origin') }}"
+                                ></search-field>
+                            </v-col>
+
+
+                        </v-row>
+
+
+                        <!-- events  -->
+
+                        <v-row>
+                            <v-col col="12">
+
+                                {% include 'admin/partials/event_dialog.html' %}
+
+
+                            </v-col>
+                        </v-row>
+
+                        <!-- End Event -->
+
+                        <v-row>
+
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="occupation__"
+                                            v-model="editedItem.occupation"
+                                            label="{{ _('Occupation') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.occupation_ar"
+                                            label="{{ _('Occupation (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="occupation__=!occupation__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="position__"
+                                            v-model="editedItem.position"
+                                            label="{{ _('Position') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.position_ar"
+                                            label="{{ _('Position (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="position__=!position__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="dialects__"
+                                            v-model="editedItem.dialects"
+                                            label="{{ _('Spoken Dialects') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.dialects_ar"
+                                            label="{{ _('Spoken Dialects (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="dialects__=!dialects__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+                            <v-col cols="12" md="3">
+                                <v-card class="d-flex" flat>
+                                    <v-text-field
+                                            v-if="family_status__"
+                                            v-model="editedItem.family_status"
+                                            label="{{ _('Family Status') }}"
+                                    ></v-text-field>
+
+                                    <v-text-field
+                                            v-else
+                                            v-model="editedItem.family_status_ar"
+                                            label="{{ _('Family Status (AR)') }}"
+                                            background-color="lime lighten-5"
+                                    ></v-text-field>
+
+                                    <v-btn
+                                            color="grey lighten-2"
+                                            outlined
+                                            x-small
+                                            fab
+                                            class="swh d-inline"
+                                            @click="family_status__=!family_status__"
+                                    >
+                                        <v-icon>mdi-web</v-icon>
+                                    </v-btn
+                                    >
+                                </v-card>
+                            </v-col>
+
+                        </v-row>
+
+                        <v-row>
+                            <v-col cols="12" md="4">
+                                <v-autocomplete
+
+                                        :items="actorConfig.actorEthno"
+                                        multiple
+                                        v-model="editedItem.ethnography"
+                                        label="{{ _('Ethnographic Information') }}"
+                                ></v-autocomplete>
+                            </v-col>
+
+                            <v-col cols="12" md="4">
+                                <v-autocomplete
+                                        multiple
+                                        :items="countries"
+                                        value=""
+                                        v-model="editedItem.nationality"
+                                        label="{{ _('Nationality') }}"
+                                ></v-autocomplete>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <v-text-field
+                                        v-model="editedItem.national_id_card"
+                                        label="{{ _('National ID Card') }}"
+                                ></v-text-field>
+
+                            </v-col>
+
+
+                        </v-row>
+
+
+                        <v-row>
+                            <v-col col="12">
+
+
+                            </v-col>
+                        </v-row>
+
+                        <v-row>
+                            <v-col col="12">
+
+
+                                <!-- Relate Actors Base Card -->
+
+                                <v-card outlined class="my-5">
+                                    <v-card-title class="handle">
+                                        <v-icon left>mdi-library-books</v-icon>
+                                        {{ _('Related Actors') }}
+                                        <v-spacer></v-spacer>
+
+                                        <v-text-field
+                                                class="mx-5"
+                                                v-model="relateActorTerm"
+                                                label="{{ _('Search & Relate Actors') }}"
+                                                @keydown.enter="searchRelatedActors"
+                                                @click:append="searchRelatedActors"
+                                                append-icon="mdi-magnify"
+                                        ></v-text-field>
+
+
+                                        <!--  Grid of Actors Items -->
+
+
+                                        <v-card-text>
+                                            <v-layout wrap>
+                                                <v-flex
+                                                        class="pa-1"
+                                                        md6
+                                                        v-for="(item,index) in editedItem.actor_relations"
+                                                        :key="index"
+                                                >
+                                                    <!--  Related Actor  Card -->
+                                                    <actor-result :actor="item.actor">
+                                                        <!--  attach relationship form -->
+                                                        <template v-slot:header>
+                                                            <v-card outlined color="lime lighten-5">
+                                                                <v-card-title class="subtitle-2">
+                                                                    <v-icon left>mdi-link</v-icon>
+                                                                    Relationship Information
+                                                                </v-card-title>
+
+
+                                                                <v-card-text>
+                                                                    <div>
+                                                                        <div class="caption">{{ _('Probability') }}</div>
+                                                                        <v-chip-group
+                                                                                v-model="editedItem.actor_relations[index].probability"
+                                                                                column
+                                                                                active-class="primary dark"
+                                                                        >
+                                                                            <v-chip small> Maybe</v-chip>
+                                                                            <v-chip small> Likely</v-chip>
+                                                                            <v-chip small> Certain</v-chip>
+                                                                        </v-chip-group>
+
+                                                                        <div class="caption">{{ _('Related As') }}</div>
+                                                                        <v-chip-group
+                                                                                v-model="editedItem.actor_relations[index].related_as"
+                                                                                column
+                                                                                active-class="primary dark"
+                                                                        >
+                                                                            <v-chip v-for="r in actorConfig.atoaRelateAs"
+                                                                                    small> ${
+                                                                                detectDirection(editedItem,
+                                                                                editedItem.actor_relations[index].actor)
+                                                                                ? r.text: r.revtext }
+                                                                            </v-chip>
+
+                                                                        </v-chip-group>
+
+
+                                                                    </div>
+
+                                                                    <v-text-field class="mt-2"
+                                                                                  v-model="editedItem.actor_relations[index].comment"
+                                                                                  dense outlined
+                                                                                  label="{{ _('Comments') }}"
+                                                                    ></v-text-field>
+                                                                </v-card-text>
+
+                                                            </v-card>
+                                                        </template>
+
+                                                        <template v-slot:actions>
+                                                            <v-btn
+                                                                    class="mx-auto"
+                                                                    @click="removeActor($event,index)"
+                                                                    x-small
+                                                                    fab
+                                                                    outlined
+                                                                    color="red lighten-3"
+                                                            >
+                                                                <v-icon>mdi-delete-sweep</v-icon>
+                                                            </v-btn
+                                                            >
+                                                        </template>
+
+
+                                                    </actor-result>
+
+                                                </v-flex>
+                                            </v-layout>
+                                        </v-card-text>
+                                </v-card>
+
+
+                                <!-- End Relate Actor Base Card-->
+
+
+                                <!-- Relate Bulletins Base Card -->
+
+                                <v-card outlined class="my-5">
+                                    <v-card-title class="handle">
+                                        <v-icon left>mdi-library-books</v-icon>
+                                        {{ _('Related Bulletins') }}
+                                        <v-spacer></v-spacer>
+
+                                        <v-text-field
+                                                class="mx-5"
+                                                v-model="relateBulletinTerm"
+                                                label="{{ _('Search & Relate Bulletins') }}"
+                                                @keydown.enter="searchRelatedBulletins"
+                                                @click:append="searchRelatedBulletins"
+                                                append-icon="mdi-magnify"
+                                        ></v-text-field>
+                                    </v-card-title>
+
+
+                                    <!--  Grid of Bulletins Items -->
+
+
+                                    <v-card-text>
+                                        <v-layout wrap>
+                                            <v-flex
+                                                    class="pa-1"
+                                                    md6
+                                                    v-for="(item,index) in editedItem.bulletin_relations"
+                                                    :key="index"
+                                            >
+                                                <!--  Related Bulletin  Card -->
+                                                <bulletin-result :bulletin="item.bulletin">
+                                                    <!--  attach relationship form -->
+                                                    <template v-slot:header>
+                                                        <v-card outlined color="lime lighten-5">
+                                                            <v-card-title class="subtitle-2">
+                                                                <v-icon left>mdi-link</v-icon>
+                                                                {{ _('Relationship Information') }}</v-card-title>
+
+
+                                                            <v-card-text>
+                                                                <div>
+                                                                    <div class="caption">{{ _('Probability') }}</div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.bulletin_relations[index].probability"
+                                                                            column
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                        <v-chip small> Maybe</v-chip>
+                                                                        <v-chip small> Likely</v-chip>
+                                                                        <v-chip small> Certain</v-chip>
+                                                                    </v-chip-group>
+
+                                                                    <div class="caption">{{ _('Related As') }}</div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.bulletin_relations[index].related_as"
+                                                                            column
+                                                                            multiple
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                        <v-chip v-for="r in actorConfig.btoaRelateAs"
+                                                                                small> ${r}
+                                                                        </v-chip>
+                                                                    </v-chip-group>
+
+
+                                                                </div>
+
+                                                                <v-text-field class="mt-2"
+                                                                              v-model="editedItem.bulletin_relations[index].comment"
+                                                                              dense outlined
+                                                                              label="{{ _('Comments') }}"
+                                                                ></v-text-field>
+                                                            </v-card-text>
+
+                                                        </v-card>
+                                                    </template>
+
+                                                    <template v-slot:actions>
+                                                        <v-btn
+                                                                class="mx-auto"
+                                                                @click="removeBulletin($event,index)"
+                                                                x-small
+                                                                fab
+                                                                outlined
+                                                                color="red lighten-3"
+                                                        >
+                                                            <v-icon>mdi-delete-sweep</v-icon>
+                                                        </v-btn
+                                                        >
+                                                    </template>
+
+
+                                                </bulletin-result>
+
+                                            </v-flex>
+                                        </v-layout>
+                                    </v-card-text>
+                                </v-card>
+
+
+                                <!---     End Relate bulletin base card   ---->
+
+                                <!-- Relate Incidents Base Card -->
+
+                                <v-card outlined class="my-5">
+                                    <v-card-title class="handle">
+                                        <v-icon left>mdi-hazard-lights</v-icon>
+                                        {{ _('Related Incidents') }}
+                                        <v-spacer></v-spacer>
+
+                                        <v-text-field
+                                                class="mx-5"
+                                                v-model="relateIncidentTerm"
+                                                label="{{ _('Search & Relate Incidents') }}"
+                                                @keydown.enter="searchRelatedIncidents"
+                                                @click:append="searchRelatedIncidents"
+                                                append-icon="mdi-magnify"
+                                        ></v-text-field>
+
+
+                                        <!--  Grid of Incidents Items -->
+
+
+                                        <v-card-text>
+                                            <v-layout wrap>
+                                                <v-flex
+                                                        class="pa-1"
+                                                        md6
+                                                        v-for="(item,index) in editedItem.incident_relations"
+                                                        :key="index"
+                                                >
+                                                    <!--  Related Actor  Card -->
+                                                    <incident-result :incident="item.incident">
+                                                        <!--  attach relationship form -->
+                                                        <template v-slot:header>
+                                                            <v-card outlined color="lime lighten-5">
+                                                                <v-card-title class="subtitle-2">
+                                                                    <v-icon left>mdi-link</v-icon>
+                                                                    {{ _('Relationship Information') }}</v-card-title>
+
+
+                                                                <v-card-text>
+
+                                                                    <div class="caption">{{ _('Probability') }}</div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.incident_relations[index].probability"
+                                                                            column
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                        <v-chip small> Maybe</v-chip>
+                                                                        <v-chip small> Likely</v-chip>
+                                                                        <v-chip small> Certain</v-chip>
+                                                                    </v-chip-group>
+
+
+                                                                    <v-text-field class="mt-2"
+                                                                                  v-model="editedItem.incident_relations[index].comment"
+                                                                                  dense outlined
+                                                                                  label="{{ _('Comments') }}"
+                                                                    ></v-text-field>
+                                                                </v-card-text>
+
+                                                            </v-card>
+                                                        </template>
+
+                                                        <template v-slot:actions>
+                                                            <v-btn
+                                                                    class="mx-auto"
+                                                                    @click="removeIncident($event,index)"
+                                                                    x-small
+                                                                    fab
+                                                                    outlined
+                                                                    color="red lighten-3"
+                                                            >
+                                                                <v-icon>mdi-delete-sweep</v-icon>
+                                                            </v-btn
+                                                            >
+                                                        </template>
+
+
+                                                    </incident-result>
+
+                                                </v-flex>
+                                            </v-layout>
+                                        </v-card-text>
+                                </v-card>
+
+
+                                <!-- End Relate Incident Base Card-->
+
+
+                                <!-- End Relate Media Base Card-->
+
+
+                                {% include 'admin/partials/media_dialog.html' %}
+
+
+                            </v-col>
+                        </v-row>
+
+
+                        <v-row>
+
+                            <v-col cols="12" md="6">
+
+
+                                <v-sheet class="d-flex align-center">
+                                    <validation-provider name="Source Link" :rules="source_disabled? '': 'required|url'"
+                                                         v-slot="{errors}">
+                                        <v-text-field class="mx-2"
+                                                      :disabled="source_disabled"
+                                                      v-model="editedItem.source_link"
+                                                      label="{{ _('Source Link') }}"
+                                        ></v-text-field>
+                                        <span class="orange--text"> ${errors[0]}</span>
+                                    </validation-provider>
+
+                                    <v-checkbox small class="mx-2" label="Not Available" v-model="source_alt" small>
+                                    </v-checkbox>
+                                    <v-switch small class="mx-2" label="Private" v-model="editedItem.source_link_type"
+                                              small>
+
+                                    </v-switch>
+
+                                </v-sheet>
+
+
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <pop-date-time-field label="Publish Date"
+                                                     v-model="editedItem.publish_date"></pop-date-time-field>
+
+                            </v-col>
+
+                            <v-col cols="12" md="3">
+
+                                <pop-date-time-field label="Documentation Date"
+                                                     v-model="editedItem.documentation_date"></pop-date-time-field>
+                            </v-col>
+
+                        </v-row>
+                        <v-row>
+                            <v-col cols="12" md="8">
+
+
+                                <validation-provider
+                                        name="Comments"
+                                        rules="required"
+                                        v-slot="{ errors }"
+                                >
+
+
+                                    <v-textarea outlined v-model="editedItem.comments" label="Comments"></v-textarea>
+                                    <span class="orange--text"> ${errors[0]}</span>
+                                </validation-provider>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <v-select
+                                        :disabled="statusDisabled"
+
+                                        :items="statusItems"
+                                        value="Human Created"
+                                        v-model="editedItem.status"
+                                        label="{{ _('Status') }}"
+                                ></v-select>
+                            </v-col>
+                        </v-row>
+
+
+                    </v-container>
                 </v-card-text>
 
-              </v-card>
-            </template>
-
-            <template v-slot:actions>
-              <v-btn
-                class="mx-auto"
-                @click="removeActor($event,index)"
-                x-small
-                fab
-                outlined
-                color="red lighten-3"
-                ><v-icon>mdi-delete-sweep</v-icon></v-btn
-              >
-            </template>
-
-
-           </actor-result>
-           
-          </v-flex>
-        </v-layout>
-      </v-card-text>
-    </v-card>
-
-
-    <!-- End Relate Actor Base Card-->
-
-
-    <!-- Relate Bulletins Base Card -->         
-
-    <v-card outlined class="my-5">
-      <v-card-title class="handle">
-        <v-icon left>mdi-library-books </v-icon>
-          {{_('Related Bulletins')}}
-        <v-spacer></v-spacer>
-
-        <v-text-field
-          class="mx-5"
-          v-model="relateBulletinTerm"
-          label="{{_('Search & Relate Bulletins')}}"
-          @keydown.enter="searchRelatedBulletins"
-          @click:append="searchRelatedBulletins"
-          append-icon="mdi-magnify"
-        ></v-text-field>
-      </v-card-title>
-       
-
-      
-      <!--  Grid of Bulletins Items -->
-
-
-      <v-card-text>
-        <v-layout wrap>
-          <v-flex
-            class="pa-1"
-            md6
-            v-for="(item,index) in editedItem.bulletin_relations"
-            :key="index"
-          >
-            <!--  Related Bulletin  Card -->
-           <bulletin-result  :bulletin="item.bulletin">
-            <!--  attach relationship form -->
-            <template v-slot:header>
-              <v-card  outlined color="lime lighten-5" >
-                <v-card-title class="subtitle-2"><v-icon left>mdi-link</v-icon>
-                    {{_('Relationship Information')}}</v-card-title>
-
-
-                <v-card-text>
-                    <div>
-                      <div class="caption">{{_('Probability')}}</div>
-                      <v-chip-group
-                      v-model="editedItem.bulletin_relations[index].probability"
-                      column
-                      active-class="primary dark"
-                    >
-                      <v-chip small> Maybe</v-chip>
-                      <v-chip small> Likely</v-chip>
-                      <v-chip small> Certain</v-chip>
-                    </v-chip-group>
-
-                    <div class="caption">{{_('Related As')}}</div>
-                      <v-chip-group
-                      v-model="editedItem.bulletin_relations[index].related_as"
-                      column
-                      multiple
-                      active-class="primary dark"
-                    >
-                    <v-chip v-for="r in actorConfig.btoaRelateAs" small> ${r}  </v-chip>
-                    </v-chip-group>
-                    
-              
-                    </div>
-
-                  <v-text-field class="mt-2" v-model="editedItem.bulletin_relations[index].comment" dense outlined
-                  label="{{_('Comments')}}"
-                ></v-text-field>
-                </v-card-text>
-
-              </v-card>
-            </template>
-
-            <template v-slot:actions>
-              <v-btn
-                class="mx-auto"
-                @click="removeBulletin($event,index)"
-                x-small
-                fab
-                outlined
-                color="red lighten-3"
-                ><v-icon>mdi-delete-sweep</v-icon></v-btn
-              >
-            </template>
-
-
-           </bulletin-result>
-           
-          </v-flex>
-        </v-layout>
-      </v-card-text>
-    </v-card>
-
-
-
-    
-    <!---     End Relate bulletin base card   ---->
-
- <!-- Relate Incidents Base Card -->         
-
- <v-card outlined class="my-5">
-  <v-card-title class="handle">
-    <v-icon left>mdi-hazard-lights </v-icon>
-      {{_('Related Incidents')}}
-    <v-spacer></v-spacer>
-
-    <v-text-field
-      class="mx-5"
-      v-model="relateIncidentTerm"
-      label="{{_('Search & Relate Incidents')}}"
-      @keydown.enter="searchRelatedIncidents"
-      @click:append="searchRelatedIncidents"
-      append-icon="mdi-magnify"
-    ></v-text-field>
-   
-
-  
-  <!--  Grid of Incidents Items -->
-
-
-  <v-card-text>
-    <v-layout wrap>
-      <v-flex
-        class="pa-1"
-        md6
-        v-for="(item,index) in editedItem.incident_relations"
-        :key="index"
-      >
-        <!--  Related Actor  Card -->
-       <incident-result  :incident="item.incident">
-        <!--  attach relationship form -->
-        <template v-slot:header>
-          <v-card  outlined color="lime lighten-5" >
-            <v-card-title class="subtitle-2"><v-icon left>mdi-link</v-icon>
-                {{_('Relationship Information')}}</v-card-title>
-
-
-            <v-card-text>
-
-                  <div class="caption">{{_('Probability')}}</div>
-                  <v-chip-group
-                  v-model="editedItem.incident_relations[index].probability"
-                  column
-                  active-class="primary dark"
-                >
-                  <v-chip small> Maybe</v-chip>
-                  <v-chip small> Likely</v-chip>
-                  <v-chip small> Certain</v-chip>
-                </v-chip-group>
-
-                
-
-              <v-text-field class="mt-2" v-model="editedItem.incident_relations[index].comment" dense outlined
-              label="{{_('Comments')}}"
-            ></v-text-field>
-            </v-card-text>
-
-          </v-card>
-        </template>
-
-        <template v-slot:actions>
-          <v-btn
-            class="mx-auto"
-            @click="removeIncident($event,index)"
-            x-small
-            fab
-            outlined
-            color="red lighten-3"
-            ><v-icon>mdi-delete-sweep</v-icon></v-btn
-          >
-        </template>
-
-
-       </incident-result>
-       
-      </v-flex>
-    </v-layout>
-  </v-card-text>
-</v-card>
-
-
-
-<!-- End Relate Incident Base Card-->
-
-
-
-
-    <!-- End Relate Media Base Card-->
-    
-
-
-  
-                      {% include 'admin/partials/media_dialog.html' %}
-                      
-  
-                  </v-col>
-                </v-row>
-             
-
-           
-
-              <v-row>
-            
-                <v-col cols="12" md="6">
-                  
-                    
-                <v-sheet class="d-flex align-center">
-                  <validation-provider name="Source Link" :rules="source_disabled? '': 'required|url'" v-slot="{errors}">
-                        <v-text-field class="mx-2"
-                                      :disabled="source_disabled"
-                                      v-model="editedItem.source_link"
-                                      label="{{_('Source Link')}}"
-                        ></v-text-field>
-                        <span class="orange--text"> ${errors[0]}</span>
-                    </validation-provider>
-
-                    <v-checkbox small class="mx-2" label="Not Available" v-model="source_alt" small>
-                    </v-checkbox>
-                    <v-switch small class="mx-2" label="Private" v-model="editedItem.source_link_type" small>
-
-                    </v-switch>
-
-        </v-sheet>
-                    
-                    
-                  
-                  
-                </v-col>
-                <v-col cols="12" md="3">
-                    <pop-date-time-field label="Publish Date" v-model="editedItem.publish_date"></pop-date-time-field>
-
-                </v-col>
-
-                <v-col cols="12" md="3">
-                   
-                   <pop-date-time-field label="Documentation Date" v-model="editedItem.documentation_date"></pop-date-time-field>
-                  </v-col>
-
-              </v-row>
-              <v-row>
-                <v-col cols="12" md="8">
-
-
-                  <validation-provider
-                  name="Comments"
-                  rules="required"
-                  v-slot="{ errors }"
-                >
-                  
-
-                    <v-textarea  outlined v-model="editedItem.comments" label="Comments"> </v-textarea>
-                <span class="orange--text"> ${errors[0]}</span>
-              </validation-provider>  
-                </v-col>
-                <v-col cols="12" md="4">
-                    <v-select
-                    :disabled="statusDisabled"
-                    
-                    :items="statusItems"
-                    value="Human Created"
-                    v-model="editedItem.status"
-                    label="{{_('Status')}}"
-                  ></v-select>
-                </v-col>
-              </v-row>
-
-
-
-            </v-container>
-          </v-card-text>
-       
-        </v-sheet>
+            </v-sheet>
         </v-card>
-      
-      </v-dialog>
-    </validation-observer>
+
+    </v-dialog>
+</validation-observer>

@@ -73,7 +73,7 @@
               ref="media"
               label-idle="Click/Drop to Upload..."
               v-bind:allow-multiple="true"
-              accepted-file-types="image/jpeg, image/png, video/mp4, video/webm"
+              accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"
               server="/admin/api/media/upload/"
               v-model="editedMedia.files"
               v-bind:files="editedMedia.files"

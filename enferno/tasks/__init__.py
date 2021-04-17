@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import hashlib
 import os
 import random
 import time
@@ -10,15 +10,15 @@ import pandas as pd
 from celery import Celery
 from celery.task import periodic_task
 from faker import Faker
-from flask_security.utils import hash_password
 from sqlalchemy import func
 
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Actor, PotentialViolation, \
-    ClaimedViolation, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory
+    ClaimedViolation, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory, Media
 from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import User, Role
 from flask_security.utils import hash_password
+from enferno.utils.data_import import DataImport
 
 celery = Celery(__name__)
 
@@ -46,8 +46,6 @@ class ContextTask(celery.Task):
 
 
 celery.Task = ContextTask
-
-
 
 
 def generate_system_roles():
@@ -147,10 +145,6 @@ def generate_bulletin(item: pd):
         print(e)
 
 
-
-
-
-
 @celery.task
 def generate_actor(item):
     try:
@@ -215,8 +209,6 @@ def generate_actor(item):
         print('Generated Actor ... {}'.format(a.id))
     except Exception as e:
         print(e)
-
-
 
 
 @celery.task
@@ -451,4 +443,11 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
     Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, 'incident')
     print("Incidents Bulk Update Successful")
 
+
+
+@celery.task(rate_limit=6)
+def etl_process_file(batch_id, file, meta, user_id, log):
+    di = DataImport(batch_id,meta,user_id = user_id,log=log)
+    di.process(file)
+    return 'done'
 
