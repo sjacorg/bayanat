@@ -10,9 +10,8 @@
     'admin/partials/bulk_bulletin_drawer.html' %}
     <v-main>
       {% include 'admin/partials/bulletin_advsearch.html' %}
-      <v-container class="fluid fill-height">
-        <v-layout class="align-top justify-center">
-          <v-container grid-list-sm>
+      <v-container class="container--fluid">
+
                   <v-card>
                     <v-card-title>
                       <div class="flex-grow-1"></div>
@@ -25,7 +24,7 @@
 
                       <v-data-table
                         fixed-header
-                        height="460"
+                        height="calc(100vh - 345px)"
                         id="bulletins-dt"
                         v-model="selected"
                         :headers="headers"
@@ -40,15 +39,15 @@
                       >
                         <template v-slot:top>
                           <v-toolbar flat color="white">
-                            <v-btn small @click="allBulletins" text
+                            <v-btn class="hidden-sm-and-down" small @click="allBulletins" text
                               >{{_('All Bulletins')}}</v-btn
                             >
-                            <v-divider class="mx-2" inset vertical></v-divider>
-                            <v-btn small @click="myAssigned" text
+                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                            <v-btn class="hidden-sm-and-down" small @click="myAssigned" text
                               >{{_('Assigned to me')}}</v-btn
                             >
-                            <v-divider class="mx-2" inset vertical></v-divider>
-                            <v-btn small @click="myReview" class="mr-2" text
+                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                            <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down" text
                               >{{_('My Review List')}}</v-btn
                             >
 
@@ -66,7 +65,7 @@
                               @click:append-outer="toggleAdvSearch"
                               prepend-inner-icon="mdi-magnify"
                               label="{{_('Search')}}"
-                              class="hidden-sm-and-down"
+                              :background-color="searchBg"
                             ></v-text-field>
 
 
@@ -89,7 +88,7 @@
 
 
 
-                          {% if current_user.has_role('Admin') %}
+                          {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
                           <v-toolbar dense color="grey lighten-4" flat>
                             <template v-if="bulkIcons">
                               <v-btn
@@ -211,8 +210,8 @@
                   </v-card>
 
 
-          </v-container>
-        </v-layout>
+
+
       </v-container>
     </v-main>
       {% include 'footer.html' %}
@@ -476,6 +475,19 @@
       }),
 
       computed: {
+
+          searchBg(){
+              for (const s of this.search){
+                  let props = Object.values(s);
+                  for (const v of props){
+                      if (v){
+                          return 'yellow lighten-5';
+                      }
+                  }
+              }
+              return ''
+
+          },
 
 
 

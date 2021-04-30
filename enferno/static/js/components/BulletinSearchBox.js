@@ -11,11 +11,11 @@ Vue.component('bulletin-search-box', {
         extraFilters: {
             type: Boolean
         },
-        showOp : {
+        showOp: {
             type: Boolean,
             default: true
         },
-        i18n:{
+        i18n: {
             type: Object,
         }
     },
@@ -33,8 +33,6 @@ Vue.component('bulletin-search-box', {
     },
     created() {
         this.q = this.value;
-
-
 
 
     },
@@ -58,10 +56,7 @@ Vue.component('bulletin-search-box', {
         }
 
     },
-    methods: {
-
-
-    },
+    methods: {},
 
     template: `
         <v-card flat>
@@ -91,17 +86,42 @@ Vue.component('bulletin-search-box', {
                                 :label="i18n.notContains_"
                                 clearable
                         ></v-text-field>
-                        
-                          <v-text-field
+                        <div class="d-flex">
+                          <v-combobox
                                 v-model="q.ref"
                                 :label="i18n.ref_"
+                                multiple
+                                deletable-chips
+                                small-chips
                                 clearable
-                        ></v-text-field>
+                        ></v-combobox>
+                        
+                        <v-checkbox label="Any" dense v-model="q.opref" color="primary" small
+                                        class="mx-3"></v-checkbox>
+                        
+                        </div>
+                        
+                        <div class="d-flex">
+                        
+                        <v-combobox
+                                v-model="q.exref"
+                                :label="i18n.exRef_"
+                                multiple
+                                deletable-chips
+                                small-chips
+                                clearable
+                        ></v-combobox>
+                        
+                        <v-checkbox label="All" dense v-model="q.opexref" color="primary" small
+                                        class="mx-3"></v-checkbox>
+                                        </div>
+                        
+                        
                     </v-col>
                 </v-row>
                 <v-row>
                     <v-col md="6">
-                        <div class="d-flex">
+                        <div class="d-flex flex-wrap">
                             <pop-date-field :label="i18n.publishDate_" v-model="q.pubdate"></pop-date-field>
                             <v-select
                                     dense
@@ -114,7 +134,7 @@ Vue.component('bulletin-search-box', {
                     </v-col>
             
                     <v-col md="6">
-                        <div class="d-flex">
+                        <div class="d-flex flex-wrap">
                             <pop-date-field :label="i18n.documentationDate_" v-model="q.docdate"></pop-date-field>
                             <v-select
                                     class="mx-2"
@@ -131,7 +151,7 @@ Vue.component('bulletin-search-box', {
               
               <v-row>
                     <v-col md="6">
-                        <div class="d-flex">
+                        <div class="d-flex flex-wrap">
                             <pop-date-field :label="i18n.createdDate_" v-model="q.created"></pop-date-field>
                             <v-select
                                     dense
@@ -144,7 +164,7 @@ Vue.component('bulletin-search-box', {
                     </v-col>
             
                     <v-col md="6">
-                        <div class="d-flex">
+                        <div class="d-flex flex-wrap">
                             <pop-date-field :label="i18n.updatedDate_" v-model="q.updated"></pop-date-field>
                             <v-select
                                     class="mx-2"

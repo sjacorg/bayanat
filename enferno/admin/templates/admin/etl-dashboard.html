@@ -24,6 +24,8 @@
                                     <v-stepper-content step="1">
 
                                         <v-data-table
+                                                fixed-header
+                                                height="calc(100vh - 410px)"
                                                 :headers="headers"
                                                 :items="items"
                                                 :options.sync="options"
@@ -37,9 +39,45 @@
                                         >
                                             <template v-slot:top="{item}">
                                                 <v-toolbar color="grey lighten-4" flat>
+
+                                                    <v-btn :disabled="selAllDisabled" @click="selectAll" x-small
+                                                           elevation="1" color="white" fab>
+                                                        <v-icon>mdi-check-all</v-icon>
+                                                    </v-btn>
+                                                    <v-btn :disabled="!selectedItems.length" @click="clearAll" x-small
+                                                           elevation="1" class="mx-3" color="white" fab>
+                                                        <v-icon>mdi-checkbox-blank-outline</v-icon>
+                                                    </v-btn>
+
+                                                    <v-divider vertical></v-divider>
+
+
+
+                                                     <v-btn :disabled="mode==2" x-small fab
+                                                                   class="mx-3 hidden-md-and-up"
+                                                                   @click="uploadFiles"
+                                                                   color="primary"
+                                                            elevation="1"
+                                                            >
+                                                                <v-icon >mdi-upload</v-icon>
+
+                                                            </v-btn>
+
+
+                                                     <v-btn :disabled="mode==1" @click="selectPath" x-small fab
+                                                                    color="primary"
+                                                            elevation="1"
+                                                            class="hidden-md-and-up">
+                                                                <v-icon> mdi-folder-open</v-icon>
+                                                            </v-btn>
+
+
+
+
                                                     <v-tooltip top>
                                                         <template v-slot:activator="{on, attrs}">
-                                                            <v-btn :disabled="mode==2" small v-on="on" class="mx-2"
+                                                            <v-btn :disabled="mode==2" small v-on="on"
+                                                                   class="mx-3 hidden-sm-and-down"
                                                                    @click="uploadFiles"
                                                                    color="primary"
                                                             >
@@ -52,7 +90,7 @@
                                                     <v-tooltip top>
                                                         <template v-slot:activator="{on}">
                                                             <v-btn :disabled="mode==1" @click="selectPath" small
-                                                                   v-on="on" color="primary">
+                                                                   v-on="on" color="primary" class="hidden-sm-and-down">
                                                                 <v-icon left> mdi-folder-open</v-icon>
                                                                 Process path
                                                             </v-btn>
@@ -65,12 +103,20 @@
 
                                                     <v-spacer></v-spacer>
 
-                                                    <v-btn small class="mx-2" @click="stepTwo"
+                                                    <v-btn small class="mx-2 hidden-sm-and-down" @click="stepTwo"
                                                            :disabled="!selectedItems.length"
                                                            :dark="selectedItems.length?true:false" color="green"
                                                            elevation="1">
                                                         <v-icon left color="white">mdi-play-circle</v-icon>
                                                         Next >
+                                                    </v-btn>
+
+                                                     <v-btn x-small class="mx-2 hidden-md-and-up" @click="stepTwo"
+                                                            fab
+                                                           :disabled="!selectedItems.length"
+                                                           :dark="selectedItems.length?true:false" color="green"
+                                                           elevation="1">
+                                                        <v-icon color="white">mdi-play-circle</v-icon>
                                                     </v-btn>
 
 
@@ -146,7 +192,7 @@
                                                     </v-col>
                                                 </v-row>
                                                 <v-row>
-                                                    <v-col cols="12" md="6">
+                                                    <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/sources/"
                                                                 item-text="title"
@@ -158,7 +204,7 @@
 
                                                     </v-col>
 
-                                                    <v-col cols="12" md="6">
+                                                    <v-col cols="12" md="4">
                                                         <v-combobox
                                                                 small-chips
                                                                 multiple
@@ -168,6 +214,9 @@
 
                                                         ></v-combobox>
 
+                                                    </v-col>
+                                                    <v-col cols="12" md="4">
+                                                        <v-switch v-model="optimize" label="Optimize Videos"></v-switch>
                                                     </v-col>
                                                 </v-row>
 
@@ -180,16 +229,16 @@
 
                                     <v-stepper-content step="3">
                                         <v-card class="pa-5">
-                                    <v-card-text>
+                                            <v-card-text>
                                                 ${ status }
-                        </v-card-text>
+                                            </v-card-text>
                                         </v-card>
                                     </v-stepper-content>
                                 </v-stepper-items>
                             </v-stepper>
 
                             <v-dialog persistent v-model="selectDlg" max-width="900">
-                                <v-card class="pa-3" v-if="selectDlg">
+                                <v-card :disabled="loading" :loading="loading" class="pa-3" v-if="selectDlg">
                                     <v-card-title>
                                         <v-spacer></v-spacer>
                                         <v-btn fab text @click="selectDlg=false">
@@ -199,7 +248,7 @@
                                     <v-card-text class="align-center">
                                         <v-text-field v-model="selectedPath" value="/home/media/"
                                                       label="Input path to files"></v-text-field>
-                                        <v-switch v-model="recursive" label="Search Subfolders"> </v-switch>
+                                        <v-switch v-model="recursive" label="Search Subfolders"></v-switch>
                                     </v-card-text>
 
                                     <v-card-actions class="pb-3">
@@ -227,7 +276,7 @@
                                                    ref="media"
                                                    label-idle="Click/Drop files here to Upload..."
                                                    v-bind:allow-multiple="true"
-{#                                                   accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"#}
+                                                {#                                                   accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"#}
                                                    server="/admin/api/media/upload/"
                                                    v-model="files"
                                                    v-bind:files="files"
@@ -261,6 +310,11 @@
                 </v-container>
             </v-main>
             {% include 'footer.html' %}
+
+            <v-overlay v-model="loading">
+
+
+            </v-overlay>
         </v-app>
     </div>
 
@@ -282,6 +336,8 @@
                 snackMessage: '',
                 loading: false,
                 status: '',
+
+                selAllDisabled: true,
 
                 ploader: true,
                 step: 1,
@@ -312,6 +368,7 @@
                 refs: [],
                 files: [],
                 items: [],
+                optimize: null,
                 selectedItems: [],
                 itemsLength: 100,
                 editedIndex: -1,
@@ -333,6 +390,15 @@
 
             watch: {
 
+                items(val) {
+                    if (val.length) {
+                        this.selAllDisabled = false;
+                    } else {
+                        this.selAllDisabled = true;
+                    }
+
+                },
+
 
                 options: {
                     handler: "refresh",
@@ -341,6 +407,17 @@
             },
 
             methods: {
+
+                selectAll() {
+                    if (this.items.length) {
+                        this.selectedItems = this.items;
+                    }
+
+                },
+
+                clearAll() {
+                    this.selectedItems = [];
+                },
                 preprocess(files) {
                     files = files.filter(x => this.validFile(x.file.name))
                     for (i = 1; i < files.length; i++) {
@@ -372,6 +449,8 @@
                     }
                     // else
 
+                    this.loading = true;
+
                     axios.post('/admin/etl/path/', {path: this.selectedPath, recursive: this.recursive}).then(res => {
                         this.items = this.preprocess(res.data);
                         this.mode = 2;
@@ -380,6 +459,7 @@
                         this.showSnack(error.response.data)
                     }).finally(() => {
                         this.selectDlg = false;
+                        this.loading = false;
                     })
 
 
@@ -399,26 +479,14 @@
                 },
 
                 validFile(filename) {
-                    if (
-                        //images
-                        filename.toLowerCase().endsWith('.jpg') ||
-                        filename.toLowerCase().endsWith('.jpeg') ||
-                        filename.toLowerCase().endsWith('.png') ||
-                        filename.toLowerCase().endsWith('.gif') ||
-                        //videos
-                        filename.toLowerCase().endsWith('.mp4') ||
-                        filename.toLowerCase().endsWith('.mov') ||
-                        filename.toLowerCase().endsWith('.mkv') ||
-                        //documents
-                        filename.toLowerCase().endsWith('.doc') ||
-                        filename.toLowerCase().endsWith('.pdf') ||
-                        filename.toLowerCase().endsWith('.txt') ||
-                        filename.toLowerCase().endsWith('.docx') ||
-                        filename.toLowerCase().endsWith('.ttf')
-                    ) {
+                    const ext = filename.split(".").pop().toLowerCase();
+                    if (ETL_EXTENSIONS.includes(ext)) {
                         return true;
+
+                    } else {
+                        return false;
                     }
-                    return false
+
 
                 },
 
@@ -429,38 +497,38 @@
 
                     this.step = 3;
 
-                        let files;
-                        if (this.mode == 1) {
-                            files = this.selectedItems.map(x=> {
-                                let f = JSON.parse(x.serverId)
-                                f.name = x.file.name;
-                                return f
-                            })
+                    let files;
+                    if (this.mode == 1) {
+                        files = this.selectedItems.map(x => {
+                            let f = JSON.parse(x.serverId)
+                            f.name = x.file.name;
+                            return f
+                        })
 
-                        }
-                        else {
-                            files = this.selectedItems;
-                        }
-                        let data = {
-                            files: files,
-                            labels: this.labels,
-                            ver_labels: this.verLabels,
-                            sources: this.sources,
-                            locations: this.locations,
-                            refs: this.refs,
-                            mode: this.mode
-                        }
+                    } else {
+                        files = this.selectedItems;
+                    }
+                    let data = {
+                        files: files,
+                        labels: this.labels,
+                        ver_labels: this.verLabels,
+                        sources: this.sources,
+                        locations: this.locations,
+                        refs: this.refs,
+                        mode: this.mode,
+                        optimize: this.optimize
+                    }
 
-                        axios.post('/admin/etl/process', data).then(res => {
-                                this.showSnack(res.data);
-                                this.status = 'You may check the status of this ETL on the status page'
+                    axios.post('/admin/etl/process', data).then(res => {
+                        this.showSnack(res.data);
+                        this.status = 'You may check the status of this ETL on the status page'
 
-                        }).catch(error => {
+                    }).catch(error => {
 
 
-                        }).finally(() => {
+                    }).finally(() => {
 
-                        });
+                    });
 
 
                 },

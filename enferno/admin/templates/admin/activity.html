@@ -3,11 +3,9 @@
 <div id="app">
   <v-app id="activity" v-cloak>
     {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-    <v-content>
-      <v-container fluid fill-height>
-        <v-layout align-top justify-center>
-          <v-container grid-list-sm>
-            <v-container>
+    <v-main>
+
+            <v-container class="container--fluid">
               <v-row>
                 <v-col cols="12">
                   <v-card>
@@ -17,6 +15,8 @@
 
                     <v-card-text>
                       <v-data-table
+                          height="calc(100vh - 325px)"
+                          fixed-header
                         :headers="headers"
                         :items="items"
                         :options.sync="options"
@@ -60,10 +60,8 @@
                 </v-col>
               </v-row>
             </v-container>
-          </v-container>
-        </v-layout>
-      </v-container>
-    </v-content>
+
+    </v-main>
       {% include 'footer.html' %}
   </v-app>
 </div>

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import pandas  as pd
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 
 import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
-    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, Etl
+    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings
 from enferno.admin.views import admin
 from enferno.extensions import cache, db, mail, debug_toolbar, migrate, session, bouncer, babel
 from enferno.public.views import bp_public
@@ -46,19 +46,16 @@ def register_extensions(app):
     return None
 
 
-
 def register_signals(app):
     @user_logged_in.connect_via(app)
     def _after_login_hook(sender, user, **extra):
-        #clear login counter
+        # clear login counter
         from flask import session
         if session.get('failed'):
             session.pop('failed')
-            print ('login counter cleared')
+            print('login counter cleared')
 
         Activity.create(user, Activity.ACTION_LOGIN, user.to_mini(), 'user')
-
-
 
     @user_logged_out.connect_via(app)
     def _after_logout_hook(sender, user, **extra):
@@ -110,7 +107,6 @@ def register_shellcontext(app):
             'Itoa': Itoa,
             'Activity': Activity,
             'Settings': Settings,
-            'Etl': Etl
         }
 
     app.shell_context_processor(shell_context)

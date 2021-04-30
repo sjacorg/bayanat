@@ -1,10 +1,16 @@
 <v-dialog v-model="advSearchExpand" width="770">
-    <v-card class="pa-6">
-        <v-btn style="z-index:1000" absolute top right @click="advSearchExpand=false" icon>
-            <v-icon>mdi-close</v-icon>
-        </v-btn>
+
+    <v-card>
+        <v-card-title>
+            <v-spacer></v-spacer>
+            <v-btn fab text @click="advSearchExpand=false">
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </v-card-title>
+
         <v-card-text>
-            <v-select :label="translations.loadExistingSearch_"
+            <v-select small
+                      :label="translations.loadExistingSearch_"
                       :items="searches"
                       item-text="name"
                       item-value="id"
@@ -14,35 +20,37 @@
                       @click:clear="resetSearch"
                       outlined
                       clearable
-                      class="mt-3"
+
             >
             </v-select>
+            <v-expansion-panels accordion v-model="searchPanels">
+                <v-expansion-panel v-for="(q,i) in search"
+
+                >
+                    <v-expansion-panel-header>${translations.query_} ${i+1} <span v-if="!i==0" class="mx-3"><v-icon
+                            @click.stop="removeQueryAt(i)" color="red lighten-1">mdi-minus-circle</v-icon></span>
+                    </v-expansion-panel-header>
+                    <v-expansion-panel-content>
+                        {{ i }}
+                        <bulletin-search-box
+                                :i18n="translations"
+                                :show-op="!i==0"
+                                :extra-filters="true"
+                                @close="advSearchExpand=false"
+                                close-btn="true"
+                                v-model="search[i]"
+                                :users="users">
+                        </bulletin-search-box>
+                    </v-expansion-panel-content>
+                </v-expansion-panel>
+            </v-expansion-panels>
         </v-card-text>
 
+    </v-card>
 
-        <v-expansion-panels class="mt-7" accordion v-model="searchPanels">
-            <v-expansion-panel v-for="(q,i) in search"
-
-            >
-                <v-expansion-panel-header>${translations.query_} ${i+1} <span v-if="!i==0" class="mx-3"><v-icon @click.stop="removeQueryAt(i)" color="red lighten-1" >mdi-minus-circle</v-icon></span> </v-expansion-panel-header>
-                <v-expansion-panel-content>
-                    {{i}}
-                    <bulletin-search-box
-                            :i18n="translations"
-                            :show-op="!i==0"
-                            :extra-filters="true"
-                            @close="advSearchExpand=false"
-                            close-btn="true"
-                            v-model="search[i]"
-                            :users="users">
-                    </bulletin-search-box>
-                </v-expansion-panel-content>
-            </v-expansion-panel>
-        </v-expansion-panels>
-
-
-        <v-card-actions color="white" class="d-flex pa-4" style="position:sticky;padding:10px;bottom:0;">
-            <v-btn small text color="grey" @click="addQuery">
+    <v-card tile class="text-center  search-toolbar" elevation="10" color="grey lighten-5">
+        <v-card-text>
+            <v-btn class="ma-3" small text color="grey" @click="addQuery">
                 <v-icon left>mdi-link-plus</v-icon>
                 ${translations.refineExtendSearch_}
             </v-btn>
@@ -50,15 +58,12 @@
             <v-btn @click="search=[{}]" text>{{ _('Clear Search') }}</v-btn>
             <v-btn @click="saveQueryDialog=true" color="grey lighten-2" depressed>{{ _('Save Search') }}</v-btn>
             <v-btn @click="doSearch" color="primary">{{ _('Search') }}</v-btn>
-
-
-        </v-card-actions>
-
+        </v-card-text>
     </v-card>
     <v-dialog width="300" v-model="saveQueryDialog">
         <v-card class="pa-3">
             <v-card-text>
-                <v-text-field v-model="queryName" label="{{_('Name this search')}}"></v-text-field>
+                <v-text-field v-model="queryName" label="{{ _('Name this search') }}"></v-text-field>
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
@@ -69,5 +74,5 @@
     </v-dialog>
 
 </v-dialog>
-    
+
 

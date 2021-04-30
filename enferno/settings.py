@@ -13,7 +13,7 @@ class Config(object):
     CACHE_TYPE = 'simple'  # Can be "memcached", "redis", etc.
     # database uri
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'SQLALCHEMY_DATABASE_URI', 'postgresql:///sjac')
+        'SQLALCHEMY_DATABASE_URI', 'postgresql:///sjac') ## Replace with db name
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
     CELERY_BROKER_URL = os.environ.get(
@@ -67,7 +67,7 @@ class Config(object):
     GOOGLE_CLIENT_SECRET = os.environ.get(
         "GOOGLE_CLIENT_SECRET", 'ClientSecret')
     GOOGLE_DISCOVERY_URL = (
-        "https://accounts.google.com/.well-known/openid-configuration"
+        ""
     )
 
     # File Upload Settings: switch to True to store files privately within the enferno/media directory
@@ -91,7 +91,8 @@ class Config(object):
     # compile translation using the following
     # pybabel compile -d enferno/translations
 
-
+    # Valid video extension list (will be processed during ETL)
+    ETL_VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
 
     # Cors Policy required on the bucket; Allowed Origin can be set to the domain of the system
 
@@ -146,7 +147,7 @@ class ProdConfig(Config):
     """Production configuration."""
     ENV = 'prod'
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://user:pass@host/db'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://user:pass@host/db' ## Replace with correct values if needed, or postgresql:///db
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
 
 # override configurations for development

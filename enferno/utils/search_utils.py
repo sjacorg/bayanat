@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, func
+from sqlalchemy import or_, not_, func, and_
 
 from enferno.admin.models import Bulletin, Actor, Incident, Label, Source, Location, Event
 from enferno.extensions import db
@@ -85,10 +85,26 @@ class SearchUtils:
                 query.append(not_(Bulletin.search.ilike('%{}%'.format(word))))
 
         # ref
-        ref = q.get('ref', None)
-        if ref is not None and ref != '':
-            search = '%' + ref + '%'
-            query.append(func.array_to_string(Bulletin.ref, '').ilike(search))
+        ref = q.get('ref')
+
+        if ref:
+            search = ['%' + r + '%' for r in ref]
+            #get serach operator
+            op = q.get('opref', False)
+            if op:
+                query.append(or_(func.array_to_string(Bulletin.ref, '').ilike(r) for r in search))
+            else:
+                query.append(and_(func.array_to_string(Bulletin.ref, '').ilike(r) for r in search))
+
+        exref = q.get('exref')
+        if exref:
+            # get operator
+            opexref = q.get('opexref')
+            if opexref:
+                subq = Bulletin.query.filter(and_(Bulletin.ref.any(x) for x in exref)).with_entities('id')
+                query.append(~Bulletin.id.in_(subq))
+            else:
+                query.extend([~Bulletin.ref.any(ref) for ref in exref])
 
         labels = q.get('labels', [])
         if len(labels):

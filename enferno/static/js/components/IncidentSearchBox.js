@@ -58,11 +58,16 @@ Vue.component('incident-search-box', {
     },
 
     template: `
-        <v-card outlined class="pa-7">
-
-            <v-btn v-if="closeBtn" absolute top right @click="$emit('close')" icon>
+<v-sheet>
+    <v-card class="pa-4">
+        <v-card-title>
+            <v-spacer></v-spacer>
+            <v-btn fab text @click="$emit('close')">
                 <v-icon>mdi-close</v-icon>
             </v-btn>
+        </v-card-title>
+
+            
 
 
             <v-container class="fluid">
@@ -239,16 +244,22 @@ Vue.component('incident-search-box', {
 
 
             </v-container>
+            
+            
 
-            <v-card-actions class="d-flex" style="position:sticky;padding:10px;background:white;bottom:0;">
-                <v-spacer></v-spacer>
-                <v-btn @click="q={}" text>{{ i18n.clearSearch_ }}</v-btn>
+            
+        </v-card>
+        <v-card tile class="text-center  search-toolbar" elevation="10" color="grey lighten-5">
+        <v-card-text> <v-spacer></v-spacer>
+        <v-btn @click="q={}" text>{{ i18n.clearSearch_ }}</v-btn>
 
                 <v-btn @click="$emit('search',q)" color="primary">{{ i18n.search_ }}</v-btn>
-                <v-spacer></v-spacer>
-            </v-card-actions>
-        </v-card>
-
+                 <v-spacer></v-spacer>
+</v-card-text>
+        
+</v-card>
+  
+</v-sheet>
     `
 
 })

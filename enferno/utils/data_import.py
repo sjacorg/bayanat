@@ -1,10 +1,11 @@
-import hashlib, ntpath, os
+import hashlib, ntpath, os, boto3
 import pyexifinfo as exiflib
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.user.models import User
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
-
+from enferno.settings import ProdConfig, DevConfig
+import subprocess
 
 def now():
     return str(arrow.utcnow())
@@ -12,6 +13,10 @@ def now():
 #log_file = '{}.log'.format(uuid.uuid4().hex[:8])
 #log = open(log_file, 'a')
 
+if os.environ.get("FLASK_DEBUG") == '0':
+    cfg = ProdConfig
+else:
+    cfg = DevConfig
 
 class DataImport():
 
@@ -25,12 +30,25 @@ class DataImport():
         self.log = open(log,'a')
 
 
+    def s3_upload(self, file):
+        s3 = boto3.resource('s3', aws_access_key_id=cfg['AWS_ACCESS_KEY_ID'],
+                            aws_secret_access_key=cfg['AWS_SECRET_ACCESS_KEY'])
+
+
+
+        # final file
+        filename = Media.generate_file_name(file)
+        # filepath = (Media.media_dir/filename).as_posix()
+
+        response = s3.Bucket(cfg['S3_BUCKET']).put_object(Key=filename, Body=f)
+        # print(response.get())
+        etag = response.get()['ETag'].replace('"', '')
 
     def process(self, file):
 
         # handle file uploads based on mode of ETL
 
-        print (file)
+        print(file)
         if self.meta.get('mode') == 2:
             self.summary += '------------------------------------------------------------------------ \n'
             self.summary += now() + 'file: {}'.format(file.get('file').get('name')) + '\n'
@@ -54,18 +72,37 @@ class DataImport():
 
             #server side mode, need to copy files and generate etags
             old_filename = file.get('file').get('name')
-            title = os.path.splitext(old_filename)[0]
+            title, ext = os.path.splitext(old_filename)
+
+
             filename = Media.generate_file_name(old_filename)
             filepath = (Media.media_dir / filename).as_posix()
-            shutil.copy(old_path, filepath)
-            self.summary  += now() + ' File saved as {}'.format(filename) + '\n'
+
+            # check if file is video (accepted extension)
+            if ext[1:].lower() in cfg.ETL_VID_EXT and self.meta.get('optimize'):
+                #process video
+                try:
+                    filepath = '{}.mp4'.format(os.path.splitext(filepath)[0])
+                    command = 'ffmpeg -i "{}" -vcodec libx264  -acodec aac -strict -2 "{}"'.format(old_path, filepath )
+                    subprocess.call(command, shell=True)
+                    #if conversion is successful / also update the filename passed to media creation code
+                    filename = os.path.basename(filepath)
+                except Exception as e:
+                    print ('An exception occurred while transcoding file {}'.format(e))
+                    #copy the file as is instead
+                    shutil.copy(old_path, filepath)
+
+
+            else:
+                shutil.copy(old_path, filepath)
+            self.summary += now() + ' File saved as {}'.format(filename) + '\n'
 
 
         elif self.meta.get('mode') == 1:
             self.summary += now() + ' ------ Processing file: {} ------'.format(file.get('filename')) + '\n'
             # we already have the file and the etag
             filename = file.get('filename')
-            title = os.path.splitext(filename)[0]
+            title, ext = os.path.splitext(filename)
             filepath = (Media.media_dir / filename).as_posix()
             etag = file.get('etag')
             # check here for duplicate to skip unnecessary code execution
@@ -82,6 +119,25 @@ class DataImport():
                 self.summary += '------------------------------------------------------------------------\n\n'
                 self.log.write(self.summary)
                 return "This file already exists"
+            # else check if video processing is enabled
+            if ext[1:].lower() in cfg.ETL_VID_EXT and self.meta.get('optimize'):
+                # process videos in the media
+                try:
+                    new_filepath = '{}*.mp4'.format(os.path.splitext(filepath)[0])
+                    command = 'ffmpeg -i "{}" -vcodec libx264 -acodec aac -strict -2 "{}"'.format(filepath, new_filepath )
+                    subprocess.call(command, shell=True)
+                    #if conversion is successful / also update the filename passed to media creation code
+                    filename = os.path.basename(new_filepath)
+                    #clean up old file
+                    os.remove(filepath)
+                    #if op is successful update filepath
+                    filepath = new_filepath
+
+                except Exception as e:
+                    print ('An exception occurred while transcoding file {}'.format(e))
+                    # do nothing
+
+
 
         # get mime type
         # mime = magic.Magic(mime=True)

@@ -19,7 +19,6 @@ from enferno.extensions import bouncer, rds, babel
 from enferno.extensions import cache
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file
 from enferno.user.models import User, Role
-from enferno.utils.data_import import DataImport
 from enferno.utils.search_utils import SearchUtils
 
 
@@ -54,7 +53,7 @@ def before_request():
     :return: None
     """
     g.user = current_user
-    g.version = '4'
+    g.version = '0'
 
 
 @admin.app_context_processor
@@ -712,7 +711,7 @@ def make_cache_key(*args, **kwargs):
 
 
 @admin.route('/api/bulletins/', methods=['POST', 'GET'])
-@cache.cached(15, make_cache_key)
+#@cache.cached(15, make_cache_key)
 def api_bulletins():
     """Returns bulletins in JSON format, allows search and paging."""
     query = []
@@ -845,8 +844,8 @@ def api_bulletin_review_update(id):
 
 
 # bulk update bulletin endpoint
+@roles_required(['Admin','Mod'])
 @admin.route('/api/bulletin/bulk/', methods=['PUT'])
-@roles_required('Admin')
 def api_bulletin_bulk_update():
     """
     Endpoint to bulk update bulletins
@@ -943,7 +942,7 @@ def api_medias_upload():
 
             response = s3.Bucket(current_app.config['S3_BUCKET']).put_object(Key=filename, Body=f)
             # print(response.get())
-            etag = response.get()['ETag']
+            etag = response.get()['ETag'].replace('"', '')
 
             return json.dumps({'filename': filename, 'etag': etag}), 200
 
@@ -1325,9 +1324,8 @@ def api_incidenthistory(incidentid):
 
 # user management routes
 
-
+@roles_required(['Admin','Mod'])
 @admin.route('/api/users/')
-@roles_required('Admin')
 def api_users():
     """
     API endpoint to feed users data in json format , supports paging and search

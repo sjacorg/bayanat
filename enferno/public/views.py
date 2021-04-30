@@ -1,7 +1,8 @@
-from flask import Flask, request, abort, Response, redirect, url_for, flash, Blueprint, send_from_directory, current_app
-from flask.templating import render_template
-from enferno.admin.models import Bulletin, Settings
+from flask import request, redirect, Blueprint, send_from_directory
+
 bp_public = Blueprint('public', __name__, static_folder='../static')
+
+
 @bp_public.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'public, max-age=10800'

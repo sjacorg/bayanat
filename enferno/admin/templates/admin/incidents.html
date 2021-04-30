@@ -11,12 +11,9 @@
     {% include
       'admin/partials/bulk_incident_drawer.html' %}
     <v-main>
-      <v-container fluid fill-height>
-        <v-layout align-top justify-center>
-          <v-container grid-list-sm>
-            <v-container>
-              <v-row>
-                <v-col cols="12">
+      <v-container class="container--fluid">
+
+
                   <v-card>
                     <v-card-title>
                       <div class="flex-grow-1"></div>
@@ -24,7 +21,7 @@
                     <v-card-text>
                       <v-data-table
                        fixed-header
-                        height="460"
+                        height="calc(100vh - 345px)"
 
                         id="incidents-dt"
                         v-model="selected"
@@ -42,11 +39,11 @@
                       >
                         <template v-slot:top>
                           <v-toolbar flat color="white">
-                            <v-btn small @click="allIncidents" text>{{_('All Incidents')}}</v-btn>
-                            <v-divider class="mx-2" inset vertical></v-divider>
-                            <v-btn small @click="myAssigned"  text>{{_('Assigned to me')}}</v-btn>
-                            <v-divider class="mx-2" inset vertical></v-divider>
-                            <v-btn small @click="myReview" class="mr-2" text>{{_('My Review List')}}</v-btn>
+                            <v-btn class="hidden-sm-and-down" small @click="allIncidents" text>{{_('All Incidents')}}</v-btn>
+                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                            <v-btn class="hidden-sm-and-down" small @click="myAssigned"  text>{{_('Assigned to me')}}</v-btn>
+                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                            <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down" text>{{_('My Review List')}}</v-btn>
 
 
 
@@ -66,7 +63,6 @@
                                 @click:append="resetSearch"
                                 prepend-inner-icon="mdi-magnify"
                                 label="{{_('Search')}}"
-                                class="hidden-sm-and-down"
                               ></v-text-field>
 
 
@@ -182,11 +178,7 @@
                       </v-snackbar>
                     </v-card-text>
                   </v-card>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-container>
-        </v-layout>
+
       </v-container>
     </v-main>
       {% include 'footer.html' %}

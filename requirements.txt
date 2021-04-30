@@ -20,7 +20,6 @@ decorator==4.4.2
 dnspython==1.16.0
 docutils==0.16
 email-validator==1.1.2
-Faker==6.1.1
 Flask==1.1.2
 Flask-Babel==2.0.0
 Flask-BabelEx==0.9.4

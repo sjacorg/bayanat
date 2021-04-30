@@ -312,3 +312,14 @@ input[type="date"]::-webkit-input-placeholder {
     text-align: center;
     height: 19px;
 }
+
+.search-toolbar {
+    position: sticky;
+
+    bottom: 0;
+    z-index: 100;
+}
+
+.search-card {
+    margin-bottom: 140px;
+}

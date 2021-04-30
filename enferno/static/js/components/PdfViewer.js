@@ -29,7 +29,7 @@ Vue.component('pdf-viewer', {
     </v-card-text>
     <v-card-text>
     
-    <iframe v-if="url" id="pdf" width="100%" style="height: 80vh" :src="url + '#toolbar=0'" frameborder="0"></iframe>
+    <iframe v-if="url" id="pdf" width="100%" style="height: 80vh" :src="url" frameborder="0"></iframe>
     </v-card-text>
     </v-card>
     </v-dialog>

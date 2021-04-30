@@ -317,7 +317,7 @@ class Media(db.Model, BaseMixin):
     media_file = db.Column(db.String, nullable=False)
     media_file_type = db.Column(db.String, nullable=False)
     category = db.Column(db.String)
-    etag = db.Column(db.String)
+    etag = db.Column(db.String, unique=True)
     duration = db.Column(db.String)
 
     title = db.Column(db.String)
@@ -1036,15 +1036,15 @@ class Bulletin(db.Model, BaseMixin):
 
     search = db.Column(db.Text, db.Computed(
         '''
-         ((((((((((((((((((id)::text || ' '::text) || (COALESCE(title, ''::character varying))::text) || ' '::text) ||
+        (((((((((((((((((id)::text || ' '::text) || (COALESCE(title, ''::character varying))::text) || ' '::text) ||
                         (COALESCE(title_ar, ''::character varying))::text) || ' '::text) ||
                       COALESCE(description, ''::text)) || ' '::text) ||
                     (COALESCE(originid, ''::character varying))::text) || ' '::text) ||
                   (COALESCE(sjac_title, ''::character varying))::text) || ' '::text) ||
                 (COALESCE(sjac_title_ar, ''::character varying))::text) || ' '::text) ||
-                (COALESCE(source_link, ''::character varying))::text) || ' '::text) ||
-              COALESCE(description, ''::text)) || ' '::text) || COALESCE(comments, ''::text)
-      '''
+                (COALESCE(source_link, ''::character varying))::text) || ' '::text) 
+                ||  ' '::text) || COALESCE(comments, ''::text)
+        '''
     ))
 
 
