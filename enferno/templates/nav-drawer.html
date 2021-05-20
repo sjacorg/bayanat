@@ -138,6 +138,7 @@
         </v-list-item-content>
       </v-list-item>
 
+         {%  if config.ETL_TOOL %}
          <v-list-item href="/admin/etl/" key="data-import">
         <v-list-item-action>
           <v-icon color="primary ">mdi-code-equal</v-icon>
@@ -148,6 +149,7 @@
           </v-list-item-title>
         </v-list-item-content>
       </v-list-item>
+             {%  endif %}
 
       {% endif %}
 

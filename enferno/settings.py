@@ -5,80 +5,86 @@ os_env = os.environ
 
 
 class Config(object):
-    SECRET_KEY = 'r@nd0mS3cr3t1' # Generate a new secret key
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
     DEBUG_TB_INTERCEPT_REDIRECTS = False
     CACHE_TYPE = 'simple'  # Can be "memcached", "redis", etc.
-    # database uri
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'SQLALCHEMY_DATABASE_URI', 'postgresql:///sjac') ## Replace with db name
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
 
-    CELERY_BROKER_URL = os.environ.get(
-        'CELERY_BROKER_URL', 'redis://localhost:6379/10')
+    # Databaset 
+    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Celery
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/10')
     REDIS_BULK_DB = 11
-    CELERY_RESULT_BACKEND = os.environ.get(
-        'CELERY_RESULT_BACKEND', 'redis://localhost:6379/{}'.format(REDIS_BULK_DB))
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/{}'.format(REDIS_BULK_DB))
 
 
-    # security
+    # Security
     SECURITY_REGISTERABLE = False
     SECURITY_RECOVERABLE = False
     SECURITY_CONFIRMABLE = False
     SECURITY_TRACKABLE = True
     SECURITY_PASSWORD_HASH = 'bcrypt'
-    SECURITY_PASSWORD_SALT = 'nd0mS3cr3t2' # Generate a new password salt
-
+    SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT')
     SECURITY_POST_LOGIN_VIEW = '/dashboard/'
     SECURITY_POST_CONFIRM_VIEW = '/dashboard/'
 
     SECURITY_TWO_FACTOR_ENABLED_METHODS= ['authenticator']  # 'sms' also valid but requires an sms provider
-    SECURITY_TWO_FACTOR = True
-    SECURITY_TWO_FACTOR_RESCUE_MAIL = ''
+    SECURITY_TWO_FACTOR = os.environ.get('SECURITY_TWO_FACTOR')
+    SECURITY_TWO_FACTOR_RESCUE_MAIL = os.environ.get('SECURITY_TWO_FACTOR_RESCUE_MAIL')
 
+    # Block security auth tokens
+    SECURITY_TOKEN_MAX_AGE = 0
 
-    # Generate a good totp secret using: passlib.totp.generate_secret()
-    SECURITY_TOTP_SECRETS = {"1": "nd0mS3cr3t3"} # Generate a new totp secret
+    # 2fa
+    SECURITY_TOTP_SECRETS = {"1": os.environ.get('SECURITY_TOTP_SECRETS')}
     SECURITY_TOTP_ISSUER = 'Bayanat'
 
-    # get from https://www.google.com/recaptcha/admin
+    # Reaphtcha
     RECAPTCHA_ENABLED = False
-    RECAPTCHA_PUBLIC_KEY = 'ReCaptchaKey'
-    RECAPTCHA_PRIVATE_KEY = 'ReCaptchaSecret'
+    RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
+    RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
+    # Redis
     SESSION_TYPE = 'redis'
     SESSION_REDIS = redis.from_url(os.environ.get('SESSION_REDIS', 'redis://localhost:6379/1'))
     PERMANENT_SESSION_LIFETIME = 3600
 
 
     # flask mail settings
-    MAIL_SERVER = 'smtp.domain.com'
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
     MAIL_PORT = 465
     MAIL_USE_SSL = True
-    MAIL_USERNAME = 'user'
-    MAIL_PASSWORD = 'pass'
-    SECURITY_EMAIL_SENDER = 'info@domain.com'
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    SECURITY_EMAIL_SENDER = os.environ.get('SECURITY_EMAIL_SENDER')
 
-    # get from https://console.cloud.google.com/
+    # Google 0Auth
     GOOGLE_CLIENT_ID = os.environ.get(
-        "GOOGLE_CLIENT_ID", 'ClientID')
+        "GOOGLE_CLIENT_ID", '')
     GOOGLE_CLIENT_SECRET = os.environ.get(
-        "GOOGLE_CLIENT_SECRET", 'ClientSecret')
+        "GOOGLE_CLIENT_SECRET", '')
     GOOGLE_DISCOVERY_URL = (
-        ""
+        "https://accounts.google.com/.well-known/openid-configuration"
     )
 
     # File Upload Settings: switch to True to store files privately within the enferno/media directory
     FILESYSTEM_LOCAL = True
 
+    # Enable data import tool
+    ETL_TOOL = True
+
+    # Valid video extension list (will be processed during ETL)
+    ETL_VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
+
     # S3 settings
     # Bucket needs to be private with public access blocked 
-
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', 'AWSACCESSKEY')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', 'AWSACCESSSECRET')
-    S3_BUCKET = os.environ.get('S3_BUCKET','AWSBUCKET')
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    S3_BUCKET = os.environ.get('S3_BUCKET')
 
     # i18n
     LANGUAGES = ['en', 'ar']
@@ -91,66 +97,12 @@ class Config(object):
     # compile translation using the following
     # pybabel compile -d enferno/translations
 
-    # Valid video extension list (will be processed during ETL)
-    ETL_VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
-
-    # Cors Policy required on the bucket; Allowed Origin can be set to the domain of the system
-
-    ''' 
-    <?xml version="1.0" encoding="UTF-8"?>
-    <CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-    <CORSRule>
-    <AllowedOrigin>*</AllowedOrigin>
-    <AllowedMethod>GET</AllowedMethod>
-    <AllowedHeader>*</AllowedHeader>
-    </CORSRule>
-    </CORSConfiguration>
-    '''
-
-    # Permissions Policy required for the bucket (replace bucket with the actual name); 
-
-    '''
-    {
-    "Version": "2012-10-20",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::bucket"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:PutObject",
-                "s3:GetObject",
-                "s3:DeleteObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::bucket/*"
-            ]
-            }
-        ]
-    }
-    '''
-
-
-
-
-
-
-# override configurations for production
 class ProdConfig(Config):
     """Production configuration."""
     ENV = 'prod'
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://user:pass@host/db' ## Replace with correct values if needed, or postgresql:///db
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
 
-# override configurations for development
 class DevConfig(Config):
     """Development configuration."""
     ENV = 'dev'

@@ -42,7 +42,7 @@ def after_app_request(response):
     """
     if request.path == '/login' and request.method == 'POST':
         #failed login
-        if g.identity.id == None:
+        if not g.identity.id:
             session['failed'] = session.get('failed', 0) + 1
 
 
@@ -120,7 +120,7 @@ def auth_callback():
     if userinfo_response.json().get("email_verified"):
         unique_id = userinfo_response.json()["sub"]
         users_email = userinfo_response.json()["email"]
-        picture = userinfo_response.json()["picture"]
+        #picture = userinfo_response.json()["picture"]
         users_name = userinfo_response.json()["name"]
     else:
         return "User email not available or not verified by Google.", 400

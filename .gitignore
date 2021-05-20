@@ -12,3 +12,6 @@ flask_session
 .mypy_cache/
 .history
 celerybeat-schedule.db
+.env
+enferno/media/*
+.log

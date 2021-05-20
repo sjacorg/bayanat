@@ -1,6 +1,7 @@
-from enferno.extensions import db
 from datetime import datetime
-from flask_security import current_user
+
+from enferno.extensions import db
+
 
 class BaseMixin(object):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -13,8 +14,9 @@ class BaseMixin(object):
             'id': self.id,
             'class': self.__tablename__
         }
-    
+
         return output
+
     def min_json(self):
         at = ''
         if self.assigned_to:
@@ -28,11 +30,10 @@ class BaseMixin(object):
             'name': getattr(self, 'name', ''),
             'assigned_to': at,
             'first_peer_reviewer': fp,
-            'status': getattr(self,'status','')
-            
+            'status': getattr(self, 'status', '')
+
         }
         return output
-
 
     def save(self):
         try:
@@ -49,6 +50,6 @@ class BaseMixin(object):
             db.session.delete(self)
             db.session.commit()
         except Exception as e:
-            print (str(e))
+            print(str(e))
             db.session.rollback()
             return False

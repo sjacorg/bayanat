@@ -137,7 +137,16 @@ const sideNav = [
 ];
 
 // items per page for data tables
-const itemsPerPageOptions = [10, 50, 100, 250, 500];
+// adjust items per page dynamically based on screen hight
+
+let itemsPerPageOptions = [10, 50, 100, 250, 500];
+if (window.innerHeight > 1000){
+    itemsPerPageOptions = [50,100,250,500]
+}
+if (window.innerHeight > 1500){
+    itemsPerPageOptions = [100,250,500]
+}
+
 
 // debounce function calls, helps avoid excessive calls to the server when using auto-complete fields
 const debounce = (fn, time) => {

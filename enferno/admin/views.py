@@ -1,4 +1,3 @@
-import glob
 import hashlib
 import os
 from pathlib import Path
@@ -147,7 +146,7 @@ def api_labels():
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
     result = Label.query.filter(
-        *query).order_by(Label.id).paginate(
+        *query).order_by(-Label.id).paginate(
         page, per_page, True)
 
     response = {'items': [item.to_dict(request.args.get('mode', 1)) for item in result.items], 'perPage': per_page,
@@ -167,7 +166,7 @@ def api_label_create():
         label = Label()
         created = label.from_json(request.json['item'])
         if created.save():
-            return 'Created !'
+            return 'Created Label #{}'.format(label.id)
         else:
             return 'Save Failed', 417
 
@@ -185,7 +184,7 @@ def api_label_update(id):
         if label is not None:
             label = label.from_json(request.json['item'])
             label.save()
-            return 'Saved !', 200
+            return 'Saved Label #{}'.format(label.id), 200
         else:
             return 'Not Found!', 417
 
@@ -204,7 +203,7 @@ def api_label_delete(id):
     if request.method == 'DELETE':
         label = Label.query.get(id)
         label.delete()
-        return 'Deleted !'
+        return 'Deleted Label #{}'.format(label.id)
     else:
         return 'Error', 417
 
@@ -272,7 +271,7 @@ def api_eventtype_create():
         eventtype = Eventtype()
         created = eventtype.from_json(request.json['item'])
         if created.save():
-            return 'Created !'
+            return 'Created Event #{}'.format(eventtype.id)
         else:
             return 'Save Failed', 417
 
@@ -290,7 +289,7 @@ def api_eventtype_update(id):
         if eventtype is not None:
             eventtype = eventtype.from_json(request.json['item'])
             eventtype.save()
-            return 'Saved !', 200
+            return 'Saved Event #{}'.format(eventtype.id), 200
         else:
             return 'Not Found!'
 
@@ -309,7 +308,7 @@ def api_eventtype_delete(id):
     if request.method == 'DELETE':
         eventtype = Eventtype.query.get(id)
         eventtype.delete()
-        return 'Deleted !'
+        return 'Deleted Event #{}'.format(eventtype.id)
     else:
         return 'Error', 417
 
@@ -359,7 +358,7 @@ def api_potentialviolation_create():
         potentialviolation = PotentialViolation()
         created = potentialviolation.from_json(request.json['item'])
         if created.save():
-            return 'Created !'
+            return 'Created Potential Violation #{}'.format(potentialviolation.id)
         else:
             return 'Save Failed', 417
 
@@ -377,7 +376,7 @@ def api_potentialviolation_update(id):
         if potentialviolation is not None:
             potentialviolation = potentialviolation.from_json(request.json['item'])
             potentialviolation.save()
-            return 'Saved !', 200
+            return 'Saved Potential Violation #{}'.format(potentialviolation.id), 200
         else:
             return 'Not Found!'
 
@@ -396,7 +395,7 @@ def api_potentialviolation_delete(id):
     if request.method == 'DELETE':
         potentialviolation = PotentialViolation.query.get(id)
         potentialviolation.delete()
-        return 'Deleted !'
+        return 'Deleted Potential Violation #{}'.format(potentialviolation.id)
     else:
         return 'Error', 417
 
@@ -446,7 +445,7 @@ def api_claimedviolation_create():
         claimedviolation = ClaimedViolation()
         created = claimedviolation.from_json(request.json['item'])
         if created.save():
-            return 'Created !'
+            return 'Created Claimed Violation #{}'.format(claimedviolation.id)
         else:
             return 'Save Failed', 417
 
@@ -464,7 +463,7 @@ def api_claimedviolation_update(id):
         if claimedviolation is not None:
             claimedviolation = claimedviolation.from_json(request.json['item'])
             claimedviolation.save()
-            return 'Saved !', 200
+            return 'Saved Claimed Violation #{}'.format(claimedviolation.id), 200
         else:
             return 'Not Found!'
 
@@ -483,7 +482,7 @@ def api_claimedviolation_delete(id):
     if request.method == 'DELETE':
         claimedviolation = ClaimedViolation.query.get(id)
         claimedviolation.delete()
-        return 'Deleted !'
+        return 'Deleted Claimed Violation #{}'.format(claimedviolation.id)
 
 
 @roles_required(['Admin', 'Mod'])
@@ -543,7 +542,7 @@ def api_source_create():
         source = Source()
         created = source.from_json(request.json['item'])
         if created.save():
-            return 'Created !'
+            return 'Created Source #{}'.format(source.id)
         else:
             return 'Save Failed', 417
 
@@ -561,7 +560,7 @@ def api_source_update(id):
         if source is not None:
             source = source.from_json(request.json['item'])
             source.save()
-            return 'Saved !', 200
+            return 'Saved Source #{}'.format(source.id), 200
         else:
             return 'Not Found!'
 
@@ -580,7 +579,7 @@ def api_source_delete(id):
     if request.method == 'DELETE':
         source = Source.query.get(id)
         source.delete()
-        return 'Deleted !'
+        return 'Deleted Source #{}'.format(source.id)
 
 
 @roles_required(['Admin', 'Mod'])
@@ -624,14 +623,10 @@ def api_locations():
         )
     res_type = 0
     if typ and typ in ['s', 'g', 'c', 'd']:
-        result = Location.query.with_entities(distinct(getattr(Location, 'parent_{}_id'.format(typ)))).all()
-        ids = [item[0] for item in result]
-        query.append(
-            Location.id.in_(ids)
-        )
-        res_type = 1
+        # finds all children of specific location type
+        query.append(Location.loc_type==typ.upper())
 
-    result = Location.query.filter(*query).order_by(Location.id).paginate(
+    result = Location.query.filter(*query).order_by(-Location.id).paginate(
         page, per_page, True)
     items = [item.to_dict() for item in result.items if item.id != 0] if res_type == 0 else [item.min_json() for item in
                                                                                              result.items if
@@ -651,7 +646,7 @@ def api_location_create():
         created = location.from_json(request.json['item'])
         created.full_location = created.get_full_string()
         if created.save():
-            return 'Created !'
+            return 'Created Location #{}'.format(location.id)
         else:
             return 'Save Failed', 417
 
@@ -666,7 +661,7 @@ def api_location_update(id):
             location = location.from_json(request.json['item'])
             location.full_location = location.get_full_string()
             location.save()
-            return 'Saved !', 200
+            return 'Saved Location #{}'.format(location.id), 200
         else:
             return 'Not Found!'
 
@@ -682,7 +677,7 @@ def api_location_delete(id):
     if request.method == 'DELETE':
         location = Location.query.get(id)
         location.delete()
-        return 'Deleted !'
+        return 'Deleted Location #{}'.format(location.id)
 
 
 @roles_required(['Admin', 'Mod'])
@@ -711,10 +706,9 @@ def make_cache_key(*args, **kwargs):
 
 
 @admin.route('/api/bulletins/', methods=['POST', 'GET'])
-#@cache.cached(15, make_cache_key)
+@cache.cached(15, make_cache_key)
 def api_bulletins():
     """Returns bulletins in JSON format, allows search and paging."""
-    query = []
     su = SearchUtils(request.json, cls='Bulletin')
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
@@ -771,7 +765,7 @@ def api_bulletin_create():
         bulletin.create_revision()
         # Record activity
         Activity.create(current_user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
-        return 'Created bulletin {}'.format(bulletin.id)
+        return 'Created Bulletin #{}'.format(bulletin.id)
     else:
         return 'Save Failed', 417
 
@@ -792,7 +786,7 @@ def api_bulletin_update(id):
 
             # Record Activity
             Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
-            return 'Saved Bulletin ... # {}'.format(bulletin.id), 200
+            return 'Saved Bulletin #{}'.format(bulletin.id), 200
         else:
             return 'Not Found!'
 
@@ -835,7 +829,7 @@ def api_bulletin_review_update(id):
 
             # Record Activity
             Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
-            return 'Bulletin review updated ... # {}'.format(bulletin.id), 200
+            return 'Bulletin review updated #{}'.format(bulletin.id), 200
         else:
             return 'Not Found!'
 
@@ -869,7 +863,7 @@ def api_bulletin_bulk_update():
     else:
         return 'Unauthorized', 403
 
-
+'''
 @admin.route('/api/bulletin/<int:id>', methods=['DELETE'])
 @roles_required('Admin')
 def api_bulletin_delete(id):
@@ -884,8 +878,8 @@ def api_bulletin_delete(id):
 
         # Record Activity
         Activity.create(current_user, Activity.ACTION_DELETE, bulletin.to_mini(), 'bulletin')
-        return 'Deleted !'
-
+        return 'Deleted!'
+'''
 
 # get one bulletin
 @admin.route('/api/bulletin/<int:id>', methods=['GET'])
@@ -1052,7 +1046,7 @@ def api_media_create():
         media = Media()
         created = media.from_json(request.json['item'])
         if created.save():
-            return 'Created !'
+            return 'Created!'
         else:
             return 'Save Failed', 417
 
@@ -1070,7 +1064,7 @@ def api_media_update(id):
         if media is not None:
             media = media.from_json(request.json['item'])
             media.save()
-            return 'Saved !', 200
+            return 'Saved!', 200
         else:
             return 'Not Found!', 417
 
@@ -1089,7 +1083,7 @@ def api_media_delete(id):
     if request.method == 'DELETE':
         media = Media.query.get(id)
         media.delete()
-        return 'Deleted !'
+        return 'Deleted!'
 
 
 # Actor routes
@@ -1103,7 +1097,6 @@ def actors(id):
 @admin.route('/api/actors/', methods=['POST', 'GET'])
 def api_actors():
     """Returns actors in JSON format, allows search and paging."""
-    query = []
     su = SearchUtils(request.json, cls='Actor')
     queries, ops = su.get_query()
     result = Actor.query.filter(*queries.pop(0))
@@ -1146,7 +1139,7 @@ def api_actor_create():
         actor.create_revision()
         # Record activity
         Activity.create(current_user, Activity.ACTION_CREATE, actor.to_mini(), 'actor')
-        return 'Created actor {}'.format(actor.id)
+        return 'Created Actor #{}'.format(actor.id)
     else:
         return 'Save Failed', 417
 
@@ -1171,7 +1164,7 @@ def api_actor_update(id):
 
             # Record Activity
             Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-            return 'Saved Actor ... # {}'.format(actor.id), 200
+            return 'Saved Actor #{}'.format(actor.id), 200
         else:
             return 'Not Found!'
 
@@ -1204,7 +1197,7 @@ def api_actor_review_update(id):
 
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-            return 'Actor review updated ... # {}'.format(actor.id), 200
+            return 'Actor review updated #{}'.format(actor.id), 200
         else:
             return 'Not Found!'
 
@@ -1237,7 +1230,7 @@ def api_actor_bulk_update():
     else:
         return 'Unauthorized', 403
 
-
+'''
 @roles_required('Admin')
 @admin.route('/api/actor/<int:id>', methods=['DELETE'])
 def api_actor_delete(id):
@@ -1251,8 +1244,8 @@ def api_actor_delete(id):
         actor.delete()
         # Record activity
         Activity.create(current_user, Activity.ACTION_DELETE, actor.to_mini(), 'actor')
-        return 'Deleted !'
-
+        return 'Deleted!'
+'''
 
 # get one actor
 
@@ -1427,7 +1420,7 @@ def api_user_delete(id):
 
         # Record activity
         Activity.create(current_user, Activity.ACTION_DELETE, user.to_mini(), 'user')
-        return 'Deleted !'
+        return 'Deleted!'
 
 
 # Roles routes
@@ -1473,9 +1466,10 @@ def api_role_create():
         role = Role()
         created = role.from_json(request.json['item'])
         if created.save():
-            return 'Created !'
             # Record activity
             Activity.create(current_user, Activity.ACTION_CREATE, role.to_mini(), 'user')
+            return 'Created!'
+
         else:
             return 'Save Failed', 417
 
@@ -1495,7 +1489,7 @@ def api_role_update(id):
             role.save()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, role.to_mini(), 'user')
-            return 'Saved !', 200
+            return 'Saved!', 200
         else:
             return 'Not Found!', 417
 
@@ -1516,7 +1510,7 @@ def api_role_delete(id):
         role.delete()
         # Record activity
         Activity.create(current_user, Activity.ACTION_DELETE, role.to_mini(), 'user')
-        return 'Deleted !'
+        return 'Deleted!'
 
 
 @admin.route('/api/role/import/', methods=['POST'])
@@ -1580,7 +1574,7 @@ def api_incident_create():
         incident.create_revision()
         # Record activity
         Activity.create(current_user, Activity.ACTION_CREATE, incident.to_mini(), 'incident')
-        return 'Created incident {}'.format(incident.id)
+        return 'Created Incident #{}'.format(incident.id)
     else:
         return 'Save Failed', 417
 
@@ -1600,7 +1594,7 @@ def api_incident_update(id):
             incident.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-            return 'Saved Incident ... # {}'.format(incident.id), 200
+            return 'Saved Incident #{}'.format(incident.id), 200
         else:
             return 'Not Found!'
 
@@ -1631,7 +1625,7 @@ def api_incident_review_update(id):
             incident.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-            return 'Bulletin review updated ... # {}'.format(incident.id), 200
+            return 'Bulletin review updated #{}'.format(incident.id), 200
         else:
             return 'Not Found!'
 
@@ -1661,7 +1655,7 @@ def api_incident_bulk_update():
     else:
         return 'Unauthorized', 403
 
-
+'''
 @admin.route('/api/incident/<int:id>', methods=['DELETE'])
 @roles_required('Admin')
 def api_incident_delete(id):
@@ -1672,8 +1666,8 @@ def api_incident_delete(id):
 
         # Record activity
         Activity.create(current_user, Activity.ACTION_DELETE, incident.to_mini(), 'incident')
-        return 'Deleted !'
-
+        return 'Deleted!'
+'''
 
 # get one incident
 
@@ -1835,6 +1829,8 @@ def etl_dashboard():
     Endpoint to render the etl backend
     :return: html page of the users backend.
     """
+    if not current_app.config['ETL_TOOL']:
+        abort(404)
     return render_template('admin/etl-dashboard.html')
 
 

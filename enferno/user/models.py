@@ -1,12 +1,12 @@
-from ..extensions import db
+import json
+
 from flask_security import UserMixin, RoleMixin
-from enferno.utils.base import BaseMixin
-from enferno.utils.base import BaseMixin
-from flask_security.utils import hash_password
-import datetime, json
 from flask_security import current_user
+from flask_security.utils import hash_password
 from sqlalchemy import JSON
 
+from enferno.utils.base import BaseMixin
+from ..extensions import db
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(),
@@ -22,7 +22,6 @@ class Role(db.Model, RoleMixin, BaseMixin):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
-
     # Permissions List
 
     # ---- General -------
@@ -34,20 +33,19 @@ class Role(db.Model, RoleMixin, BaseMixin):
     delete_bulletin = db.Column(db.Boolean, default=True)
 
     settings = db.Column(JSON)
-    
-
 
     def to_dict(self):
         return {
-            'id': self.id ,
+            'id': self.id,
             'name': self.name,
-            
+
         }
 
     def to_json(self):
         return json.dumps(self.to_dict())
-    def from_json(self,json):
-        self.name = json.get('name','')
+
+    def from_json(self, json):
+        self.name = json.get('name', '')
         return self
 
     def __repr__(self):
@@ -60,9 +58,9 @@ class User(UserMixin, db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
     picture = db.Column(db.String(255))
-    email = db.Column(db.String(255),  nullable=False)
+    email = db.Column(db.String(255), nullable=False)
     username = db.Column(db.String(255), nullable=True, unique=True)
-    password = db.Column(db.String(255),  nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean, default=False)
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
@@ -85,25 +83,22 @@ class User(UserMixin, db.Model, BaseMixin):
     view_simple_history = db.Column(db.Boolean, default=True)
     view_full_history = db.Column(db.Boolean, default=True)
 
-
     # oauth
     google_id = db.Column(db.String(255))
 
     settings = db.Column(JSON)
 
-    def roles_in(self,roles):
+    def roles_in(self, roles):
         chk = [self.has_role(r) for r in roles]
         return any(chk)
-
 
     def __unicode__(self):
         return '%s' % self.id
 
     def __repr__(self):
         return "%s %s %s" % (self.name, self.id, self.email)
-    
 
-    def from_json(self,item):
+    def from_json(self, item):
         self.email = item['email']
         password = item['password']
         self.password = hash_password(password)
@@ -121,7 +116,7 @@ class User(UserMixin, db.Model, BaseMixin):
 
         self.active = item['active']
         return self
-    
+
     def to_compact(self):
         """Automatically detect permissions of the user"""
 
@@ -148,8 +143,7 @@ class User(UserMixin, db.Model, BaseMixin):
 
         }
 
-
-    def to_dict(self,hide_name = False):
+    def to_dict(self, hide_name=False):
         if hide_name:
             name = 'user {}'.format(self.id)
             email = name + '@***.com'
@@ -161,7 +155,7 @@ class User(UserMixin, db.Model, BaseMixin):
             'name': name,
             'google_id': self.google_id,
             'email': email,
-            'active': self.active, 
+            'active': self.active,
             'roles': [role.to_dict() for role in self.roles],
             'view_usernames': self.view_usernames,
             'view_simple_history': self.view_simple_history,
@@ -171,7 +165,6 @@ class User(UserMixin, db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict())
-
 
     meta = {
         'allow_inheritance': True,

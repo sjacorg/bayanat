@@ -57,7 +57,6 @@ Vue.component('search-field',
                     axios
                         .get(`${this.api}?q=${evt.target.value}${qp}&per_page=100`)
                         .then(response => {
-                            console.log(response.data.items.length)
                             this.items = response.data.items;
                         });
                 }, 350)

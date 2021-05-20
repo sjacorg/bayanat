@@ -16,7 +16,7 @@ let mediaMixin = {
     medias: [],
     mediaCats: mediaCats,
 
-    
+
     //media edit / create item
     editedMediaIndex: -1,
     editedMedia: {
@@ -43,15 +43,15 @@ let mediaMixin = {
         tool:null,
         active: false
       },
-      
+
   },
-    
+
     methods: {
 
-      
-    
+
+
        viewImage(item) {
-        
+
         viewer.show(item);
       },
 
@@ -68,7 +68,7 @@ let mediaMixin = {
         this.cropper.canvas.width = this.videoMeta.width;
         this.cropper.canvas.height = this.videoMeta.height;
         let context = this.cropper.canvas.getContext('2d');
-        context.fillRect(0, 0, this.cropper.canvas.width, this.cropper.canvas.height);        
+        context.fillRect(0, 0, this.cropper.canvas.width, this.cropper.canvas.height);
         context.drawImage(video, 0, 0, this.cropper.canvas.width, this.cropper.canvas.height);
         let img = document.querySelector('#cropImg')
         if (!img){
@@ -85,11 +85,11 @@ let mediaMixin = {
       },
 
       attachCrop(){
-          
+
 
         let crop = this.cropper.tool.getValue();
         let img = this.$el.querySelector('.croppr-image');
-        
+
         let id = this.screenshots.length;
         let video = this.$el.querySelector('#player video');
         let wr = this.videoMeta.width/img.width;
@@ -102,30 +102,29 @@ let mediaMixin = {
           fileType: 'image/jpeg',
           filename: video.src.getFilename(),
           ready: false,
-          overlay: false, 
+          overlay: false,
           sw: true
         };
-        console.log(media);
-        console.log(crop);
-        
+
+
         this.screenshots.push(media);
         // wait until data binding is in effect
         this.$nextTick(() => {
         let canvas = this.$el.querySelector('.canvas'+id);
         canvas.width = media.width;
         canvas.height = media.height;
-        // calculate ration based on widht/height 
-        
+        // calculate ration based on widht/height
+
         let context = canvas.getContext('2d');
-        context.fillRect(0, 0, media.width, media.height);        
+        context.fillRect(0, 0, media.width, media.height);
         context.drawImage(img, crop.x, crop.y, media.width, media.height,0,0, media.width, media.height);
 
-        //clear source image 
-        
+        //clear source image
+
         this.$el.querySelector('.croppr-container').remove();
         this.cropper.active = false;
-        
-      })
+
+      });
     }
 
       ,
@@ -135,7 +134,7 @@ let mediaMixin = {
         let id = this.screenshots.length;
         let video = this.$el.querySelector('#player video');
         video.pause()
-        
+
         let media = {
 
           width : this.videoMeta.width,
@@ -144,14 +143,14 @@ let mediaMixin = {
           fileType: 'image/jpeg',
           filename: video.src.getFilename(),
           ready: false,
-          overlay: false, 
+          overlay: false,
           sw: true
         };
-        
+
         this.screenshots.push(media);
         // wait until data binding is in effect
         this.$nextTick(() => {
-        
+
         let canvas = this.$el.querySelector('.canvas'+id);
 
         canvas.width = media.width;
@@ -160,16 +159,16 @@ let mediaMixin = {
         context.fillRect(0, 0, media.width, media.height);
         context.drawImage(video, 0, 0, media.width, media.height);
 
-        
-        
+
+
       });
-        
-        
+
+
 
       },
       removeSnapshot(e,index) {
 
-      this.screenshots[index]
+
         //this.screenshots.splice(index,1);
         this.screenshots[index].deleted = true;
         // force Vue to re-render the UI
@@ -196,10 +195,10 @@ let mediaMixin = {
               media.etag = serverId.etag;
               media.overlay = false;
               media.ready = true;
-              
+
               //this.refresh(this.options);
             });
-          
+
 
 
       },
@@ -209,7 +208,7 @@ let mediaMixin = {
          // get screenshots excluding deleted onces
         let final = this.screenshots.filter(x=> !x.deleted);
 
-        for (scr of final){
+        for (const scr of final){
           //check uploaded ones
           if (scr.ready) {
 
@@ -224,22 +223,22 @@ let mediaMixin = {
 
           }
         }
-        
-        this.closeVideo()
+
+        this.closeVideo();
       }
 
       ,
-      
+
 
       viewPlayer(s3url) {
-        
-        //open video player      
+
+        //open video player
         this.videoDialog = true;
         this.screenshots = [];
         this.$nextTick(()=>{
           let pp = document.querySelector('#pp');
 
-          //cleanup pip or existing video 
+          //cleanup pip or existing video
           let ep = pp.querySelector('#player');
           if (ep) {
             videojs(ep).dispose();
@@ -262,12 +261,12 @@ let mediaMixin = {
 
         });
 
-       
-        
-         
 
-        
-        
+
+
+
+
+
       },
 
       closeVideo() {
@@ -276,13 +275,13 @@ let mediaMixin = {
         //videojs(player).dispose();
         player.pause();
 
-        
-        
+
+
         this.videoDialog = false;
       },
 
 
-     
+
 
        addMedia(media, item, index) {
         this.editedMedia = Object.assign({}, this.defaultMedia);
@@ -296,7 +295,7 @@ let mediaMixin = {
         this.mediaDialog = true;
         //this.locations = this.editedItem.locations;
       },
-      
+
       removeMedia: function(evt, index) {
         if (confirm("Are you sure?")) {
           this.editedItem.medias.splice(index, 1);
@@ -314,7 +313,7 @@ let mediaMixin = {
       },
 
       attachFilepondMedia() {
-        
+
         if (this.editedMediaIndex > -1) {
           //unused : editing existing media item
           Object.assign(
@@ -324,7 +323,7 @@ let mediaMixin = {
         } else {
           //console.log(this.editedItem);
           //push files from editedMedia to to edited item medias
-          for (file of this.editedMedia.files) {
+          for (const file of this.editedMedia.files) {
             let item = {};
             const serverId = JSON.parse(file.serverId);
             item.title = this.editedMedia.title;
@@ -341,8 +340,8 @@ let mediaMixin = {
           if (!error){
             this.upMediaBtnDisabled = false;
           }
-          
-        
+
+
       },
 
       searchRelatedMedia() {
@@ -353,9 +352,9 @@ let mediaMixin = {
         let searchTerm = this.relateMediaTerm || "";
 
         axios.get(`/admin/api/medias/?q=${searchTerm}`).then(response => {
-          results = response.data.items;
+          let results = response.data.items;
           // filter already existing items
-          for (item of this.editedItem.medias) {
+          for (const item of this.editedItem.medias) {
             results.removeById(item.id);
           }
 
@@ -375,7 +374,7 @@ let mediaMixin = {
       }
 
 
-      
+
     }
   }
   

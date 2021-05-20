@@ -139,8 +139,8 @@ Vue.component("bulletin-card", {
 
       </v-sheet>
 
-      <uni-field caption="Title" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
-      <uni-field caption="SJAC Title" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
+      <uni-field caption="Original Title" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
+      <uni-field caption="Title" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
 
       <v-card outlined v-if="bulletin.description" class="ma-2 pa-2" color="grey lighten-5">
         <div class="caption grey--text mb-2">Description</div>

@@ -38,7 +38,7 @@ def install():
             db.session.add(r)
             db.session.commit()
             u = click.prompt('Admin Email?', default='admin')
-            p = click.prompt('Admin Password (min 6 characters)?', default='B@y@n@t42')
+            p = click.prompt('Admin Password (min 6 characters)?')
             user = User(email=u, password=hash_password(p), active=1)
             user.name = 'Admin'
             user.roles.append(r)
@@ -105,11 +105,9 @@ def reset(email, password):
         pwd = hash_password(password)
         u = User.query.filter(User.email == email).first()
         u.password = pwd
-        try:
-            db.session.commit()
-            print('User password has been reset successfully.')
-        except:
-            db.session.rollback()
+        u.save()
+        print('User password has been reset successfully.')
+        
     except Exception as e:
         print('Error resetting user password: %s' % e)
 

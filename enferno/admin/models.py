@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 import pandas as pd
 from flask_login import current_user
 from sqlalchemy import JSON, ARRAY
-from sqlalchemy import func, event
+from sqlalchemy import  event
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from werkzeug.utils import secure_filename
 
@@ -44,6 +44,8 @@ class Source(db.Model, BaseMixin):
         parent = json.get('parent')
         if parent:
             self.parent_id = parent.get("id")
+        else:
+            self.parent_id = None
         return self
 
     # custom serialization method
@@ -59,7 +61,7 @@ class Source(db.Model, BaseMixin):
         }
 
     def to_json(self):
-        return json.dumps(self.to_dict(mode='3'))
+        return json.dumps(self.to_dict())
 
     # import csv data into db
     @staticmethod
@@ -136,6 +138,17 @@ class Label(db.Model, BaseMixin):
     def to_json(self):
         return json.dumps(self.to_dict())
 
+    def __repr__(self):
+        return '<Label {} {}>'.format(self.id,self.title)
+    def get_parents(self):
+        parents = []
+        label = self
+        while label.parent and label.parent.id != 0:
+            parents.append(label.parent)
+            label = label.parent
+        return parents
+
+
     # populate object from json data
     def from_json(self, json):
         self.title = json["title"]
@@ -147,7 +160,12 @@ class Label(db.Model, BaseMixin):
         self.for_actor = json.get("for_actor", False)
         self.for_incident = json.get("for_incident", False)
         self.for_offline = json.get("for_offline", False)
-        self.parent_label_id = json["parent"]["id"] if "parent" in json else None
+        parent = json.get('parent')
+        # reject associating label with itself
+        if parent and parent.get('id') and parent.get('id') != self.id:
+            self.parent_label_id = parent.get('id')
+        else:
+            self.parent_label_id = None
         return self
 
     # import csv data into db
@@ -506,6 +524,7 @@ class Location(db.Model, BaseMixin):
     def min_json(self):
         return {
             'id': self.id,
+            'loc_type': self.loc_type,
             'full_string': '{} | {}'.format(self.full_location, self.title_ar)
         }
 
@@ -519,13 +538,27 @@ class Location(db.Model, BaseMixin):
         self.loc_type = jsn.get('loc_type')
         self.longitude = jsn.get('longitude')
         self.latitude = jsn.get('latitude')
-        self.parent_g_id = jsn.get('parent_g').get('id') if jsn.get('parent_g') else None
-        self.parent_s_id = jsn.get('parent_s').get('id') if jsn.get('parent_s') else None
-        self.parent_d_id = jsn.get('parent_d').get('id') if jsn.get('parent_d') else None
-        self.parent_c_id = jsn.get('parent_c').get('id') if jsn.get('parent_c') else None
+        if jsn.get('parent_g') and jsn.get('parent_g').get('id'):
+            self.parent_g_id = jsn.get('parent_g').get('id')
+        else:
+            self.parent_g_id = None
+        if jsn.get('parent_s') and jsn.get('parent_s').get('id'):
+            self.parent_s_id = jsn.get('parent_s').get('id')
+        else:
+            self.parent_s_id = None
+        if jsn.get('parent_d') and jsn.get('parent_d').get('id'):
+            self.parent_d_id = jsn.get('parent_d').get('id')
+        else:
+            self.parent_d_id = None
+        if jsn.get('parent_c') and jsn.get('parent_c').get('id'):
+            self.parent_c_id = jsn.get('parent_c').get('id')
+        else:
+            self.parent_c_id = None
         parent = jsn.get('parent')
-        if parent:
+        if parent and parent.get('id'):
             self.parent_location_id = parent.get('id')
+        else:
+            self.parent_location_id = None
 
         return self
 
@@ -538,35 +571,17 @@ class Location(db.Model, BaseMixin):
             for l in self.sub_location:
                 locations += [l] + l.get_sub_locations()
             return locations
-    # helper method to get full location heirarchy
+    # helper method to get full location hierarchy
     def get_full_string(self):
-        name_str = self.title
-        if self.loc_type == "D":
-            name_str = self.parent_g_en + ", " + self.title
-        if self.loc_type == "S":
-            name_str = self.parent_g_en + ", " + self.parent_d_en + ", " + self.title
-        if self.loc_type == "C":
-            name_str = (
-                    self.parent_g_en
-                    + ", "
-                    + self.parent_d_en
-                    + ", "
-                    + self.parent_s_en
-                    + ", "
-                    + self.title
-            )
-        if self.loc_type == "N":
-            name_str = (
-                    self.parent_g_en
-                    + ", "
-                    + self.parent_d_en
-                    + ", "
-                    + self.parent_s_en
-                    + ", "
-                    + self.parent_c_en
-                    + ", "
-                    + self.title
-            )
+        name_str = str(self.title)
+        if self.loc_type == "D" and self.parent_g_id:
+            name_str = '{}, {}'.format(self.query.get(self.parent_g_id).title,  self.title)
+        if self.loc_type == "S" and self.parent_g_id and self.parent_d_id:
+            name_str = '{}, {}, {}'.format(self.query.get(self.parent_g_id).title, self.query.get(self.parent_d_id).title, self.title)
+        if self.loc_type == "C" and self.parent_g_id and self.parent_d_id and self.parent_s_id:
+            name_str = '{}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title, self.query.get(self.parent_d_id).title, self.query.get(self.parent_s_id).title, self.title)
+        if self.loc_type == "N" and self.parent_g_id and self.parent_d_id and self.parent_s_id and self.parent_c_id:
+            name_str = '{}, {}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title, self.query.get(self.parent_d_id).title, self.query.get(self.parent_s_id).title, self.query.get(self.parent_c_id).title, self.title)
         return name_str
 
     # imports csv data into db
@@ -944,7 +959,6 @@ class Bulletin(db.Model, BaseMixin):
     description = db.Column(db.Text)
 
     reliability_score = db.Column(db.Integer, default=0)
-    status = db.Column(db.String(255))
 
     first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -1703,7 +1717,7 @@ class Actor(db.Model, BaseMixin):
     # helper method to create a revision
     def create_revision(self, user_id=None, created=None):
         if not user_id:
-            user_id = user_id = getattr(current_user, 'id', 1)
+            user_id = getattr(current_user, 'id', 1)
 
         a = ActorHistory(
             actor_id=self.id, data=self.to_dict(), user_id=user_id
@@ -3169,7 +3183,6 @@ class Activity(db.Model, BaseMixin):
 
         except Exception:
             print('Oh Noes! Error creating activity.')
-            pass
 
 
 class Settings(db.Model, BaseMixin):

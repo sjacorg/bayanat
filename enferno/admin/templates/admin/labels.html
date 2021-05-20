@@ -17,7 +17,7 @@
 
                     <v-card-text>
                       <v-data-table
-                          height="calc(100vh - 325px)"
+                          height="calc(100vh - 335px)"
                           fixed-header
                         :headers="headers"
                         :items="items"
@@ -82,21 +82,21 @@
                                     </v-row>
                                     <v-row>
                                       <v-col cols="12" md="6">
-                                        <v-combobox
-                                        hide-no-data
-                                       label="{{_('Parent')}}"
-                                        v-model="editedItem.parent"
-                                        
-                                        :items="parentList"
-                                       label="{{_('Parent')}}"
-                                        item-text="title"
-                                        item-value="id"
-                                        prepend-inner-icon="mdi-magnify"
-                                        
-                                        :multiple="false"
-                                        :clearable="true"
-                                        @input.native="searchParents"
-                                      ></v-combobox>
+
+
+                           <search-field
+                                    api="/admin/api/labels/"
+                                    item-text="title"
+                                    label="{{_('Parent')}}"
+                                    v-model="editedItem.parent"
+                                    item-value="id"
+                                    :multiple="false"
+                                    label="Labels"
+                                    query-params="&fltr=all"
+                            ></search-field>
+
+
+
                                       </v-col>
                                       <v-col cols="12" md="6">
                                        
@@ -256,7 +256,7 @@
 {% endblock %} {% block js %}
 <script>
 
-  new Vue({
+  let app = new Vue({
     el: "#app",
     vuetify: vuetify,
     delimiters: delimiters,
@@ -296,10 +296,7 @@
       editedIndex: -1,
       editedItem: {
         title: "",
-        parent :{
-          id: null,
-          title: ''
-        }
+        parent :null
       },
       defaultItem: {
         title: ""

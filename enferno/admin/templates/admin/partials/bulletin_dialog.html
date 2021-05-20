@@ -46,14 +46,14 @@
                                         <v-text-field
                                                 v-if="title__"
                                                 v-model="editedItem.title"
-                                                label="{{_('Title')}}"
+                                                label="{{_('Original Title')}}"
                                         ></v-text-field>
 
 
                                         <v-text-field
                                                 v-else
                                                 v-model="editedItem.title_ar"
-                                                label="{{ _('Title (AR)')}}"
+                                                label="{{ _('Original Title (AR)')}}"
                                                 background-color="lime lighten-5"
                                         ></v-text-field>
 
@@ -78,13 +78,13 @@
                                     <v-text-field
                                             v-if="sjac_title__"
                                             v-model="editedItem.sjac_title"
-                                            label="{{_('SJAC Title')}}"
+                                            label="{{_('Title')}}"
                                     ></v-text-field>
 
                                     <v-text-field
                                             v-else
                                             v-model="editedItem.sjac_title_ar"
-                                            label="{{_('Sjac Title (AR)')}}"
+                                            label="{{_('Title (AR)')}}"
                                             background-color="lime lighten-5"
                                     ></v-text-field>
 

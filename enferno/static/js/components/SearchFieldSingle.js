@@ -5,7 +5,7 @@ Vue.component('search-field-single',
             return {
                 loading: false,
                 items: [],
-                model: this.value
+                model: ''
             }
         },
         watch : {

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas  as pd
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 
@@ -46,16 +46,19 @@ def register_extensions(app):
     return None
 
 
+
 def register_signals(app):
     @user_logged_in.connect_via(app)
     def _after_login_hook(sender, user, **extra):
-        # clear login counter
+        #clear login counter
         from flask import session
         if session.get('failed'):
             session.pop('failed')
-            print('login counter cleared')
+            print ('login counter cleared')
 
         Activity.create(user, Activity.ACTION_LOGIN, user.to_mini(), 'user')
+
+
 
     @user_logged_out.connect_via(app)
     def _after_logout_hook(sender, user, **extra):

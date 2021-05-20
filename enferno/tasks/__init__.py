@@ -10,10 +10,8 @@ from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import Role
 from enferno.utils.data_import import DataImport
 
-celery = Celery(__name__)
-
 # Load configuraitons based on environment settings
-if os.environ.get("FLASK_DEBUG") == '0':
+if os.getenv("FLASK_DEBUG") == '0':
     cfg = ProdConfig
 else:
     cfg = DevConfig
@@ -29,9 +27,12 @@ celery.conf.add_defaults(cfg)
 # Class to run tasks within application's context
 class ContextTask(celery.Task):
     abstract = True
-
     def __call__(self, *args, **kwargs):
         from enferno.app import create_app
+        from dotenv import load_dotenv
+        load_dotenv()
+        # Fixes
+        cfg.SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
         with create_app(cfg).app_context():
             return super(ContextTask, self).__call__(*args, **kwargs)
 
@@ -192,7 +193,7 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
     print("Incidents Bulk Update Successful")
 
 
-@celery.task(rate_limit=6)
+@celery.task(rate_limit=10)
 def etl_process_file(batch_id, file, meta, user_id, log):
     di = DataImport(batch_id, meta, user_id=user_id, log=log)
     di.process(file)

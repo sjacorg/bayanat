@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from sqlalchemy import or_, not_, func, and_
 
 from enferno.admin.models import Bulletin, Actor, Incident, Label, Source, Location, Event
-from enferno.extensions import db
+
 
 
 class SearchUtils:

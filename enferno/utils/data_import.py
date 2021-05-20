@@ -1,4 +1,4 @@
-import hashlib, ntpath, os, boto3
+import hashlib, os, boto3
 import pyexifinfo as exiflib
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.user.models import User
@@ -29,7 +29,7 @@ class DataImport():
         self.summary = ''
         self.log = open(log,'a')
 
-
+    '''
     def s3_upload(self, file):
         s3 = boto3.resource('s3', aws_access_key_id=cfg['AWS_ACCESS_KEY_ID'],
                             aws_secret_access_key=cfg['AWS_SECRET_ACCESS_KEY'])
@@ -43,6 +43,7 @@ class DataImport():
         response = s3.Bucket(cfg['S3_BUCKET']).put_object(Key=filename, Body=f)
         # print(response.get())
         etag = response.get()['ETag'].replace('"', '')
+    '''
 
     def process(self, file):
 
