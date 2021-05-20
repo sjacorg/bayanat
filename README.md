@@ -28,7 +28,7 @@ The main purpose of this project is to support the work of SJAC's [Data Analysis
 
 Stable releases will be pushed to this repository every few weeks and critical updates will be pushed sooner.
 
-In most cases updates can be implemented by pulling the new code and restarting the services. However, in some cases where changes to the database have been introduced, migrations might be needed. We'll provide instructions to carry out those migrations if they are required.
+In most cases updates can be implemented by pulling the new code and restarting the services. However, in some cases where changes to the database have been introduced, migrations might be needed. We'll provide [instructions](https://github.com/sjacorg/bayanat/releases) to carry out those migrations if they are required.
 
 It's critical to understand that, in all cases, **backups must be taken before pulling any new updates**. For production environments with important data, it's advised to use two backup methods with at least one taking daily backups.
 
