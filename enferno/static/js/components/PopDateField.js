@@ -53,6 +53,7 @@ Vue.component('pop-date-field', {
                         @click:prepend="menu=true"
                         dense
                         type="date"
+                        min="1900-01-01" max="2040-01-01"
                         v-model="date"
                         v-bind="attrs"
                         :label="label"

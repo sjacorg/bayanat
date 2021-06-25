@@ -1,5 +1,5 @@
 Vue.component('relate-bulletins', {
-    props: ['value', 'show', 'exid'],
+    props: ['value', 'show', 'exids'],
     data: () => {
         return {
             q: {},
@@ -19,6 +19,7 @@ Vue.component('relate-bulletins', {
     }
     ,
     mounted() {
+
 
     },
 
@@ -58,19 +59,19 @@ Vue.component('relate-bulletins', {
 
             axios.post(`/admin/api/bulletins/?page=${this.page}&per_page=${this.perPage}&mode=2`, {q: [this.q]}).then(response => {
                 this.loading = false
-                this.exid = this.exid || -1;
+                this.exids = this.exids || [];
+
                 this.loading = false;
                 this.total = response.data.total;
-
-                this.results = this.results.concat(response.data.items.filter(x => x.id != this.exid));
+                this.results = this.results.concat(response.data.items.filter(x => !this.exids.includes(x.id)));
 
                 if (this.page * this.perPage >= this.total) {
                     this.moreItems = false;
-                    console.log("Set more items");
+                    //console.log("Set more items");
                 } else {
                     this.moreItems = true;
                 }
-            }).catch(err=>{
+            }).catch(err => {
                 console.log(err.response.data);
                 this.loading = false;
             });
@@ -91,82 +92,84 @@ Vue.component('relate-bulletins', {
 
 
     template: `
-        <v-dialog v-model="visible" max-width="1220">
-            <v-sheet>
+      <v-dialog v-model="visible" max-width="1220">
+      <v-sheet>
 
-                <v-container class="fluid fill-height">
-                    <v-row>
-                        <v-col cols="12" md="4">
-                            <v-card outlined>
-                                <bulletin-search-box :i18n="$root.translations" v-model="q" :show-op="false"></bulletin-search-box>
-                                <v-card-actions>
-                                    <v-spacer></v-spacer>
-                                    <v-btn color="primary" @click="reSearch">Search</v-btn>
-                                    <v-spacer></v-spacer>
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="12" md="8"> 
+        <v-container class="fluid fill-height">
+          <v-row>
+            <v-col cols="12" md="4">
+              <v-card outlined>
+                <bulletin-search-box @search="reSearch" :i18n="$root.translations" v-model="q"
+                                     :show-op="false"></bulletin-search-box>
 
-                            <v-card :loading="loading">
+              </v-card>
+              <v-card tile class="text-center  search-toolbar" elevation="10" color="grey lighten-5">
+                <v-card-text>
+                  <v-btn color="primary" @click="reSearch">Search</v-btn>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col cols="12" md="8"> 
 
-                                <v-card-title class="handle">
-                                    Advanced Search
-                                    <v-spacer></v-spacer>
-                                    <v-btn @click="visible=false" small text fab>
-                                        <v-icon>mdi-close</v-icon>
-                                    </v-btn>
-                                </v-card-title>
+              <v-card :loading="loading">
 
-                                <v-divider></v-divider>
+                <v-card-title class="handle">
+                  Advanced Search
+                  <v-spacer></v-spacer>
+                  <v-btn @click="visible=false" small text fab>
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </v-card-title>
 
-                                <v-card-text v-if="loading" class="d-flex pa-5" justify-center align-center>
-                                    <v-progress-circular class="ma-auto" indeterminate
-                                                         color="primary"></v-progress-circular>
-                                </v-card-text>
+                <v-divider></v-divider>
 
-
-                                <v-card class="pa-2" tile color="grey lighten-4">
-
-                                    <bulletin-result v-for="(item, i) in results" :key="i" :bulletin="item"
-                                                     :show-hide="true">
-                                        <template v-slot:actions>
-                                            <v-btn @click="relateItem(item)" small depressed color="primary">relate
-                                            </v-btn>
-                                            
-                                        </template>
-                                    </bulletin-result>
-                                </v-card>
-
-                                <v-card-actions>
-                                    <v-spacer></v-spacer>
-                                    <v-btn icon @click="loadMore" v-if="moreItems" color="third">
-                                        <v-icon>mdi-dots-horizontal</v-icon>
-                                    </v-btn>
-                                  <v-sheet small v-else class="heading" color=" grey--text">No (more) items found.</v-sheet>
-                                    <v-spacer></v-spacer>
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-
-                    </v-row>
-                </v-container>
-
-                <v-dialog v-model="showBulletin" max-width="550">
-                    <v-sheet>
-                        <div class="d-flex justify-end">
-                            <v-btn @click="showBulletin=false" small text fab right="10">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </div>
-                        <bulletin-card :bulletin="bulletin"></bulletin-card>
-                    </v-sheet>
-                </v-dialog>
+                <v-card-text v-if="loading" class="d-flex pa-5" justify-center align-center>
+                  <v-progress-circular class="ma-auto" indeterminate
+                                       color="primary"></v-progress-circular>
+                </v-card-text>
 
 
-            </v-sheet>
+                <v-card class="pa-2" tile color="grey lighten-4">
 
+                  <bulletin-result v-for="(item, i) in results" :key="i" :bulletin="item"
+                                   :show-hide="true">
+                    <template v-slot:actions>
+                      <v-btn @click="relateItem(item)" small depressed color="primary">relate
+                      </v-btn>
+
+                    </template>
+                  </bulletin-result>
+                </v-card>
+
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn icon @click="loadMore" v-if="moreItems" color="third">
+                    <v-icon>mdi-dots-horizontal</v-icon>
+                  </v-btn>
+                  <v-sheet small v-else class="heading" color=" grey--text">No (more) items found.</v-sheet>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+
+          </v-row>
+        </v-container>
+
+        <v-dialog v-model="showBulletin" max-width="550">
+          <v-sheet>
+            <div class="d-flex justify-end">
+              <v-btn @click="showBulletin=false" small text fab right="10">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </div>
+            <bulletin-card :bulletin="bulletin"></bulletin-card>
+          </v-sheet>
         </v-dialog>
+
+
+      </v-sheet>
+
+      </v-dialog>
 
     `
 })

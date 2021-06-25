@@ -69,6 +69,14 @@ def register_blueprints(app):
     app.register_blueprint(bp_public)
     app.register_blueprint(bp_user)
     app.register_blueprint(admin)
+
+    try:
+        from enferno.deduplication.views import deduplication
+        app.register_blueprint(deduplication)
+    except Exception as e:
+        pass
+
+
     return None
 
 
@@ -124,3 +132,4 @@ def register_commands(app):
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
+

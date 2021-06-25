@@ -8,7 +8,8 @@ from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User
-
+from enferno.deduplication.models import DedupRelation
+import pandas as pd
 
 @click.command()
 @with_appcontext
@@ -123,3 +124,9 @@ def clean():
                 full_pathname = os.path.join(dirpath, filename)
                 click.echo('Removing {}'.format(full_pathname))
                 os.remove(full_pathname)
+
+
+
+
+
+

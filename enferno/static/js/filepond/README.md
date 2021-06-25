@@ -5,7 +5,7 @@ A JavaScript library that can upload anything you throw at it, optimizes images 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/pqina/filepond/blob/master/LICENSE)
 [![npm version](https://badge.fury.io/js/filepond.svg)](https://www.npmjs.com/package/filepond)
 
-21 KB gzipped. FilePond adapters are available for **[React](https://github.com/pqina/react-filepond)**, **[Vue](https://github.com/pqina/vue-filepond)**, **[Angular](https://github.com/pqina/ngx-filepond)** and **[jQuery](https://github.com/pqina/jquery-filepond)**
+21 KB gzipped. FilePond adapters are available for **[React](https://github.com/pqina/react-filepond)**, **[Vue](https://github.com/pqina/vue-filepond)**, **[Angular](https://github.com/pqina/ngx-filepond)**, **[Svelte](https://github.com/pqina/svelte-filepond)**, and **[jQuery](https://github.com/pqina/jquery-filepond)**
 
 FilePond is maintained by **[Rik Schennink](https://twitter.com/rikschennink/)**
 
@@ -26,11 +26,11 @@ FilePond is maintained by **[Rik Schennink](https://twitter.com/rikschennink/)**
 
 ### Also need Image Editing?
 
-**Doka.js** might just be what you're looking for. It's a Modern JavaScript Image Editor, Doka supports setting **crop aspect ratios**, **resizing**, **rotating**, **cropping**, and **flipping** images. Above all, it integrates beautifully with FilePond.
+**Doka.js** is what you're looking for. It's a Modern JavaScript Image Editor, Doka supports setting **crop aspect ratios**, **resizing**, **rotating**, **cropping**, and **flipping** images. Above all, it integrates beautifully with FilePond.
 
-[Learn more about Doka](https://pqina.nl/doka/?ref=github)
+[Learn more about Doka](https://pqina.nl/doka/?ref=github-filepond)
 
-<img src="https://github.com/pqina/filepond-github-assets/blob/master/doka.gif?raw=true" width="478" alt=""/>
+<img src="https://github.com/pqina/filepond-github-assets/blob/master/filepond_doka.gif?raw=true" width="600" alt=""/>
 
 ---
 
@@ -50,26 +50,32 @@ FilePond is maintained by **[Rik Schennink](https://twitter.com/rikschennink/)**
 *   [Image resize](https://github.com/pqina/filepond-plugin-image-resize)
 *   [Image transform](https://github.com/pqina/filepond-plugin-image-transform)
 *   [Image EXIF orientation](https://github.com/pqina/filepond-plugin-image-exif-orientation)
-*   [Image overlay](https://github.com/nielsboogaard/filepond-plugin-image-overlay) (third-party)
-*   [Media preview](https://github.com/nielsboogaard/filepond-plugin-media-preview) (third-party)
-*   [Get file](https://github.com/nielsboogaard/filepond-plugin-get-file) (third-party)
+*   [Image overlay](https://github.com/nielsboogaard/filepond-plugin-image-overlay) ([nielsboogaard/filepond-plugin-image-overlay](https://github.com/nielsboogaard/filepond-plugin-image-overlay))
+*   [Media preview](https://github.com/nielsboogaard/filepond-plugin-media-preview) ([nielsboogaard/filepond-plugin-media-preview](https://github.com/nielsboogaard/filepond-plugin-media-preview))
+*   [Media preview + PDF preview](https://github.com/ErnestBrandi/filepond-plugin-media-preview) ([ErnestBrandi/filepond-plugin-media-preview](https://github.com/ErnestBrandi/filepond-plugin-media-preview))
+*   [Get file](https://github.com/nielsboogaard/filepond-plugin-get-file) ([nielsboogaard/filepond-plugin-get-file](https://github.com/nielsboogaard/filepond-plugin-get-file))
+*   [Zip Directory Uploads](https://github.com/tzsk/filepond-plugin-zipper) ([tzsk/filepond-plugin-zipper](https://github.com/tzsk/filepond-plugin-zipper))
+*   [PDF Preview](https://github.com/Adri-Glez/filepond-plugin-pdf-preview) ([Adri-Glez/filepond-plugin-pdf-preview](https://github.com/Adri-Glez/filepond-plugin-pdf-preview)
+*   [Copy Path](https://github.com/jnkn6/filepond-plugin-copy-path) ([jnkn6/filepond-plugin-copy-path](https://github.com/jnkn6/filepond-plugin-copy-path))
 
 
 ### Adapters
 
 *   [React](https://github.com/pqina/react-filepond)
 *   [Vue](https://github.com/pqina/vue-filepond)
+*   [Svelte](https://github.com/pqina/svelte-filepond)
 *   [jQuery](https://github.com/pqina/jquery-filepond)
 *   [Angular](https://github.com/pqina/ngx-filepond)
-*   [Angular 1](https://github.com/johnnyasantoss/angularjs-filepond) (third-party)
-*   [Ember](https://github.com/alexdiliberto/ember-filepond) (third-party)
+*   [Angular 1](https://github.com/johnnyasantoss/angularjs-filepond) ([johnnyasantoss/angularjs-filepond](https://github.com/johnnyasantoss/angularjs-filepond))
+*   [Ember](https://github.com/alexdiliberto/ember-filepond) ([alexdiliberto/ember-filepond](https://github.com/alexdiliberto/ember-filepond))
 
 
 ### Backend
 
 *   [PHP](https://github.com/pqina/filepond-boilerplate-php)
-*   [Django](https://github.com/ImperialCollegeLondon/django-drf-filepond)  (third-party)
-*   [Laravel](https://github.com/Sopamo/laravel-filepond) (third-party)
+*   [Django](https://github.com/ImperialCollegeLondon/django-drf-filepond)  ([ImperialCollegeLondon/django-drf-filepond](https://github.com/ImperialCollegeLondon/django-drf-filepond))
+*   [Laravel](https://github.com/Sopamo/laravel-filepond) ([Sopamo/laravel-filepond](https://github.com/Sopamo/laravel-filepond))
+*   [Laravel](https://github.com/Albert221/laravel-filepond) ([Albert221/laravel-filepond](https://github.com/Albert221/laravel-filepond))
 
 
 ## Quick Start
@@ -127,6 +133,17 @@ Or get it from a CDN:
 [Getting started with FilePond](https://pqina.nl/filepond/docs/patterns/getting-started/)
 
 
+## Internationalization
+
+The [locale folder](./locale/) contains different language files, PR's are welcome, you can use locale files like this:
+
+```js
+import pt_BR from 'filepond/locale/pt-br.js';
+
+FilePond.setOptions(pt_BR);
+```
+
+
 ## Contributing
 
 At the moment test coverage is not great, it's around 65%. To accept pull requests the tests need to be better, any help to improve them is very much appreciated.
@@ -136,19 +153,15 @@ Tests are based on Jest and can be run with `npm run test`
 To build the library run `npm run build`
 
 
-## Sponsors
-
-Thanks go out to Ryan Olson (@ams-ryanolson) Arctic Media for donating the funds to build the chunked uploading feature.
-
-
 ## Publications
 
+* [Applying Watermarks to Images with FilePond](https://pqina.nl/blog/applying-watermarks-to-images-with-filepond/)
 * [Generating Image Thumbnails in the Browser using JavaScript and FilePond](https://dev.to/pqina/generating-image-thumbnails-in-the-browser-using-javascript-and-filepond-10b8)
 * [How to upload files with Vue and FilePond](https://dev.to/pqina/how-to-upload-files-with-vue-and-filepond-1m02)
 * [Smooth file uploading with React and FilePond](https://itnext.io/uploading-files-with-react-and-filepond-f8a798308557)
 * [5 interesting technical challenges I faced while building FilePond](https://itnext.io/filepond-frontend-trickery-a3073c934c77)
 * [Image uploads with Laravel and FilePond](https://devdojo.com/episode/image-uploads-with-laravel-and-filepond)
-* [Integrating FilePond with Ember](https://alexdiliberto.com/ember-filepond/latest/)
+* [Integrating FilePond with Ember](https://alexdiliberto.com/ember-filepond/)
 * [FilePond launch day post-mortem](https://pqina.nl/blog/filepond-launch-day-post-mortem)
 * [FilePond on ProductHunt](https://www.producthunt.com/posts/filepond-js)
 
@@ -168,7 +181,7 @@ FilePond uses [BrowserStack](https://www.browserstack.com/) for compatibility te
 
 MIT License
 
-Copyright (c) 2019 PQINA | [Rik Schennink](mailto:rik@pqina.nl)
+Copyright (c) 2020 PQINA | [Rik Schennink](mailto:rik@pqina.nl)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

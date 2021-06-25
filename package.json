@@ -3,6 +3,7 @@
     "axios": "^0.21.1",
     "cropperjs": "^1.5.11",
     "date-fns": "^2.19.0",
+    "filepond": "^4.27.1",
     "iv-viewer": "^2.0.1",
     "jsondiffpatch": "^0.4.1",
     "vee-validate": "^3.4.5",

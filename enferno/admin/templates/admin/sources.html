@@ -29,6 +29,15 @@
                                                 <v-toolbar-title>{{ _('Sources') }}</v-toolbar-title>
 
                                                 <v-divider class="mx-4" inset vertical></v-divider>
+                                            <v-text-field
+                                            dense
+                                            outlined
+                                            class="mt-6"
+                                            v-model="q"
+                                            label="Search"
+                                            @keydown.enter="refresh"
+                                            ></v-text-field>
+
                                                 <v-spacer></v-spacer>
                                                 <v-dialog v-model="dialog" max-width="770px">
                                                     {% if current_user.roles_in(['Admin','Mod']) %}
@@ -240,6 +249,7 @@
                 items: [],
                 itemsLength: 10,
                 editedIndex: -1,
+                q: '',
                 editedItem: {
                     title: "",
                     parent: {
@@ -270,9 +280,9 @@
             },
 
             methods: {
-                refresh(options) {
+                refresh() {
 
-                    axios.get(`/admin/api/sources/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+                    axios.get(`/admin/api/sources/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&q=${this.q}`).then(response => {
                         this.loading = false;
 
                         this.itemsLength = response.data.total;
@@ -286,7 +296,7 @@
                     axios.post('/admin/api/source/import/', reqData).then(response => {
 
                         this.imDialog = false;
-                        this.refresh(this.options);
+                        this.refresh();
                         this.snackMessage = response.data;
                         this.snackbar = true;
                     })
@@ -314,7 +324,7 @@
                             .then(response => {
                                 this.snackMessage = response.data;
                                 this.snackbar = true;
-                                this.refresh(this.options)
+                                this.refresh()
                             })
                     }
                 },
@@ -335,7 +345,7 @@
                             .then(response => {
                                 this.snackMessage = response.data;
                                 this.snackbar = true;
-                                this.refresh(this.options)
+                                this.refresh()
                             })
                     } else {
                         this.items.push(this.editedItem);
@@ -346,7 +356,7 @@
 
                                 this.snackMessage = response.data;
                                 this.snackbar = true;
-                                this.refresh(this.options)
+                                this.refresh()
                             });
                     }
                     this.close();

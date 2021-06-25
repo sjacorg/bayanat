@@ -243,7 +243,7 @@ if (__settings__.dark) {
 // define static data contants for different fields
 var mediaCats = ["Generic", "Humans", "Signs/Text"];
 var probs = ["Maybe", "Likely", "Certain"];
-var btobRelateAs = ["Duplicate", "Other", "Part of a Series", "Same Object", "Same Person"];
+var btobRelateAs = ["Duplicate", "Other", "Part of a Series", "Same Object", "Same Person","Potentially Duplicate","Potentially Related"];
 var itobRelateAs = ["default"];
 var itoiRelateAs = ["Default"];
 var statuses = [

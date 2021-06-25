@@ -1,0 +1,214 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div id="app">
+    <v-app v-cloak>
+        {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+        <v-main class="align-start ma-3">
+            <v-container fluid fill-height>
+                <v-row>
+                    <v-col cols="12">
+                        <v-toolbar elevation="1" dense class="mb-5">
+                            <v-btn @click="process" :disabled="loading" color="green" text dark>
+                                <v-icon left>mdi-play</v-icon>
+                                Start
+                            </v-btn>
+
+
+                        </v-toolbar>
+
+                        <v-data-table
+                                :loading="loading"
+                                :items="items"
+                                :headers="headers"
+                                :options.sync="options"
+                                :server-items-length="itemsLength"
+                                :footer-props.sync="footerProps"
+
+                        >
+
+                            <template v-slot:item.distance="{item}">
+                                ${item.distance | formatDistance}
+
+                            </template>
+
+                            <template v-slot:item.result="{item}">
+                                <div v-if="item.status==3">
+                                <v-btn @click="previewItem('/admin/api/bulletin/'+item.result.b1)"  color="grey lighten-2"  elevation="0" class="mx-2"  small><v-icon color="grey darken-2"   left x-small>mdi-library-books</v-icon> ${item.result.b1}</v-btn> -
+                                <v-btn  @click="previewItem('/admin/api/bulletin/'+item.result.b2)"  color="grey lighten-2"class="mx-1" elevation="0" small><v-icon color="grey darken-2"  left x-small>mdi-library-books</v-icon>${item.result.b2}</v-btn>
+                                </div>
+                            </template>
+
+                        </v-data-table>
+
+
+                        <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
+
+
+                        <v-snackbar v-model="snackbar">
+                            ${snackMessage}
+                            <v-btn color="secondary" text @click="snackbar = false">
+                                Close
+                            </v-btn>
+                        </v-snackbar>
+                    </v-col>
+                </v-row>
+            </v-container>
+        </v-main>
+    </v-app>
+</div>
+
+
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/components/MediaCard.js"></script>
+<script src="/static/js/components/BulletinResult.js"></script>
+<script src="/static/js/components/ActorResult.js"></script>
+<script src="/static/js/components/IncidentResult.js"></script>
+
+<script>
+
+    const app = new Vue({
+        el: "#app",
+        vuetify: vuetify,
+        delimiters: delimiters,
+        data: () => ({
+            drawer: drawer,
+            mode: null,
+            sideNav: sideNav,
+            snackbar: false,
+            snackMessage: '',
+            loading: false,
+            itemsLength: 0,
+            headers: [
+                {text: 'ID', value: 'id', sortable: false},
+                {text: 'Query', value: 'query', sortable: false},
+                {text: 'Match', value: 'match', sortable: false},
+                {text: 'Distance', value: 'distance', sortable: false},
+
+                {text: 'Data',width: 300, value: 'result'},
+                {text: 'Status', value: 'hstatus', sortable: false},
+
+            ],
+
+            //preview bulletins
+            pitem: {},
+            preview: false,
+
+
+            items: [],
+            options: {
+                page: 1,
+                itemsPerPage: 1000
+            },
+            footerProps: {
+                itemsPerPageOptions: [1000, 5000, 10000],
+                itemsPerPageText: "{{ _('Rows per page')}}"
+            },
+
+
+        }),
+        filters : {
+          formatDistance: function(n){
+
+            return parseFloat(n).toFixed(2);
+
+          }
+        },
+        mounted() {
+            this.refresh();
+        },
+
+
+        computed: {},
+
+
+        watch: {
+
+
+            options: {
+                handler: "refresh",
+                immdiate: true
+            }
+        },
+
+        methods: {
+
+            previewItem(endpoint) {
+
+                axios.get(endpoint).then(res => {
+                    this.pitem = res.data;
+                    this.preview = true;
+
+                })
+            },
+            editAllowed(){
+                return false;
+            },
+
+
+            showSnack(message) {
+                this.snackMessage = message;
+                this.snackBar = true;
+            },
+
+
+            clearData() {
+                this.loading = true;
+                axios.delete('/api/deduplication/clear').then(res => {
+                    this.showSnack(res.data);
+                }).catch(err => console.log(err)).finally(
+                    () => {
+                        this.loading = false;
+                        this.refresh();
+                    }
+                )
+            },
+
+
+            process() {
+                this.loading = true;
+                axios.post('/api/deduplication/process').then(res => {
+                    this.showSnack(res.data);
+
+                }).catch(err => console.log(err.response.data)).finally(() => {
+                    this.loading = false;
+                    this.refresh();
+                })
+
+            },
+
+
+            refresh() {
+
+                this.loading = true;
+                axios.get(`/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
+                    this.items = res.data.items;
+                    this.itemsLength = res.data.total;
+                    this.showSnack('Success');
+                }).catch(err => console.log(err)).finally(() => {
+                    this.loading = false
+                })
+
+            },
+
+            validFile(filename) {
+                const ext = filename.split(".").pop().toLowerCase();
+                if (ETL_EXTENSIONS.includes(ext)) {
+                    return true;
+
+                } else {
+                    return false;
+                }
+
+
+            },
+
+
+        }
+    });
+</script>
+
+{% endblock %}

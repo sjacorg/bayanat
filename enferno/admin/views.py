@@ -121,10 +121,11 @@ def api_labels():
     """
     query = []
     q = request.args.get('q', None)
-    if q is not None:
-        query.append(
-            Label.title.ilike('%' + q + '%')
-        )
+
+    if q:
+        words = q.split(' ')
+        query.extend([Label.title.ilike('%{}%'.format(word)) for word in words])
+
     typ = request.args.get('typ', None)
     if typ and typ in ['for_bulletin', 'for_actor', 'for_incident', 'for_offline']:
         query.append(
@@ -145,9 +146,27 @@ def api_labels():
 
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
-    result = Label.query.filter(
-        *query).order_by(-Label.id).paginate(
-        page, per_page, True)
+
+
+    # pull children only when specific labels are searched
+    if q:
+        result = Label.query.filter(*query).all()
+        labels = [label for label in result]
+        ids = []
+        children = Label.get_children(labels)
+        for label in labels + children:
+            ids.append(label.id)
+        #remove dups
+        ids = list(set(ids))
+        result = Label.query.filter(
+            Label.id.in_(ids)).paginate(
+            page, per_page, True)
+    else:
+        result = Label.query.filter(*query).paginate(page, per_page, True)
+
+
+
+
 
     response = {'items': [item.to_dict(request.args.get('mode', 1)) for item in result.items], 'perPage': per_page,
                 'total': result.total}
@@ -518,14 +537,33 @@ def api_sources():
     """
     query = []
     q = request.args.get('q', None)
+
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
 
     if q is not None:
-        query.append(Source.title.ilike('%' + q + '%'))
-    result = Source.query.filter(
-        *query).order_by(-Source.id).paginate(
-        page, per_page, True)
+        words = q.split(' ')
+        query.extend([Source.title.ilike('%{}%'.format(word)) for word in words])
+
+
+    # ignore complex recursion when pulling all sources without filters
+    if q:
+        result = Source.query.filter(*query).all()
+        sources = [source for source in result]
+        ids = []
+        children = Source.get_children(sources)
+        for source in sources + children:
+            ids.append(source.id)
+
+        #remove dups
+        ids = list(set(ids))
+
+        result = Source.query.filter(
+            Source.id.in_(ids)).order_by(-Source.id).paginate(
+            page, per_page, True)
+    else:
+        result = Source.query.filter(*query).paginate(
+            page, per_page, True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
                     content_type='application/json'), 200
@@ -626,7 +664,7 @@ def api_locations():
         # finds all children of specific location type
         query.append(Location.loc_type==typ.upper())
 
-    result = Location.query.filter(*query).order_by(-Location.id).paginate(
+    result = Location.query.filter(*query).paginate(
         page, per_page, True)
     items = [item.to_dict() for item in result.items if item.id != 0] if res_type == 0 else [item.min_json() for item in
                                                                                              result.items if

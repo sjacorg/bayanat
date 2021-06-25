@@ -60,8 +60,29 @@ class Source(db.Model, BaseMixin):
             "comments": self.comments,
         }
 
+    def __repr__(self):
+        return '<Source {} {}>'.format(self.id, self.title)
+
     def to_json(self):
         return json.dumps(self.to_dict())
+
+    @staticmethod
+    def get_children(sources, depth=3):
+        all = []
+        targets = sources
+        while depth != 0:
+            children = Source.get_direct_children(targets)
+            all += children
+            targets = children
+            depth -= 1
+        return all
+
+    @staticmethod
+    def get_direct_children(sources):
+        children = []
+        for source in sources:
+            children += source.sub_source
+        return children
 
     # import csv data into db
     @staticmethod
@@ -108,6 +129,7 @@ class Label(db.Model, BaseMixin):
     )
     parent = db.relationship("Label", remote_side=id, backref="sub_label")
 
+
     # custom serialization method
     def to_dict(self, mode='1'):
         if mode == '2':
@@ -140,13 +162,26 @@ class Label(db.Model, BaseMixin):
 
     def __repr__(self):
         return '<Label {} {}>'.format(self.id,self.title)
-    def get_parents(self):
-        parents = []
-        label = self
-        while label.parent and label.parent.id != 0:
-            parents.append(label.parent)
-            label = label.parent
-        return parents
+
+
+    @staticmethod
+    def get_children(labels,depth=3):
+        all = []
+        targets = labels
+        while depth !=0:
+            children =  Label.get_direct_children(targets)
+            all += children
+            targets = children
+            depth -=1
+        return all
+
+    @staticmethod
+    def get_direct_children(labels):
+        children = []
+        for label in labels:
+            children += label.sub_label
+        return children
+
 
 
     # populate object from json data

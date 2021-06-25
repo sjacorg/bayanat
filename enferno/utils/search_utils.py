@@ -109,10 +109,34 @@ class SearchUtils:
         labels = q.get('labels', [])
         if len(labels):
             ids = [item.get('id') for item in labels]
+            # children search ?
+            recursive = q.get('childlabels', None)
             if q.get('oplabels'):
+                # or operator
+                if recursive:
+                    # get ids of children // update ids 
+                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = [label for label in result]
+                    all = direct + Label.get_children(direct)
+                    #remove dups
+                    all = list(set(all))
+                    ids = [label.id for label in all]
+
                 query.append(Bulletin.labels.any(Label.id.in_(ids)))
             else:
-                query.extend([Bulletin.labels.any(Label.id == id) for id in ids])
+                # and operator (modify children search logic)
+                if recursive:
+                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    for label in direct:
+                        children = Label.get_children([label])
+                        # add original label + uniquify list
+                        children = list(set([label] + children))
+                        ids = [child.id for child in children]
+                        query.append(Bulletin.labels.any(Label.id.in_(ids)))
+
+                else:
+                    # non-recursive (apply and on all ids)
+                    query.extend([Bulletin.labels.any(Label.id == id) for id in ids])
 
         # Excluded labels
         exlabels = q.get('exlabels', [])
@@ -123,11 +147,34 @@ class SearchUtils:
         vlabels = q.get('vlabels', [])
         if len(vlabels):
             ids = [item.get('id') for item in vlabels]
+            # children search ?
+            recursive = q.get('childverlabels', None)
             if q.get('opvlabels'):
-                # And query
+                # or operator
+                if recursive:
+                    # get ids of children // update ids
+                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = [label for label in result]
+                    all = direct + Label.get_children(direct)
+                    # remove dups
+                    all = list(set(all))
+                    ids = [label.id for label in all]
+
                 query.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
             else:
-                query.extend([Bulletin.ver_labels.any(Label.id == id) for id in ids])
+                # and operator (modify children search logic)
+                if recursive:
+                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    for label in direct:
+                        children = Label.get_children([label])
+                        # add original label + uniquify list
+                        children = list(set([label] + children))
+                        ids = [child.id for child in children]
+                        query.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
+
+                else:
+                    # non-recursive (apply and on all ids)
+                    query.extend([Bulletin.ver_labels.any(Label.id == id) for id in ids])
 
         # Excluded vlabels
         exvlabels = q.get('exvlabels', [])
@@ -138,10 +185,34 @@ class SearchUtils:
         sources = q.get('sources', [])
         if len(sources):
             ids = [item.get('id') for item in sources]
+            # children search ?
+            recursive = q.get('childsources', None)
             if q.get('opsources'):
+                # or operator
+                if recursive:
+                    # get ids of children // update ids
+                    result = Source.query.filter(Source.id.in_(ids)).all()
+                    direct = [source for source in result]
+                    all = direct + Source.get_children(direct)
+                    # remove dups
+                    all = list(set(all))
+                    ids = [source.id for source in all]
+
                 query.append(Bulletin.sources.any(Source.id.in_(ids)))
             else:
-                query.extend([Bulletin.sources.any(Source.id == id) for id in ids])
+                # and operator (modify children search logic)
+                if recursive:
+                    direct = Source.query.filter(Source.id.in_(ids)).all()
+                    for source in direct:
+                        children = Source.get_children([source])
+                        # add original label + uniquify list
+                        children = list(set([source] + children))
+                        ids = [child.id for child in children]
+                        query.append(Bulletin.sources.any(Source.id.in_(ids)))
+
+                else:
+                    # non-recursive (apply and on all ids)
+                    query.extend([Bulletin.sources.any(Source.id == id) for id in ids])
 
         # Excluded sources
         exsources = q.get('exsources', [])

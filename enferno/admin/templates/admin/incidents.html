@@ -166,9 +166,9 @@
                               <v-progress-circular indeterminate size="64"></v-progress-circular>
                           </v-overlay>
 
-                      <relate-bulletins @relate="relateBulletin"  ref="relateBulletins"></relate-bulletins>
-                    <relate-actors @relate="relateActor"  ref="relateActors"></relate-actors>
-                    <relate-incidents @relate="relateIncident"  :exid="editedItem.id" ref="relateIncidents"></relate-incidents>
+                      <relate-bulletins @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
+                    <relate-actors @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
+                    <relate-incidents @relate="relateIncident" :exids="exIncidents"   ref="relateIncidents"></relate-incidents>
 
                       <v-snackbar v-model="snackbar">
                         ${snackMessage}
@@ -407,6 +407,32 @@
     }),
 
     computed: {
+
+
+          exBulletins(){
+              let ids = [];
+              if (this.editedItem.bulletin_relations){
+                  ids = ids.concat(this.editedItem.bulletin_relations.map(x=> x.bulletin.id))
+              }
+              return ids;
+          },
+
+          exActors(){
+              let ids = [];
+              if (this.editedItem.actor_relations){
+                  ids = ids.concat(this.editedItem.actor_relations.map(x=> x.actor.id))
+              }
+              return ids;
+          },
+
+          exIncidents(){
+              let ids = [this.editedItem.id];
+              if (this.editedItem.incident_relations){
+                  ids = ids.concat(this.editedItem.incident_relations.map(x=> x.incident.id))
+              }
+              return ids;
+          },
+
       formTitle() {
         return this.editedIndex === -1 ? "{{_('New Incident')}}" : "{{_('Edit Incident')}}";
       },

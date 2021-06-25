@@ -141,11 +141,26 @@
          {%  if config.ETL_TOOL %}
          <v-list-item href="/admin/etl/" key="data-import">
         <v-list-item-action>
-          <v-icon color="primary ">mdi-code-equal</v-icon>
+          <v-icon>mdi-database-import</v-icon>
         </v-list-item-action>
         <v-list-item-content>
           <v-list-item-title>
               {{_('Data Import')}}
+          </v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+             {%  endif %}
+
+
+
+       {%  if deduplication %}
+         <v-list-item href="/deduplication/dashboard/" key="deduplication">
+        <v-list-item-action>
+          <v-icon>mdi-link-variant-plus</v-icon>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>
+              {{_('Deduplication Dashbaord')}}
           </v-list-item-title>
         </v-list-item-content>
       </v-list-item>

@@ -56,7 +56,10 @@ Vue.component('bulletin-search-box', {
         }
 
     },
-    methods: {},
+    methods: {
+
+
+    },
 
     template: `
         <v-card flat>
@@ -292,6 +295,8 @@ Vue.component('bulletin-search-box', {
                                 :label="i18n.excludeSources_"
 
                         ></search-field>
+                        
+                        <v-switch  v-model="q.childsources" label="Also include child sources"></v-switch>
 
 
                     </v-col>
@@ -322,6 +327,8 @@ Vue.component('bulletin-search-box', {
                                 :multiple="true"
                                 :label="i18n.excludeLabels_"
                         ></search-field>
+                        
+                        <v-switch v-model="q.childlabels" label="Also include child labels"></v-switch>
 
 
                     </v-col>
@@ -351,6 +358,8 @@ Vue.component('bulletin-search-box', {
                                 :multiple="true"
                                 :label="i18n.excludeVerLabels_"
                         ></search-field>
+                      
+                      <v-switch v-model="q.childverlabels" label="Also include verified child labels"></v-switch>
                     </v-col>
                 </v-row>
 

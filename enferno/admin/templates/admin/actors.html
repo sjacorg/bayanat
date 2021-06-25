@@ -154,9 +154,9 @@
                         ></v-progress-circular>
                       </v-overlay>
 
-                      <relate-bulletins @relate="relateBulletin"  ref="relateBulletins"></relate-bulletins>
-                      <relate-actors @relate="relateActor" :exid="editedItem.id" ref="relateActors"></relate-actors>
-                      <relate-incidents @relate="relateIncident"  ref="relateIncidents"></relate-incidents>
+                      <relate-bulletins @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
+                      <relate-actors @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
+                      <relate-incidents @relate="relateIncident" :exids="exIncidents"  ref="relateIncidents"></relate-incidents>
 
                       {% include 'admin/partials/relate_media_dialog.html' %}
                       {% include 'admin/partials/video_player_dialog.html' %}
@@ -424,6 +424,34 @@
     }),
 
     computed: {
+
+
+          exBulletins(){
+              let ids = [];
+              if (this.editedItem.bulletin_relations){
+                  ids = ids.concat(this.editedItem.bulletin_relations.map(x=> x.bulletin.id))
+              }
+              return ids;
+          },
+
+          exActors(){
+              let ids = [this.editedItem.id];
+              if (this.editedItem.actor_relations){
+                  ids = ids.concat(this.editedItem.actor_relations.map(x=> x.actor.id))
+              }
+              return ids;
+          },
+
+          exIncidents(){
+              let ids = [];
+              if (this.editedItem.incident_relations){
+                  ids = ids.concat(this.editedItem.incident_relations.map(x=> x.incident.id))
+              }
+              return ids;
+          },
+
+
+
       formTitle() {
         return this.editedItem.id? this.translations.editActor_ : this.translations.newActr_;
       },

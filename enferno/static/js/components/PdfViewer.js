@@ -28,8 +28,7 @@ Vue.component('pdf-viewer', {
     
     </v-card-text>
     <v-card-text>
-    
-    <iframe v-if="url" id="pdf" width="100%" style="height: 80vh" :src="url" frameborder="0"></iframe>
+    <object id="pdf" v-if="url" style="width: 100%;height: 80vh" :data='url'></object>
     </v-card-text>
     </v-card>
     </v-dialog>

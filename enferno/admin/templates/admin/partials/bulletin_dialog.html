@@ -255,11 +255,8 @@
                                                                                 column
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip small> Duplicate</v-chip>
-                                                                            <v-chip small> Other</v-chip>
-                                                                            <v-chip small> Part of a Series</v-chip>
-                                                                            <v-chip small> Same Object</v-chip>
-                                                                            <v-chip small> Same Person</v-chip>
+                                                                            <v-chip v-for="rel in btobRelateAs" small> ${rel}</v-chip>
+
                                                                         </v-chip-group>
 
 
