@@ -8,8 +8,7 @@ from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User
-from enferno.deduplication.models import DedupRelation
-import pandas as pd
+from flask.cli import AppGroup
 
 @click.command()
 @with_appcontext
@@ -108,7 +107,7 @@ def reset(email, password):
         u.password = pwd
         u.save()
         print('User password has been reset successfully.')
-        
+
     except Exception as e:
         print('Error resetting user password: %s' % e)
 
@@ -125,8 +124,20 @@ def clean():
                 click.echo('Removing {}'.format(full_pathname))
                 os.remove(full_pathname)
 
+# translation management
+i18n_cli = AppGroup('translate', short_help='commands to help with translation management')
 
+@i18n_cli.command()
+def extract():
+    if os.system('pybabel extract -F babel.cfg -k _l -o messages.pot .'):
+        raise RuntimeError('Extract command failed')
 
+@i18n_cli.command()
+def update():
+    if os.system('pybabel update -i messages.pot -d enferno/translations'):
+        raise RuntimeError('Update command failed')
 
-
-
+@i18n_cli.command()
+def compile():
+    if os.system('pybabel compile -d enferno/translations'):
+        raise RuntimeError('Compile command failed')

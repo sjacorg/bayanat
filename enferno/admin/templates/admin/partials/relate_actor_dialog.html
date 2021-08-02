@@ -30,8 +30,7 @@
       
             <actor-result :actor="item">
                 <template v-slot:actions>
-                <v-btn @click="relateActor($event,item)"  small  depressed color="primary">relate</v-btn>
-                <v-btn @click="viewActor($event,item)" small depressed  color="grey lighten-3">Preview</v-btn>
+                <v-btn @click="relateActor($event,item)"  small  depressed color="primary"> {{ i18n.relate_ }}</v-btn>
                 </template>
               </actor-result>
             

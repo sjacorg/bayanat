@@ -7,9 +7,9 @@ import shortuuid
 from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
 from flask.templating import render_template
 from flask_bouncer import requires
-from flask_security.decorators import roles_required, login_required, current_user
+from flask_security.decorators import roles_required, login_required, current_user, roles_accepted
 from flask_security.utils import hash_password
-from sqlalchemy import desc, or_, distinct, text
+from sqlalchemy import desc, or_, text
 
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
                                   IncidentHistory, BulletinHistory, ActorHistory, PotentialViolation, ClaimedViolation,
@@ -19,7 +19,6 @@ from enferno.extensions import cache
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file
 from enferno.user.models import User, Role
 from enferno.utils.search_utils import SearchUtils
-
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
@@ -113,6 +112,7 @@ def labels():
 
 
 @admin.route('/api/labels/')
+@roles_accepted('Admin', 'Mod')
 def api_labels():
     """
     API endpoint feed and filter labels with paging
@@ -147,7 +147,6 @@ def api_labels():
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
 
-
     # pull children only when specific labels are searched
     if q:
         result = Label.query.filter(*query).all()
@@ -156,7 +155,7 @@ def api_labels():
         children = Label.get_children(labels)
         for label in labels + children:
             ids.append(label.id)
-        #remove dups
+        # remove dups
         ids = list(set(ids))
         result = Label.query.filter(
             Label.id.in_(ids)).paginate(
@@ -164,18 +163,14 @@ def api_labels():
     else:
         result = Label.query.filter(*query).paginate(page, per_page, True)
 
-
-
-
-
     response = {'items': [item.to_dict(request.args.get('mode', 1)) for item in result.items], 'perPage': per_page,
                 'total': result.total}
     return Response(json.dumps(response),
                     content_type='application/json')
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/label/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_label_create():
     """
     Endpoint to create a label.
@@ -190,8 +185,8 @@ def api_label_create():
             return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/label/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_label_update(id):
     """
     Endpoint to update a label.
@@ -211,8 +206,8 @@ def api_label_update(id):
         return 'Unauthorized', 403
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/label/<int:id>', methods=['DELETE'])
+@roles_accepted('Admin', 'Mod')
 def api_label_delete(id):
     """
     Endpoint to delete a label.
@@ -227,8 +222,8 @@ def api_label_delete(id):
         return 'Error', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/label/import/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_label_import():
     """
     Endpoint to import labels via CSV
@@ -279,8 +274,8 @@ def api_eventtypes():
                     content_type='application/json')
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/eventtype/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_eventtype_create():
     """
     Endpoint to create an Event Type
@@ -295,8 +290,8 @@ def api_eventtype_create():
             return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/eventtype/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_eventtype_update(id):
     """
     Endpoint to update an Event Type
@@ -316,8 +311,8 @@ def api_eventtype_update(id):
         return 'Unauthorized', 403
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/eventtype/<int:id>', methods=['DELETE'])
+@roles_accepted('Admin', 'Mod')
 def api_eventtype_delete(id):
     """
     Endpoint to delete an event type
@@ -332,8 +327,8 @@ def api_eventtype_delete(id):
         return 'Error', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/eventtype/import/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_eventtype_import():
     """
     Endpoint to bulk import event types from a CSV file
@@ -366,8 +361,8 @@ def api_potentialviolations(page):
                     content_type='application/json')
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/potentialviolation/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_potentialviolation_create():
     """
     Endpoint to create a potential violation
@@ -382,8 +377,8 @@ def api_potentialviolation_create():
             return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/potentialviolation/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_potentialviolation_update(id):
     """
     Endpoint to update a potential violation
@@ -403,8 +398,8 @@ def api_potentialviolation_update(id):
         return 'Unauthorized', 403
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/potentialviolation/<int:id>', methods=['DELETE'])
+@roles_accepted('Admin', 'Mod')
 def api_potentialviolation_delete(id):
     """
     Endpoint to delete a potential violation
@@ -419,8 +414,8 @@ def api_potentialviolation_delete(id):
         return 'Error', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/potentialviolation/import/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_potentialviolation_import():
     """
     Endpoint to import potential violations from csv file
@@ -453,8 +448,8 @@ def api_claimedviolations(page):
                     content_type='application/json')
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/claimedviolation/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_claimedviolation_create():
     """
     Endpoint to create a claimed violation
@@ -469,8 +464,8 @@ def api_claimedviolation_create():
             return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/claimedviolation/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_claimedviolation_update(id):
     """
     Endpoint to update a claimed violation
@@ -490,8 +485,8 @@ def api_claimedviolation_update(id):
         return 'Unauthorized', 403
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/claimedviolation/<int:id>', methods=['DELETE'])
+@roles_accepted('Admin', 'Mod')
 def api_claimedviolation_delete(id):
     """
     Endpoint to delete a claimed violation
@@ -504,8 +499,8 @@ def api_claimedviolation_delete(id):
         return 'Deleted Claimed Violation #{}'.format(claimedviolation.id)
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/claimedviolation/import/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_claimedviolation_import():
     """
     Endpoint to import claimed violations from a CSV file
@@ -545,7 +540,6 @@ def api_sources():
         words = q.split(' ')
         query.extend([Source.title.ilike('%{}%'.format(word)) for word in words])
 
-
     # ignore complex recursion when pulling all sources without filters
     if q:
         result = Source.query.filter(*query).all()
@@ -555,7 +549,7 @@ def api_sources():
         for source in sources + children:
             ids.append(source.id)
 
-        #remove dups
+        # remove dups
         ids = list(set(ids))
 
         result = Source.query.filter(
@@ -569,8 +563,8 @@ def api_sources():
                     content_type='application/json'), 200
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/source/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_source_create():
     """
     Endpoint to create a source
@@ -585,8 +579,8 @@ def api_source_create():
             return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/source/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_source_update(id):
     """
     Endpoint to update a source
@@ -606,8 +600,8 @@ def api_source_update(id):
         return 'Unauthorized', 403
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/source/<int:id>', methods=['DELETE'])
+@roles_accepted('Admin', 'Mod')
 def api_source_delete(id):
     """
     Endopint to delete a source item
@@ -620,8 +614,8 @@ def api_source_delete(id):
         return 'Deleted Source #{}'.format(source.id)
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/source/import/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_source_import():
     """
     Endpoint to import sources from CSV data
@@ -637,12 +631,14 @@ def api_source_import():
 # locations routes
 
 @admin.route('/locations/')
+@roles_accepted('Admin', 'Mod')
 def locations():
     """Endpoint for locations management."""
     return render_template('admin/locations.html')
 
 
 @admin.route('/api/locations/')
+@roles_accepted('Admin', 'Mod')
 def api_locations():
     """Returns locations in JSON format, allows search and paging."""
     query = []
@@ -662,7 +658,7 @@ def api_locations():
     res_type = 0
     if typ and typ in ['s', 'g', 'c', 'd']:
         # finds all children of specific location type
-        query.append(Location.loc_type==typ.upper())
+        query.append(Location.loc_type == typ.upper())
 
     result = Location.query.filter(*query).paginate(
         page, per_page, True)
@@ -675,8 +671,8 @@ def api_locations():
                     content_type='application/json'), 200
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/location/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_location_create():
     """Endpoint for creating locations."""
     if request.method == 'POST':
@@ -689,8 +685,8 @@ def api_location_create():
             return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/location/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_location_update(id):
     """Endpoint for updating locations. """
     if request.method == 'PUT':
@@ -707,8 +703,8 @@ def api_location_update(id):
         return 'Unauthorized', 403
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/location/<int:id>', methods=['DELETE'])
+@roles_accepted('Admin', 'Mod')
 def api_location_delete(id):
     """Endpoint for deleting locations. """
 
@@ -718,8 +714,8 @@ def api_location_delete(id):
         return 'Deleted Location #{}'.format(location.id)
 
 
-@roles_required(['Admin', 'Mod'])
 @admin.route('/api/location/import/', methods=['POST'])
+@roles_accepted('Admin', 'Mod')
 def api_location_import():
     """Endpoint for importing locations."""
     if 'csv' in request.files:
@@ -790,8 +786,8 @@ def api_bulletins():
                     content_type='application/json'), 200
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/bulletin/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_bulletin_create():
     """Creates a new bulletin."""
 
@@ -808,8 +804,8 @@ def api_bulletin_create():
         return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/bulletin/<int:id>', methods=['PUT'])
+@roles_accepted('Admin','DA')
 def api_bulletin_update(id):
     """Updates a bulletin."""
 
@@ -833,8 +829,8 @@ def api_bulletin_update(id):
 
 
 # Add/Update review bulletin endpoint
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/bulletin/review/<int:id>', methods=['PUT'])
+@roles_accepted('Admin','DA')
 def api_bulletin_review_update(id):
     """
     Endpoint to update a bulletin review
@@ -876,8 +872,8 @@ def api_bulletin_review_update(id):
 
 
 # bulk update bulletin endpoint
-@roles_required(['Admin','Mod'])
 @admin.route('/api/bulletin/bulk/', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_bulletin_bulk_update():
     """
     Endpoint to bulk update bulletins
@@ -901,6 +897,7 @@ def api_bulletin_bulk_update():
     else:
         return 'Unauthorized', 403
 
+
 '''
 @admin.route('/api/bulletin/<int:id>', methods=['DELETE'])
 @roles_required('Admin')
@@ -919,6 +916,7 @@ def api_bulletin_delete(id):
         return 'Deleted!'
 '''
 
+
 # get one bulletin
 @admin.route('/api/bulletin/<int:id>', methods=['GET'])
 def api_bulletin_get(id):
@@ -932,11 +930,14 @@ def api_bulletin_get(id):
         if not bulletin:
             abort(404)
         else:
+            # hide review from view-only users
+            if not current_user.roles:
+                bulletin.review = None
             return bulletin.to_json(), 200
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/bulletin/import/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_bulletin_import():
     """
     Endpoint to import bulletins from csv data
@@ -950,8 +951,8 @@ def api_bulletin_import():
 
 
 # Media special endpoints
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/media/upload/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_medias_upload():
     """
     Endpoint to upload files (based on file system settings : s3 or local file system)
@@ -1048,7 +1049,6 @@ def api_local_serve_media(filename):
     return send_from_directory('media', filename)
 
 
-
 # Medias routes
 
 @admin.route('/api/medias/', defaults={'page': 1})
@@ -1073,8 +1073,8 @@ def api_medias(page):
                     content_type='application/json')
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/media/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_media_create():
     """
     Endpoint to create a media item
@@ -1089,8 +1089,8 @@ def api_media_create():
             return 'Save Failed', 417
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/media/<int:id>', methods=['PUT'])
+@roles_accepted('Admin','DA')
 def api_media_update(id):
     """
     Endpoint to update a media item
@@ -1161,8 +1161,8 @@ def api_actors():
 
 
 # create actor endpoint
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/actor/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_actor_create():
     """
     Endpoint to create an Actor item
@@ -1171,48 +1171,59 @@ def api_actor_create():
     if request.method == 'POST':
         actor = Actor()
         actor.from_json(request.json['item'])
-        actor.save()
+        result = actor.save()
+        if result:
 
-        # the below will create the first revision by default
-        actor.create_revision()
-        # Record activity
-        Activity.create(current_user, Activity.ACTION_CREATE, actor.to_mini(), 'actor')
-        return 'Created Actor #{}'.format(actor.id)
+
+            # the below will create the first revision by default
+            actor.create_revision()
+            # Record activity
+            Activity.create(current_user, Activity.ACTION_CREATE, actor.to_mini(), 'actor')
+            return 'Created Actor #{}'.format(actor.id)
+        else:
+            return 'Error creating actor', 417
     else:
         return 'Save Failed', 417
 
 
 # update actor endpoint 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/actor/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'DA')
 def api_actor_update(id):
     """
     Endpoint to update an Actor item
     :param id: id of the actor to be updated
     :return: success/error
     """
-    if request.method == 'PUT':
-        actor = Actor.query.get(id)
-        if actor is not None:
-            actor = actor.from_json(request.json['item'])
-            # Create a revision using latest values
-            # this method automatically commits
-            #  actor changes (referenced)           
-            actor.create_revision()
 
-            # Record Activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-            return 'Saved Actor #{}'.format(actor.id), 200
-        else:
-            return 'Not Found!'
+    actor = Actor.query.get(id)
+    if not actor:
+        abort(404)
 
+    actor = actor.from_json(request.json['item'])
+    # Create a revision using latest values
+    # this method automatically commits
+    #  actor changes (referenced)
+    result = actor.save()
+    if result:
+        actor.create_revision()
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
+        return 'Saved Actor #{}'.format(actor.id), 200
     else:
-        return 'Unauthorized', 403
+        return 'Error saving actor', 417
+
+
+
+
+
+
+
 
 
 # Add/Update review actor endpoint
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/actor/review/<int:id>', methods=['PUT'])
+@roles_accepted('Admin','DA')
 def api_actor_review_update(id):
     """
     Endpoint to update an Actor's review item
@@ -1244,8 +1255,8 @@ def api_actor_review_update(id):
 
 
 # bulk update actor endpoint
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/actor/bulk/', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_actor_bulk_update():
     """
     Endpoint to bulk update actors
@@ -1268,6 +1279,7 @@ def api_actor_bulk_update():
     else:
         return 'Unauthorized', 403
 
+
 '''
 @roles_required('Admin')
 @admin.route('/api/actor/<int:id>', methods=['DELETE'])
@@ -1285,6 +1297,7 @@ def api_actor_delete(id):
         return 'Deleted!'
 '''
 
+
 # get one actor
 
 @admin.route('/api/actor/<int:id>', methods=['GET'])
@@ -1300,6 +1313,21 @@ def api_actor_get(id):
             abort(404)
         else:
             return actor.to_json(), 200
+
+
+@admin.route('/api/actormp/<int:id>', methods=['GET'])
+def api_actor_mp_get(id):
+    """
+    Endpoint to get missing person data for an actor
+    :param id: id of the actor
+    :return: actor data in json format + success or error in case of failure
+    """
+    if request.method == 'GET':
+        actor = Actor.query.get(id)
+        if not actor:
+            abort(404)
+        else:
+            return json.dumps(actor.mp_json()), 200
 
 
 # Bulletin History Helpers
@@ -1355,8 +1383,8 @@ def api_incidenthistory(incidentid):
 
 # user management routes
 
-@roles_required(['Admin','Mod'])
 @admin.route('/api/users/')
+@roles_accepted('Admin', 'Mod')
 def api_users():
     """
     API endpoint to feed users data in json format , supports paging and search
@@ -1463,6 +1491,7 @@ def api_user_delete(id):
 
 # Roles routes
 @admin.route('/roles/')
+@roles_required('Admin')
 def roles():
     """
     Endpoint to redner roles backend page
@@ -1473,6 +1502,7 @@ def roles():
 
 @admin.route('/api/roles/', defaults={'page': 1})
 @admin.route('/api/roles/<int:page>/')
+@roles_required('Admin')
 def api_roles(page):
     """
     API endpoint to feed roles items in josn format - supports paging and search
@@ -1493,8 +1523,8 @@ def api_roles(page):
                     content_type='application/json')
 
 
-@roles_required('Admin')
 @admin.route('/api/role/', methods=['POST'])
+@roles_required('Admin')
 def api_role_create():
     """
     Endpoint to create a role item
@@ -1512,8 +1542,8 @@ def api_role_create():
             return 'Save Failed', 417
 
 
-@roles_required('Admin')
 @admin.route('/api/role/<int:id>', methods=['PUT'])
+@roles_required('Admin')
 def api_role_update(id):
     """
     Endpoint to update a role item
@@ -1600,8 +1630,8 @@ def api_incidents():
                     content_type='application/json'), 200
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/incident/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_incident_create():
     """API endpoint to create an incident."""
     if request.method == 'POST':
@@ -1618,8 +1648,8 @@ def api_incident_create():
 
 
 # update incident endpoint 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/incident/<int:id>', methods=['PUT'])
+@roles_accepted('Admin','DA')
 def api_incident_update(id):
     """API endpoint to update an incident."""
     if request.method == 'PUT':
@@ -1641,8 +1671,8 @@ def api_incident_update(id):
 
 
 # Add/Update review incident endpoint
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/incident/review/<int:id>', methods=['PUT'])
+@roles_accepted('Admin','DA')
 def api_incident_review_update(id):
     """
     Endpoint to update an incident review item
@@ -1672,8 +1702,8 @@ def api_incident_review_update(id):
 
 
 # bulk update incident endpoint
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/incident/bulk/', methods=['PUT'])
+@roles_accepted('Admin', 'Mod')
 def api_incident_bulk_update():
     """endpoint to handle bulk incidents updates."""
     if request.method == 'PUT':
@@ -1693,6 +1723,7 @@ def api_incident_bulk_update():
     else:
         return 'Unauthorized', 403
 
+
 '''
 @admin.route('/api/incident/<int:id>', methods=['DELETE'])
 @roles_required('Admin')
@@ -1706,6 +1737,7 @@ def api_incident_delete(id):
         Activity.create(current_user, Activity.ACTION_DELETE, incident.to_mini(), 'incident')
         return 'Deleted!'
 '''
+
 
 # get one incident
 
@@ -1724,8 +1756,8 @@ def api_incident_get(id):
             return incident.to_json(), 200
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/incident/import/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_incident_import():
     """
     Endpoint to handle incident imports.
@@ -1837,8 +1869,8 @@ def api_queries():
     return json.dumps([query.to_dict() for query in queries]), 200
 
 
-@roles_required(['Admin', 'DA'])
 @admin.route('/api/query/', methods=['POST'])
+@roles_accepted('Admin','DA')
 def api_query_create():
     """
     API Endpoint save a query search object (advanced search)
@@ -1882,8 +1914,7 @@ def etl_status():
     return render_template('admin/etl-status.html')
 
 
-
-@admin.route('/etl/path/',methods=['POST'])
+@admin.route('/etl/path/', methods=['POST'])
 @roles_required('Admin')
 def path_process():
     path = request.json.get('path')
@@ -1898,9 +1929,10 @@ def path_process():
         items = p.glob('*')
     files = [str(file) for file in items]
 
-    output = [{'file': {'name': os.path.basename(file), 'path': file }} for file in files]
+    output = [{'file': {'name': os.path.basename(file), 'path': file}} for file in files]
 
-    return json.dumps(output) ,200
+    return json.dumps(output), 200
+
 
 @admin.route('/etl/process', methods=['POST'])
 @roles_required('Admin')
@@ -1918,17 +1950,14 @@ def etl_process():
     results = []
     batch_id = 'ETL' + shortuuid.uuid()[:9]
     batch_log = batch_id + '.log'
-    open(batch_log,'a')
+    open(batch_log, 'a')
 
     for file in files:
-
         results.append(etl_process_file.delay(batch_id, file, meta, user_id=current_user.id, log=batch_log))
 
     ids = [r.id for r in results]
     session['etl-tasks'] = ids
     return 'ETL operation queued successfully.', 200
-
-
 
 
 @admin.route('/api/etl/status/')
@@ -1940,6 +1969,5 @@ def etl_task_status():
     """
     ids = session['etl-tasks']
     results = [etl_process_file.AsyncResult(i) for i in ids]
-    output = [r.state for r in results ]
+    output = [r.state for r in results]
     return json.dumps(output), 200
-

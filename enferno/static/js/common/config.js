@@ -542,6 +542,8 @@ var dateWithin = [
 
 // videojs config settings  - prevent plugin from sending data
 window.HELP_IMPROVE_VIDEOJS = false;
+// Video player playback rates
+const VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]
 
 
 // media screenshots helper method

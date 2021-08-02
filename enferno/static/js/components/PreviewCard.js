@@ -1,5 +1,5 @@
 Vue.component('preview-card', {
-    props: ['item', 'value'],
+    props: ['item', 'value', 'i18n'],
     watch: {
         value(val) {
             this.preview = val;
@@ -33,10 +33,10 @@ Vue.component('preview-card', {
                 </v-toolbar>
 
 
-                <bulletin-card v-if="item && item.class=='Bulletin'" :close="false"
+                <bulletin-card :i18n="i18n" v-if="item && item.class=='Bulletin'" :close="false"
                                :bulletin="item"></bulletin-card>
-                <actor-card v-if="item && item.class=='Actor'" :close="false" :actor="item"></actor-card>
-                <incident-card v-if="item && item.class=='Incident'" :close="false"
+                <actor-card :i18n="i18n" v-if="item && item.class=='Actor'" :close="false" :actor="item"></actor-card>
+                <incident-card :i18n="i18n" v-if="item && item.class=='Incident'" :close="false"
                                :incident="item"></incident-card>
 
             </v-card>

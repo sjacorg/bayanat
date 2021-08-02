@@ -18,7 +18,7 @@
       </v-container>
 
       
-       <bulletin-card v-if="bulletinDrawer" :show-edit="true" @edit="editItem" v-if="bulletin" :log="true"  @thumb-click="viewImage" @close="bulletinDrawer=false" :bulletin="bulletin"></bulletin-card>
-      <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
+       <bulletin-card :i18n="translations" v-if="bulletinDrawer" :show-edit="true" @edit="editItem" v-if="bulletin" :log="true"  @thumb-click="viewImage" @close="bulletinDrawer=false" :bulletin="bulletin"></bulletin-card>
+      <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
     <pdf-viewer ref="pdfViewer"></pdf-viewer>
     </v-navigation-drawer>  

@@ -1,1249 +1,1187 @@
 {% extends 'layout.html' %} {% block css %}
-<link rel="stylesheet" href="/static/js/filepond/dist/filepond.min.css" />
+    <link rel="stylesheet" href="/static/js/filepond/dist/filepond.min.css"/>
 
 {% endblock %} {% block content %}
 
-<div id="app">
-  <v-app id="bulletins" v-cloak>
-    {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
+    <div id="app">
+        <v-app id="bulletins" v-cloak>
+            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
     'admin/partials/bulletin_drawer.html' %} {% include
     'admin/partials/bulk_bulletin_drawer.html' %}
-    <v-main>
-      {% include 'admin/partials/bulletin_advsearch.html' %}
-      <v-container class="container--fluid">
+            <v-main>
+                {% include 'admin/partials/bulletin_advsearch.html' %}
+                <v-container class="container--fluid">
 
-                  <v-card>
-                    <v-card-title>
-                      <div class="flex-grow-1"></div>
-                    </v-card-title>
-                    <v-card-text>
-
-
+                    <v-card>
+                        <v-card-title>
+                            <div class="flex-grow-1"></div>
+                        </v-card-title>
+                        <v-card-text>
 
 
-
-                      <v-data-table
-                        fixed-header
-                        height="calc(100vh - 355px)"
-                        id="bulletins-dt"
-                        v-model="selected"
-                        :headers="headers"
-                        @click:row="rowClick"
-                        show-select
-                        :items="items"
-                        :options.sync="options"
-                        :footer-props.sync="footerProps"
-                        :loading="loading"
-                        :server-items-length="itemsLength"
-                        class="elevation-1"
-                      >
-                        <template v-slot:top>
-                          <v-toolbar flat color="white">
-                            <v-btn class="hidden-sm-and-down" small @click="allBulletins" text
-                              >{{_('All Bulletins')}}</v-btn
+                            <v-data-table
+                                    fixed-header
+                                    height="calc(100vh - 355px)"
+                                    id="bulletins-dt"
+                                    v-model="selected"
+                                    :headers="headers"
+                                    @click:row="rowClick"
+                                    show-select
+                                    :items="items"
+                                    :options.sync="options"
+                                    :footer-props.sync="footerProps"
+                                    :loading="loading"
+                                    :server-items-length="itemsLength"
+                                    class="elevation-1"
                             >
-                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                            <v-btn class="hidden-sm-and-down" small @click="myAssigned" text
-                              >{{_('Assigned to me')}}</v-btn
-                            >
-                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                            <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down" text
-                              >{{_('My Review List')}}</v-btn
-                            >
+                                <template v-slot:top>
+                                    <v-toolbar flat color="white">
+                                        <v-btn class="hidden-sm-and-down" small @click="allBulletins" text
+                                        >{{ _('All Bulletins') }}</v-btn
+                                        >
+                                        <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                                        <v-btn class="hidden-sm-and-down" small @click="myAssigned" text
+                                        >{{ _('Assigned to me') }}</v-btn
+                                        >
+                                        <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                                        <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down" text
+                                        >{{ _('My Review List') }}</v-btn
+                                        >
 
-                            <v-text-field
-                              flat
-                              dense
-                              outlined
-                              small
-                              v-model.trim="search[0].tsv"
-                              @keydown.enter="doSearch()"
-                              hide-details
-                              append-outer-icon="mdi-ballot"
-                              append-icon="mdi-close"
-                              @click:append="resetSearch"
-                              @click:append-outer="toggleAdvSearch"
-                              prepend-inner-icon="mdi-magnify"
-                              label="{{_('Search')}}"
-                              :background-color="searchBg"
-                            ></v-text-field>
+                                        <v-text-field
+                                                flat
+                                                dense
+                                                outlined
+                                                small
+                                                v-model.trim="search[0].tsv"
+                                                @keydown.enter="doSearch()"
+                                                hide-details
+                                                append-outer-icon="mdi-ballot"
+                                                append-icon="mdi-close"
+                                                @click:append="resetSearch"
+                                                @click:append-outer="toggleAdvSearch"
+                                                prepend-inner-icon="mdi-magnify"
+                                                label="{{ _('Search') }}"
+                                                :background-color="searchBg"
+                                        ></v-text-field>
 
 
-
-                            <v-spacer></v-spacer>
-                            {% if current_user.roles_in(['Admin','DA']) %}
-                            <v-btn
-                              @click="editItem"
-                              color="primary"
-                              dark
-                              class="ma-2"
-                              >{{_('New Bulletin')}}</v-btn
-                            >
-                            {% endif %} {% include
+                                        <v-spacer></v-spacer>
+                                        {% if current_user.roles_in(['Admin','DA']) %}
+                                            <v-btn
+                                                    @click="editItem"
+                                                    color="primary"
+                                                    dark
+                                                    class="ma-2"
+                                            >{{ _('New Bulletin') }}</v-btn
+                                            >
+                                        {% endif %} {% include
                             'admin/partials/bulletin_dialog.html' %} {% include
                             'admin/partials/review_dialog.html' %}
-                          </v-toolbar>
+                                    </v-toolbar>
 
 
 
 
 
-                          {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
-                          <v-toolbar dense color="grey lighten-4" flat>
-                            <template v-if="bulkIcons">
-                              <v-btn
-                                @click="bulkBulletinDrawer=true"
-                                small
-                                color="fifth"
-                                depressed
-                                ><v-icon small left
-                                  >mdi-circle-edit-outline</v-icon
-                                >Bulk update</v-btn
-                              >
-                            </template>
-                            <template>
-                              <v-progress-circular v-for="job in jobs"
-                                  size="20" small
-                                  :indeterminate="job.status!='SUCCESS'"
+                                    {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
+                                        <v-toolbar dense color="grey lighten-4" flat>
+                                            <template v-if="bulkIcons">
 
-                                  :color="job.status=='SUCCESS' ? 'success': 'amber'"
-                              :value="job.status=='SUCCESS'?100:null"
-                          class="mx-1"
-                                           stroke="1"
-                                ></v-progress-circular>
-                            </template>
-                            <v-spacer>
-                              </v-spacer>
-
-                              <v-tooltip top>
-                                  <template v-slot:activator="{ on, attrs }">
-                                       <v-chip v-on="on"  label small close color="yellow lighten-4" class="grey--text text--darken-2"
-                                       @click:close="allBulletins"
-                              >{{_('About')}} ${itemsLength} {{_('results')}} (${searchTime} {{_('seconds')}})</v-chip>
-                                  </template>
-                                  <span>${search}</span>
-                              </v-tooltip>
+                                                <v-btn @click="selected=[]" x-small fab
+                                                       class="mr-3" elevation="0" color="white">
+                                                    <v-icon>mdi-checkbox-blank-outline</v-icon>
+                                                </v-btn>
 
 
+                                                <v-btn
+                                                        @click="bulkBulletinDrawer=true"
+                                                        small
+                                                        color="fifth"
+                                                        depressed
+                                                >
+                                                    <v-icon small left
+                                                    >mdi-circle-edit-outline
+                                                    </v-icon
+                                                    >
+                                                    Bulk update
+                                                </v-btn
+                                                >
+                                            </template>
+                                            <template>
+                                                <v-progress-circular v-for="job in jobs"
+                                                                     size="20" small
+                                                                     :indeterminate="job.status!='SUCCESS'"
+
+                                                                     :color="job.status=='SUCCESS' ? 'success': 'amber'"
+                                                                     :value="job.status=='SUCCESS'?100:null"
+                                                                     class="mx-1"
+                                                                     stroke="1"
+                                                ></v-progress-circular>
+                                            </template>
+                                           <v-spacer></v-spacer>
+
+                                            <div>
+
+                                                <v-tooltip top>
+                                                    <template v-slot:activator="{ on, attrs }">
+                                                        <v-chip v-on="on" label small close color="yellow lighten-4"
+                                                                class="grey--text text--darken-2"
+                                                                @click:close="allBulletins"
+                                                        >{{ _('About') }} ${itemsLength} {{ _('results') }}
+                                                            (${searchTime} {{ _('seconds') }})
+                                                        </v-chip>
+                                                    </template>
+                                                    <span>${search}</span>
+                                                </v-tooltip>
+                                            </div>
 
 
-
-                            <v-spacer></v-spacer>
-                            <v-chip small color="accent" v-if="selected.length"
-                              >${selected.length} {{_('Selected items')}}</v-chip
-                            >
-                          </v-toolbar>
-                          {% endif %}
-
-
-                        </template>
-
-                        <template v-slot:item.status="{ item }">
-                          ${item.status}
-                          <v-chip
-                            x-small
-                            v-if="item.review_action"
-                            color="grey lighten-4"
-                            class="secondary--text"
-                            >${item.review_action}</v-chip
-                          >
-                        </template>
-                        <template v-slot:item.action="{ item }">
-                          <v-tooltip top>
-                            <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                color="ov darken-1"
-                                class="mr-2"
-                                @click.stop="editItem(item)"
-                                v-if="editAllowed(item)"
-                              >
-                                mdi-pencil
-                              </v-icon>
-                            </template>
-                            <span>Edit</span>
-                          </v-tooltip>
+                                            <v-spacer></v-spacer>
+                                            <v-chip small color="accent" v-if="selected.length"
+                                            >${selected.length} {{ _('Selected items') }}</v-chip
+                                            >
+                                        </v-toolbar>
+                                    {% endif %}
 
 
-                           <v-tooltip top>
-                            <template v-slot:activator="{ on }">
-                               <v-icon v-on="on"
-                            v-if="reviewAllowed(item)"
-                            @click.stop="addReview(item)"
-                            color="gv darken-1"
-                            class="mr-2"
-                            >mdi-message-draw</v-icon>
                                 </template>
-                            <span>Add Review</span>
-                          </v-tooltip>
 
-                        </template>
-                        <template v-slot:no-data> </template>
-                      </v-data-table>
-
-                      <v-overlay :value="loading">
-                        <v-progress-circular
-                          indeterminate
-                          size="64"
-                        ></v-progress-circular>
-                      </v-overlay>
-                    <relate-bulletins @relate="relateBulletin" :exids="exBulletins" ref="relateBulletins"></relate-bulletins>
-                    <relate-actors @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
-                    <relate-incidents @relate="relateIncident" :exids="exIncidents"  ref="relateIncidents"></relate-incidents>
-
-
-                      {% include 'admin/partials/relate_media_dialog.html' %}
-                      {% include 'admin/partials/video_player_dialog.html' %}
-
-
-
-
-
-
-                      <v-snackbar v-model="snackbar">
-                        ${snackMessage}
-                        <v-btn color="secondary" text @click="snackbar = false">
-                          Close
-                        </v-btn>
-                      </v-snackbar>
-                    </v-card-text>
-                  </v-card>
+                                <template v-slot:item.status="{ item }">
+                                    ${item.status}
+                                    <v-chip
+                                            x-small
+                                            v-if="item.review_action"
+                                            color="grey lighten-4"
+                                            class="secondary--text"
+                                    >${item.review_action}
+                                    </v-chip
+                                    >
+                                </template>
+                                <template v-slot:item.action="{ item }">
+                                    <v-tooltip top>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon
+                                                    v-on="on"
+                                                    color="ov darken-1"
+                                                    class="mr-2"
+                                                    @click.stop="editItem(item)"
+                                                    v-if="editAllowed(item)"
+                                            >
+                                                mdi-pencil
+                                            </v-icon>
+                                        </template>
+                                        <span>Edit</span>
+                                    </v-tooltip>
 
 
+                                    <v-tooltip top>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon v-on="on"
+                                                    v-if="reviewAllowed(item)"
+                                                    @click.stop="addReview(item)"
+                                                    color="gv darken-1"
+                                                    class="mr-2"
+                                            >mdi-message-draw
+                                            </v-icon>
+                                        </template>
+                                        <span>Add Review</span>
+                                    </v-tooltip>
+
+                                </template>
+                                <template v-slot:no-data></template>
+                            </v-data-table>
+
+                            <v-overlay :value="loading">
+                                <v-progress-circular
+                                        indeterminate
+                                        size="64"
+                                ></v-progress-circular>
+                            </v-overlay>
+                            <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
+                                              ref="relateBulletins"></relate-bulletins>
+                            <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors" ref="relateActors"></relate-actors>
+                            <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
+                                              ref="relateIncidents"></relate-incidents>
 
 
-      </v-container>
-    </v-main>
-      {% include 'footer.html' %}
-  </v-app>
-</div>
+                            {% include 'admin/partials/relate_media_dialog.html' %}
+                            {% include 'admin/partials/video_player_dialog.html' %}
+
+
+                            <v-snackbar v-model="snackbar">
+                                ${snackMessage}
+                                <v-btn color="secondary" text @click="snackbar = false">
+                                    Close
+                                </v-btn>
+                            </v-snackbar>
+                        </v-card-text>
+                    </v-card>
+
+
+                </v-container>
+            </v-main>
+            {% include 'footer.html' %}
+        </v-app>
+    </div>
 
 {% endblock %} {% block js %}
-<script
-  src="/static/js/tinymce/js/tinymce/tinymce.min.js"
-  referrerpolicy="origin"
-></script>
-<script src="/static/js/tinymce-vue.min.js"></script>
-<script src="/static/js/filepond/dist/filepond.min.js"></script>
-<script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
-<script src="/static/js/components/MediaCard.js?v={{g.version}}"></script>
-<script src="/static/js/components/BulletinResult.js?v={{g.version}}"></script>
-<script src="/static/js/components/ActorResult.js?v={{g.version}}"></script>
-<script src="/static/js/components/IncidentResult.js?v={{g.version}}"></script>
-<script src="/static/js/components/UniField.js?v={{g.version}}"></script>
-<script src="/static/js/mixins/media-mixin.js?v={{g.version}}"></script>
-<script src="/static/js/actorConfig.js?v={{g.version}}"></script>
-<script src="/static/js/components/PdfViewer.js?v={{g.version}}"></script>
+    <script
+            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            referrerpolicy="origin"
+    ></script>
+    <script src="/static/js/tinymce-vue.min.js"></script>
+    <script src="/static/js/filepond/dist/filepond.min.js"></script>
+    <script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
+    <script src="/static/js/components/MediaCard.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/BulletinResult.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/ActorResult.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/IncidentResult.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/UniField.js?v={{ g.version }}"></script>
+    <script src="/static/js/mixins/media-mixin.js?v={{ g.version }}"></script>
+    <script src="/static/js/actorConfig.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/PdfViewer.js?v={{ g.version }}"></script>
 
-<script>
+    <script>
 
-    let app = new Vue({
-      el: "#app",
-      vuetify: vuetify,
-      delimiters: delimiters,
-      router,
+        let app = new Vue({
+            el: "#app",
+            vuetify: vuetify,
+            delimiters: delimiters,
+            router,
 
-      mixins: [ mediaMixin],
+            mixins: [mediaMixin],
 
 
-      components: {
+            components: {
 
-        "tinymce-editor": Editor, // <- Important part,
-        FilePond: vueFilePond.default(),
-        VueQueryBuilder: window.VueQueryBuilder
-      },
+                "tinymce-editor": Editor, // <- Important part,
+                FilePond: vueFilePond.default(),
+                VueQueryBuilder: window.VueQueryBuilder
+            },
 
 
+            data: () => ({
 
-      data: () => ({
 
+                {% include 'admin/i18n.jinja2' %}
 
-    {% include 'admin/i18n.jinja2' %}
 
 
 
+                //global preview dialog
+                preview: false,
+                pitem: null,
+                search: [{}],
+                queryName: null,
+                saveQueryDialog: false,
+                searchPanels: 0,
+                searches: null,
+                searchTime: null,
 
-        //global preview dialog
-        preview : false,
-        pitem: null,
-        search : [{}],
-        queryName: null,
-        saveQueryDialog: false,
-        searchPanels: 0,
-        searches: null,
-        searchTime: null,
 
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+                users: JSON.parse(`{{users|tojson}}`),
 
+                // advanced search
+                q: {},
 
+                advSearchExpand: false,
+                advSearchMenu: false,
 
 
+                fsloading: true,
 
-        currentUser : JSON.parse(`{{ current_user.to_dict()|tojson }}`),
-        users : JSON.parse(`{{users|tojson}}`),
 
-        // advanced search
-        q: {},
+                dialog: dialog,
+                eventDialog: false,
 
-        advSearchExpand : false,
-        advSearchMenu: false,
+                reviewDialog: false,
+                reviewKey: 0,
+                descKey: 0,
 
 
-        fsloading : true,
+                // search and relate bulletin dialog vars
 
 
+                relateBulletinTerm: "",
+                relateBulletinResults: [],
+                selectedRelatedBulletins: [],
 
-        dialog: dialog,
-        eventDialog: false,
+                // search and relate actor dialog vars
+                relateActorTerm: "",
+                relateActorResults: [],
+                selectedRelatedActors: [],
 
-        reviewDialog: false,
-        reviewKey : 0,
-        descKey : 0,
 
+                // search and relate incident dialog vars
+                relateIncidentDialog: false,
+                relateIncidentLoader: true,
+                relateIncidentTerm: "",
+                relateIncidentResults: [],
+                selectedRelatedIncidents: [],
 
 
+                drawer: drawer,
+                sideNav: sideNav,
+                bulletinDrawer: false,
+                bulkBulletinDrawer: false,
 
 
+                sources: [],
+                locations: [],
+                labels: [],
+                verLabels: [],
+                eventtypes: [],
+
+                statuses: statuses,
+                statusItems: ['Human Created'],
+                statusDisabled: false,
 
 
+                //field language switchers
+                title__: true,
+                sjac_title__: true,
+                //events fields
+                eventTitle__: true,
+                eventComments__: true,
+
+
+                //source link extras
+                source_alt: null,
+                source_disabled: false,
+
+                //rich text config
+                tinyConfig: tinyConfig,
 
+                snackbar: false,
+                snackMessage: "",
+                loading: true,
+                parentLoading: false,
+                csvFile: null,
+                options: {},
+                searchLoading: {
+                    assigned: false,
+                    first: false,
+                    second: false,
+                    third: false
+                },
+
+
+                //event dates popups
+                eventFromMenu: false,
+                eventToMenu: false,
+
+                //bulletin dates popups
+                publishDateMenu: false,
+                documentationDateMenu: false,
+
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
+
+                headers: [
+                    {text: "{{_('ID')}}", value: "id", width: 12, sortable: true},
+                    {text: "{{_('Title')}}", value: "title", width: 300, sortable: false},
+                    {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
+                        {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
+                        {text: "{{_('1st Reviewer')}}", value: "first_peer_reviewer.name", width: 130, sortable: false},
+                    {% endif %}
+                    {text: "{{_('Status')}}", value: "status", width: 150, sortable: false},
+
+
+                    {text: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
+
+                ],
+
+
+                items: [],
+                selected: [],
+                itemsLength: 10,
+
+                editedIndex: -1,
+                editedItem: {
+                    title: "",
+                    events: [],
+                    medias: [],
+                    bulletin_relations: []
+                },
+                defaultItem: {
+                    title: "",
+                    description: "",
 
+                    // related events
+                    events: [],
+                    // related media
+                    medias: [],
+                    // related bulletins
+                    bulletin_relations: [],
 
-        // search and relate bulletin dialog vars
+                    // related actors
+                    actor_relations: [],
+                    publish_date: '',
+                    documentation_date: '',
 
 
-        relateBulletinTerm: "",
-        relateBulletinResults: [],
-        selectedRelatedBulletins: [],
+                },
 
-        // search and relate actor dialog vars
-        relateActorTerm: "",
-        relateActorResults: [],
-        selectedRelatedActors: [],
+                reviewItem: {},
 
+                // bulk actions
+                bulk: {},
+                bulkIcons: false,
+                jobs: [],
+                bulkTimer: 0,
 
-        // search and relate incident dialog vars
-        relateIncidentDialog: false,
-        relateIncidentLoader: true,
-        relateIncidentTerm: "",
-        relateIncidentResults: [],
-        selectedRelatedIncidents: [],
 
+                //events
+                editedEventIndex: -1,
+                editedEvent: {
+                    title: ""
+                },
+                defaultEvent: {
+                    title: "",
+                    from_date: '',
+                    to_date: ''
+                },
 
 
+                bulletin: {},
+                bulletinLoader: false
+            }),
 
-        drawer: drawer,
-        sideNav: sideNav,
-        bulletinDrawer: false,
-        bulkBulletinDrawer: false,
+            computed: {
 
+                exBulletins() {
+                    let ids = [this.editedItem.id];
+                    if (this.editedItem.bulletin_relations) {
+                        ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id))
+                    }
+                    return ids;
+                },
 
+                exActors() {
+                    let ids = [];
+                    if (this.editedItem.actor_relations) {
+                        ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id))
+                    }
+                    return ids;
+                },
 
-        sources: [],
-        locations: [],
-        labels: [],
-        verLabels: [],
-        eventtypes: [],
+                exIncidents() {
+                    let ids = [];
+                    if (this.editedItem.incident_relations) {
+                        ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id))
+                    }
+                    return ids;
+                },
 
-        statuses: statuses,
-        statusItems : ['Human Created'],
-        statusDisabled : false,
 
+                searchBg() {
+                    for (const s of this.search) {
+                        let props = Object.values(s);
+                        for (const v of props) {
+                            if (v) {
+                                return 'yellow lighten-5';
+                            }
+                        }
+                    }
+                    return ''
 
+                },
 
 
-        //field language switchers
-        title__: true,
-        sjac_title__: true,
-        //events fields
-        eventTitle__: true,
-        eventComments__: true,
+                formTitle() {
 
+                    return this.editedItem.id ? this.translations.editBulletin_ : this.translations.newBulletin_;
+                },
 
+            },
 
-        //source link extras
-        source_alt: null,
-        source_disabled: false,
 
-        //rich text config
-        tinyConfig: tinyConfig,
+            watch: {
 
-        snackbar: false,
-        snackMessage: "",
-        loading: true,
-        parentLoading: false,
-        csvFile: null,
-        options: {},
-        searchLoading: {
-          assigned: false,
-          first: false,
-          second: false,
-          third: false
-        },
+                bulletinDrawer: function (val) {
+                    if (val == false) {
 
+                        if (this.$route.path != '/admin/bulletins/')
+                            this.$router.push('/admin/bulletins/')
+                    }
+                },
 
 
+                selected: function (val) {
+                    this.bulkIcons = val.length ? true : false;
 
+                },
 
+                source_alt: function (val) {
 
-        //event dates popups
-        eventFromMenu: false,
-        eventToMenu: false,
+                    if (val) {
+                        this.editedItem.source_link = 'NA';
+                        this.source_disabled = true;
+                    } else {
+                        //this.editedItem.source_link = '';
+                        this.source_disabled = false;
+                    }
+                },
 
-        //bulletin dates popups
-        publishDateMenu: false,
-        documentationDateMenu: false,
 
-        footerProps: {
-          itemsPerPageOptions: itemsPerPageOptions,
-              itemsPerPageText: "{{ _('Rows per page')}}"
-        },
+                eventDialog(val) {
+                    val || this.closeEvent();
+                },
 
-        headers: [
-          { text: "{{_('ID')}}", value: "id", width:12, sortable: true },
-          { text: "{{_('Title')}}", value: "title",width: 300, sortable: false },
-          {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
-          { text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable:false },
-          { text: "{{_('1st Reviewer')}}", value: "first_peer_reviewer.name", width: 130, sortable:false },
-          {% endif %}
-          { text: "{{_('Status')}}", value: "status", width: 150, sortable:false },
+                mediaDialog(val) {
+                    val || this.closeMedia();
+                },
 
-
-
-          { text: "{{_('Actions')}}", value: "action", sortable: false, width: 100 }
-
-        ],
-
-
-
-        items: [],
-        selected: [],
-        itemsLength: 10,
-
-        editedIndex: -1,
-        editedItem: {
-          title: "",
-          events: [],
-          medias: [],
-          bulletin_relations: []
-        },
-        defaultItem: {
-          title: "",
-          description: "",
-
-          // related events
-          events: [],
-          // related media
-          medias: [],
-          // related bulletins
-          bulletin_relations: [],
-
-          // related actors
-          actor_relations: [],
-          publish_date: '',
-          documentation_date: '',
-
-
-
-        },
-
-        reviewItem: {
-
-        },
-
-        // bulk actions
-        bulk: {},
-        bulkIcons : false,
-        jobs: [],
-        bulkTimer: 0,
-
-
-        //events
-        editedEventIndex: -1,
-        editedEvent: {
-          title: ""
-        },
-        defaultEvent: {
-          title: "",
-                  from_date: '',
-                  to_date:''
-        },
-
-
-
-        bulletin: {},
-        bulletinLoader: false
-      }),
-
-      computed: {
-
-          exBulletins(){
-              let ids = [this.editedItem.id];
-              if (this.editedItem.bulletin_relations){
-                  ids = ids.concat(this.editedItem.bulletin_relations.map(x=> x.bulletin.id))
-              }
-              return ids;
-          },
-
-          exActors(){
-              let ids = [];
-              if (this.editedItem.actor_relations){
-                  ids = ids.concat(this.editedItem.actor_relations.map(x=> x.actor.id))
-              }
-              return ids;
-          },
-
-          exIncidents(){
-              let ids = [];
-              if (this.editedItem.incident_relations){
-                  ids = ids.concat(this.editedItem.incident_relations.map(x=> x.incident.id))
-              }
-              return ids;
-          },
-
-
-
-          searchBg(){
-              for (const s of this.search){
-                  let props = Object.values(s);
-                  for (const v of props){
-                      if (v){
-                          return 'yellow lighten-5';
-                      }
-                  }
-              }
-              return ''
-
-          },
-
-
-
-
-        formTitle() {
-
-          return this.editedItem.id ? this.translations.editBulletin_ : this.translations.newBulletin_;
-        },
-
-      },
-
-
-
-      watch: {
-
-        bulletinDrawer : function(val){
-          if(val == false) {
-
-            if (this.$route.path !='/admin/bulletins/')
-            this.$router.push('/admin/bulletins/')
-          }
-        },
-
-
-
-
-        selected : function(val){
-          this.bulkIcons = val.length ? true: false;
-
-        },
-
-        source_alt: function(val) {
-
-          if (val) {
-            this.editedItem.source_link = 'NA';
-            this.source_disabled = true;
-          } else {
-            //this.editedItem.source_link = '';
-            this.source_disabled = false;
-          }
-        },
-
-
-
-        eventDialog(val) {
-          val || this.closeEvent();
-        },
-
-        mediaDialog(val) {
-          val || this.closeMedia();
-        },
-
-        options: {
-          handler: "refresh",
-          immdiate: true
-        }
-      },
-      mounted: function() {
-
-          // display confirmation alert if edit dialog is open.
-          let self = this;
-          window.addEventListener("beforeunload", function (e) {
-              if (self.dialog) {
-              var confirmationMessage = 'It looks like you have been editing something. '
-                  + 'If you leave before saving, your changes will be lost.';
-              (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-              return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
-                  }
-          });
-
-
-
-        if (this.$route.params.id){
-          this.showBulletin(this.$route.params.id);
-        }
-
-        this.$router.afterEach((to, from, next) => {
-
-
-          if (this.$route.params.id){
-            this.showBulletin(this.$route.params.id);
-          }
-
-        })
-
-
-      },
-
-      methods: {
-
-        previewItem(endpoint){
-
-          axios.get(endpoint).then(res=>{
-            this.pitem = res.data;
-            this.preview = true;
-
-          })
-
-
-
-
-
-
-        },
-
-
-        bulkStatus() {
-
-            axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
-              this.jobs = res.data;
-
-              if (!this.jobs.length) {
-                clearInterval(this.bulkTimer);
-                this.refresh();
-                this.showSnack('Bulk Update is finished!')
-              }
-              else {
-                  console.log(this.jobs)
-                  for (job of this.jobs) {
-                      console.log(job.status)
-                  }
-              }
-            });
-
-        },
-
-
-        // bulk updates
-
-        bulk_update(){
-          let ids = this.selected.map(x => x.id);
-          this.loading = true;
-          axios.put(`/admin/api/bulletin/bulk/`, {
-                items: ids,
-                bulk: this.bulk
-              })
-              .then(response => {
-                this.loading = false;
-                this.showSnack(response.data);
-                this.refresh(this.options);
-                //reset bulk drawer, and bulk data
-                this.bulkBulletinDrawer = false;
-                this.selected = [];
-                this.bulk = {};
-                clearInterval(this.bulkTimer);
-               // if (!this.bulkProcInterval)
-                  this.bulkTimer = setInterval(this.bulkStatus,3000);
-
-              });
-        },
-
-
-
-
-
-
-        // - ------------------ bulletins search methods  ---------------------------------
-
-  toggleAdvSearch() {
-          this.advSearchExpand = !this.advSearchExpand
-          this.advSearchMenu = !this.advSearchMenu;
-          this.$nextTick(()=>{
-            // trick to just invoke the binding
-          })
-
-        },
-        doSearch(){
-          this.options.page = 1;
-
-          // some good UX
-          if (this.advSearchExpand){
-          this.advSearchExpand = false;
-          }else {
-            //this.search = Object.assign({},{tsv:this.search.tsv})
-          }
-
-          this.searchBulletins();
-        }
-      ,
-        searchBulletins() {
-
-
-          // const page = this.options.page > 1? this.options.page : '';
-          // const url =
-
-          this.loading = true;
-          const startTime = new Date()
-
-          axios.post(`/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q:this.search, options:this.options}).then(response => {
-            const endTime = new Date()
-            this.searchTime = (endTime - startTime)/1000;
-            this.loading = false;
-            this.itemsLength = response.data.total;
-            this.items = response.data.items;
-          });
-
-
-
-        },
-        removeQueryAt(i) {
-
-        this.search.splice(i,1);
-
-        },
-
-        addQuery(){
-          this.search.push({})
-          this.searchPanels= this.search.length-1;
-        },
-
-
-        //saved searches
-         loadSearch(item){
-            if(item){
-            this.search = Object.assign([],item.data);
-            }
-
-        },
-        resetSearch(){
-          this.search = [{}];
-          this.doSearch()
-        },
-
-        loadSearches(){
-              axios.get('/admin/api/queries/').then(res=>{
-
-
-                this.searches  = Array.from(res.data);
-            })
-            this.saveDialog = false;
-
-        },
-
-        saveSearch(){
-            axios.post('/admin/api/query/', {q: this.search, name: this.queryName}).then(res=>{
-                this.showSnack(res.data);
-            })
-            this.saveDialog = false;
-        },
-      // - ------------------ end bulletins search methods  ---------------------------------
-
-
-      /* Bulletins Custom Lists */
-
-      allBulletins() {
-        this.search = [{}];
-        this.doSearch();
-
-      },
-      myAssigned() {
-        q = {};
-        this.options.page = 1;
-        q.assigned =  [this.currentUser.id];
-        q.status = "Assigned";
-        this.search = [q];
-        this.searchBulletins();
-      },
-
-      myReview() {
-        q = {};
-        this.options.page = 1;
-        q.reviewer =  [this.currentUser.id];
-        q.status = "Peer Review Assigned";
-        this.search = [q]
-        this.searchBulletins();
-      },
-
-
-
-
-
-
-
-        removeEvent: function(evt, index) {
-        if (confirm('Confirm deleting this event?')) {
-          this.editedItem.events.splice(index, 1);
-        }
-
-        },
-
-
-
-        //reset initial visible fields to english language
-
-        resetSwitchers: function() {
-          this.title__ = true;
-          this.sjac_title__ = true;
-        },
-
-        refresh() {
-
-          this.searchBulletins(this.search)
-
-        },
-
-        rowClick(item){
-          path = `/admin/bulletins/${item.id}`;
-          if (this.$route.path !== path)
-          this.$router.push(path);
-
-        },
-
-        showBulletin(id) {
-
-
-
-          this.bulletinLoader = true
-          this.bulletinDrawer = true;
-          axios.get(`/admin/api/bulletin/${id}`).then(response => {
-            this.loading = false;
-            this.bulletin = response.data;
-            this.bulletinLoader = false;
-
-
-          }).catch(error => {
-            this.bulletinDrawer = false;
-            this.bulletinLoader = false;
-            this.showSnack('Oops! We couldn\'t find this item.')
-
-          });
-        },
-
-
-
-
-
-        searchEventtypes: debounce(function(evt) {
-          axios
-            .get(`/admin/api/eventtypes/?q=${evt.target.value}&typ=for_bulletin`)
-            .then(response => {
-              this.eventtypes = response.data.items;
-            });
-        }, 350),
-
-
-
-        handleStatus(bulletin) {
-
-
-
-          if (this.editedItem.id) {
-            // edit existing bulletin mode
-            if (this.has_role(this.currentUser, 'Admin')){
-
-            this.statusItems = this.statuses;
-            this.statusDisabled = false;
-            return;
-
-          }
-
-
-          // else is a standard user
-
-            this.statusItems = statuses;
-            if (this.editedItem.status == 'Assigned'){
-              this.editedItem.status = "Updated";
-            }
-
-            if (this.editedItem.status == 'Peer Reviewed'){
-              this.editedItem.status = "Revisited";
-            }
-
-
-            this.statusDisabled = true;
-          } else {
-
-            // new bulletin mode
-            this.statusItems = ["Human Created"];
-            this.editedItem.status = "Human Created";
-            this.statusDisabled = true;
-
-          }
-        },
-
-        showSnack(message){
-              this.snackMessage = message;
-              this.snackbar = true;
-        },
-        has_role(user,role) {
-          for (r of user.roles){
-            if (r.name == role) {
-              return true
-            }
-          }
-          return false;
-        },
-
-        editAllowed(bulletin) {
-          if (this.has_role(this.currentUser,'Admin')) {
-            return true;
-          }
-          if (!this.has_role(this.currentUser,'DA')) {
-            return false;
-          }
-          const statuses = ['Assigned','Updated', 'Peer Reviewed', 'Revisited'];
-          if (bulletin.assigned_to && bulletin.assigned_to.id == this.currentUser.id && statuses.includes(bulletin.status)) {
-            return true
-          }
-          return false;
-        },
-
-         reviewAllowed(bulletin) {
-
-          const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
-          if (bulletin.first_peer_reviewer && bulletin.first_peer_reviewer.id == this.currentUser.id && statuses.includes(bulletin.status)) {
-            return true
-          }
-          return false;
-        },
-
-
-        addReview(item)
-        {
-
-          this.loading = true;
-          this.reviewDialog = true;
-
-
-          axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
-            this.loading = false;
-            this.$nextTick(() => {
-              this.reviewItem = response.data;
-              this.reviewKey += 1;
-              // fix bug in vue reactivity with nested object attribs
-
-              if (!response.data.review){
-                  this.reviewItem.review = '';
-              }
-
-
-            })
-
-
-          })
-
-
-        }
-      ,
-
-        saveReview(){
-
-          axios.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
-                item: this.reviewItem
-              })
-              .then(response => {
-                this.reviewDialog = false;
-                this.showSnack(response.data);
-                this.refresh(this.options);
-              });
-
-        },
-
-        adjustDates(){
-
-
-
-        if (this.editedItem.publish_date) {
-          this.editedItem.publish_time = dateFns.format(this.editedItem.publish_date,'HH:mm');
-          this.editedItem.publish_date = dateFns.format(this.editedItem.publish_date,'YYYY-MM-DD')
-        }
-
-        if (this.editedItem.documentation_date) {
-          this.editedItem.documentation_time = dateFns.format(this.editedItem.documentation_date, 'HH:mm');
-          this.editedItem.documentation_date = dateFns.format(this.editedItem.documentation_date, 'YYYY-MM-DD');
-        }
-        },
-
-
-
-        editItem(item) {
-
-          this.bulletinDrawer= false;
-
-
-
-
-
-          if(!item.id)     {
-            // hack to invoke deep copy and avoid passing attributes by reference
-            // (resolves data the persists across dialogs)
-            this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
-            this.source_alt = null;
-            this.dialog = true;
-            this.handleStatus(item);
-          }
-          else {
-            // load item from db
-            this.loading = true;
-            axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
-              this.dialog = true;
-
-              this.$nextTick(()=>{
-                this.loading= false
-              this.editedItem = response.data;
-                //reload tinymce component hack
-                this.descKey += 1;
-                if (this.editedItem.source_link == 'NA') {
-                  this.source_alt = true;
+                options: {
+                    handler: "refresh",
+                    immdiate: true
                 }
-                else {
-                  this.source_alt = false;
+            },
+            mounted: function () {
+
+                // display confirmation alert if edit dialog is open.
+                let self = this;
+                window.addEventListener("beforeunload", function (e) {
+                    if (self.dialog) {
+                        var confirmationMessage = 'It looks like you have been editing something. '
+                            + 'If you leave before saving, your changes will be lost.';
+                        (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+                        return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+                    }
+                });
+
+
+                if (this.$route.params.id) {
+                    this.showBulletin(this.$route.params.id);
                 }
-                this.editedItem.comments = '';
 
-              this.resetSwitchers();
-              this.handleStatus(item);
-              })
+                this.$router.afterEach((to, from, next) => {
 
 
+                    if (this.$route.params.id) {
+                        this.showBulletin(this.$route.params.id);
+                    }
+
+                })
 
 
+            },
 
-          }).catch(error => {
-            this.showSnack('Oops! We couldn\'t find this item.')
+            methods: {
 
-          });
+                previewItem(endpoint) {
+
+                    axios.get(endpoint).then(res => {
+                        this.pitem = res.data;
+                        this.preview = true;
+
+                    })
 
 
-
-          }
-
+                },
 
 
+                bulkStatus() {
 
-        },
+                    axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
+                        this.jobs = res.data;
 
-        deleteItem(item) {
-          const index = this.items.indexOf(item);
-          const cfm =
-            confirm("Are you sure you want to delete this item?") &&
-            this.items.splice(index, 1);
-          if (cfm) {
-            axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
-              this.showSnack(response.data);
-              this.refresh(this.options);
-            });
-          }
-        },
+                        if (!this.jobs.length) {
+                            clearInterval(this.bulkTimer);
+                            // default refresh to first page
+                            this.options.page = 1;
+                            this.refresh();
+                            this.showSnack('Bulk Update is finished!')
+                        } else {
+                            //console.log(this.jobs)
+                            for (job of this.jobs) {
+                                // console.log(job.status)
+                            }
+                        }
+                    });
 
-        confirmClose() {
+                },
 
-          if(confirm('Are you sure?')) {
-            this.dialog = false;
-          setTimeout(() => {
-            this.editedItem = Object.assign({}, this.defaultItem);
-            this.editedIndex = -1;
-          }, 300);
-          }
-        },
-        close() {
 
-            this.dialog = false;
-          setTimeout(() => {
-            this.editedItem = Object.assign({}, this.defaultItem);
-            this.editedIndex = -1;
-          }, 300);
-        },
+                // bulk updates
 
-        save() {
+                bulk_update() {
+                    let ids = this.selected.map(x => x.id);
+                    this.loading = true;
+                    axios.put(`/admin/api/bulletin/bulk/`, {
+                        items: ids,
+                        bulk: this.bulk
+                    })
+                        .then(response => {
+                            this.loading = false;
+                            this.showSnack(response.data);
+                            this.refresh(this.options);
+                            //reset bulk drawer, and bulk data
+                            this.bulkBulletinDrawer = false;
+                            this.selected = [];
+                            this.bulk = {};
+                            clearInterval(this.bulkTimer);
+                            // if (!this.bulkProcInterval)
+                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
 
-          if (this.editedItem.id) {
-            axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
-                item: this.editedItem
-              })
-              .then(response => {
-                this.showSnack(response.data);
-                this.refresh(this.options);
-                this.close();
-              }).catch(err => {
-                this.showSnack(err.response.data);
-            }).then(()=>{
-              this.close()
-            });
-          } else {
-            this.items.push(this.editedItem);
-            //create new record
-            axios.post("/admin/api/bulletin/", { item: this.editedItem })
-              .then(response => {
-                this.showSnack(response.data);
-                this.refresh(this.options);
-              }).catch(err => {
-                this.showSnack(err.response.data);
-            }).then(()=>{
-              this.close();
-            });
-          }
+                        });
+                },
 
-        },
 
-        editEvent(evt, item, index) {
-        this.eventDialog = true;
+                // - ------------------ bulletins search methods  ---------------------------------
 
-        this.$nextTick(()=>{
-        this.editedEvent = Object.assign({}, item);
-          //console.log(this.editedEvent);
-          this.editedEventIndex = index;
+                toggleAdvSearch() {
+                    this.advSearchExpand = !this.advSearchExpand
+                    this.advSearchMenu = !this.advSearchMenu;
+                    this.$nextTick(() => {
+                        // trick to just invoke the binding
+                    })
 
-          //reset dual fields display to english
-          this.eventTitle__ = true;
-          this.eventComments__ = true;
+                },
+                doSearch() {
+                    this.options.page = 1;
 
-        })
+                    // some good UX
+                    if (this.advSearchExpand) {
+                        this.advSearchExpand = false;
+                    } else {
+                        //this.search = Object.assign({},{tsv:this.search.tsv})
+                    }
 
-          //this.locations = this.editedItem.locations;
-        },
+                    this.searchBulletins();
+                }
+                ,
+                searchBulletins() {
 
-        closeEvent() {
-          this.eventDialog = false;
-          setTimeout(() => {
-            this.editedEvent = Object.assign({}, this.defaultEvent);
-            this.editedEventIndex = -1;
-          }, 300);
-        },
 
-        saveEvent() {
+                    // const page = this.options.page > 1? this.options.page : '';
+                    // const url =
 
-          if (this.editedEventIndex > -1) {
-            Object.assign(
-              this.editedItem.events[this.editedEventIndex],
-              this.editedEvent
-            );
-            //update record
-          } else {
-            this.editedItem.events.push(this.editedEvent);
-            //create new record
-          }
-          this.closeEvent();
-        },
+                    this.loading = true;
+                    const startTime = new Date()
 
-        // related bulletins functions --------------------
+                    axios.post(`/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {
+                        q: this.search,
+                        options: this.options
+                    }).then(response => {
+                        const endTime = new Date()
+                        this.searchTime = (endTime - startTime) / 1000;
+                        this.loading = false;
+                        this.itemsLength = response.data.total;
+                        this.items = response.data.items;
+                    });
 
-        searchRelatedBulletins() {
 
-        this.$refs.relateBulletins.open();
-        this.$nextTick(()=> {
-          this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-          this.$refs.relateBulletins.reSearch();
+                },
+                removeQueryAt(i) {
+
+                    this.search.splice(i, 1);
+
+                },
+
+                addQuery() {
+                    this.search.push({})
+                    this.searchPanels = this.search.length - 1;
+                },
+
+
+                //saved searches
+                loadSearch(item) {
+                    if (item) {
+                        this.search = Object.assign([], item.data);
+                    }
+
+                },
+                resetSearch() {
+                    this.search = [{}];
+                    this.doSearch()
+                },
+
+                loadSearches() {
+                    axios.get('/admin/api/queries/').then(res => {
+
+
+                        this.searches = Array.from(res.data);
+                    })
+                    this.saveDialog = false;
+
+                },
+
+                saveSearch() {
+                    axios.post('/admin/api/query/', {q: this.search, name: this.queryName}).then(res => {
+                        this.showSnack(res.data);
+                    })
+                    this.saveDialog = false;
+                },
+                // - ------------------ end bulletins search methods  ---------------------------------
+
+
+                /* Bulletins Custom Lists */
+
+                allBulletins() {
+                    this.search = [{}];
+                    this.doSearch();
+
+                },
+                myAssigned() {
+                    q = {};
+                    this.options.page = 1;
+                    q.assigned = [this.currentUser.id];
+                    q.status = "Assigned";
+                    this.search = [q];
+                    this.searchBulletins();
+                },
+
+                myReview() {
+                    q = {};
+                    this.options.page = 1;
+                    q.reviewer = [this.currentUser.id];
+                    q.status = "Peer Review Assigned";
+                    this.search = [q]
+                    this.searchBulletins();
+                },
+
+
+                removeEvent: function (evt, index) {
+                    if (confirm('Confirm deleting this event?')) {
+                        this.editedItem.events.splice(index, 1);
+                    }
+
+                },
+
+
+                //reset initial visible fields to english language
+
+                resetSwitchers: function () {
+                    this.title__ = true;
+                    this.sjac_title__ = true;
+                },
+
+                refresh() {
+
+                    this.searchBulletins(this.search)
+
+                },
+
+                rowClick(item) {
+                    path = `/admin/bulletins/${item.id}`;
+                    if (this.$route.path !== path)
+                        this.$router.push(path);
+
+                },
+
+                showBulletin(id) {
+
+
+                    this.bulletinLoader = true
+                    this.bulletinDrawer = true;
+                    axios.get(`/admin/api/bulletin/${id}`).then(response => {
+                        this.loading = false;
+                        this.bulletin = response.data;
+                        this.bulletinLoader = false;
+
+
+                    }).catch(error => {
+                        this.bulletinDrawer = false;
+                        this.bulletinLoader = false;
+                        this.showSnack('Oops! We couldn\'t find this item.')
+
+                    });
+                },
+
+
+                searchEventtypes: debounce(function (evt) {
+                    axios
+                        .get(`/admin/api/eventtypes/?q=${evt.target.value}&typ=for_bulletin`)
+                        .then(response => {
+                            this.eventtypes = response.data.items;
+                        });
+                }, 350),
+
+
+                handleStatus(bulletin) {
+
+
+                    if (this.editedItem.id) {
+                        // edit existing bulletin mode
+                        if (this.has_role(this.currentUser, 'Admin')) {
+
+                            this.statusItems = this.statuses;
+                            this.statusDisabled = false;
+                            return;
+
+                        }
+
+
+                        // else is a standard user
+
+                        this.statusItems = statuses;
+                        if (this.editedItem.status == 'Assigned') {
+                            this.editedItem.status = "Updated";
+                        }
+
+                        if (this.editedItem.status == 'Peer Reviewed') {
+                            this.editedItem.status = "Revisited";
+                        }
+
+
+                        this.statusDisabled = true;
+                    } else {
+
+                        // new bulletin mode
+                        this.statusItems = ["Human Created"];
+                        this.editedItem.status = "Human Created";
+                        this.statusDisabled = true;
+
+                    }
+                },
+
+                showSnack(message) {
+                    this.snackMessage = message;
+                    this.snackbar = true;
+                },
+                has_role(user, role) {
+                    for (r of user.roles) {
+                        if (r.name == role) {
+                            return true
+                        }
+                    }
+                    return false;
+                },
+
+                editAllowed(bulletin) {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return true;
+                    }
+                    if (!this.has_role(this.currentUser, 'DA')) {
+                        return false;
+                    }
+                    const statuses = ['Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
+                    if (bulletin.assigned_to && bulletin.assigned_to.id == this.currentUser.id && statuses.includes(bulletin.status)) {
+                        return true
+                    }
+                    return false;
+                },
+
+                reviewAllowed(bulletin) {
+                    if (!this.currentUser.roles.length) {
+                        return false;
+                    }
+
+                    const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
+                    if (bulletin.first_peer_reviewer && bulletin.first_peer_reviewer.id == this.currentUser.id && statuses.includes(bulletin.status)) {
+                        return true
+                    }
+                    return false;
+                },
+
+
+                addReview(item) {
+
+                    this.loading = true;
+                    this.reviewDialog = true;
+
+
+                    axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                        this.loading = false;
+                        this.$nextTick(() => {
+                            this.reviewItem = response.data;
+                            this.reviewKey += 1;
+                            // fix bug in vue reactivity with nested object attribs
+
+                            if (!response.data.review) {
+                                this.reviewItem.review = '';
+                            }
+
+
+                        })
+
+
+                    })
+
+
+                }
+                ,
+
+                saveReview() {
+
+                    axios.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
+                        item: this.reviewItem
+                    })
+                        .then(response => {
+                            this.reviewDialog = false;
+                            this.showSnack(response.data);
+                            this.refresh(this.options);
+                        });
+
+                },
+
+                adjustDates() {
+
+
+                    if (this.editedItem.publish_date) {
+                        this.editedItem.publish_time = dateFns.format(this.editedItem.publish_date, 'HH:mm');
+                        this.editedItem.publish_date = dateFns.format(this.editedItem.publish_date, 'YYYY-MM-DD')
+                    }
+
+                    if (this.editedItem.documentation_date) {
+                        this.editedItem.documentation_time = dateFns.format(this.editedItem.documentation_date, 'HH:mm');
+                        this.editedItem.documentation_date = dateFns.format(this.editedItem.documentation_date, 'YYYY-MM-DD');
+                    }
+                },
+
+
+                editItem(item) {
+
+                    this.bulletinDrawer = false;
+
+
+                    if (!item.id) {
+                        // hack to invoke deep copy and avoid passing attributes by reference
+                        // (resolves data the persists across dialogs)
+                        this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                        this.source_alt = null;
+                        this.dialog = true;
+                        this.handleStatus(item);
+                    } else {
+                        // load item from db
+                        this.loading = true;
+                        axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                            this.dialog = true;
+
+                            this.$nextTick(() => {
+                                this.loading = false
+                                this.editedItem = response.data;
+                                //reload tinymce component hack
+                                this.descKey += 1;
+                                if (this.editedItem.source_link == 'NA') {
+                                    this.source_alt = true;
+                                } else {
+                                    this.source_alt = false;
+                                }
+                                this.editedItem.comments = '';
+
+                                this.resetSwitchers();
+                                this.handleStatus(item);
+                            })
+
+
+                        }).catch(error => {
+                            this.showSnack('Oops! We couldn\'t find this item.')
+
+                        });
+
+
+                    }
+
+
+                },
+
+                deleteItem(item) {
+                    const index = this.items.indexOf(item);
+                    const cfm =
+                        confirm("Are you sure you want to delete this item?") &&
+                        this.items.splice(index, 1);
+                    if (cfm) {
+                        axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
+                            this.showSnack(response.data);
+                            this.refresh(this.options);
+                        });
+                    }
+                },
+
+                confirmClose() {
+
+                    if (confirm('Are you sure?')) {
+                        this.dialog = false;
+                        setTimeout(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem);
+                            this.editedIndex = -1;
+                        }, 300);
+                    }
+                },
+                close() {
+
+                    this.dialog = false;
+                    setTimeout(() => {
+                        this.editedItem = Object.assign({}, this.defaultItem);
+                        this.editedIndex = -1;
+                    }, 300);
+                },
+
+                save() {
+
+                    if (this.editedItem.id) {
+                        axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
+                            item: this.editedItem
+                        })
+                            .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                                this.close();
+                            }).catch(err => {
+                            this.showSnack(err.response.data);
+                        }).then(() => {
+                            this.close()
+                        });
+                    } else {
+                        this.items.push(this.editedItem);
+                        //create new record
+                        axios.post("/admin/api/bulletin/", {item: this.editedItem})
+                            .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                            }).catch(err => {
+                            this.showSnack(err.response.data);
+                        }).then(() => {
+                            this.close();
+                        });
+                    }
+
+                },
+
+                editEvent(evt, item, index) {
+                    this.eventDialog = true;
+
+                    this.$nextTick(() => {
+                        this.editedEvent = Object.assign({}, item);
+                        //console.log(this.editedEvent);
+                        this.editedEventIndex = index;
+
+                        //reset dual fields display to english
+                        this.eventTitle__ = true;
+                        this.eventComments__ = true;
+
+                    })
+
+                    //this.locations = this.editedItem.locations;
+                },
+
+                closeEvent() {
+                    this.eventDialog = false;
+                    setTimeout(() => {
+                        this.editedEvent = Object.assign({}, this.defaultEvent);
+                        this.editedEventIndex = -1;
+                    }, 300);
+                },
+
+                saveEvent() {
+
+                    if (this.editedEventIndex > -1) {
+                        Object.assign(
+                            this.editedItem.events[this.editedEventIndex],
+                            this.editedEvent
+                        );
+                        //update record
+                    } else {
+                        this.editedItem.events.push(this.editedEvent);
+                        //create new record
+                    }
+                    this.closeEvent();
+                },
+
+                // related bulletins functions --------------------
+
+                searchRelatedBulletins() {
+
+                    this.$refs.relateBulletins.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
+                        this.$refs.relateBulletins.reSearch();
+                    });
+
+                },
+
+                relateBulletin(bulletin) {
+
+
+                    // get list of existing attached bulletins
+                    let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
+
+                    if (!ex.includes(bulletin.id)) {
+                        relation = {
+                            bulletin: bulletin
+                        };
+                        this.editedItem.bulletin_relations.push(relation);
+                    }
+                },
+
+                removeBulletin: function (evt, index) {
+                    if (confirm("Are you sure?")) {
+                        this.editedItem.bulletin_relations.splice(index, 1);
+                    }
+                },
+
+
+                // -------------------------------------------------
+
+
+                // related actors functions ------------------------
+
+                searchRelatedActors() {
+                    this.$refs.relateActors.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateActors.q = {tsv: this.relateActorTerm};
+                        this.$refs.relateActors.reSearch();
+                    });
+
+                },
+                relateActor(actor) {
+                    // get list of existing attached actors
+                    let ex = this.editedItem.actor_relations.map(x => x.actor.id);
+
+                    if (!ex.includes(actor.id)) {
+                        relation = {
+                            actor: actor
+                        };
+                        this.editedItem.actor_relations.push(relation);
+                        this.relateActorResults.removeById(actor.id);
+                    }
+                },
+
+                removeActor: function (evt, index) {
+                    if (confirm("Are you sure?")) {
+                        this.editedItem.actor_relations.splice(index, 1);
+                    }
+                },
+
+
+                // related incidents functions ------------------------
+
+                searchRelatedIncidents() {
+
+                    this.$refs.relateIncidents.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
+                        this.$refs.relateIncidents.reSearch();
+                    });
+
+                },
+                relateIncident(incident) {
+                    // get list of existing attached actors
+                    let ex = this.editedItem.incident_relations.map(x => x.incident.id);
+
+                    if (!ex.includes(incident.id)) {
+                        relation = {
+                            incident: incident
+                        };
+                        this.editedItem.incident_relations.push(relation);
+                        this.relateIncidentResults.removeById(incident.id);
+                    }
+                },
+
+                removeIncident: function (evt, index) {
+                    if (confirm("Are you sure?")) {
+                        this.editedItem.incident_relations.splice(index, 1);
+                    }
+                },
+
+
+            }
         });
-
-        },
-
-        relateBulletin(bulletin) {
-
-
-          // get list of existing attached bulletins
-          let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
-
-          if (!ex.includes(bulletin.id)) {
-            relation = {
-              bulletin: bulletin
-            };
-            this.editedItem.bulletin_relations.push(relation);
-          }
-        },
-
-        removeBulletin: function(evt, index) {
-          if (confirm("Are you sure?")) {
-            this.editedItem.bulletin_relations.splice(index, 1);
-          }
-        },
-
-
-
-        // -------------------------------------------------
-
-
-        // related actors functions ------------------------
-
-        searchRelatedActors() {
-          this.$refs.relateActors.open();
-          this.$nextTick(()=> {
-            this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-            this.$refs.relateActors.reSearch();
-        });
-
-        },
-        relateActor( actor) {
-          // get list of existing attached actors
-          let ex = this.editedItem.actor_relations.map(x => x.actor.id);
-
-          if (!ex.includes(actor.id)) {
-            relation = {
-              actor: actor
-            };
-            this.editedItem.actor_relations.push(relation);
-            this.relateActorResults.removeById(actor.id);
-          }
-        },
-
-        removeActor: function(evt, index) {
-          if (confirm("Are you sure?")) {
-            this.editedItem.actor_relations.splice(index, 1);
-          }
-        },
-
-
-        // related incidents functions ------------------------
-
-        searchRelatedIncidents() {
-
-        this.$refs.relateIncidents.open();
-        this.$nextTick(()=> {
-          this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-          this.$refs.relateIncidents.reSearch();
-        });
-
-        },
-        relateIncident(incident) {
-          // get list of existing attached actors
-          let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-          if (!ex.includes(incident.id)) {
-            relation = {
-              incident: incident
-            };
-            this.editedItem.incident_relations.push(relation);
-            this.relateIncidentResults.removeById(incident.id);
-          }
-        },
-
-        removeIncident: function(evt, index) {
-          if (confirm("Are you sure?")) {
-            this.editedItem.incident_relations.splice(index, 1);
-          }
-        },
-
-
-
-
-      }
-    });
-</script>
+    </script>
 {% endblock %}

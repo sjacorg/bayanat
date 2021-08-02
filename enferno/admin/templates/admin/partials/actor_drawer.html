@@ -16,7 +16,7 @@
       </v-container>
 
       
-      <actor-card v-if="actorDrawer" :show-edit="true" @edit="editItem" :active="actorDrawer" v-if="actor" :log="true" @thumb-click="viewImage" @close="actorDrawer=false" :actor="actor"></actor-card>
-      <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
+      <actor-card :i18n="translations" v-if="actorDrawer" :show-edit="true" @edit="editItem" :active="actorDrawer" v-if="actor" :log="true" @thumb-click="viewImage" @close="actorDrawer=false" :actor="actor"></actor-card>
+      <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
     <pdf-viewer ref="pdfViewer"></pdf-viewer>
     </v-navigation-drawer>  

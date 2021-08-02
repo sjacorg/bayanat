@@ -75,8 +75,14 @@
                         {% if current_user.has_role('Admin') %}
                           <v-toolbar dense  color="grey lighten-4" flat >
                             <template v-if="bulkIcons">
+
+                                <v-btn @click="selected=[]" x-small fab
+                                       class="mr-3" elevation="0" color="white">
+                                    <v-icon>mdi-checkbox-blank-outline</v-icon>
+                                </v-btn>
+
                               <v-btn @click="bulkActorDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>Bulk update</v-btn>
-                              <v-spacer></v-spacer>
+
                             </template>
 
                             <template>
@@ -92,6 +98,7 @@
 
                             <v-spacer></v-spacer>
 
+                              <div>
                              <v-tooltip top>
                                   <template v-slot:activator="{ on, attrs }">
                                        <v-chip v-on="on"  label small close color="yellow lighten-4" class="grey--text text--darken-2"
@@ -100,6 +107,7 @@
                                   </template>
                                   <span>${search}</span>
                               </v-tooltip>
+                              </div>
                             <v-spacer></v-spacer>
 
                             <v-chip small color="accent"  v-if="selected.length" >${selected.length} {{_('Selected items')}}</v-chip>
@@ -110,7 +118,7 @@
                         </template>
 
                         <template v-slot:item.status="{ item }">
-                          ${item.status} 
+                          ${item.status}
                           <v-chip x-small v-if="item.review_action"  color="grey lighten-4" class="secondary--text">${item.review_action}</v-chip>
                         </template>
 
@@ -141,9 +149,9 @@
                                 </template>
                             <span>Add Review</span>
                           </v-tooltip>
-                          
 
-                          
+
+
                         </template>
                         <template v-slot:no-data> </template>
                       </v-data-table>
@@ -154,9 +162,9 @@
                         ></v-progress-circular>
                       </v-overlay>
 
-                      <relate-bulletins @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
-                      <relate-actors @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
-                      <relate-incidents @relate="relateIncident" :exids="exIncidents"  ref="relateIncidents"></relate-incidents>
+                      <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
+                      <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
+                      <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"  ref="relateIncidents"></relate-incidents>
 
                       {% include 'admin/partials/relate_media_dialog.html' %}
                       {% include 'admin/partials/video_player_dialog.html' %}
@@ -191,9 +199,19 @@
 <script src="/static/js/components/IncidentResult.js?v={{g.version}}"></script>
 <script src="/static/js/components/MediaCard.js?v={{g.version}}"></script>
 <script src="/static/js/components/UniField.js?v={{g.version}}"></script>
-<script src="/static/js/mixins/media-mixin.js?v={{g.version}}"></script>
+
+{#Missing Persons Components#}
+<script src="/static/js/components/Address.js?v={{g.version}}"></script>
+<script src="/static/js/components/MixI.js?v={{g.version}}"></script>
+<script src="/static/js/components/MixII.js?v={{g.version}}"></script>
+<script src="/static/js/components/MixIII.js?v={{g.version}}"></script>
+<script src="/static/js/components/MPCard.js?v={{g.version}}"></script>
+<script src="/static/js/components/MPField.js?v={{g.version}}"></script>
+
+    <script src="/static/js/mixins/media-mixin.js?v={{g.version}}"></script>
 <script src="/static/js/actorConfig.js?v={{g.version}}"></script>
 <script src="/static/js/components/PdfViewer.js?v={{g.version}}"></script>
+<script src="/static/js/mp.js?v={{g.version}}"></script>
 
 <script>
   let app = new Vue({
@@ -211,6 +229,9 @@
     data: () => ({
 
   {% include 'admin/i18n.jinja2' %}
+
+   // missing person toggle
+    profile : false,
 
 
 
@@ -231,11 +252,11 @@
       searchPanels: 0,
 
       searchTime: null,
-      
+
       fsloading : true,
 
-      
-      
+
+
       // Load actor config
       actorConfig: actorConfig,
 
@@ -245,7 +266,7 @@
       sideNav: sideNav,
       dialog: dialog,
       //load advsearch constants
-      
+
 
 
       eventDialog: false,
@@ -254,7 +275,7 @@
       videoDialog: false,
       playerOptions: {},
 
-    
+
 
       statusItems: ["Human Created"],
 
@@ -280,14 +301,14 @@
        relateIncidentResults: [],
        selectedRelatedIncidents: [],
 
-      
-      
+
+
 
 
 
       actorDrawer: false,
       bulkActorDrawer: false,
-      
+
       sources: [],
       locations: [],
       labels: [],
@@ -407,7 +428,7 @@
       },
 
 
-     
+
 
       reviewItem: {
 
@@ -469,7 +490,7 @@
           this.$router.push('/admin/actors/')
         }
       },
-      
+
 
 
       selected : function(val){
@@ -519,17 +540,17 @@
       if (this.$route.params.id){
         this.showActor(this.$route.params.id);
       }
-      
+
       this.$router.afterEach((to, from, next) => {
 
-        
+
       if (this.$route.params.id){
           this.showActor(this.$route.params.id);
         }
-        
+
       })
 
-   
+
 
 
     },
@@ -555,6 +576,7 @@
               this.jobs = res.data;
               if (!this.jobs.length) {
                 clearInterval(this.bulkTimer);
+                this.options.page = 1;
                 this.refresh();
                 this.showSnack('Bulk Update is finished!')
               }
@@ -587,7 +609,7 @@
 
               });
         },
-      
+
 
 
       // ---------------- advanced search -----------------------
@@ -598,7 +620,7 @@
             // trick to just invoke the binding
 
           })
-        
+
       },
 
       doSearch() {
@@ -679,14 +701,14 @@
         this.searchActors();
       },
 
-     
 
 
 
 
 
-     
-      
+
+
+
 
       removeEvent: function(evt, index) {
         if (confirm('Confirm deleting this event?')) {
@@ -694,7 +716,7 @@
         }
       },
 
-     
+
       //reset initial visible fields to english language
 
       resetSwitchers: function() {
@@ -732,7 +754,7 @@
           this.actorDrawer = false;
           this.actorLoader = false;
           this.showSnack('Oops! We couldn\'t find this item.')
-          
+
         });
       },
 
@@ -747,20 +769,20 @@
 
 
       handleStatus(actor) {
-        
+
 
         if (this.editedItem.id) {
           // edit existing bulletin mode
           if (this.has_role(this.currentUser, 'Admin')){
-            
+
           this.statusItems = this.statuses;
           this.statusDisabled = false;
           return;
         }
-        
-        // else is a standard user 
+
+        // else is a standard user
           this.statusItems = statuses;
-          
+
           if (this.editedItem.status == 'Assigned'){
             this.editedItem.status = "Updated";
           }
@@ -768,10 +790,10 @@
           if (this.editedItem.status == 'Peer Reviewed'){
             this.editedItem.status = "Revisited";
           }
-          
+
           this.statusDisabled = true;
         } else {
-          // new bulletin mode 
+          // new bulletin mode
           this.statusItems = ["Human Created"];
           this.editedItem.status = "Human Created";
           this.statusDisabled = true;
@@ -779,7 +801,7 @@
         }
       },
 
-     
+
       showSnack(message){
         this.snackMessage = message;
         this.snackbar = true;
@@ -789,7 +811,7 @@
       if (r.name == role) {
         return true
       }
-    } 
+    }
     return false;
   },
 
@@ -808,7 +830,11 @@
   },
 
    reviewAllowed(actor) {
-   
+
+       if (!this.currentUser.roles.length) {
+           return false;
+       }
+
     const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
     if (actor.first_peer_reviewer && actor.first_peer_reviewer.id == this.currentUser.id && statuses.includes(actor.status)) {
       return true
@@ -819,7 +845,7 @@
 
 
 
-      addReview(item) {     
+      addReview(item) {
        this.loading = true;
           this.reviewDialog = true;
           axios.get(`/admin/api/actor/${item.id}`).then(response => {
@@ -848,7 +874,7 @@
             this.showSnack(response.data);
             this.refresh(this.options);
           });
-      
+
     },
 
 
@@ -861,7 +887,7 @@
           this.source_alt = null;
           this.dialog = true;
           this.handleStatus(item);
-        }    
+        }
         else {
 
             this.loading = true;
@@ -894,7 +920,7 @@
           });
 
         }
-        
+
 
 
         //this.locations = this.editedItem.locations;
@@ -908,7 +934,7 @@
         if (cfm) {
           axios.delete(`/admin/api/actor/${item.id}`).then(response => {
             this.showSnack(response.data);
-          
+
             this.refresh(this.options);
           });
         }
@@ -938,6 +964,7 @@
       save() {
         if (this.editedItem.id) {
           //update record
+            this.loading = true;
           axios
             .put(`/admin/api/actor/${this.editedItem.id}`, {
               item: this.editedItem
@@ -945,16 +972,29 @@
             .then(response => {
               this.showSnack(response.data);
               this.refresh(this.options);
-            });
+            }).catch(err=>{
+                console.log(err.response.data);
+                this.showSnack(err.response.data)
+          }).finally(()=>{
+              this.loading = false;
+
+
+          });
         } else {
-          this.items.push(this.editedItem);
+
           //create new record
+            this.loading = true;
           axios
             .post("/admin/api/actor/", { item: this.editedItem })
             .then(response => {
               this.showSnack(response.data);
               this.refresh(this.options);
-            });
+            }).catch(err=>{
+                console.log(err.response.data);
+                this.showSnack(err.response.data)
+          }).finally(()=>{
+              this.loading = false;
+          });
         }
         this.close();
       },
@@ -1000,7 +1040,7 @@
         // this can be used to determine the relationship label displayed
         // one special case needs handling is when a new actor is created (id is null) in this case
         // new actor id will be definitely larger than any id in the system
-        
+
         if (!editedItem.id){
           return false;
         }
@@ -1041,7 +1081,7 @@
       // related bulletins functions --------------------
 
       searchRelatedBulletins() {
-        
+
          this.$refs.relateBulletins.open();
         this.$nextTick(()=> {
           this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
@@ -1101,10 +1141,10 @@
       },
 
 
-      
-      
 
-     
+
+
+
 
     }
   });

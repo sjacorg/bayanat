@@ -1,7 +1,7 @@
 <v-app-bar
   :clipped-left="$vuetify.breakpoint.lgAndUp"
   app
-  color="#439d92 "
+  color="primary"
   dark
 >
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
@@ -18,7 +18,8 @@
         </v-img></a>
   </v-toolbar-title>
 
-  
+
+
 
   <v-spacer></v-spacer>
 
@@ -49,7 +50,7 @@
             {{current_user.email}}
 
             </div>
-            
+
             </v-list-item-subtitle
           >
         </v-list-item-content>

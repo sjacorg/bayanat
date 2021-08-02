@@ -1,10 +1,10 @@
 Vue.component("incident-result", {
-  props: ['incident','hidden','showHide'],
+  props: ['incident','hidden','showHide', 'i18n'],
   template: `
     <v-card outlined class="ma-2" v-if="!hidden"  >     
         
         <v-card-title class="d-flex">
-          <v-chip label small color="gv darken-2" dark>ID: {{incident.id}} </v-chip>
+          <v-chip label small color="gv darken-2" dark>{{ i18n.id_ }} {{incident.id}} </v-chip>
           <v-spacer></v-spacer>
         </v-card-title>
         <slot name="header"></slot>            
@@ -21,7 +21,7 @@ Vue.component("incident-result", {
         </v-card-text>
         <v-card-actions>
             <slot name="actions"></slot>   
-            <v-btn v-if="showHide" @click="hidden=true" small depressed  color="grey lighten-4">Hide</v-btn>
+            <v-btn v-if="showHide" @click="hidden=true" small depressed  color="grey lighten-4"> {{ i18n.hide_ }} </v-btn>
           <v-btn text small icon color="gv darken-1" @click.stop="$root.previewItem('/admin/api/incident/'+incident.id)"><v-icon>mdi-eye</v-icon></v-btn>
         </v-card-actions>
       </v-card >

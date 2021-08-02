@@ -150,10 +150,11 @@
         </v-list-item-content>
       </v-list-item>
              {%  endif %}
-
+      {% endif %}      
 
 
        {%  if deduplication %}
+       {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
          <v-list-item href="/deduplication/dashboard/" key="deduplication">
         <v-list-item-action>
           <v-icon>mdi-link-variant-plus</v-icon>

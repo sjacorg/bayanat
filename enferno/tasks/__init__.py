@@ -3,24 +3,29 @@ import os
 from collections import namedtuple
 
 from celery import Celery
+from celery.task import periodic_task
 
 from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory
-from enferno.extensions import db
+from enferno.extensions import db, rds
 from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import Role
 from enferno.utils.data_import import DataImport
+from enferno.deduplication.models import DedupRelation
+from datetime import timedelta
 
-# Load configuraitons based on environment settings
-if os.getenv("FLASK_DEBUG") == '0':
-    cfg = ProdConfig
-else:
-    cfg = DevConfig
+
+
+cfg = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
+
+
 
 celery = Celery('tasks', broker=cfg.CELERY_BROKER_URL)
 # remove deprecated warning
 celery.conf.update(
     {'CELERY_ACCEPT_CONTENT': ['pickle', 'json', 'msgpack', 'yaml']})
-celery.conf.update({'CELERY_RESULT_BACKEND': cfg.CELERY_RESULT_BACKEND})
+celery.conf.update({'CELERY_RESULT_BACKEND': os.environ.get('CELERY_RESULT_BACKEND', cfg.CELERY_RESULT_BACKEND)})
+celery.conf.update({'SQLALCHEMY_DATABASE_URI': os.environ.get('SQLALCHEMY_DATABASE_URI', cfg.SQLALCHEMY_DATABASE_URI)})
+celery.conf.update({'SECRET_KEY': os.environ.get('SECRET_KEY', cfg.SECRET_KEY)})
 celery.conf.add_defaults(cfg)
 
 
@@ -29,10 +34,6 @@ class ContextTask(celery.Task):
     abstract = True
     def __call__(self, *args, **kwargs):
         from enferno.app import create_app
-        from dotenv import load_dotenv
-        load_dotenv()
-        # Fixes
-        cfg.SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
         with create_app(cfg).app_context():
             return super(ContextTask, self).__call__(*args, **kwargs)
 
@@ -198,3 +199,42 @@ def etl_process_file(batch_id, file, meta, user_id, log):
     di = DataImport(batch_id, meta, user_id=user_id, log=log)
     di.process(file)
     return 'done'
+
+# this will publish a message to redis and will be captured by the front-end client
+def update_stats():
+    # send any message to refresh the UI
+    # this will run only if the process is on
+    rds.publish('dedprocess', 1)
+
+
+@celery.task
+def process_dedup(id, user_id):
+    #print('processing {}'.format(id))
+    d = DedupRelation.query.get(id)
+    if d:
+        d.process(user_id)
+        # detect final task and send a refresh message
+        if rds.scard('dedq') == 0:
+            rds.publish('dedprocess', 2)
+
+
+
+
+@periodic_task(run_every=timedelta(seconds=int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))))
+def dedup_cron():
+
+    #shut down processing when we hit 0 items in the queue or when we turn off the processing
+    if rds.get('dedup') != '1' or rds.scard('dedq') == 0:
+        rds.delete('dedup')
+        rds.publish('dedprocess', 0)
+        # Pause processing / do nothing
+        print("Process engine - off")
+        return
+
+    data = []
+    items = rds.spop('dedq', cfg.DEDUP_BATCH_SIZE)
+    for item in items:
+        data = item.split('|')
+        process_dedup.delay(data[0], data[1])
+
+    update_stats()

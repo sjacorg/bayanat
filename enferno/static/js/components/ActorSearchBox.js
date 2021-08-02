@@ -301,30 +301,58 @@ Vue.component('actor-search-box', {
 
                 <v-row>
                     <v-col>
-                        <div class="d-flex">
+                        
                             <search-field
-                                    v-model="q.locations"
+                                    v-model="q.resLocations"
                                     api="/admin/api/locations/"
                                     item-text="full_string"
                                     item-value="id"
                                     :multiple="true"
-                                    :label="i18n.includeLocations_"
+                                    :label="i18n.includeResLocations_"
                             ></search-field>
-                            <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
-                                        class="mx-3"></v-checkbox>
-                        </div>
+                            
+                        
+                      
                         <search-field
-                                v-model="q.exlocations"
+                                v-model="q.exResLocations"
                                 api="/admin/api/locations/"
                                 item-text="full_string"
                                 item-value="id"
                                 :multiple="true"
-                                :label="i18n.excludeLocations_"
+                                :label="i18n.excludeResLocations_"
                         ></search-field>
 
 
                     </v-col>
                 </v-row>
+              
+                <v-row>
+                    <v-col>
+                        
+                            <search-field
+                                    v-model="q.originLocations"
+                                    api="/admin/api/locations/"
+                                    item-text="full_string"
+                                    item-value="id"
+                                    :multiple="true"
+                                    :label="i18n.includeOriginLocations_"
+                            ></search-field>
+                            
+                        
+                      
+                        <search-field
+                                v-model="q.exOriginLocations"
+                                api="/admin/api/locations/"
+                                item-text="full_string"
+                                item-value="id"
+                                :multiple="true"
+                                :label="i18n.excludeOriginLocations_"
+                        ></search-field>
+
+
+                    </v-col>
+                </v-row>
+
 
 
                 <v-row>

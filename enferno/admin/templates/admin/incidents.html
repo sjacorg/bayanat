@@ -88,7 +88,14 @@
                           <v-toolbar dense  color="grey lighten-4" flat >
 
                             <template v-if="bulkIcons">
-                              <v-btn @click="bulkIncidentDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>Bulk update</v-btn>
+
+                                <v-btn @click="selected=[]" x-small fab
+                                       class="mr-3" elevation="0" color="white">
+                                    <v-icon>mdi-checkbox-blank-outline</v-icon>
+                                </v-btn>
+
+
+                                <v-btn @click="bulkIncidentDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>Bulk update</v-btn>
 
 
                             </template>
@@ -106,6 +113,7 @@
                             </template>
                             <v-spacer></v-spacer>
 
+                              <div>
                             <v-tooltip top>
                                   <template v-slot:activator="{ on, attrs }">
                                        <v-chip v-on="on"  label small close color="yellow lighten-4" class="grey--text text--darken-2"
@@ -114,6 +122,7 @@
                                   </template>
                                   <span>${search}</span>
                               </v-tooltip>
+                              </div>
                               <v-spacer></v-spacer>
                             <v-chip small color="accent"  v-if="selected.length" >${selected.length} {{_('Selected items')}}</v-chip>
   
@@ -166,9 +175,9 @@
                               <v-progress-circular indeterminate size="64"></v-progress-circular>
                           </v-overlay>
 
-                      <relate-bulletins @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
-                    <relate-actors @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
-                    <relate-incidents @relate="relateIncident" :exids="exIncidents"   ref="relateIncidents"></relate-incidents>
+                      <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
+                    <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
+                    <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"   ref="relateIncidents"></relate-incidents>
 
                       <v-snackbar v-model="snackbar">
                         ${snackMessage}
@@ -523,6 +532,8 @@
               this.jobs = res.data;
               if (!this.jobs.length) {
                 clearInterval(this.bulkTimer);
+                //reset search pager
+                this.options.page = 1;
                 this.refresh();
                 this.showSnack('Bulk Update is finished!')
               }
@@ -753,7 +764,11 @@ toggleAdvSearch() {
       },
 
        reviewAllowed(incident) {
-       
+
+           if (!this.currentUser.roles.length) {
+               return false;
+           }
+
         const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
         if (incident.first_peer_reviewer && incident.first_peer_reviewer.id == this.currentUser.id && statuses.includes(incident.status)) {
           return true

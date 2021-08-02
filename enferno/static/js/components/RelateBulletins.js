@@ -1,5 +1,5 @@
 Vue.component('relate-bulletins', {
-    props: ['value', 'show', 'exids'],
+    props: ['value', 'show', 'exids', 'i18n'],
     data: () => {
         return {
             q: {},
@@ -114,7 +114,7 @@ Vue.component('relate-bulletins', {
               <v-card :loading="loading">
 
                 <v-card-title class="handle">
-                  Advanced Search
+                  {{ i18n.advSearch_ }}
                   <v-spacer></v-spacer>
                   <v-btn @click="visible=false" small text fab>
                     <v-icon>mdi-close</v-icon>
@@ -131,10 +131,10 @@ Vue.component('relate-bulletins', {
 
                 <v-card class="pa-2" tile color="grey lighten-4">
 
-                  <bulletin-result v-for="(item, i) in results" :key="i" :bulletin="item"
+                  <bulletin-result :i18n="i18n" v-for="(item, i) in results" :key="i" :bulletin="item"
                                    :show-hide="true">
                     <template v-slot:actions>
-                      <v-btn @click="relateItem(item)" small depressed color="primary">relate
+                      <v-btn @click="relateItem(item)" small depressed color="primary">{{ i18n.relate_ }}
                       </v-btn>
 
                     </template>
@@ -146,7 +146,7 @@ Vue.component('relate-bulletins', {
                   <v-btn icon @click="loadMore" v-if="moreItems" color="third">
                     <v-icon>mdi-dots-horizontal</v-icon>
                   </v-btn>
-                  <v-sheet small v-else class="heading" color=" grey--text">No (more) items found.</v-sheet>
+                  <v-sheet small v-else class="heading" color=" grey--text"> {{ i18n.noResults_ }} </v-sheet>
                   <v-spacer></v-spacer>
                 </v-card-actions>
               </v-card>

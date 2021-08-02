@@ -2,7 +2,7 @@
     <v-dialog persistent v-model="dialog" fullscreen>
 
 
-        <v-card v-if="dialog"  class="overflow-hidden">
+        <v-card v-if="dialog" class="overflow-hidden">
 
             <v-app-bar
                     absolute
@@ -19,8 +19,8 @@
                 <v-spacer></v-spacer>
 
 
-                <v-btn @click="save" :disabled="invalid" dark color="primary darken-1" small class="mx-2" depressed>Save
-                    Bulletin
+                <v-btn @click="save" :disabled="invalid" dark color="primary darken-1" small class="mx-2" depressed>
+                    {{ _('Save Bulletin')}}
                 </v-btn>
                 <v-btn @click="confirmClose" icon>
                     <v-icon>mdi-close</v-icon>
@@ -201,7 +201,7 @@
                                 <v-card outlined class="my-5">
                                     <v-card-title class="handle">
                                         <v-icon left>mdi-library-books</v-icon>
-                                        {{_('Related Bulletins')}}
+                                        {{ _('Related Bulletins') }}
                                         <v-spacer></v-spacer>
 
                                         <v-text-field
@@ -226,19 +226,20 @@
                                                         :key="index"
                                                 >
                                                     <!--  Related Bulletin  Card -->
-                                                    <bulletin-result :bulletin="item.bulletin" :show-hide="false">
+                                                    <bulletin-result :i18n="translations" :bulletin="item.bulletin" :show-hide="false">
                                                         <!--  attach relationship form -->
                                                         <template v-slot:header>
                                                             <v-card outlined color="lime lighten-5">
                                                                 <v-card-title class="subtitle-2">
                                                                     <v-icon left>mdi-link</v-icon>
-                                                                    Relationship Information
+                                                                    {{ _('Relationship Information') }}
                                                                 </v-card-title>
 
 
                                                                 <v-card-text>
                                                                     <div>
-                                                                        <div class="caption">{{_('Probability')}}</div>
+                                                                        <div class="caption">{{ _('Probability') }}
+                                                                        </div>
                                                                         <v-chip-group
                                                                                 v-model="editedItem.bulletin_relations[index].probability"
                                                                                 column
@@ -249,13 +250,15 @@
                                                                             <v-chip small> Certain</v-chip>
                                                                         </v-chip-group>
 
-                                                                        <div class="caption">{{_('Related As')}}</div>
+                                                                        <div class="caption">{{ _('Related As') }}</div>
                                                                         <v-chip-group
                                                                                 v-model="editedItem.bulletin_relations[index].related_as"
                                                                                 column
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip v-for="rel in btobRelateAs" small> ${rel}</v-chip>
+                                                                            <v-chip v-for="rel in btobRelateAs" small>
+                                                                                ${rel}
+                                                                            </v-chip>
 
                                                                         </v-chip-group>
 
@@ -268,6 +271,7 @@
                                                                     ></v-text-field>
 
                                                                 </v-card-text>
+
 
                                                             </v-card>
                                                         </template>
@@ -302,7 +306,7 @@
                                 <v-card outlined class="my-5">
                                     <v-card-title class="handle">
                                         <v-icon left>mdi-library-books</v-icon>
-                                        {{_('Related Actors')}}
+                                        {{ _('Related Actors') }}
                                         <v-spacer></v-spacer>
 
                                         <v-text-field
@@ -327,19 +331,20 @@
                                                         :key="index"
                                                 >
                                                     <!--  Related Actor  Card -->
-                                                    <actor-result :actor="item.actor">
+                                                    <actor-result :i18n="translations" :actor="item.actor">
                                                         <!--  attach relationship form -->
                                                         <template v-slot:header>
                                                             <v-card outlined color="lime lighten-5">
                                                                 <v-card-title class="subtitle-2">
                                                                     <v-icon left>mdi-link</v-icon>
-                                                                    {{_('Relationship Information')}}
+                                                                    {{ _('Relationship Information') }}
                                                                 </v-card-title>
 
 
                                                                 <v-card-text>
                                                                     <div>
-                                                                        <div class="caption">{{_('Probability')}}</div>
+                                                                        <div class="caption">{{ _('Probability') }}
+                                                                        </div>
                                                                         <v-chip-group
                                                                                 v-model="editedItem.actor_relations[index].probability"
                                                                                 column
@@ -350,7 +355,7 @@
                                                                             <v-chip small> Certain</v-chip>
                                                                         </v-chip-group>
 
-                                                                        <div class="caption">{{_('Related As')}}</div>
+                                                                        <div class="caption">{{ _('Related As') }}</div>
                                                                         <v-chip-group
                                                                                 v-model="editedItem.actor_relations[index].related_as"
                                                                                 column
@@ -407,7 +412,7 @@
                                 <v-card outlined class="my-5">
                                     <v-card-title class="handle">
                                         <v-icon left>mdi-hazard-lights</v-icon>
-                                        {{_('Related Incidents')}}
+                                        {{ _('Related Incidents') }}
                                         <v-spacer></v-spacer>
 
                                         <v-text-field
@@ -432,19 +437,19 @@
                                                         :key="index"
                                                 >
                                                     <!--  Related Actor  Card -->
-                                                    <incident-result :incident="item.incident">
+                                                    <incident-result :i18n="translations" :incident="item.incident">
                                                         <!--  attach relationship form -->
                                                         <template v-slot:header>
                                                             <v-card outlined color="lime lighten-5">
                                                                 <v-card-title class="subtitle-2">
                                                                     <v-icon left>mdi-link</v-icon>
-                                                                    Relationship Information
+                                                                    {{ _('Relationship Information') }}
                                                                 </v-card-title>
 
 
                                                                 <v-card-text>
 
-                                                                    <div class="caption">{{_('Probability')}}</div>
+                                                                    <div class="caption">{{ _('Probability') }}</div>
                                                                     <v-chip-group
                                                                             v-model="editedItem.incident_relations[index].probability"
                                                                             column
@@ -455,19 +460,16 @@
                                                                         <v-chip small> Certain</v-chip>
                                                                     </v-chip-group>
 
-                                                                     <div class="caption">Related As</div>
-                                                                        <v-chip-group
-                                                                                v-model="editedItem.incident_relations[index].related_as"
-                                                                                column
-                                                                                active-class="primary dark"
-                                                                        >
-                                                                            <v-chip v-for="r in itobRelateAs"
-                                                                                    small> ${r}
-                                                                            </v-chip>
-                                                                        </v-chip-group>
-
-
-
+                                                                    <div class="caption">Related As</div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.incident_relations[index].related_as"
+                                                                            column
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                        <v-chip v-for="r in itobRelateAs"
+                                                                                small> ${r}
+                                                                        </v-chip>
+                                                                    </v-chip-group>
 
 
                                                                     <v-text-field class="mt-2"
@@ -530,7 +532,8 @@
 
                                 <v-sheet class="d-flex align-center">
 
-                                    <validation-provider name="Source Link" :rules="source_disabled? 'required': 'required|url'"
+                                    <validation-provider name="Source Link"
+                                                         :rules="source_disabled? 'required': 'required|url'"
                                                          v-slot="{errors}">
                                         <v-text-field class="mx-2"
                                                       :disabled="source_disabled"
@@ -540,10 +543,12 @@
                                         <span class="orange--text"> ${errors[0]}</span>
                                     </validation-provider>
 
-                                    <v-checkbox small class="mx-2" label="{{_('Not Available')}}" v-model="source_alt" small>
+                                    <v-checkbox small class="mx-2" label="{{_('Not Available')}}" v-model="source_alt"
+                                                small>
                                     </v-checkbox>
 
-                                    <v-switch small class="mx-2" label="{{_('Private')}}" v-model="editedItem.source_link_type"
+                                    <v-switch small class="mx-2" label="{{_('Private')}}"
+                                              v-model="editedItem.source_link_type"
                                               small>
                                     </v-switch>
 
@@ -553,16 +558,16 @@
 
                             </v-col>
                             <v-col cols="12" md="3">
-                                <pop-date-time-field label="{{_('Publish Date')}}" timeLabel="{{_('Time')}}"
-                                                v-model="editedItem.publish_date"></pop-date-time-field>
+                                <pop-date-time-field time-label="{{_('Time')}}"  label="{{_('Publish Date')}}"
+                                                     v-model="editedItem.publish_date"></pop-date-time-field>
 
 
                             </v-col>
 
                             <v-col cols="12" md="3">
 
-                                <pop-date-time-field label="{{_('Documentation Date')}}"
-                                                v-model="editedItem.documentation_date"></pop-date-time-field>
+                                <pop-date-time-field time-label="{{ _('Time')  }}" label="{{_('Documentation Date')}}"
+                                                     v-model="editedItem.documentation_date"></pop-date-time-field>
 
                             </v-col>
 
@@ -599,6 +604,24 @@
                                 ></v-select>
                             </v-col>
                         </v-row>
+
+                        <v-row v-if="editedItem.review">
+                            <v-col cols="12" md="12">
+
+                                <v-card color="light-green lighten-5" elevation="0">
+                                    <v-card-title class="subtitle-2">Review</v-card-title>
+                                    <v-card-text>
+                                        <p v-html="editedItem.review">
+
+                                        </p>
+                                    </v-card-text>
+
+                                </v-card>
+
+                            </v-col>
+                        </v-row>
+
+
 
 
                     </v-container>

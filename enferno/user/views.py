@@ -12,6 +12,7 @@ from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import User
 from enferno.user.forms import ExtendedLoginForm
 from flask_security.forms import LoginForm
+from flask_babelex import gettext
 
 bp_user = Blueprint('users', __name__, static_folder='../static')
 
@@ -203,7 +204,7 @@ def change_password():
             if password != '':
                 user.password = hash_password(password)
                 user.save()
-                flash('Password changed successfully. ')
+                flash(gettext('Password changed successfully.') )
                 return redirect('/dashboard')
     return render_template('change-password.html')
 

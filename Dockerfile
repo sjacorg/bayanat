@@ -30,3 +30,4 @@ RUN echo 'alias ee="export FLASK_APP=run.py && export FLASK_DEBUG=0"' >> ~/.bash
 CMD [ "uwsgi", "--http", "0.0.0.0:5000", \
                "--protocol", "uwsgi", \
                "--wsgi", "run:app" ]
+

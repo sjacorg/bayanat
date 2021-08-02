@@ -17,3 +17,14 @@ def index():
 @bp_public.route('/robots.txt')
 def static_from_root():
     return send_from_directory(bp_public.static_folder, request.path[1:])
+
+
+
+from enferno.extensions import db
+@bp_public.teardown_app_request
+def shutdown_global_session(exception=None):
+    try:
+        #print ('-------------------- session cleaned --------------------')
+        db.session.remove()
+    except Exception as e:
+        print (e)

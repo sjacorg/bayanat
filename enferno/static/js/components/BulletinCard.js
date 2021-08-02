@@ -1,5 +1,5 @@
 Vue.component("bulletin-card", {
-    props: ["bulletin", "close", "thumb-click", "active", "log", "diff", "showEdit"],
+    props: ["bulletin", "close", "thumb-click", "active", "log", "diff", "showEdit","i18n"],
 
     watch: {
         bulletin: function (val, old) {
@@ -37,6 +37,13 @@ Vue.component("bulletin-card", {
         },
 
 
+        showReview(bulletin){
+
+            return (bulletin.status=='Peer Reviewed' && bulletin.review) ;
+
+        },
+
+
         editAllowed() {
             return this.$root.editAllowed(this.bulletin) && this.showEdit;
         },
@@ -48,9 +55,9 @@ Vue.component("bulletin-card", {
                 .get(`/admin/api/bulletinhistory/${this.bulletin.id}`)
                 .then((response) => {
                     this.revisions = response.data.items;
-                }).catch(error=>{
-              console.log(error.body.data)
-            }).finally(()=>{
+                }).catch(error => {
+                console.log(error.body.data)
+            }).finally(() => {
                 this.hloading = false;
             });
         },
@@ -69,14 +76,27 @@ Vue.component("bulletin-card", {
 
 
         viewVideo(s3url) {
+            this.iplayer = true
+            //solve bug when the player div is not ready yet
+            // wait for vue's next tick
 
-            this.removeVideo();
+            this.$nextTick(() => {
 
-            let video = document.createElement('video');
-            video.src = s3url;
-            video.controls = true;
-            video.autoplay = true;
-            this.$el.querySelector('#iplayer').append(video);
+                const video = document.querySelector('#iplayer video');
+
+                videojs(video, {
+                      playbackRates: VIDEO_RATES,
+                    //resizeManager: false
+                    fluid: true
+                }, function () {
+
+                    this.reset();
+                    this.src(s3url);
+                    this.load();
+                    this.play();
+                });
+
+            })
 
 
         },
@@ -112,6 +132,7 @@ Vue.component("bulletin-card", {
             revisions: null,
             show: false,
             hloading: false,
+            iplayer: false,
         };
     },
 
@@ -124,26 +145,33 @@ Vue.component("bulletin-card", {
       </v-btn>
       <v-card-text>
         <v-chip pill small label color="gv darken-2" class="white--text">
-          ID {{ bulletin.id }}</v-chip>
+          {{ i18n.id_ }} {{ bulletin.id }}</v-chip>
         <v-chip :href="bulletin.source_link" target="_blank" small pill label color="lime darken-3 "
                 class="white--text ml-1">
           # {{ bulletin.originid }}</v-chip>
-        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',bulletin)" x-small outlined>Edit</v-btn>
+        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',bulletin)" x-small outlined>{{ i18n.edit_ }}</v-btn>
 
       </v-card-text>
+      
+      
+        <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="bulletin.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
+          {{ i18n.assignedUser_ }} {{bulletin.assigned_to['name']}}</v-chip>
+        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status"  label="Assigned to"> <v-icon left>mdi-delta</v-icon> {{bulletin.status}}</v-chip>
+        
+      
 
       <v-sheet v-if="bulletin.ref && bulletin.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
                color="yellow lighten-5 ">
-        <div class="caption grey--text mr-2">Ref</div>
+        <div class="caption grey--text mr-2">{{ i18n.ref_ }}</div>
         <v-chip x-small v-for="e in bulletin.ref" class="caption black--text mx-1">{{ e }}</v-chip>
 
       </v-sheet>
 
-      <uni-field caption="Original Title" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
-      <uni-field caption="Title" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
+      <uni-field :caption="i18n.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
+      <uni-field :caption="i18n.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
 
       <v-card outlined v-if="bulletin.description" class="ma-2 pa-2" color="grey lighten-5">
-        <div class="caption grey--text mb-2">Description</div>
+        <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
         <div class="rich-description" v-html="bulletin.description"></div>
       </v-card>
 
@@ -151,7 +179,7 @@ Vue.component("bulletin-card", {
       <!-- Sources -->
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="bulletin.sources && bulletin.sources.length">
         <v-card-text>
-          <div class="px-1 title black--text">Sources</div>
+          <div class="px-1 title black--text">{{ i18n.sources_ }}</div>
           <v-chip-group column>
             <v-chip small label color="blue-grey lighten-5" v-for="source in bulletin.sources"
                     :key="source.id">{{ source.title }}</v-chip>
@@ -162,7 +190,7 @@ Vue.component("bulletin-card", {
       <!-- Events -->
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.events && bulletin.events.length">
         <v-card-text class="pa-2">
-          <div class="px-1 title black--text">Events</div>
+          <div class="px-1 title black--text">{{ i18n.events_ }}</div>
           <event-card v-for="event in bulletin.events" :key="event.id" :event="event"></event-card>
         </v-card-text>
       </v-card>
@@ -171,7 +199,7 @@ Vue.component("bulletin-card", {
 
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="bulletin.labels && bulletin.labels.length">
         <v-card-text>
-          <div class="px-1 title black--text">Labels</div>
+          <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
           <v-chip-group column>
             <v-chip label small color="blue-grey lighten-5" v-for="label in bulletin.labels"
                     :key="label.id">{{ label.title }}</v-chip>
@@ -183,7 +211,7 @@ Vue.component("bulletin-card", {
 
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="bulletin.verLabels && bulletin.verLabels.length">
         <v-card-text>
-          <div class="px-1 title black--text">Verified Labels</div>
+          <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
           <v-chip-group column>
             <v-chip label small color="blue-grey lighten-5" v-for="vlabel in bulletin.verLabels"
                     :key="vlabel.id">{{ vlabel.title }}</v-chip>
@@ -195,25 +223,29 @@ Vue.component("bulletin-card", {
       <!-- Media -->
 
       <v-card outlined class="ma-3" v-if="bulletin.medias && bulletin.medias.length">
-        <v-card outlined id="iplayer">
+        <v-card v-if="iplayer" elevation="0" id="iplayer" class="px-2 my-3">
+          <video id="player" controls class="video-js vjs-default-skin vjs-big-play-centered" crossorigin="anonymous"
+                 height="360" preload="auto"></video>
 
         </v-card>
         <v-card-text>
-          <div class="px-1 mb-3 title black--text">Media</div>
-          <v-layout wrap>
-            <v-flex class="ma-2" md6 v-for="media in bulletin.medias" :key="media.id">
+          <div class="px-1 mb-3 title black--text">{{ i18n.media_ }}</div>
+
+          <div class="d-flex flex-wrap">
+            <div class="pa-1" style="width: 50%" v-for="media in bulletin.medias" :key="media.id">
 
               <media-card v-if="media" @thumb-click="viewThumb" @video-click="viewVideo"
                           :media="media"></media-card>
-            </v-flex>
-          </v-layout>
+            </div>
+          </div>
+
         </v-card-text>
       </v-card>
 
       <!-- Locations -->
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.locations && bulletin.locations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Locations</div>
+          <div class="px-1 title black--text">{{ i18n.locations_ }}</div>
           <v-chip-group column>
             <v-chip label small color="blue-grey lighten-5" v-for="location in bulletin.locations"
                     :key="location.id">
@@ -226,14 +258,14 @@ Vue.component("bulletin-card", {
 
       <v-card outlined class="ma-3" v-if="bulletin.bulletin_relations && bulletin.bulletin_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Related Bulletins</div>
-          <bulletin-result class="mt-1" v-for="(item,index) in bulletin.bulletin_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }}</div>
+          <bulletin-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ bulletin_related_as(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
@@ -248,16 +280,17 @@ Vue.component("bulletin-card", {
       <!-- Related Actors  -->
       <v-card outlined class="ma-3" v-if="bulletin.actor_relations && bulletin.actor_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Related Actors</div>
-          <actor-result class="mt-1" v-for="(item,index) in bulletin.actor_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}</div>
+          <actor-result :i18n="i18n"  class="mt-1" v-for="(item,index) in bulletin.actor_relations" :key="index"
                         :actor="item.actor">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small label>{{ actor_related_as(r) }}</v-chip>
+                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small
+                        label>{{ actor_related_as(r) }}</v-chip>
                 <v-chip class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
@@ -270,14 +303,14 @@ Vue.component("bulletin-card", {
       <!-- Related Incidents -->
       <v-card outlined class="ma-3" v-if="bulletin.incident_relations && bulletin.incident_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Related Incidents</div>
-          <incident-result class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}</div>
+          <incident-result :i18n="i18n"  class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
                            :incident="item.incident">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
 
@@ -292,16 +325,16 @@ Vue.component("bulletin-card", {
 
       <!-- Pub/Doc Dates -->
       <div class="d-flex">
-        <uni-field caption="Publish Date" :english="bulletin.publish_date"></uni-field>
-        <uni-field caption="Documentation Date" :english="bulletin.documentation_date"></uni-field>
+        <uni-field :caption="i18n.publishDate_" :english="bulletin.publish_date"></uni-field>
+        <uni-field :caption="i18n.documentationDate_" :english="bulletin.documentation_date"></uni-field>
       </div>
 
-      <uni-field caption="Source Link" :english="bulletin.source_link"></uni-field>
+      <uni-field :caption="i18n.sourceLink_" :english="bulletin.source_link"></uni-field>
 
 
-      <v-card v-if="bulletin.status=='Peer Reviewed'" outline elevation="0" class="ma-3" color="light-green lighten-5">
+      <v-card v-if="showReview(bulletin)" outline elevation="0" class="ma-3" color="light-green lighten-5">
         <v-card-text>
-          <div class="px-1 title black--text">Review</div>
+          <div class="px-1 title black--text">{{ i18n.review_ }}</div>
           <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
 
           </div>
@@ -311,34 +344,30 @@ Vue.component("bulletin-card", {
 
       <v-card v-if="log" outline elevation="0" color="ma-3">
         <v-card-text>
-          <h3 class="title black--text align-content-center" >Log History
-          <v-btn fab small :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center" >
-              <v-icon  >mdi-history</v-icon>
-          </v-btn>
+          <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
+            <v-btn fab small :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
+              <v-icon>mdi-history</v-icon>
+            </v-btn>
           </h3>
 
-          
 
-            
-
-
-            <template v-for="(revision,index) in revisions">
-              <v-sheet color="grey lighten-4" dense flat class="my-1 pa-3 d-flex align-center">
+          <template v-for="(revision,index) in revisions">
+            <v-sheet color="grey lighten-4" dense flat class="my-1 pa-3 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
                                                                               color="gv lighten-3">{{ revision.data.status }}</v-chip> - {{ revision.created_at }}
                 - By {{ revision.user.email }}</span>
-                <v-spacer></v-spacer>
+              <v-spacer></v-spacer>
 
-                <v-btn v-if="diff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
-                       class="mx-1"
-                       color="grey" icon small>
-                  <v-icon>mdi-compare</v-icon>
-                </v-btn>
+              <v-btn v-if="diff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
+                     class="mx-1"
+                     color="grey" icon small>
+                <v-icon>mdi-compare</v-icon>
+              </v-btn>
 
-              </v-sheet>
+            </v-sheet>
 
-            </template>
-          
+          </template>
+
         </v-card-text>
 
       </v-card>

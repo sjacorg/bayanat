@@ -1,5 +1,5 @@
 Vue.component("incident-card", {
-    props: ['incident', 'close', 'log', 'diff', "showEdit"],
+    props: ['incident', 'close', 'log', 'diff', "showEdit", "i18n"],
     watch: {
         incident: function (b, n) {
 
@@ -91,21 +91,21 @@ Vue.component("incident-card", {
       </v-btn>
       <v-card-text class="d-flex align-center">
         <v-chip small pill label color="gv darken-2" class="white--text">
-          ID {{ incident.id }}</v-chip>
+          {{ i18n.id_ }} {{ incident.id }}</v-chip>
         <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',incident)" x-small outlined>Edit</v-btn>
 
       </v-card-text>
-      <uni-field caption="Title" :english="incident.title" :arabic="incident.title_ar"></uni-field>
+      <uni-field :caption="i18n.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
 
       <v-card outlined v-if="incident.description" class="ma-2 pa-2" color="grey lighten-5">
-        <div class="caption grey--text mb-2">Description</div>
+        <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
         <div class="rich-description" v-html="incident.description"></div>
       </v-card>
 
       <v-card outlined class="ma-3" color="grey lighten-5"
               v-if="incident.potential_violations && incident.potential_violations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Potential Violation Categories</div>
+          <div class="px-1 title black--text">{{ i18n.potentialViolationsCategories_ }}</div>
           <v-chip-group column>
             <v-chip small color="blue-grey lighten-5" v-for="item in incident.potential_violations"
                     :key="item.id">{{ item.title }}</v-chip>
@@ -116,7 +116,7 @@ Vue.component("incident-card", {
       <v-card outlined class="ma-3" color="grey lighten-5"
               v-if="incident.claimed_violations && incident.claimed_violations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Claimed Violation Categories</div>
+          <div class="px-1 title black--text">{{ i18n.claimedViolationsCategories_ }}</div>
           <v-chip-group column>
             <v-chip small color="blue-grey lighten-5" v-for="item in incident.claimed_violations"
                     :key="item.id">{{ item.title }}</v-chip>
@@ -127,7 +127,7 @@ Vue.component("incident-card", {
 
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="incident.labels && incident.labels.length">
         <v-card-text>
-          <div class="px-1 title black--text">Labels</div>
+          <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
           <v-chip-group column>
             <v-chip small color="blue-grey lighten-5" v-for="label in incident.labels"
                     :key="label.id">{{ label.title }}</v-chip>
@@ -137,7 +137,7 @@ Vue.component("incident-card", {
 
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="incident.locations && incident.locations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Locations</div>
+          <div class="px-1 title black--text">{{ i18n.locations_ }}</div>
           <v-chip-group column>
             <v-chip small color="blue-grey lighten-5" v-for="item in incident.locations"
                     :key="item.id">{{ item.title }}</v-chip>
@@ -149,7 +149,7 @@ Vue.component("incident-card", {
       <!-- Events -->
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="incident.events && incident.events.length">
         <v-card-text class="pa-2">
-          <div class="px-1 title black--text">Events</div>
+          <div class="px-1 title black--text">{{ i18n.events_ }}</div>
           <event-card v-for="event in incident.events" :key="event.id" :event="event"></event-card>
         </v-card-text>
       </v-card>
@@ -157,14 +157,14 @@ Vue.component("incident-card", {
 
       <v-card outlined class="ma-3" v-if="incident.incident_relations && incident.incident_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Related Incidents</div>
-          <incident-result class="mt-1" v-for="(item,index) in incident.incident_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}</div>
+          <incident-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.incident_relations" :key="index"
                            :incident="item.incident">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
@@ -179,14 +179,14 @@ Vue.component("incident-card", {
       <v-card outlined class="ma-3" v-if="incident.bulletin_relations && incident.bulletin_relations.length">
 
         <v-card-text>
-          <div class="px-1 title black--text">Related Bulletins</div>
-          <bulletin-result class="mt-1" v-for="(item,index) in incident.bulletin_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }}</div>
+          <bulletin-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ bulletin_related_as(item) }}</v-chip>
 
@@ -201,14 +201,14 @@ Vue.component("incident-card", {
 
       <v-card outlined class="ma-3" v-if="incident.actor_relations && incident.actor_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Related Actors</div>
-          <actor-result class="mt-1" v-for="(item,index) in incident.actor_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}</div>
+          <actor-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.actor_relations" :key="index"
                         :actor="item.actor">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ actor_related_as(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
@@ -222,7 +222,7 @@ Vue.component("incident-card", {
 
       <v-card v-if="incident.status=='Peer Reviewed'" outline elevation="0" class="ma-3" color="light-green lighten-5">
         <v-card-text>
-          <div class="px-1 title black--text">Review</div>
+          <div class="px-1 title black--text">{{ i18n.review_ }}</div>
           <div v-html="incident.review" class="pa-1 my-2 grey--text text--darken-2">
 
           </div>
@@ -233,7 +233,7 @@ Vue.component("incident-card", {
 
       <v-card v-if="log" outline elevation="0" color="ma-3">
         <v-card-text>
-          <h3 class="title black--text align-content-center">Log History
+          <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
             <v-btn fab small :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
               <v-icon>mdi-history</v-icon>
             </v-btn>

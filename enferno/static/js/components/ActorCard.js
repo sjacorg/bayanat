@@ -1,5 +1,5 @@
 Vue.component("actor-card", {
-    props: ["actor", "close", "thumb-click", "active", "log", "diff", "showEdit"],
+    props: ["actor", "close", "thumb-click", "active", "log", "diff", "showEdit", "i18n"],
     watch: {
         actor: function (b, n) {
 
@@ -115,12 +115,12 @@ Vue.component("actor-card", {
       </v-btn>
       <v-card-text class="d-flex align-center">
         <v-chip small pill label color="gv darken-2" class="white--text">
-          ID {{ actor.id }}</v-chip>
+          {{ i18n.id_ }} {{ actor.id }}</v-chip>
 
         <v-chip :href="actor.source_link" target="_blank" small pill label color="lime darken-3 "
                 class="white--text ml-1">
           # {{ actor.originid }}</v-chip>
-        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',actor)" x-small outlined>Edit</v-btn>
+        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',actor)" x-small outlined>{{ i18n.edit_ }}</v-btn>
       </v-card-text>
 
 
@@ -130,62 +130,62 @@ Vue.component("actor-card", {
         <div class="actor-description" v-html="actor.description"></div>
       </v-card-text>
 
-      <uni-field caption="Full Name" :english="actor.name" :arabic="actor.name_ar"></uni-field>
-      <uni-field caption="Nickname" :english="actor.nickname" :arabic="actor.nickname_ar"></uni-field>
+      <uni-field :caption="i18n.fullName_" :english="actor.name" :arabic="actor.name_ar"></uni-field>
+      <uni-field :caption="i18n.nickName_" :english="actor.nickname" :arabic="actor.nickname_ar"></uni-field>
       <div class="d-flex">
-        <uni-field caption="First Name" :english="actor.first_name" :arabic="actor.first_name_ar"></uni-field>
-        <uni-field caption="Middle Name" :english="actor.middle_name" :arabic="actor.middle_name_ar"></uni-field>
+        <uni-field :caption="i18n.firstName_" :english="actor.first_name" :arabic="actor.first_name_ar"></uni-field>
+        <uni-field :caption="i18n.middleName_" :english="actor.middle_name" :arabic="actor.middle_name_ar"></uni-field>
 
       </div>
-      <uni-field caption="Last Name" :english="actor.last_name" :arabic="actor.last_name_ar"></uni-field>
+      <uni-field :caption="i18n.lastName_" :english="actor.last_name" :arabic="actor.last_name_ar"></uni-field>
       <div class="d-flex">
-        <uni-field caption="Mother's Name" :english="actor.mother_name" :arabic="actor.mother_name_ar"></uni-field>
-        <uni-field caption="Sex" :english="actor.sex"></uni-field>
-        <uni-field caption="Age" :english="actor.age"></uni-field>
+        <uni-field :caption="i18n.mothersName_" :english="actor.mother_name" :arabic="actor.mother_name_ar"></uni-field>
+        <uni-field :caption="i18n.sex_" :english="actor.sex"></uni-field>
+        <uni-field :caption="i18n.age_" :english="actor.age"></uni-field>
       </div>
       <div class="d-flex">
-        <uni-field caption="Civilian" :english="actor.civilian"></uni-field>
-        <uni-field caption="Actor Type" :english="actor.actor_type"></uni-field>
+        <uni-field :caption="i18n.civilian_" :english="actor.civilian"></uni-field>
+        <uni-field :caption="i18n.actorType_" :english="actor.actor_type"></uni-field>
 
       </div>
-      <uni-field caption="Date of Birth" :english="actor.birth_date"></uni-field>
-      <uni-field caption="Place of Birth" v-if="actor.birth_place" :english="actor.birth_place.full_string"></uni-field>
-      <uni-field caption="Place of Residence" v-if="actor.residence_place"
+      <uni-field :caption="i18n.birthDate_" :english="actor.birth_date"></uni-field>
+      <uni-field :caption="i18n.birthPlace_" v-if="actor.birth_place" :english="actor.birth_place.full_string"></uni-field>
+      <uni-field :caption="i18n.residencePlace_" v-if="actor.residence_place"
                  :english="actor.residence_place.full_string"></uni-field>
-      <uni-field caption="Place of Origin" v-if="actor.origin_place"
+      <uni-field :caption="i18n.originPlace_" v-if="actor.origin_place"
                  :english="actor.origin_place.full_string"></uni-field>
 
 
       <div class="d-flex">
-        <uni-field caption="Occupation" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
-        <uni-field caption="Position" :english="actor.position" :arabic="actor.position_ar"></uni-field>
+        <uni-field :caption="i18n.occupation_" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
+        <uni-field :caption="i18n.position_" :english="actor.position" :arabic="actor.position_ar"></uni-field>
       </div>
 
       <div class="d-flex">
-        <uni-field caption="Spoken Dialects" :english="actor.dialects" :arabic="actor.dialects_ar"></uni-field>
-        <uni-field caption="Family Status" :english="actor.family_status" :arabic="actor.family_status_ar"></uni-field>
+        <uni-field :caption="i18n.spokenDialects_" :english="actor.dialects" :arabic="actor.dialects_ar"></uni-field>
+        <uni-field :caption="i18n.familyStatus_" :english="actor.family_status" :arabic="actor.family_status_ar"></uni-field>
       </div>
 
 
       <v-card v-if="actor.ethnography && actor.ethnography.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
-        <div class="caption grey--text mr-2">Ethnographic Info</div>
+        <div class="caption grey--text mr-2">{{ i18n.ethnographicInfo_ }}</div>
         <v-chip x-small v-for="e in actor.ethnography" class="caption black--text mx-1">{{ e }}</v-chip>
 
       </v-card>
       <v-card v-if="actor.nationality && actor.nationality.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
-        <div class="caption grey--text mr-2">Nationalities</div>
+        <div class="caption grey--text mr-2">{{ i18n.nationalities_ }}</div>
         <v-chip x-small v-for="n in actor.nationality" class="caption black--text mx-1">{{ n }}</v-chip>
 
       </v-card>
 
 
-      <uni-field caption="National ID Card" :english="actor.national_id_card"></uni-field>
+      <uni-field :caption="i18n.nationalIDCard_" :english="actor.national_id_card"></uni-field>
 
       <v-card outlined class="ma-3" color="grey lighten-5">
         <v-card-text>
-          <div class="px-1 title black--text">Overview</div>
+          <div class="px-1 title black--text">{{ i18n.overview_ }}</div>
           <v-chip v-if="actor.civilian" class="grey lighten-4 ma-1" small>{{ actor.civilian }}</v-chip>
           <v-chip v-if="actor.actor_type" class="grey lighten-4 ma-1" small>{{ actor.actor_type }}</v-chip>
           <v-chip v-if="actor.birth_place" class="grey lighten-4 ma-1" small>Born
@@ -199,7 +199,7 @@ Vue.component("actor-card", {
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="actor.sources && actor.sources.length">
 
         <v-card-text>
-          <div class="px-1 title black--text">Sources</div>
+          <div class="px-1 title black--text">{{ i18n.sources_ }}</div>
           <v-chip-group column>
             <v-chip small color="blue-grey lighten-5" v-for="source in actor.sources"
                     :key="source.id">{{ source.title }}</v-chip>
@@ -210,7 +210,7 @@ Vue.component("actor-card", {
 
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="actor.labels && actor.labels.length">
         <v-card-text>
-          <div class="px-1 title black--text">Labels</div>
+          <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
           <v-chip-group column>
             <v-chip small color="blue-grey lighten-5" v-for="label in actor.labels"
                     :key="label.id">{{ label.title }}</v-chip>
@@ -220,7 +220,7 @@ Vue.component("actor-card", {
 
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="actor.verLabels && actor.verLabels.length">
         <v-card-text>
-          <div class="px-1 title black--text">Verified Labels</div>
+          <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
           <v-chip-group column>
             <v-chip small color="blue-grey lighten-5" v-for="label in actor.verLabels"
                     :key="label.id">{{ label.title }}</v-chip>
@@ -231,7 +231,7 @@ Vue.component("actor-card", {
 
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="actor.events && actor.events.length">
         <v-card-text class="pa-2">
-          <div class="px-1 title black--text">Events</div>
+          <div class="px-1 title black--text">{{ i18n.events_ }}</div>
           <event-card v-for="event in actor.events" :key="event.id" :event="event"></event-card>
         </v-card-text>
       </v-card>
@@ -242,7 +242,7 @@ Vue.component("actor-card", {
 
         </v-card>
         <v-card-text>
-          <div class="px-1 mb-3 title black--text">Media</div>
+          <div class="px-1 mb-3 title black--text">{{ i18n.media }}</div>
           <v-layout wrap>
             <v-flex class="ma-2" md6 v-for="media in actor.medias">
               <media-card v-if="active" @thumb-click="viewThumb" @video-click="viewVideo" :media="media"></media-card>
@@ -250,18 +250,20 @@ Vue.component("actor-card", {
           </v-layout>
         </v-card-text>
       </v-card>
+      
+      <mp-card v-if="actor.MP" :i18n="i18n" :actorId="actor.id"></mp-card>
 
 
       <v-card outlined class="ma-3" v-if="actor.actor_relations && actor.actor_relations.length">
 
         <v-card-text>
-          <div class="px-1 title black--text">Related Actors</div>
-          <actor-result class="mt-1" v-for="(item,index) in actor.actor_relations" :key="index" :actor="item.actor">
+          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}</div>
+          <actor-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.actor_relations" :key="index" :actor="item.actor">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip v-if="item.related_as!=null" color="grey lighten-4" small
                         label>{{ actor_related_as(item) }}</v-chip>
@@ -277,12 +279,12 @@ Vue.component("actor-card", {
       <v-card outlined class="ma-3" v-if="actor.bulletin_relations && actor.bulletin_relations.length">
 
         <v-card-text>
-          <div class="px-1 title black--text">Related Bulletins</div>
-          <bulletin-result class="mt-1" v-for="(item,index) in actor.bulletin_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }}</div>
+          <bulletin-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
               <v-sheet color="yellow lighten-5" class="pa-2">
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small label>{{ bulletin_related_as(r) }}</v-chip>
                 <v-chip class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
@@ -297,14 +299,14 @@ Vue.component("actor-card", {
 
       <v-card outlined class="ma-3" v-if="actor.incident_relations && actor.incident_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">Related Incidents</div>
-          <incident-result class="mt-1" v-for="(item,index) in actor.incident_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}</div>
+          <incident-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.incident_relations" :key="index"
                            :incident="item.incident">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
-                <div class="caption ma-2">Relationship Info</div>
+                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
                 <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
@@ -318,15 +320,15 @@ Vue.component("actor-card", {
 
 
       <div class="d-flex">
-        <uni-field caption="Publish Date" :english="actor.publish_date"></uni-field>
-        <uni-field caption="Documentation Date" :english="actor.documentation_date"></uni-field>
+        <uni-field :caption="i18n.publishDate_" :english="actor.publish_date"></uni-field>
+        <uni-field :caption="i18n.documentationDate_" :english="actor.documentation_date"></uni-field>
       </div>
-      <uni-field caption="Source Link" :english="actor.source_link"></uni-field>
+      <uni-field :caption="i18n.sourceLink_" :english="actor.source_link"></uni-field>
 
 
       <v-card v-if="actor.status=='Peer Reviewed'" outline elevation="0" class="ma-3" color="light-green lighten-5">
         <v-card-text>
-          <div class="px-1 title black--text">Review</div>
+          <div class="px-1 title black--text">{{ i18n.review_ }}</div>
           <div v-html="actor.review" class="pa-1 my-2 grey--text text--darken-2">
 
           </div>
@@ -337,7 +339,7 @@ Vue.component("actor-card", {
 
       <v-card v-if="log" outline elevation="0" color="ma-3">
         <v-card-text>
-          <h3 class="title black--text align-content-center">Log History
+          <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
             <v-btn fab small :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
               <v-icon>mdi-history</v-icon>
             </v-btn>

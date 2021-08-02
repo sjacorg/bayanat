@@ -247,7 +247,7 @@ let mediaMixin = {
           pp.insertAdjacentHTML('afterbegin','<video id="player" controls class="video-js vjs-default-skin vjs-big-play-centered" crossorigin="anonymous" width="620" height="360" preload="auto" ></video>')
           let video = this.$el.querySelector('video');
           videojs('#player',{
-            playbackRates: [0.5, 1, 1.5, 2]
+            playbackRates: VIDEO_RATES
           },function(){
             this.src(s3url);
 

@@ -31,8 +31,7 @@
 
             <incident-result :incident="item">
                 <template v-slot:actions>
-                    <v-btn @click="relateIncident($event,item)" small depressed color="primary">relate</v-btn>
-                    <v-btn @click="viewIncident($event,item)" small depressed color="grey lighten-3">Preview</v-btn>
+                    <v-btn @click="relateIncident($event,item)" small depressed color="primary"> {{ i18n.relate_ }} </v-btn>
                 </template>
             </incident-result>
 

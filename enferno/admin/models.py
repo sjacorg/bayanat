@@ -1,5 +1,5 @@
 # import datetime
-import json
+import json, os
 from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -9,11 +9,19 @@ from flask_login import current_user
 from sqlalchemy import JSON, ARRAY
 from sqlalchemy import  event
 from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
 
 from enferno.extensions import db
+from enferno.settings import ProdConfig, DevConfig
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
+
+# Load configuraitons based on environment settings
+if os.getenv("FLASK_DEBUG") == '0':
+    cfg = ProdConfig
+else:
+    cfg = DevConfig
 
 
 class Source(db.Model, BaseMixin):
@@ -500,7 +508,6 @@ class Location(db.Model, BaseMixin):
         else:
             return [c.id for c in childs]
 
-
     # custom serialization method
     def to_dict(self):
         parent_g = None
@@ -662,6 +669,7 @@ class Location(db.Model, BaseMixin):
 
         return ""
 
+
 # joint table
 bulletin_sources = db.Table(
     "bulletin_sources",
@@ -682,7 +690,7 @@ bulletin_locations = db.Table(
     ),
 )
 
-#joint table
+# joint table
 bulletin_labels = db.Table(
     "bulletin_labels",
     db.Column("label_id", db.Integer, db.ForeignKey("label.id"), primary_key=True),
@@ -691,7 +699,7 @@ bulletin_labels = db.Table(
     ),
 )
 
-#joint table
+# joint table
 bulletin_verlabels = db.Table(
     "bulletin_verlabels",
     db.Column("label_id", db.Integer, db.ForeignKey("label.id"), primary_key=True),
@@ -851,7 +859,7 @@ class Atob(db.Model, BaseMixin):
         return {
             "bulletin": self.bulletin.to_compact(),
             "actor": self.actor.to_compact(),
-            "related_as": self.related_as,
+            "related_as": self.related_as if self.related_as else [],
             "probability": self.probability,
             "comment": self.comment,
             "user_id": self.user_id,
@@ -1096,10 +1104,9 @@ class Bulletin(db.Model, BaseMixin):
         '''
     ))
 
-
     __table_args__ = (
         db.Index('ix_bulletin_search', 'search', postgresql_using="gin", postgresql_ops={'search': 'gin_trgm_ops'}),
-        )
+    )
 
     # custom method to create new revision in history table
     def create_revision(self, user_id=None, created=None):
@@ -1566,6 +1573,7 @@ class Bulletin(db.Model, BaseMixin):
     def to_json(self):
         return json.dumps(self.to_dict())
 
+
 # joint table
 actor_sources = db.Table(
     "actor_sources",
@@ -1580,7 +1588,7 @@ actor_labels = db.Table(
     db.Column("actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True),
 )
 
-#joint table
+# joint table
 actor_verlabels = db.Table(
     "actor_verlabels",
     db.Column("label_id", db.Integer, db.ForeignKey("label.id"), primary_key=True),
@@ -1589,7 +1597,7 @@ actor_verlabels = db.Table(
     ),
 )
 
-#joint table
+# joint table
 actor_events = db.Table(
     "actor_events",
     db.Column("event_id", db.Integer, db.ForeignKey("event.id"), primary_key=True),
@@ -1738,6 +1746,67 @@ class Actor(db.Model, BaseMixin):
 
     tsv = db.Column(TSVECTOR)
 
+    if cfg.MISSING_PERSONS:
+        last_address = db.Column(db.Text)
+        social_networks = db.Column(JSON)
+        marriage_history = db.Column(db.String)
+        bio_children = db.Column(db.Integer)
+        pregnant_at_disappearance = db.Column(db.Boolean)
+        months_pregnant = db.Column(db.NUMERIC)
+        missing_relatives = db.Column(db.Boolean)
+        saw_name = db.Column(db.String)
+        saw_address = db.Column(db.Text)
+        saw_email = db.Column(db.String)
+        saw_phone = db.Column(db.String)
+        detained_before = db.Column(db.String)
+        seen_in_detention = db.Column(JSON)
+        injured = db.Column(JSON)
+        known_dead = db.Column(JSON)
+        death_details = db.Column(db.Text)
+        personal_items = db.Column(db.Text)
+        height = db.Column(db.NUMERIC)
+        weight = db.Column(db.NUMERIC)
+        physique = db.Column(db.String)
+        hair_loss = db.Column(db.String)
+        hair_type = db.Column(db.String)
+        hair_length = db.Column(db.String)
+        hair_color = db.Column(db.String)
+        facial_hair = db.Column(db.String)
+        posture = db.Column(db.Text)
+        skin_markings = db.Column(JSON)
+        handedness = db.Column(db.String)
+        glasses = db.Column(db.String)
+        eye_color = db.Column(db.String)
+        dist_char_con = db.Column(db.String)
+        dist_char_acq = db.Column(db.String)
+        physical_habits = db.Column(db.String)
+        other = db.Column(db.Text)
+        phys_name_contact = db.Column(db.Text)
+        injuries = db.Column(db.Text)
+        implants = db.Column(db.Text)
+        malforms = db.Column(db.Text)
+        pain = db.Column(db.Text)
+        other_conditions = db.Column(db.Text)
+        accidents = db.Column(db.Text)
+        pres_drugs = db.Column(db.Text)
+        smoker = db.Column(db.Boolean)
+        dental_record = db.Column(db.Boolean)
+        dentist_info = db.Column(db.Text)
+        teeth_features = db.Column(db.Text)
+        dental_problems = db.Column(db.Text)
+        dental_treatments = db.Column(db.Text)
+        dental_habits = db.Column(db.Text)
+        case_status = db.Column(db.String)
+        # array of objects: name, email,phone, email, address, relationship
+        reporters = db.Column(JSON)
+        identified_by = db.Column(db.String)
+        family_notified = db.Column(db.Boolean)
+        hypothesis_based = db.Column(db.Text)
+        hypothesis_status = db.Column(db.String)
+
+        #death_cause = db.Column(db.String)
+        reburial_location = db.Column(db.String)
+
     search = db.Column(db.Text, db.Computed("""
          ((((((((((id)::text || ' '::text) || (COALESCE(name, ''::character varying))::text) || ' '::text) ||
                   (COALESCE(name_ar, ''::character varying))::text) || ' '::text) ||
@@ -1859,6 +1928,10 @@ class Actor(db.Model, BaseMixin):
         if "residence_place" in json:
             if json["residence_place"] and "id" in json["residence_place"]:
                 self.residence_place_id = json["residence_place"]["id"]
+
+        if "origin_place" in json:
+            if json["origin_place"] and "id" in json["origin_place"]:
+                self.origin_place_id = json["origin_place"]["id"]
 
         # Events
         if "events" in json:
@@ -1983,7 +2056,131 @@ class Actor(db.Model, BaseMixin):
         if "status" in json:
             self.status = json["status"]
 
+
+        # Missing Persons
+        if cfg.MISSING_PERSONS:
+            self.last_address = json.get('last_address')
+            self.marriage_history = json.get('marriage_history')
+            self.bio_children = json.get('bio_children')
+            self.pregnant_at_disappearance = json.get('pregnant_at_disappearance')
+            self.months_pregnant = json.get('months_pregnant')
+            self.missing_relatives = json.get('missing_relatives')
+            self.saw_name = json.get('saw_name')
+            self.saw_address = json.get('saw_address')
+            self.saw_phone = json.get('saw_phone')
+            self.saw_email = json.get('saw_email')
+            self.seen_in_detention = json.get('seen_in_detention')
+            # Flag json fields for saving
+            flag_modified(self,'seen_in_detention')
+            self.injured = json.get('injured')
+            flag_modified(self, 'injured')
+            self.known_dead = json.get('known_dead')
+            flag_modified(self, 'known_dead')
+            self.death_details = json.get('death_details')
+            self.personal_items = json.get('personal_items')
+            self.height = json.get('height')
+            self.weight = json.get('weight')
+            self.physique = json.get('physique')
+            self.hair_loss = json.get('hair_loss')
+            self.hair_type = json.get('hair_type')
+            self.hair_length = json.get('hair_length')
+            self.hair_color = json.get('hair_color')
+            self.facial_hair = json.get('facial_hair')
+            self.posture = json.get('posture')
+            self.skin_markings = json.get('skin_markings')
+            flag_modified(self, 'skin_markings')
+            self.handedness = json.get('handedness')
+            self.eye_color = json.get('eye_color')
+            self.glasses = json.get('glasses')
+            self.dist_char_con = json.get('dist_char_con')
+            self.dist_char_acq = json.get('dist_char_acq')
+            self.physical_habits = json.get('physical_habits')
+            self.other = json.get('other')
+            self.phys_name_contact = json.get('phys_name_contact')
+            self.injuries = json.get('injuries')
+            self.implants = json.get('implants')
+            self.malforms = json.get('malforms')
+            self.pain = json.get('pain')
+            self.other_conditions = json.get('other_conditions')
+            self.accidents = json.get('accidents')
+            self.pres_drugs = json.get('pres_drugs')
+            self.smoker = json.get('smoker')
+            self.dental_record = json.get('dental_record')
+            self.dentist_info = json.get('dentist_info')
+            self.teeth_features = json.get('teeth_features')
+            self.dental_problems = json.get('dental_problems')
+            self.dental_treatments = json.get('dental_treatments')
+            self.dental_habits = json.get('dental_habits')
+            self.case_status = json.get('case_status')
+            self.reporters = json.get('reporters')
+            flag_modified(self,'reporters')
+            self.identified_by = json.get('identified_by')
+            self.family_notified = json.get('family_notified')
+            self.reburial_location = json.get('reburial_location')
+            self.hypothesis_based = json.get('hypothesis_based')
+            self.hypothesis_status = json.get('hypothesis_status')
+
+
         return self
+
+    def mp_json(self):
+        mp = {}
+        mp['MP'] = True
+        mp['last_address'] = getattr(self, 'last_address')
+        mp['marriage_history'] = getattr(self, 'marriage_history')
+        mp['bio_children'] = getattr(self, 'bio_children')
+        mp['pregnant_at_disappearance'] = getattr(self, 'pregnant_at_disappearance')
+        mp['months_pregnant'] = str(self.months_pregnant) if self.months_pregnant else None
+        mp['missing_relatives'] = getattr(self, 'missing_relatives')
+        mp['saw_name'] = getattr(self,'saw_name')
+        mp['saw_address'] = getattr(self, 'saw_address')
+        mp['saw_phone'] = getattr(self, 'saw_phone')
+        mp['saw_email'] = getattr(self, 'saw_email')
+        mp['seen_in_detention'] = getattr(self, 'seen_in_detention')
+        mp['injured'] = getattr(self, 'injured')
+        mp['known_dead'] = getattr(self, 'known_dead')
+        mp['death_details'] = getattr(self, 'death_details')
+        mp['personal_items'] = getattr(self, 'personal_items')
+        mp['height'] = str(self.height) if self.height else None
+        mp['weight'] = str(self.weight) if self.weight else None
+        mp['physique'] = getattr(self, 'physique')
+        mp['hair_loss'] = getattr(self, 'hair_loss')
+        mp['hair_type'] = getattr(self, 'hair_type')
+        mp['hair_length'] = getattr(self, 'hair_length')
+        mp['hair_color'] = getattr(self, 'hair_color')
+        mp['facial_hair'] = getattr(self, 'facial_hair')
+        mp['posture'] = getattr(self, 'posture')
+        mp['skin_markings'] = getattr(self, 'skin_markings')
+        mp['handedness'] = getattr(self, 'handedness')
+        mp['eye_color'] = getattr(self,'eye_color')
+        mp['glasses'] = getattr(self, 'glasses')
+        mp['dist_char_con'] = getattr(self, 'dist_char_con')
+        mp['dist_char_acq'] = getattr(self, 'dist_char_acq')
+        mp['physical_habits'] = getattr(self, 'physical_habits')
+        mp['other'] = getattr(self, 'other')
+        mp['phys_name_contact'] = getattr(self, 'phys_name_contact')
+        mp['injuries'] = getattr(self, 'injuries')
+        mp['implants'] = getattr(self, 'implants')
+        mp['malforms'] = getattr(self, 'malforms')
+        mp['pain'] = getattr(self, 'pain')
+        mp['other_conditions'] = getattr(self, 'other_conditions')
+        mp['accidents'] = getattr(self, 'accidents')
+        mp['pres_drugs'] = getattr(self, 'pres_drugs')
+        mp['smoker'] = getattr(self, 'smoker')
+        mp['dental_record'] = getattr(self, 'dental_record')
+        mp['dentist_info'] = getattr(self, 'dentist_info')
+        mp['teeth_features'] = getattr(self, 'teeth_features')
+        mp['dental_problems'] = getattr(self, 'dental_problems')
+        mp['dental_treatments'] = getattr(self, 'dental_treatments')
+        mp['dental_habits'] = getattr(self, 'dental_habits')
+        mp['case_status'] = getattr(self, 'case_status')
+        mp['reporters'] = getattr(self, 'reporters')
+        mp['identified_by'] = getattr(self, 'identified_by')
+        mp['family_notified'] = getattr(self, 'family_notified')
+        mp['reburial_location'] = getattr(self, 'reburial_location')
+        mp['hypothesis_based'] = getattr(self, 'hypothesis_based')
+        mp['hypothesis_status'] = getattr(self, 'hypothesis_status')
+        return mp
 
     # Compact dict for relationships
     def to_compact(self):
@@ -2088,6 +2285,7 @@ class Actor(db.Model, BaseMixin):
 
     # custom serialization method
     def to_dict(self, mode=None):
+
         if mode == '1':
             return self.min_json()
         if mode == '2':
@@ -2136,15 +2334,15 @@ class Actor(db.Model, BaseMixin):
         for relation in self.incident_relations:
             incident_relations_dict.append(relation.to_dict())
 
-        return {
+        actor =  {
             "class": "Actor",
             "id": self.id,
             "originid": self.originid or None,
             "name": self.name or None,
-            "name_ar": getattr(self,'name_ar'),
+            "name_ar": getattr(self, 'name_ar'),
             "description": self.description or None,
             "nickname": self.nickname or None,
-            "nickname_ar": getattr(self,'nickname_ar'),
+            "nickname_ar": getattr(self, 'nickname_ar'),
             "first_name": self.first_name or None,
             "first_name_ar": self.first_name_ar or None,
             "middle_name": self.middle_name or None,
@@ -2210,6 +2408,14 @@ class Actor(db.Model, BaseMixin):
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
         }
+        # handle missing actors mode
+
+        if cfg.MISSING_PERSONS:
+            mp = self.mp_json()
+            actor.update(mp)
+
+        return actor
+
 
     def to_mode2(self):
 
@@ -2310,7 +2516,6 @@ class Itoa(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_itoas", foreign_keys=[user_id])
 
-
     # custom serialization method
     def to_dict(self):
 
@@ -2330,8 +2535,8 @@ class Itoa(db.Model, BaseMixin):
                 relation["probability"] if "probability" in relation else None
             )
             self.related_as = (
-                 relation["related_as"] if "related_as" in relation else None
-             )
+                relation["related_as"] if "related_as" in relation else None
+            )
             self.comment = relation["comment"] if "comment" in relation else None
             print("Relation has been updated.")
         else:
@@ -2449,6 +2654,7 @@ class PotentialViolation(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
     title_ar = db.Column(db.String)
+
     # to serialize data
     def to_dict(self):
         return {"id": self.id, "title": self.title}
@@ -2522,6 +2728,7 @@ class ClaimedViolation(db.Model, BaseMixin):
         print("Claimed Violation ID counter updated.")
         return ""
 
+
 # joint table
 incident_locations = db.Table(
     "incident_locations",
@@ -2533,7 +2740,7 @@ incident_locations = db.Table(
     ),
 )
 
-#joint table
+# joint table
 incident_labels = db.Table(
     "incident_labels",
     db.Column("label_id", db.Integer, db.ForeignKey("label.id"), primary_key=True),
@@ -2542,7 +2749,7 @@ incident_labels = db.Table(
     ),
 )
 
-#joint table
+# joint table
 incident_events = db.Table(
     "incident_events",
     db.Column("event_id", db.Integer, db.ForeignKey("event.id"), primary_key=True),
@@ -2551,7 +2758,7 @@ incident_events = db.Table(
     ),
 )
 
-#joint table
+# joint table
 incident_potential_violations = db.Table(
     "incident_potential_violations",
     db.Column("potentialviolation_id", db.Integer, db.ForeignKey("potential_violation.id"), primary_key=True),
@@ -3072,8 +3279,6 @@ class BulletinHistory(db.Model, BaseMixin):
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
-
-
 # how to search
 # Bulletin.query.filter(Bulletin.tsv.op('@@')(func.plainto_tsquery('search_term')))
 
@@ -3121,8 +3326,6 @@ class ActorHistory(db.Model, BaseMixin):
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
-
-
 # how to search
 # Bulletin.query.filter(Bulletin.tsv.op('@@')(func.plainto_tsquery('search_term')))
 
@@ -3166,7 +3369,6 @@ class IncidentHistory(db.Model, BaseMixin):
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
-
 # register an event listener to store version histories History tables
 @event.listens_for(Incident, "after_insert")
 def version_trigger(mapper, connection, incident: Incident):
@@ -3205,6 +3407,7 @@ class Activity(db.Model, BaseMixin):
             'created_at': DateHelper.serialize_datetime(self.created_at),
 
         }
+
     # helper static method to create different type of activities (tags)
     @staticmethod
     def create(user, action, subject, tag):

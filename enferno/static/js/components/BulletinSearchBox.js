@@ -92,14 +92,14 @@ Vue.component('bulletin-search-box', {
                         <div class="d-flex">
                           <v-combobox
                                 v-model="q.ref"
-                                :label="i18n.ref_"
+                                :label="i18n.inRef_"
                                 multiple
                                 deletable-chips
                                 small-chips
                                 clearable
                         ></v-combobox>
                         
-                        <v-checkbox label="Any" dense v-model="q.opref" color="primary" small
+                        <v-checkbox :label="i18n.any_" dense v-model="q.opref" color="primary" small
                                         class="mx-3"></v-checkbox>
                         
                         </div>
@@ -115,7 +115,7 @@ Vue.component('bulletin-search-box', {
                                 clearable
                         ></v-combobox>
                         
-                        <v-checkbox label="All" dense v-model="q.opexref" color="primary" small
+                        <v-checkbox :label="i18n.all_" dense v-model="q.opexref" color="primary" small
                                         class="mx-3"></v-checkbox>
                                         </div>
                         
@@ -281,7 +281,7 @@ Vue.component('bulletin-search-box', {
                                     :multiple="true"
                                     :label="i18n.includeSources_"
                             ></search-field>
-                            <v-checkbox label="Any" dense v-model="q.opsources" color="primary" small
+                            <v-checkbox :label="i18n.any_" dense v-model="q.opsources" color="primary" small
                                         class="mx-3"></v-checkbox>
 
                         </div>
@@ -296,7 +296,7 @@ Vue.component('bulletin-search-box', {
 
                         ></search-field>
                         
-                        <v-switch  v-model="q.childsources" label="Also include child sources"></v-switch>
+                        <v-switch  v-model="q.childsources" :label="i18n.includeChildSources_"></v-switch>
 
 
                     </v-col>
@@ -314,7 +314,7 @@ Vue.component('bulletin-search-box', {
                                     :multiple="true"
                                     :label="i18n.includeLabels_"
                             ></search-field>
-                            <v-checkbox label="Any" dense v-model="q.oplabels" color="primary" small
+                            <v-checkbox :label="i18n.any_" dense v-model="q.oplabels" color="primary" small
                                         class="mx-3"></v-checkbox>
                         </div>
 
@@ -328,7 +328,7 @@ Vue.component('bulletin-search-box', {
                                 :label="i18n.excludeLabels_"
                         ></search-field>
                         
-                        <v-switch v-model="q.childlabels" label="Also include child labels"></v-switch>
+                        <v-switch v-model="q.childlabels" :label="i18n.includeChildLabels_"></v-switch>
 
 
                     </v-col>
@@ -345,7 +345,7 @@ Vue.component('bulletin-search-box', {
                                     :multiple="true"
                                     :label="i18n.includeVerLabels_"
                             ></search-field>
-                            <v-checkbox label="Any" dense v-model="q.opvlabels" color="primary" small
+                            <v-checkbox :label="i18n.any_" dense v-model="q.opvlabels" color="primary" small
                                         class="mx-3"></v-checkbox>
                         </div>
 
@@ -359,7 +359,7 @@ Vue.component('bulletin-search-box', {
                                 :label="i18n.excludeVerLabels_"
                         ></search-field>
                       
-                      <v-switch v-model="q.childverlabels" label="Also include verified child labels"></v-switch>
+                      <v-switch v-model="q.childverlabels" :label="i18n.includeChildVerLabels_"></v-switch>
                     </v-col>
                 </v-row>
 
@@ -374,7 +374,7 @@ Vue.component('bulletin-search-box', {
                                     :multiple="true"
                                     :label="i18n.includeLocations_"
                             ></search-field>
-                            <v-checkbox label="Any" dense v-model="q.oplocations" color="primary" small
+                            <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
                                         class="mx-3"></v-checkbox>
                         </div>
                         <search-field

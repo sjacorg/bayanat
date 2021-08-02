@@ -1,7 +1,7 @@
 <validation-observer v-slot="{invalid}">
     <v-dialog persistent v-model="dialog" fullscreen>
 
-        <v-card class="overflow-hidden">
+        <v-card v-if="dialog" class="overflow-hidden">
 
             <v-app-bar
                     absolute
@@ -21,8 +21,8 @@
                 <v-spacer></v-spacer>
 
 
-                <v-btn @click="save" :disabled="invalid" dark color="primary darken-1" small class="mx-2" depressed>Save
-                    Actor
+                <v-btn @click="save" :disabled="invalid" dark color="primary darken-1" small class="mx-2" depressed>
+                    {{ _('Save Actor')}}
                 </v-btn>
                 <v-btn @click="confirmClose" icon>
                     <v-icon>mdi-close</v-icon>
@@ -45,13 +45,18 @@
                             <v-col cols="12" md="6">
 
                                 <v-card class="d-flex" flat>
+                                    <div style="flex:auto" v-if="name__">
+                                        <validation-provider name="Name" rules="required" v-slot="{errors}">
+                                            <v-text-field
 
+                                                    v-model="editedItem.name"
+                                                    label="{{ _('Name') }}"
+                                            ></v-text-field>
 
-                                    <v-text-field
-                                            v-if="name__"
-                                            v-model="editedItem.name"
-                                            label="{{ _('Name') }}"
-                                    ></v-text-field>
+                                            <span class="orange--text">${errors[0]}</span>
+                                        </validation-provider>
+
+                                    </div>
 
 
                                     <v-text-field
@@ -70,9 +75,9 @@
                                             @click="name__=!name__"
                                     >
                                         <v-icon>mdi-web</v-icon>
-                                    </v-btn
-                                    >
+                                    </v-btn>
                                 </v-card>
+
 
                             </v-col>
                             <v-col cols="12" md="6">
@@ -228,7 +233,7 @@
 
                         <v-row>
                             <v-col cols="12" md="12">
-                                <div class="body-1 pa-1 grey--text">Description</div>
+                                <div class="body-1 pa-1 grey--text">{{ _('Description') }}</div>
                                 <tinymce-editor
                                         :init="tinyConfig"
                                         v-model="editedItem.description"
@@ -319,7 +324,7 @@
 
 
                             <v-col cols="3" class="align-center d-flex">
-                                <pop-date-field label="Date of Birth" v-model="editedItem.birth_date"></pop-date-field>
+                                <pop-date-field label="{{ _('Date of Birth') }}" v-model="editedItem.birth_date"></pop-date-field>
 
 
                             </v-col>
@@ -413,7 +418,7 @@
                                 </v-card>
                             </v-col>
 
-                            </v-col>
+
                             <v-col cols="12" md="3">
                                 <v-card class="d-flex" flat>
                                     <v-text-field
@@ -563,91 +568,95 @@
                                                 @click:append="searchRelatedActors"
                                                 append-icon="mdi-magnify"
                                         ></v-text-field>
+                                    </v-card-title>
 
 
-                                        <!--  Grid of Actors Items -->
+                                    <!--  Grid of Actors Items -->
 
 
-                                        <v-card-text>
-                                            <v-layout wrap>
-                                                <v-flex
-                                                        class="pa-1"
-                                                        md6
-                                                        v-for="(item,index) in editedItem.actor_relations"
-                                                        :key="index"
-                                                >
-                                                    <!--  Related Actor  Card -->
-                                                    <actor-result :actor="item.actor">
-                                                        <!--  attach relationship form -->
-                                                        <template v-slot:header>
-                                                            <v-card outlined color="lime lighten-5">
-                                                                <v-card-title class="subtitle-2">
-                                                                    <v-icon left>mdi-link</v-icon>
-                                                                    Relationship Information
-                                                                </v-card-title>
+                                    <v-card-text>
+                                        <v-layout wrap>
+                                            <v-flex
+                                                    class="pa-1"
+                                                    md6
+                                                    v-for="(item,index) in editedItem.actor_relations"
+                                                    :key="index"
+                                            >
+                                                <!--  Related Actor  Card -->
+                                                <actor-result :i18n="translations" :actor="item.actor">
+                                                    <!--  attach relationship form -->
+                                                    <template v-slot:header>
+                                                        <v-card outlined color="lime lighten-5">
+                                                            <v-card-title class="subtitle-2">
+                                                                <v-icon left>mdi-link</v-icon>
+                                                                {{ _('Relationship Information') }}
+                                                            </v-card-title>
 
 
-                                                                <v-card-text>
-                                                                    <div>
-                                                                        <div class="caption">{{ _('Probability') }}</div>
-                                                                        <v-chip-group
-                                                                                v-model="editedItem.actor_relations[index].probability"
-                                                                                column
-                                                                                active-class="primary dark"
-                                                                        >
-                                                                            <v-chip small> Maybe</v-chip>
-                                                                            <v-chip small> Likely</v-chip>
-                                                                            <v-chip small> Certain</v-chip>
-                                                                        </v-chip-group>
-
-                                                                        <div class="caption">{{ _('Related As') }}</div>
-                                                                        <v-chip-group
-                                                                                v-model="editedItem.actor_relations[index].related_as"
-                                                                                column
-                                                                                active-class="primary dark"
-                                                                        >
-                                                                            <v-chip v-for="r in actorConfig.atoaRelateAs"
-                                                                                    small> ${
-                                                                                detectDirection(editedItem,
-                                                                                editedItem.actor_relations[index].actor)
-                                                                                ? r.text: r.revtext }
-                                                                            </v-chip>
-
-                                                                        </v-chip-group>
-
-
+                                                            <v-card-text>
+                                                                <div>
+                                                                    <div class="caption">{{
+                                                                            _('Probability')
+                                                                        }}
                                                                     </div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.actor_relations[index].probability"
+                                                                            column
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                        <v-chip small> Maybe</v-chip>
+                                                                        <v-chip small> Likely</v-chip>
+                                                                        <v-chip small> Certain</v-chip>
+                                                                    </v-chip-group>
 
-                                                                    <v-text-field class="mt-2"
-                                                                                  v-model="editedItem.actor_relations[index].comment"
-                                                                                  dense outlined
-                                                                                  label="{{ _('Comments') }}"
-                                                                    ></v-text-field>
-                                                                </v-card-text>
+                                                                    <div class="caption">{{ _('Related As') }}</div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.actor_relations[index].related_as"
+                                                                            column
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                        <v-chip v-for="r in actorConfig.atoaRelateAs"
+                                                                                small> ${
+                                                                            detectDirection(editedItem,
+                                                                            editedItem.actor_relations[index].actor)
+                                                                            ? r.text: r.revtext }
+                                                                        </v-chip>
 
-                                                            </v-card>
-                                                        </template>
-
-                                                        <template v-slot:actions>
-                                                            <v-btn
-                                                                    class="mx-auto"
-                                                                    @click="removeActor($event,index)"
-                                                                    x-small
-                                                                    fab
-                                                                    outlined
-                                                                    color="red lighten-3"
-                                                            >
-                                                                <v-icon>mdi-delete-sweep</v-icon>
-                                                            </v-btn
-                                                            >
-                                                        </template>
+                                                                    </v-chip-group>
 
 
-                                                    </actor-result>
+                                                                </div>
 
-                                                </v-flex>
-                                            </v-layout>
-                                        </v-card-text>
+                                                                <v-text-field class="mt-2"
+                                                                              v-model="editedItem.actor_relations[index].comment"
+                                                                              dense outlined
+                                                                              label="{{ _('Comments') }}"
+                                                                ></v-text-field>
+                                                            </v-card-text>
+
+                                                        </v-card>
+                                                    </template>
+
+                                                    <template v-slot:actions>
+                                                        <v-btn
+                                                                class="mx-auto"
+                                                                @click="removeActor($event,index)"
+                                                                x-small
+                                                                fab
+                                                                outlined
+                                                                color="red lighten-3"
+                                                        >
+                                                            <v-icon>mdi-delete-sweep</v-icon>
+                                                        </v-btn
+                                                        >
+                                                    </template>
+
+
+                                                </actor-result>
+
+                                            </v-flex>
+                                        </v-layout>
+                                    </v-card-text>
                                 </v-card>
 
 
@@ -685,13 +694,14 @@
                                                     :key="index"
                                             >
                                                 <!--  Related Bulletin  Card -->
-                                                <bulletin-result :bulletin="item.bulletin">
+                                                <bulletin-result :i18n="translations" :bulletin="item.bulletin">
                                                     <!--  attach relationship form -->
                                                     <template v-slot:header>
                                                         <v-card outlined color="lime lighten-5">
                                                             <v-card-title class="subtitle-2">
                                                                 <v-icon left>mdi-link</v-icon>
-                                                                {{ _('Relationship Information') }}</v-card-title>
+                                                                {{ _('Relationship Information') }}
+                                                            </v-card-title>
 
 
                                                             <v-card-text>
@@ -773,84 +783,425 @@
                                                 @click:append="searchRelatedIncidents"
                                                 append-icon="mdi-magnify"
                                         ></v-text-field>
+                                    </v-card-title>
 
 
-                                        <!--  Grid of Incidents Items -->
+                                    <!--  Grid of Incidents Items -->
 
 
-                                        <v-card-text>
-                                            <v-layout wrap>
-                                                <v-flex
-                                                        class="pa-1"
-                                                        md6
-                                                        v-for="(item,index) in editedItem.incident_relations"
-                                                        :key="index"
-                                                >
-                                                    <!--  Related Actor  Card -->
-                                                    <incident-result :incident="item.incident">
-                                                        <!--  attach relationship form -->
-                                                        <template v-slot:header>
-                                                            <v-card outlined color="lime lighten-5">
-                                                                <v-card-title class="subtitle-2">
-                                                                    <v-icon left>mdi-link</v-icon>
-                                                                    {{ _('Relationship Information') }}</v-card-title>
+                                    <v-card-text>
+                                        <v-layout wrap>
+                                            <v-flex
+                                                    class="pa-1"
+                                                    md6
+                                                    v-for="(item,index) in editedItem.incident_relations"
+                                                    :key="index"
+                                            >
+                                                <!--  Related Actor  Card -->
+                                                <incident-result :i18n="translations" :incident="item.incident">
+                                                    <!--  attach relationship form -->
+                                                    <template v-slot:header>
+                                                        <v-card outlined color="lime lighten-5">
+                                                            <v-card-title class="subtitle-2">
+                                                                <v-icon left>mdi-link</v-icon>
+                                                                {{ _('Relationship Information') }}
+                                                            </v-card-title>
 
 
-                                                                <v-card-text>
+                                                            <v-card-text>
 
-                                                                    <div class="caption">{{ _('Probability') }}</div>
-                                                                    <v-chip-group
-                                                                            v-model="editedItem.incident_relations[index].probability"
-                                                                            column
-                                                                            active-class="primary dark"
-                                                                    >
-                                                                        <v-chip small> Maybe</v-chip>
-                                                                        <v-chip small> Likely</v-chip>
-                                                                        <v-chip small> Certain</v-chip>
-                                                                    </v-chip-group>
-
-
-                                                                    <v-text-field class="mt-2"
-                                                                                  v-model="editedItem.incident_relations[index].comment"
-                                                                                  dense outlined
-                                                                                  label="{{ _('Comments') }}"
-                                                                    ></v-text-field>
-                                                                </v-card-text>
-
-                                                            </v-card>
-                                                        </template>
-
-                                                        <template v-slot:actions>
-                                                            <v-btn
-                                                                    class="mx-auto"
-                                                                    @click="removeIncident($event,index)"
-                                                                    x-small
-                                                                    fab
-                                                                    outlined
-                                                                    color="red lighten-3"
-                                                            >
-                                                                <v-icon>mdi-delete-sweep</v-icon>
-                                                            </v-btn
-                                                            >
-                                                        </template>
+                                                                <div class="caption">{{ _('Probability') }}</div>
+                                                                <v-chip-group
+                                                                        v-model="editedItem.incident_relations[index].probability"
+                                                                        column
+                                                                        active-class="primary dark"
+                                                                >
+                                                                    <v-chip small> Maybe</v-chip>
+                                                                    <v-chip small> Likely</v-chip>
+                                                                    <v-chip small> Certain</v-chip>
+                                                                </v-chip-group>
 
 
-                                                    </incident-result>
+                                                                <v-text-field class="mt-2"
+                                                                              v-model="editedItem.incident_relations[index].comment"
+                                                                              dense outlined
+                                                                              label="{{ _('Comments') }}"
+                                                                ></v-text-field>
+                                                            </v-card-text>
 
-                                                </v-flex>
-                                            </v-layout>
-                                        </v-card-text>
+                                                        </v-card>
+                                                    </template>
+
+                                                    <template v-slot:actions>
+                                                        <v-btn
+                                                                class="mx-auto"
+                                                                @click="removeIncident($event,index)"
+                                                                x-small
+                                                                fab
+                                                                outlined
+                                                                color="red lighten-3"
+                                                        >
+                                                            <v-icon>mdi-delete-sweep</v-icon>
+                                                        </v-btn
+                                                        >
+                                                    </template>
+
+
+                                                </incident-result>
+
+                                            </v-flex>
+                                        </v-layout>
+                                    </v-card-text>
                                 </v-card>
 
 
                                 <!-- End Relate Incident Base Card-->
 
 
-                                <!-- End Relate Media Base Card-->
-
-
                                 {% include 'admin/partials/media_dialog.html' %}
 
+                                {% if config.MISSING_PERSONS %}
+                                <v-card color="yellow lighten-5" class="my-6">
+                                    <v-card-title>
+                                        {{ _('Missing Person Profile') }}
+                                        <v-btn v-show="!editedItem.id" @click="profile=true" class="elevation-0 mx-3"
+                                               fab x-small color="primary">
+                                            <v-icon>mdi-plus</v-icon>
+                                        </v-btn>
+                                    </v-card-title>
+                                    <v-card-text v-show="editedItem.id || profile">
+                                        <v-container>
+                                            <v-row>
+                                                <v-col md="4">
+                                                    <v-text-field label="{{_('Last Address')}}"
+                                                                  v-model="editedItem.last_address"></v-text-field>
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <v-text-field label="{{_('Marriage History')}}"
+                                                                  v-model="editedItem.marriage_history"></v-text-field>
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <v-text-field type="number" label="{{_('Bio Children')}}"
+                                                                  v-model="editedItem.bio_children"></v-text-field>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="4">
+                                                    <v-switch label="{{_('Pregnant at Disappearance')}}"
+                                                              v-model="editedItem.pregnant_at_disappearance"></v-switch>
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <validation-provider name="Months Pregnant"
+                                                                         rules="max_value:9|min_value:1"
+                                                                         v-slot="{errors}">
+                                                        <v-text-field type="number"
+                                                                      min="1"
+                                                                      max="9"
+                                                                      label="{{_('Months Pregnant at time of disappearance')}}"
+                                                                      v-model="editedItem.months_pregnant"></v-text-field>
+                                                        <span class="red--text">${errors[0]}</span>
+                                                    </validation-provider>
+
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <v-switch label="{{ _('Missing Relatives') }}"
+                                                              v-model="editedItem.missing_relatives"></v-switch>
+                                                </v-col>
+
+                                            </v-row>
+
+                                            <v-row>
+
+
+                                                <v-col md="6">
+                                                    <v-card class="pa-3" color="yellow lighten-4">
+                                                        <v-card-title class="subtitle-2">
+                                                            {{ _('Details of the person who saw them last') }}
+                                                        </v-card-title>
+                                                        <v-card-text>
+                                                            <v-textarea rows="1" label="{{_('Name')}}"
+                                                                        v-model="editedItem.saw_name"></v-textarea>
+                                                            <v-textarea rows="1" label="{{_('Address')}}"
+                                                                        v-model="editedItem.saw_address"></v-textarea>
+                                                            <v-text-field label="{{_('Phone')}}"
+                                                                          v-model="editedItem.saw_phone"></v-text-field>
+
+
+                                                            <validation-provider name="Email" rules="email"
+                                                                                 v-slot="{errors}">
+                                                                <v-text-field label="{{_('Email')}}"
+                                                                              v-model="editedItem.saw_email"></v-text-field>
+
+                                                                <span class="red--text">${errors[0]}</span>
+                                                            </validation-provider>
+                                                        </v-card-text>
+                                                    </v-card>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <mix-i title="{{_('Seen in a detention center?')}}"
+                                                           :i18n="translations"
+                                                           v-model="editedItem.seen_in_detention"></mix-i>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <mix-i v-model="editedItem.injured"
+                                                           :i18n="translations"
+                                                           title="{{_('Injured around time of disappearance?')}}"
+                                                    ></mix-i>
+                                                </v-col>
+
+
+                                                <v-col md="6">
+                                                    <mix-i v-model="editedItem.known_dead"
+                                                           :i18n="translations"
+                                                           title="{{ _('Known to be dead?')}}"></mix-i>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Details about circumstances of death')}}"
+                                                                v-model="editedItem.death_details"></v-textarea>
+                                                </v-col>
+
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Personal Items (watch,ring,chains etc)')}}"
+                                                                v-model="editedItem.personal_items"></v-textarea>
+                                                </v-col>
+
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="2">
+                                                    <v-text-field type="number" v-model="editedItem.height"
+                                                                  label="{{_('Height')}}"
+                                                    ></v-text-field>
+
+                                                </v-col>
+                                                <v-col md="2">
+                                                    <v-text-field type="number" v-model="editedItem.weight"
+                                                                  label="{{_('Weight')}}"
+                                                    ></v-text-field>
+
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <v-select label="{{_('Physique')}}"
+                                                              v-model="editedItem.physique"
+                                                              :items="mp.physique"
+                                                    ></v-select>
+
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <v-select label="{{_('Hair loss')}}"
+                                                              v-model="editedItem.hair_loss"
+                                                              :items="mp.hairLoss"
+                                                    ></v-select>
+
+                                                </v-col>
+                                            </v-row>
+
+                                            <v-row>
+                                                <v-col md="3">
+                                                    <v-select label="{{_('Hair type')}}"
+                                                              v-model="editedItem.hair_type"
+                                                              :items="mp.hairType"
+                                                    ></v-select>
+                                                </v-col>
+                                                <v-col md="3">
+                                                    <v-select label="{{_('Hair length')}}"
+                                                              v-model="editedItem.hair_length"
+                                                              :items="mp.hairLength"
+                                                    ></v-select>
+                                                </v-col>
+                                                <v-col md="3">
+                                                    <v-select label="{{_('Hair color')}}"
+                                                              v-model="editedItem.hair_color"
+                                                              :items="mp.hairColor"
+                                                    ></v-select>
+                                                </v-col>
+                                                <v-col md="3">
+                                                    <v-select label="{{_('Facial hair')}}"
+                                                              v-model="editedItem.facial_hair"
+                                                              :items="mp.facialHair"
+                                                    ></v-select>
+                                                </v-col>
+
+                                            </v-row>
+
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                v-model="editedItem.posture"
+                                                                label="{{_('Notes on posture and walking style')}}"
+                                                    ></v-textarea>
+                                                    <v-select label="{{_('Handness')}}"
+                                                              :items="mp.handedness"
+                                                              v-model="editedItem.handedness"></v-select>
+                                                    <v-switch label="{{_('Glasses')}}"
+                                                              v-model="editedItem.glasses"></v-switch>
+                                                    <v-select label="{{_('Eye color')}}"
+                                                              :items="mp.eyeColor"
+                                                              v-model="editedItem.eye_color"></v-select>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <mix-ii title="{{_('Skin Markings')}}"
+                                                            :i18n="translations"
+                                                            :items="mp.skinMarkings"
+                                                            multiple
+                                                            v-model="editedItem.skin_markings"></mix-ii>
+                                                </v-col>
+
+                                            </v-row>
+
+
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Distinctive characteristics (congenital)')}}"
+                                                                v-model="editedItem.dist_char_con"></v-textarea>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Distinctive characteristics (acquired)')}}"
+                                                                v-model="editedItem.dist_char_acq"></v-textarea>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1" label="{{_('Physical habits')}}"
+                                                                v-model="editedItem.physical_habits"></v-textarea>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1" label="{{_('Other comments')}}"
+                                                                v-model="editedItem.other"></v-textarea>
+                                                </v-col>
+                                            </v-row>
+
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1" label="{{_('Physician’s name and contact')}}"
+                                                                v-model="editedItem.phys_name_contact"></v-textarea>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)')}}"
+                                                                v-model="editedItem.injuries"
+                                                    ></v-textarea>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age')}}"
+                                                                v-model="editedItem.implants"></v-textarea>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Congenital malformations (indicate type and whether there is more than one relative with the same pathology)')}}"
+                                                                v-model="editedItem.malforms"
+                                                    ></v-textarea>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1" label="{{_('Pain and/or ailments')}}"
+                                                                v-model="editedItem.pain"></v-textarea>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Other medical conditions (specify type and age of occurrence)')}}"
+                                                                v-model="editedItem.other_conditions"
+                                                    ></v-textarea>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Accidents (indicate age of occurrence)')}}"
+                                                                v-model="editedItem.accidents"></v-textarea>
+                                                </v-col>
+                                                <v-col md="6">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Prescription drugs taken (indicate at what age and reason)')}}"
+                                                                v-model="editedItem.pres_drugs"
+                                                    ></v-textarea>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col cols="2">
+                                                    <v-switch label="{{ _('Smoker') }}" v-model="editedItem.smoker"></v-switch>
+                                                </v-col>
+                                                <v-col cols="3">
+                                                    <v-switch label="{{_('Is there a Dental Record?')}}"
+                                                              v-model="editedItem.dental_record"></v-switch>
+                                                </v-col>
+                                                <v-col cols="3">
+                                                    <v-textarea rows="1" label="{{_('Dentist’s name and contact')}}"
+                                                                v-model="editedItem.dentist_info"></v-textarea>
+                                                </v-col>
+                                                <v-col cols="4">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)')}}"
+                                                                v-model="editedItem.teeth_features"></v-textarea>
+                                                </v-col>
+
+                                            </v-row>
+
+                                            <v-row>
+                                                <v-col md="3">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Dental problems (absences, infections, bleeding, etc...)')}}"
+                                                                v-model="editedItem.dental_problems"></v-textarea>
+                                                </v-col>
+                                                <v-col md="3">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Dental treatments (extractions, fillings, etc...) with dates')}}"
+                                                                v-model="editedItem.dental_treatments"></v-textarea>
+                                                </v-col>
+                                                <v-col md="3">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Dental habits (toothpicks, smoking, etc...)')}}"
+                                                                v-model="editedItem.dental_habits"></v-textarea>
+                                                </v-col>
+                                                <v-col md="3">
+                                                    <v-select label="{{ _('Case status')}}" v-model="editedItem.case_status"
+                                                              :items="mp.caseStatus"></v-select>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col>
+
+                                                    <mix-iii
+                                                            :i18n="translations"
+                                                            v-model="editedItem.reporters"></mix-iii>
+
+                                                </v-col>
+                                            </v-row>
+                                            <v-row>
+                                                <v-col md="4">
+                                                    <v-text-field
+                                                            label="{{_('Identified by (responsible institution)')}}"
+                                                            v-model="editedItem.identified_by"
+                                                    ></v-text-field>
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <v-switch label="{{_('Was the family notified?')}}"
+                                                              v-model="editedItem.family_notified"></v-switch>
+
+                                                </v-col>
+                                                <v-col md="4">
+                                                    <v-textarea rows="1"
+                                                                label="{{_('Location of reburial (full address)')}}"
+                                                                v-model="editedItem.reburial_location"></v-textarea>
+
+                                                </v-col>
+                                            </v-row>
+
+
+                                        </v-container>
+                                    </v-card-text>
+
+                                </v-card>
+                                {% endif %}
 
                             </v-col>
                         </v-row>
@@ -872,9 +1223,9 @@
                                         <span class="orange--text"> ${errors[0]}</span>
                                     </validation-provider>
 
-                                    <v-checkbox small class="mx-2" label="Not Available" v-model="source_alt" small>
+                                    <v-checkbox small class="mx-2" label="{{ _('Not Available')}}" v-model="source_alt" small>
                                     </v-checkbox>
-                                    <v-switch small class="mx-2" label="Private" v-model="editedItem.source_link_type"
+                                    <v-switch small class="mx-2" label="{{ _('Private') }}" v-model="editedItem.source_link_type"
                                               small>
 
                                     </v-switch>
@@ -884,14 +1235,14 @@
 
                             </v-col>
                             <v-col cols="12" md="3">
-                                <pop-date-time-field label="Publish Date"
+                                <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date')}}"
                                                      v-model="editedItem.publish_date"></pop-date-time-field>
 
                             </v-col>
 
                             <v-col cols="12" md="3">
 
-                                <pop-date-time-field label="Documentation Date"
+                                <pop-date-time-field time-label="{{ _('Time')  }}"  label="{{ _('Documentation Date')}}"
                                                      v-model="editedItem.documentation_date"></pop-date-time-field>
                             </v-col>
 
@@ -907,7 +1258,7 @@
                                 >
 
 
-                                    <v-textarea outlined v-model="editedItem.comments" label="Comments"></v-textarea>
+                                    <v-textarea outlined v-model="editedItem.comments" label="{{ _('Comments') }}"></v-textarea>
                                     <span class="orange--text"> ${errors[0]}</span>
                                 </validation-provider>
                             </v-col>
@@ -922,7 +1273,6 @@
                                 ></v-select>
                             </v-col>
                         </v-row>
-
 
                     </v-container>
                 </v-card-text>

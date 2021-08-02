@@ -6,7 +6,12 @@ Vue.component('pop-date-time-field', {
         },
         label: {
             type: String
-        }
+        },
+        timeLabel: {
+            type: String,
+            default: 'Time'
+        },
+
 
     },
      data: function () {
@@ -98,7 +103,7 @@ Vue.component('pop-date-time-field', {
     template: `
         <v-sheet >
             <pop-date-field :label="label" v-model="dt"></pop-date-field>
-            <v-text-field @input="emitInput" v-model="tm" type="time" label="Time"></v-text-field>
+            <v-text-field @input="emitInput" v-model="tm" type="time" :label="timeLabel"></v-text-field>
         </v-sheet>
     `
 })

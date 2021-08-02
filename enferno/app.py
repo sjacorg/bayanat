@@ -132,4 +132,5 @@ def register_commands(app):
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
+    app.cli.add_command(commands.i18n_cli)
 

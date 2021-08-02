@@ -1,10 +1,10 @@
 Vue.component("actor-result", {
-    props: ['actor', 'hidden','showHide'],
+    props: ['actor', 'hidden','showHide', 'i18n'],
 
     template: `
         <v-card outlined class="ma-2" v-if="!hidden">
             <v-card-title class="d-flex">
-                <v-chip label small color="gv darken-2" dark>ID: {{actor.id}} </v-chip>
+                <v-chip label small color="gv darken-2" dark>{{ i18n.id_ }} {{actor.id}} </v-chip>
                 <v-chip color="lime darken-3" class="white--text ml-1" label small># {{actor.originid}}</v-chip>
                 <v-spacer></v-spacer>
                 <v-chip v-if="actor.publish_date" small color="grey lighten-4">{{actor.publish_date}}</v-chip>
@@ -20,7 +20,7 @@ Vue.component("actor-result", {
                 <v-divider class="my-2"></v-divider>
 
 
-                <div class="caption mt-2">Sources</div>
+                <div class="caption mt-2">{{ i18n.sources_ }}</div>
                 <v-chip-group
                         column
                 >
@@ -32,7 +32,7 @@ Vue.component("actor-result", {
             </v-card-text>
             <v-card-actions>
                 <slot name="actions"></slot>
-                <v-btn v-if="showHide" @click="hidden=true" small depressed color="grey lighten-4">Hide</v-btn>
+                <v-btn v-if="showHide" @click="hidden=true" small depressed color="grey lighten-4"> {{ i18n.hide_ }}</v-btn>
                 <v-btn text small icon color="gv darken-1" @click.stop="$root.previewItem('/admin/api/actor/'+actor.id)"><v-icon>mdi-eye</v-icon></v-btn>
             </v-card-actions>
         </v-card>

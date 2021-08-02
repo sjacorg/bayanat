@@ -148,10 +148,10 @@
 
         <v-row>
           <v-col cols="12" md="5" class="text-center">
-           <pop-date-time-field label="{{_('From')}}" v-model="editedEvent.from_date"></pop-date-time-field>
+           <pop-date-time-field time-label="{{ _('Time') }}" label="{{_('From')}}" v-model="editedEvent.from_date"></pop-date-time-field>
           </v-col>
           <v-col cols="12" md="5">
-            <pop-date-time-field label="{{_('To')}}" v-model="editedEvent.to_date" ></pop-date-time-field>
+            <pop-date-time-field time-label="{{ _('Time') }}" label="{{_('To')}}" v-model="editedEvent.to_date" ></pop-date-time-field>
           </v-col>
           <v-col md="2">
             <v-switch

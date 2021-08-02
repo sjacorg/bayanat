@@ -97,7 +97,7 @@
                             </v-col>
                             <v-col cols="12" md="4">
                             <validation-provider name="Password" rules="" v-slot="{ errors }">
-                              <password v-model="editedItem.password"></password>
+                              <password placeholder="{{ _('Password') }}"  toggle v-model="editedItem.password"></password>
 
                             <span class="error"> ${errors[0]}</span>
 

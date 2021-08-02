@@ -12,12 +12,12 @@
 
                             <v-stepper v-model="step">
                                 <v-stepper-header>
-                                    <v-stepper-step step="1">Upload or Select</v-stepper-step>
+                                    <v-stepper-step step="1">{{ _('Upload or Select') }}</v-stepper-step>
                                     <v-divider></v-divider>
 
-                                    <v-stepper-step step="2">Add Data</v-stepper-step>
+                                    <v-stepper-step step="2">{{ _('Add Data') }}</v-stepper-step>
                                     <v-divider></v-divider>
-                                    <v-stepper-step step="3">Stats</v-stepper-step>
+                                    <v-stepper-step step="3">{{ _('Finish') }}</v-stepper-step>
                                 </v-stepper-header>
 
                                 <v-stepper-items>
@@ -82,21 +82,21 @@
                                                                    color="primary"
                                                             >
                                                                 <v-icon left>mdi-upload</v-icon>
-                                                                Upload files
+                                                                {{ _('Upload files') }}
                                                             </v-btn>
                                                         </template>
-                                                        <span>Manual web upload</span>
+                                                        <span>{{ _('Manual web upload') }}</span>
                                                     </v-tooltip>
                                                     <v-tooltip top>
                                                         <template v-slot:activator="{on}">
                                                             <v-btn :disabled="mode==1" @click="selectPath" small
                                                                    v-on="on" color="primary" class="hidden-sm-and-down">
                                                                 <v-icon left> mdi-folder-open</v-icon>
-                                                                Process path
+                                                                {{ _('Process path') }}
                                                             </v-btn>
                                                         </template>
                                                         <span>
-                                                        Process existing files at path,  server side (Faster)
+                                                        {{ _('Process existing files at path, server side(Faster)') }}
                                                     </span>
                                                     </v-tooltip>
 
@@ -108,7 +108,7 @@
                                                            :dark="selectedItems.length?true:false" color="green"
                                                            elevation="1">
                                                         <v-icon left color="white">mdi-play-circle</v-icon>
-                                                        Next >
+                                                        {{ _('Next') }}
                                                     </v-btn>
 
                                                      <v-btn x-small class="mx-2 hidden-md-and-up" @click="stepTwo"
@@ -137,7 +137,7 @@
                                             <v-btn small class="mx-2" @click="step=1"
 
                                                    elevation="1">
-                                                < Previous
+                                                < {{ _('Back') }}
                                             </v-btn>
                                             <v-spacer></v-spacer>
                                             <v-btn small class="mx-2" @click="processFiles"
@@ -145,13 +145,13 @@
                                                    color="success"
                                                    elevation="1">
                                                 <v-icon left color="white">mdi-play-circle</v-icon>
-                                                Process
+                                                {{ _('Process') }}
                                             </v-btn>
                                         </v-toolbar>
 
                                         <v-card class="pa-3" color="yellow lighten-4">
                                             <v-card-title>
-                                                Attach data to files
+                                                {{ _('Attach data to files')}}
                                             </v-card-title>
 
                                             <v-card-text>
@@ -164,7 +164,7 @@
                                                                 item-text="title"
                                                                 item-value="id"
                                                                 :multiple="true"
-                                                                label="Labels"
+                                                                label="{{ _('Labels') }}"
                                                                 v-model="labels"
                                                         ></search-field>
                                                     </v-col>
@@ -175,7 +175,7 @@
                                                                 item-text="title"
                                                                 item-value="id"
                                                                 :multiple="true"
-                                                                label="Verified Labels"
+                                                                label="{{ _('Verified Labels') }} "
                                                                 v-model="verLabels"
                                                         ></search-field>
                                                     </v-col>
@@ -186,7 +186,7 @@
                                                                 item-text="full_string"
                                                                 item-value="id"
                                                                 :multiple="true"
-                                                                label="Locations"
+                                                                label="{{ _('Locations') }}"
                                                                 v-model="locations"
                                                         ></search-field>
                                                     </v-col>
@@ -198,7 +198,7 @@
                                                                 item-text="title"
                                                                 item-value="id"
                                                                 :multiple="true"
-                                                                label="Sources"
+                                                                label="{{ _('Sources') }}"
                                                                 v-model="sources"
                                                         ></search-field>
 
@@ -208,7 +208,7 @@
                                                         <v-combobox
                                                                 small-chips
                                                                 multiple
-                                                                label="Refs"
+                                                                label="{{ _('Refs') }}"
                                                                 v-model="refs"
                                                                 hint="Type and enter free tags"
 
@@ -216,7 +216,7 @@
 
                                                     </v-col>
                                                     <v-col cols="12" md="4">
-                                                        <v-switch v-model="optimize" label="Optimize Videos"></v-switch>
+                                                        <v-switch v-model="optimize" label="{{ _('Optimize Videos')}}"></v-switch>
                                                     </v-col>
                                                 </v-row>
 
@@ -253,8 +253,8 @@
 
                                     <v-card-actions class="pb-3">
                                         <v-spacer></v-spacer>
-                                        <v-btn @click="selectDlg=false" class="mx-2" text>Cancel</v-btn>
-                                        <v-btn @click="processPath" class="mx-2" color="primary">Scan</v-btn>
+                                        <v-btn @click="selectDlg=false" class="mx-2" text>{{ _('Cancel') }}</v-btn>
+                                        <v-btn @click="processPath" class="mx-2" color="primary">{{ _('Scan') }}</v-btn>
                                         <v-spacer></v-spacer>
                                     </v-card-actions>
                                 </v-card>
@@ -356,7 +356,7 @@
                 },
 
                 headers: [
-                    {text: 'Name', value: 'file.name', sortable: false},
+                    {text: "{{_('Name')}}", value: 'file.name', sortable: false},
 
 
                 ],
@@ -521,7 +521,7 @@
 
                     axios.post('/admin/etl/process', data).then(res => {
                         this.showSnack(res.data);
-                        this.status = 'You may check the status of this ETL on the status page'
+                        this.status = "{{ _('Files added to queue and will be imported in turn.') }}"
 
                     }).catch(error => {
 

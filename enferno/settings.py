@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import os, redis
 
-os_env = os.environ
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class Config(object):
@@ -39,12 +40,15 @@ class Config(object):
     # Block security auth tokens
     SECURITY_TOKEN_MAX_AGE = 0
 
+    # Strong session protection
+    SESSION_PROTECTION = 'strong'
+
     # 2fa
     SECURITY_TOTP_SECRETS = {"1": os.environ.get('SECURITY_TOTP_SECRETS')}
     SECURITY_TOTP_ISSUER = 'Bayanat'
 
     # Reaphtcha
-    RECAPTCHA_ENABLED = False
+    RECAPTCHA_ENABLED = (os.environ.get('RECAPTCHA_ENABLED', 'False') == 'True')
     RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
     RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
@@ -72,10 +76,10 @@ class Config(object):
     )
 
     # File Upload Settings: switch to True to store files privately within the enferno/media directory
-    FILESYSTEM_LOCAL = True
+    FILESYSTEM_LOCAL = (os.environ.get('FILESYSTEM_LOCAL', 'False') == 'True')
 
     # Enable data import tool
-    ETL_TOOL = True
+    ETL_TOOL = (os.environ.get('ETL_TOOL', 'False') == 'True')
 
     # Valid video extension list (will be processed during ETL)
     ETL_VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
@@ -96,6 +100,24 @@ class Config(object):
     # pybabel update -i messages.pot -d enferno/translations
     # compile translation using the following
     # pybabel compile -d enferno/translations
+
+
+    # Missing persons
+    MISSING_PERSONS = (os.environ.get('MISSING_PERSONS', 'False') == 'True')
+
+    # Deduplication
+
+    # specify min and max distance for matching
+    DEDUP_LOW_DISTANCE = float(os.environ.get('DEDUP_LOW_DISTANCE', 0.3))
+    DEDUP_MAX_DISTANCE = float(os.environ.get('DEDUP_MAX_DISTANCE', 0.5))
+
+    # how many items to process every cycle (cycles are processed based on the time interval below)
+    DEDUP_BATCH_SIZE = int(os.environ.get('DEDUP_BATCH_SIZE',30))
+
+    # the time in seconds at which a batch of deduplication items is processed
+    DEDUP_INTERVAL = 3
+
+
 
 class ProdConfig(Config):
     """Production configuration."""

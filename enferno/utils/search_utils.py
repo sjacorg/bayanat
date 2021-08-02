@@ -242,12 +242,14 @@ class SearchUtils:
 
         # event date
         edate = q.get('edate', None)
-        edatewithin = q.get('edatewithin', '1d')
+        edatewithin = q.get('edatewithin', None)
         if edate:
             if edatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(edatewithin[:-1]))
                 edate = parse(edate)
                 query.append(Bulletin.events.any(Event.from_date.between(edate - diff, edate + diff)))
+            else:
+                query.append(Bulletin.events.any(Event.from_date==edate))
 
         elocation = q.get('elocation')
         if elocation:
@@ -261,39 +263,47 @@ class SearchUtils:
 
         # publish date
         pubdate = q.get('pubdate', None)
-        pubdatewithin = q.get('pubdatewithin', '1d')
+        pubdatewithin = q.get('pubdatewithin', None)
         if pubdate:
             if pubdatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(pubdatewithin[:-1]))
                 pubdate = parse(pubdate)
                 query.append(Bulletin.publish_date.between(pubdate - diff, pubdate + diff))
+            else:
+                query.append(Bulletin.publish_date == pubdate)
 
         # documentation date
         docdate = q.get('docdate', None)
-        docdatewithin = q.get('docdatewithin', '1d')
+        docdatewithin = q.get('docdatewithin', None)
         if docdate:
             if docdatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(docdatewithin[:-1]))
                 docdate = parse(docdate)
                 query.append(Bulletin.documentation_date.between(docdate - diff, docdate + diff))
+            else:
+                query.append(Bulletin.documentation_date == docdate)
 
         # creation date
         created = q.get('created', None)
-        created_within = q.get('createdwithin', '1d')
+        created_within = q.get('createdwithin', None)
         if created:
             if created_within in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(created_within[:-1]))
                 created = parse(created)
                 query.append(Bulletin.created_at.between(created - diff, created + diff))
+            else:
+                query.append(Bulletin.created_at == created)
 
         # modified date
         updated = q.get('updated', None)
-        updated_within = q.get('updatedwithin', '1d')
+        updated_within = q.get('updatedwithin', None)
         if updated:
             if updated_within in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(updated_within[:-1]))
                 updated = parse(updated)
                 query.append(Bulletin.updated_at.between(updated - diff, updated + diff))
+            else:
+                query.append(Bulletin.updated_at == updated)
                 
 
         # assigned user(s)
@@ -385,26 +395,39 @@ class SearchUtils:
 
         # event date
         edate = q.get('edate', None)
-        edatewithin = q.get('edatewithin', '1d')
+        edatewithin = q.get('edatewithin', None)
         if edate:
             if edatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(edatewithin[:-1]))
                 edate = parse(edate)
                 query.append(Actor.events.any(Event.from_date.between(edate - diff, edate + diff)))
-
-        locations = q.get('locations', [])
-        if len(locations):
-            ids = [item.get('id') for item in locations]
-            if q.get('oplocations'):
-                query.append(Actor.locations.any(Location.id.in_(ids)))
             else:
-                query.extend([Actor.locations.any(Location.id == id) for id in ids])
+                query.append(Actor.events.any(Event.from_date == edate))
 
-        # Excluded sources
-        exlocations = q.get('exlocations', [])
-        if len(exlocations):
-            ids = [item.get('id') for item in exlocations]
-            query.append(~Actor.locations.any(Location.id.in_(ids)))
+        res_locations = q.get('resLocations', [])
+        if res_locations:
+            ids = [item.get('id') for item in res_locations]
+            # query will always be or
+            query.append(Actor.residence_place_id.in_(ids))
+
+        origin_locations = q.get('originLocations', [])
+        if origin_locations:
+            ids = [item.get('id') for item in origin_locations]
+            # query will always be or
+            query.append(Actor.origin_place_id.in_(ids))
+
+
+        # Excluded residence locations
+        ex_res_locations = q.get('exResLocations', [])
+        if ex_res_locations:
+            ids = [item.get('id') for item in ex_res_locations]
+            query.append(~Actor.residence_place.has(Location.id.in_(ids)))
+            # Excluded residence locations
+
+        ex_origin_locations = q.get('exOriginLocations', [])
+        if ex_origin_locations:
+            ids = [item.get('id') for item in ex_origin_locations]
+            query.append(~Actor.origin_place.has(Location.id.in_(ids)))
 
         elocation = q.get('elocation')
         if elocation:
@@ -418,21 +441,25 @@ class SearchUtils:
 
         # publish date
         pubdate = q.get('pubdate', None)
-        pubdatewithin = q.get('pubdatewithin', '1d')
+        pubdatewithin = q.get('pubdatewithin', None)
         if pubdate:
             if pubdatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(pubdatewithin[:-1]))
                 pubdate = parse(pubdate)
                 query.append(Actor.publish_date.between(pubdate - diff, pubdate + diff))
+            else:
+                query.append(Actor.publish_date == pubdate)
 
         # documentation date
         docdate = q.get('docdate', None)
-        docdatewithin = q.get('docdatewithin', '1d')
+        docdatewithin = q.get('docdatewithin', None)
         if docdate:
             if docdatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(docdatewithin[:-1]))
                 docdate = parse(docdate)
                 query.append(Actor.documentation_date.between(docdate - diff, docdate + diff))
+            else:
+                query.append(Actor.documentation_date == docdate)
 
         # assigned user(s)
         assigned = q.get('assigned', [])
@@ -514,6 +541,11 @@ class SearchUtils:
         birth_place = q.get('birth_place', {})
         if birth_place:
             query.append(Actor.birth_place_id == birth_place.get('id'))
+
+        # date of birth
+        birth_date = q.get('birth_date')
+        if birth_date:
+            query.append(Actor.birth_date == birth_date)
 
         # National ID card
         national_id_card = q.get('national_id_card', {})
