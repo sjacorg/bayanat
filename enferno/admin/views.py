@@ -103,6 +103,7 @@ def dashboard():
 
 # Labels routes
 @admin.route('/labels/')
+@roles_accepted('Admin', 'Mod')
 def labels():
     """
     Endpoint to render the labels backend page.
@@ -112,7 +113,6 @@ def labels():
 
 
 @admin.route('/api/labels/')
-@roles_accepted('Admin', 'Mod')
 def api_labels():
     """
     API endpoint feed and filter labels with paging
@@ -207,7 +207,7 @@ def api_label_update(id):
 
 
 @admin.route('/api/label/<int:id>', methods=['DELETE'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_label_delete(id):
     """
     Endpoint to delete a label.
@@ -223,7 +223,7 @@ def api_label_delete(id):
 
 
 @admin.route('/api/label/import/', methods=['POST'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_label_import():
     """
     Endpoint to import labels via CSV
@@ -238,6 +238,7 @@ def api_label_import():
 
 # EventType routes
 @admin.route('/eventtypes/')
+@roles_accepted('Admin', 'Mod')
 def eventtypes():
     """
     Endpoint to render event types backend
@@ -312,7 +313,7 @@ def api_eventtype_update(id):
 
 
 @admin.route('/api/eventtype/<int:id>', methods=['DELETE'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_eventtype_delete(id):
     """
     Endpoint to delete an event type
@@ -328,7 +329,7 @@ def api_eventtype_delete(id):
 
 
 @admin.route('/api/eventtype/import/', methods=['POST'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_eventtype_import():
     """
     Endpoint to bulk import event types from a CSV file
@@ -399,7 +400,7 @@ def api_potentialviolation_update(id):
 
 
 @admin.route('/api/potentialviolation/<int:id>', methods=['DELETE'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_potentialviolation_delete(id):
     """
     Endpoint to delete a potential violation
@@ -415,7 +416,7 @@ def api_potentialviolation_delete(id):
 
 
 @admin.route('/api/potentialviolation/import/', methods=['POST'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_potentialviolation_import():
     """
     Endpoint to import potential violations from csv file
@@ -486,7 +487,7 @@ def api_claimedviolation_update(id):
 
 
 @admin.route('/api/claimedviolation/<int:id>', methods=['DELETE'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_claimedviolation_delete(id):
     """
     Endpoint to delete a claimed violation
@@ -500,7 +501,7 @@ def api_claimedviolation_delete(id):
 
 
 @admin.route('/api/claimedviolation/import/', methods=['POST'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_claimedviolation_import():
     """
     Endpoint to import claimed violations from a CSV file
@@ -515,6 +516,7 @@ def api_claimedviolation_import():
 
 # Sources routes
 @admin.route('/sources/')
+@roles_accepted('Admin', 'Mod')
 def sources():
     """
     Endpoint to render sources backend page
@@ -601,7 +603,7 @@ def api_source_update(id):
 
 
 @admin.route('/api/source/<int:id>', methods=['DELETE'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_source_delete(id):
     """
     Endopint to delete a source item
@@ -615,7 +617,7 @@ def api_source_delete(id):
 
 
 @admin.route('/api/source/import/', methods=['POST'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_source_import():
     """
     Endpoint to import sources from CSV data
@@ -638,7 +640,6 @@ def locations():
 
 
 @admin.route('/api/locations/')
-@roles_accepted('Admin', 'Mod')
 def api_locations():
     """Returns locations in JSON format, allows search and paging."""
     query = []
@@ -704,7 +705,7 @@ def api_location_update(id):
 
 
 @admin.route('/api/location/<int:id>', methods=['DELETE'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_location_delete(id):
     """Endpoint for deleting locations. """
 
@@ -715,7 +716,7 @@ def api_location_delete(id):
 
 
 @admin.route('/api/location/import/', methods=['POST'])
-@roles_accepted('Admin', 'Mod')
+@roles_required('Admin')
 def api_location_import():
     """Endpoint for importing locations."""
     if 'csv' in request.files:
@@ -937,7 +938,7 @@ def api_bulletin_get(id):
 
 
 @admin.route('/api/bulletin/import/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_required('Admin')
 def api_bulletin_import():
     """
     Endpoint to import bulletins from csv data
@@ -1757,7 +1758,7 @@ def api_incident_get(id):
 
 
 @admin.route('/api/incident/import/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_required('Admin')
 def api_incident_import():
     """
     Endpoint to handle incident imports.
