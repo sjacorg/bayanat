@@ -50,7 +50,8 @@ Vue.component('event-card',{
       </span>
       </div>
     </v-card-text>
-    
+
+    <slot name="actions"></slot>   
      
     
   </v-card>
