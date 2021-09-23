@@ -194,7 +194,7 @@
                                                         :key="index"
                                                 >
                                                     <!--  Related Actor  Card -->
-                                                    <actor-result :actor="item.actor">
+                                                    <actor-result :i18n="translations" :actor="item.actor">
                                                         <!--  attach relationship form -->
                                                         <template v-slot:header>
                                                             <v-card outlined color="lime lighten-5">
@@ -294,7 +294,7 @@
                                                         :key="index"
                                                 >
                                                     <!--  Related Bulletin  Card -->
-                                                    <bulletin-result :bulletin="item.bulletin">
+                                                    <bulletin-result :i18n="translations" :bulletin="item.bulletin" :show-hide="false">
                                                         <!--  attach relationship form -->
                                                         <template v-slot:header>
                                                             <v-card outlined color="lime lighten-5">
@@ -396,7 +396,7 @@
                                                         :key="index"
                                                 >
                                                     <!--  Related inciddnt  Card -->
-                                                    <incident-result :incident="item.incident">
+                                                    <incident-result :i18n="translations" :incident="item.incident">
                                                         <!--  attach relationship form -->
                                                         <template v-slot:header>
                                                             <v-card outlined color="lime lighten-5">

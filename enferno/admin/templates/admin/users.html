@@ -63,7 +63,7 @@
                     <template v-slot:no-data> </template>
                   </v-data-table>
                   <v-dialog v-model="dialog" max-width="1000px">
-                  <validation-observer v-slot="{ invalid} " >
+                  <validation-observer mode="eager" ref="form" v-slot="{ invalid} " >
                     <v-card>
                       <v-card-title primary-title>
                         ${formTitle}
@@ -83,29 +83,38 @@
                             </v-col>
                             <v-col cols="12" md="4">
                             
-                            <validation-provider name="Email" rules="required" v-slot="{ errors }">
+                            <validation-provider name="Email" rules="email"  v-slot="{ errors }">
 
                               <v-text-field
                                 autocomplete="chrome-off"
                                 label="{{_('Email')}}"
-                                :disabled="editEmailDisabled"
+
                                 v-model="editedItem.email"
                               ></v-text-field>
-                              <span class="error"> ${errors[0]}</span>
+                              <span class="orange--text"> ${errors[0]}</span>
 
                             </validation-provider>
                             </v-col>
                             <v-col cols="12" md="4">
-                            <validation-provider name="Password" rules="" v-slot="{ errors }">
+                            <validation-provider name="Password" :rules="editedItem.id? '':'required'" v-slot="{ errors }">
                               <password placeholder="{{ _('Password') }}"  toggle v-model="editedItem.password"></password>
 
-                            <span class="error"> ${errors[0]}</span>
+                            <span class="orange--text"> ${errors[0]}</span>
 
                               </validation-provider>
                             </v-col>
                           </v-row>
                           <v-row>
-                            <v-col cols="12" md="6">
+                              <v-col>
+
+                                  <validation-provider vid="username" name="Username" rules="required" v-slot="{errors}">
+
+                                  <v-text-field @blur="checkUsername" @input="checkUsername" label="Username" :disabled="editUserDisabled" v-model="editedItem.username"></v-text-field>
+                                      <span class="orange--text">${errors[0]}</span>
+                                      </validation-provider>
+
+                              </v-col>
+                            <v-col cols="4" md="4">
                               <v-select
                                 :items="roles"
                                 item-text="name"
@@ -117,7 +126,7 @@
                               ></v-select>
                                    
                             </v-col>
-                          <v-col cols="12" md="6">
+                          <v-col cols="12" md="4">
                               <v-switch label="{{_('Active')}}"
                                         v-model="editedItem.active"></v-switch>
                           </v-col>
@@ -194,6 +203,7 @@ Vue.component('password', Password);
 
       headers: [
         { text: "{{_('ID')}}", value: "id" },
+        { text: "{{_('Username')}}", value: "username" },
         { text: "{{_('Email')}}", value: "email" },
         { text: "{{_('Name')}}", value: "name" },
         { text: "{{_('Google ID')}}", value: "google_id" },
@@ -238,6 +248,26 @@ Vue.component('password', Password);
     },
 
     methods: {
+       
+        checkUsername:
+          debounce( function(evt){
+              axios.post('/admin/api/checkuser/',{item: this.editedItem.username}).then(
+                  res => {
+
+                  }
+              ).catch(
+                  err=> {
+                      this.$refs.form.setErrors({username: [err.response.data]});
+                  }
+              ).finally(
+                  ()=>{
+
+                  }
+              )
+
+          }, 350)
+
+        ,
 
       getRoles() {
         
@@ -260,9 +290,10 @@ Vue.component('password', Password);
       },
 
     createItem(){
-        this.editEmailDisabled = false;
+
         this.editedItem = Object.assign({},this.defaultItem);
         this.dialog = true;
+        this.editUserDisabled = false;
     },
 
       editItem(item) {
@@ -270,7 +301,7 @@ Vue.component('password', Password);
         this.editedItem = Object.assign({}, item);
         
         this.editedItem.password = '';
-        this.editEmailDisabled = true;
+        this.editUserDisabled = true;
         this.dialog = true;
       },
 
@@ -297,6 +328,7 @@ Vue.component('password', Password);
       },
 
       save() {
+            // edit mode
         if (this.editedIndex > -1) {
           Object.assign(this.items[this.editedIndex], this.editedItem);
           axios
@@ -304,25 +336,33 @@ Vue.component('password', Password);
               item: this.editedItem
             })
             .then(response => {
+                this.refresh()
               this.snackMessage = response.data;
               this.snackbar = true;
-              this.refresh(this.options);
-            });
+
+            }).catch(err=>{
+                console.log(err.response.data)
+          }).finally(
+                ()=>{
+                    this.dialog = false;
+
+                });
+
         } else {
-          this.items.push(this.editedItem);
+            // create mode
 
           axios
             .post("/admin/api/user/", { item: this.editedItem })
             .then(response => {
               this.snackMessage = response.data;
               this.snackbar = true;
-              this.refresh(this.options);
+              this.refresh();
             }).catch(err => {
               this.snackMessage = err.response.data;
               this.snackbar = true;
 
           }).then(()=>{
-            this.close();
+            this.dialog = false;
           });
         }
 

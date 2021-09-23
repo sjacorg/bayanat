@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
 import os, redis
-
+from datetime import timedelta
 from dotenv import load_dotenv
 load_dotenv()
 
+os_env = os.environ
+import bleach
 
 class Config(object):
+
+    def uia_username_mapper(identity):
+        # we allow pretty much anything - but we bleach it.
+
+        return bleach.clean(identity, strip=True)
+
+
+
     SECRET_KEY = os.environ.get('SECRET_KEY')
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
@@ -33,12 +43,19 @@ class Config(object):
     SECURITY_POST_LOGIN_VIEW = '/dashboard/'
     SECURITY_POST_CONFIRM_VIEW = '/dashboard/'
 
+    SECURITY_USER_IDENTITY_ATTRIBUTES = [{"username": {"mapper": uia_username_mapper, "case_insensitive": True}}]
+
+    #disabel token apis
+    SECURITY_API_ENABLED_METHODS = ['session']
+
     SECURITY_TWO_FACTOR_ENABLED_METHODS= ['authenticator']  # 'sms' also valid but requires an sms provider
     SECURITY_TWO_FACTOR = os.environ.get('SECURITY_TWO_FACTOR')
     SECURITY_TWO_FACTOR_RESCUE_MAIL = os.environ.get('SECURITY_TWO_FACTOR_RESCUE_MAIL')
 
-    # Block security auth tokens
-    SECURITY_TOKEN_MAX_AGE = 0
+    # Enable only session auth
+    SECURITY_API_ENABLED_METHODS = ['session']
+    SECURITY_FRESHNESS = timedelta(hours=6)
+    SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=30)
 
     # Strong session protection
     SESSION_PROTECTION = 'strong'
@@ -81,6 +98,9 @@ class Config(object):
     # Enable data import tool
     ETL_TOOL = (os.environ.get('ETL_TOOL', 'False') == 'True')
 
+    # Enable data deduplication tool
+    DEDUP_TOOL = (os.environ.get('DEDUP_TOOL', 'False') == 'True')
+
     # Valid video extension list (will be processed during ETL)
     ETL_VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
 
@@ -101,6 +121,7 @@ class Config(object):
     # compile translation using the following
     # pybabel compile -d enferno/translations
 
+    MAPS_API_ENDPOINT = os.environ.get('MAPS_API_ENDPOINT', 'https://{s}.tile.osm.org/{z}/{x}/{y}.png')
 
     # Missing persons
     MISSING_PERSONS = (os.environ.get('MISSING_PERSONS', 'False') == 'True')

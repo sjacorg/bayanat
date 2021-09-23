@@ -2,7 +2,7 @@
     <v-dialog persistent v-model="dialog" fullscreen>
 
 
-        <v-card v-if="dialog" class="overflow-hidden">
+        <v-card v-if="dialog"  class="overflow-hidden card-edit">
 
             <v-app-bar
                     absolute
@@ -140,20 +140,6 @@
                         </v-row>
 
                         <v-row>
-                            <v-col cols="12" md="12">
-
-                                <search-field
-                                        v-model="editedItem.locations"
-                                        api="/admin/api/locations/"
-                                        item-text="full_string"
-                                        item-value="id"
-                                        :multiple="true"
-                                        label="{{_('Locations')}}"
-                                ></search-field>
-
-                            </v-col>
-                        </v-row>
-                        <v-row>
 
                             <v-col cols="12" md="12">
                                 <search-field
@@ -184,9 +170,50 @@
                             </v-col>
                         </v-row>
 
+                        <v-row>
+                            <v-col cols="12" md="12">
+
+                                <search-field
+                                        v-model="editedItem.locations"
+                                        api="/admin/api/locations/"
+                                        item-text="full_string"
+                                        item-value="id"
+                                        :multiple="true"
+                                        label="{{_('Locations')}}"
+                                ></search-field>
+
+                            </v-col>
+                        </v-row>
+
 
                         <v-row>
                             <v-col col="12">
+
+
+                            </v-col>
+                        </v-row>
+
+                        <v-row>
+                            <v-col cols="12">
+                                <global-map ref="globalmap" :value="compLocations"></global-map>
+
+                            </v-col>
+                        </v-row>
+
+                        <!-- events  -->
+
+                        <v-row>
+                            <v-col col="12">
+
+                                {% include 'admin/partials/event_dialog.html' %}
+
+
+                            </v-col>
+                        </v-row>
+
+                        <v-row>
+                            <v-col col="12">
+                            <geo-locations v-model="editedItem.geoLocations"></geo-locations>
 
 
                             </v-col>
@@ -508,18 +535,6 @@
 
 
                                 {% include 'admin/partials/media_dialog.html' %}
-
-
-                            </v-col>
-                        </v-row>
-
-
-                        <!-- events  -->
-
-                        <v-row>
-                            <v-col col="12">
-
-                                {% include 'admin/partials/event_dialog.html' %}
 
 
                             </v-col>

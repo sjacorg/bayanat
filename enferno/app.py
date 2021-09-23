@@ -7,7 +7,7 @@ from flask_security import Security, SQLAlchemyUserDatastore
 
 import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
-    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings
+    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation
 from enferno.admin.views import admin
 from enferno.extensions import cache, db, mail, debug_toolbar, migrate, session, bouncer, babel
 from enferno.public.views import bp_public
@@ -70,11 +70,13 @@ def register_blueprints(app):
     app.register_blueprint(bp_user)
     app.register_blueprint(admin)
 
-    try:
-        from enferno.deduplication.views import deduplication
-        app.register_blueprint(deduplication)
-    except Exception as e:
-        pass
+    if app.config.get('DEDUP_TOOL'):
+
+        try:
+            from enferno.deduplication.views import deduplication
+            app.register_blueprint(deduplication)
+        except ImportError as e:
+            pass
 
 
     return None
@@ -104,6 +106,7 @@ def register_shellcontext(app):
             'Bulletin': Bulletin,
             'BulletinHistory': BulletinHistory,
             'Location': Location,
+            'GeoLocation': GeoLocation,
             'Source': Source,
             'Eventtype': Eventtype,
             'Event': Event,

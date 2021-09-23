@@ -122,6 +122,10 @@ Vue.component("actor-card", {
           # {{ actor.originid }}</v-chip>
         <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',actor)" x-small outlined>{{ i18n.edit_ }}</v-btn>
       </v-card-text>
+      
+      <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="actor.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
+          {{ i18n.assignedUser_ }} {{actor.assigned_to['name']}}</v-chip>
+        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{actor.status}}</v-chip>
 
 
       <v-card-text>
@@ -349,7 +353,7 @@ Vue.component("actor-card", {
             <v-sheet color="grey lighten-4" dense flat class="my-1 pa-2 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
                                                                               color="gv lighten-3">{{ revision.data.status }}</v-chip> - {{ revision.created_at }}
-                - By {{ revision.user.email }}</span>
+                - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
               <v-btn v-if="diff" v-show="index!=revisions.length-1" @click="showDiff($event,index)" class="mx-1"

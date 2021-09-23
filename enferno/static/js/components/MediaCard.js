@@ -15,7 +15,6 @@ Vue.component("media-card", {
     methods: {
         init() {
             axios.get(`/admin/api/media/${this.media.filename}`).then(response => {
-                console.log('media path set', response.data)
                 this.s3url = response.data;
                 this.media.s3url = response.data;
 

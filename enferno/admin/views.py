@@ -4,6 +4,7 @@ from pathlib import Path
 
 import boto3
 import shortuuid
+from uuid import uuid4
 from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
 from flask.templating import render_template
 from flask_bouncer import requires
@@ -51,7 +52,7 @@ def before_request():
     :return: None
     """
     g.user = current_user
-    g.version = '0'
+    g.version = '3'
 
 
 @admin.app_context_processor
@@ -1423,22 +1424,40 @@ def api_user_create():
     Endpoint to create a user item
     :return: success / error baesd on operation's outcome
     """
-    if request.method == 'POST':
-        # validate existing
-        u = request.json['item']
-        email = u.get('email', None)
-        exists = User.query.filter(User.email == email).first()
-        if exists:
-            return 'Error, Email Already Exists', 417
-        user = User()
-        user.from_json(u)
-        user.save()
+    # validate existing
+    u = request.json.get('item')
+    username = u.get('username')
 
+    exists = User.query.filter(User.username == username).first()
+    if exists:
+        return 'Error, username already exists', 417
+    user = User()
+    user.fs_uniquifier = uuid4().hex
+    user.from_json(u)
+    result = user.save()
+    if result:
         # Record activity
         Activity.create(current_user, Activity.ACTION_CREATE, user.to_mini(), 'user')
-        return 'Success.', 200
+        return 'User {} has been created successfully'.format(username), 200
     else:
-        return 'rejected', 417
+        return 'Error creating user', 417
+
+
+@admin.route('/api/checkuser/', methods=['POST'])
+@roles_required('Admin')
+def api_user_check():
+    data = request.json.get('item')
+    if not data:
+        return 'Please select a username', 417
+    u = User.query.filter(User.username == data).first()
+    if u:
+        return 'Username already exists', 417
+    else:
+        return 'Username ok', 200
+
+
+
+
 
 
 @admin.route('/api/user/<int:uid>', methods=['PUT'])
@@ -1461,6 +1480,11 @@ def api_user_update(uid):
             user.view_full_history = request.json['item']['view_full_history']
 
             user.name = request.json['item']['name']
+            email = request.json.get('item').get('email')
+            if email:
+                user.email = email
+            else:
+                user.email = None
             user.save()
 
             # Record activity

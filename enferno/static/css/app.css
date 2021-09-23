@@ -118,6 +118,11 @@ button.swh {
     /* cursor: grabbing; */
 }
 
+/* resolve map overlap conflict */
+.v-dialog.v-dialog--active  .card-header {
+    z-index: 1200;
+}
+
 /* media images */
 .media-img,
 .media-vid {
@@ -322,4 +327,14 @@ input[type="date"]::-webkit-input-placeholder {
 
 .search-card {
     margin-bottom: 140px;
+}
+
+
+.circle-marker {
+    opacity: 0.8;
+}
+
+.leaflet-popup-content .chipwrap {
+    white-space: normal;
+    height: auto;
 }

@@ -226,7 +226,7 @@
     data: () => ({
 
          // i18n
-        {% include 'admin/i18n.jinja2' %}
+        translations: translations,
 
         //global preview dialog
         preview : false,
@@ -250,6 +250,7 @@
       dialog: dialog,
       eventDialog: false,
       reviewDialog: false,
+        eventParams : '?typ=for_bulletin',
       reviewKey : 0,
       videoDialog: false,
       playerOptions: {},
@@ -996,14 +997,19 @@ toggleAdvSearch() {
 
       relateBulletin(bulletin) {
         // get list of existing attached incidents
+
+
         let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
 
+
+
         if (!ex.includes(bulletin.id)) {
-          relation = {
+
+          const relation = {
             bulletin: bulletin
           };
           this.editedItem.bulletin_relations.push(relation);
-          this.relateBulletinResults.removeById(bulletin.id);
+
         }
       },
 

@@ -228,8 +228,7 @@
 
     data: () => ({
 
-  {% include 'admin/i18n.jinja2' %}
-
+    translations: translations,
    // missing person toggle
     profile : false,
 
@@ -270,6 +269,7 @@
 
 
       eventDialog: false,
+      eventParams: '&typ=for_actor',
       reviewDialog: false,
       reviewKey : 0,
       videoDialog: false,

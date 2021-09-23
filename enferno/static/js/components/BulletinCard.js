@@ -12,6 +12,8 @@ Vue.component("bulletin-card", {
                 this.diff = true;
             }
 
+            this.mapLocations = this.$root.aggregateLocations(this.bulletin);
+
         },
     },
 
@@ -19,6 +21,8 @@ Vue.component("bulletin-card", {
 
 
         this.removeVideo();
+        //this.mapLocations = this.$root.aggregateLocations(this.bulletin)
+
     },
 
 
@@ -56,7 +60,7 @@ Vue.component("bulletin-card", {
                 .then((response) => {
                     this.revisions = response.data.items;
                 }).catch(error => {
-                console.log(error.body.data)
+                console.log(error.response.data)
             }).finally(() => {
                 this.hloading = false;
             });
@@ -132,6 +136,7 @@ Vue.component("bulletin-card", {
             revisions: null,
             show: false,
             hloading: false,
+            mapLocations: [],
             iplayer: false,
         };
     },
@@ -156,7 +161,7 @@ Vue.component("bulletin-card", {
       
         <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="bulletin.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{bulletin.assigned_to['name']}}</v-chip>
-        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status"  label="Assigned to"> <v-icon left>mdi-delta</v-icon> {{bulletin.status}}</v-chip>
+        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status" > <v-icon left>mdi-delta</v-icon> {{bulletin.status}}</v-chip>
         
       
 
@@ -174,7 +179,10 @@ Vue.component("bulletin-card", {
         <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
         <div class="rich-description" v-html="bulletin.description"></div>
       </v-card>
-
+    
+      <v-card outlined class="ma-2 pa-2" color="grey lighten-5">
+        <global-map :value="mapLocations" ></global-map>
+      </v-card>
 
       <!-- Sources -->
       <v-card outlined class="ma-3" color="grey lighten-5" v-if="bulletin.sources && bulletin.sources.length">
@@ -191,7 +199,7 @@ Vue.component("bulletin-card", {
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.events && bulletin.events.length">
         <v-card-text class="pa-2">
           <div class="px-1 title black--text">{{ i18n.events_ }}</div>
-          <event-card v-for="event in bulletin.events" :key="event.id" :event="event"></event-card>
+          <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id" :event="event"></event-card>
         </v-card-text>
       </v-card>
 
@@ -224,7 +232,7 @@ Vue.component("bulletin-card", {
 
       <v-card outlined class="ma-3" v-if="bulletin.medias && bulletin.medias.length">
         <v-card v-if="iplayer" elevation="0" id="iplayer" class="px-2 my-3">
-          <video id="player" controls class="video-js vjs-default-skin vjs-big-play-centered" crossorigin="anonymous"
+          <video :id="'player'+_uid" controls class="video-js vjs-default-skin vjs-big-play-centered" crossorigin="anonymous"
                  height="360" preload="auto"></video>
 
         </v-card>
@@ -355,7 +363,7 @@ Vue.component("bulletin-card", {
             <v-sheet color="grey lighten-4" dense flat class="my-1 pa-3 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
                                                                               color="gv lighten-3">{{ revision.data.status }}</v-chip> - {{ revision.created_at }}
-                - By {{ revision.user.email }}</span>
+                - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
               <v-btn v-if="diff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"

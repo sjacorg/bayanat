@@ -41,6 +41,7 @@
               @thumb-click="viewImage"
               @video-click="viewPlayer"
               :media="item"
+            :key="index+editedItem.medias.length"
             >
               <template v-slot:actions>
               <v-spacer></v-spacer>

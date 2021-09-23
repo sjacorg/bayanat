@@ -22,7 +22,7 @@
                                     </v-card-title>
                                     <v-card-text>
                                         <p>
-                                            {{ g.user.email }}
+                                            {{ g.user.username }}
                                         </p>
                                         {% if g.user.last_login_at %}
                                         <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>

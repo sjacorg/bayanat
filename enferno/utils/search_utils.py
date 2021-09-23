@@ -223,15 +223,16 @@ class SearchUtils:
         locations = q.get('locations', [])
         if len(locations):
             ids = [item.get('id') for item in locations]
-            all_ids = []
-            for id in ids:
-                all_ids += Location.query.get(id).find_children()
+            children = Location.find_by_ids(ids)
+            all_ids =  [l.get('id')for l in children]
+
             if q.get('oplocations'):
                 query.append(Bulletin.locations.any(Location.id.in_(all_ids)))
             else:
                 for id in ids:
-                    location = Location.query.get(id)
-                    query.append(Bulletin.locations.any(Location.id.in_(location.find_children())))
+                    children = Location.find_by_ids([id])
+                    all_ids = [l.get("id") for l in children]
+                    query.append(Bulletin.locations.any(Location.id.in_(all_ids)))
 
                     
         # Excluded sources
@@ -246,10 +247,10 @@ class SearchUtils:
         if edate:
             if edatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(edatewithin[:-1]))
-                edate = parse(edate)
-                query.append(Bulletin.events.any(Event.from_date.between(edate - diff, edate + diff)))
+                edate = parse(edate).date()
+                query.append(Bulletin.events.any((func.date(Event.from_date) >= edate - diff) & (func.date(Event.from_date) <= edate + diff)))
             else:
-                query.append(Bulletin.events.any(Event.from_date==edate))
+                query.append(Bulletin.events.any(func.date(Event.from_date) == edate))
 
         elocation = q.get('elocation')
         if elocation:
@@ -267,10 +268,10 @@ class SearchUtils:
         if pubdate:
             if pubdatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(pubdatewithin[:-1]))
-                pubdate = parse(pubdate)
-                query.append(Bulletin.publish_date.between(pubdate - diff, pubdate + diff))
+                pubdate = parse(pubdate).date()
+                query.append((func.date(Bulletin.publish_date) >= pubdate - diff) & (func.date(Bulletin.publish_date) <= pubdate + diff))
             else:
-                query.append(Bulletin.publish_date == pubdate)
+                query.append(func.date(Bulletin.publish_date) == pubdate)
 
         # documentation date
         docdate = q.get('docdate', None)
@@ -278,10 +279,10 @@ class SearchUtils:
         if docdate:
             if docdatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(docdatewithin[:-1]))
-                docdate = parse(docdate)
-                query.append(Bulletin.documentation_date.between(docdate - diff, docdate + diff))
+                docdate = parse(docdate).date()
+                query.append((func.date(Bulletin.documentation_date) >= docdate - diff) & (func.date(Bulletin.documentation_date) <= docdate + diff))
             else:
-                query.append(Bulletin.documentation_date == docdate)
+                query.append(func.date(Bulletin.documentation_date) == docdate)
 
         # creation date
         created = q.get('created', None)
@@ -289,10 +290,10 @@ class SearchUtils:
         if created:
             if created_within in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(created_within[:-1]))
-                created = parse(created)
-                query.append(Bulletin.created_at.between(created - diff, created + diff))
+                created = parse(created).date()
+                query.append((func.date(Bulletin.created_at) >= created - diff) & (func.date(Bulletin.created_at) <= created + diff))
             else:
-                query.append(Bulletin.created_at == created)
+                query.append(func.date(Bulletin.created_at) == created)
 
         # modified date
         updated = q.get('updated', None)
@@ -300,10 +301,10 @@ class SearchUtils:
         if updated:
             if updated_within in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(updated_within[:-1]))
-                updated = parse(updated)
-                query.append(Bulletin.updated_at.between(updated - diff, updated + diff))
+                updated = parse(updated).date()
+                query.append((func.date(Bulletin.updated_at) >= updated - diff) & (func.date(Bulletin.updated_at) <= updated + diff))
             else:
-                query.append(Bulletin.updated_at == updated)
+                query.append(func.date(Bulletin.updated_at) == updated)
                 
 
         # assigned user(s)
@@ -399,22 +400,29 @@ class SearchUtils:
         if edate:
             if edatewithin in self.ACCEPTED_DATE_RANGES:
                 diff = timedelta(days=int(edatewithin[:-1]))
-                edate = parse(edate)
-                query.append(Actor.events.any(Event.from_date.between(edate - diff, edate + diff)))
+                edate = parse(edate).date()
+                query.append(Actor.events.any((func.date(Event.from_date) >= edate - diff) & (func.date(Event.from_date) <= edate + diff)))
             else:
-                query.append(Actor.events.any(Event.from_date == edate))
+                query.append(Actor.events.any(func.date(Event.from_date) == edate))
 
         res_locations = q.get('resLocations', [])
         if res_locations:
             ids = [item.get('id') for item in res_locations]
             # query will always be or
-            query.append(Actor.residence_place_id.in_(ids))
+            # adding recursive search
+            children = Location.find_by_ids(ids)
+            all_ids = [l.get('id')for l in children]
+            query.append(Actor.residence_place_id.in_(all_ids))
 
         origin_locations = q.get('originLocations', [])
         if origin_locations:
             ids = [item.get('id') for item in origin_locations]
             # query will always be or
-            query.append(Actor.origin_place_id.in_(ids))
+            # recursive
+            # adding recursive search
+            children = Location.find_by_ids(ids)
+            all_ids = [l.get('id') for l in children]
+            query.append(Actor.origin_place_id.in_(all_ids))
 
 
         # Excluded residence locations
@@ -616,12 +624,19 @@ class SearchUtils:
             query.append(~Incident.sources.any(Source.id.in_(ids)))
 
         locations = q.get('locations', [])
-        if len(locations):
+        if locations:
             ids = [item.get('id') for item in locations]
+            children = Location.find_by_ids(ids)
+            all_ids = [l.get('id') for l in children]
+
             if q.get('oplocations'):
-                query.append(Incident.locations.any(Location.id.in_(ids)))
+                query.append(Incident.locations.any(Location.id.in_(all_ids)))
             else:
-                query.extend([Incident.locations.any(Location.id == id) for id in ids])
+                for id in ids:
+                    children = Location.find_by_ids([ids])
+                    all_ids = [l.get("id") for l in children]
+                    query.append(Incident.locations.any(Location.id.in_(all_ids)))
+
 
         # Excluded sources
         exlocations = q.get('exlocations', [])

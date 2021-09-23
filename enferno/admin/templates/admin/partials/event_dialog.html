@@ -27,7 +27,7 @@
             v-for="(item,index) in editedItem.events"
             :key="index"
           >
-           <event-card :event="item">
+           <event-card :number="index+1" :event="item">
 
               <template v-slot:actions>
                 <v-card-actions>
@@ -135,7 +135,7 @@
               <search-field
                     v-model="editedEvent.eventtype"
                     api="/admin/api/eventtypes/"
-                    query-params="&typ=for_bulletin"
+                    :query-params="eventParams"
                     item-text="title"
                     item-value="id"
                     :multiple="false"

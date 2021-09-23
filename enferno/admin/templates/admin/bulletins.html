@@ -241,6 +241,8 @@
     <script src="/static/js/mixins/media-mixin.js?v={{ g.version }}"></script>
     <script src="/static/js/actorConfig.js?v={{ g.version }}"></script>
     <script src="/static/js/components/PdfViewer.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/GeoLocations.js?v={{g.version}}"></script>
+    <script src="/static/js/components/GlobalMap.js?v={{g.version}}"></script>
 
     <script>
 
@@ -264,7 +266,7 @@
             data: () => ({
 
 
-                {% include 'admin/i18n.jinja2' %}
+                translations: translations,
 
 
 
@@ -295,7 +297,7 @@
 
                 dialog: dialog,
                 eventDialog: false,
-
+                eventParams: '&typ=for_bulletin',
                 reviewDialog: false,
                 reviewKey: 0,
                 descKey: 0,
@@ -452,6 +454,10 @@
             }),
 
             computed: {
+             compLocations (){
+                return this.aggregateLocations(this.editedItem);
+              },
+
 
                 exBulletins() {
                     let ids = [this.editedItem.id];
@@ -584,6 +590,46 @@
 
                 },
 
+                 aggregateLocations(bulletin) {
+
+              let locations = []
+
+              // aggregate locations, add a color identifier
+              if (bulletin.locations && bulletin.locations.length) {
+                  let locs = bulletin.locations.filter(x=>x.lat && x.lng);
+                  locs.map(x => {
+                      x.color = '#00a1f1';
+                      return x
+                  });
+                  locations = locations.concat(locs);
+
+              }
+
+              // geolocations
+              if (bulletin.geoLocations && bulletin.geoLocations.length) {
+                  bulletin.geoLocations.map(x => {
+                      x.color = '#ffbb00';
+                      return x
+                  });
+                  locations = locations.concat(bulletin.geoLocations);
+              }
+              // event locations
+              if (bulletin.events && bulletin.events.length) {
+                  let eventLocations = bulletin.events.filter(x => x.location).map((x,i) => {
+                      //attach serial number to events for map reference
+                      x.location.number = i+1;
+                      x.location.title = x.title;
+                      x.location.color = '#f65314';
+
+                      return x.location
+                  });
+
+                  locations = locations.concat(eventLocations);
+              }
+              return locations;
+
+          },
+
 
                 bulkStatus() {
 
@@ -594,7 +640,8 @@
                             clearInterval(this.bulkTimer);
                             // default refresh to first page
                             this.options.page = 1;
-                            this.refresh();
+                            
+                            this.refresh(true);
                             this.showSnack('Bulk Update is finished!')
                         } else {
                             //console.log(this.jobs)
@@ -655,7 +702,7 @@
                     this.searchBulletins();
                 }
                 ,
-                searchBulletins() {
+                searchBulletins(cached) {
 
 
                     // const page = this.options.page > 1? this.options.page : '';
@@ -663,8 +710,11 @@
 
                     this.loading = true;
                     const startTime = new Date()
-
-                    axios.post(`/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {
+                    let url = `/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
+                    if (cached){
+                        url += '&cache=' +new Date().getTime();
+                    }
+                    axios.post(url, {
                         q: this.search,
                         options: this.options
                     }).then(response => {
@@ -761,9 +811,9 @@
                     this.sjac_title__ = true;
                 },
 
-                refresh() {
+                refresh(cached=false) {
 
-                    this.searchBulletins(this.search)
+                    this.searchBulletins(this.search,cached=cached)
 
                 },
 

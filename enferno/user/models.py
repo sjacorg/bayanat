@@ -1,4 +1,5 @@
 import json
+from uuid import uuid4
 
 from flask_security import UserMixin, RoleMixin
 from flask_security import current_user
@@ -56,9 +57,10 @@ class User(UserMixin, db.Model, BaseMixin):
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
+    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False, default=uuid4().hex)
     name = db.Column(db.String(255))
     picture = db.Column(db.String(255))
-    email = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), nullable=True)
     username = db.Column(db.String(255), nullable=True, unique=True)
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean, default=False)
@@ -99,10 +101,11 @@ class User(UserMixin, db.Model, BaseMixin):
         return "%s %s %s" % (self.name, self.id, self.email)
 
     def from_json(self, item):
-        self.email = item['email']
-        password = item['password']
+        self.email = item.get('email')
+        self.username = item.get('username')
+        password = item.get('password')
         self.password = hash_password(password)
-        self.name = item.get('name', '')
+        self.name = item.get('name')
         roles = item.get('roles', [])
         rs = []
         if len(roles):
@@ -118,50 +121,51 @@ class User(UserMixin, db.Model, BaseMixin):
         return self
 
     def to_compact(self):
+
         """Automatically detect permissions of the user"""
 
         try:
+            hide = True
             if current_user.view_usernames or current_user.has_role('Admin'):
                 hide = False
-            else:
-                hide = True
-
         except Exception:
             hide = True
 
         if hide:
             name = 'user-{}'.format(self.id)
-            email = name + '@***.com'
+            username = self.fs_uniquifier
         else:
             name = self.name
-            email = self.email
+            username = self.username
+
 
         return {
             'id': self.id,
             'name': name,
-            'email': email,
+            'username': username
 
         }
 
     def to_dict(self, hide_name=False):
+        name = self.name
         if hide_name:
             name = 'user {}'.format(self.id)
             email = name + '@***.com'
-        else:
-            name = self.name
-            email = self.email
-        return {
-            'id': self.id,
-            'name': name,
-            'google_id': self.google_id,
-            'email': email,
-            'active': self.active,
-            'roles': [role.to_dict() for role in self.roles],
-            'view_usernames': self.view_usernames,
-            'view_simple_history': self.view_simple_history,
-            'view_full_history': self.view_full_history,
+            name = 'user-{}'.format(self.id)
 
-        }
+        return {
+                'id': self.id,
+                'name': name,
+                'google_id': self.google_id,
+                'email': self.email,
+                'username': self.username ,
+                'active': self.active,
+                'roles': [role.to_dict() for role in self.roles],
+                'view_usernames': self.view_usernames,
+                'view_simple_history': self.view_simple_history,
+                'view_full_history': self.view_full_history,
+
+            }
 
     def to_json(self):
         return json.dumps(self.to_dict())

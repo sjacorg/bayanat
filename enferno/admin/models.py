@@ -1,5 +1,6 @@
 # import datetime
-import json, os
+import json
+import os
 from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -7,7 +8,7 @@ from tempfile import NamedTemporaryFile
 import pandas as pd
 from flask_login import current_user
 from sqlalchemy import JSON, ARRAY
-from sqlalchemy import  event
+from sqlalchemy import event
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
@@ -16,6 +17,8 @@ from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
 
 # Load configuraitons based on environment settings
 if os.getenv("FLASK_DEBUG") == '0':
@@ -73,6 +76,44 @@ class Source(db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict())
+
+    @staticmethod
+    def search(kw):
+        """
+        Enhanced method to search all hierarchy from the db side, using raw sql query instead of the orm.
+        :return: matching records
+        """
+        query = """
+            with  recursive lcte (id, parent_id, title) as (
+            select id, parent_id, title from source where title ilike '%%{}%%' union all 
+            select x.id, x.parent_id, x.title from lcte c, source x where x.parent_id = c.id)
+            select * from lcte;
+            """.format(kw)
+        result = db.engine.execute(query)
+
+        return [{'id': x[0], 'title': x[2]} for x in result]
+
+    @staticmethod
+    def find_by_ids(ids:list):
+        """
+        finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
+        :return: matching records
+        """
+        if not ids:
+            return []
+        if len(ids) == 1:
+            qstr = '= {} '.format(ids[0])
+        else:
+            qstr = 'in {} '.format(str(tuple(ids)))
+        query = """
+               with  recursive lcte (id, parent_id, title) as (
+               select id, parent_id, title from source where id {} union all 
+               select x.id, x.parent_id, x.title from lcte c, source x where x.parent_id = c.id)
+               select * from lcte;
+               """.format(qstr)
+        result = db.engine.execute(query)
+
+        return [{'id': x[0], 'title': x[2]} for x in result]
 
     @staticmethod
     def get_children(sources, depth=3):
@@ -137,7 +178,6 @@ class Label(db.Model, BaseMixin):
     )
     parent = db.relationship("Label", remote_side=id, backref="sub_label")
 
-
     # custom serialization method
     def to_dict(self, mode='1'):
         if mode == '2':
@@ -169,18 +209,56 @@ class Label(db.Model, BaseMixin):
         return json.dumps(self.to_dict())
 
     def __repr__(self):
-        return '<Label {} {}>'.format(self.id,self.title)
-
+        return '<Label {} {}>'.format(self.id, self.title)
 
     @staticmethod
-    def get_children(labels,depth=3):
+    def search(kw):
+        """
+        Enhanced method to search all hierarchy from the db side, using raw sql query instead of the orm.
+        :return: matching records
+        """
+        query = """
+               with  recursive lcte (id, parent_id, title) as (
+               select id, parent_label_id, title from label where title ilike '%%{}%%' union all 
+               select x.id, x.parent_label_id, x.title from lcte c, label x where x.parent_label_id = c.id)
+               select * from lcte;
+               """.format(kw)
+        result = db.engine.execute(query)
+
+        return [{'id': x[0], 'title': x[2]} for x in result]
+
+    @staticmethod
+    def find_by_ids(ids: list):
+        """
+        finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
+        :return: matching records
+        """
+        if not ids:
+            return []
+        if len(ids) == 1:
+            qstr = '= {} '.format(ids[0])
+        else:
+            qstr = 'in {} '.format(str(tuple(ids)))
+
+        query = """
+                  with  recursive lcte (id, parent_label_id, title) as (
+                  select id, parent_label_id, title from label where id {} union all 
+                  select x.id, x.parent_label_id, x.title from lcte c, label x where x.parent_label_id = c.id)
+                  select * from lcte;
+                  """.format(qstr)
+        result = db.engine.execute(query)
+
+        return [{'id': x[0], 'title': x[2]} for x in result]
+
+    @staticmethod
+    def get_children(labels, depth=3):
         all = []
         targets = labels
-        while depth !=0:
-            children =  Label.get_direct_children(targets)
+        while depth != 0:
+            children = Label.get_direct_children(targets)
             all += children
             targets = children
-            depth -=1
+            depth -= 1
         return all
 
     @staticmethod
@@ -189,8 +267,6 @@ class Label(db.Model, BaseMixin):
         for label in labels:
             children += label.sub_label
         return children
-
-
 
     # populate object from json data
     def from_json(self, json):
@@ -480,6 +556,29 @@ class Location(db.Model, BaseMixin):
 
     full_location = db.Column(db.String)
 
+    @staticmethod
+    def find_by_ids(ids: list):
+        """
+        finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
+        :return: matching records
+        """
+        if not ids:
+            return []
+        if len(ids) == 1:
+            qstr = '= {} '.format(ids[0])
+        else:
+            qstr = 'in {} '.format(str(tuple(ids)))
+        query = """
+                  with  recursive lcte (id, parent_g_id,parent_d_id, parent_s_id, parent_c_id, title) as (
+                  select id, parent_g_id,parent_d_id, parent_s_id, parent_c_id, title from location where id {} union all 
+                  select x.id, x.parent_g_id, x.parent_d_id, x.parent_s_id, x.parent_c_id, x.title from lcte c, location x 
+                  where x.parent_g_id = c.id or x.parent_d_id = c.id or x.parent_s_id = c.id or x.parent_c_id = c.id)
+                  select * from lcte;
+                  """.format(qstr)
+        result = db.engine.execute(query)
+
+        return [{'id': x[0], 'title': x[5]} for x in result]
+
     def find_children(self, include_self=True):
         """
         Helper method to find all child location
@@ -550,8 +649,8 @@ class Location(db.Model, BaseMixin):
             "loc_type_name": self.LOC_TYPE[self.loc_type]
             if self.loc_type in self.LOC_TYPE.keys()
             else "",
-            "latitude": self.latitude,
-            "longitude": self.longitude,
+            "lat": self.latitude,
+            "lng": self.longitude,
             "parent_g": parent_g,
             "parent_d": parent_d,
             "parent_s": parent_s,
@@ -578,8 +677,8 @@ class Location(db.Model, BaseMixin):
         self.title = jsn.get('title')
         self.title_ar = jsn.get('title_ar')
         self.loc_type = jsn.get('loc_type')
-        self.longitude = jsn.get('longitude')
-        self.latitude = jsn.get('latitude')
+        self.longitude = jsn.get('lng')
+        self.latitude = jsn.get('lat')
         if jsn.get('parent_g') and jsn.get('parent_g').get('id'):
             self.parent_g_id = jsn.get('parent_g').get('id')
         else:
@@ -613,17 +712,24 @@ class Location(db.Model, BaseMixin):
             for l in self.sub_location:
                 locations += [l] + l.get_sub_locations()
             return locations
+
     # helper method to get full location hierarchy
     def get_full_string(self):
         name_str = str(self.title)
         if self.loc_type == "D" and self.parent_g_id:
-            name_str = '{}, {}'.format(self.query.get(self.parent_g_id).title,  self.title)
+            name_str = '{}, {}'.format(self.query.get(self.parent_g_id).title, self.title)
         if self.loc_type == "S" and self.parent_g_id and self.parent_d_id:
-            name_str = '{}, {}, {}'.format(self.query.get(self.parent_g_id).title, self.query.get(self.parent_d_id).title, self.title)
+            name_str = '{}, {}, {}'.format(self.query.get(self.parent_g_id).title,
+                                           self.query.get(self.parent_d_id).title, self.title)
         if self.loc_type == "C" and self.parent_g_id and self.parent_d_id and self.parent_s_id:
-            name_str = '{}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title, self.query.get(self.parent_d_id).title, self.query.get(self.parent_s_id).title, self.title)
+            name_str = '{}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title,
+                                               self.query.get(self.parent_d_id).title,
+                                               self.query.get(self.parent_s_id).title, self.title)
         if self.loc_type == "N" and self.parent_g_id and self.parent_d_id and self.parent_s_id and self.parent_c_id:
-            name_str = '{}, {}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title, self.query.get(self.parent_d_id).title, self.query.get(self.parent_s_id).title, self.query.get(self.parent_c_id).title, self.title)
+            name_str = '{}, {}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title,
+                                                   self.query.get(self.parent_d_id).title,
+                                                   self.query.get(self.parent_s_id).title,
+                                                   self.query.get(self.parent_c_id).title, self.title)
         return name_str
 
     # imports csv data into db
@@ -668,6 +774,33 @@ class Location(db.Model, BaseMixin):
         db.session.commit()
 
         return ""
+
+
+class GeoLocation(db.Model, BaseMixin):
+    """
+        SQL Alchemy model for Geo markers (improved location class)
+    """
+    __table_args__ = {"extend_existing": True}
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String)
+    type = db.Column(db.String)
+    comment = db.Column(db.Text)
+    latlng = db.Column(Geometry('POINT'))
+    bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
+
+
+
+    def to_dict(self):
+
+        return {
+        'id': self.id,
+        'title': self.title,
+        'type': self.type,
+        'lat' : to_shape(self.latlng).x,
+        'lng': to_shape(self.latlng).y,
+        'comment': self.comment
+        }
+
 
 
 # joint table
@@ -1023,6 +1156,13 @@ class Bulletin(db.Model, BaseMixin):
         secondary=bulletin_locations,
         backref=db.backref("bulletins", lazy="dynamic"),
     )
+
+
+    geo_locations = db.relationship(
+        "GeoLocation", backref="bulletin",
+    )
+
+
     labels = db.relationship(
         "Label",
         secondary=bulletin_labels,
@@ -1082,7 +1222,7 @@ class Bulletin(db.Model, BaseMixin):
     ref = db.Column(ARRAY(db.String))
 
     # extra fields used by etl etc ..
-    originid = db.Column(db.String)
+    originid = db.Column(db.String, index=True)
     comments = db.Column(db.Text)
 
     # review fields
@@ -1169,6 +1309,29 @@ class Bulletin(db.Model, BaseMixin):
             locations = Location.query.filter(Location.id.in_(ids)).all()
             self.locations = locations
 
+        geo_locations = json.get('geoLocations')
+        if geo_locations:
+            final_locations = []
+            for geo in geo_locations:
+                gid = geo.get('id')
+                if not gid:
+                    #new geolocation
+                    g = GeoLocation()
+                    g.title = geo.get('title')
+                    g.type = geo.get('type')
+                    g.latlng = 'POINT({} {})'.format(geo.get('lat'), geo.get('lng'))
+                    g.comment = geo.get('comment')
+                    g.save()
+                else:
+                    #geolocation exists // update
+                    g = GeoLocation.query.get(gid)
+                    g.title = geo.get('title')
+                    g.type = geo.get('type')
+                    g.save()
+                final_locations.append(g)
+            self.geo_locations = final_locations
+
+
         # Sources
         if "sources" in json:
             ids = [source["id"] for source in json["sources"]]
@@ -1235,7 +1398,6 @@ class Bulletin(db.Model, BaseMixin):
                 if bulletin:
                     rel_ids.append(bulletin.id)
                     # this will update/create the relationship (will flush to db)
-                    print(relation)
                     self.relate_bulletin(bulletin, relation=relation)
 
                 # Find out removed relations and remove them
@@ -1321,6 +1483,8 @@ class Bulletin(db.Model, BaseMixin):
                         "id": location.id,
                         "title": location.title,
                         "full_string": location.get_full_string(),
+                        "lat": location.latitude,
+                        "lng": location.longitude
                     }
                 )
 
@@ -1444,7 +1608,17 @@ class Bulletin(db.Model, BaseMixin):
                         "id": location.id,
                         "title": location.title,
                         "full_string": location.get_full_string(),
+                        "lat": location.latitude,
+                        "lng": location.longitude
                     }
+                )
+
+        # locations json
+        geo_locations_json = []
+        if self.geo_locations:
+            for geo in self.geo_locations:
+                geo_locations_json.append(
+                    geo.to_dict()
                 )
 
         # sources json
@@ -1512,6 +1686,7 @@ class Bulletin(db.Model, BaseMixin):
             if self.first_peer_reviewer_id
             else None,
             "locations": locations_json,
+            "geoLocations": geo_locations_json,
             "labels": labels_json,
             "verLabels": ver_labels_json,
             "sources": sources_json,
@@ -1804,7 +1979,7 @@ class Actor(db.Model, BaseMixin):
         hypothesis_based = db.Column(db.Text)
         hypothesis_status = db.Column(db.String)
 
-        #death_cause = db.Column(db.String)
+        # death_cause = db.Column(db.String)
         reburial_location = db.Column(db.String)
 
     search = db.Column(db.Text, db.Computed("""
@@ -2056,7 +2231,6 @@ class Actor(db.Model, BaseMixin):
         if "status" in json:
             self.status = json["status"]
 
-
         # Missing Persons
         if cfg.MISSING_PERSONS:
             self.last_address = json.get('last_address')
@@ -2071,7 +2245,7 @@ class Actor(db.Model, BaseMixin):
             self.saw_email = json.get('saw_email')
             self.seen_in_detention = json.get('seen_in_detention')
             # Flag json fields for saving
-            flag_modified(self,'seen_in_detention')
+            flag_modified(self, 'seen_in_detention')
             self.injured = json.get('injured')
             flag_modified(self, 'injured')
             self.known_dead = json.get('known_dead')
@@ -2113,13 +2287,12 @@ class Actor(db.Model, BaseMixin):
             self.dental_habits = json.get('dental_habits')
             self.case_status = json.get('case_status')
             self.reporters = json.get('reporters')
-            flag_modified(self,'reporters')
+            flag_modified(self, 'reporters')
             self.identified_by = json.get('identified_by')
             self.family_notified = json.get('family_notified')
             self.reburial_location = json.get('reburial_location')
             self.hypothesis_based = json.get('hypothesis_based')
             self.hypothesis_status = json.get('hypothesis_status')
-
 
         return self
 
@@ -2132,7 +2305,7 @@ class Actor(db.Model, BaseMixin):
         mp['pregnant_at_disappearance'] = getattr(self, 'pregnant_at_disappearance')
         mp['months_pregnant'] = str(self.months_pregnant) if self.months_pregnant else None
         mp['missing_relatives'] = getattr(self, 'missing_relatives')
-        mp['saw_name'] = getattr(self,'saw_name')
+        mp['saw_name'] = getattr(self, 'saw_name')
         mp['saw_address'] = getattr(self, 'saw_address')
         mp['saw_phone'] = getattr(self, 'saw_phone')
         mp['saw_email'] = getattr(self, 'saw_email')
@@ -2152,7 +2325,7 @@ class Actor(db.Model, BaseMixin):
         mp['posture'] = getattr(self, 'posture')
         mp['skin_markings'] = getattr(self, 'skin_markings')
         mp['handedness'] = getattr(self, 'handedness')
-        mp['eye_color'] = getattr(self,'eye_color')
+        mp['eye_color'] = getattr(self, 'eye_color')
         mp['glasses'] = getattr(self, 'glasses')
         mp['dist_char_con'] = getattr(self, 'dist_char_con')
         mp['dist_char_acq'] = getattr(self, 'dist_char_acq')
@@ -2334,7 +2507,7 @@ class Actor(db.Model, BaseMixin):
         for relation in self.incident_relations:
             incident_relations_dict.append(relation.to_dict())
 
-        actor =  {
+        actor = {
             "class": "Actor",
             "id": self.id,
             "originid": self.originid or None,
@@ -2415,7 +2588,6 @@ class Actor(db.Model, BaseMixin):
             actor.update(mp)
 
         return actor
-
 
     def to_mode2(self):
 
@@ -2975,8 +3147,6 @@ class Incident(db.Model, BaseMixin):
                     rel_actor = r.actor
                     # print ('deleting', r)
                     r.delete()
-
-
 
                     # -revision related actor
                     rel_actor.create_revision()

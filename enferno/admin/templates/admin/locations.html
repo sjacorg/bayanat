@@ -30,6 +30,17 @@
                                                 <v-toolbar-title>{{ _('Locations') }}</v-toolbar-title>
 
                                                 <v-divider class="mx-4" inset vertical></v-divider>
+
+                                                <v-text-field
+                                                        outlined
+                                                        dense
+                                                        class="mt-6"
+                                                        v-model="q"
+                                                        @keydown.enter="refresh()"
+
+                                                        label="{{ _('Search') }}">
+
+                                                </v-text-field>
                                                 <v-spacer></v-spacer>
                                                 <v-dialog v-model="dialog" max-width="990px">
                                                     {% if current_user.roles_in(['Admin','Mod']) %}
@@ -79,21 +90,21 @@
                                                                     <v-col cols="12" md="3">
                                                                         <v-text-field
 
-                                                                                v-model="editedItem.latitude"
+                                                                                v-model="editedItem.lat"
                                                                                 label="{{ _('Latitude') }}"
                                                                         ></v-text-field>
                                                                     </v-col>
                                                                     <v-col cols="12" md="3">
                                                                         <v-text-field
 
-                                                                                v-model="editedItem.longitude"
+                                                                                v-model="editedItem.lng"
                                                                                 label="{{ _('Longitude') }}"
                                                                         ></v-text-field>
                                                                     </v-col>
                                                                     <v-col cols="12" md="3">
 
                                                                         <v-select :items="['S','D','N','C','G']"
-                                                                                  label="{{ _('Location type')}}"
+                                                                                  label="{{ _('Location type') }}"
                                                                                   v-model="editedItem.loc_type"></v-select>
                                                                     </v-col>
 
@@ -120,7 +131,7 @@
                                                                     </v-col>
 
                                                                     <v-col cols="12" md="6">
-                                                                          <search-field
+                                                                        <search-field
                                                                                 v-model="editedItem.parent_d"
                                                                                 api="/admin/api/locations/"
                                                                                 item-text="full_string"
@@ -134,7 +145,7 @@
                                                                 <v-row>
 
                                                                     <v-col cols="12" md="6">
-                                                                          <search-field
+                                                                        <search-field
                                                                                 v-model="editedItem.parent_s"
                                                                                 api="/admin/api/locations/"
                                                                                 item-text="full_string"
@@ -146,7 +157,7 @@
                                                                     </v-col>
 
                                                                     <v-col cols="12" md="6">
-                                                                          <search-field
+                                                                        <search-field
                                                                                 v-model="editedItem.parent_c"
                                                                                 api="/admin/api/locations/"
                                                                                 item-text="full_string"
@@ -283,6 +294,7 @@
                 snackMessage: '',
                 loading: true,
                 csvFile: null,
+                q: '',
                 options: {},
                 footerProps: {
                     itemsPerPageOptions: itemsPerPageOptions,
@@ -351,15 +363,18 @@
                     return items;
                 },
 
-                refresh(options) {
+                refresh() {
                     //console.log(options);
                     this.loading = true;
-                    axios.get(`/admin/api/locations/?page=${options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
+                    axios.get(`/admin/api/locations/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&q=${this.q}`).then(response => {
 
 
                         this.itemsLength = response.data.total;
                         this.items = this.preprocess(response.data.items);
-                    }).finally(() => {
+                    }).catch(err=>{
+                        console.log(err.response.data);
+                    })
+                        .finally(() => {
                         this.loading = false;
                     });
                 },
@@ -370,7 +385,7 @@
                     axios.post('/admin/api/location/import/', reqData).then(response => {
 
                         this.imDialog = false;
-                        this.refresh(this.options);
+                        this.refresh();
                         this.snackMessage = response.data;
                         this.snackbar = true;
                     })
@@ -395,7 +410,7 @@
                             .then(response => {
                                 this.snackMessage = response.data;
                                 this.snackbar = true;
-                                this.refresh(this.options)
+                                this.refresh()
                             })
                     }
                 },
@@ -416,7 +431,7 @@
                             .then(response => {
                                 this.snackMessage = response.data;
                                 this.snackbar = true;
-                                this.refresh(this.options)
+                                this.refresh()
                             })
                     } else {
                         this.items.push(this.editedItem);
@@ -428,7 +443,7 @@
 
                                 this.snackMessage = response.data;
                                 this.snackbar = true;
-                                this.refresh(this.options)
+                                this.refresh()
                             });
                     }
                     this.close();

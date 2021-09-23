@@ -50,6 +50,7 @@ class DataImport():
         # handle file uploads based on mode of ETL
 
         print(file)
+        duration = None
         if self.meta.get('mode') == 2:
             self.summary += '------------------------------------------------------------------------ \n'
             self.summary += now() + 'file: {}'.format(file.get('file').get('name')) + '\n'
@@ -80,18 +81,27 @@ class DataImport():
             filepath = (Media.media_dir / filename).as_posix()
 
             # check if file is video (accepted extension)
-            if ext[1:].lower() in cfg.ETL_VID_EXT and self.meta.get('optimize'):
-                #process video
+            if ext[1:].lower() in cfg.ETL_VID_EXT:
                 try:
-                    filepath = '{}.mp4'.format(os.path.splitext(filepath)[0])
-                    command = 'ffmpeg -i "{}" -vcodec libx264  -acodec aac -strict -2 "{}"'.format(old_path, filepath )
-                    subprocess.call(command, shell=True)
-                    #if conversion is successful / also update the filename passed to media creation code
-                    filename = os.path.basename(filepath)
+                    # get video duration via ffprobe
+                    cmd = 'ffprobe -i "{}" -show_entries format=duration -v quiet -of csv="p=0"'.format(old_path)
+                    duration = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
                 except Exception as e:
-                    print ('An exception occurred while transcoding file {}'.format(e))
-                    #copy the file as is instead
-                    shutil.copy(old_path, filepath)
+                    print('failed to get video duration')
+                    print(e)
+                if self.meta.get('optimize'):
+                    #process video
+                    try:
+                        filepath = '{}.mp4'.format(os.path.splitext(filepath)[0])
+                        command = 'ffmpeg -i "{}" -vcodec libx264  -acodec aac -strict -2 "{}"'.format(old_path, filepath )
+                        subprocess.call(command, shell=True)
+                        #if conversion is successful / also update the filename passed to media creation code
+                        filename = os.path.basename(filepath)
+
+                    except Exception as e:
+                        print ('An exception occurred while transcoding file {}'.format(e))
+                        #copy the file as is instead
+                        shutil.copy(old_path, filepath)
 
 
             else:
@@ -103,7 +113,8 @@ class DataImport():
             self.summary += now() + ' ------ Processing file: {} ------'.format(file.get('filename')) + '\n'
             # we already have the file and the etag
             filename = file.get('filename')
-            title, ext = os.path.splitext(filename)
+            n, ext = os.path.splitext(filename)
+            title, ex = os.path.splitext(file.get('name'))
             filepath = (Media.media_dir / filename).as_posix()
             etag = file.get('etag')
             # check here for duplicate to skip unnecessary code execution
@@ -121,22 +132,33 @@ class DataImport():
                 self.log.write(self.summary)
                 return "This file already exists"
             # else check if video processing is enabled
-            if ext[1:].lower() in cfg.ETL_VID_EXT and self.meta.get('optimize'):
-                # process videos in the media
+            if ext[1:].lower() in cfg.ETL_VID_EXT:
                 try:
-                    new_filepath = '{}*.mp4'.format(os.path.splitext(filepath)[0])
-                    command = 'ffmpeg -i "{}" -vcodec libx264 -acodec aac -strict -2 "{}"'.format(filepath, new_filepath )
-                    subprocess.call(command, shell=True)
-                    #if conversion is successful / also update the filename passed to media creation code
-                    filename = os.path.basename(new_filepath)
-                    #clean up old file
-                    os.remove(filepath)
-                    #if op is successful update filepath
-                    filepath = new_filepath
+                    # get video duration via ffprobe
+                    cmd = 'ffprobe -i "{}" -show_entries format=duration -v quiet -of csv="p=0"'.format(filepath)
+                    duration = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
+
 
                 except Exception as e:
-                    print ('An exception occurred while transcoding file {}'.format(e))
-                    # do nothing
+                    print('failed to get video duration')
+                    print(e)
+
+                if self.meta.get('optimize'):
+                    # process videos in the media
+                    try:
+                        new_filepath = '{}*.mp4'.format(os.path.splitext(filepath)[0])
+                        command = 'ffmpeg -i "{}" -vcodec libx264 -acodec aac -strict -2 "{}"'.format(filepath, new_filepath )
+                        subprocess.call(command, shell=True)
+                        #if conversion is successful / also update the filename passed to media creation code
+                        filename = os.path.basename(new_filepath)
+                        #clean up old file
+                        os.remove(filepath)
+                        #if op is successful update filepath
+                        filepath = new_filepath
+
+                    except Exception as e:
+                        print ('An exception occurred while transcoding file {}'.format(e))
+                        # do nothing
 
 
 
@@ -155,6 +177,10 @@ class DataImport():
         info['etag'] = etag
         if self.meta.get('mode') == 2:
             info['old_path'] = old_path
+        # pass duration
+        if duration:
+            info['vduration'] = duration
+        print ('=====================')
 
         print('Meta data parse success')
         result =  self.create_bulletin(info)
@@ -187,6 +213,10 @@ class DataImport():
         media.media_file = info.get('filename')
         # handle mime type failure
         mime_type = info.get('File:MIMEType')
+        duration = info.get('vduration')
+        if duration:
+            media.duration = duration
+            print ('duration set')
         if not mime_type:
             self.summary += now() + 'Problem retrieving file mime type !' + '\n'
             print('Problem retrieving file mime type ! \n')
@@ -199,6 +229,7 @@ class DataImport():
             self.summary += '------------------------------------------------------------------------\n\n'
             return
         media.media_file_type = mime_type
+
 
         media.etag = info.get('etag')
 

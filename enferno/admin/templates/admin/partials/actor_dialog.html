@@ -881,8 +881,11 @@
                                                                   v-model="editedItem.marriage_history"></v-text-field>
                                                 </v-col>
                                                 <v-col md="4">
-                                                    <v-text-field type="number" label="{{_('Bio Children')}}"
-                                                                  v-model="editedItem.bio_children"></v-text-field>
+                                                    <validation-provider name="Bio Children" rules="integer|between:0,69|is_not:e" v-slot="{errors}">
+                                                    <v-text-field  label="{{_('Bio Children')}}"
+                                                                  v-model="editedItem.bio_children" ></v-text-field>
+                                                        <span class="red--text">${errors[0]}</span>
+                                                    </validation-provider>
                                                 </v-col>
                                             </v-row>
                                             <v-row>
@@ -891,12 +894,9 @@
                                                               v-model="editedItem.pregnant_at_disappearance"></v-switch>
                                                 </v-col>
                                                 <v-col md="4">
-                                                    <validation-provider name="Months Pregnant"
-                                                                         rules="max_value:9|min_value:1"
-                                                                         v-slot="{errors}">
-                                                        <v-text-field type="number"
-                                                                      min="1"
-                                                                      max="9"
+                                                    <validation-provider name="Months Pregnant" rules="digits:1|integer|min_value:1|max_value:9" v-slot="{errors}">
+                                                        <v-text-field
+
                                                                       label="{{_('Months Pregnant at time of disappearance')}}"
                                                                       v-model="editedItem.months_pregnant"></v-text-field>
                                                         <span class="red--text">${errors[0]}</span>
@@ -972,15 +972,27 @@
                                             </v-row>
                                             <v-row>
                                                 <v-col md="2">
-                                                    <v-text-field type="number" v-model="editedItem.height"
+                                                    <validation-provider name="Height" rules="is_not:e|integer|between:20,250"
+                                                                                 v-slot="{errors}">
+                                                    <v-text-field  v-model="editedItem.height"
                                                                   label="{{_('Height')}}"
+                                                                  suffix="cm"
                                                     ></v-text-field>
+                                                         <span class="red--text">${errors[0]}</span>
+
+                                                    </validation-provider>
 
                                                 </v-col>
                                                 <v-col md="2">
-                                                    <v-text-field type="number" v-model="editedItem.weight"
+                                                    <validation-provider name="Weight" rules="is_not:e|integer|between:10,350"
+                                                                                 v-slot="{errors}">
+                                                    <v-text-field v-model="editedItem.weight"
                                                                   label="{{_('Weight')}}"
+                                                                  suffix="kg"
                                                     ></v-text-field>
+
+                                                        <span class="red--text">${errors[0]}</span>
+                                                    </validation-provider>
 
                                                 </v-col>
                                                 <v-col md="4">

@@ -3,12 +3,13 @@
 import os
 
 import click
+from flask.cli import AppGroup
 from flask.cli import with_appcontext
 from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User
-from flask.cli import AppGroup
+
 
 @click.command()
 @with_appcontext
@@ -17,6 +18,8 @@ def create_db():
     """
     db.engine.execute('CREATE EXTENSION if not exists pg_trgm ;')
     print('Trigram extension installed successfully')
+    db.engine.execute('CREATE EXTENSION if not exists postgis ;')
+    print('Postgis extension installed successfully')
     db.create_all()
     print('Database structure created successfully')
 
@@ -31,38 +34,35 @@ def install():
     # check if admin exists
     from enferno.user.models import Role
     a = Role.query.filter(Role.name == 'Admin').first()
-
     if a is None:
+        # create admin role
         r = Role(name='Admin')
-        try:
-            db.session.add(r)
-            db.session.commit()
-            u = click.prompt('Admin Email?', default='admin')
-            p = click.prompt('Admin Password (min 6 characters)?')
-            user = User(email=u, password=hash_password(p), active=1)
-            user.name = 'Admin'
-            user.roles.append(r)
-            user.save()
-        except Exception as e:
-            db.session.rollback()
+        r.save()
+        u = click.prompt('Admin username?', default='admin')
+        p = click.prompt('Admin Password (min 6 characters)?')
+        user = User(username=u, password=hash_password(p), active=1)
+        user.name = 'Admin'
+        user.roles.append(r)
+        user.save()
+
     else:
         print('Seems like an Admin is already installed')
 
 
 @click.command()
-@click.option('-e', '--email', prompt=True, default=None)
+@click.option('-u', '--username', prompt=True, default=None)
 @click.option('-p', '--password', prompt=True, default=None)
 @with_appcontext
-def create(email, password):
+def create(username, password):
     """Creates a user using an email.
     """
-
-    a = User.query.filter(User.email == email).first()
-    if a != None:
+    a = User.query.filter(User.username == username).first()
+    if a:
         print('User already exists!')
-    else:
-        user = User(email=email, password=hash_password(password), active=1)
-        user.save()
+
+    user = User(username=username,  password=hash_password(password), active=1)
+    user.save()
+    print('User created successfully')
 
 
 @click.command()
@@ -124,18 +124,22 @@ def clean():
                 click.echo('Removing {}'.format(full_pathname))
                 os.remove(full_pathname)
 
+
 # translation management
 i18n_cli = AppGroup('translate', short_help='commands to help with translation management')
+
 
 @i18n_cli.command()
 def extract():
     if os.system('pybabel extract -F babel.cfg -k _l -o messages.pot .'):
         raise RuntimeError('Extract command failed')
 
+
 @i18n_cli.command()
 def update():
     if os.system('pybabel update -i messages.pot -d enferno/translations'):
         raise RuntimeError('Update command failed')
+
 
 @i18n_cli.command()
 def compile():

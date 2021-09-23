@@ -95,6 +95,12 @@ Vue.component("incident-card", {
         <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',incident)" x-small outlined>Edit</v-btn>
 
       </v-card-text>
+      
+      <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="incident.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
+          {{ i18n.assignedUser_ }} {{incident.assigned_to['name']}}</v-chip>
+        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{incident.status}}</v-chip>
+      
+      
       <uni-field :caption="i18n.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
 
       <v-card outlined v-if="incident.description" class="ma-2 pa-2" color="grey lighten-5">
@@ -243,7 +249,7 @@ Vue.component("incident-card", {
             <v-sheet color="grey lighten-4" dense flat class="my-1 pa-2 d-flex align-center">
                             <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
                                                                                             color="gv lighten-3">{{ revision.data.status }}</v-chip> - {{ revision.created_at }}
-                              - By {{ revision.user.email }}</span>
+                              - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
               <v-btn v-if="diff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
