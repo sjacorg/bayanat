@@ -1,7 +1,7 @@
 import hashlib
 import os
 from pathlib import Path
-
+import pandas as pd
 import boto3
 import shortuuid
 from uuid import uuid4
@@ -11,15 +11,17 @@ from flask_bouncer import requires
 from flask_security.decorators import roles_required, login_required, current_user, roles_accepted
 from flask_security.utils import hash_password
 from sqlalchemy import desc, or_, text
-
+from sqlalchemy.orm.attributes import flag_modified
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
                                   IncidentHistory, BulletinHistory, ActorHistory, PotentialViolation, ClaimedViolation,
-                                  Activity, Query)
+                                  Activity, Query, Mapping, Log)
 from enferno.extensions import bouncer, rds, babel
 from enferno.extensions import cache
-from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file
+from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file, \
+    process_sheet
 from enferno.user.models import User, Role
 from enferno.utils.search_utils import SearchUtils
+from enferno.utils.sheet_utils import SheetUtils
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
@@ -61,7 +63,7 @@ def ctx():
     passes all users to the application, based on the current user's permissions.
     :return: None
     """
-    users = User.query.order_by(User.email).all()
+    users = User.query.order_by(User.username).all()
     if current_user.is_authenticated:
         if current_user.has_role('Admin') or current_user.view_usernames:
             hide_name = False
@@ -789,7 +791,7 @@ def api_bulletins():
 
 
 @admin.route('/api/bulletin/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_bulletin_create():
     """Creates a new bulletin."""
 
@@ -807,7 +809,7 @@ def api_bulletin_create():
 
 
 @admin.route('/api/bulletin/<int:id>', methods=['PUT'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_bulletin_update(id):
     """Updates a bulletin."""
 
@@ -832,7 +834,7 @@ def api_bulletin_update(id):
 
 # Add/Update review bulletin endpoint
 @admin.route('/api/bulletin/review/<int:id>', methods=['PUT'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_bulletin_review_update(id):
     """
     Endpoint to update a bulletin review
@@ -920,22 +922,21 @@ def api_bulletin_delete(id):
 
 
 # get one bulletin
-@admin.route('/api/bulletin/<int:id>', methods=['GET'])
+@admin.get('/api/bulletin/<int:id>')
 def api_bulletin_get(id):
     """
     Endpoint to get a single bulletin
     :param id: id of the bulletin
     :return: bulletin in json format / success or error
     """
-    if request.method == 'GET':
-        bulletin = Bulletin.query.get(id)
-        if not bulletin:
-            abort(404)
-        else:
-            # hide review from view-only users
-            if not current_user.roles:
-                bulletin.review = None
-            return bulletin.to_json(), 200
+    bulletin = Bulletin.query.get(id)
+    if not bulletin:
+        abort(404)
+    else:
+        # hide review from view-only users
+        if not current_user.roles:
+            bulletin.review = None
+        return bulletin.to_json(), 200
 
 
 @admin.route('/api/bulletin/import/', methods=['POST'])
@@ -954,7 +955,7 @@ def api_bulletin_import():
 
 # Media special endpoints
 @admin.route('/api/media/upload/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_medias_upload():
     """
     Endpoint to upload files (based on file system settings : s3 or local file system)
@@ -1076,7 +1077,7 @@ def api_medias(page):
 
 
 @admin.route('/api/media/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_media_create():
     """
     Endpoint to create a media item
@@ -1092,7 +1093,7 @@ def api_media_create():
 
 
 @admin.route('/api/media/<int:id>', methods=['PUT'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_media_update(id):
     """
     Endpoint to update a media item
@@ -1164,7 +1165,7 @@ def api_actors():
 
 # create actor endpoint
 @admin.route('/api/actor/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_actor_create():
     """
     Endpoint to create an Actor item
@@ -1175,7 +1176,6 @@ def api_actor_create():
         actor.from_json(request.json['item'])
         result = actor.save()
         if result:
-
 
             # the below will create the first revision by default
             actor.create_revision()
@@ -1216,16 +1216,9 @@ def api_actor_update(id):
         return 'Error saving actor', 417
 
 
-
-
-
-
-
-
-
 # Add/Update review actor endpoint
 @admin.route('/api/actor/review/<int:id>', methods=['PUT'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_actor_review_update(id):
     """
     Endpoint to update an Actor's review item
@@ -1400,7 +1393,7 @@ def api_users():
     if q is not None:
         query.append(User.name.ilike('%' + q + '%'))
     result = User.query.filter(
-        *query).order_by(User.email).paginate(
+        *query).order_by(User.username).paginate(
         page, per_page, True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
@@ -1454,10 +1447,6 @@ def api_user_check():
         return 'Username already exists', 417
     else:
         return 'Username ok', 200
-
-
-
-
 
 
 @admin.route('/api/user/<int:uid>', methods=['PUT'])
@@ -1656,7 +1645,7 @@ def api_incidents():
 
 
 @admin.route('/api/incident/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_incident_create():
     """API endpoint to create an incident."""
     if request.method == 'POST':
@@ -1674,7 +1663,7 @@ def api_incident_create():
 
 # update incident endpoint 
 @admin.route('/api/incident/<int:id>', methods=['PUT'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_incident_update(id):
     """API endpoint to update an incident."""
     if request.method == 'PUT':
@@ -1697,7 +1686,7 @@ def api_incident_update(id):
 
 # Add/Update review incident endpoint
 @admin.route('/api/incident/review/<int:id>', methods=['PUT'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_incident_review_update(id):
     """
     Endpoint to update an incident review item
@@ -1895,7 +1884,7 @@ def api_queries():
 
 
 @admin.route('/api/query/', methods=['POST'])
-@roles_accepted('Admin','DA')
+@roles_accepted('Admin', 'DA')
 def api_query_create():
     """
     API Endpoint save a query search object (advanced search)
@@ -1916,7 +1905,6 @@ def api_query_create():
 
 
 # Data Import Backend API
-
 @admin.route('/etl/')
 @roles_required('Admin')
 def etl_dashboard():
@@ -1996,3 +1984,201 @@ def etl_task_status():
     results = [etl_process_file.AsyncResult(i) for i in ids]
     output = [r.state for r in results]
     return json.dumps(output), 200
+
+
+# CSV Tool
+
+
+@admin.route('/csv/dashboard/')
+@roles_required('Admin')
+def csv_dashboard():
+    """
+    Endpoint to render the csv backend
+    :return: html page of the csv backend.
+    """
+    if not current_app.config.get('SHEET_IMPORT'):
+        abort(404)
+    return render_template('admin/csv-dashboard.html')
+
+
+@admin.post('/api/csv/upload/')
+@roles_required('Admin')
+def api_local_csv_upload():
+    import_dir = Path(current_app.config.get('IMPORT_DIR'))
+    # file pond sends multiple requests for multiple files (handle each request as a separate file )
+    try:
+        f = request.files.get('media')
+        # final file
+        filename = Media.generate_file_name(f.filename)
+        filepath = (import_dir / filename).as_posix()
+        f.save(filepath)
+        # get md5 hash
+        f = open(filepath, 'rb').read()
+        etag = hashlib.md5(f).hexdigest()
+
+        response = {'etag': etag, 'filename': filename}
+        return Response(json.dumps(response), content_type='application/json'), 200
+    except Exception as e:
+        return 'Problem uploading file: {}'.format(e), 417
+
+
+@admin.delete('/api/csv/upload/')
+@roles_required('Admin')
+def api_local_csv_delete():
+    """
+    API endpoint for removing files ::
+    :return:  success if file is removed
+    keeping uploaded sheets for now, used as a handler for http calls from filepond for now.
+    """
+    return ''
+
+
+@admin.post('/api/csv/analyze')
+@roles_required('Admin')
+def api_csv_analyze():
+    # locate file
+    filename = request.json.get('file').get('filename')
+    import_dir = Path(current_app.config.get('IMPORT_DIR'))
+
+    filepath = (import_dir / filename).as_posix()
+    su = SheetUtils(filepath)
+    result = su.parse_sheet()
+    # print(Bulletin.get_columns())
+    # result['fields'] = Bulletin.get_columns()
+    if result:
+        return json.dumps(result)
+    else:
+        return 'Problem parsing sheet file', 417
+
+
+# Excel sheet selector
+@admin.post('/api/xls/sheets')
+@roles_required('Admin')
+def api_xls_sheet():
+    filename = request.json.get('file').get('filename')
+    import_dir = Path(current_app.config.get('IMPORT_DIR'))
+
+    filepath = (import_dir / filename).as_posix()
+    su = SheetUtils(filepath)
+    sheets = su.get_sheets()
+    # print(Bulletin.get_columns())
+    # result['fields'] = Bulletin.get_columns()
+    return json.dumps(sheets)
+
+
+@admin.post('/api/xls/analyze')
+@roles_required('Admin')
+def api_xls_analyze():
+    # locate file
+    filename = request.json.get('file').get('filename')
+    import_dir = Path(current_app.config.get('IMPORT_DIR'))
+
+    filepath = (import_dir / filename).as_posix()
+    su = SheetUtils(filepath)
+    sheet = request.json.get('sheet')
+    result = su.parse_xsheet(sheet)
+
+    # print(result['head'])
+    # print(Bulletin.get_columns())
+    # result['fields'] = Bulletin.get_columns()
+    if result:
+        return Response(json.dumps(result, sort_keys=False), content_type='application/json'), 200
+    else:
+        return 'Problem parsing sheet file', 417
+
+
+# Saved Searches
+@admin.route('/api/mappings/')
+def api_mappings():
+    """
+    Endpoint to get sheet mappings
+    :return: successful json feed of mappings or error
+    """
+    mappings = Mapping.query.all()
+    return json.dumps([map.to_dict() for map in mappings]), 200
+
+
+@admin.post('/api/mapping/')
+@roles_accepted('Admin')
+def api_mapping_create():
+    """
+    API Endpoint save a mapping object
+    :return: success if save is successful, error otherwise
+    """
+    d = request.json.get('data', None)
+
+    name = request.json.get('name', None)
+    if d and name:
+        map = Mapping()
+        map.name = name
+        map.data = d
+        map.user_id = current_user.id
+        # Important : flag json field to enable correct update
+        flag_modified(map, 'data')
+
+        map.save()
+        return {'message': 'Mapping saved successfully - Mapping ID : {}'.format(map.id), 'id': map.id}, 200
+    else:
+        return 'Error saving mapping data', 417
+
+
+@admin.put('/api/mapping/<int:id>')
+@roles_accepted('Admin')
+def api_mapping_update(id):
+    """
+    API Endpoint update a mapping object
+    :return: success if save is successful, error otherwise
+    """
+    map = Mapping.query.get(id)
+    if map:
+        data = request.json.get('data')
+        m = data.get('map', None)
+        name = request.json.get('name', None)
+        if m and name:
+            map.name = name
+            map.data = data
+            map.user_id = current_user.id
+            map.save()
+            return {'message': 'Mapping saved successfully - Mapping ID : {}'.format(map.id), 'id': map.id}, 200
+        else:
+            return "Update request missing parameters data", 417
+
+    else:
+        abort(404)
+
+
+@admin.post('/api/process-sheet')
+@roles_accepted('Admin')
+def api_process_sheet():
+    """
+    API Endpoint invoke sheet import into target model via a CSV mapping
+    :return: success if save is successful, error otherwise
+    """
+    files = request.json.get('files')
+    import_dir = Path(current_app.config.get('IMPORT_DIR'))
+    map = request.json.get('map')
+    vmap = request.json.get('vmap')
+    batch_id = request.json.get('batch')
+    sheet = request.json.get('sheet')
+    actor_config = request.json.get('actorConfig')
+
+    for file in files:
+        filename = file.get('filename')
+        filepath = (import_dir / filename).as_posix()
+        target = request.json.get('target')
+        process_sheet.delay(filepath, map, 'actor', batch_id, vmap, sheet, actor_config)
+
+    return 'Import process queued successfully! batch id: {}'.format(batch_id)
+
+
+@admin.get('/api/logs')
+@roles_accepted('Admin')
+def api_logs():
+    """
+    API Endpoint to provide status updates for a given sheet import batch id
+    """
+    batch_id = request.args.get('batch')
+    logs = Log.query.filter(Log.tag == batch_id).all()
+    logs = [log.to_dict() for log in logs]
+
+    return Response(json.dumps(logs), content_type='application/json'), 200

@@ -2,7 +2,7 @@
     <v-dialog persistent v-model="dialog" fullscreen>
 
 
-        <v-card v-if="dialog"  class="overflow-hidden card-edit">
+        <v-card v-if="dialog" class="overflow-hidden card-edit">
 
             <v-app-bar
                     absolute
@@ -20,7 +20,7 @@
 
 
                 <v-btn @click="save" :disabled="invalid" dark color="primary darken-1" small class="mx-2" depressed>
-                    {{ _('Save Bulletin')}}
+                    {{ _('Save Bulletin') }}
                 </v-btn>
                 <v-btn @click="confirmClose" icon>
                     <v-icon>mdi-close</v-icon>
@@ -46,14 +46,14 @@
                                         <v-text-field
                                                 v-if="title__"
                                                 v-model="editedItem.title"
-                                                label="{{_('Original Title')}}"
+                                                label="{{ _('Original Title') }}"
                                         ></v-text-field>
 
 
                                         <v-text-field
                                                 v-else
                                                 v-model="editedItem.title_ar"
-                                                label="{{ _('Original Title (AR)')}}"
+                                                label="{{ _('Original Title (AR)') }}"
                                                 background-color="lime lighten-5"
                                         ></v-text-field>
 
@@ -78,13 +78,13 @@
                                     <v-text-field
                                             v-if="sjac_title__"
                                             v-model="editedItem.sjac_title"
-                                            label="{{_('Title')}}"
+                                            label="{{ _('Title') }}"
                                     ></v-text-field>
 
                                     <v-text-field
                                             v-else
                                             v-model="editedItem.sjac_title_ar"
-                                            label="{{_('Title (AR)')}}"
+                                            label="{{ _('Title (AR)') }}"
                                             background-color="lime lighten-5"
                                     ></v-text-field>
 
@@ -107,7 +107,7 @@
                                         small-chips
                                         multiple
                                         v-model="editedItem.ref"
-                                        label="{{_('Ref')}}"
+                                        label="{{ _('Ref') }}"
                                 ></v-combobox>
 
                             </v-col>
@@ -123,7 +123,7 @@
                                         item-text="title"
                                         item-value="id"
                                         :multiple="true"
-                                        label="{{_('Sources')}}"
+                                        label="{{ _('Sources') }}"
                                 ></search-field>
 
 
@@ -149,7 +149,7 @@
                                         item-text="title"
                                         item-value="id"
                                         :multiple="true"
-                                        label="{{_('Labels')}}"
+                                        label="{{ _('Labels') }}"
                                 ></search-field>
                             </v-col>
 
@@ -164,7 +164,7 @@
                                         item-text="title"
                                         item-value="id"
                                         :multiple="true"
-                                        label="{{_('Verified Labels')}}"
+                                        label="{{ _('Verified Labels') }}"
                                 ></search-field>
 
                             </v-col>
@@ -179,7 +179,7 @@
                                         item-text="full_string"
                                         item-value="id"
                                         :multiple="true"
-                                        label="{{_('Locations')}}"
+                                        label="{{ _('Locations') }}"
                                 ></search-field>
 
                             </v-col>
@@ -195,7 +195,7 @@
 
                         <v-row>
                             <v-col cols="12">
-                                <global-map ref="globalmap" :value="compLocations"></global-map>
+                                <global-map :i18n="translations" ref="globalmap" :value="compLocations"></global-map>
 
                             </v-col>
                         </v-row>
@@ -213,7 +213,7 @@
 
                         <v-row>
                             <v-col col="12">
-                            <geo-locations v-model="editedItem.geoLocations"></geo-locations>
+                                <geo-locations  @locations-updated="geoLocationsUpdated" :others="editedItem.geoLocations" :i18n="translations" v-model="editedItem.geoLocations"></geo-locations>
 
 
                             </v-col>
@@ -234,7 +234,7 @@
                                         <v-text-field
                                                 class="mx-5"
                                                 v-model="relateBulletinTerm"
-                                                label="{{_('Search & Relate Bulletins')}}"
+                                                label="{{ _('Search & Relate Bulletins') }}"
                                                 @keydown.enter="searchRelatedBulletins"
                                                 @click:append="searchRelatedBulletins"
                                                 append-icon="mdi-magnify"
@@ -253,7 +253,8 @@
                                                         :key="index"
                                                 >
                                                     <!--  Related Bulletin  Card -->
-                                                    <bulletin-result :i18n="translations" :bulletin="item.bulletin" :show-hide="false">
+                                                    <bulletin-result :i18n="translations" :bulletin="item.bulletin"
+                                                                     :show-hide="false">
                                                         <!--  attach relationship form -->
                                                         <template v-slot:header>
                                                             <v-card outlined color="lime lighten-5">
@@ -272,9 +273,8 @@
                                                                                 column
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip small> Maybe</v-chip>
-                                                                            <v-chip small> Likely</v-chip>
-                                                                            <v-chip small> Certain</v-chip>
+                                                                            <v-chip v-for="item in translations.probs" small> ${item[__lang__]} </v-chip>
+
                                                                         </v-chip-group>
 
                                                                         <div class="caption">{{ _('Related As') }}</div>
@@ -283,8 +283,8 @@
                                                                                 column
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip v-for="rel in btobRelateAs" small>
-                                                                                ${rel}
+                                                                            <v-chip v-for="rel in translations.btobRelateAs" small>
+                                                                                ${rel[__lang__]}
                                                                             </v-chip>
 
                                                                         </v-chip-group>
@@ -294,7 +294,7 @@
                                                                     <v-text-field class="mt-2"
                                                                                   v-model="editedItem.bulletin_relations[index].comment"
                                                                                   dense outlined
-                                                                                  label="{{_('Comments')}}"
+                                                                                  label="{{ _('Comments') }}"
                                                                     ></v-text-field>
 
                                                                 </v-card-text>
@@ -339,7 +339,7 @@
                                         <v-text-field
                                                 class="mx-5"
                                                 v-model="relateActorTerm"
-                                                label="{{_('Search & Relate Actors')}}"
+                                                label="{{ _('Search & Relate Actors') }}"
                                                 @keydown.enter="searchRelatedActors"
                                                 @click:append="searchRelatedActors"
                                                 append-icon="mdi-magnify"
@@ -377,9 +377,9 @@
                                                                                 column
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip small> Maybe</v-chip>
-                                                                            <v-chip small> Likely</v-chip>
-                                                                            <v-chip small> Certain</v-chip>
+                                                                            <v-chip v-for="item in translations.probs"
+                                                                                small>${item[__lang__]}
+                                                                            </v-chip>
                                                                         </v-chip-group>
 
                                                                         <div class="caption">{{ _('Related As') }}</div>
@@ -389,8 +389,8 @@
                                                                                 multiple
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip v-for="r in actorConfig.btoaRelateAs"
-                                                                                    small> ${r}
+                                                                            <v-chip v-for="r in translations.btoaRelateAs"
+                                                                                    small> ${r[__lang__]}
                                                                             </v-chip>
 
                                                                         </v-chip-group>
@@ -401,7 +401,7 @@
                                                                     <v-text-field class="mt-2"
                                                                                   v-model="editedItem.actor_relations[index].comment"
                                                                                   dense outlined
-                                                                                  label="{{_('Comments')}}"
+                                                                                  label="{{ _('Comments') }}"
                                                                     ></v-text-field>
                                                                 </v-card-text>
 
@@ -445,7 +445,7 @@
                                         <v-text-field
                                                 class="mx-5"
                                                 v-model="relateIncidentTerm"
-                                                label="{{_('Search & Relate Incidents')}}"
+                                                label="{{ _('Search & Relate Incidents') }}"
                                                 @keydown.enter="searchRelatedIncidents"
                                                 @click:append="searchRelatedIncidents"
                                                 append-icon="mdi-magnify"
@@ -482,9 +482,10 @@
                                                                             column
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip small> Maybe</v-chip>
-                                                                        <v-chip small> Likely</v-chip>
-                                                                        <v-chip small> Certain</v-chip>
+                                                                        <v-chip v-for="item in translations.probs"
+                                                                                small>${item[__lang__]}
+                                                                        </v-chip>
+
                                                                     </v-chip-group>
 
                                                                     <div class="caption">Related As</div>
@@ -493,8 +494,8 @@
                                                                             column
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip v-for="r in itobRelateAs"
-                                                                                small> ${r}
+                                                                        <v-chip v-for="r in translations.itobRelateAs"
+                                                                                small> ${ r[__lang__] }
                                                                         </v-chip>
                                                                     </v-chip-group>
 
@@ -502,7 +503,7 @@
                                                                     <v-text-field class="mt-2"
                                                                                   v-model="editedItem.incident_relations[index].comment"
                                                                                   dense outlined
-                                                                                  label="{{_('Comments')}}"
+                                                                                  label="{{ _('Comments') }}"
                                                                     ></v-text-field>
                                                                 </v-card-text>
 
@@ -553,16 +554,16 @@
                                         <v-text-field class="mx-2"
                                                       :disabled="source_disabled"
                                                       v-model="editedItem.source_link"
-                                                      label="{{_('Source Link')}}"
+                                                      label="{{ _('Source Link') }}"
                                         ></v-text-field>
                                         <span class="orange--text"> ${errors[0]}</span>
                                     </validation-provider>
 
-                                    <v-checkbox small class="mx-2" label="{{_('Not Available')}}" v-model="source_alt"
+                                    <v-checkbox small class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt"
                                                 small>
                                     </v-checkbox>
 
-                                    <v-switch small class="mx-2" label="{{_('Private')}}"
+                                    <v-switch small class="mx-2" label="{{ _('Private') }}"
                                               v-model="editedItem.source_link_type"
                                               small>
                                     </v-switch>
@@ -573,7 +574,7 @@
 
                             </v-col>
                             <v-col cols="12" md="3">
-                                <pop-date-time-field time-label="{{_('Time')}}"  label="{{_('Publish Date')}}"
+                                <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
                                                      v-model="editedItem.publish_date"></pop-date-time-field>
 
 
@@ -581,7 +582,7 @@
 
                             <v-col cols="12" md="3">
 
-                                <pop-date-time-field time-label="{{ _('Time')  }}" label="{{_('Documentation Date')}}"
+                                <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
                                                      v-model="editedItem.documentation_date"></pop-date-time-field>
 
                             </v-col>
@@ -601,7 +602,7 @@
                                     <v-textarea
                                             outlined
                                             v-model="editedItem.comments"
-                                            label="{{_('Comments')}}"
+                                            label="{{ _('Comments') }}"
                                     >
 
                                     </v-textarea>
@@ -612,10 +613,12 @@
                             <v-col cols="12" md="4">
                                 <v-select
                                         :disabled="statusDisabled"
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         :items="statusItems"
-                                        value="Human Created"
+
                                         v-model="editedItem.status"
-                                        label="{{_('Status')}}"
+                                        label="{{ _('Status') }}"
                                 ></v-select>
                             </v-col>
                         </v-row>
@@ -635,8 +638,6 @@
 
                             </v-col>
                         </v-row>
-
-
 
 
                     </v-container>

@@ -9,7 +9,7 @@
     <validation-observer v-slot="{invalid}">
         <v-card flat color="grey lighten-3" class="mx-auto pa-3">
             <v-card-title>
-                Bulk Update
+                {{ _('Bulk Update') }}
             </v-card-title>
             <v-btn
                     @click="bulkIncidentDrawer=false"
@@ -27,7 +27,7 @@
             <v-card-text>
                 <v-autocomplete
                         v-model="bulk.assigned_to_id"
-                        label="Assigned To"
+                        label="{{ _('Assigned To') }}"
                         :items="users"
                         @input.native="searchUsers"
                         @focus="searchUsers"
@@ -42,7 +42,7 @@
             <v-card-text>
                 <v-autocomplete
                         v-model="bulk.first_peer_reviewer_id"
-                        label="First Peer Reviewer"
+                        label="{{ _('Peer Reviewer') }}"
                         :items="users"
                         @input.native="searchUsers"
                         @focus="searchUsers"
@@ -57,8 +57,10 @@
 
                 <v-select
                         :items="statuses"
+                        :item-text="__lang__"
                         v-model="bulk.status"
-                        label="Status"
+                        item-value="en"
+                        label="{{ _('Status') }}"
                         clearable
                 ></v-select>
             </v-card-text>
@@ -68,7 +70,7 @@
 
                     <v-textarea
                             v-model="bulk.comments"
-                            label="Comments"
+                            label="{{ _('Comments') }}"
                     >
 
                     </v-textarea>
@@ -78,7 +80,7 @@
 
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn :disabled="invalid" @click="bulk_update" color="primary">Bulk Update Bulletins</v-btn>
+                <v-btn :disabled="invalid" @click="bulk_update" color="primary">{{ _('Bulk Update Incidents') }}</v-btn>
                 <v-spacer></v-spacer>
             </v-card-actions>
         </v-card>

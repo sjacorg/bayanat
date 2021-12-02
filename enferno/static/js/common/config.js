@@ -34,7 +34,7 @@ const vuetify = new Vuetify({
                     base: "#222",
                     lighten5: "#444"
                 },
-                black : {
+                black: {
                     base: '#ddd',
                     '--text': '#ddd'
                 },
@@ -42,18 +42,16 @@ const vuetify = new Vuetify({
                     lighten5: '#24240f'
                 },
                 primary: '#09a7a6',
-                gv :{
+                gv: {
                     darken2: "#019985"
                 },
                 lime: {
-                    lighten5 : "#303030"
+                    lighten5: "#303030"
 
                 },
-                teal:  {
+                teal: {
                     lighten5: "#008080"
                 }
-
-
 
 
             }
@@ -136,17 +134,17 @@ const sideNav = [
     }
 ];
 
-const geoMapDefaultCenter = {lat: 33.510414,lng: 36.278336};
+const geoMapDefaultCenter = {lat: 33.510414, lng: 36.278336};
 
 // items per page for data tables
 // adjust items per page dynamically based on screen hight
 
 let itemsPerPageOptions = [10, 50, 100, 250, 500];
-if (window.innerHeight > 1000){
-    itemsPerPageOptions = [50,100,250,500]
+if (window.innerHeight > 1000) {
+    itemsPerPageOptions = [50, 100, 250, 500]
 }
-if (window.innerHeight > 1500){
-    itemsPerPageOptions = [100,250,500]
+if (window.innerHeight > 1500) {
+    itemsPerPageOptions = [100, 250, 500]
 }
 
 
@@ -167,12 +165,31 @@ Vue.component("validation-observer", VeeValidate.ValidationObserver);
 
 //register leaflet map components
 Vue.component('l-map', window.Vue2Leaflet.LMap);
-Vue.component('l-tile-layer',window.Vue2Leaflet.LTileLayer);
+Vue.component('l-tile-layer', window.Vue2Leaflet.LTileLayer);
 Vue.component('l-marker', window.Vue2Leaflet.LMarker);
 Vue.component('l-circle-marker', window.Vue2Leaflet.LCircleMarker);
 Vue.component('l-popup', window.Vue2Leaflet.LPopup);
 Vue.component('l-icon', window.Vue2Leaflet.LIcon);
+Vue.component('l-control', window.Vue2Leaflet.LControl);
+
 const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
+
+
+/*
+// Hybrid
+{
+    url: 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+    subdomains:['mt0','mt1','mt2','mt3']
+}
+
+// Terrain
+{
+    url: 'http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+    subdomains: ['mt0','mt1','mt2','mt3']
+}
+
+
+ */
 
 // define custom regexp URL validator for source links
 VeeValidate.extend("url", {
@@ -231,7 +248,7 @@ var tinyConfig = {
 
 
     block_formats: "Paragraph=p; Header 1=h1; Header 2=h2; Header 3=h3",
-    branding: false,
+    branding: true,
     default_link_target: "_blank",
 
     menubar: false,
@@ -247,209 +264,35 @@ var tinyConfig = {
 
 // adjust rich text editor theme based on mode
 if (__settings__.dark) {
-    tinyConfig.skin =  "oxide-dark";
-    tinyConfig.content_css ="dark";
+    tinyConfig.skin = "oxide-dark";
+    tinyConfig.content_css = "dark";
 }
 
 // define static data contants for different fields
+
 let i = translations;
-var mediaCats = [i.generic_, i.humans_, i.signsText_ ];
-var probs = [i.maybe_, i.likely_, i.certain_];
-var btobRelateAs = [i.duplicate_, i.other_, i.partOfSeries_, i.sameObject_, i.samePerson_,i.potentiallyDuplicate_, i.potentiallyRelated_];
-var itobRelateAs = [i.default_];
-var itoiRelateAs = [i.default_];
-var statuses = [
-    i.machineCreated_,
-    i.humanCreated_,
-    i.updated_,
-    i.peerReviewed_,
-    i.finalized_,
-    i.seniorReviewed_,
-    i.machineUpdated_,
-    i.assigned_,
-    i.secondPeerReview_,
-    i.revisited_,
-    i.seniorUpdated_,
-    i.peerReviewAssigned_
-];
+// var mediaCats = [i.generic_, i.humans_, i.signsText_];
+// var probs = [i.maybe_, i.likely_, i.certain_];
+// var btobRelateAs = [i.duplicate_, i.other_, i.partOfSeries_, i.sameObject_, i.samePerson_, i.potentiallyDuplicate_, i.potentiallyRelated_];
+// var itobRelateAs = [i.default_];
+// var itoiRelateAs = [i.default_];
+ var statuses = i.statuses_;
 
 var geoLocationTypes = [
     i.default_,
+    i.school_,
+    i.religious_,
+    i.militaryStructure_,
+    i.infrastructure_,
+    i.medical_,
     i.establishment_,
     i.park_,
 
 ]
 
-var countries = [
-i.afghanistan_,
-i.albania_,
-i.algeria_,
-i.andorra_,
-i.angola_,
-i.argentina_,
-i.armenia_,
-i.aruba_,
-i.australia_,
-i.austria_,
-i.azerbaijan_,
-i.bahrain_,
-i.bangladesh_,
-i.barbados_,
-i.belarus_,
-i.belgium_,
-i.belize_,
-i.benin_,
-i.bhutan_,
-i.bosniaandherzegovina_,
-i.botswana_,
-i.brazil_,
-i.brunei_,
-i.bulgaria_,
-i.burkinafaso_,
-i.burma_,
-i.burundi_,
-i.cambodia_,
-i.cameroon_,
-i.canada_,
-i.centralafricanrepublic_,
-i.chad_,
-i.chile_,
-i.china_,
-i.colombia_,
-i.comoros_,
-i.democraticrepublicofthecongo_,
-i.republicofthecongo_,
-i.cotedivoire_,
-i.croatia_,
-i.cuba_,
-i.cyprus_,
-i.czechia_,
-i.denmark_,
-i.djibouti_,
-i.dominica_,
-i.dominicanrepublic_,
-i.egypt_,
-i.eritrea_,
-i.estonia_,
-i.ethiopia_,
-i.finland_,
-i.france_,
-i.gabon_,
-i.gambia_,
-i.georgia_,
-i.germany_,
-i.ghana_,
-i.greece_,
-i.guinea_,
-i.guineabissau_,
-i.guyana_,
-i.haiti_,
-i.honduras_,
-i.hungary_,
-i.iceland_,
-i.india_,
-i.indonesia_,
-i.iran_,
-i.iraq_,
-i.ireland_,
-i.israel_,
-i.italy_,
-i.jamaica_,
-i.japan_,
-i.jordan_,
-i.kazakhstan_,
-i.kenya_,
-i.kosovo_,
-i.kuwait_,
-i.kyrgyzstan_,
-i.laos_,
-i.latvia_,
-i.lebanon_,
-i.liberia_,
-i.libya_,
-i.liechtenstein_,
-i.lithuania_,
-i.luxembourg_,
-i.macedonia_,
-i.madagascar_,
-i.malawi_,
-i.malaysia_,
-i.mali_,
-i.malta_,
-i.mauritania_,
-i.mauritius_,
-i.micronesia_,
-i.moldova_,
-i.monaco_,
-i.mongolia_,
-i.montenegro_,
-i.morocco_,
-i.mozambique_,
-i.namibia_,
-i.nauru_,
-i.nepal_,
-i.netherlands_,
-i.newzealand_,
-i.nicaragua_,
-i.niger_,
-i.nigeria_,
-i.northkorea_,
-i.norway_,
-i.oman_,
-i.pakistan_,
-i.palestine_,
-i.panama_,
-i.philippines_,
-i.poland_,
-i.portugal_,
-i.qatar_,
-i.romania_,
-i.russia_,
-i.rwanda_,
-i.saudiarabia_,
-i.senegal_,
-i.serbia_,
-i.seychelles_,
-i.sierraleone_,
-i.slovakia_,
-i.slovenia_,
-i.somalia_,
-i.southafrica_,
-i.southsudan_,
-i.spain_,
-i.srilanka_,
-i.sudan_,
-i.swaziland_,
-i.sweden_,
-i.switzerland_,
-i.syria_,
-i.taiwan_,
-i.tajikistan_,
-i.tanzania_,
-i.thailand_,
-i.togo_,
-i.tonga_,
-i.trinidadandtobago_,
-i.tunisia_,
-i.turkey_,
-i.turkmenistan_,
-i.tuvalu_,
-i.uganda_,
-i.ukraine_,
-i.unitedarabemirates_,
-i.unitedkingdom_,
-i.unitedstates_,
-i.uruguay_,
-i.uzbekistan_,
-i.venezuela_,
-i.vietnam_,
-i.yemen_,
-i.zambia_,
-i.zimbabwe_,
-i.other_,
-]
+var countries = i.countries_;
 
-// helper protoype functions
+// helper prototype functions
 
 // removes an item from the array based on its id
 Array.prototype.removeById = function (id) {
@@ -474,11 +317,90 @@ String.prototype.getFilename = function () {
 
 }
 
+//helper method to translate front-end strings using an array of translation objects (constructed in i18n.jinja2)
+String.prototype.translate = function (lang, search) {
+
+    if (lang == 'ar') {
+        let translation = search.filter(x => x.en == this).pop();
+
+        if (translation.ar) {
+            return translation.ar;
+        } else {
+            return this;
+        }
+
+
+    }
+    return this
+}
+
+String.prototype.toHHMMSS = function () {
+    var sec_num = parseInt(this, 10); // don't forget the second param
+    var hours = Math.floor(sec_num / 3600);
+    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+    if (hours < 10) {
+        hours = "0" + hours;
+    }
+    if (minutes < 10) {
+        minutes = "0" + minutes;
+    }
+    if (seconds < 10) {
+        seconds = "0" + seconds;
+    }
+    return hours + ':' + minutes + ':' + seconds;
+}
+
+
 String.prototype.formatName = function () {
     let firstlast = this.split(' ');
     return firstlast[0].substr(0, 1).toUpperCase() + '.' + firstlast[1];
 
 }
+
+// global helper methods for geolocations
+
+var aggregateLocations = function (bulletin) {
+
+    let locations = []
+
+    // aggregate locations, add a color identifier
+    if (bulletin.locations && bulletin.locations.length) {
+        let locs = bulletin.locations.filter(x => x.lat && x.lng);
+        locs.map(x => {
+            x.color = '#00a1f1';
+            return x
+        });
+        locations = locations.concat(locs);
+
+    }
+
+    // geolocations
+    if (bulletin.geoLocations && bulletin.geoLocations.length) {
+        bulletin.geoLocations.map(x => {
+            x.color = '#ffbb00';
+            return x
+        });
+        locations = locations.concat(bulletin.geoLocations);
+    }
+    // event locations
+    if (bulletin.events && bulletin.events.length) {
+        let eventLocations = bulletin.events.filter(x => x.location).map((x, i) => {
+            //attach serial number to events for map reference
+            x.location.number = i + 1;
+            x.location.title = x.title;
+            x.location.color = '#f65314';
+
+            return x.location
+        });
+
+        locations = locations.concat(eventLocations);
+    }
+    return locations;
+
+}
+
 // global image viewer
 var viewer = new ImageViewer.FullScreenViewer();
 
@@ -488,7 +410,7 @@ var dateWithin = [
     {'text': i.oneDay_, value: '1d',},
     {'text': i.twoDays_, value: '2d',},
     {'text': i.threeDays_, value: '3d',},
-    {'text': i.fourDays_ , value: '4d',},
+    {'text': i.fourDays_, value: '4d',},
     {'text': i.fiveDays_, value: '5d',},
     {'text': i.sixDays_, value: '6d',},
     {'text': i.sevenDays_, value: '7d',},
@@ -586,5 +508,5 @@ dataUriToBlob = function (dataURI) {
     return new Blob([ia], {type: mimeString});
 }
 
-const VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b",  "mts", "lvr", "m2ts"]
-const ETL_EXTENSIONS = ["jpg", "jpeg","png","gif","doc","docx","pdf", "txt", "ttf"].concat(VID_EXT)
+const VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
+const ETL_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "doc", "docx", "pdf", "txt", "ttf"].concat(VID_EXT)

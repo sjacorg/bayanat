@@ -6,29 +6,48 @@ Vue.component("mp-field", {
         i18n: Object
 
     },
-    data: function() {
+    data: function () {
         return {
             output: null
         }
     },
-    methods : {
-      formatReporter(rep) {
-          let output = '';
-          if (rep.name){
-              output += this.i18n.name_ + ': ' + rep.name + '<br>';
-          }
-          if (rep.contact){
-              output +=  this.i18n.contact_ +': ' + rep.contact  + '<br>';
-          }
-          if (rep.relationship){
-              output += this.i18n.relationship_ + ': ' + rep.relationship  + '<br>';
-          }
-          if(output.length){
-              output = '<div class="elevation-1 my-3 pa-2 yellow lighten-5">' + output + '</div>';
-          }
-          return output;
+    methods: {
+        formatReporter(rep) {
+            let output = '';
+            if (rep.name) {
+                output += this.i18n.name_ + ': ' + rep.name + '<br>';
+            }
+            if (rep.contact) {
+                output += this.i18n.contact_ + ': ' + rep.contact + '<br>';
+            }
+            if (rep.relationship) {
+                output += this.i18n.relationship_ + ': ' + rep.relationship + '<br>';
+            }
+            if (output.length) {
+                output = '<div class="elevation-1 my-3 pa-2 yellow lighten-5">' + output + '</div>';
+            }
+            return output;
 
-      }
+        }
+    },
+    computed: {
+        show() {
+
+            if (this.type == 1) {
+                if (this.field) {
+                    return true
+                }
+                return false;
+            } else {
+                if (this.field && this.field.length && Object.keys(this.field[0]).length) {
+                    return true;
+                }
+                return false;
+
+            }
+
+
+        }
     },
     mounted() {
         this.output = this.field;
@@ -43,22 +62,21 @@ Vue.component("mp-field", {
         }
 
 
-
-        if (this.type == 1){
+        if (this.type == 1) {
 
             if (this.field && this.field.opts) {
-            this.output = this.field.opts +  ': ';
+                this.output = this.field.opts + ': ';
             }
 
             if (this.field && this.field.details) {
-            this.output += this.field.details || '-';
+                this.output += this.field.details || '-';
             }
 
         }
 
-        if (this.type==2) {
-                let out = ''
-            if (this.field && this.field.length){
+        if (this.type == 2) {
+            let out = ''
+            if (this.field && this.field.length) {
                 for (x of this.field) {
                     out += this.formatReporter(x);
 
@@ -72,14 +90,14 @@ Vue.component("mp-field", {
     },
 
 
-
     template: `
-         <v-sheet v-if="field" class="pa-1 pb-2 mb-2" color="transparent">
-        <div class="caption grey--text text--darken-1">{{title}}</div>
-        
-        <span v-html="output"></span>
-        </v-sheet>
-    
+      <v-sheet v-if="show" class="pa-1 pb-2 mb-2" color="transparent">
+
+      <div class="caption grey--text text--darken-1">{{ title }}</div>
+
+      <span v-html="output"></span>
+      </v-sheet>
+
     `
 
 });

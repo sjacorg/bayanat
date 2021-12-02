@@ -122,6 +122,7 @@ class Config(object):
     # pybabel compile -d enferno/translations
 
     MAPS_API_ENDPOINT = os.environ.get('MAPS_API_ENDPOINT', 'https://{s}.tile.osm.org/{z}/{x}/{y}.png')
+    GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
     # Missing persons
     MISSING_PERSONS = (os.environ.get('MISSING_PERSONS', 'False') == 'True')
@@ -138,6 +139,9 @@ class Config(object):
     # the time in seconds at which a batch of deduplication items is processed
     DEDUP_INTERVAL = 3
 
+    #Sheet import tool settings
+    SHEET_IMPORT = (os.environ.get('SHEET_IMPORT', 'False') == 'True')
+    IMPORT_DIR = 'enferno/imports'
 
 
 class ProdConfig(Config):

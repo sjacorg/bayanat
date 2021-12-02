@@ -132,8 +132,8 @@ class User(UserMixin, db.Model, BaseMixin):
             hide = True
 
         if hide:
-            name = 'user-{}'.format(self.id)
-            username = self.fs_uniquifier
+            name = ''
+            username = ''
         else:
             name = self.name
             username = self.username
@@ -149,9 +149,9 @@ class User(UserMixin, db.Model, BaseMixin):
     def to_dict(self, hide_name=False):
         name = self.name
         if hide_name:
-            name = 'user {}'.format(self.id)
-            email = name + '@***.com'
-            name = 'user-{}'.format(self.id)
+            name = ''
+            email = ''
+            name = ''
 
         return {
                 'id': self.id,

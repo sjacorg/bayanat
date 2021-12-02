@@ -81,7 +81,7 @@
                                     <v-icon>mdi-checkbox-blank-outline</v-icon>
                                 </v-btn>
 
-                              <v-btn @click="bulkActorDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>Bulk update</v-btn>
+                              <v-btn @click="bulkActorDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>{{ _('Bulk update') }}</v-btn>
 
                             </template>
 
@@ -209,9 +209,8 @@
 <script src="/static/js/components/MPField.js?v={{g.version}}"></script>
 
     <script src="/static/js/mixins/media-mixin.js?v={{g.version}}"></script>
-<script src="/static/js/actorConfig.js?v={{g.version}}"></script>
 <script src="/static/js/components/PdfViewer.js?v={{g.version}}"></script>
-<script src="/static/js/mp.js?v={{g.version}}"></script>
+
 
 <script>
   let app = new Vue({
@@ -257,7 +256,6 @@
 
 
       // Load actor config
-      actorConfig: actorConfig,
 
       // load countries from global config
       countries: countries,
@@ -277,7 +275,7 @@
 
 
 
-      statusItems: ["Human Created"],
+
 
       // search and relate actor dialog vars
       relateActorDialog: false,
@@ -316,7 +314,7 @@
       eventtypes: [],
 
       statuses: statuses,
-      statusItems : ['Human Created'],
+      statusItems: statuses,
       statusDisabled : false,
 
 
@@ -383,7 +381,7 @@
         { text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable:false },
         { text: "{{_('1st Reviewer')}}", value: "first_peer_reviewer.name", width: 130, sortable:false },
         {% endif %}
-        { text: "{{_('Status')}}", value: "status",sortable: false },
+        { text: "{{_('Status')}}", value: "_status",sortable: false },
         { text: "{{_('Actions')}}", value: "action", sortable: false, width: 100 }
       ],
 
@@ -775,27 +773,26 @@
           // edit existing bulletin mode
           if (this.has_role(this.currentUser, 'Admin')){
 
-          this.statusItems = this.statuses;
           this.statusDisabled = false;
           return;
         }
 
         // else is a standard user
-          this.statusItems = statuses;
+          this.statusItems = this.statuses;
 
           if (this.editedItem.status == 'Assigned'){
-            this.editedItem.status = "Updated";
+            this.editedItem.status = this.statusItems[2].en;
           }
 
           if (this.editedItem.status == 'Peer Reviewed'){
-            this.editedItem.status = "Revisited";
+            this.editedItem.status = this.statusItems[9].en;
           }
 
           this.statusDisabled = true;
         } else {
           // new bulletin mode
-          this.statusItems = ["Human Created"];
-          this.editedItem.status = "Human Created";
+
+          this.editedItem.status = this.statusItems[1].en;
           this.statusDisabled = true;
 
         }

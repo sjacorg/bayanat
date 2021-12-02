@@ -14,7 +14,7 @@ let mediaMixin = {
     relateMediaDialog: false,
 
     medias: [],
-    mediaCats: mediaCats,
+    mediaCats: translations.mediaCats,
 
 
     //media edit / create item

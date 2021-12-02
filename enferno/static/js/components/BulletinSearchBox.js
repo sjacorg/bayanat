@@ -213,7 +213,7 @@ Vue.component('bulletin-search-box', {
                                 v-model="q.assigned"
                                 
                         >
-                            <v-chip :value="user.id" small label v-for="user in users" filter
+                            <v-chip :value="user.id" small label v-if="user.name != ''" v-for="user in users" filter
                                     outlined>{{user.name}}</v-chip>
                         </v-chip-group>
                     </v-col>
@@ -232,7 +232,7 @@ Vue.component('bulletin-search-box', {
                                 multiple
                                 v-model="q.reviewer"
                         >
-                            <v-chip :value="user.id" label small v-for="user in users" filter
+                            <v-chip :value="user.id" label small v-if="user.name != ''" v-for="user in users" filter
                                     outlined>{{user.name}}</v-chip>
                         </v-chip-group>
                     </v-col>
@@ -249,8 +249,8 @@ Vue.component('bulletin-search-box', {
 
                                 v-model="q.status"
                         >
-                            <v-chip :value="status" label small v-for="status in statuses" filter
-                                    outlined>{{status}}</v-chip>
+                            <v-chip :value="status.en" label small v-for="status in statuses" filter
+                                    outlined>{{status[__lang__]}}</v-chip>
                         </v-chip-group>
 
                     </v-col>

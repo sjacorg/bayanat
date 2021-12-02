@@ -1,6 +1,6 @@
 # import datetime
 import json
-import os
+import os, re
 from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -12,6 +12,7 @@ from sqlalchemy import event
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
+from flask_babelex import gettext
 
 from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
@@ -94,7 +95,7 @@ class Source(db.Model, BaseMixin):
         return [{'id': x[0], 'title': x[2]} for x in result]
 
     @staticmethod
-    def find_by_ids(ids:list):
+    def find_by_ids(ids: list):
         """
         finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
         :return: matching records
@@ -132,6 +133,14 @@ class Source(db.Model, BaseMixin):
         for source in sources:
             children += source.sub_source
         return children
+
+    @staticmethod
+    def find_by_title(title):
+        ar = Source.query.filter(Source.title_ar.ilike(title)).first()
+        if ar:
+            return ar
+        else:
+            return Source.query.filter(Source.title.ilike(title)).first()
 
     # import csv data into db
     @staticmethod
@@ -268,6 +277,14 @@ class Label(db.Model, BaseMixin):
             children += label.sub_label
         return children
 
+    @staticmethod
+    def find_by_title(title):
+        ar = Label.query.filter(Label.title_ar.ilike(title)).first()
+        if ar:
+            return ar
+        else:
+            return Label.query.filter(Label.title.ilike(title)).first()
+
     # populate object from json data
     def from_json(self, json):
         self.title = json["title"]
@@ -350,6 +367,11 @@ class Eventtype(db.Model, BaseMixin):
 
         return self
 
+    @staticmethod
+    def find_by_title(title):
+        # search
+        return Eventtype.query.filter(Eventtype.title.ilike(title.strip())).first()
+
     # imports data from csv
     @staticmethod
     def import_csv(file_storage):
@@ -430,10 +452,11 @@ class Event(db.Model, BaseMixin):
 
         from_date = json.get('from_date', None)
         if from_date:
-            self.from_date = from_date
+            self.from_date = DateHelper.parse_date(from_date)
+
         to_date = json.get('to_date', None)
         if to_date:
-            self.to_date = to_date
+            self.to_date = DateHelper.parse_date(to_date)
 
         if "estimated" in json:
             self.estimated = json["estimated"]
@@ -476,7 +499,8 @@ class Media(db.Model, BaseMixin):
             "fileType": self.media_file_type if self.media_file_type else None,
             "filename": self.media_file if self.media_file else None,
             "etag": getattr(self, 'etag', None),
-            "time": getattr(self, 'time', None)
+            "time": getattr(self, 'time', None),
+            "duration": self.duration
         }
 
     def to_json(self):
@@ -606,6 +630,14 @@ class Location(db.Model, BaseMixin):
             return [c.id for c in childs] + [self.id]
         else:
             return [c.id for c in childs]
+
+    @staticmethod
+    def find_by_title(title):
+        ar = Location.query.filter(Location.title_ar.ilike(title)).first()
+        if ar:
+            return ar
+        else:
+            return Location.query.filter(Location.title.ilike(title)).first()
 
     # custom serialization method
     def to_dict(self):
@@ -788,19 +820,15 @@ class GeoLocation(db.Model, BaseMixin):
     latlng = db.Column(Geometry('POINT'))
     bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
 
-
-
     def to_dict(self):
-
         return {
-        'id': self.id,
-        'title': self.title,
-        'type': self.type,
-        'lat' : to_shape(self.latlng).x,
-        'lng': to_shape(self.latlng).y,
-        'comment': self.comment
+            'id': self.id,
+            'title': self.title,
+            'type': self.type,
+            'lat': to_shape(self.latlng).x,
+            'lng': to_shape(self.latlng).y,
+            'comment': self.comment
         }
-
 
 
 # joint table
@@ -1157,11 +1185,9 @@ class Bulletin(db.Model, BaseMixin):
         backref=db.backref("bulletins", lazy="dynamic"),
     )
 
-
     geo_locations = db.relationship(
         "GeoLocation", backref="bulletin",
     )
-
 
     labels = db.relationship(
         "Label",
@@ -1315,7 +1341,7 @@ class Bulletin(db.Model, BaseMixin):
             for geo in geo_locations:
                 gid = geo.get('id')
                 if not gid:
-                    #new geolocation
+                    # new geolocation
                     g = GeoLocation()
                     g.title = geo.get('title')
                     g.type = geo.get('type')
@@ -1323,14 +1349,14 @@ class Bulletin(db.Model, BaseMixin):
                     g.comment = geo.get('comment')
                     g.save()
                 else:
-                    #geolocation exists // update
+                    # geolocation exists // update
                     g = GeoLocation.query.get(gid)
                     g.title = geo.get('title')
                     g.type = geo.get('type')
+                    g.latlng = 'POINT({} {})'.format(geo.get('lat'), geo.get('lng'))
                     g.save()
                 final_locations.append(g)
             self.geo_locations = final_locations
-
 
         # Sources
         if "sources" in json:
@@ -1703,6 +1729,7 @@ class Bulletin(db.Model, BaseMixin):
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
             "status": self.status,
+            "_status": gettext(self.status),
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
         }
@@ -1747,6 +1774,13 @@ class Bulletin(db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict())
+
+    @staticmethod
+    def get_columns():
+        columns = []
+        for column in Bulletin.__table__.columns:
+            columns.append(column.name)
+        return columns
 
 
 # joint table
@@ -1950,7 +1984,7 @@ class Actor(db.Model, BaseMixin):
         posture = db.Column(db.Text)
         skin_markings = db.Column(JSON)
         handedness = db.Column(db.String)
-        glasses = db.Column(db.String)
+        glasses = db.Column(db.Boolean)
         eye_color = db.Column(db.String)
         dist_char_con = db.Column(db.String)
         dist_char_acq = db.Column(db.String)
@@ -2317,15 +2351,34 @@ class Actor(db.Model, BaseMixin):
         mp['height'] = str(self.height) if self.height else None
         mp['weight'] = str(self.weight) if self.weight else None
         mp['physique'] = getattr(self, 'physique')
+        mp['_physique'] = getattr(self, 'physique')
+
         mp['hair_loss'] = getattr(self, 'hair_loss')
+        mp['_hair_loss'] = gettext(self.hair_loss)
+
         mp['hair_type'] = getattr(self, 'hair_type')
+        mp['_hair_type'] = gettext(self.hair_type)
+
         mp['hair_length'] = getattr(self, 'hair_length')
+        mp['_hair_length'] = gettext(self.hair_length)
+
         mp['hair_color'] = getattr(self, 'hair_color')
+        mp['_hair_color'] = gettext(self.hair_color)
+
         mp['facial_hair'] = getattr(self, 'facial_hair')
+        mp['_facial_hair'] = gettext(self.facial_hair)
+
         mp['posture'] = getattr(self, 'posture')
         mp['skin_markings'] = getattr(self, 'skin_markings')
+        if self.skin_markings and self.skin_markings['opts']:
+            mp['_skin_markings'] = [gettext(item) for item in self.skin_markings['opts']]
+
+
         mp['handedness'] = getattr(self, 'handedness')
+        mp['_handedness'] = gettext(self.handedness)
         mp['eye_color'] = getattr(self, 'eye_color')
+        mp['_eye_color'] = gettext(self.eye_color)
+
         mp['glasses'] = getattr(self, 'glasses')
         mp['dist_char_con'] = getattr(self, 'dist_char_con')
         mp['dist_char_acq'] = getattr(self, 'dist_char_acq')
@@ -2347,6 +2400,7 @@ class Actor(db.Model, BaseMixin):
         mp['dental_treatments'] = getattr(self, 'dental_treatments')
         mp['dental_habits'] = getattr(self, 'dental_habits')
         mp['case_status'] = getattr(self, 'case_status')
+        mp['_case_status'] = gettext(self.case_status)
         mp['reporters'] = getattr(self, 'reporters')
         mp['identified_by'] = getattr(self, 'identified_by')
         mp['family_notified'] = getattr(self, 'family_notified')
@@ -2524,10 +2578,14 @@ class Actor(db.Model, BaseMixin):
             "last_name_ar": self.last_name_ar or None,
             "mother_name": self.mother_name or None,
             "mother_name_ar": self.mother_name_ar or None,
-            "sex": self.sex or None,
-            "age": self.age or None,
+            "sex": self.sex,
+            "_sex": gettext(self.sex),
+            "age": self.age,
+            "_age": gettext(self.age),
             "civilian": self.civilian or None,
-            "actor_type": self.actor_type or None,
+            "_civilian": gettext(self.civilian),
+            "actor_type": self.actor_type,
+            "_actor_type": gettext(self.actor_type),
             "occupation": self.occupation or None,
             "occupation_ar": self.occupation_ar or None,
             "position": self.position or None,
@@ -2537,6 +2595,7 @@ class Actor(db.Model, BaseMixin):
             "family_status": self.family_status or None,
             "family_status_ar": self.family_status_ar or None,
             "ethnography": self.ethnography or None,
+
             "nationality": self.nationality or None,
             "national_id_card": self.national_id_card or None,
             # assigned to
@@ -2577,12 +2636,17 @@ class Actor(db.Model, BaseMixin):
             else None,
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
-            "status": self.status if self.status else None,
+            "status": self.status,
+            "_status": gettext(self.status),
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
         }
+        # custom translation handler for ethnography and nationality
+        if self.ethnography:
+            actor['_ethnography'] = [gettext(item) for item in self.ethnography]
+        if self.nationality:
+            actor['_nationality'] = [gettext(item) for item in self.nationality]
         # handle missing actors mode
-
         if cfg.MISSING_PERSONS:
             mp = self.mp_json()
             actor.update(mp)
@@ -2613,6 +2677,17 @@ class Actor(db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict())
+
+
+
+    def validate(self):
+        """
+        a helper method to validate actors upon setting values from CSV row, invalid actors can be dropped.
+        :return:
+        """
+        if not self.name:
+            return False
+        return True
 
 
 # Incident to bulletin uni-direction relation
@@ -3636,3 +3711,67 @@ class Query(db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict())
+
+
+class Mapping(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for sheet import mappings
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship("User", backref="mappings", foreign_keys=[user_id])
+    data = db.Column(JSON)
+
+    # serialize data
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'data': self.data,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+
+class Log(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for log table
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    batch_id = db.Column(db.String, index=True)
+    name = db.Column(db.String)
+    subject = db.Column(db.String)
+    type = db.Column(db.String)
+    tag = db.Column(db.String, index=True)
+    status = db.Column(db.String, index=True)
+    meta = db.Column(JSON)
+
+    # helper static method to create log entries
+    @staticmethod
+    def create(name, subject, type, tag, status, meta=None):
+        try:
+            log = Log()
+            log.name = name
+            log.subject = subject
+            log.type = type
+            log.tag = tag
+            log.status = status
+            log.meta = meta
+            log.save()
+
+        except Exception as e:
+            print('Error creating log entry:  {}'.format(e))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'tag': self.tag,
+            'status': self.status,
+            'meta': self.meta
+        }
+
+    def __repr__(self):
+        return '<{} - {}>'.format(self.id, self.name)

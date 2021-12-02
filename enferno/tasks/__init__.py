@@ -12,7 +12,7 @@ from enferno.user.models import Role
 from enferno.utils.data_import import DataImport
 from enferno.deduplication.models import DedupRelation
 from datetime import timedelta
-
+from enferno.utils.sheet_utils import SheetUtils
 
 
 cfg = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
@@ -238,3 +238,11 @@ def dedup_cron():
         process_dedup.delay(data[0], data[1])
 
     update_stats()
+
+
+@celery.task
+def process_sheet(filepath, map, target, batch_id,vmap, sheet, actorConfig):
+    su = SheetUtils(filepath, actorConfig)
+    su.import_sheet(map, target, batch_id, vmap, sheet)
+
+

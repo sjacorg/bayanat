@@ -116,7 +116,9 @@
               <!-- cagtegory -->
               <v-select
                 v-model="editedMedia.category"
-                :items="mediaCats"
+                :item-text="__lang__"
+                item-value="en"
+                :items="translations.mediaCats"
                 label="Media Category"
               ></v-select>
             </v-card>

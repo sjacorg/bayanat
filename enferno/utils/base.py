@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from flask_babelex import gettext
 from enferno.extensions import db
 
 
@@ -30,7 +30,8 @@ class BaseMixin(object):
             'name': getattr(self, 'name', ''),
             'assigned_to': at,
             'first_peer_reviewer': fp,
-            'status': getattr(self, 'status', '')
+            'status': getattr(self, 'status', ''),
+            "_status": gettext(self.status)
 
         }
         return output

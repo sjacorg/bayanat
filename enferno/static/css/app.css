@@ -108,6 +108,10 @@ button.swh {
     font-size: 14px;
 }
 
+.fp-wrap .filepond--root .filepond--drop-label {
+    min-height: 120px;
+}
+
 /* draggable dialogs */
 .v-dialog.v-dialog--active .card-header {
     /* cursor: grab; */
@@ -119,7 +123,7 @@ button.swh {
 }
 
 /* resolve map overlap conflict */
-.v-dialog.v-dialog--active  .card-header {
+.v-dialog.v-dialog--active .card-header {
     z-index: 1200;
 }
 
@@ -337,4 +341,90 @@ input[type="date"]::-webkit-input-placeholder {
 .leaflet-popup-content .chipwrap {
     white-space: normal;
     height: auto;
+}
+
+
+/* csv import */
+
+.drag-area {
+    display: block;
+    padding: 2px;
+    min-width: 75px;
+
+
+}
+
+.ghost, .sortable-ghost {
+    opacity: 0.3;
+    background: #c8ebfb;
+}
+
+.flip-list-move {
+    transition: transform 0.5s;
+}
+
+.no-move {
+    transition: transform 0s;
+}
+
+
+.list-group {
+    min-height: 20px;
+}
+
+.list-group-item {
+    cursor: move;
+}
+
+.list-group-item i {
+    cursor: pointer;
+}
+
+.drop {
+    min-width: 40px;
+    min-height: 28px;
+    display: grid;
+    place-content: center;
+    background: #fcfce9;
+    box-shadow: inset 3px 2px 13px -8px #00000096;
+    border: 1px solid #ddd;
+    border-radius: 9px;
+    margin: 0 5px;
+
+}
+
+.drop .v-chip.ma-1 {
+    margin: 0 !important;
+}
+
+.d-caption {
+    padding: 2px;
+    font-weight: bold;
+}
+
+
+.csv-panel {
+    overflow-y: scroll;
+    height: calc(100vh - 260px);
+
+}
+
+.d-sep {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 32px;
+    margin: auto;
+    width: 48px;
+    padding: 4px;
+    text-align: center;
+}
+
+
+.media-card .etag {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+
+
+
 }

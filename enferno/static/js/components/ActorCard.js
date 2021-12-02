@@ -3,6 +3,7 @@ Vue.component("actor-card", {
     watch: {
         actor: function (b, n) {
 
+
             if (!this.$root.currentUser.view_simple_history) {
                 this.log = false;
             }
@@ -15,21 +16,21 @@ Vue.component("actor-card", {
 
     methods: {
         probability(item) {
-            return probs[item.probability]
+            return translations.probs[item.probability][__lang__];
         },
         actor_related_as(item) {
             if (this.actor.id < item.actor.id) {
-                return actorConfig.atoaRelateAs[item.related_as].text;
+                return translations.atoaRelateAs[item.related_as][__lang__].text;
             } else {
-                return actorConfig.atoaRelateAs[item.related_as].revtext;
+                return translations.atoaRelateAs[item.related_as][__lang__].revtext;
             }
         },
         bulletin_related_as(rid) {
-            return actorConfig.btoaRelateAs[rid];
+            return translations.btoaRelateAs[rid][__lang__];
 
         },
         incident_related_as(item) {
-            return actorConfig.itoaRelateAs[item.related_as];
+            return translations.itoaRelateAs[item.related_as][__lang__];
 
         },
 
@@ -144,12 +145,12 @@ Vue.component("actor-card", {
       <uni-field :caption="i18n.lastName_" :english="actor.last_name" :arabic="actor.last_name_ar"></uni-field>
       <div class="d-flex">
         <uni-field :caption="i18n.mothersName_" :english="actor.mother_name" :arabic="actor.mother_name_ar"></uni-field>
-        <uni-field :caption="i18n.sex_" :english="actor.sex"></uni-field>
-        <uni-field :caption="i18n.age_" :english="actor.age"></uni-field>
+        <uni-field :caption="i18n.sex_" :english="actor._sex"></uni-field>
+        <uni-field :caption="i18n.age_" :english="actor._age"></uni-field>
       </div>
       <div class="d-flex">
-        <uni-field :caption="i18n.civilian_" :english="actor.civilian"></uni-field>
-        <uni-field :caption="i18n.actorType_" :english="actor.actor_type"></uni-field>
+        <uni-field :caption="i18n.civilian_" :english="actor._civilian"></uni-field>
+        <uni-field :caption="i18n.actorType_" :english="actor._actor_type"></uni-field>
 
       </div>
       <uni-field :caption="i18n.birthDate_" :english="actor.birth_date"></uni-field>
@@ -174,13 +175,13 @@ Vue.component("actor-card", {
       <v-card v-if="actor.ethnography && actor.ethnography.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
         <div class="caption grey--text mr-2">{{ i18n.ethnographicInfo_ }}</div>
-        <v-chip x-small v-for="e in actor.ethnography" class="caption black--text mx-1">{{ e }}</v-chip>
+        <v-chip x-small v-for="e in actor._ethnography" class="caption black--text mx-1">{{ e }}</v-chip>
 
       </v-card>
       <v-card v-if="actor.nationality && actor.nationality.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
         <div class="caption grey--text mr-2">{{ i18n.nationalities_ }}</div>
-        <v-chip x-small v-for="n in actor.nationality" class="caption black--text mx-1">{{ n }}</v-chip>
+        <v-chip x-small v-for="n in actor._nationality" class="caption black--text mx-1">{{ n }}</v-chip>
 
       </v-card>
 
@@ -268,10 +269,10 @@ Vue.component("actor-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip v-if="item.related_as!=null" color="grey lighten-4" small
                         label>{{ actor_related_as(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+                <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 
@@ -289,9 +290,9 @@ Vue.component("actor-card", {
             <template v-slot:header>
               <v-sheet color="yellow lighten-5" class="pa-2">
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.probability" class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small label>{{ bulletin_related_as(r) }}</v-chip>
-                <v-chip class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+                <v-chip v-if="item.comment" class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 
@@ -311,9 +312,9 @@ Vue.component("actor-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+                <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.related_as" color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
+                <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 

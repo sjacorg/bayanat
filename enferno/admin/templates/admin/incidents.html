@@ -84,7 +84,7 @@
                             {% include 'admin/partials/incident_advsearch.html' %}
                           </v-expand-transition>
 
-                          {% if current_user.has_role('Admin') %}
+                          {% if current_user.roles_in(['Admin','Mod']) %}
                           <v-toolbar dense  color="grey lighten-4" flat >
 
                             <template v-if="bulkIcons">
@@ -95,7 +95,7 @@
                                 </v-btn>
 
 
-                                <v-btn @click="bulkIncidentDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>Bulk update</v-btn>
+                                <v-btn @click="bulkIncidentDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>{{ _('Bulk update') }}</v-btn>
 
 
                             </template>
@@ -203,6 +203,7 @@
 <script src="/static/js/components/IncidentResult.js?v={{g.version}}"></script>
 <script src="/static/js/components/BulletinResult.js?v={{g.version}}"></script>
 <script src="/static/js/components/ActorResult.js?v={{g.version}}"></script>
+<script src="/static/js/components/MediaCard.js?v={{g.version}}"></script>
 <script src="/static/js/components/UniField.js?v={{g.version}}"></script>
 <script src="/static/js/actorConfig.js?v={{g.version}}"></script>
 
@@ -250,7 +251,7 @@
       dialog: dialog,
       eventDialog: false,
       reviewDialog: false,
-        eventParams : '?typ=for_bulletin',
+        eventParams : '&typ=for_incident',
       reviewKey : 0,
       videoDialog: false,
       playerOptions: {},
@@ -294,7 +295,7 @@
       claimedViolations: [],
 
       statuses: statuses,
-      statusItems : ['Human Created'],
+      statusItems : statuses,
       statusDisabled : false,
 
 
@@ -706,32 +707,30 @@ toggleAdvSearch() {
       handleStatus(incident) {
         
 
-        if (this.editedItem.id) {
-          // edit existing incident mode
+          if (this.editedItem.id) {
+          // edit existing bulletin mode
           if (this.has_role(this.currentUser, 'Admin')){
-            
-          this.statusItems = this.statuses;
+
           this.statusDisabled = false;
           return;
         }
-        
-        // else is a standard user 
-          
-          this.statusItems = statuses;
+
+        // else is a standard user
+          this.statusItems = this.statuses;
+
           if (this.editedItem.status == 'Assigned'){
-            this.editedItem.status = "Updated";
+            this.editedItem.status = this.statusItems[2].en;
           }
 
           if (this.editedItem.status == 'Peer Reviewed'){
-            this.editedItem.status = "Revisited";
+            this.editedItem.status = this.statusItems[9].en;
           }
 
-          
           this.statusDisabled = true;
         } else {
-          // new incident mode 
-          this.statusItems = ["Human Created"];
-          this.editedItem.status = "Human Created";
+          // new bulletin mode
+
+          this.editedItem.status = this.statusItems[1].en;
           this.statusDisabled = true;
 
         }

@@ -292,7 +292,9 @@
 
                             <v-col cols="12" md="2">
                                 <v-select
-                                        :items="actorConfig.actorSex"
+                                        :items="translations.actorSex"
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         v-model="editedItem.sex"
                                         label="{{ _('Sex') }}"
                                 ></v-select>
@@ -300,7 +302,9 @@
 
                             <v-col cols="12" md="2">
                                 <v-select
-                                        :items="actorConfig.actorAge"
+                                        :items="translations.actorAge"
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         v-model="editedItem.age"
                                         label="{{ _('Minor/Adult') }}"
                                 ></v-select>
@@ -308,16 +312,20 @@
 
                             <v-col cols="12" md="3">
                                 <v-select
-                                        :items="actorConfig.actorCivilian"
+                                        :items="translations.actorCivilian"
                                         v-model="editedItem.civilian"
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         label="{{ _('Civilian/Non Civilian') }}"
                                 ></v-select>
                             </v-col>
 
                             <v-col md="2">
                                 <v-select
-                                        :items="actorConfig.actorTypes"
+                                        :items="translations.actorTypes"
                                         v-model="editedItem.actor_type"
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         label="{{ _('Actor Type') }}"
                                 ></v-select>
                             </v-col>
@@ -513,8 +521,10 @@
                             <v-col cols="12" md="4">
                                 <v-autocomplete
 
-                                        :items="actorConfig.actorEthno"
+                                        :items="translations.actorEthno"
                                         multiple
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         v-model="editedItem.ethnography"
                                         label="{{ _('Ethnographic Information') }}"
                                 ></v-autocomplete>
@@ -523,8 +533,9 @@
                             <v-col cols="12" md="4">
                                 <v-autocomplete
                                         multiple
-                                        :items="countries"
-                                        value=""
+                                        :items="translations.countries"
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         v-model="editedItem.nationality"
                                         label="{{ _('Nationality') }}"
                                 ></v-autocomplete>
@@ -604,9 +615,9 @@
                                                                             column
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip small> Maybe</v-chip>
-                                                                        <v-chip small> Likely</v-chip>
-                                                                        <v-chip small> Certain</v-chip>
+                                                                         <v-chip v-for="r in translations.probs"
+                                                                                    small> ${r[__lang__]}
+                                                                            </v-chip>
                                                                     </v-chip-group>
 
                                                                     <div class="caption">{{ _('Related As') }}</div>
@@ -615,11 +626,11 @@
                                                                             column
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip v-for="r in actorConfig.atoaRelateAs"
+                                                                        <v-chip v-for="r in translations.atoaRelateAs"
                                                                                 small> ${
                                                                             detectDirection(editedItem,
                                                                             editedItem.actor_relations[index].actor)
-                                                                            ? r.text: r.revtext }
+                                                                            ? r[__lang__].text: r[__lang__].revtext }
                                                                         </v-chip>
 
                                                                     </v-chip-group>
@@ -712,9 +723,9 @@
                                                                             column
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip small> Maybe</v-chip>
-                                                                        <v-chip small> Likely</v-chip>
-                                                                        <v-chip small> Certain</v-chip>
+                                                                      <v-chip v-for="r in translations.probs"
+                                                                                    small> ${r[__lang__]}
+                                                                            </v-chip>
                                                                     </v-chip-group>
 
                                                                     <div class="caption">{{ _('Related As') }}</div>
@@ -724,8 +735,8 @@
                                                                             multiple
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip v-for="r in actorConfig.btoaRelateAs"
-                                                                                small> ${r}
+                                                                        <v-chip v-for="r in translations.btoaRelateAs"
+                                                                                small> ${r[__lang__]}
                                                                         </v-chip>
                                                                     </v-chip-group>
 
@@ -816,9 +827,9 @@
                                                                         column
                                                                         active-class="primary dark"
                                                                 >
-                                                                    <v-chip small> Maybe</v-chip>
-                                                                    <v-chip small> Likely</v-chip>
-                                                                    <v-chip small> Certain</v-chip>
+                                                                     <v-chip v-for="r in translations.btoaRelateAs"
+                                                                                    small> ${r[__lang__]}
+                                                                            </v-chip>
                                                                 </v-chip-group>
 
 
@@ -997,15 +1008,19 @@
                                                 </v-col>
                                                 <v-col md="4">
                                                     <v-select label="{{_('Physique')}}"
+                                                              item-text="en"
+                                                              :item-value="__lang__"
                                                               v-model="editedItem.physique"
-                                                              :items="mp.physique"
+                                                              :items="translations.physique"
                                                     ></v-select>
 
                                                 </v-col>
                                                 <v-col md="4">
                                                     <v-select label="{{_('Hair loss')}}"
                                                               v-model="editedItem.hair_loss"
-                                                              :items="mp.hairLoss"
+                                                              :item-text="__lang__"
+                                                              item-value="en"
+                                                              :items="translations.hairLoss"
                                                     ></v-select>
 
                                                 </v-col>
@@ -1015,25 +1030,33 @@
                                                 <v-col md="3">
                                                     <v-select label="{{_('Hair type')}}"
                                                               v-model="editedItem.hair_type"
-                                                              :items="mp.hairType"
+                                                              :item-text="__lang__"
+                                                              item-value="en"
+                                                              :items="translations.hairType"
                                                     ></v-select>
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{_('Hair length')}}"
                                                               v-model="editedItem.hair_length"
-                                                              :items="mp.hairLength"
+                                                              :item-text="__lang__"
+                                                              item-value="en"
+                                                              :items="translations.hairLength"
                                                     ></v-select>
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{_('Hair color')}}"
                                                               v-model="editedItem.hair_color"
-                                                              :items="mp.hairColor"
+                                                              :item-text="__lang__"
+                                                              item-value="en"
+                                                              :items="translations.hairColor"
                                                     ></v-select>
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{_('Facial hair')}}"
                                                               v-model="editedItem.facial_hair"
-                                                              :items="mp.facialHair"
+                                                              :item-text="__lang__"
+                                                              item-value="en"
+                                                              :items="translations.facialHair"
                                                     ></v-select>
                                                 </v-col>
 
@@ -1046,18 +1069,24 @@
                                                                 label="{{_('Notes on posture and walking style')}}"
                                                     ></v-textarea>
                                                     <v-select label="{{_('Handness')}}"
-                                                              :items="mp.handedness"
+                                                              :items="translations.handness"
+                                                              :item-text="__lang__"
+                                                              item-value="en"
                                                               v-model="editedItem.handedness"></v-select>
                                                     <v-switch label="{{_('Glasses')}}"
                                                               v-model="editedItem.glasses"></v-switch>
                                                     <v-select label="{{_('Eye color')}}"
-                                                              :items="mp.eyeColor"
+                                                              :items="translations.eyeColor"
+                                                              :item-text="__lang__"
+                                                              item-value="en"
                                                               v-model="editedItem.eye_color"></v-select>
                                                 </v-col>
                                                 <v-col md="6">
                                                     <mix-ii title="{{_('Skin Markings')}}"
                                                             :i18n="translations"
-                                                            :items="mp.skinMarkings"
+                                                            :items="translations.skinMarkings"
+                                                            :item-text="__lang__"
+                                                            item-value="en"
                                                             multiple
                                                             v-model="editedItem.skin_markings"></mix-ii>
                                                 </v-col>
@@ -1176,7 +1205,10 @@
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{ _('Case status')}}" v-model="editedItem.case_status"
-                                                              :items="mp.caseStatus"></v-select>
+                                                              :item-text="__lang__"
+                                                              item-value="en"
+                                                              :items="translations.caseStatus"
+                                                    ></v-select>
                                                 </v-col>
                                             </v-row>
                                             <v-row>
@@ -1277,9 +1309,10 @@
                             <v-col cols="12" md="4">
                                 <v-select
                                         :disabled="statusDisabled"
-
+                                        :item-text="__lang__"
+                                        item-value="en"
                                         :items="statusItems"
-                                        value="Human Created"
+
                                         v-model="editedItem.status"
                                         label="{{ _('Status') }}"
                                 ></v-select>

@@ -4,6 +4,8 @@ Vue.component('geo-locations', {
         value: {
             default: []
         },
+        i18n: {},
+        others : []
 
     }
 
@@ -82,6 +84,8 @@ Vue.component('geo-locations', {
             this.addDlg = false;
             // reset edited item
             this.e = {};
+            // broadcast an event to  refresh parent global map
+            this.$emit('locations-updated')
 
 
 
@@ -124,7 +128,7 @@ Vue.component('geo-locations', {
       <v-card outlined color="grey lighten-3">
         <v-toolbar elevation="0">
           <v-toolbar-title>
-            Geo Markers
+            {{ i18n.geoMarkers_}}
           </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn @click="newLocation" fab x-small elevation="0" color="teal lighten-2">
@@ -190,7 +194,7 @@ Vue.component('geo-locations', {
       </v-card>
       <v-dialog v-if="addDlg" max-width="770" v-model="addDlg">
         <v-card elevation="0">
-          <v-card-title>Add Geo Marker
+          <v-card-title> {{ i18n.addGeoMarker_ }}
             <v-spacer></v-spacer>
             <v-btn @click="addDlg=false" icon>
               <v-icon>mdi-close</v-icon>
@@ -210,7 +214,7 @@ Vue.component('geo-locations', {
 
           </v-card-text>
           <v-card-text>
-            <geo-map v-model="e.latlng" map-height="300"></geo-map>
+            <geo-map :others="others" v-model="e.latlng" map-height="300"></geo-map>
           </v-card-text>
           <v-card-actions class="pb-3">
             <v-spacer></v-spacer>

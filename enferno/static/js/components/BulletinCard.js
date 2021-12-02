@@ -5,6 +5,7 @@ Vue.component("bulletin-card", {
         bulletin: function (val, old) {
 
 
+
             if (!this.$root.currentUser.view_simple_history) {
                 this.log = false;
             }
@@ -12,7 +13,7 @@ Vue.component("bulletin-card", {
                 this.diff = true;
             }
 
-            this.mapLocations = this.$root.aggregateLocations(this.bulletin);
+            this.mapLocations = aggregateLocations(this.bulletin);
 
         },
     },
@@ -28,16 +29,17 @@ Vue.component("bulletin-card", {
 
     methods: {
         probability(item) {
-            return probs[item.probability]
+
+            return translations.probs[item.probability][__lang__]
         },
         actor_related_as(id) {
-            return actorConfig.btoaRelateAs[id];
+            return translations.btoaRelateAs[id][__lang__];
         },
         bulletin_related_as(item) {
-            return btobRelateAs[item.related_as];
+            return translations.btobRelateAs[item.related_as][__lang__];
         },
         incident_related_as(item) {
-            return itobRelateAs[item.related_as];
+            return translations.itobRelateAs[item.related_as][__lang__];
         },
 
 
@@ -161,7 +163,7 @@ Vue.component("bulletin-card", {
       
         <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="bulletin.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{bulletin.assigned_to['name']}}</v-chip>
-        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status" > <v-icon left>mdi-delta</v-icon> {{bulletin.status}}</v-chip>
+        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status" > <v-icon left>mdi-delta</v-icon> {{bulletin._status}}</v-chip>
         
       
 
@@ -181,7 +183,7 @@ Vue.component("bulletin-card", {
       </v-card>
     
       <v-card outlined class="ma-2 pa-2" color="grey lighten-5">
-        <global-map :value="mapLocations" ></global-map>
+        <global-map :i18n="i18n" :value="mapLocations" ></global-map>
       </v-card>
 
       <!-- Sources -->
@@ -274,9 +276,9 @@ Vue.component("bulletin-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ bulletin_related_as(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+                <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.btobRelateAs" color="grey lighten-4" small label>{{ bulletin_related_as(item) }}</v-chip>
+                <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 
@@ -296,10 +298,10 @@ Vue.component("bulletin-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.probability" class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small
                         label>{{ actor_related_as(r) }}</v-chip>
-                <v-chip class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+                <v-chip v-if="item.comment" class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 
@@ -319,10 +321,10 @@ Vue.component("bulletin-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
+                <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.related_as" color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
 
-                <v-chip color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+                <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 

@@ -7,7 +7,7 @@ from flask_security import Security, SQLAlchemyUserDatastore
 
 import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
-    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation
+    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation, Log
 from enferno.admin.views import admin
 from enferno.extensions import cache, db, mail, debug_toolbar, migrate, session, bouncer, babel
 from enferno.public.views import bp_public
@@ -119,8 +119,9 @@ def register_shellcontext(app):
             'Itoi': Itoi,
             'Itob': Itob,
             'Itoa': Itoa,
+            'Log': Log,
             'Activity': Activity,
-            'Settings': Settings,
+            'Settings': Settings
         }
 
     app.shell_context_processor(shell_context)

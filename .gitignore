@@ -16,3 +16,5 @@ celerybeat-schedule.db
 enferno/media/*
 *.log
 *.csv
+*.xls
+*.xlsx

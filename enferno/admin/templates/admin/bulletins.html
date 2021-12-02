@@ -104,7 +104,7 @@
                                                     >mdi-circle-edit-outline
                                                     </v-icon
                                                     >
-                                                    Bulk update
+                                                    {{ _('Bulk update') }}
                                                 </v-btn
                                                 >
                                             </template>
@@ -119,7 +119,7 @@
                                                                      stroke="1"
                                                 ></v-progress-circular>
                                             </template>
-                                           <v-spacer></v-spacer>
+                                            <v-spacer></v-spacer>
 
                                             <div>
 
@@ -200,7 +200,8 @@
                             </v-overlay>
                             <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
                                               ref="relateBulletins"></relate-bulletins>
-                            <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors" ref="relateActors"></relate-actors>
+                            <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
+                                           ref="relateActors"></relate-actors>
                             <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
                                               ref="relateIncidents"></relate-incidents>
 
@@ -241,10 +242,20 @@
     <script src="/static/js/mixins/media-mixin.js?v={{ g.version }}"></script>
     <script src="/static/js/actorConfig.js?v={{ g.version }}"></script>
     <script src="/static/js/components/PdfViewer.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/GeoLocations.js?v={{g.version}}"></script>
-    <script src="/static/js/components/GlobalMap.js?v={{g.version}}"></script>
+    <script src="/static/js/components/GeoLocations.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/GlobalMap.js?v={{ g.version }}"></script>
+    {% if config.GOOGLE_MAPS_API_KEY  %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}" async defer></script>
+
+    {% endif %}
+    <script src="/static/js/Leaflet.GoogleMutant.js"></script>
+
+
+
+
 
     <script>
+    window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
         let app = new Vue({
             el: "#app",
@@ -259,7 +270,7 @@
 
                 "tinymce-editor": Editor, // <- Important part,
                 FilePond: vueFilePond.default(),
-                VueQueryBuilder: window.VueQueryBuilder
+
             },
 
 
@@ -267,8 +278,6 @@
 
 
                 translations: translations,
-
-
 
 
                 //global preview dialog
@@ -336,8 +345,10 @@
                 verLabels: [],
                 eventtypes: [],
 
+
+
                 statuses: statuses,
-                statusItems: ['Human Created'],
+                statusItems: statuses,
                 statusDisabled: false,
 
 
@@ -390,7 +401,7 @@
                         {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
                         {text: "{{_('1st Reviewer')}}", value: "first_peer_reviewer.name", width: 130, sortable: false},
                     {% endif %}
-                    {text: "{{_('Status')}}", value: "status", width: 150, sortable: false},
+                    {text: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
 
 
                     {text: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
@@ -454,9 +465,9 @@
             }),
 
             computed: {
-             compLocations (){
-                return this.aggregateLocations(this.editedItem);
-              },
+                compLocations() {
+                    return aggregateLocations(this.editedItem);
+                },
 
 
                 exBulletins() {
@@ -590,45 +601,16 @@
 
                 },
 
-                 aggregateLocations(bulletin) {
+                geoLocationsUpdated(){
+                   if (this.editedItem.geoLocations.length > 0){
+                    this.editedItem.geoLocations.push(this.editedItem.geoLocations.pop())
+                   }
 
-              let locations = []
 
-              // aggregate locations, add a color identifier
-              if (bulletin.locations && bulletin.locations.length) {
-                  let locs = bulletin.locations.filter(x=>x.lat && x.lng);
-                  locs.map(x => {
-                      x.color = '#00a1f1';
-                      return x
-                  });
-                  locations = locations.concat(locs);
 
-              }
+                },
 
-              // geolocations
-              if (bulletin.geoLocations && bulletin.geoLocations.length) {
-                  bulletin.geoLocations.map(x => {
-                      x.color = '#ffbb00';
-                      return x
-                  });
-                  locations = locations.concat(bulletin.geoLocations);
-              }
-              // event locations
-              if (bulletin.events && bulletin.events.length) {
-                  let eventLocations = bulletin.events.filter(x => x.location).map((x,i) => {
-                      //attach serial number to events for map reference
-                      x.location.number = i+1;
-                      x.location.title = x.title;
-                      x.location.color = '#f65314';
 
-                      return x.location
-                  });
-
-                  locations = locations.concat(eventLocations);
-              }
-              return locations;
-
-          },
 
 
                 bulkStatus() {
@@ -640,7 +622,7 @@
                             clearInterval(this.bulkTimer);
                             // default refresh to first page
                             this.options.page = 1;
-                            
+
                             this.refresh(true);
                             this.showSnack('Bulk Update is finished!')
                         } else {
@@ -711,8 +693,8 @@
                     this.loading = true;
                     const startTime = new Date()
                     let url = `/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
-                    if (cached){
-                        url += '&cache=' +new Date().getTime();
+                    if (cached) {
+                        url += '&cache=' + new Date().getTime();
                     }
                     axios.post(url, {
                         q: this.search,
@@ -811,9 +793,9 @@
                     this.sjac_title__ = true;
                 },
 
-                refresh(cached=false) {
+                refresh(cached = false) {
 
-                    this.searchBulletins(this.search,cached=cached)
+                    this.searchBulletins(this.search, cached = cached)
 
                 },
 
@@ -855,39 +837,34 @@
 
                 handleStatus(bulletin) {
 
-
                     if (this.editedItem.id) {
                         // edit existing bulletin mode
                         if (this.has_role(this.currentUser, 'Admin')) {
 
-                            this.statusItems = this.statuses;
                             this.statusDisabled = false;
                             return;
-
                         }
 
-
                         // else is a standard user
+                        this.statusItems = this.statuses;
 
-                        this.statusItems = statuses;
                         if (this.editedItem.status == 'Assigned') {
-                            this.editedItem.status = "Updated";
+                            this.editedItem.status = this.statusItems[2].en;
                         }
 
                         if (this.editedItem.status == 'Peer Reviewed') {
-                            this.editedItem.status = "Revisited";
+                            this.editedItem.status = this.statusItems[9].en;
                         }
-
 
                         this.statusDisabled = true;
                     } else {
-
                         // new bulletin mode
-                        this.statusItems = ["Human Created"];
-                        this.editedItem.status = "Human Created";
+
+                        this.editedItem.status = this.statusItems[1].en;
                         this.statusDisabled = true;
 
                     }
+
                 },
 
                 showSnack(message) {

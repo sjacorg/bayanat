@@ -1,4 +1,5 @@
-import arrow 
+import arrow
+from dateutil.parser import parse
 
 class DateHelper:
     @staticmethod
@@ -14,3 +15,16 @@ class DateHelper:
             print (e)
             return None
 
+
+
+    @staticmethod
+    def parse_date(str_date):
+        # Handle pandas naT (null dates values)
+        if (str_date != str_date):
+            return None
+        try:
+            d = parse(str(str_date))
+            return str(d)
+        except Exception as e:
+            print (e)
+            return None

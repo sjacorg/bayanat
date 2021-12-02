@@ -50,7 +50,7 @@
     <script>
       {% set settings = current_user.settings or {} %}
       window.__settings__ = JSON.parse('{{settings|tojson|safe }}');
-      window.__lang__ = "{{session.get('lang')}}";
+      window.__lang__ = "{{session.get('lang','en')}}";
       window.__MAPS_API_ENDPOINT__ = '{{config.MAPS_API_ENDPOINT}}';
 
     </script>

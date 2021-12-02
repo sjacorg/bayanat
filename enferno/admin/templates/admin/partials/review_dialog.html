@@ -1,5 +1,5 @@
 <v-dialog persistent v-model="reviewDialog" fullscreen>
-    <v-card class="overflow-hidden">
+    <v-card v-if="reviewDialog" class="overflow-hidden">
 
         <v-app-bar
                 absolute
@@ -126,8 +126,8 @@
             <v-card-text class="text-center">
 
                 <v-btn-toggle  borderless v-model="reviewItem.review_action">
-                    <v-btn small outlined color="red darken-2 " value="Needs Review">Needs Review</v-btn>
-                    <v-btn small outlined color="lime darken-2 " value="No Review Needed">No Review Needed</v-btn>
+                    <v-btn small outlined color="red darken-2 " value="Needs Review">{{ _('Needs Review')}}</v-btn>
+                    <v-btn small outlined color="lime darken-2 " value="No Review Needed">{{ _('No Review Needed')}}</v-btn>
                 </v-btn-toggle>
 
             </v-card-text>

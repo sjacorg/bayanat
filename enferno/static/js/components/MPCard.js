@@ -14,6 +14,18 @@ Vue.component("mp-card", {
 
     watch: {},
 
+    computed : {
+      showDPS(){
+          if (this.mp) {
+              if (this.mp.saw_name || this.mp.saw_address || this.mp.saw_email || this.mp.saw_phone){
+                  return true
+              }
+          }
+          return false;
+
+      }
+    },
+
 
     mounted: function () {
 
@@ -61,8 +73,8 @@ Vue.component("mp-card", {
               <mp-field :field="this.mp.pregnant_at_disappearance" :title="i18n.pregnantAtDisappearance_"></mp-field>
               <mp-field :field="this.mp.months_pregnant" :title="i18n.mpAtDisappearance_"></mp-field>
               <mp-field :field="this.mp.missing_relatives" :title="i18n.missingRelatives_"></mp-field>
-              <v-card color="yellow lighten-5" class="my-2" outlined>
-                <v-card-text>
+              <v-card v-if="showDPS" color="yellow lighten-5" class="my-2" outlined>
+                <v-card-text >
                   <h3 class="subtitle-2 mb-2 black--text">{{ i18n.detailsPersonSawLast_ }}</h3>
                   <mp-field :field="this.mp.saw_name" :title="i18n.name_"></mp-field>
                   <mp-field :field="this.mp.saw_address" :title="i18n.address_"></mp-field>
@@ -77,17 +89,17 @@ Vue.component("mp-card", {
               <mp-field :field="this.mp.personal_items" :title="i18n.personalItemsEg_"></mp-field>
               <mp-field :field="this.mp.height" :title="i18n.height_"></mp-field>
               <mp-field :field="this.mp.weight" :title="i18n.weight_"></mp-field>
-              <mp-field :field="this.mp.physique" :title="i18n.physique_"></mp-field>
-              <mp-field :field="this.mp.hair_loss" :title="i18n.hairloss_"></mp-field>
-              <mp-field :field="this.mp.hair_type" :title="i18n.hairtype_"></mp-field>
-              <mp-field :field="this.mp.hair_length" :title="i18n.hairlength_"></mp-field>
-              <mp-field :field="this.mp.hair_color" :title="i18n.haircolor_"></mp-field>
-              <mp-field :field="this.mp.facial_hair" :title="i18n.facialhair_"></mp-field>
+              <mp-field :field="this.mp._physique" :title="i18n.physique_"></mp-field>
+              <mp-field :field="this.mp._hair_loss" :title="i18n.hairloss_"></mp-field>
+              <mp-field :field="this.mp._hair_type" :title="i18n.hairtype_"></mp-field>
+              <mp-field :field="this.mp._hair_length" :title="i18n.hairlength_"></mp-field>
+              <mp-field :field="this.mp._hair_color" :title="i18n.haircolor_"></mp-field>
+              <mp-field :field="this.mp._facial_hair" :title="i18n.facialhair_"></mp-field>
               <mp-field :field="this.mp.posture" :title="i18n.postureNotes_"></mp-field>
               <mp-field type="1" :field="this.mp.skin_markings" :title="i18n.skinMarkings_"></mp-field>
-              <mp-field :field="this.mp.handedness" :title="i18n.handness_"></mp-field>
+              <mp-field :field="this.mp._handedness" :title="i18n.handness_"></mp-field>
               <mp-field :field="this.mp.glasses" :title="i18n.glasses_"></mp-field>
-              <mp-field :field="this.mp.eye_color" :title="i18n.eyecolor_"></mp-field>
+              <mp-field :field="this.mp._eye_color" :title="i18n.eyecolor_"></mp-field>
               <mp-field :field="this.mp.dist_char_con" :title="i18n.characteristicsCongenital_"></mp-field>
               <mp-field :field="this.mp.dist_char_acq" :title="i18n.characteristicsAcquired_"></mp-field>
               <mp-field :field="this.mp.physical_habits" :title="i18n.physicalHabits_"></mp-field>
@@ -107,7 +119,7 @@ Vue.component("mp-card", {
               <mp-field :field="this.mp.dental_problems" :title="i18n.dentalProblems_"></mp-field>
               <mp-field :field="this.mp.dental_treatments" :title="i18n.dentalTreatmetns_"></mp-field>
               <mp-field :field="this.mp.dental_habits" :title="i18n.dentalHabits_"></mp-field>
-              <mp-field :field="this.mp.case_status" :title="i18n.caseStatus_"></mp-field>
+              <mp-field :field="this.mp._case_status" :title="i18n.caseStatus_"></mp-field>
               <mp-field :i18n="i18n" type="2" :field="this.mp.reporters" :title="i18n.reporters_"></mp-field>
               <mp-field :field="this.mp.identified_by" :title="i18n.identifiedBy"></mp-field>
               <mp-field :field="this.mp.family_notified" :title="i18n.familyNotified_"></mp-field>

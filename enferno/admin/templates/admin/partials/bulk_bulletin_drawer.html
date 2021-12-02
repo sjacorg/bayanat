@@ -9,7 +9,7 @@
     <validation-observer v-slot="{invalid}">
         <v-card flat color="grey lighten-3" class="mx-auto pa-3">
             <v-card-title>
-                Bulk Update
+                {{ _('Bulk Update') }}
             </v-card-title>
             <v-btn
                     @click="bulkBulletinDrawer=false"
@@ -34,7 +34,7 @@
                         :return-object="false"
 
                         :multiple="false"
-                        label="Assigned To"
+                        label="{{ _('Assigned To') }}"
                 ></search-field-single>
 
 
@@ -47,7 +47,7 @@
                         item-text="name"
                         item-value="id"
                         :multiple="false"
-                        label="First Peer Reviewer"
+                        label="{{ _('Peer Reviewer') }}"
                 ></search-field-single>
 
 
@@ -55,8 +55,10 @@
             <v-card-text>
                 <v-select
                         :items="statuses"
+                        :item-text="__lang__"
                         v-model="bulk.status"
-                        label="Status"
+                        item-value="en"
+                        label="{{ _('Status') }}"
                         clearable
                 ></v-select>
             </v-card-text>
@@ -67,11 +69,11 @@
                     small-chips
                   multiple
                   v-model="bulk.ref"
-                  label="Bulletin Ref"
+                  label="{{ _('Ref') }}"
                     class="mr-2"
                 ></v-combobox>
 
-                    <v-checkbox small v-model="bulk.refReplace" label="Replace Existing"></v-checkbox>
+                    <v-checkbox small v-model="bulk.refReplace" label="{{ _('Replace Existing') }}"></v-checkbox>
                     </div>
 
             </v-card-text>
@@ -81,7 +83,7 @@
 
                 <v-textarea
                         v-model="bulk.comments"
-                        label="Comments"
+                        label="{{ _('Comments') }}"
                 >
 
                 </v-textarea>
@@ -90,7 +92,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn :disabled="invalid" @click="bulk_update" color="primary">Bulk Update Bulletins</v-btn>
+                <v-btn :disabled="invalid" @click="bulk_update" color="primary">{{ _('Bulk Update Bulletins') }}</v-btn>
 
                 <v-spacer></v-spacer>
             </v-card-actions>
