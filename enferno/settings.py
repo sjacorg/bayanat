@@ -28,9 +28,9 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Celery
-    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/10')
+    celery_broker_url = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/10')
     REDIS_BULK_DB = 11
-    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/{}'.format(REDIS_BULK_DB))
+    result_backend = os.environ.get('result_backend', 'redis://localhost:6379/{}'.format(REDIS_BULK_DB))
 
 
     # Security

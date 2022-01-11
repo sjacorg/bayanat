@@ -285,8 +285,6 @@ var geoLocationTypes = [
     i.militaryStructure_,
     i.infrastructure_,
     i.medical_,
-    i.establishment_,
-    i.park_,
 
 ]
 

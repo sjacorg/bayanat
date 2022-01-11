@@ -3,7 +3,7 @@ import os
 from collections import namedtuple
 
 from celery import Celery
-from celery.task import periodic_task
+
 
 from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory
 from enferno.extensions import db, rds
@@ -19,11 +19,11 @@ cfg = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
 
 
 
-celery = Celery('tasks', broker=cfg.CELERY_BROKER_URL)
+celery = Celery('tasks', broker=cfg.celery_broker_url)
 # remove deprecated warning
 celery.conf.update(
-    {'CELERY_ACCEPT_CONTENT': ['pickle', 'json', 'msgpack', 'yaml']})
-celery.conf.update({'CELERY_RESULT_BACKEND': os.environ.get('CELERY_RESULT_BACKEND', cfg.CELERY_RESULT_BACKEND)})
+    {'accept_content': ['pickle', 'json', 'msgpack', 'yaml']})
+celery.conf.update({'result_backend': os.environ.get('RESULT_BACKEND', cfg.result_backend)})
 celery.conf.update({'SQLALCHEMY_DATABASE_URI': os.environ.get('SQLALCHEMY_DATABASE_URI', cfg.SQLALCHEMY_DATABASE_URI)})
 celery.conf.update({'SECRET_KEY': os.environ.get('SECRET_KEY', cfg.SECRET_KEY)})
 celery.conf.add_defaults(cfg)
@@ -217,12 +217,16 @@ def process_dedup(id, user_id):
         if rds.scard('dedq') == 0:
             rds.publish('dedprocess', 2)
 
+@celery.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    seconds = int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))
+    sender.add_periodic_task(seconds, dedup_cron.s(), name='Deduplication Cron')
 
 
 
-@periodic_task(run_every=timedelta(seconds=int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))))
+# @periodic_task(run_every=timedelta(seconds=int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))))
+@celery.task
 def dedup_cron():
-
     #shut down processing when we hit 0 items in the queue or when we turn off the processing
     if rds.get('dedup') != '1' or rds.scard('dedq') == 0:
         rds.delete('dedup')
