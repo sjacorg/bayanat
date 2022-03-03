@@ -170,9 +170,35 @@
                                             >
                                                 mdi-pencil
                                             </v-icon>
+
+
+
                                         </template>
                                         <span>Edit</span>
                                     </v-tooltip>
+
+                                      <v-tooltip top>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon
+                                                    v-on="on"
+                                                    color="primary lighten-1"
+                                                    class="mr-2"
+
+                                                    @click.stop="openSelfAssign(item)"
+                                                    v-if="selfAssignAllowed(item)"
+                                            >
+                                                mdi-arrow-left-thin-circle-outline
+                                            </v-icon>
+
+
+
+                                        </template>
+                                        <span>Assign to self</span>
+                                    </v-tooltip>
+
+
+
+
 
 
                                     <v-tooltip top>
@@ -189,6 +215,8 @@
                                     </v-tooltip>
 
                                 </template>
+
+
                                 <template v-slot:no-data></template>
                             </v-data-table>
 
@@ -208,6 +236,28 @@
 
                             {% include 'admin/partials/relate_media_dialog.html' %}
                             {% include 'admin/partials/video_player_dialog.html' %}
+
+                            <v-dialog width="600" v-model="selfAssignDialog">
+                                <v-card class="pa-3">
+                                    <v-card-title>Self Assign Bulletin #${assignBulletin.id}</v-card-title>
+                                    <v-card-text>
+                                        <v-combobox
+
+                                                small-chips
+                                                multiple
+                                                v-model="assignBulletin.ref"
+                                                label="{{ _('Ref') }}"
+                                                class="mr-2"
+                                        ></v-combobox>
+                                        <v-textarea v-model="assignBulletin.comments" label="Comments"></v-textarea>
+                                    </v-card-text>
+                                    <v-card-actions>
+                                        <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign" color="primary">Assign to self
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-card>
+
+                            </v-dialog>
 
 
                             <v-snackbar v-model="snackbar">
@@ -244,8 +294,8 @@
     <script src="/static/js/components/PdfViewer.js?v={{ g.version }}"></script>
     <script src="/static/js/components/GeoLocations.js?v={{ g.version }}"></script>
     <script src="/static/js/components/GlobalMap.js?v={{ g.version }}"></script>
-    {% if config.GOOGLE_MAPS_API_KEY  %}
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}" async defer></script>
+    {% if config.GOOGLE_MAPS_API_KEY %}
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}" async defer></script>
 
     {% endif %}
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>
@@ -255,7 +305,7 @@
 
 
     <script>
-    window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
         let app = new Vue({
             el: "#app",
@@ -279,6 +329,8 @@
 
                 translations: translations,
 
+                assignBulletin: {},
+                selfAssignDialog: false,
 
                 //global preview dialog
                 preview: false,
@@ -344,7 +396,6 @@
                 labels: [],
                 verLabels: [],
                 eventtypes: [],
-
 
 
                 statuses: statuses,
@@ -500,6 +551,7 @@
                         let props = Object.values(s);
                         for (const v of props) {
                             if (v) {
+
                                 return 'yellow lighten-5';
                             }
                         }
@@ -576,11 +628,39 @@
                     this.showBulletin(this.$route.params.id);
                 }
 
+                if (this.$route.query.reltob) {
+                    this.filter_related_to_bulletin(this.$route.query.reltob);
+
+                }
+
+                if (this.$route.query.reltoa) {
+                    this.filter_related_to_actor(this.$route.query.reltoa);
+                }
+
+                if (this.$route.query.reltoi) {
+                    this.filter_related_to_incident(this.$route.query.reltoi);
+                }
+
+
                 this.$router.afterEach((to, from, next) => {
+
+                    if (this.$route.query.reltob) {
+                        this.filter_related_to_bulletin(this.$route.query.reltob);
+                    }
+
+                    if (this.$route.query.reltoa) {
+                        this.filter_related_to_actor(this.$route.query.reltoa);
+                    }
+
+                    if (this.$route.query.reltoi) {
+                        this.filter_related_to_incident(this.$route.query.reltoi);
+                    }
 
 
                     if (this.$route.params.id) {
                         this.showBulletin(this.$route.params.id);
+                    } else {
+                        this.bulletinDrawer = false;
                     }
 
                 })
@@ -589,6 +669,48 @@
             },
 
             methods: {
+
+                openSelfAssign(bulletin){
+                    this.assignBulletin = {id:bulletin.id};
+                    this.selfAssignDialog = true;
+
+                },
+
+                selfAssign(){
+
+
+
+                    axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`,{bulletin:this.assignBulletin}).then(res=>{
+                        this.showSnack('Bulletin assigned successfully.')
+                        this.searchBulletins(true)
+
+                    }).catch(err=>{
+                        this.showSnack(err.response.data);
+                    }).finally(()=>{
+                        this.selfAssignDialog = false;
+                        this.assignBulletin = {};
+
+                    });
+
+                },
+
+                filter_related_to_bulletin(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_bulletin: id}];
+                    this.searchBulletins();
+                },
+
+                filter_related_to_actor(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_actor: id}];
+                    this.searchBulletins();
+                },
+
+                filter_related_to_incident(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_incident: id}];
+                    this.searchBulletins();
+                },
 
                 previewItem(endpoint) {
 
@@ -601,16 +723,13 @@
 
                 },
 
-                geoLocationsUpdated(){
-                   if (this.editedItem.geoLocations.length > 0){
-                    this.editedItem.geoLocations.push(this.editedItem.geoLocations.pop())
-                   }
-
+                geoLocationsUpdated() {
+                    if (this.editedItem.geoLocations.length > 0) {
+                        this.editedItem.geoLocations.push(this.editedItem.geoLocations.pop())
+                    }
 
 
                 },
-
-
 
 
                 bulkStatus() {
@@ -906,6 +1025,18 @@
                     return false;
                 },
 
+                selfAssignAllowed(bulletin){
+                    if (this.currentUser.can_self_assign) {
+                        if ((!bulletin.assigned_to) || (bulletin.assigned_to && !bulletin.assigned_to.active)) {
+                            return true
+                        }
+
+                    }
+
+                    return false;
+
+                },
+
 
                 addReview(item) {
 
@@ -942,7 +1073,7 @@
                         .then(response => {
                             this.reviewDialog = false;
                             this.showSnack(response.data);
-                            this.refresh(this.options);
+                            this.searchBulletins();
                         });
 
                 },
@@ -1016,7 +1147,7 @@
                     if (cfm) {
                         axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
                             this.showSnack(response.data);
-                            this.refresh(this.options);
+                            this.refresh();
                         });
                     }
                 },

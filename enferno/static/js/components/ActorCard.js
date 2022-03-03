@@ -262,7 +262,18 @@ Vue.component("actor-card", {
       <v-card outlined class="ma-3" v-if="actor.actor_relations && actor.actor_relations.length">
 
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}</div>
+          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}
+          <v-tooltip top>
+              <template v-slot:activator="{on,attrs}">
+                <a :href="'/admin/actors/?reltoa='+actor.id" target="_self">
+                  <v-icon v-on="on" small color="grey" class="mb-1">
+                    mdi-image-filter-center-focus-strong
+                  </v-icon>
+                </a>
+              </template>
+              <span>Filter and display related items in main table</span>
+            </v-tooltip>
+          </div>
           <actor-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.actor_relations" :key="index" :actor="item.actor">
             <template v-slot:header>
 
@@ -284,7 +295,17 @@ Vue.component("actor-card", {
       <v-card outlined class="ma-3" v-if="actor.bulletin_relations && actor.bulletin_relations.length">
 
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }}</div>
+          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }} 
+          <v-tooltip top>
+              <template v-slot:activator="{on,attrs}">
+                
+                <a :href="'/admin/bulletins/?reltoa='+actor.id" target="_self"><v-icon v-on="on" small color="grey" class="mb-1">
+              mdi-image-filter-center-focus-strong
+            </v-icon></a>
+              </template>
+              <span>Filter and display related items in main table</span>
+            </v-tooltip>
+          </div>
           <bulletin-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
@@ -304,7 +325,18 @@ Vue.component("actor-card", {
 
       <v-card outlined class="ma-3" v-if="actor.incident_relations && actor.incident_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}</div>
+          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}
+           <v-tooltip top>
+              <template v-slot:activator="{on,attrs}">
+                <a :href="'/admin/incidents/?reltoa='+actor.id" target="_self">
+                  <v-icon v-on="on" small color="grey" class="mb-1">
+                    mdi-image-filter-center-focus-strong
+                  </v-icon>
+                </a>
+              </template>
+              <span>Filter and display related items in main table</span>
+            </v-tooltip>
+          </div>
           <incident-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.incident_relations" :key="index"
                            :incident="item.incident">
             <template v-slot:header>

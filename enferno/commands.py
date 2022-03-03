@@ -9,6 +9,7 @@ from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User
+from enferno.tasks import import_data,generate_user_roles
 
 
 @click.command()
@@ -145,3 +146,23 @@ def update():
 def compile():
     if os.system('pybabel compile -d enferno/translations'):
         raise RuntimeError('Compile command failed')
+
+@click.command()
+@with_appcontext
+def init():
+    '''
+    Command to initilize the system with SJAC's data.
+    '''
+    # generate user roles
+    try:
+        generate_user_roles()
+        print('Successfully generated user roles.')
+    except:
+        print('Error generating user roles.')
+    
+    # import data
+    try:
+        import_data()
+        print('Successfully imported data.')
+    except:
+        print('Error importing data.')

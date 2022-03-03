@@ -5,7 +5,7 @@ from collections import namedtuple
 from celery import Celery
 
 
-from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory
+from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory, Label, Eventtype, PotentialViolation, ClaimedViolation
 from enferno.extensions import db, rds
 from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import Role
@@ -39,23 +39,6 @@ class ContextTask(celery.Task):
 
 
 celery.Task = ContextTask
-
-
-def generate_system_roles():
-    # create admin role if it doesn't exist
-    r = Role.query.filter_by(name='Admin').first()
-    if not r:
-        Role(name='Admin').save()
-
-    # create DA role, if not exists
-    r = Role.query.filter_by(name='DA').first()
-    if not r:
-        Role(name='DA').save()
-
-    # create MOD role, if not exists
-    r = Role.query.filter_by(name='Mod').first()
-    if not r:
-        Role(name='Mod').save()
 
 
 @celery.task
@@ -223,7 +206,6 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(seconds, dedup_cron.s(), name='Deduplication Cron')
 
 
-
 # @periodic_task(run_every=timedelta(seconds=int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))))
 @celery.task
 def dedup_cron():
@@ -250,3 +232,53 @@ def process_sheet(filepath, map, target, batch_id,vmap, sheet, actorConfig):
     su.import_sheet(map, target, batch_id, vmap, sheet)
 
 
+def generate_user_roles():
+    '''
+    Generates standard user roles.
+    '''
+    # create admin role if it doesn't exist
+    r = Role.query.filter_by(name='Admin').first()
+    if not r:
+        Role(name='Admin').save()
+
+    # create DA role, if not exists
+    r = Role.query.filter_by(name='DA').first()
+    if not r:
+        Role(name='DA').save()
+
+    # create MOD role, if not exists
+    r = Role.query.filter_by(name='Mod').first()
+    if not r:
+        Role(name='Mod').save()
+
+
+def import_data():
+    '''
+    Imports SJAC data from data dir.
+    '''
+    data_path = 'enferno/data/'
+    from werkzeug.datastructures import FileStorage
+
+    # labels
+    if not Label.query.count():
+        f = data_path + 'label.csv'
+        fs = FileStorage(open(f, 'rb'))
+        Label.import_csv(fs)
+
+    # Eventtypes
+    if not Eventtype.query.count():
+        f = data_path + 'eventtypes.csv'
+        fs = FileStorage(open(f, 'rb'))
+        Eventtype.import_csv(fs)
+
+    # potential violations
+    if not PotentialViolation.query.count():
+        f = data_path + 'potential_violation.csv'
+        fs = FileStorage(open(f, 'rb'))
+        PotentialViolation.import_csv(fs)
+
+    # claimed violations
+    if not ClaimedViolation.query.count():
+        f = data_path + 'claimed_violation.csv'
+        fs = FileStorage(open(f, 'rb'))
+        ClaimedViolation.import_csv(fs)

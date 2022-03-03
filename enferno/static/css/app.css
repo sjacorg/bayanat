@@ -428,3 +428,7 @@ input[type="date"]::-webkit-input-placeholder {
 
 
 }
+
+.v-card a {
+    text-decoration: none;
+}

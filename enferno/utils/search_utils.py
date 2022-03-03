@@ -332,7 +332,33 @@ class SearchUtils:
         if review_action:
             query.append(Bulletin.review_action == review_action)
 
+        # Related to bulletin search
+        rel_to_bulletin= q.get('rel_to_bulletin')
+        if rel_to_bulletin:
+            bulletin = Bulletin.query.get(int(rel_to_bulletin))
+            if bulletin:
+                ids = [b.get_other_id(bulletin.id) for b in bulletin.bulletin_relations]
+                query.append(Bulletin.id.in_(ids))
+
+        # Related to actor search
+        rel_to_actor = q.get('rel_to_actor')
+        if rel_to_actor:
+            actor = Actor.query.get(int(rel_to_actor))
+            if actor:
+                ids = [b.bulletin_id for b in actor.bulletin_relations]
+                query.append(Bulletin.id.in_(ids))
+
+        # Related to incident search
+        rel_to_incident = q.get('rel_to_incident')
+        if rel_to_incident:
+            incident = Incident.query.get(int(rel_to_incident))
+            if incident:
+                ids = [b.bulletin_id for b in incident.bulletin_relations]
+                query.append(Bulletin.id.in_(ids))
+
         return query
+
+
 
     def actor_query(self, q):
         query = []
@@ -561,6 +587,31 @@ class SearchUtils:
             search = '%{}%'.format(national_id_card)
             query.append(Actor.national_id_card.ilike(search))
 
+        # Related to bulletin search
+        rel_to_bulletin= q.get('rel_to_bulletin')
+        if rel_to_bulletin:
+            bulletin = Bulletin.query.get(int(rel_to_bulletin))
+            if bulletin:
+                ids = [a.actor_id for a in bulletin.actor_relations]
+                query.append(Actor.id.in_(ids))
+
+        # Related to actor search
+        rel_to_actor = q.get('rel_to_actor')
+        if rel_to_actor:
+            actor = Actor.query.get(int(rel_to_actor))
+            if actor:
+                ids = [a.get_other_id(actor.id) for a in actor.actor_relations]
+                query.append(Actor.id.in_(ids))
+
+        # Related to incident search
+        rel_to_incident = q.get('rel_to_incident')
+        if rel_to_incident:
+            incident = Incident.query.get(int(rel_to_incident))
+            if incident:
+                ids = [a.actor_id for a in incident.actor_relations]
+                query.append(Actor.id.in_(ids))
+
+
         return query
 
     def incident_query(self, q):
@@ -691,5 +742,30 @@ class SearchUtils:
         review_action = q.get('reviewAction', None)
         if review_action:
             query.append(Incident.review_action == review_action)
+
+
+        # Related to bulletin search
+        rel_to_bulletin= q.get('rel_to_bulletin')
+        if rel_to_bulletin:
+            bulletin = Bulletin.query.get(int(rel_to_bulletin))
+            if bulletin:
+                ids = [i.incident_id for i in bulletin.incident_relations]
+                query.append(Incident.id.in_(ids))
+
+        # Related to actor search
+        rel_to_actor = q.get('rel_to_actor')
+        if rel_to_actor:
+            actor = Actor.query.get(int(rel_to_actor))
+            if actor:
+                ids = [i.incident_id for i in actor.incident_relations]
+                query.append(Incident.id.in_(ids))
+
+        # Related to incident search
+        rel_to_incident = q.get('rel_to_incident')
+        if rel_to_incident:
+            incident = Incident.query.get(int(rel_to_incident))
+            if incident:
+                ids = [i.get_other_id(incident.id) for i in incident.incident_relations]
+                query.append(Incident.id.in_(ids))
 
         return query

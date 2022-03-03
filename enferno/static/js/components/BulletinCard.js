@@ -1,9 +1,8 @@
 Vue.component("bulletin-card", {
-    props: ["bulletin", "close", "thumb-click", "active", "log", "diff", "showEdit","i18n"],
+    props: ["bulletin", "close", "thumb-click", "active", "log", "diff", "showEdit", "i18n"],
 
     watch: {
         bulletin: function (val, old) {
-
 
 
             if (!this.$root.currentUser.view_simple_history) {
@@ -28,6 +27,7 @@ Vue.component("bulletin-card", {
 
 
     methods: {
+
         probability(item) {
 
             return translations.probs[item.probability][__lang__]
@@ -43,9 +43,9 @@ Vue.component("bulletin-card", {
         },
 
 
-        showReview(bulletin){
+        showReview(bulletin) {
 
-            return (bulletin.status=='Peer Reviewed' && bulletin.review) ;
+            return (bulletin.status == 'Peer Reviewed' && bulletin.review);
 
         },
 
@@ -91,7 +91,7 @@ Vue.component("bulletin-card", {
                 const video = document.querySelector('#iplayer video');
 
                 videojs(video, {
-                      playbackRates: VIDEO_RATES,
+                    playbackRates: VIDEO_RATES,
                     //resizeManager: false
                     fluid: true
                 }, function () {
@@ -152,20 +152,27 @@ Vue.component("bulletin-card", {
       </v-btn>
       <v-card-text>
         <v-chip pill small label color="gv darken-2" class="white--text">
-          {{ i18n.id_ }} {{ bulletin.id }}</v-chip>
+          {{ i18n.id_ }} {{ bulletin.id }}
+        </v-chip>
         <v-chip :href="bulletin.source_link" target="_blank" small pill label color="lime darken-3 "
                 class="white--text ml-1">
-          # {{ bulletin.originid }}</v-chip>
-        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',bulletin)" x-small outlined>{{ i18n.edit_ }}</v-btn>
+          # {{ bulletin.originid }}
+        </v-chip>
+        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',bulletin)" x-small outlined>{{ i18n.edit_ }}
+        </v-btn>
 
       </v-card-text>
-      
-      
-        <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="bulletin.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
-          {{ i18n.assignedUser_ }} {{bulletin.assigned_to['name']}}</v-chip>
-        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status" > <v-icon left>mdi-delta</v-icon> {{bulletin._status}}</v-chip>
-        
-      
+
+
+      <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="bulletin.assigned_to">
+        <v-icon left>mdi-account-circle-outline</v-icon>
+        {{ i18n.assignedUser_ }} {{ bulletin.assigned_to['name'] }}
+      </v-chip>
+      <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status">
+        <v-icon left>mdi-delta</v-icon>
+        {{ bulletin._status }}
+      </v-chip>
+
 
       <v-sheet v-if="bulletin.ref && bulletin.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
                color="yellow lighten-5 ">
@@ -181,9 +188,9 @@ Vue.component("bulletin-card", {
         <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
         <div class="rich-description" v-html="bulletin.description"></div>
       </v-card>
-    
+
       <v-card outlined class="ma-2 pa-2" color="grey lighten-5">
-        <global-map :i18n="i18n" :value="mapLocations" ></global-map>
+        <global-map :i18n="i18n" :value="mapLocations"></global-map>
       </v-card>
 
       <!-- Sources -->
@@ -192,7 +199,8 @@ Vue.component("bulletin-card", {
           <div class="px-1 title black--text">{{ i18n.sources_ }}</div>
           <v-chip-group column>
             <v-chip small label color="blue-grey lighten-5" v-for="source in bulletin.sources"
-                    :key="source.id">{{ source.title }}</v-chip>
+                    :key="source.id">{{ source.title }}
+            </v-chip>
           </v-chip-group>
         </v-card-text>
       </v-card>
@@ -201,7 +209,8 @@ Vue.component("bulletin-card", {
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.events && bulletin.events.length">
         <v-card-text class="pa-2">
           <div class="px-1 title black--text">{{ i18n.events_ }}</div>
-          <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id" :event="event"></event-card>
+          <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id"
+                      :event="event"></event-card>
         </v-card-text>
       </v-card>
 
@@ -212,7 +221,8 @@ Vue.component("bulletin-card", {
           <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
           <v-chip-group column>
             <v-chip label small color="blue-grey lighten-5" v-for="label in bulletin.labels"
-                    :key="label.id">{{ label.title }}</v-chip>
+                    :key="label.id">{{ label.title }}
+            </v-chip>
           </v-chip-group>
         </v-card-text>
       </v-card>
@@ -224,7 +234,8 @@ Vue.component("bulletin-card", {
           <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
           <v-chip-group column>
             <v-chip label small color="blue-grey lighten-5" v-for="vlabel in bulletin.verLabels"
-                    :key="vlabel.id">{{ vlabel.title }}</v-chip>
+                    :key="vlabel.id">{{ vlabel.title }}
+            </v-chip>
           </v-chip-group>
         </v-card-text>
       </v-card>
@@ -234,7 +245,8 @@ Vue.component("bulletin-card", {
 
       <v-card outlined class="ma-3" v-if="bulletin.medias && bulletin.medias.length">
         <v-card v-if="iplayer" elevation="0" id="iplayer" class="px-2 my-3">
-          <video :id="'player'+_uid" controls class="video-js vjs-default-skin vjs-big-play-centered" crossorigin="anonymous"
+          <video :id="'player'+_uid" controls class="video-js vjs-default-skin vjs-big-play-centered"
+                 crossorigin="anonymous"
                  height="360" preload="auto"></video>
 
         </v-card>
@@ -259,7 +271,8 @@ Vue.component("bulletin-card", {
           <v-chip-group column>
             <v-chip label small color="blue-grey lighten-5" v-for="location in bulletin.locations"
                     :key="location.id">
-              {{ location.full_string }}</v-chip>
+              {{ location.full_string }}
+            </v-chip>
           </v-chip-group>
         </v-card-text>
       </v-card>
@@ -268,7 +281,20 @@ Vue.component("bulletin-card", {
 
       <v-card outlined class="ma-3" v-if="bulletin.bulletin_relations && bulletin.bulletin_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }}</div>
+          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }}
+            <v-tooltip top>
+              <template v-slot:activator="{on,attrs}">
+
+                <a :href="'/admin/bulletins/?reltob='+bulletin.id" target="_self">
+                  <v-icon v-on="on" small color="grey" class="mb-1">
+                    mdi-image-filter-center-focus-strong
+                  </v-icon>
+                </a>
+              </template>
+              <span>Filter and display related items in main table</span>
+            </v-tooltip>
+
+          </div>
           <bulletin-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
@@ -277,7 +303,8 @@ Vue.component("bulletin-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.btobRelateAs" color="grey lighten-4" small label>{{ bulletin_related_as(item) }}</v-chip>
+                <v-chip v-if="item.btobRelateAs" color="grey lighten-4" small label>{{ bulletin_related_as(item) }}
+                </v-chip>
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
@@ -290,17 +317,33 @@ Vue.component("bulletin-card", {
       <!-- Related Actors  -->
       <v-card outlined class="ma-3" v-if="bulletin.actor_relations && bulletin.actor_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}</div>
-          <actor-result :i18n="i18n"  class="mt-1" v-for="(item,index) in bulletin.actor_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}
+          <v-tooltip top>
+              <template v-slot:activator="{on,attrs}">
+
+                <a :href="'/admin/actors/?reltob='+bulletin.id" target="_self">
+                  <v-icon v-on="on" small color="grey" class="mb-1">
+                    mdi-image-filter-center-focus-strong
+                  </v-icon>
+                </a>
+              </template>
+              <span>Filter and display related items in main table</span>
+            </v-tooltip>
+          
+          </div>
+          <actor-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.actor_relations" :key="index"
                         :actor="item.actor">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability" class="ma-1" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.probability" class="ma-1" color="grey lighten-4" small label>
+                  {{ probability(item) }}
+                </v-chip>
                 <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small
-                        label>{{ actor_related_as(r) }}</v-chip>
+                        label>{{ actor_related_as(r) }}
+                </v-chip>
                 <v-chip v-if="item.comment" class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
@@ -313,8 +356,20 @@ Vue.component("bulletin-card", {
       <!-- Related Incidents -->
       <v-card outlined class="ma-3" v-if="bulletin.incident_relations && bulletin.incident_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}</div>
-          <incident-result :i18n="i18n"  class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
+          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}
+           <v-tooltip top>
+              <template v-slot:activator="{on,attrs}">
+                <a :href="'/admin/incidents/?reltob='+bulletin.id" target="_self">
+                  <v-icon v-on="on" small color="grey" class="mb-1">
+                    mdi-image-filter-center-focus-strong
+                  </v-icon>
+                </a>
+              </template>
+              <span>Filter and display related items in main table</span>
+            </v-tooltip>
+          
+          </div>
+          <incident-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
                            :incident="item.incident">
             <template v-slot:header>
 
@@ -322,7 +377,8 @@ Vue.component("bulletin-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as" color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
+                <v-chip v-if="item.related_as" color="grey lighten-4" small label>{{ incident_related_as(item) }}
+                </v-chip>
 
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
@@ -364,7 +420,8 @@ Vue.component("bulletin-card", {
           <template v-for="(revision,index) in revisions">
             <v-sheet color="grey lighten-4" dense flat class="my-1 pa-3 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
-                                                                              color="gv lighten-3">{{ revision.data.status }}</v-chip> - {{ revision.created_at }}
+                                                                              color="gv lighten-3">{{ revision.data.status }}</v-chip> -
+                {{ revision.created_at }}
                 - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 

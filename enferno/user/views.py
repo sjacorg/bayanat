@@ -13,6 +13,7 @@ from enferno.user.models import User
 from enferno.user.forms import ExtendedLoginForm
 from flask_security.forms import LoginForm
 from flask_babelex import gettext
+from sqlalchemy.orm.attributes import flag_modified
 
 bp_user = Blueprint('users', __name__, static_folder='../static')
 
@@ -170,6 +171,9 @@ def save_settings():
     if not user:
         return 'Problem loading user', 417
     user.settings = {'dark': dark}
+    lang = json.get('language')
+    user.settings['language'] = lang
+    flag_modified(user, 'settings')
     user.save()
     return 'Settings Saved', 200
 
@@ -186,9 +190,7 @@ def load_settings():
 
     settings = user.settings or {}
 
-    dark = settings.get('dark', 0)
-
-    return Response(json.dumps({'dark':dark }), content_type='Application/json'), 200
+    return Response(json.dumps(settings), content_type='Application/json'), 200
 
 @bp_user.route('/change-password/', methods=['GET', 'POST'])
 @login_required

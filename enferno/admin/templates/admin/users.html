@@ -132,18 +132,23 @@
                           </v-col>
                           </v-row>
                           <v-row>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                               <v-switch label="{{_('Can view usernames')}}"
                                         v-model="editedItem.view_usernames"></v-switch>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                               <v-switch label="{{_('Can view simple history')}}"
                                         v-model="editedItem.view_simple_history"></v-switch>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                               <v-switch label="{{_('Can view Full History')}}"
                                         v-model="editedItem.view_full_history"></v-switch>
                             </v-col>
+                              <v-col cols="12" md="3">
+                                  <v-switch label="{{_('Can self assign')}}"
+                                        v-model="editedItem.can_self_assign"></v-switch>
+
+                              </v-col>
                           </v-row>
                         </v-container>
                       </v-card-text>

@@ -138,6 +138,29 @@
                             <span>Edit</span>
                           </v-tooltip>
 
+
+
+                              <v-tooltip top>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon
+                                                    v-on="on"
+                                                    color="primary lighten-1"
+                                                    class="mr-2"
+
+                                                    @click.stop="openSelfAssign(item)"
+                                                    v-if="selfAssignAllowed(item)"
+                                            >
+                                                mdi-arrow-left-thin-circle-outline
+                                            </v-icon>
+
+
+
+                                        </template>
+                                        <span>Assign to self</span>
+                                    </v-tooltip>
+
+
+
                            <v-tooltip top>
                             <template v-slot:activator="{ on }">
                                <v-icon v-on="on"
@@ -168,6 +191,23 @@
 
                       {% include 'admin/partials/relate_media_dialog.html' %}
                       {% include 'admin/partials/video_player_dialog.html' %}
+
+
+                        <v-dialog width="600" v-model="selfAssignDialog">
+                            <v-card class="pa-3">
+                                <v-card-title>Self Assign Actor #${assignActor.id}</v-card-title>
+                                <v-card-text>
+
+                                    <v-textarea v-model="assignActor.comments" label="Comments"></v-textarea>
+                                </v-card-text>
+                                <v-card-actions>
+                                    <v-btn :disabled="!assignActor.comments" class="ma-auto" @click="selfAssign"
+                                           color="primary">Assign to self
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+
+                        </v-dialog>
 
 
                       <v-snackbar v-model="snackbar">
@@ -228,6 +268,11 @@
     data: () => ({
 
     translations: translations,
+
+    assignActor: {},
+    selfAssignDialog: false,
+
+
    // missing person toggle
     profile : false,
 
@@ -539,7 +584,31 @@
         this.showActor(this.$route.params.id);
       }
 
+        if (this.$route.query.reltob) {
+            this.filter_related_to_bulletin(this.$route.query.reltob);
+        }
+
+        if (this.$route.query.reltoa) {
+            this.filter_related_to_actor(this.$route.query.reltoa);
+        }
+
+        if (this.$route.query.reltoi) {
+            this.filter_related_to_incident(this.$route.query.reltoi);
+        }
+
       this.$router.afterEach((to, from, next) => {
+
+          if (this.$route.query.reltob) {
+              this.filter_related_to_bulletin(this.$route.query.reltob);
+          }
+
+          if (this.$route.query.reltoa) {
+              this.filter_related_to_actor(this.$route.query.reltoa);
+          }
+
+          if (this.$route.query.reltoi) {
+              this.filter_related_to_incident(this.$route.query.reltoi);
+          }
 
 
       if (this.$route.params.id){
@@ -554,6 +623,49 @@
     },
 
     methods: {
+
+            openSelfAssign(actor){
+                    this.assignActor = {id:actor.id};
+                    this.selfAssignDialog = true;
+
+                },
+
+                selfAssign(){
+
+
+
+                    axios.put(`/admin/api/actor/assign/${this.assignActor.id}`,{actor:this.assignActor}).then(res=>{
+                        this.showSnack('Actor assigned successfully.')
+                        this.searchActors(true)
+
+                    }).catch(err=>{
+                        this.showSnack(err.response.data);
+                    }).finally(()=>{
+                        this.selfAssignDialog = false;
+                        this.assignActor = {};
+
+                    });
+
+                },
+
+
+               filter_related_to_bulletin(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_bulletin: id}];
+                    this.searchActors();
+                },
+
+                filter_related_to_actor(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_actor: id}];
+                    this.searchActors();
+                },
+
+                filter_related_to_incident(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_incident: id}];
+                    this.searchActors();
+                },
 
       previewItem(endpoint)
         {
@@ -838,6 +950,19 @@
     }
     return false;
   },
+
+        selfAssignAllowed(actor) {
+            if (this.currentUser.can_self_assign) {
+                if ((!actor.assigned_to) || (actor.assigned_to && !actor.assigned_to.active)) {
+                    return true
+                }
+
+            }
+
+            return false;
+
+        },
+
 
 
 

@@ -84,6 +84,7 @@ class User(UserMixin, db.Model, BaseMixin):
     view_usernames = db.Column(db.Boolean, default=True)
     view_simple_history = db.Column(db.Boolean, default=True)
     view_full_history = db.Column(db.Boolean, default=True)
+    can_self_assign = db.Column(db.Boolean, default=False)
 
     # oauth
     google_id = db.Column(db.String(255))
@@ -116,6 +117,7 @@ class User(UserMixin, db.Model, BaseMixin):
         self.view_usernames = item.get('view_usernames', False)
         self.view_simple_history = item.get('view_simple_history', False)
         self.view_full_history = item.get('view_full_history', False)
+        self.can_self_assign = item.get('can_self_assign', False)
 
         self.active = item['active']
         return self
@@ -142,7 +144,8 @@ class User(UserMixin, db.Model, BaseMixin):
         return {
             'id': self.id,
             'name': name,
-            'username': username
+            'username': username,
+            'active': self.active
 
         }
 
@@ -164,6 +167,7 @@ class User(UserMixin, db.Model, BaseMixin):
                 'view_usernames': self.view_usernames,
                 'view_simple_history': self.view_simple_history,
                 'view_full_history': self.view_full_history,
+                'can_self_assign': self.can_self_assign
 
             }
 

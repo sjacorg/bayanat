@@ -901,8 +901,13 @@
                                             </v-row>
                                             <v-row>
                                                 <v-col md="4">
-                                                    <v-switch label="{{_('Pregnant at Disappearance')}}"
-                                                              v-model="editedItem.pregnant_at_disappearance"></v-switch>
+                                                    <v-select label="{{_('Pregnant at Disappearance')}}"
+                                                              item-text="en"
+                                                              :item-value="__lang__"
+                                                              :items="translations.pregnant"
+                                                              v-model="editedItem.pregnant_at_disappearance">
+
+                                                    </v-select>
                                                 </v-col>
                                                 <v-col md="4">
                                                     <validation-provider name="Months Pregnant" rules="digits:1|integer|min_value:1|max_value:9" v-slot="{errors}">
@@ -1073,8 +1078,11 @@
                                                               :item-text="__lang__"
                                                               item-value="en"
                                                               v-model="editedItem.handedness"></v-select>
-                                                    <v-switch label="{{_('Glasses')}}"
-                                                              v-model="editedItem.glasses"></v-switch>
+                                                    <v-select label="{{_('Glasses')}}"
+                                                               item-text="en"
+                                                              :item-value="__lang__"
+                                                              :items="translations.glasses"
+                                                              v-model="editedItem.glasses"></v-select>
                                                     <v-select label="{{_('Eye color')}}"
                                                               :items="translations.eyeColor"
                                                               :item-text="__lang__"
@@ -1168,8 +1176,14 @@
                                                 </v-col>
                                             </v-row>
                                             <v-row>
-                                                <v-col cols="2">
-                                                    <v-switch label="{{ _('Smoker') }}" v-model="editedItem.smoker"></v-switch>
+                                                <v-col cols="3">
+                                                    <v-select
+                                                             item-text="en"
+                                                              :item-value="__lang__"
+                                                              :items="translations.smoker"
+                                                            label="{{ _('Smoker') }}" v-model="editedItem.smoker">
+
+                                                    </v-select>
                                                 </v-col>
                                                 <v-col cols="3">
                                                     <v-switch label="{{_('Is there a Dental Record?')}}"
@@ -1179,7 +1193,7 @@
                                                     <v-textarea rows="1" label="{{_('Dentist’s name and contact')}}"
                                                                 v-model="editedItem.dentist_info"></v-textarea>
                                                 </v-col>
-                                                <v-col cols="4">
+                                                <v-col cols="3">
                                                     <v-textarea rows="1"
                                                                 label="{{_('Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)')}}"
                                                                 v-model="editedItem.teeth_features"></v-textarea>

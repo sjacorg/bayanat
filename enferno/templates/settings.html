@@ -2,135 +2,133 @@
 
 {% block content %}
 
-<v-app id="app" v-cloak>
-    {% include 'nav-drawer.html' %}
-    {% include 'nav-bar.html' %}
-    <v-content>
-        <v-container fluid fill-height>
-            <v-layout align-top justify-center fluid>
-                <v-container fluid>
+    <v-app id="app" v-cloak>
+        {% include 'nav-drawer.html' %}
+        {% include 'nav-bar.html' %}
+        <v-main>
+            <v-container class="container--fluid">
 
-                        <v-row>
-                            <v-col cols="12" >
+                <v-row>
+                    <v-col cols="12">
 
-                                <v-card>
-                                    <v-card-title>
-                                        {{_('Settings')}}
-                                    </v-card-title>
-                                    <v-divider></v-divider>
-                                    <v-card-text class="d-flex">
-                                        <v-card  outlined class="ma-2">
-                                            <v-card-title>{{_('User Interface')}}</v-card-title>
-                                            <v-card-text>
-                                                <v-switch v-model="settings.dark" @change="saveSettings" label="{{_('Dark Mode')}}"></v-switch>
-                                            </v-card-text>
-
-                                        </v-card>
-                                        <v-card outlined class="ma-2">
-                                            <v-card-title>{{_('Profile Settings')}}</v-card-title>
-                                            <v-card-text>
-                                                <v-btn href="/change-password/">{{_('Change Password')}}</v-btn>
-                                            </v-card-text>
-
-                                        </v-card>
-
-                                        <v-card outlined class="ma-2">
-                                            <v-card-title>{{_('Security')}}</v-card-title>
-                                            <v-card-text>
-                                                <v-btn href="/tf-setup">{{_('Setup Two-Factor Auth')}}</v-btn>
-                                            </v-card-text>
-
-                                        </v-card>
-
-
-
-
+                        <v-card>
+                            <v-card-title>
+                                {{ _('Settings') }}
+                            </v-card-title>
+                            <v-divider></v-divider>
+                            <v-card-text class="d-flex">
+                                <v-card outlined class="ma-2">
+                                    <v-card-title>{{ _('User Interface') }}</v-card-title>
+                                    <v-card-text>
+                                        <v-switch v-model="settings.dark" @change="saveSettings"
+                                                  label="{{ _('Dark Mode') }}"></v-switch>
                                     </v-card-text>
 
-                                    
+                                </v-card>
+                                <v-card outlined class="ma-2">
+                                    <v-card-title>{{ _('Interface Language') }}</v-card-title>
+                                    <v-card-text>
 
+                                        <v-select v-model="settings.language" @change="saveSettings"
+                                                  :items="languages"></v-select>
+                                    </v-card-text>
+
+                                </v-card>
+                                <v-card outlined class="ma-2">
+                                    <v-card-title>{{ _('Profile Settings') }}</v-card-title>
+                                    <v-card-text>
+                                        <v-btn href="/change-password/">{{ _('Change Password') }}</v-btn>
+                                    </v-card-text>
+
+                                </v-card>
+
+                                <v-card outlined class="ma-2">
+                                    <v-card-title>{{ _('Security') }}</v-card-title>
+                                    <v-card-text>
+                                        <v-btn href="/tf-setup">{{ _('Setup Two-Factor Auth') }}</v-btn>
+                                    </v-card-text>
 
                                 </v-card>
 
 
-                            </v-col>
+                            </v-card-text>
 
 
-                        </v-row>
-                    </v-container>
+                        </v-card>
 
 
+                    </v-col>
 
 
+                </v-row>
+            </v-container>
 
-            </v-layout>
-        </v-container>
-    </v-content>
-    {% include 'footer.html' %}
-</v-app>
-{% endblock  %}
+        </v-main>
+        {% include 'footer.html' %}
+    </v-app>
+{% endblock %}
 
 {% block js %}
-<script>
-    const app = new Vue({
-        el: '#app',
-        vuetify: vuetify,
-        delimiters: delimiters,
-        data: () => ({
+    <script>
+        const app = new Vue({
+            el: '#app',
+            vuetify: vuetify,
+            delimiters: delimiters,
+            data: () => ({
 
-            apiBtnDisabled: false,
-            genBtn: false,
-            settings: {},
-            search: '',
-            dialog: dialog,
-            drawer: drawer,
-            sideNav: sideNav
+                languages: {{ config.LANGUAGES|safe }},
+                defaultLocale: '{{ config.BABEL_DEFAULT_LOCALE|safe }}' || 'en',
+                apiBtnDisabled: false,
+                genBtn: false,
+                settings: {},
+                search: '',
+                dialog: dialog,
+                drawer: drawer,
+                sideNav: sideNav
 
-        }),
-
-
-
-        mounted (){
-          this.loadSettings();
-        },
+            }),
 
 
-
-
-        methods: {
-
-            showSnack(msg){
-              this.snackMessage = msg;
-              this.snackBar = true;
+            mounted() {
+                this.loadSettings();
             },
 
 
-           loadSettings(){
-               axios.get('/settings/load').then(res=>{
-                   this.settings = res.data;
+            methods: {
 
-               })
+                showSnack(msg) {
+                    this.snackMessage = msg;
+                    this.snackBar = true;
+                },
 
 
-           },
+                loadSettings() {
+                    axios.get('/settings/load').then(res => {
+                        this.settings = res.data;
+                        if (!this.settings.language) {
+                            this.settings.language = '{{ config.BABEL_DEFAULT_LOCALE|safe }}' || 'en';
+                        }
 
-            saveSettings() {
-               axios.put('/settings/save',{settings: this.settings}).then(res=>{
-                   this.showSnack(res.data);
-                   this.$vuetify.theme.dark = this.settings.dark;
-               }).catch(err=>{
-                   this.showSnack(err.body);
-               })
+
+                    })
+
+
+                },
+
+                saveSettings() {
+                    axios.put('/settings/save', {settings: this.settings}).then(res => {
+                        this.showSnack(res.data);
+                        this.$vuetify.theme.dark = this.settings.dark;
+                    }).catch(err => {
+                        this.showSnack(err.body);
+                    })
+
+                },
+
 
             },
 
 
-        },
-
-
-
-
-
-    })
-</script>
+        })
+    </script>
 {% endblock %}

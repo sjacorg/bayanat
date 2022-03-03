@@ -1,0 +1,324 @@
+id,title,parent_label_id,order,verified,for_bulletin,for_actor,for_incident,for_offline
+1,"Meta, Confidential",,100200,1,1,1,1,0
+2,"Meta, Irrelevant",,100800,1,1,1,1,0
+3,"Meta, False or Fake",,100400,1,1,1,1,0
+4,"Meta, Graphic",,100600,1,1,1,1,0
+5,"Meta, Important",,100700,1,1,1,1,0
+6,"Meta, Duplicate",,100300,1,1,1,1,0
+7,"Meta, Bad Import",,100100,1,1,1,1,0
+8,"Meta, Flagged",,100500,1,1,1,1,0
+9,"Content, Media",,110100,1,1,1,1,0
+10,"Content, Report",,110110,1,1,1,1,0
+11,"Content, Non-Arabic",,110130,1,1,1,1,0
+12,"Content, Document",,110120,1,1,1,1,0
+13,"Content, Incident",,110140,1,1,1,1,0
+14,"Content, Non-Incident",,110150,1,1,1,1,0
+16,"Content, Post-Incident",,110160,1,1,1,1,0
+17,Identifiable Information,,120100,1,1,1,1,0
+18,"Identifiable, Identities",17,120300,1,1,1,1,0
+19,"Identifiable, Symbols and Text",17,120400,1,1,1,1,0
+20,"Identifiable, Ethnographic Info",17,120200,1,1,1,1,0
+21,"Type, Martial",,131900,0,1,1,1,0
+22,"Type, Martial, Clashing",21,132100,0,1,1,1,0
+23,"Type, Martial, Explosion",21,132200,0,1,1,1,0
+24,"Type, Martial, Airstrike",21,132000,0,1,1,1,0
+25,"Type, Martial, Shelling",21,132400,0,1,1,1,0
+26,"Type, Martial, Hitting a Target",21,132300,0,1,1,1,0
+27,"Type, Human",,130600,0,1,1,1,0
+28,"Type, Human, Killing",27,131200,0,1,1,1,0
+29,"Type, Human, Torture",27,131600,0,1,1,1,0
+30,"Type, Human, Sexual Violence",27,131500,0,1,1,1,0
+31,"Type, Human, Killing, Execution",28,131205,0,1,1,1,0
+32,"Type, Human, Detention/Abduction",27,130900,0,1,1,1,0
+33,"Type, Human, Impairing",27,131300,0,1,1,1,0
+34,"Type, Human, Arming Minor",27,130700,0,1,1,1,0
+35,"Type, Human, Using Human Shield",27,131700,0,1,1,1,0
+36,"Type, Looting",,131800,0,1,1,1,0
+37,"Type, Collective Punishment",,130500,0,1,1,1,0
+38,"Type, Martial, Indiscriminate Attack",21,132350,0,1,1,1,0
+39,"Type, Attack on Property",,130100,0,1,1,1,0
+40,"Type, Attack on Property, Non-Military Facilities",39,130400,0,1,1,1,0
+41,"Type, Attack on Property, Military Facilities",39,130300,0,1,1,1,0
+42,Weapons,,140100,0,1,1,1,0
+43,"Weapons, Land System",42,140600,0,1,1,1,0
+44,"Weapons, Land System, Armored Fighting Vehicle",43,140800,0,1,1,1,0
+45,"Weapons, Air System",42,140120,0,1,1,1,0
+46,"Weapons, Land System, Artillery",43,140900,0,1,1,1,0
+47,"Weapons, Land System, Light Weapons",43,141000,0,1,1,1,0
+48,"Weapons, Land System, Heavy and Medium Machine Guns",43,141100,0,1,1,1,0
+49,"Weapons, Land System, Light Weapons, Sniper",47,141005,0,1,1,1,0
+50,"Weapons, Explosives",42,140200,0,1,1,1,0
+51,"Weapons, Explosives, Missile",50,140395,0,1,1,1,0
+52,"Weapons, Explosives, Improvised, Barrels",380,140320,0,1,1,1,0
+54,Injured Party,,150100,0,1,1,1,0
+55,"Injured Party, Unarmed",54,153200,0,1,1,1,0
+56,"Injured Party, Armed",54,152000,0,1,1,1,0
+58,"Injured Party, Noncombatant/Civilian",54,152800,0,1,1,1,0
+59,"Injured Party, Minor",54,152700,0,1,1,1,0
+60,"Injured Party, Sick or Disabled",54,153100,0,1,1,1,0
+61,"Injured Party, Religious",54,153000,0,1,1,1,0
+62,"Injured Party, Medical/Humanitarian",54,152600,0,1,1,1,0
+63,"Injured Party, Journalist",54,152500,0,1,1,1,0
+64,"Injured Party, Elderly",54,152300,0,1,1,1,0
+65,"Injured Party, Female",54,152400,0,1,1,1,0
+66,"Injured Party, Captured Fighter",54,152100,0,1,1,1,0
+67,"Injured Party, Wounded",54,153300,0,1,1,1,0
+68,"Injured Party, Pregnant",54,152900,0,1,1,1,0
+69,"Injured Party, Affiliation, Pro-Government",176,150400,0,1,1,1,0
+70,"Injured Party, Affiliation, Pro-Government, Government Forces",176,150701,0,1,1,1,0
+71,"Injured Party, Affiliation, Pro-Opposition",176,150799,0,1,1,1,0
+72,"Injured Party, Affiliation, Unknown",176,151900,0,1,1,1,0
+73,"Injured Party, Affiliation, Third Party",176,151400,0,1,1,1,0
+74,"Injured Party, Non-Syrian",54,152850,0,1,1,1,0
+75,Alleged Perpetrator,,160100,0,1,1,1,0
+76,"Alleged Perpetrator, Unarmed",75,163200,0,1,1,1,0
+77,"Alleged Perpetrator, Armed",75,162000,0,1,1,1,0
+79,"Alleged Perpetrator, Noncombatant/Civilian",75,162800,0,1,1,1,0
+80,"Alleged Perpetrator, Minor",75,162700,0,1,1,1,0
+86,"Alleged Perpetrator, Female",75,162400,0,1,1,1,0
+90,"Alleged Perpetrator, Affiliation, Pro-Government",175,160400,0,1,1,1,0
+91,"Alleged Perpetrator, Affiliation, Pro-Government, Government Forces",175,160701,0,1,1,1,0
+92,"Alleged Perpetrator, Affiliation, Pro-Opposition",175,160799,0,1,1,1,0
+93,"Alleged Perpetrator, Affiliation, Unknown",175,161900,0,1,1,1,0
+94,"Alleged Perpetrator, Affiliation, Third Party",175,161400,0,1,1,1,0
+95,"Alleged Perpetrator, Non-Syrian",75,162850,0,1,1,1,0
+96,"Type, Martial, Shooting",21,132500,0,1,1,1,0
+100,"Meta, Low Quality",,100900,1,1,1,1,0
+101,"Type, Martial, Units Un-Engaged",21,132600,0,1,1,1,0
+103,"Type, Human, Hate Speech",27,131100,0,1,1,1,0
+111,"Content, List of Names",,110180,1,1,1,1,0
+112,"Type, Human, Cruel Treatment",27,130800,0,1,1,1,0
+113,"Type, Attack on Property, Cultural Property/Heritage",39,130200,0,1,1,1,0
+114,"Type, Human, Postmortem Offences, Mass Grave",258,131441,0,1,1,1,0
+149,"Alleged Perpetrator, Affiliation, Pro-Government, Popular Forces/Shabiha",175,160700,0,1,1,1,0
+150,"Alleged Perpetrator, Affiliation, Pro-Government, Civilian or Off-Duty Government",175,160500,0,1,1,1,0
+151,"Alleged Perpetrator, Affiliation, Pro-Government, Other",175,160600,0,1,1,1,0
+152,"Alleged Perpetrator, Affiliation, Pro-Opposition, Opposition Forces",175,160800,0,1,1,1,0
+155,"Alleged Perpetrator, Affiliation, Pro-Opposition, Other",175,161100,0,1,1,1,0
+156,"Alleged Perpetrator, Affiliation, Kurdish Political Parties, Syrian Kurdish Forces",208,161130,0,1,1,1,0
+157,"Alleged Perpetrator, Affiliation, Third Party, Hezbollah",175,161500,0,1,1,1,0
+158,"Alleged Perpetrator, Affiliation, Third Party, Iranian Guard",175,161600,0,1,1,1,0
+159,"Alleged Perpetrator, Affiliation, Third Party, Non-Syrian Kurdish Forces",175,161700,0,1,1,1,0
+160,"Alleged Perpetrator, Affiliation, Third Party, Other",175,161800,0,1,1,1,0
+161,"Injured Party, Affiliation, Pro-Government, Popular Forces/Shabiha",176,150700,0,1,1,1,0
+162,"Injured Party, Affiliation, Pro-Government, Civilian or Off-Duty Government",176,150500,0,1,1,1,0
+163,"Injured Party, Affiliation, Pro-Government, Other",176,150600,0,1,1,1,0
+164,"Injured Party, Affiliation, Pro-Opposition, Opposition Forces",176,150800,0,1,1,1,0
+167,"Injured Party, Affiliation, Pro-Opposition, Other",176,151100,0,1,1,1,0
+168,"Injured Party, Affiliation, Kurdish Political Parties, Syrian Kurdish Forces",207,151130,0,1,1,1,0
+169,"Injured Party, Affiliation, Third Party, Hezbollah",176,151500,0,1,1,1,0
+170,"Injured Party, Affiliation, Third Party, Iranian Guard",176,151600,0,1,1,1,0
+171,"Injured Party, Affiliation, Third Party, Non-Syrian Kurdish Forces",176,151700,0,1,1,1,0
+172,"Injured Party, Affiliation, Third Party, Other",176,151800,0,1,1,1,0
+173,"Type, Suicide Attack",,132800,0,1,1,1,0
+175,"Alleged Perpetrator, Affiliation",75,160110,0,1,1,1,0
+176,"Injured Party, Affiliation",54,150110,0,1,1,1,0
+177,"Injured Party, Affiliation, ISIS",176,150750,0,1,1,1,0
+178,"Alleged Perpetrator, Affiliation, ISIS",175,160750,0,1,1,1,0
+180,"Injured Party, Affiliation, Defected",176,151350,0,1,1,1,0
+181,"Alleged Perpetrator, Affiliation, Defected",175,161350,0,1,1,1,0
+185,"Injured Party, Affiliation, Pro-Government, Government Forces, Armed Forces",70,150715,0,1,1,1,0
+186,"Injured Party, Affiliation, Pro-Government, Government Forces, Police",70,150716,0,1,1,1,0
+187,"Injured Party, Affiliation, Pro-Government, Government Forces, Other Security Forces",70,150717,0,1,1,1,0
+188,"Alleged Perpetrator, Affiliation, Pro-Government, Government Forces, Armed Forces",91,160710,0,1,1,1,0
+189,"Alleged Perpetrator, Affiliation, Pro-Government, Government Forces, Police",91,160711,0,1,1,1,0
+190,"Alleged Perpetrator, Affiliation, Pro-Government, Government Forces, Other Security Forces",91,160712,0,1,1,1,0
+191,"Weapons, Explosives, Improvised, Car Bomb",380,140322,0,1,1,1,0
+192,"Weapons, Explosives, Landmine",50,140315,0,1,1,1,0
+193,"Weapons, Explosives, Improvised, IED",380,140323,0,1,1,1,0
+194,"Weapons, Exploding/Expanding bullets",42,140190,0,1,1,1,0
+195,"Weapons, Explosives, Cluster Munitions",50,140324,0,1,1,1,0
+196,"Weapons, Non-Traditional",42,150000,0,1,1,1,0
+197,"Weapons, Non-Traditional, Chemical Weapons",196,150001,0,1,1,1,0
+198,"Weapons, Non-Traditional, Chemical Weapons, Chlorine gas",197,150002,0,1,1,1,0
+199,"Weapons, Riot Control",42,150050,0,1,1,1,0
+200,"Injured Party, Affiliation, Jabhat al-Nusra",176,150745,0,1,1,1,0
+201,"Alleged Perpetrator, Affiliation, Jabhat al-Nusra",175,160745,0,1,1,1,0
+203,"Weapons, Explosives, Unexploded Ordinance",50,140400,0,1,1,1,0
+204,"Weapons, Incendiary Ammunition, White Phosphorus Munitions",229,140412,0,1,1,1,0
+205,"Injured Party, Affiliation, Pro-Government, Palestinian Groups",69,150650,0,1,1,1,0
+206,"Alleged Perpetrator, Affiliation, Pro-Government, Palestinian Groups",90,160650,0,1,1,1,0
+207,"Injured Party, Affiliation, Kurdish Political Parties",176,151125,0,1,1,1,0
+208,"Alleged Perpetrator, Affiliation, Kurdish Political Parties",175,161125,0,1,1,1,0
+209,"Type, Human, Stillbirth",27,131550,0,1,1,1,0
+210,"Type, Human, Indirect Injury",27,131350,0,1,1,1,0
+211,"Injured Party, Affiliation, Third Party, CJTF–OIR",73,151410,0,1,1,1,0
+212,"Injured Party, Affiliation, Third Party, CJTF–OIR, France",211,151420,0,1,1,1,0
+213,"Injured Party, Affiliation, Third Party, CJTF–OIR, Jordan",211,151430,0,1,1,1,0
+214,"Injured Party, Affiliation, Third Party, CJTF–OIR, Saudi Arabia",211,151440,0,1,1,1,0
+215,"Injured Party, Affiliation, Third Party, CJTF–OIR, Turkey",211,151450,0,1,1,1,0
+216,"Injured Party, Affiliation, Third Party, CJTF–OIR, United Kingdom",211,151460,0,1,1,1,0
+217,"Injured Party, Affiliation, Third Party, CJTF–OIR, United States",211,151470,0,1,1,1,0
+218,"Injured Party, Affiliation, Third Party, Russia",73,151860,0,1,1,1,0
+219,"Injured Party, Affiliation, Third Party, Pro-Iran Militias",73,151850,0,1,1,1,0
+220,"Alleged Perpetrator, Affiliation, Third Party, CJTF–OIR",94,161410,0,1,1,1,0
+221,"Alleged Perpetrator, Affiliation, Third Party, CJTF–OIR, France",220,161420,0,1,1,1,0
+222,"Alleged Perpetrator, Affiliation, Third Party, CJTF–OIR, Jordan",220,161430,0,1,1,1,0
+223,"Alleged Perpetrator, Affiliation, Third Party, CJTF–OIR, Saudi Arabia",220,161440,0,1,1,1,0
+224,"Alleged Perpetrator, Affiliation, Third Party, CJTF–OIR, Turkey",220,161450,0,1,1,1,0
+225,"Alleged Perpetrator, Affiliation, Third Party, CJTF–OIR, United Kingdom",220,161460,0,1,1,1,0
+226,"Alleged Perpetrator, Affiliation, Third Party, CJTF–OIR, United States",220,161470,0,1,1,1,0
+227,"Alleged Perpetrator, Affiliation, Third Party, Pro-Iran Militias",94,161850,0,1,1,1,0
+228,"Alleged Perpetrator, Affiliation, Third Party, Russia",94,161860,0,1,1,1,0
+229,"Weapons, Incendiary Ammunition ",42,140410,0,1,1,1,0
+230,"Weapons, Incendiary Ammunition, Napalm",229,140411,0,1,1,1,0
+231,"Type, Human, Persecution",27,131410,0,1,1,1,0
+232,"Type, Human, Persecution, Racial/Ethnic",231,131425,0,1,1,1,0
+233,"Type, Human, Persecution, Gender Identity",231,131415,0,1,1,1,0
+234,"Type, Human, Persecution, Political/Ideological",231,131420,0,1,1,1,0
+235,"Type, Human, Persecution, Religious",231,131430,0,1,1,1,0
+236,"Type, Human, Persecution, Sexual Orientation",231,131435,0,1,1,1,0
+241,"Injured Party, Affiliation, Other Political Groups",176,151870,0,1,1,1,0
+242,"Injured Party, Affiliation, Other Armed Groups",176,151880,0,1,1,1,0
+243,"Alleged Perpetrator, Affiliation, Other Political Groups",175,161870,0,1,1,1,0
+244,"Alleged Perpetrator, Affiliation, Other Armed Groups",175,161880,0,1,1,1,0
+246,"Type, Human, Forced Conscription",27,130950,0,1,1,1,0
+247,"Weapons, Explosives, Volumetric Weapons ",50,140405,0,1,1,1,0
+248,"Injured Party, Affiliation, Tribal Forces",176,151862,0,1,1,1,0
+249,"Injured Party, Affiliation, Tribal Forces, Pro-Government",248,151865,0,1,1,1,0
+250,"Injured Party, Affiliation, Tribal Forces, Other Affiliations",248,151864,0,1,1,1,0
+251,"Injured Party, Affiliation, Tribal Forces, Independent/Unknown",248,151863,0,1,1,1,0
+252,"Alleged Perpetrator, Affiliation, Tribal Forces",175,161862,0,1,1,1,0
+253,"Alleged Perpetrator, Affiliation, Tribal Forces, Independent/Unknown",252,161863,0,1,1,1,0
+254,"Alleged Perpetrator, Affiliation, Tribal Forces, Other Affiliations",252,161864,0,1,1,1,0
+255,"Alleged Perpetrator, Affiliation, Tribal Forces, Pro-Government",252,161865,0,1,1,1,0
+256,"Injured Party, Affiliation, Pro-Government, Government Forces, Palestine Liberation Army",70,150718,0,1,1,1,0
+257,"Alleged Perpetrator, Affiliation, Pro-Government, Government Forces, Palestine Liberation Army",91,160713,0,1,1,1,0
+258,"Type, Human, Postmortem Offences",27,131440,0,1,1,1,0
+259,"Reliability, No Evidence",,101010,1,1,1,1,0
+260,"Reliability, Some/Weak Evidence",,101011,1,1,1,1,0
+261,"Reliability, Strong Evidence",,101012,1,1,1,1,0
+262,"Meta, Irrelevant, Border Incidents",2,100801,1,1,1,1,0
+263,"Meta, Actor Needed",,100099,1,1,1,1,0
+264,Uniform,,200200,1,1,1,1,0
+265,Human,,200400,1,1,1,1,0
+266,Grave,,200600,1,1,1,1,0
+267,Weapon,,200800,1,1,1,1,0
+268,Aircraft,,201000,1,1,1,1,0
+269,Vehicle,,201200,1,1,1,1,0
+270,Property/Buildings,,201400,1,1,1,1,0
+271,Demonstration,,201600,1,1,1,1,0
+272,Hostilities,,201800,1,1,1,1,0
+273,Non-Battle Incidents,,202000,1,1,1,1,0
+274,Sounds,,202200,1,1,1,1,0
+275,Video,,202400,1,1,1,1,0
+276,"Uniform, Government military ",264,200205,1,1,1,1,0
+277,"Uniform, Government security/police",264,200210,1,1,1,1,0
+278,"Uniform, Third-country military",264,200215,1,1,1,1,0
+279,"Uniform, Non-government militia",264,200220,1,1,1,1,0
+280,"Uniform, Kurdish",264,200225,1,1,1,1,0
+281,"Uniform, Unit detectable",264,200230,1,1,1,1,0
+282,"Uniform, Rank detectable",264,200235,1,1,1,1,0
+283,"Uniform, Unknown",264,200240,1,1,1,1,0
+284,"Uniform, Plain clothed fighter",264,200245,1,1,1,1,0
+285,"Uniform, Humanitarian uniform",264,200250,1,1,1,1,0
+286,"Uniform, Other",264,200255,1,1,1,1,0
+287,"Human, Incapacitated ",265,200405,1,1,0,0,0
+288,"Human, Signs of Injury, Wounds/Bruises",397,200411,1,1,1,1,0
+289,"Human, Signs of Injury, Maimed",265,200415,1,1,0,0,0
+290,"Human, Child",265,200420,1,1,1,1,0
+291,"Identifiable, Identities, Face(s) detectable",18,120301,1,1,1,1,0
+292,"Identifiable, Identities, Name(s) detectable",18,120302,1,1,1,1,0
+295,"Human, Officer/Commander(s)",265,200445,1,1,1,1,0
+296,"Grave, Burial ceremony",266,200605,1,1,1,1,0
+297,"Grave, Uncovering a grave with one body",266,200610,1,1,1,1,0
+298,"Grave, Uncovering a grave with multiple bodies",266,200615,1,1,1,1,0
+299,"Weapon, Manufacturing",267,200805,1,1,1,1,0
+300,"Weapon, Transporting",267,200810,1,1,1,1,0
+301,"Weapon, Loading",267,200815,1,1,1,1,0
+302,"Weapon, Firing",267,200820,1,1,1,1,0
+303,"Weapon, Weapon type detectable",267,200825,1,1,1,1,0
+307,"Aircraft, Airstrike with aircraft visible",268,201020,1,1,1,1,0
+308,"Aircraft, Airstrike with no visible aircraft ",268,201025,1,1,1,1,0
+309,"Aircraft, Ground to air shooting",268,201030,1,1,1,1,0
+310,"Vehicle, Unarmored military vehicle",269,201210,1,1,1,1,0
+311,"Vehicle, Armored military vehicle",269,201205,1,1,1,1,0
+313,"Vehicle, Armored civilian vehicle",269,201220,1,1,1,1,0
+314,"Vehicle, Unarmored civilian vehicle",269,201225,1,1,1,1,0
+315,"Property/Buildings, Civilian structure",270,201405,1,1,1,1,0
+316,"Property/Buildings, Religious/Cultural",270,201410,1,1,1,1,0
+317,"Property/Buildings, Educational",270,201415,1,1,1,1,0
+318,"Property/Buildings, Military structure",270,201420,1,1,1,1,0
+319,"Property/Buildings, Checkpoint",270,201425,1,1,1,1,0
+320,"Property/Buildings, Identifiable structure",270,201430,1,1,1,1,0
+321,"Property/Buildings, Destroyed",270,201435,1,1,1,1,0
+322,"Property/Buildings, Damaged",270,201440,1,1,1,1,0
+323,"Property/Buildings, Looting",270,201445,1,1,1,1,0
+324,"Demonstration, Funeral",271,201605,1,1,1,1,0
+325,"Demonstration, Violence",271,201610,1,1,1,1,0
+326,"Demonstration, Arrests",271,201615,1,1,1,1,0
+327,"Hostilities, In urban area",272,201805,1,1,1,1,0
+328,"Hostilities, Near urban area",272,201810,1,1,1,1,0
+331,"Hostilities, Civilians on periphery",272,201825,1,1,1,1,0
+332,"Hostilities, Civilians as human shields",272,201830,1,1,1,1,0
+333,"Hostilities, Indiscriminate",272,201835,1,1,1,1,0
+337,"Non-Battle Incidents, Beating",273,202005,1,1,1,1,0
+338,"Non-Battle Incidents, Beheading",273,202010,1,1,1,1,0
+341,"Sounds, Audible weapon(s)",274,202215,1,1,1,1,0
+342,"Sounds, Audible explosion(s)",274,202220,1,1,1,1,0
+343,"Sounds, Audible chant(s)",274,202225,1,1,1,1,0
+344,"Sounds, Audible scream(s)",274,202230,1,1,1,1,0
+347,"Video, Aerial view",275,202410,1,1,1,1,0
+348,"Video, Night",275,202415,1,1,1,1,0
+349,"Video, Timestamp visible",275,202420,1,1,1,1,0
+354,"Video, Clear weather",275,202445,1,1,1,1,0
+355,"Video, Stormy weather",275,202450,1,1,1,1,0
+356,"Reliability, Source claims differ from visual/audio",,100950,1,1,1,1,0
+357,"Reliability, Source claims partially differ from visual/audio",,100951,1,1,1,1,0
+358,"Reliability, Source claims same as visual/audio",,100952,1,1,1,1,0
+361,"Weapons, Air System, Aircraft",45,140121,0,1,1,1,0
+362,"Weapons, Air System, Drone",45,140122,0,1,1,1,0
+363,"Weapons, Air System, Helicopter ",45,140123,0,1,1,1,0
+364,"Weapons, Land System, Armored Fighting Vehicle, APC",44,140801,0,1,1,1,0
+365,"Weapons, Land System, Armored Fighting Vehicle, Tank",44,140802,0,1,1,1,0
+366,"Weapons, Land System, Artillery, Field Artillery",46,140901,0,1,1,1,0
+367,"Weapons, Land System, Artillery, Improvised",46,140902,0,1,1,1,0
+368,"Weapons, Land System, Artillery, Mortars",46,140903,0,1,1,1,0
+369,"Weapons, Land System, Artillery, Rockets Artillery",46,140904,0,1,1,1,0
+370,"Weapons, Land System, Anti-Aircraft Weapons",43,140950,0,1,1,1,0
+371,"Weapons, Land System, Anti-Armor Weapons",43,140960,0,1,1,1,0
+373,"Type, Use of Non-Military Facilities for Military Purposes",,132810,0,1,1,1,0
+374,"Sounds, Radio Contact",274,202236,1,1,1,1,0
+376,"Weapon, Remnants of weapons ",267,200826,1,1,1,1,0
+378,"Non-Battle Incidents, Questioning ",273,202013,1,1,1,1,0
+379,"Sounds, Audible aircraft(s)",274,202214,1,1,0,0,0
+380,"Weapons, Explosives, Improvised",50,140320,0,1,1,1,0
+381,"Weapons, Bladed Weapons",42,140140,0,1,1,1,0
+382,"Hostilities, Wounding/Killing ",272,201836,1,1,0,0,0
+383,"Aircraft, Origin detectable",268,201031,1,1,0,0,0
+384,"Human, Child, Participating in hostilities",290,200422,1,1,0,0,0
+385,"Property/Buildings, Agricultural ",270,201417,1,1,0,0,0
+386,"Property/Buildings, Public Infrastructure",270,201422,1,1,0,0,0
+387,"Vehicle, Humanitarian",269,201226,1,1,0,0,0
+388,"Property/Buildings, Medical",270,201419,1,1,0,0,0
+389,"Hostilities, Explosion",272,201805,1,1,0,0,0
+390,"Hostilities, Unknown area",272,201815,1,1,0,0,0
+391,"Weapon, Identification Marking",267,200822,1,1,0,0,0
+392,"Content, Interview",,110165,1,1,0,0,0
+393,"Human, Child, Armed",290,200421,1,1,0,0,0
+394,"Property/Buildings, Unknown structure used for military purposes",270,201421,1,1,0,0,0
+395,"Priority, High",,100945,1,1,0,0,0
+396,"Priority, Low",,100946,1,1,0,0,0
+397,"Human, Signs of Injury",265,200410,1,1,0,0,0
+398,"Non-Battle Incidents, Other Violence ",273,202014,1,1,0,0,0
+1399,"Non-Battle Incidents, Destruction to Property",273,202012,1,1,0,0,0
+1400,"Type, Attack on Property, Humanitarian/IPD",39,130205,0,1,0,0,0
+1401,"Property/Buildings, Camp",270,201407,1,1,0,0,0
+1402,"Content, Promotional ",,110165,1,1,0,0,0
+1403,"Content, Non-Incident, Prisoner Release/Exchange",14,110155,1,1,0,0,0
+1404,"Type, Extortion ",,132815,0,1,1,1,0
+1405,"Content, Unsubstantiated Confessions  ",,110166,1,1,0,0,0
+1406,"Non-Battle Incidents, Threats ",273,202014,1,1,0,0,0
+1407,"Content, Post-Incident, Signs of recent incident",,110161,1,1,0,0,0
+1408,"Weapons, Land System, Anti-Aircraft Weapons, MANPADS",370,140951,0,1,1,1,1
+1409,"Type, Attack on Property, Demolition",39,130250,0,1,0,0,1
+1410,"Meta, Bad Import, Low Quality",7,100101,1,1,0,0,0
+1411,"Non-Battle Incidents, Killing/Wounding",273,202006,1,1,0,0,0
+1412,"Injured Party, Affiliation, Pro-Government, Informant",69,150501,0,1,1,1,0
+1413,"Alleged Perpetrator, Affiliation, Pro-Government, Informant",90,160501,0,1,1,1,0
+1414,"Type, Attack on Property, Agriculture",39,130105,0,1,0,1,0
+1415,"Type, Attack on Property, Buildings used militarily ",39,130202,0,1,0,0,1
+1416,"Meta, Flagged for screenshots",,100600,1,1,0,0,0
+1417,"Weapons, Explosives, Bunker buster munition",50,140205,0,1,1,0,0
+1419,"Weapons, Land System, Armored Fighting Vehicle, Mine Clearing Vehicle",44,140801,0,1,1,1,0
+1420,"Property/Buildings, Humanitarian",,201419,1,1,0,0,0

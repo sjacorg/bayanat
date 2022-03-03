@@ -39,9 +39,16 @@ def get_locale():
     Sets the system global language.
     :return: system language from the current session.
     """
-    override = request.args.get('lang')
-    if override:
-        session['lang'] = override
+    # override = request.args.get('lang')
+    # if override:
+    #     session['lang'] = override
+    if not current_user.is_authenticated:
+        # will return default language
+        pass
+    else:
+        if current_user.settings:
+            if current_user.settings.get('language'):
+                session['lang'] = current_user.settings.get('language')
     return session.get('lang', 'en')
 
 
@@ -739,7 +746,7 @@ def bulletins(id):
 
 def make_cache_key(*args, **kwargs):
     json_key = str(hash(str(request.json)))
-    args_key = request.args.get('page') + request.args.get('per_page')
+    args_key = request.args.get('page') + request.args.get('per_page',PER_PAGE) + request.args.get('cache','')
     return json_key + args_key
 
 
@@ -830,6 +837,7 @@ def api_bulletin_update(id):
 
     else:
         return 'Unauthorized', 403
+
 
 
 # Add/Update review bulletin endpoint
@@ -952,6 +960,117 @@ def api_bulletin_import():
     else:
         return 'Error', 400
 
+
+# ----- self assign endpoints -----
+
+@admin.route('/api/bulletin/assign/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'DA')
+def api_bulletin_self_assign(id):
+
+    """assign a bulletin to the user"""
+
+    # permission check
+    if not current_user.can_self_assign:
+        return 'User not allowed to self assign', 400
+
+    bulletin = Bulletin.query.get(id)
+    if bulletin:
+        b = request.json.get('bulletin')
+        # workflow check
+        if bulletin.assigned_to_id and bulletin.assigned_to.active:
+            return 'Item already assigned to an active user', 400
+
+        # update bulletin assignement
+        bulletin.assigned_to_id = current_user.id
+        bulletin.comments = b.get('comments')
+        bulletin.ref = bulletin.ref or []
+        bulletin.ref = bulletin.ref + b.get('ref',[])
+
+        # Change status to assigned if needed
+        if bulletin.status == 'Machine Created' or bulletin.status == 'Human Created':
+            bulletin.status = 'Assigned'
+
+        # Create a revision using latest values
+        # this method automatically commits
+        # bulletin changes (referenced)
+        bulletin.create_revision()
+
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
+        return 'Saved Bulletin #{}'.format(bulletin.id), 200
+    else:
+        abort(404)
+
+
+@admin.route('/api/actor/assign/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'DA')
+def api_actor_self_assign(id):
+
+    """ self assign an actor to the user"""
+
+    # permission check
+    if not current_user.can_self_assign:
+        return 'User not allowed to self assign', 400
+
+    actor = Actor.query.get(id)
+    if actor:
+        a = request.json.get('actor')
+        # workflow check
+        if actor.assigned_to_id and actor.assigned_to.active:
+            return 'Item already assigned to an active user', 400
+
+        # update bulletin assignement
+        actor.assigned_to_id = current_user.id
+        actor.comments = a.get('comments')
+
+
+        # Change status to assigned if needed
+        if actor.status == 'Machine Created' or actor.status == 'Human Created':
+            actor.status = 'Assigned'
+
+        actor.create_revision()
+
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
+        return 'Saved Actor #{}'.format(actor.id), 200
+    else:
+        abort(404)
+
+
+@admin.route('/api/incident/assign/<int:id>', methods=['PUT'])
+@roles_accepted('Admin', 'DA')
+def api_incident_self_assign(id):
+
+    """ self assign an incident to the user"""
+
+    # permission check
+    if not current_user.can_self_assign:
+        return 'User not allowed to self assign', 400
+
+    incident = Incident.query.get(id)
+    if incident:
+        i = request.json.get('incident')
+        # workflow check
+        if incident.assigned_to_id and incident.assigned_to.active:
+            return 'Item already assigned to an active user', 400
+
+        # update bulletin assignement
+        incident.assigned_to_id = current_user.id
+        incident.comments = i.get('comments')
+
+
+        # Change status to assigned if needed
+        if incident.status == 'Machine Created' or incident.status == 'Human Created':
+            incident.status = 'Assigned'
+
+
+        incident.create_revision()
+
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
+        return 'Saved Actor #{}'.format(incident.id), 200
+    else:
+        abort(404)
 
 # Media special endpoints
 @admin.route('/api/media/upload/', methods=['POST'])
@@ -1467,7 +1586,7 @@ def api_user_update(uid):
             user.view_usernames = request.json['item']['view_usernames']
             user.view_simple_history = request.json['item']['view_simple_history']
             user.view_full_history = request.json['item']['view_full_history']
-
+            user.can_self_assign = request.json['item'].get('can_self_assign', False)
             user.name = request.json['item']['name']
             email = request.json.get('item').get('email')
             if email:

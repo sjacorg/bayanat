@@ -233,8 +233,9 @@ axios.interceptors.response.use(function (response) {
 
 //  in-page router for bulleints/actors/incidents pages
 const router = new VueRouter({
-    // mode: 'history',
+     mode: 'history',
     routes: [
+
         {path: '/admin/bulletins/:id'},
         {path: '/admin/actors/:id'},
         {path: '/admin/incidents/:id'}

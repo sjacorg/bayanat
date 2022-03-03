@@ -310,17 +310,20 @@ class Label(db.Model, BaseMixin):
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
-        df.comments = df.comments.fillna("")
-        df.name_ar = df.name_ar.fillna("")
-        df.parent_label_id = df.parent_label_id.fillna(0)
+        df.order.astype(int)
+
         # first ignore foreign key constraints
         dfi = df.copy()
         del dfi['parent_label_id']
+
         # first insert
         db.session.bulk_insert_mappings(Label, dfi.to_dict(orient="records"))
-        # then update
+
+        # then drop labels with no foreign keys and update
+        df = df[df['parent_label_id'].notna()]
         db.session.bulk_update_mappings(Label, df.to_dict(orient="records"))
         db.session.commit()
+        
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from label").scalar()
         db.session.execute("alter sequence label_id_seq restart with {}".format(max_id))
@@ -1960,7 +1963,7 @@ class Actor(db.Model, BaseMixin):
         social_networks = db.Column(JSON)
         marriage_history = db.Column(db.String)
         bio_children = db.Column(db.Integer)
-        pregnant_at_disappearance = db.Column(db.Boolean)
+        pregnant_at_disappearance = db.Column(db.String)
         months_pregnant = db.Column(db.NUMERIC)
         missing_relatives = db.Column(db.Boolean)
         saw_name = db.Column(db.String)
@@ -1984,7 +1987,7 @@ class Actor(db.Model, BaseMixin):
         posture = db.Column(db.Text)
         skin_markings = db.Column(JSON)
         handedness = db.Column(db.String)
-        glasses = db.Column(db.Boolean)
+        glasses = db.Column(db.String)
         eye_color = db.Column(db.String)
         dist_char_con = db.Column(db.String)
         dist_char_acq = db.Column(db.String)
@@ -1998,7 +2001,7 @@ class Actor(db.Model, BaseMixin):
         other_conditions = db.Column(db.Text)
         accidents = db.Column(db.Text)
         pres_drugs = db.Column(db.Text)
-        smoker = db.Column(db.Boolean)
+        smoker = db.Column(db.String)
         dental_record = db.Column(db.Boolean)
         dentist_info = db.Column(db.Text)
         teeth_features = db.Column(db.Text)
@@ -2370,7 +2373,7 @@ class Actor(db.Model, BaseMixin):
 
         mp['posture'] = getattr(self, 'posture')
         mp['skin_markings'] = getattr(self, 'skin_markings')
-        if self.skin_markings and self.skin_markings['opts']:
+        if self.skin_markings and self.skin_markings.get('opts'):
             mp['_skin_markings'] = [gettext(item) for item in self.skin_markings['opts']]
 
 

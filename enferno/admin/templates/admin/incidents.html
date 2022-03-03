@@ -154,6 +154,27 @@
                             <span>Edit</span>
                           </v-tooltip>
 
+
+                             <v-tooltip top>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon
+                                                    v-on="on"
+                                                    color="primary lighten-1"
+                                                    class="mr-2"
+
+                                                    @click.stop="openSelfAssign(item)"
+                                                    v-if="selfAssignAllowed(item)"
+                                            >
+                                                mdi-arrow-left-thin-circle-outline
+                                            </v-icon>
+
+
+
+                                        </template>
+                                        <span>Assign to self</span>
+                                    </v-tooltip>
+
+
                           <v-tooltip top>
                             <template v-slot:activator="{ on }">
                                <v-icon v-on="on"
@@ -178,6 +199,23 @@
                       <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
                     <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
                     <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"   ref="relateIncidents"></relate-incidents>
+
+
+                        <v-dialog width="600" v-model="selfAssignDialog">
+                            <v-card class="pa-3">
+                                <v-card-title>Self Assign Incidnet #${assignIncident.id}</v-card-title>
+                                <v-card-text>
+
+                                    <v-textarea v-model="assignIncident.comments" label="Comments"></v-textarea>
+                                </v-card-text>
+                                <v-card-actions>
+                                    <v-btn :disabled="!assignIncident.comments" class="ma-auto" @click="selfAssign"
+                                           color="primary">Assign to self
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+
+                        </v-dialog>
 
                       <v-snackbar v-model="snackbar">
                         ${snackMessage}
@@ -228,6 +266,10 @@
 
          // i18n
         translations: translations,
+
+
+        assignIncident: {},
+        selfAssignDialog: false,
 
         //global preview dialog
         preview : false,
@@ -497,11 +539,35 @@
       });
 
 
-      if (this.$route.params.id){
-        this.showIncident(this.$route.params.id);
-      }
+        if (this.$route.params.id) {
+            this.showIncident(this.$route.params.id);
+        }
+
+        if (this.$route.query.reltob) {
+            this.filter_related_to_bulletin(this.$route.query.reltob);
+        }
+
+        if (this.$route.query.reltoa) {
+            this.filter_related_to_actor(this.$route.query.reltoa);
+        }
+
+        if (this.$route.query.reltoi) {
+            this.filter_related_to_incident(this.$route.query.reltoi);
+        }
       
       this.$router.afterEach((to, from, next) => {
+
+           if (this.$route.query.reltob) {
+              this.filter_related_to_bulletin(this.$route.query.reltob);
+          }
+
+          if (this.$route.query.reltoa) {
+              this.filter_related_to_actor(this.$route.query.reltoa);
+          }
+
+          if (this.$route.query.reltoi) {
+              this.filter_related_to_incident(this.$route.query.reltoi);
+          }
 
         
         if (this.$route.params.id){
@@ -516,6 +582,48 @@
     },
 
     methods: {
+
+            openSelfAssign(incident){
+                    this.assignIncident = {id:incident.id};
+                    this.selfAssignDialog = true;
+
+                },
+
+                selfAssign(){
+
+
+
+                    axios.put(`/admin/api/incident/assign/${this.assignIncident.id}`,{incident:this.assignIncident}).then(res=>{
+                        this.showSnack('Incident assigned successfully.')
+                        this.searchIncidents()
+
+                    }).catch(err=>{
+                        this.showSnack(err.response.data);
+                    }).finally(()=>{
+                        this.selfAssignDialog = false;
+                        this.assignIncident = {};
+
+                    });
+
+                },
+
+        filter_related_to_bulletin(id) {
+            this.bulletinDrawer = false;
+            this.search = {rel_to_bulletin: id};
+            this.searchIncidents();
+        },
+
+        filter_related_to_actor(id) {
+            this.bulletinDrawer = false;
+            this.search = {rel_to_actor: id};
+            this.searchIncidents();
+        },
+
+        filter_related_to_incident(id) {
+            this.bulletinDrawer = false;
+            this.search = {rel_to_incident: id};
+            this.searchIncidents();
+        },
 
        previewItem(endpoint)
       {
@@ -775,6 +883,21 @@ toggleAdvSearch() {
         }
         return false;
       },
+
+
+        selfAssignAllowed(incident) {
+
+            if (this.currentUser.can_self_assign) {
+                if ((!incident.assigned_to) || (incident.assigned_to && !incident.assigned_to.active)) {
+                    return true
+                }
+
+            }
+
+            return false;
+
+        },
+
 
 
       addReview(item) {     
