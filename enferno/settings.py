@@ -111,7 +111,8 @@ class Config(object):
     S3_BUCKET = os.environ.get('S3_BUCKET')
 
     # i18n
-    LANGUAGES = ['en', 'ar']
+    LANGUAGES = ['en', 'ar', 'uk']
+    DEFAULT_LANGUAGE = os.environ.get('DEFAULT_LANGUAGE','en')
     # extract messages with the following command
     # pybabel extract -F babel.cfg -k _l -o messages.pot .
     # generate a new language using the following command

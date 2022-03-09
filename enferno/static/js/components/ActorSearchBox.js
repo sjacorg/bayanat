@@ -422,7 +422,7 @@ Vue.component('actor-search-box', {
           <v-col cols="12" md="3">
             <v-select
                 :items="translations.actorSex"
-                :item-text="__lang__"
+                item-text="tr"
                 item-value="en"
                 v-model="q.sex"
                 :label="i18n.sex_"
@@ -432,7 +432,7 @@ Vue.component('actor-search-box', {
           <v-col cols="12" md="3">
             <v-select
                 :items="translations.actorAge"
-                :item-text="__lang__"
+                item-text="tr"
                 item-value="en"
                 v-model="q.age"
                 :label="i18n.minorAdult_"
@@ -442,7 +442,7 @@ Vue.component('actor-search-box', {
           <v-col cols="12" md="3">
             <v-select
                 :items="translations.actorCivilian"
-                :item-text="__lang__"
+                item-text="tr"
                 item-value="en"
                 v-model="q.civilian"
                 :label="i18n.civilian_"
@@ -451,7 +451,7 @@ Vue.component('actor-search-box', {
 
           <v-col md="3">
             <v-select
-                :item-text="__lang__"
+                item-text="tr"
                 item-value="en"
                 :items="translations.actorTypes"
                 v-model="q.actor_type"
@@ -464,7 +464,7 @@ Vue.component('actor-search-box', {
           <v-col cols="12" md="6">
             <v-autocomplete
                 :items="translations.actorEthno"
-                :item-text="__lang__"
+                item-text="tr"
                 item-value="en"
                 v-model="q.ethnography"
                 :label="i18n.ethnography_"
@@ -474,7 +474,7 @@ Vue.component('actor-search-box', {
           <v-col cols="12" md="6">
             <v-autocomplete
                 :items="translations.countries"
-                :item-text="__lang__"
+                item-text="tr"
                 item-value="en"
                 v-model="q.nationality"
                 :label="i18n.nationality_"

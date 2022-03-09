@@ -45,7 +45,7 @@ Vue.component("mix-ii", {
       <v-card-text>
       <div>
       <v-select v-model="mix.opts"
-                :item-text="__lang__"
+                item-text="tr"
                 item-value="en"
                 :items="items" :multiple="this.multiple">
         

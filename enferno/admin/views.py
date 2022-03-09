@@ -42,6 +42,11 @@ def get_locale():
     # override = request.args.get('lang')
     # if override:
     #     session['lang'] = override
+    try:
+        default = current_app.config.get('DEFAULT_LANGUAGE')
+    except Exception as e:
+        print(e)
+        default = 'en'
     if not current_user.is_authenticated:
         # will return default language
         pass
@@ -49,7 +54,7 @@ def get_locale():
         if current_user.settings:
             if current_user.settings.get('language'):
                 session['lang'] = current_user.settings.get('language')
-    return session.get('lang', 'en')
+    return session.get('lang', default)
 
 
 @admin.before_request

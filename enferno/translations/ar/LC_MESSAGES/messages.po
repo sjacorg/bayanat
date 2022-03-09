@@ -1,41 +1,45 @@
-
+# Arabic translations for PROJECT.
+# Copyright (C) 2022 Syria Justice and Accountability Centre
+# This file is distributed under the same license as the Bayanat project.
+# SJAC <tech@syriaaccountability.org >, 2022.
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-12-02 02:11+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Project-Id-Version: Bayanat v1.11.1\n"
+"Report-Msgid-Bugs-To: tech@syriaaccountability.org \n"
+"POT-Creation-Date: 2022-03-08 19:33+0000\n"
+"PO-Revision-Date: 2022-03-08 19:33+0000\n"
+"Last-Translator: SJAC <tech@syriaaccountability.org >\n"
 "Language: ar\n"
-"Language-Team: ar <LL@li.org>\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
-"n%100>=3 && n%100<=10 ? 3 : n%100>=0 && n%100<=2 ? 4 : 5)\n"
+"Language-Team: SJAC <tech@syriaaccountability.org >\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.0\n"
+"Generated-By: Babel 2.9.1\n"
 
-#: enferno/admin/templates/nav-bar.html:45
+#: enferno/admin/templates/nav-bar.html:39
 msgid "Account Settings"
 msgstr "اعدادات الحساب"
 
-#: enferno/admin/templates/nav-bar.html:68
+#: enferno/admin/templates/nav-bar.html:62
 msgid "Logout"
 msgstr "تسجيل خروج"
 
 #: enferno/admin/templates/admin/activity.html:94
-#: enferno/admin/templates/admin/actors.html:374
-#: enferno/admin/templates/admin/bulletins.html:394
+#: enferno/admin/templates/admin/actors.html:419
+#: enferno/admin/templates/admin/bulletins.html:446
 #: enferno/admin/templates/admin/csv-dashboard.html:900
 #: enferno/admin/templates/admin/etl-dashboard.html:355
 #: enferno/admin/templates/admin/etl-status.html:85
 #: enferno/admin/templates/admin/eventtypes.html:211
-#: enferno/admin/templates/admin/incidents.html:347
+#: enferno/admin/templates/admin/incidents.html:389
 #: enferno/admin/templates/admin/labels.html:286
 #: enferno/admin/templates/admin/locations.html:301
 #: enferno/admin/templates/admin/roles.html:180
 #: enferno/admin/templates/admin/sources.html:233
-#: enferno/admin/templates/admin/users.html:201
+#: enferno/admin/templates/admin/users.html:206
 #: enferno/deduplication/templates/deduplication.html:148
 msgid "Rows per page"
 msgstr "نتائج في الصفحة"
@@ -45,19 +49,19 @@ msgid "All Actors"
 msgstr "جميع الكيانات"
 
 #: enferno/admin/templates/admin/actors.html:42
-#: enferno/admin/templates/admin/bulletins.html:44
+#: enferno/admin/templates/admin/bulletins.html:45
 #: enferno/admin/templates/admin/incidents.html:44
 msgid "Assigned to me"
 msgstr "المخصصة لي"
 
 #: enferno/admin/templates/admin/actors.html:44
-#: enferno/admin/templates/admin/bulletins.html:48
+#: enferno/admin/templates/admin/bulletins.html:49
 #: enferno/admin/templates/admin/incidents.html:46
 msgid "My Review List"
 msgstr "قائمة التدقيق"
 
 #: enferno/admin/templates/admin/actors.html:60
-#: enferno/admin/templates/admin/bulletins.html:64
+#: enferno/admin/templates/admin/bulletins.html:65
 #: enferno/admin/templates/admin/i18n.jinja2:48
 #: enferno/admin/templates/admin/incidents.html:65
 #: enferno/admin/templates/admin/labels.html:42
@@ -73,81 +77,81 @@ msgid "New Actor"
 msgstr "كيان جديد"
 
 #: enferno/admin/templates/admin/actors.html:84
-#: enferno/admin/templates/admin/bulletins.html:107
+#: enferno/admin/templates/admin/bulletins.html:108
 #: enferno/admin/templates/admin/incidents.html:98
 msgid "Bulk update"
 msgstr "تحديث بالجملة"
 
 #: enferno/admin/templates/admin/actors.html:106
-#: enferno/admin/templates/admin/bulletins.html:131
+#: enferno/admin/templates/admin/bulletins.html:132
 #: enferno/admin/templates/admin/incidents.html:121
 msgid "About"
 msgstr "تقريبا"
 
 #: enferno/admin/templates/admin/actors.html:106
-#: enferno/admin/templates/admin/bulletins.html:131
+#: enferno/admin/templates/admin/bulletins.html:132
 #: enferno/admin/templates/admin/incidents.html:121
 msgid "results"
 msgstr "نتائج"
 
 #: enferno/admin/templates/admin/actors.html:106
-#: enferno/admin/templates/admin/bulletins.html:132
+#: enferno/admin/templates/admin/bulletins.html:133
 #: enferno/admin/templates/admin/incidents.html:121
 msgid "seconds"
 msgstr "ثواني"
 
 #: enferno/admin/templates/admin/actors.html:113
-#: enferno/admin/templates/admin/bulletins.html:142
+#: enferno/admin/templates/admin/bulletins.html:143
 #: enferno/admin/templates/admin/incidents.html:127
 msgid "Selected items"
 msgstr "المواد المختارة"
 
-#: enferno/admin/templates/admin/actors.html:378
-#: enferno/admin/templates/admin/bulletins.html:398
+#: enferno/admin/templates/admin/actors.html:423
+#: enferno/admin/templates/admin/bulletins.html:450
 #: enferno/admin/templates/admin/eventtypes.html:215
 #: enferno/admin/templates/admin/i18n.jinja2:81
-#: enferno/admin/templates/admin/incidents.html:351
+#: enferno/admin/templates/admin/incidents.html:393
 #: enferno/admin/templates/admin/labels.html:290
 #: enferno/admin/templates/admin/locations.html:305
 #: enferno/admin/templates/admin/roles.html:184
-#: enferno/admin/templates/admin/users.html:205
+#: enferno/admin/templates/admin/users.html:210
 #: enferno/deduplication/templates/deduplication.html:126
 msgid "ID"
 msgstr "الرقم التعريفي"
 
-#: enferno/admin/templates/admin/actors.html:379
+#: enferno/admin/templates/admin/actors.html:424
 #: enferno/admin/templates/admin/csv-dashboard.html:230
 #: enferno/admin/templates/admin/csv-dashboard.html:904
 #: enferno/admin/templates/admin/etl-dashboard.html:359
 #: enferno/admin/templates/admin/i18n.jinja2:70
 #: enferno/admin/templates/admin/i18n.jinja2:144
 #: enferno/admin/templates/admin/partials/actor_dialog.html:53
-#: enferno/admin/templates/admin/partials/actor_dialog.html:933
+#: enferno/admin/templates/admin/partials/actor_dialog.html:938
 #: enferno/admin/templates/admin/roles.html:185
-#: enferno/admin/templates/admin/users.html:208
+#: enferno/admin/templates/admin/users.html:213
 msgid "Name"
 msgstr "الاسم"
 
-#: enferno/admin/templates/admin/actors.html:381
-#: enferno/admin/templates/admin/bulletins.html:401
-#: enferno/admin/templates/admin/incidents.html:354
+#: enferno/admin/templates/admin/actors.html:426
+#: enferno/admin/templates/admin/bulletins.html:453
+#: enferno/admin/templates/admin/incidents.html:396
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:28
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:37
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:30
 msgid "Assigned To"
 msgstr "موكل إلى"
 
-#: enferno/admin/templates/admin/actors.html:382
-#: enferno/admin/templates/admin/bulletins.html:402
-#: enferno/admin/templates/admin/incidents.html:355
+#: enferno/admin/templates/admin/actors.html:427
+#: enferno/admin/templates/admin/bulletins.html:454
+#: enferno/admin/templates/admin/incidents.html:397
 msgid "1st Reviewer"
 msgstr "المدقق الأول"
 
-#: enferno/admin/templates/admin/actors.html:384
-#: enferno/admin/templates/admin/bulletins.html:404
+#: enferno/admin/templates/admin/actors.html:429
+#: enferno/admin/templates/admin/bulletins.html:456
 #: enferno/admin/templates/admin/csv-dashboard.html:24
-#: enferno/admin/templates/admin/incidents.html:357
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1317
+#: enferno/admin/templates/admin/incidents.html:399
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1331
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:61
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:61
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:63
@@ -157,33 +161,39 @@ msgstr "المدقق الأول"
 msgid "Status"
 msgstr "الحالة"
 
-#: enferno/admin/templates/admin/actors.html:385
-#: enferno/admin/templates/admin/bulletins.html:407
+#: enferno/admin/templates/admin/actors.html:430
+#: enferno/admin/templates/admin/bulletins.html:459
 #: enferno/admin/templates/admin/eventtypes.html:222
-#: enferno/admin/templates/admin/incidents.html:361
+#: enferno/admin/templates/admin/incidents.html:403
 #: enferno/admin/templates/admin/labels.html:300
 #: enferno/admin/templates/admin/locations.html:312
 #: enferno/admin/templates/admin/roles.html:187
 #: enferno/admin/templates/admin/sources.html:245
-#: enferno/admin/templates/admin/users.html:213
+#: enferno/admin/templates/admin/users.html:218
 msgid "Actions"
 msgstr "العمليات"
 
-#: enferno/admin/templates/admin/bulletins.html:40
+#: enferno/admin/templates/admin/bulletins.html:41
 msgid "All Bulletins"
 msgstr "جميع المواد"
 
-#: enferno/admin/templates/admin/bulletins.html:76
+#: enferno/admin/templates/admin/bulletins.html:77
 #: enferno/admin/templates/admin/i18n.jinja2:2
 msgid "New Bulletin"
 msgstr "مادة جديدة"
 
-#: enferno/admin/templates/admin/bulletins.html:399
+#: enferno/admin/templates/admin/bulletins.html:250
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:72
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:110
+msgid "Ref"
+msgstr "مرجع"
+
+#: enferno/admin/templates/admin/bulletins.html:451
 #: enferno/admin/templates/admin/csv-dashboard.html:359
 #: enferno/admin/templates/admin/eventtypes.html:58
 #: enferno/admin/templates/admin/eventtypes.html:216
 #: enferno/admin/templates/admin/i18n.jinja2:85
-#: enferno/admin/templates/admin/incidents.html:352
+#: enferno/admin/templates/admin/incidents.html:394
 #: enferno/admin/templates/admin/labels.html:70
 #: enferno/admin/templates/admin/labels.html:291
 #: enferno/admin/templates/admin/locations.html:70
@@ -351,7 +361,7 @@ msgstr "التوصيف"
 #: enferno/admin/templates/admin/partials/actor_dialog.html:253
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:126
 #: enferno/admin/templates/admin/sources.html:29
-#: enferno/templates/nav-drawer.html:68
+#: enferno/templates/nav-drawer.html:71
 msgid "Sources"
 msgstr "المصادر"
 
@@ -362,7 +372,7 @@ msgstr "المصادر"
 #: enferno/admin/templates/admin/partials/actor_dialog.html:267
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:152
 #: enferno/admin/templates/admin/partials/incident_dialog.html:130
-#: enferno/templates/nav-drawer.html:82
+#: enferno/templates/nav-drawer.html:85
 msgid "Labels"
 msgstr "الوسوم"
 
@@ -423,7 +433,7 @@ msgstr "مكان الولادة"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:353
 #: enferno/admin/templates/admin/i18n.jinja2:90
-#: enferno/admin/templates/admin/i18n.jinja2:535
+#: enferno/admin/templates/admin/i18n.jinja2:533
 #: enferno/admin/templates/admin/partials/event_dialog.html:6
 msgid "Events"
 msgstr "الحوادث"
@@ -443,7 +453,7 @@ msgstr "نوع الحادثة"
 #: enferno/admin/templates/admin/partials/actor_dialog.html:644
 #: enferno/admin/templates/admin/partials/actor_dialog.html:749
 #: enferno/admin/templates/admin/partials/actor_dialog.html:839
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1305
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1319
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:72
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:86
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:73
@@ -548,25 +558,25 @@ msgstr "الرقم الوطني"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:445
 #: enferno/admin/templates/admin/i18n.jinja2:99
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1265
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1279
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:557
 msgid "Source Link"
 msgstr "رابط المصدر"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:458
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1272
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1286
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:566
 msgid "Private"
 msgstr "خاص"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:460
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1282
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1296
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:577
 msgid "Publish Date"
 msgstr "تاريخ النشر"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:462
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1289
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1303
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:585
 msgid "Documentation Date"
 msgstr "تاريخ التوثيق"
@@ -641,7 +651,7 @@ msgstr "أضف بيانات للملفات"
 #: enferno/admin/templates/admin/locations.html:30
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:182
 #: enferno/admin/templates/admin/partials/incident_dialog.html:141
-#: enferno/templates/nav-drawer.html:54
+#: enferno/templates/nav-drawer.html:57
 msgid "Locations"
 msgstr "الأماكن"
 
@@ -672,7 +682,7 @@ msgid "Files added to queue and will be imported in turn."
 msgstr "تم إضافة الملفات إلى قائمة الإنتظار وسيتم إستيرادها بحسب الترتيب"
 
 #: enferno/admin/templates/admin/eventtypes.html:30
-#: enferno/templates/nav-drawer.html:94
+#: enferno/templates/nav-drawer.html:97
 msgid "Event Types"
 msgstr "أنواع الحوادث"
 
@@ -725,7 +735,7 @@ msgstr "العنوان (عربي)"
 #: enferno/admin/templates/admin/locations.html:338
 #: enferno/admin/templates/admin/sources.html:51
 #: enferno/admin/templates/admin/sources.html:267
-#: enferno/admin/templates/admin/users.html:231
+#: enferno/admin/templates/admin/users.html:236
 msgid "New Item"
 msgstr "عنصر جديد"
 
@@ -733,7 +743,7 @@ msgstr "عنصر جديد"
 #: enferno/admin/templates/admin/labels.html:320
 #: enferno/admin/templates/admin/locations.html:338
 #: enferno/admin/templates/admin/sources.html:267
-#: enferno/admin/templates/admin/users.html:231
+#: enferno/admin/templates/admin/users.html:236
 msgid "Edit Item"
 msgstr "تعديل العنصر"
 
@@ -944,17 +954,25 @@ msgid "Date of birth"
 msgstr "تاريخ الولادة"
 
 #: enferno/admin/templates/admin/i18n.jinja2:66
+#: enferno/admin/templates/admin/i18n.jinja2:557
+#: enferno/admin/templates/admin/i18n.jinja2:619
 msgid "Yes"
 msgstr "نعم"
 
 #: enferno/admin/templates/admin/i18n.jinja2:67
+#: enferno/admin/templates/admin/i18n.jinja2:558
+#: enferno/admin/templates/admin/i18n.jinja2:620
 msgid "No"
 msgstr "لا"
 
 #: enferno/admin/templates/admin/i18n.jinja2:68
-#: enferno/admin/templates/admin/i18n.jinja2:428
-#: enferno/admin/templates/admin/i18n.jinja2:432
-#: enferno/admin/templates/admin/i18n.jinja2:453
+#: enferno/admin/templates/admin/i18n.jinja2:426
+#: enferno/admin/templates/admin/i18n.jinja2:430
+#: enferno/admin/templates/admin/i18n.jinja2:451
+#: enferno/admin/templates/admin/i18n.jinja2:551
+#: enferno/admin/templates/admin/i18n.jinja2:559
+#: enferno/admin/templates/admin/i18n.jinja2:615
+#: enferno/admin/templates/admin/i18n.jinja2:621
 msgid "Unknown"
 msgstr "غير معروف"
 
@@ -980,7 +998,7 @@ msgstr "العلاقة"
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:71
 #: enferno/admin/templates/admin/partials/event_dialog.html:168
 #: enferno/admin/templates/admin/roles.html:123
-#: enferno/admin/templates/admin/users.html:153
+#: enferno/admin/templates/admin/users.html:158
 msgid "Save"
 msgstr "حفظ"
 
@@ -1058,7 +1076,7 @@ msgid "Age"
 msgstr "العمر"
 
 #: enferno/admin/templates/admin/i18n.jinja2:112
-#: enferno/admin/templates/admin/i18n.jinja2:433
+#: enferno/admin/templates/admin/i18n.jinja2:431
 msgid "Civilian"
 msgstr "مدني"
 
@@ -1117,64 +1135,64 @@ msgid "Months Pregnant at Disappearance"
 msgstr "شهر الحمل وقت الاختفاء"
 
 #: enferno/admin/templates/admin/i18n.jinja2:143
-#: enferno/admin/templates/admin/partials/actor_dialog.html:918
+#: enferno/admin/templates/admin/partials/actor_dialog.html:923
 msgid "Missing Relatives"
 msgstr "أقارب مفقودين"
 
 #: enferno/admin/templates/admin/i18n.jinja2:145
-#: enferno/admin/templates/admin/partials/actor_dialog.html:935
+#: enferno/admin/templates/admin/partials/actor_dialog.html:940
 msgid "Address"
 msgstr "العنوان"
 
 #: enferno/admin/templates/admin/i18n.jinja2:146
-#: enferno/admin/templates/admin/partials/actor_dialog.html:937
+#: enferno/admin/templates/admin/partials/actor_dialog.html:942
 msgid "Phone"
 msgstr "رقم الهاتف"
 
 #: enferno/admin/templates/admin/i18n.jinja2:147
-#: enferno/admin/templates/admin/partials/actor_dialog.html:943
+#: enferno/admin/templates/admin/partials/actor_dialog.html:948
 #: enferno/admin/templates/admin/users.html:90
-#: enferno/admin/templates/admin/users.html:207
+#: enferno/admin/templates/admin/users.html:212
 msgid "Email"
 msgstr "البريد الالكتروني"
 
 #: enferno/admin/templates/admin/i18n.jinja2:148
-#: enferno/admin/templates/admin/partials/actor_dialog.html:952
+#: enferno/admin/templates/admin/partials/actor_dialog.html:957
 msgid "Seen in a detention center?"
 msgstr "هل شوهد في مركز اعتقال؟"
 
 #: enferno/admin/templates/admin/i18n.jinja2:149
-#: enferno/admin/templates/admin/partials/actor_dialog.html:959
+#: enferno/admin/templates/admin/partials/actor_dialog.html:964
 msgid "Injured around time of disappearance?"
 msgstr "هل كان مصابا وقت الاختفاء؟"
 
 #: enferno/admin/templates/admin/i18n.jinja2:150
-#: enferno/admin/templates/admin/partials/actor_dialog.html:967
+#: enferno/admin/templates/admin/partials/actor_dialog.html:972
 msgid "Known to be dead?"
 msgstr "هل يعرف بأنه ميت؟"
 
 #: enferno/admin/templates/admin/i18n.jinja2:151
-#: enferno/admin/templates/admin/partials/actor_dialog.html:973
+#: enferno/admin/templates/admin/partials/actor_dialog.html:978
 msgid "Details about circumstances of death"
 msgstr "تفاصيل حول ظروف الوفاة"
 
 #: enferno/admin/templates/admin/i18n.jinja2:152
-#: enferno/admin/templates/admin/partials/actor_dialog.html:979
+#: enferno/admin/templates/admin/partials/actor_dialog.html:984
 msgid "Personal Items (watch,ring,chains etc)"
 msgstr "متعلقات شخصية (ساعة، خاتم، قلادة..إلخ)"
 
 #: enferno/admin/templates/admin/i18n.jinja2:153
-#: enferno/admin/templates/admin/partials/actor_dialog.html:989
+#: enferno/admin/templates/admin/partials/actor_dialog.html:994
 msgid "Height"
 msgstr "الطول"
 
 #: enferno/admin/templates/admin/i18n.jinja2:154
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1001
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1006
 msgid "Weight"
 msgstr "الوزن"
 
 #: enferno/admin/templates/admin/i18n.jinja2:155
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1010
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1015
 msgid "Physique"
 msgstr "البنية الجسدية"
 
@@ -1199,22 +1217,22 @@ msgid "Facial Hair"
 msgstr "شعر الوجه"
 
 #: enferno/admin/templates/admin/i18n.jinja2:161
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1069
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1074
 msgid "Notes on posture and walking style"
 msgstr "ملاحظة عن القامة وطريقة المشي"
 
 #: enferno/admin/templates/admin/i18n.jinja2:162
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1085
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1093
 msgid "Skin Markings"
 msgstr "علامات ظاهرة على الجلد"
 
 #: enferno/admin/templates/admin/i18n.jinja2:163
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1071
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1076
 msgid "Handness"
 msgstr "أيمن/أعسر"
 
 #: enferno/admin/templates/admin/i18n.jinja2:164
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1076
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1081
 msgid "Glasses"
 msgstr "نظارات"
 
@@ -1223,22 +1241,22 @@ msgid "Eye Color"
 msgstr "لون العين"
 
 #: enferno/admin/templates/admin/i18n.jinja2:166
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1100
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1108
 msgid "Distinctive characteristics (congenital)"
 msgstr "سمات مميزة (خلقية)"
 
 #: enferno/admin/templates/admin/i18n.jinja2:167
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1105
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1113
 msgid "Distinctive characteristics (acquired)"
 msgstr "سمات مميزة (مكتسبة)"
 
 #: enferno/admin/templates/admin/i18n.jinja2:168
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1111
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1119
 msgid "Physical habits"
 msgstr "عادات بدنية"
 
 #: enferno/admin/templates/admin/i18n.jinja2:169
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1115
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1123
 msgid "Other comments"
 msgstr "تعليقات"
 
@@ -1275,7 +1293,7 @@ msgid "Prescription drugs taken"
 msgstr "الأدوية المتناولة التي تتطلب وصفات طبية"
 
 #: enferno/admin/templates/admin/i18n.jinja2:178
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1172
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1184
 msgid "Smoker"
 msgstr "مدخن"
 
@@ -1284,7 +1302,7 @@ msgid "Is there a Dental Record"
 msgstr "هل هناك سجل أسنان؟"
 
 #: enferno/admin/templates/admin/i18n.jinja2:180
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1179
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1193
 msgid "Dentist’s name and contact"
 msgstr "اسم ومعلومات الاتصال الخاصة بطبيب الأسنان"
 
@@ -1305,7 +1323,7 @@ msgid "Dental habits"
 msgstr "عادات سنية"
 
 #: enferno/admin/templates/admin/i18n.jinja2:185
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1207
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1221
 msgid "Case status"
 msgstr "حالة الكيان"
 
@@ -1314,12 +1332,12 @@ msgid "Reporters"
 msgstr "الإبلاغ عن الأشخاص"
 
 #: enferno/admin/templates/admin/i18n.jinja2:187
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1226
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1240
 msgid "Identified by (responsible institution)"
 msgstr "تم التعرف عليه من قبل (المؤسسة المسؤولة)"
 
 #: enferno/admin/templates/admin/i18n.jinja2:188
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1231
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1245
 msgid "Was the family notified?"
 msgstr "هل تم إخطار العائلة؟"
 
@@ -1328,7 +1346,7 @@ msgid "Location of reburial"
 msgstr "مكان إعادة الدفن (العنوان كاملا)"
 
 #: enferno/admin/templates/admin/i18n.jinja2:190
-#: enferno/admin/templates/admin/partials/actor_dialog.html:930
+#: enferno/admin/templates/admin/partials/actor_dialog.html:935
 msgid "Details of the person who saw them last"
 msgstr "معلومات الشخص الذي شاهدهم أخر مرة"
 
@@ -1337,8 +1355,8 @@ msgid "Contact"
 msgstr "معلومات الاتصال"
 
 #: enferno/admin/templates/admin/i18n.jinja2:197
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1282
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1289
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1296
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1303
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:577
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:585
 #: enferno/admin/templates/admin/partials/event_dialog.html:151
@@ -1347,64 +1365,64 @@ msgid "Time"
 msgstr "الوقت"
 
 #: enferno/admin/templates/admin/i18n.jinja2:201
-#: enferno/admin/templates/admin/i18n.jinja2:509
+#: enferno/admin/templates/admin/i18n.jinja2:507
 msgid "Generic"
 msgstr "عام"
 
 #: enferno/admin/templates/admin/i18n.jinja2:202
-#: enferno/admin/templates/admin/i18n.jinja2:510
+#: enferno/admin/templates/admin/i18n.jinja2:508
 msgid "Humans"
 msgstr "إنسان"
 
 #: enferno/admin/templates/admin/i18n.jinja2:203
-#: enferno/admin/templates/admin/i18n.jinja2:511
+#: enferno/admin/templates/admin/i18n.jinja2:509
 msgid "Signs/Text"
 msgstr "إشارات/نصوص"
 
 #: enferno/admin/templates/admin/i18n.jinja2:205
-#: enferno/admin/templates/admin/i18n.jinja2:516
+#: enferno/admin/templates/admin/i18n.jinja2:514
 msgid "Maybe"
 msgstr "ضئيل"
 
 #: enferno/admin/templates/admin/i18n.jinja2:206
-#: enferno/admin/templates/admin/i18n.jinja2:517
+#: enferno/admin/templates/admin/i18n.jinja2:515
 msgid "Likely"
 msgstr "غالب/محتمل"
 
 #: enferno/admin/templates/admin/i18n.jinja2:207
-#: enferno/admin/templates/admin/i18n.jinja2:518
+#: enferno/admin/templates/admin/i18n.jinja2:516
 msgid "Certain"
 msgstr "أكيد"
 
 #: enferno/admin/templates/admin/i18n.jinja2:210
-#: enferno/admin/templates/admin/i18n.jinja2:492
-#: enferno/admin/templates/admin/i18n.jinja2:523
+#: enferno/admin/templates/admin/i18n.jinja2:490
+#: enferno/admin/templates/admin/i18n.jinja2:521
 msgid "Duplicate"
 msgstr "مكرر"
 
 #: enferno/admin/templates/admin/i18n.jinja2:211
-#: enferno/admin/templates/admin/i18n.jinja2:412
-#: enferno/admin/templates/admin/i18n.jinja2:477
-#: enferno/admin/templates/admin/i18n.jinja2:487
-#: enferno/admin/templates/admin/i18n.jinja2:504
-#: enferno/admin/templates/admin/i18n.jinja2:524
-#: enferno/admin/templates/admin/i18n.jinja2:579
+#: enferno/admin/templates/admin/i18n.jinja2:410
+#: enferno/admin/templates/admin/i18n.jinja2:475
+#: enferno/admin/templates/admin/i18n.jinja2:485
+#: enferno/admin/templates/admin/i18n.jinja2:502
+#: enferno/admin/templates/admin/i18n.jinja2:522
+#: enferno/admin/templates/admin/i18n.jinja2:591
 msgid "Other"
 msgstr "أخرى"
 
 #: enferno/admin/templates/admin/i18n.jinja2:212
-#: enferno/admin/templates/admin/i18n.jinja2:525
+#: enferno/admin/templates/admin/i18n.jinja2:523
 msgid "Part of a Series"
 msgstr "جزء من سلسلة"
 
 #: enferno/admin/templates/admin/i18n.jinja2:213
-#: enferno/admin/templates/admin/i18n.jinja2:526
+#: enferno/admin/templates/admin/i18n.jinja2:524
 msgid "Same Object"
 msgstr "نفس الجسم"
 
 #: enferno/admin/templates/admin/i18n.jinja2:214
-#: enferno/admin/templates/admin/i18n.jinja2:491
-#: enferno/admin/templates/admin/i18n.jinja2:527
+#: enferno/admin/templates/admin/i18n.jinja2:489
+#: enferno/admin/templates/admin/i18n.jinja2:525
 msgid "Same Person"
 msgstr "نفس الشخص"
 
@@ -1488,829 +1506,821 @@ msgstr "بنى تحتية"
 msgid "Medical Structure"
 msgstr "مبنى طبي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:241
-msgid "Establishment"
-msgstr "منشأة"
-
-#: enferno/admin/templates/admin/i18n.jinja2:242
-msgid "Park"
-msgstr "حديقة"
-
-#: enferno/admin/templates/admin/i18n.jinja2:247
+#: enferno/admin/templates/admin/i18n.jinja2:245
 msgid "Afghanistan"
 msgstr "أفغانستان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:248
+#: enferno/admin/templates/admin/i18n.jinja2:246
 msgid "Albania"
 msgstr "ألبانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:249
+#: enferno/admin/templates/admin/i18n.jinja2:247
 msgid "Algeria"
 msgstr "الجزائر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:250
+#: enferno/admin/templates/admin/i18n.jinja2:248
 msgid "Andorra"
 msgstr "أندورا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:251
+#: enferno/admin/templates/admin/i18n.jinja2:249
 msgid "Angola"
 msgstr "أنغولا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:252
+#: enferno/admin/templates/admin/i18n.jinja2:250
 msgid "Argentina"
 msgstr "الأرجنتين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:253
+#: enferno/admin/templates/admin/i18n.jinja2:251
 msgid "Armenia"
 msgstr "أرمينيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:254
+#: enferno/admin/templates/admin/i18n.jinja2:252
 msgid "Aruba"
 msgstr "آروبا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:255
+#: enferno/admin/templates/admin/i18n.jinja2:253
 msgid "Australia"
 msgstr "أستراليا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:256
+#: enferno/admin/templates/admin/i18n.jinja2:254
 msgid "Austria"
 msgstr "النمسا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:257
+#: enferno/admin/templates/admin/i18n.jinja2:255
 msgid "Azerbaijan"
 msgstr "أذربيجان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:258
+#: enferno/admin/templates/admin/i18n.jinja2:256
 msgid "Bahrain"
 msgstr "البحرين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:259
+#: enferno/admin/templates/admin/i18n.jinja2:257
 msgid "Bangladesh"
 msgstr "بنغلاديش"
 
-#: enferno/admin/templates/admin/i18n.jinja2:260
+#: enferno/admin/templates/admin/i18n.jinja2:258
 msgid "Barbados"
 msgstr "بربادوس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:261
+#: enferno/admin/templates/admin/i18n.jinja2:259
 msgid "Belarus"
 msgstr "بيلاروسيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:262
+#: enferno/admin/templates/admin/i18n.jinja2:260
 msgid "Belgium"
 msgstr "بلجيكا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:263
+#: enferno/admin/templates/admin/i18n.jinja2:261
 msgid "Belize"
 msgstr "بليز"
 
-#: enferno/admin/templates/admin/i18n.jinja2:264
+#: enferno/admin/templates/admin/i18n.jinja2:262
 msgid "Benin"
 msgstr "بنين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:265
+#: enferno/admin/templates/admin/i18n.jinja2:263
 msgid "Bhutan"
 msgstr "بوتان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:266
+#: enferno/admin/templates/admin/i18n.jinja2:264
 msgid "Bosnia and Herzegovina"
 msgstr "البوسنة والهرسك"
 
-#: enferno/admin/templates/admin/i18n.jinja2:267
+#: enferno/admin/templates/admin/i18n.jinja2:265
 msgid "Botswana"
 msgstr "بتسوانا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:268
+#: enferno/admin/templates/admin/i18n.jinja2:266
 msgid "Brazil"
 msgstr "البرازيل"
 
-#: enferno/admin/templates/admin/i18n.jinja2:269
+#: enferno/admin/templates/admin/i18n.jinja2:267
 msgid "Brunei"
 msgstr "بروناي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:270
+#: enferno/admin/templates/admin/i18n.jinja2:268
 msgid "Bulgaria"
 msgstr "بلغاريا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:271
+#: enferno/admin/templates/admin/i18n.jinja2:269
 msgid "Burkina Faso"
 msgstr "بوركينا فاسو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:272
+#: enferno/admin/templates/admin/i18n.jinja2:270
 msgid "Burma"
 msgstr "بورما"
 
-#: enferno/admin/templates/admin/i18n.jinja2:273
+#: enferno/admin/templates/admin/i18n.jinja2:271
 msgid "Burundi"
 msgstr "بوروندي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:274
+#: enferno/admin/templates/admin/i18n.jinja2:272
 msgid "Cambodia"
 msgstr "كامبوديا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:275
+#: enferno/admin/templates/admin/i18n.jinja2:273
 msgid "Cameroon"
 msgstr "الكاميرون"
 
-#: enferno/admin/templates/admin/i18n.jinja2:276
+#: enferno/admin/templates/admin/i18n.jinja2:274
 msgid "Canada"
 msgstr "كندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:277
+#: enferno/admin/templates/admin/i18n.jinja2:275
 msgid "Central African Republic"
 msgstr "جمهورية أفريقيا الوسطى"
 
-#: enferno/admin/templates/admin/i18n.jinja2:278
+#: enferno/admin/templates/admin/i18n.jinja2:276
 msgid "Chad"
 msgstr "تشاد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:279
+#: enferno/admin/templates/admin/i18n.jinja2:277
 msgid "Chile"
 msgstr "تشيلي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:280
+#: enferno/admin/templates/admin/i18n.jinja2:278
 msgid "China"
 msgstr "الصين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:281
+#: enferno/admin/templates/admin/i18n.jinja2:279
 msgid "Colombia"
 msgstr "كولومبيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:282
+#: enferno/admin/templates/admin/i18n.jinja2:280
 msgid "Comoros"
 msgstr "جزر القمر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:283
+#: enferno/admin/templates/admin/i18n.jinja2:281
 msgid "Democratic Republic of the Congo"
 msgstr "جمهورية الكونغو الديمقراطية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:284
+#: enferno/admin/templates/admin/i18n.jinja2:282
 msgid "Republic of the Congo"
 msgstr "جمهورية الكونغو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:285
+#: enferno/admin/templates/admin/i18n.jinja2:283
 msgid "Cote d'Ivoire"
 msgstr "ساحل العاج"
 
-#: enferno/admin/templates/admin/i18n.jinja2:286
+#: enferno/admin/templates/admin/i18n.jinja2:284
 msgid "Croatia"
 msgstr "كرواتيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:287
+#: enferno/admin/templates/admin/i18n.jinja2:285
 msgid "Cuba"
 msgstr "كوبا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:288
+#: enferno/admin/templates/admin/i18n.jinja2:286
 msgid "Cyprus"
 msgstr "قبرص"
 
-#: enferno/admin/templates/admin/i18n.jinja2:289
+#: enferno/admin/templates/admin/i18n.jinja2:287
 msgid "Czechia"
 msgstr "التشيك"
 
-#: enferno/admin/templates/admin/i18n.jinja2:290
+#: enferno/admin/templates/admin/i18n.jinja2:288
 msgid "Denmark"
 msgstr "الدنمارك"
 
-#: enferno/admin/templates/admin/i18n.jinja2:291
+#: enferno/admin/templates/admin/i18n.jinja2:289
 msgid "Djibouti"
 msgstr "جيبوتي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:292
+#: enferno/admin/templates/admin/i18n.jinja2:290
 msgid "Dominica"
 msgstr "دومينيكا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:293
+#: enferno/admin/templates/admin/i18n.jinja2:291
 msgid "Dominican Republic"
 msgstr "جمهورية الدومينيكان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:294
+#: enferno/admin/templates/admin/i18n.jinja2:292
 msgid "Egypt"
 msgstr "مصر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:295
+#: enferno/admin/templates/admin/i18n.jinja2:293
 msgid "Eritrea"
 msgstr "إريتريا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:296
+#: enferno/admin/templates/admin/i18n.jinja2:294
 msgid "Estonia"
 msgstr "إستونيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:297
+#: enferno/admin/templates/admin/i18n.jinja2:295
 msgid "Ethiopia"
 msgstr "إثيوبيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:298
+#: enferno/admin/templates/admin/i18n.jinja2:296
 msgid "Finland"
 msgstr "فنلندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:299
+#: enferno/admin/templates/admin/i18n.jinja2:297
 msgid "France"
 msgstr "فرنسا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:300
+#: enferno/admin/templates/admin/i18n.jinja2:298
 msgid "Gabon"
 msgstr "الغابون"
 
-#: enferno/admin/templates/admin/i18n.jinja2:301
+#: enferno/admin/templates/admin/i18n.jinja2:299
 msgid "Gambia"
 msgstr "غامبيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:302
+#: enferno/admin/templates/admin/i18n.jinja2:300
 msgid "Georgia"
 msgstr "جورجيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:303
+#: enferno/admin/templates/admin/i18n.jinja2:301
 msgid "Germany"
 msgstr "ألمانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:304
+#: enferno/admin/templates/admin/i18n.jinja2:302
 msgid "Ghana"
 msgstr "غانا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:305
+#: enferno/admin/templates/admin/i18n.jinja2:303
 msgid "Greece"
 msgstr "اليونان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:306
+#: enferno/admin/templates/admin/i18n.jinja2:304
 msgid "Guinea"
 msgstr "غينيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:307
+#: enferno/admin/templates/admin/i18n.jinja2:305
 msgid "Guinea-Bissau"
 msgstr "غينيا بيساو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:308
+#: enferno/admin/templates/admin/i18n.jinja2:306
 msgid "Guyana"
 msgstr "غويانا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:309
+#: enferno/admin/templates/admin/i18n.jinja2:307
 msgid "Haiti"
 msgstr "هايتي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:310
+#: enferno/admin/templates/admin/i18n.jinja2:308
 msgid "Honduras"
 msgstr "الهندوراس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:311
+#: enferno/admin/templates/admin/i18n.jinja2:309
 msgid "Hungary"
 msgstr "هنغاريا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:312
+#: enferno/admin/templates/admin/i18n.jinja2:310
 msgid "Iceland"
 msgstr "آيسلاند"
 
-#: enferno/admin/templates/admin/i18n.jinja2:313
+#: enferno/admin/templates/admin/i18n.jinja2:311
 msgid "India"
 msgstr "الهند"
 
-#: enferno/admin/templates/admin/i18n.jinja2:314
+#: enferno/admin/templates/admin/i18n.jinja2:312
 msgid "Indonesia"
 msgstr "إندونيسيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:315
+#: enferno/admin/templates/admin/i18n.jinja2:313
 msgid "Iran"
 msgstr "إيران"
 
-#: enferno/admin/templates/admin/i18n.jinja2:316
+#: enferno/admin/templates/admin/i18n.jinja2:314
 msgid "Iraq"
 msgstr "العراق"
 
-#: enferno/admin/templates/admin/i18n.jinja2:317
+#: enferno/admin/templates/admin/i18n.jinja2:315
 msgid "Ireland"
 msgstr "إيرلندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:318
+#: enferno/admin/templates/admin/i18n.jinja2:316
 msgid "Israel"
 msgstr "اسرائيل"
 
-#: enferno/admin/templates/admin/i18n.jinja2:319
+#: enferno/admin/templates/admin/i18n.jinja2:317
 msgid "Italy"
 msgstr "إيطاليا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:320
+#: enferno/admin/templates/admin/i18n.jinja2:318
 msgid "Jamaica"
 msgstr "جامايكا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:321
+#: enferno/admin/templates/admin/i18n.jinja2:319
 msgid "Japan"
 msgstr "اليابان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:322
+#: enferno/admin/templates/admin/i18n.jinja2:320
 msgid "Jordan"
 msgstr "الأردن"
 
-#: enferno/admin/templates/admin/i18n.jinja2:323
+#: enferno/admin/templates/admin/i18n.jinja2:321
 msgid "Kazakhstan"
 msgstr "كازاخستان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:324
+#: enferno/admin/templates/admin/i18n.jinja2:322
 msgid "Kenya"
 msgstr "كينيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:325
+#: enferno/admin/templates/admin/i18n.jinja2:323
 msgid "Kosovo"
 msgstr "كوسوفو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:326
+#: enferno/admin/templates/admin/i18n.jinja2:324
 msgid "Kuwait"
 msgstr "الكويت"
 
-#: enferno/admin/templates/admin/i18n.jinja2:327
+#: enferno/admin/templates/admin/i18n.jinja2:325
 msgid "Kyrgyzstan"
 msgstr "قرغيزستان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:328
+#: enferno/admin/templates/admin/i18n.jinja2:326
 msgid "Laos"
 msgstr "لاوس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:329
+#: enferno/admin/templates/admin/i18n.jinja2:327
 msgid "Latvia"
 msgstr "لاتفيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:330
+#: enferno/admin/templates/admin/i18n.jinja2:328
 msgid "Lebanon"
 msgstr "لبنان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:331
+#: enferno/admin/templates/admin/i18n.jinja2:329
 msgid "Liberia"
 msgstr "ليبيريا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:332
+#: enferno/admin/templates/admin/i18n.jinja2:330
 msgid "Libya"
 msgstr "ليبيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:333
+#: enferno/admin/templates/admin/i18n.jinja2:331
 msgid "Liechtenstein"
 msgstr "ليشتنشتاين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:334
+#: enferno/admin/templates/admin/i18n.jinja2:332
 msgid "Lithuania"
 msgstr "ليتوانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:335
+#: enferno/admin/templates/admin/i18n.jinja2:333
 msgid "Luxembourg"
 msgstr "لوكسمبورغ"
 
-#: enferno/admin/templates/admin/i18n.jinja2:336
+#: enferno/admin/templates/admin/i18n.jinja2:334
 msgid "Macedonia"
 msgstr "مقدونيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:337
+#: enferno/admin/templates/admin/i18n.jinja2:335
 msgid "Madagascar"
 msgstr "مدغشقر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:338
+#: enferno/admin/templates/admin/i18n.jinja2:336
 msgid "Malawi"
 msgstr "مالاوي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:339
+#: enferno/admin/templates/admin/i18n.jinja2:337
 msgid "Malaysia"
 msgstr "ماليزيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:340
+#: enferno/admin/templates/admin/i18n.jinja2:338
 msgid "Mali"
 msgstr "مالي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:341
+#: enferno/admin/templates/admin/i18n.jinja2:339
 msgid "Malta"
 msgstr "مالطا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:342
+#: enferno/admin/templates/admin/i18n.jinja2:340
 msgid "Mauritania"
 msgstr "موريتانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:343
+#: enferno/admin/templates/admin/i18n.jinja2:341
 msgid "Mauritius"
 msgstr "موريشيوس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:344
+#: enferno/admin/templates/admin/i18n.jinja2:342
 msgid "Micronesia"
 msgstr "ميكرونيزيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:345
+#: enferno/admin/templates/admin/i18n.jinja2:343
 msgid "Moldova"
 msgstr "مولدافيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:346
+#: enferno/admin/templates/admin/i18n.jinja2:344
 msgid "Monaco"
 msgstr "موناكو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:347
+#: enferno/admin/templates/admin/i18n.jinja2:345
 msgid "Mongolia"
 msgstr "منغوليا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:348
+#: enferno/admin/templates/admin/i18n.jinja2:346
 msgid "Montenegro"
 msgstr "مونتينيغرو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:349
+#: enferno/admin/templates/admin/i18n.jinja2:347
 msgid "Morocco"
 msgstr "المغرب"
 
-#: enferno/admin/templates/admin/i18n.jinja2:350
+#: enferno/admin/templates/admin/i18n.jinja2:348
 msgid "Mozambique"
 msgstr "موزنبيق"
 
-#: enferno/admin/templates/admin/i18n.jinja2:351
+#: enferno/admin/templates/admin/i18n.jinja2:349
 msgid "Namibia"
 msgstr "ناميبيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:352
+#: enferno/admin/templates/admin/i18n.jinja2:350
 msgid "Nauru"
 msgstr "ناورو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:353
+#: enferno/admin/templates/admin/i18n.jinja2:351
 msgid "Nepal"
 msgstr "نيبال"
 
-#: enferno/admin/templates/admin/i18n.jinja2:354
+#: enferno/admin/templates/admin/i18n.jinja2:352
 msgid "Netherlands"
 msgstr "هولندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:355
+#: enferno/admin/templates/admin/i18n.jinja2:353
 msgid "New Zealand"
 msgstr "نيوزيلندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:356
+#: enferno/admin/templates/admin/i18n.jinja2:354
 msgid "Nicaragua"
 msgstr "نيكاراغوا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:357
+#: enferno/admin/templates/admin/i18n.jinja2:355
 msgid "Niger"
 msgstr "النيجر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:358
+#: enferno/admin/templates/admin/i18n.jinja2:356
 msgid "Nigeria"
 msgstr "نيجيريا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:359
+#: enferno/admin/templates/admin/i18n.jinja2:357
 msgid "North Korea"
 msgstr "كوريا الشمالية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:360
+#: enferno/admin/templates/admin/i18n.jinja2:358
 msgid "Norway"
 msgstr "النروج"
 
-#: enferno/admin/templates/admin/i18n.jinja2:361
+#: enferno/admin/templates/admin/i18n.jinja2:359
 msgid "Oman"
 msgstr "عمان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:362
+#: enferno/admin/templates/admin/i18n.jinja2:360
 msgid "Pakistan"
 msgstr "باكستان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:363
+#: enferno/admin/templates/admin/i18n.jinja2:361
 msgid "Palestine"
 msgstr "فلسطين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:364
+#: enferno/admin/templates/admin/i18n.jinja2:362
 msgid "Panama"
 msgstr "بنما"
 
-#: enferno/admin/templates/admin/i18n.jinja2:365
+#: enferno/admin/templates/admin/i18n.jinja2:363
 msgid "Philippines"
 msgstr "الفلبين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:366
+#: enferno/admin/templates/admin/i18n.jinja2:364
 msgid "Poland"
 msgstr "بولندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:367
+#: enferno/admin/templates/admin/i18n.jinja2:365
 msgid "Portugal"
 msgstr "البرتغال"
 
-#: enferno/admin/templates/admin/i18n.jinja2:368
+#: enferno/admin/templates/admin/i18n.jinja2:366
 msgid "Qatar"
 msgstr "قطر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:369
+#: enferno/admin/templates/admin/i18n.jinja2:367
 msgid "Romania"
 msgstr "رومانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:370
+#: enferno/admin/templates/admin/i18n.jinja2:368
 msgid "Russia"
 msgstr "روسيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:371
+#: enferno/admin/templates/admin/i18n.jinja2:369
 msgid "Rwanda"
 msgstr "رواندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:372
+#: enferno/admin/templates/admin/i18n.jinja2:370
 msgid "Saudi Arabia"
 msgstr "المملكة العربية السعودية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:373
+#: enferno/admin/templates/admin/i18n.jinja2:371
 msgid "Senegal"
 msgstr "السينيغال"
 
-#: enferno/admin/templates/admin/i18n.jinja2:374
+#: enferno/admin/templates/admin/i18n.jinja2:372
 msgid "Serbia"
 msgstr "صربيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:375
+#: enferno/admin/templates/admin/i18n.jinja2:373
 msgid "Seychelles"
 msgstr "سيشيل"
 
-#: enferno/admin/templates/admin/i18n.jinja2:376
+#: enferno/admin/templates/admin/i18n.jinja2:374
 msgid "Sierra Leone"
 msgstr "سيراليون"
 
-#: enferno/admin/templates/admin/i18n.jinja2:377
+#: enferno/admin/templates/admin/i18n.jinja2:375
 msgid "Slovakia"
 msgstr "سلوفاكيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:378
+#: enferno/admin/templates/admin/i18n.jinja2:376
 msgid "Slovenia"
 msgstr "سلوفينيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:379
+#: enferno/admin/templates/admin/i18n.jinja2:377
 msgid "Somalia"
 msgstr "الصومال"
 
-#: enferno/admin/templates/admin/i18n.jinja2:380
+#: enferno/admin/templates/admin/i18n.jinja2:378
 msgid "South Africa"
 msgstr "جنوب أفريقيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:381
+#: enferno/admin/templates/admin/i18n.jinja2:379
 msgid "South Sudan"
 msgstr "السودان الجنوبي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:382
+#: enferno/admin/templates/admin/i18n.jinja2:380
 msgid "Spain"
 msgstr "إسبانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:383
+#: enferno/admin/templates/admin/i18n.jinja2:381
 msgid "Sri Lanka"
 msgstr "سيريلانكا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:384
+#: enferno/admin/templates/admin/i18n.jinja2:382
 msgid "Sudan"
 msgstr "السودان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:385
+#: enferno/admin/templates/admin/i18n.jinja2:383
 msgid "Swaziland"
 msgstr "سوازيلاند / إسواتيني"
 
-#: enferno/admin/templates/admin/i18n.jinja2:386
+#: enferno/admin/templates/admin/i18n.jinja2:384
 msgid "Sweden"
 msgstr "السويد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:387
+#: enferno/admin/templates/admin/i18n.jinja2:385
 msgid "Switzerland"
 msgstr "سويسرا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:388
+#: enferno/admin/templates/admin/i18n.jinja2:386
 msgid "Syria"
 msgstr "سوريا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:389
+#: enferno/admin/templates/admin/i18n.jinja2:387
 msgid "Taiwan"
 msgstr "تايوان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:390
+#: enferno/admin/templates/admin/i18n.jinja2:388
 msgid "Tajikistan"
 msgstr "طاجيكستان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:391
+#: enferno/admin/templates/admin/i18n.jinja2:389
 msgid "Tanzania"
 msgstr "تانزانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:392
+#: enferno/admin/templates/admin/i18n.jinja2:390
 msgid "Thailand"
 msgstr "تايلند"
 
-#: enferno/admin/templates/admin/i18n.jinja2:393
+#: enferno/admin/templates/admin/i18n.jinja2:391
 msgid "Togo"
 msgstr "توغو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:394
+#: enferno/admin/templates/admin/i18n.jinja2:392
 msgid "Tonga"
 msgstr "تونغا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:395
+#: enferno/admin/templates/admin/i18n.jinja2:393
 msgid "Trinidad and Tobago"
 msgstr "ترينيداد وتوباغو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:396
+#: enferno/admin/templates/admin/i18n.jinja2:394
 msgid "Tunisia"
 msgstr "تونس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:397
+#: enferno/admin/templates/admin/i18n.jinja2:395
 msgid "Turkey"
 msgstr "تركيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:398
+#: enferno/admin/templates/admin/i18n.jinja2:396
 msgid "Turkmenistan"
 msgstr "تركمانستان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:399
+#: enferno/admin/templates/admin/i18n.jinja2:397
 msgid "Tuvalu"
 msgstr "توفالو / جزر إليس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:400
+#: enferno/admin/templates/admin/i18n.jinja2:398
 msgid "Uganda"
 msgstr "أوغندا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:401
+#: enferno/admin/templates/admin/i18n.jinja2:399
 msgid "Ukraine"
 msgstr "أوكرانيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:402
+#: enferno/admin/templates/admin/i18n.jinja2:400
 msgid "United Arab Emirates"
 msgstr "الإمارات العربية المتحدة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:403
+#: enferno/admin/templates/admin/i18n.jinja2:401
 msgid "United Kingdom"
 msgstr "المملكة المتحدة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:404
+#: enferno/admin/templates/admin/i18n.jinja2:402
 msgid "United States"
 msgstr "الولايات المتحدة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:405
+#: enferno/admin/templates/admin/i18n.jinja2:403
 msgid "Uruguay"
 msgstr "الأوروغواي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:406
+#: enferno/admin/templates/admin/i18n.jinja2:404
 msgid "Uzbekistan"
 msgstr "أوزباكستان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:407
+#: enferno/admin/templates/admin/i18n.jinja2:405
 msgid "Venezuela"
 msgstr "فنزويلا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:408
+#: enferno/admin/templates/admin/i18n.jinja2:406
 msgid "Vietnam"
 msgstr "فيتنام"
 
-#: enferno/admin/templates/admin/i18n.jinja2:409
+#: enferno/admin/templates/admin/i18n.jinja2:407
 msgid "Yemen"
 msgstr "اليمن"
 
-#: enferno/admin/templates/admin/i18n.jinja2:410
+#: enferno/admin/templates/admin/i18n.jinja2:408
 msgid "Zambia"
 msgstr "زامبيا"
 
-#: enferno/admin/templates/admin/i18n.jinja2:411
+#: enferno/admin/templates/admin/i18n.jinja2:409
 msgid "Zimbabwe"
 msgstr "زيمبابوي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:416
+#: enferno/admin/templates/admin/i18n.jinja2:414
 msgid "Person"
 msgstr "شخص"
 
-#: enferno/admin/templates/admin/i18n.jinja2:417
+#: enferno/admin/templates/admin/i18n.jinja2:415
 msgid "Entity"
 msgstr "كيان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:421
+#: enferno/admin/templates/admin/i18n.jinja2:419
 msgid "Male"
 msgstr "ذكر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:422
+#: enferno/admin/templates/admin/i18n.jinja2:420
 msgid "Female"
 msgstr "أنثى"
 
-#: enferno/admin/templates/admin/i18n.jinja2:426
+#: enferno/admin/templates/admin/i18n.jinja2:424
 msgid "Minor"
 msgstr "قاصر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:427
+#: enferno/admin/templates/admin/i18n.jinja2:425
 msgid "Adult"
 msgstr "بالغ"
 
-#: enferno/admin/templates/admin/i18n.jinja2:434
+#: enferno/admin/templates/admin/i18n.jinja2:432
 msgid "Non-Civilian"
 msgstr "غير مدني"
 
-#: enferno/admin/templates/admin/i18n.jinja2:435
+#: enferno/admin/templates/admin/i18n.jinja2:433
 msgid "Police"
 msgstr "شرطة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:436
+#: enferno/admin/templates/admin/i18n.jinja2:434
 msgid "Other Security Forces"
 msgstr "قوات أمنية أخرى"
 
-#: enferno/admin/templates/admin/i18n.jinja2:441
+#: enferno/admin/templates/admin/i18n.jinja2:439
 msgid "Alawite"
 msgstr "علوي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:442
+#: enferno/admin/templates/admin/i18n.jinja2:440
 msgid "Arab"
 msgstr "عربي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:443
+#: enferno/admin/templates/admin/i18n.jinja2:441
 msgid "Armenian"
 msgstr "أرمني"
 
-#: enferno/admin/templates/admin/i18n.jinja2:444
+#: enferno/admin/templates/admin/i18n.jinja2:442
 msgid "Christian"
 msgstr "مسيحي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:445
+#: enferno/admin/templates/admin/i18n.jinja2:443
 msgid "Circassian"
 msgstr "شركسي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:446
+#: enferno/admin/templates/admin/i18n.jinja2:444
 msgid "Druze"
 msgstr "درزي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:447
+#: enferno/admin/templates/admin/i18n.jinja2:445
 msgid "Ismaili"
 msgstr "اسماعيلي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:448
+#: enferno/admin/templates/admin/i18n.jinja2:446
 msgid "Kurd"
 msgstr "كردي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:449
+#: enferno/admin/templates/admin/i18n.jinja2:447
 msgid "Shiaa"
 msgstr "شيعي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:450
+#: enferno/admin/templates/admin/i18n.jinja2:448
 msgid "Sunni"
 msgstr "سني"
 
-#: enferno/admin/templates/admin/i18n.jinja2:451
+#: enferno/admin/templates/admin/i18n.jinja2:449
 msgid "Syriac"
 msgstr "سرياني"
 
-#: enferno/admin/templates/admin/i18n.jinja2:452
+#: enferno/admin/templates/admin/i18n.jinja2:450
 msgid "Turkmen"
 msgstr "تركمان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:457
+#: enferno/admin/templates/admin/i18n.jinja2:455
 msgid "1 Day"
 msgstr "يوم واحد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:458
+#: enferno/admin/templates/admin/i18n.jinja2:456
 msgid "2 Days"
 msgstr "يومان"
 
-#: enferno/admin/templates/admin/i18n.jinja2:459
+#: enferno/admin/templates/admin/i18n.jinja2:457
 msgid "3 Days"
 msgstr "ثلاثة أيام"
 
-#: enferno/admin/templates/admin/i18n.jinja2:460
+#: enferno/admin/templates/admin/i18n.jinja2:458
 msgid "4 Days"
 msgstr "أربعة أيام"
 
-#: enferno/admin/templates/admin/i18n.jinja2:461
+#: enferno/admin/templates/admin/i18n.jinja2:459
 msgid "5 Days"
 msgstr "خمسة أيام"
 
-#: enferno/admin/templates/admin/i18n.jinja2:462
+#: enferno/admin/templates/admin/i18n.jinja2:460
 msgid "6 Days"
 msgstr "ستة أيام"
 
-#: enferno/admin/templates/admin/i18n.jinja2:463
+#: enferno/admin/templates/admin/i18n.jinja2:461
 msgid "7 Days"
 msgstr "سبعة أيام"
 
-#: enferno/admin/templates/admin/i18n.jinja2:464
+#: enferno/admin/templates/admin/i18n.jinja2:462
 msgid "1 Month"
 msgstr "شهر واحد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:465
+#: enferno/admin/templates/admin/i18n.jinja2:463
 msgid "3 Months"
 msgstr "ثلاثة أشهر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:466
+#: enferno/admin/templates/admin/i18n.jinja2:464
 msgid "6 Months"
 msgstr "ستة أشهر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:467
+#: enferno/admin/templates/admin/i18n.jinja2:465
 msgid "1 Year"
 msgstr "سنة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:472
-#: enferno/admin/templates/admin/i18n.jinja2:482
+#: enferno/admin/templates/admin/i18n.jinja2:470
+#: enferno/admin/templates/admin/i18n.jinja2:480
 msgid "Victim"
 msgstr "ضحية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:473
-#: enferno/admin/templates/admin/i18n.jinja2:483
+#: enferno/admin/templates/admin/i18n.jinja2:471
+#: enferno/admin/templates/admin/i18n.jinja2:481
 msgid "Witness"
 msgstr "شاهد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:474
-#: enferno/admin/templates/admin/i18n.jinja2:484
+#: enferno/admin/templates/admin/i18n.jinja2:472
+#: enferno/admin/templates/admin/i18n.jinja2:482
 msgid "Perpetrator"
 msgstr "جاني"
 
-#: enferno/admin/templates/admin/i18n.jinja2:475
-#: enferno/admin/templates/admin/i18n.jinja2:485
+#: enferno/admin/templates/admin/i18n.jinja2:473
+#: enferno/admin/templates/admin/i18n.jinja2:483
 msgid "Appeared"
 msgstr "ظاهر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:476
-#: enferno/admin/templates/admin/i18n.jinja2:486
+#: enferno/admin/templates/admin/i18n.jinja2:474
+#: enferno/admin/templates/admin/i18n.jinja2:484
 msgid "Participant"
 msgstr "مشارك"
 
-#: enferno/admin/templates/admin/i18n.jinja2:493
-#: enferno/admin/templates/admin/i18n.jinja2:494
+#: enferno/admin/templates/admin/i18n.jinja2:491
+#: enferno/admin/templates/admin/i18n.jinja2:492
 #: enferno/admin/templates/admin/labels.html:101
 #: enferno/admin/templates/admin/labels.html:293
 #: enferno/admin/templates/admin/sources.html:78
@@ -2318,230 +2328,256 @@ msgstr "مشارك"
 msgid "Parent"
 msgstr "أب"
 
-#: enferno/admin/templates/admin/i18n.jinja2:493
-#: enferno/admin/templates/admin/i18n.jinja2:494
+#: enferno/admin/templates/admin/i18n.jinja2:491
+#: enferno/admin/templates/admin/i18n.jinja2:492
 msgid "Child"
 msgstr "ابن"
 
-#: enferno/admin/templates/admin/i18n.jinja2:495
+#: enferno/admin/templates/admin/i18n.jinja2:493
 msgid "Sibling"
 msgstr "شقيق"
 
-#: enferno/admin/templates/admin/i18n.jinja2:496
+#: enferno/admin/templates/admin/i18n.jinja2:494
 msgid "Spouse"
 msgstr "قرين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:497
-#: enferno/admin/templates/admin/i18n.jinja2:498
+#: enferno/admin/templates/admin/i18n.jinja2:495
+#: enferno/admin/templates/admin/i18n.jinja2:496
 msgid "Superior officer"
 msgstr "ضابط رئيس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:497
-#: enferno/admin/templates/admin/i18n.jinja2:498
+#: enferno/admin/templates/admin/i18n.jinja2:495
+#: enferno/admin/templates/admin/i18n.jinja2:496
 msgid "Subordinate officer"
 msgstr "ضابط مرؤوس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:499
+#: enferno/admin/templates/admin/i18n.jinja2:497
 msgid "Subunit"
 msgstr "فصيل أدنى"
 
-#: enferno/admin/templates/admin/i18n.jinja2:500
+#: enferno/admin/templates/admin/i18n.jinja2:498
 msgid "Alleged Perpetrator"
 msgstr "الجاني المزعوم"
 
-#: enferno/admin/templates/admin/i18n.jinja2:501
+#: enferno/admin/templates/admin/i18n.jinja2:499
 msgid "Member"
 msgstr "عضو"
 
-#: enferno/admin/templates/admin/i18n.jinja2:502
+#: enferno/admin/templates/admin/i18n.jinja2:500
 msgid "Group"
 msgstr "مجموعة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:503
+#: enferno/admin/templates/admin/i18n.jinja2:501
 msgid "Unit"
 msgstr "فصيل أعلى"
 
-#: enferno/admin/templates/admin/i18n.jinja2:529
-#: enferno/admin/templates/admin/i18n.jinja2:530
+#: enferno/admin/templates/admin/i18n.jinja2:527
+#: enferno/admin/templates/admin/i18n.jinja2:528
 msgid "default"
 msgstr "افتراضي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:533
+#: enferno/admin/templates/admin/i18n.jinja2:531
 msgid "Geo Markers"
 msgstr "علامات جغرافية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:534
+#: enferno/admin/templates/admin/i18n.jinja2:532
 msgid "Add Geo Marker"
 msgstr "أضف علامة جغرافية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:542
+#: enferno/admin/templates/admin/i18n.jinja2:540
 msgid "Very thin"
 msgstr "نحيل جداً"
 
-#: enferno/admin/templates/admin/i18n.jinja2:543
+#: enferno/admin/templates/admin/i18n.jinja2:541
 msgid "Thin"
 msgstr "نحيل"
 
-#: enferno/admin/templates/admin/i18n.jinja2:544
+#: enferno/admin/templates/admin/i18n.jinja2:542
 msgid "Average"
 msgstr "متوسط البنية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:545
+#: enferno/admin/templates/admin/i18n.jinja2:543
 msgid "Muscular"
 msgstr "ذو بنية عضلية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:546
+#: enferno/admin/templates/admin/i18n.jinja2:544
 msgid "Overweight"
 msgstr "ذو وزن زائد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:547
+#: enferno/admin/templates/admin/i18n.jinja2:545
 msgid "Obese"
 msgstr "بدين"
 
-#: enferno/admin/templates/admin/i18n.jinja2:551
+#: enferno/admin/templates/admin/i18n.jinja2:549
+#, fuzzy
+msgid "Pregnant"
+msgstr "أرمني"
+
+#: enferno/admin/templates/admin/i18n.jinja2:550
+msgid "Not Pregnant"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:552
+#, fuzzy
+msgid "Not Applicable"
+msgstr "غير متوفر"
+
+#: enferno/admin/templates/admin/i18n.jinja2:553
+msgid "The Question Was Not Asked"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:563
 msgid "Full"
 msgstr "كامل"
 
-#: enferno/admin/templates/admin/i18n.jinja2:552
+#: enferno/admin/templates/admin/i18n.jinja2:564
 msgid "Bald"
 msgstr "أصلع"
 
-#: enferno/admin/templates/admin/i18n.jinja2:553
+#: enferno/admin/templates/admin/i18n.jinja2:565
 msgid "Partial hair loss"
 msgstr "فقدان شعر جزئي"
 
-#: enferno/admin/templates/admin/i18n.jinja2:557
+#: enferno/admin/templates/admin/i18n.jinja2:569
 msgid "Straight"
 msgstr "أملس"
 
-#: enferno/admin/templates/admin/i18n.jinja2:558
+#: enferno/admin/templates/admin/i18n.jinja2:570
 msgid "Wavy"
 msgstr "مموج"
 
-#: enferno/admin/templates/admin/i18n.jinja2:559
+#: enferno/admin/templates/admin/i18n.jinja2:571
 msgid "Curly"
 msgstr "مجعد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:560
+#: enferno/admin/templates/admin/i18n.jinja2:572
 msgid "Very curly"
 msgstr "مجعد جداً"
 
-#: enferno/admin/templates/admin/i18n.jinja2:565
+#: enferno/admin/templates/admin/i18n.jinja2:577
 msgid "Very short"
 msgstr "قصير جداً"
 
-#: enferno/admin/templates/admin/i18n.jinja2:566
+#: enferno/admin/templates/admin/i18n.jinja2:578
 msgid "Short"
 msgstr "قصير"
 
-#: enferno/admin/templates/admin/i18n.jinja2:567
+#: enferno/admin/templates/admin/i18n.jinja2:579
 msgid "Medium"
 msgstr "متوسط"
 
-#: enferno/admin/templates/admin/i18n.jinja2:568
+#: enferno/admin/templates/admin/i18n.jinja2:580
 msgid "Long"
 msgstr "طويل"
 
-#: enferno/admin/templates/admin/i18n.jinja2:569
+#: enferno/admin/templates/admin/i18n.jinja2:581
 msgid "Very long"
 msgstr "طويل جداً"
 
-#: enferno/admin/templates/admin/i18n.jinja2:573
-#: enferno/admin/templates/admin/i18n.jinja2:605
+#: enferno/admin/templates/admin/i18n.jinja2:585
+#: enferno/admin/templates/admin/i18n.jinja2:626
 msgid "Black"
 msgstr "أسود"
 
-#: enferno/admin/templates/admin/i18n.jinja2:574
-#: enferno/admin/templates/admin/i18n.jinja2:606
+#: enferno/admin/templates/admin/i18n.jinja2:586
+#: enferno/admin/templates/admin/i18n.jinja2:627
 msgid "Brown"
 msgstr "بني"
 
-#: enferno/admin/templates/admin/i18n.jinja2:575
+#: enferno/admin/templates/admin/i18n.jinja2:587
 msgid "Blonde"
 msgstr "أشقر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:576
-#: enferno/admin/templates/admin/i18n.jinja2:609
+#: enferno/admin/templates/admin/i18n.jinja2:588
+#: enferno/admin/templates/admin/i18n.jinja2:630
 msgid "Grey"
 msgstr "رمادي/أشيب"
 
-#: enferno/admin/templates/admin/i18n.jinja2:577
+#: enferno/admin/templates/admin/i18n.jinja2:589
 msgid "Turning grey"
 msgstr "بدأ يشيب"
 
-#: enferno/admin/templates/admin/i18n.jinja2:578
+#: enferno/admin/templates/admin/i18n.jinja2:590
 msgid "Red"
 msgstr "أحمر/أصهب"
 
-#: enferno/admin/templates/admin/i18n.jinja2:582
+#: enferno/admin/templates/admin/i18n.jinja2:594
 msgid "none"
 msgstr "لا يوجد"
 
-#: enferno/admin/templates/admin/i18n.jinja2:583
+#: enferno/admin/templates/admin/i18n.jinja2:595
 msgid "Beard"
 msgstr "لحية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:584
+#: enferno/admin/templates/admin/i18n.jinja2:596
 msgid "Moustache"
 msgstr "شارب"
 
-#: enferno/admin/templates/admin/i18n.jinja2:585
+#: enferno/admin/templates/admin/i18n.jinja2:597
 msgid "Beard and moustache"
 msgstr "شارب ولحية"
 
-#: enferno/admin/templates/admin/i18n.jinja2:586
+#: enferno/admin/templates/admin/i18n.jinja2:598
 msgid "Goatee"
 msgstr "سكسوكة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:587
+#: enferno/admin/templates/admin/i18n.jinja2:599
 msgid "Whiskers"
 msgstr "سوالف"
 
-#: enferno/admin/templates/admin/i18n.jinja2:591
+#: enferno/admin/templates/admin/i18n.jinja2:603
 msgid "Scar"
 msgstr "ندبة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:592
+#: enferno/admin/templates/admin/i18n.jinja2:604
 msgid "Tattoo"
 msgstr "وشم"
 
-#: enferno/admin/templates/admin/i18n.jinja2:593
+#: enferno/admin/templates/admin/i18n.jinja2:605
 msgid "piercing"
 msgstr "ثقب/قرط"
 
-#: enferno/admin/templates/admin/i18n.jinja2:594
+#: enferno/admin/templates/admin/i18n.jinja2:606
 msgid "Mole"
 msgstr "شامة"
 
-#: enferno/admin/templates/admin/i18n.jinja2:595
+#: enferno/admin/templates/admin/i18n.jinja2:607
 msgid "Birthmarks"
 msgstr "علامات ولادة (وحمة)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:596
+#: enferno/admin/templates/admin/i18n.jinja2:608
 msgid "Cuts"
 msgstr "جروح"
 
-#: enferno/admin/templates/admin/i18n.jinja2:600
+#: enferno/admin/templates/admin/i18n.jinja2:612
 msgid "Right"
 msgstr "أيمن"
 
-#: enferno/admin/templates/admin/i18n.jinja2:601
+#: enferno/admin/templates/admin/i18n.jinja2:613
 msgid "Left"
 msgstr "أعسر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:607
+#: enferno/admin/templates/admin/i18n.jinja2:614
+msgid "Both Hands"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:622
+msgid "Question Not Asked"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:628
 msgid "Green"
 msgstr "أخضر"
 
-#: enferno/admin/templates/admin/i18n.jinja2:608
+#: enferno/admin/templates/admin/i18n.jinja2:629
 msgid "Blue"
 msgstr "أزرق"
 
-#: enferno/admin/templates/admin/i18n.jinja2:613
+#: enferno/admin/templates/admin/i18n.jinja2:634
 msgid "Missing"
 msgstr "مفقود"
 
-#: enferno/admin/templates/admin/i18n.jinja2:614
+#: enferno/admin/templates/admin/i18n.jinja2:635
 msgid "Identified"
 msgstr "محدد / معرَّف"
 
@@ -2550,11 +2586,11 @@ msgid "All Incidents"
 msgstr "جميع الوقائع"
 
 #: enferno/admin/templates/admin/incidents.html:75
-#: enferno/admin/templates/admin/incidents.html:448
+#: enferno/admin/templates/admin/incidents.html:490
 msgid "New Incident"
 msgstr "واقعة جديدة"
 
-#: enferno/admin/templates/admin/incidents.html:448
+#: enferno/admin/templates/admin/incidents.html:490
 msgid "Edit Incident"
 msgstr "تحرير الواقعة"
 
@@ -2656,7 +2692,7 @@ msgid "Password"
 msgstr "كلمة المرور"
 
 #: enferno/admin/templates/admin/users.html:123
-#: enferno/admin/templates/admin/users.html:210
+#: enferno/admin/templates/admin/users.html:215
 msgid "Roles"
 msgstr "الأدوار"
 
@@ -2676,16 +2712,20 @@ msgstr "إمكانبة عرض تاريخ (نشاط) مبسط"
 msgid "Can view Full History"
 msgstr "إمكانبة عرض تاريخ (نشاط) كامل"
 
+#: enferno/admin/templates/admin/users.html:148
+msgid "Can self assign"
+msgstr ""
+
 #: enferno/admin/templates/admin/partials/event_dialog.html:167
-#: enferno/admin/templates/admin/users.html:152
+#: enferno/admin/templates/admin/users.html:157
 msgid "Close"
 msgstr "اغلاق"
 
-#: enferno/admin/templates/admin/users.html:206
+#: enferno/admin/templates/admin/users.html:211
 msgid "Username"
 msgstr "إمكانبة عرض أسماء المستخدمين"
 
-#: enferno/admin/templates/admin/users.html:209
+#: enferno/admin/templates/admin/users.html:214
 msgid "Google ID"
 msgstr "المعرِّف الخاص بـGoogle"
 
@@ -2761,97 +2801,97 @@ msgstr "البحث عن الوقائع المرتبطة"
 msgid "Missing Person Profile"
 msgstr "ملف الشخص المفقود"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:911
+#: enferno/admin/templates/admin/partials/actor_dialog.html:916
 msgid "Months Pregnant at time of disappearance"
 msgstr "شهر الحمل وقت الاختفاء"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1019
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1024
 msgid "Hair loss"
 msgstr "كثافة الشعر"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1031
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1036
 msgid "Hair type"
 msgstr "نوع الشعر"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1039
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1044
 msgid "Hair length"
 msgstr "طول الشعر"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1047
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1052
 msgid "Hair color"
 msgstr "لون الشعر"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1055
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1060
 msgid "Facial hair"
 msgstr "شعر الوجه"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1078
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1086
 msgid "Eye color"
 msgstr "لون العين"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1122
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1130
 msgid "Physician’s name and contact"
 msgstr "اسم ومعلومات الاتصال الخاصة بالطبيب"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1127
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1135
 msgid ""
 "Fractures / Injuries (indicate place, side, circumstances, age at the "
 "time of injury, treatment)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1135
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1143
 msgid ""
 "Implants (pacemakers, orthopedic prostheses, screws or metal plates, "
 "etc...) with date or age"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1140
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1148
 msgid ""
 "Congenital malformations (indicate type and whether there is more than "
 "one relative with the same pathology)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1147
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1155
 msgid "Pain and/or ailments"
 msgstr "آلام واعتلالات"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1152
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1160
 msgid "Other medical conditions (specify type and age of occurrence)"
 msgstr "حالات طبية أخرى (حدد النوع وتاريخ الحدوث)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1160
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1168
 msgid "Accidents (indicate age of occurrence)"
 msgstr "حوادث (حدد تاريخ الحدوث)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1165
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1173
 msgid "Prescription drugs taken (indicate at what age and reason)"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1175
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1189
 msgid "Is there a Dental Record?"
 msgstr "هل هناك سجل أسنان؟"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1184
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1198
 msgid "Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)"
 msgstr "مواصفات الأسنان (مثل التباعد، أسنان زائدة، تراكب العضة، إلخ...)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1193
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1207
 msgid "Dental problems (absences, infections, bleeding, etc...)"
 msgstr "مشاكل سنية (مثل فقد، عدوى، نزيف، إلخ...)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1198
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1212
 msgid "Dental treatments (extractions, fillings, etc...) with dates"
 msgstr "علاجات سنية (خلع، حشوات، إلخ...) مع التاريخ"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1203
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1217
 msgid "Dental habits (toothpicks, smoking, etc...)"
 msgstr "عادات سنية (أعواد الأسنان، تدخين، إلخ...)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1237
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1251
 msgid "Location of reburial (full address)"
 msgstr "مكان إعادة الدفن (العنوان كاملا)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1270
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1284
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:562
 msgid "Not Available"
 msgstr "غير متوفر"
@@ -2871,11 +2911,6 @@ msgstr "المدقق"
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:82
 msgid "Bulk Update Actors"
 msgstr "تحديث كيانات بالجملة"
-
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:72
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:110
-msgid "Ref"
-msgstr "مرجع"
 
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:76
 msgid "Replace Existing"
@@ -2971,67 +3006,71 @@ msgstr "آخر دخول"
 msgid "All rights reserved."
 msgstr "جميع الحقوق محفوظة"
 
-#: enferno/templates/nav-drawer.html:16
+#: enferno/templates/nav-drawer.html:19
 msgid "Bulletins"
 msgstr "المواد"
 
-#: enferno/templates/nav-drawer.html:28
+#: enferno/templates/nav-drawer.html:31
 msgid "Actors"
 msgstr "الكيانات"
 
-#: enferno/templates/nav-drawer.html:40
+#: enferno/templates/nav-drawer.html:43
 msgid "Incidents"
 msgstr "الوقائع"
 
-#: enferno/templates/nav-drawer.html:111
+#: enferno/templates/nav-drawer.html:114
 msgid "Activity"
 msgstr "سجل النشاطات"
 
-#: enferno/templates/nav-drawer.html:125
+#: enferno/templates/nav-drawer.html:128
 msgid "Users Management"
 msgstr "إدارة المستخدمين"
 
-#: enferno/templates/nav-drawer.html:138
+#: enferno/templates/nav-drawer.html:141
 msgid "Groups & Permissions"
 msgstr "المجموعات والصلاحيات"
 
-#: enferno/templates/nav-drawer.html:150
+#: enferno/templates/nav-drawer.html:153
 msgid "Media Import"
 msgstr "استيراد الوسائط"
 
-#: enferno/templates/nav-drawer.html:163
+#: enferno/templates/nav-drawer.html:166
 msgid "Sheets Import"
 msgstr "استيراد جداول البيانات"
 
-#: enferno/templates/nav-drawer.html:179
+#: enferno/templates/nav-drawer.html:182
 msgid "Deduplication Dashbaord"
 msgstr "لوحة تحكم أداة المطابقة"
 
-#: enferno/templates/nav-drawer.html:193 enferno/templates/settings.html:18
+#: enferno/templates/nav-drawer.html:196 enferno/templates/settings.html:16
 msgid "Settings"
 msgstr "الإعدادت"
 
-#: enferno/templates/settings.html:23
+#: enferno/templates/settings.html:21
 msgid "User Interface"
 msgstr "واجهة المستخدم"
 
-#: enferno/templates/settings.html:25
+#: enferno/templates/settings.html:24
 msgid "Dark Mode"
 msgstr "الوضع الليلي"
 
-#: enferno/templates/settings.html:30
+#: enferno/templates/settings.html:29
+msgid "Interface Language"
+msgstr ""
+
+#: enferno/templates/settings.html:38
 msgid "Profile Settings"
 msgstr "اعدادات الحساب"
 
-#: enferno/templates/settings.html:32
+#: enferno/templates/settings.html:40
 msgid "Change Password"
 msgstr "تغيير كلمة المرور"
 
-#: enferno/templates/settings.html:38
+#: enferno/templates/settings.html:46
 msgid "Security"
 msgstr "الأمان"
 
-#: enferno/templates/settings.html:40
+#: enferno/templates/settings.html:48
 msgid "Setup Two-Factor Auth"
 msgstr "اعداد المصادقة الثنائية"
 
@@ -3167,7 +3206,7 @@ msgstr "أو قم باستخدام الرابط أدناه:"
 msgid "You can confirm your email through the link below:"
 msgstr "يمكنك تأكيد حسابك باستخدام الرابط أدناه:"
 
-#: enferno/user/views.py:207
+#: enferno/user/views.py:209
 msgid "Password changed successfully."
 msgstr "تم تغيير كلمة السر بنجاح"
 
@@ -3176,4 +3215,10 @@ msgstr "تم تغيير كلمة السر بنجاح"
 
 #~ msgid "Bulletin Ref"
 #~ msgstr "مادة"
+
+#~ msgid "Establishment"
+#~ msgstr "منشأة"
+
+#~ msgid "Park"
+#~ msgstr "حديقة"
 
