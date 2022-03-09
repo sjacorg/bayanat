@@ -10,6 +10,14 @@ Installation and Documentation
 ------------------------------
 Installation guidelines and user manual are available at [docs.bayanat.org](https://docs.bayanat.org/).
 
+Localization
+------------
+Bayanat currently has translations for the following lanaguages:
+- Arabic
+- Ukrainian
+
+You can help by translating Bayanat to your language. `messages.pot` file is the translation template for Bayanat.
+
 Live Demo
 ---------
 You can access a demo instance of Bayanat on [demo.bayanat.org](https://demo.bayanat.org/). You can use the following credentials to log in:
