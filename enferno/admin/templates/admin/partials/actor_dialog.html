@@ -616,7 +616,7 @@
                                                                             active-class="primary dark"
                                                                     >
                                                                          <v-chip v-for="r in translations.probs"
-                                                                                    small> ${r[__lang__]}
+                                                                                    small> ${r.tr}
                                                                             </v-chip>
                                                                     </v-chip-group>
 
@@ -630,7 +630,7 @@
                                                                                 small> ${
                                                                             detectDirection(editedItem,
                                                                             editedItem.actor_relations[index].actor)
-                                                                            ? r[__lang__].text: r[__lang__].revtext }
+                                                                            ? r.tr.text: r.tr.revtext }
                                                                         </v-chip>
 
                                                                     </v-chip-group>
@@ -724,7 +724,7 @@
                                                                             active-class="primary dark"
                                                                     >
                                                                       <v-chip v-for="r in translations.probs"
-                                                                                    small> ${r[__lang__]}
+                                                                                    small> ${r.tr}
                                                                             </v-chip>
                                                                     </v-chip-group>
 
@@ -736,7 +736,7 @@
                                                                             active-class="primary dark"
                                                                     >
                                                                         <v-chip v-for="r in translations.btoaRelateAs"
-                                                                                small> ${r[__lang__]}
+                                                                                small> ${r.tr}
                                                                         </v-chip>
                                                                     </v-chip-group>
 
@@ -827,8 +827,8 @@
                                                                         column
                                                                         active-class="primary dark"
                                                                 >
-                                                                     <v-chip v-for="r in translations.btoaRelateAs"
-                                                                                    small> ${r[__lang__]}
+                                                                     <v-chip v-for="r in translations.itoaRelateAs"
+                                                                                    small> ${r.tr}
                                                                             </v-chip>
                                                                 </v-chip-group>
 
@@ -902,8 +902,8 @@
                                             <v-row>
                                                 <v-col md="4">
                                                     <v-select label="{{_('Pregnant at Disappearance')}}"
-                                                              item-text="en"
-                                                              :item-value="__lang__"
+                                                              item-text="tr"
+                                                              item-value="en"
                                                               :items="translations.pregnant"
                                                               v-model="editedItem.pregnant_at_disappearance">
 
@@ -1013,8 +1013,8 @@
                                                 </v-col>
                                                 <v-col md="4">
                                                     <v-select label="{{_('Physique')}}"
-                                                              item-text="en"
-                                                              :item-value="__lang__"
+                                                              item-text="tr"
+                                                              item-value="en"
                                                               v-model="editedItem.physique"
                                                               :items="translations.physique"
                                                     ></v-select>
@@ -1079,8 +1079,8 @@
                                                               item-value="en"
                                                               v-model="editedItem.handedness"></v-select>
                                                     <v-select label="{{_('Glasses')}}"
-                                                               item-text="en"
-                                                              :item-value="__lang__"
+                                                               item-text="tr"
+                                                              item-value="en"
                                                               :items="translations.glasses"
                                                               v-model="editedItem.glasses"></v-select>
                                                     <v-select label="{{_('Eye color')}}"
@@ -1178,8 +1178,8 @@
                                             <v-row>
                                                 <v-col cols="3">
                                                     <v-select
-                                                             item-text="en"
-                                                              :item-value="__lang__"
+                                                             item-text="tr"
+                                                              item-value="en"
                                                               :items="translations.smoker"
                                                             label="{{ _('Smoker') }}" v-model="editedItem.smoker">
 

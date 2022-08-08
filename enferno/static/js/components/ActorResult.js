@@ -33,7 +33,7 @@ Vue.component("actor-result", {
             <v-card-actions>
                 <slot name="actions"></slot>
                 <v-btn v-if="showHide" @click="hidden=true" small depressed color="grey lighten-4"> {{ i18n.hide_ }}</v-btn>
-                <v-btn text small icon color="gv darken-1" @click.stop="$root.previewItem('/admin/api/actor/'+actor.id)"><v-icon>mdi-eye</v-icon></v-btn>
+                <v-btn text small icon color="gv darken-1" @click.capture="$root.previewItem('/admin/api/actor/'+actor.id+'?mode=3')"><v-icon>mdi-eye</v-icon></v-btn>
             </v-card-actions>
         </v-card>
     `

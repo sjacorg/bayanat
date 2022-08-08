@@ -64,15 +64,13 @@
 
                             <v-spacer></v-spacer>
                             {% if current_user.roles_in(['Admin','DA']) %}
-                            <v-btn @click="editItem" color="primary" dark class="ma-2"
-                              >{{ _('New Actor') }}</v-btn
-                            >
+                            <v-btn @click="editItem" color="primary" dark class="ma-2">{{ _('New Actor') }}</v-btn>
                             {% endif %}
                             {% include 'admin/partials/actor_dialog.html' %}
                             {% include 'admin/partials/review_dialog.html' %}
                           </v-toolbar>
 
-                        {% if current_user.has_role('Admin') %}
+                          {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
                           <v-toolbar dense  color="grey lighten-4" flat >
                             <template v-if="bulkIcons">
 
@@ -192,6 +190,8 @@
                       {% include 'admin/partials/relate_media_dialog.html' %}
                       {% include 'admin/partials/video_player_dialog.html' %}
 
+                    <visualization ref="viz" :i18n="translations"></visualization>
+
 
                         <v-dialog width="600" v-model="selfAssignDialog">
                             <v-card class="pa-3">
@@ -239,6 +239,14 @@
 <script src="/static/js/components/IncidentResult.js?v={{g.version}}"></script>
 <script src="/static/js/components/MediaCard.js?v={{g.version}}"></script>
 <script src="/static/js/components/UniField.js?v={{g.version}}"></script>
+<script src="/static/js/components/Visualization.js?v={{ g.version }}"></script>
+<script src="/static/js/element-resize-detector.min.js?v={{ g.version }}"></script>
+<script src="/static/js/force-graph.min.js?v={{ g.version }}"></script>
+
+<script src="/static/js/components/GlobalMap.js?v={{ g.version }}"></script>
+
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
+
 
 {#Missing Persons Components#}
 <script src="/static/js/components/Address.js?v={{g.version}}"></script>
@@ -253,6 +261,7 @@
 
 
 <script>
+window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
   let app = new Vue({
     el: "#app",
     vuetify: vuetify,
@@ -857,7 +866,7 @@
         this.actorLoader = true;
         this.actorDrawer = true;
 
-        axios.get(`/admin/api/actor/${id}`).then(response => {
+        axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
           this.actor = response.data;
           this.actorLoader = false;
         }).catch(error => {
@@ -892,7 +901,7 @@
         // else is a standard user
           this.statusItems = this.statuses;
 
-          if (this.editedItem.status == 'Assigned'){
+          if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created'){
             this.editedItem.status = this.statusItems[2].en;
           }
 
@@ -931,7 +940,7 @@
     if (!this.has_role(this.currentUser,'DA')) {
       return false;
     }
-    const statuses = ['Assigned','Updated', 'Peer Reviewed', 'Revisited'];
+    const statuses = ['Human Created','Assigned','Updated', 'Peer Reviewed', 'Revisited'];
     if (actor.assigned_to && actor.assigned_to.id == this.currentUser.id && statuses.includes(actor.status)) {
       return true
     }

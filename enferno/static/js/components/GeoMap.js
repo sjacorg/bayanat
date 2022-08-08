@@ -150,7 +150,7 @@ Vue.component("geo-map", {
 
 
             <l-map @click="setMarker" class="mt-4" ref="map" v-if="lat && lng" :zoom="mapZoom"
-                   :style="'border-radius: 8px;resize: vertical;height:'+ mapHeight + 'px'" :center="[lat,lng]">
+                   :style="'border-radius: 8px;resize: vertical;height:'+ mapHeight + 'px'" :center="[lat,lng]" :options="{scrollWheelZoom:false}">
               <l-tile-layer :key="mapKey" v-if="defaultTile" :attribution="attribution" :url="mapsApiEndpoint"
                             :subdomains="subdomains"></l-tile-layer>
               <l-control class="example-custom-control">

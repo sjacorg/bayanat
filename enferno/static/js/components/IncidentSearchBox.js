@@ -131,7 +131,8 @@ Vue.component('incident-search-box', {
                                 column
                                 v-model="q.status"
                         >
-                            <v-chip :value="status.en" label small v-for="status in translations.statuses" filter outlined>{{status[__lang__]}}</v-chip>
+                            <v-chip :value="status.en" label small v-for="status in translations.statuses_" :key="status.en"
+                                    filter outlined>{{status.tr}}</v-chip>
                         </v-chip-group>
 
                     </v-col>

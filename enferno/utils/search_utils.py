@@ -684,7 +684,7 @@ class SearchUtils:
                 query.append(Incident.locations.any(Location.id.in_(all_ids)))
             else:
                 for id in ids:
-                    children = Location.find_by_ids([ids])
+                    children = Location.find_by_ids([id])
                     all_ids = [l.get("id") for l in children]
                     query.append(Incident.locations.any(Location.id.in_(all_ids)))
 

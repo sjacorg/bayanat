@@ -37,80 +37,85 @@ def install():
     a = Role.query.filter(Role.name == 'Admin').first()
     if a is None:
         # create admin role
-        r = Role(name='Admin')
-        r.save()
+        r = Role(name='Admin').save()
         u = click.prompt('Admin username?', default='admin')
         p = click.prompt('Admin Password (min 6 characters)?')
         user = User(username=u, password=hash_password(p), active=1)
         user.name = 'Admin'
         user.roles.append(r)
         user.save()
+        click.echo('Admin user installed successfully!')
 
     else:
-        print('Seems like an Admin is already installed')
+        click.echo('Seems like an Admin is already installed')
 
 
 @click.command()
 @click.option('-u', '--username', prompt=True, default=None)
-@click.option('-p', '--password', prompt=True, default=None)
+@click.option('-p', '--password', prompt=True, default=None, hide_input=True)
 @with_appcontext
 def create(username, password):
-    """Creates a user using an email.
+    """Creates a user.
     """
     a = User.query.filter(User.username == username).first()
     if a:
-        print('User already exists!')
-
+        click.echo('User already exists!')
+        return
+    if len(password < 8):
+        click.echo('Password should be at least 8 characters long!')
+        return
     user = User(username=username,  password=hash_password(password), active=1)
-    user.save()
-    print('User created successfully')
+    if user.save():
+        click.echo('User created successfully')
+    else:
+        click.echo('Error creating user.')
 
 
 @click.command()
-@click.option('-e', '--email', prompt=True, default=None)
+@click.option('-u', '--username', prompt=True, default=None)
 @click.option('-r', '--role', prompt=True, default='Admin')
 @with_appcontext
-def add_role(email, role):
+def add_role(username, role):
     """Adds a role to the specified user.
-        """
+    """
     from enferno.user.models import Role
-    u = User.query.filter(User.email == email).first()
+    user = User.query.filter(User.username == username).first()
 
-    if u is None:
-        print('Sorry, this user does not exist!')
+    if not user :
+        click.echo('Sorry, this user does not exist!')
     else:
         r = Role.query.filter(Role.name == role).first()
-        if r is None:
-            print('Sorry, this role does not exist!')
+        if not role:
+            click.echo('Sorry, this role does not exist!')
             u = click.prompt('Would you like to create one? Y/N', default='N')
             if u.lower() == 'y':
-                r = Role(name=role)
-                try:
-                    db.session.add(r)
-                    db.session.commit()
-                    print('Role created successfully, you may add it now to the user')
-                except Exception as e:
-                    db.session.rollback()
+                r = Role(name=role).save()
         # add role to user
-        u.roles.append(r)
+        user.roles.append(r)
+        click.echo('Role {} added successfully to user {}'.format(username,role))
 
 
 @click.command()
-@click.option('-e', '--email', prompt=True, default=None)
+@click.option('-u', '--username', prompt=True, default=None)
 @click.option('-p', '--password', hide_input=True, confirmation_prompt=True, prompt=True, default=None)
 @with_appcontext
-def reset(email, password):
+def reset(username, password):
     """Reset a user password
     """
-    try:
-        pwd = hash_password(password)
-        u = User.query.filter(User.email == email).first()
-        u.password = pwd
-        u.save()
-        print('User password has been reset successfully.')
+    user = User.query.filter(User.username == username).first()
+    if not user:
+        click.echo('Specified user does not exist!')
+    else:
+        if len(password) < 8:
+            click.echo('Password should be at least 8 characters long!')
+            return
+        user.password = hash_password(password)
+        user.save()
+        click.echo('User password has been reset successfully.')
+        if not user.active:
+            click.echo('Warning: User is not active!')
 
-    except Exception as e:
-        print('Error resetting user password: %s' % e)
+
 
 
 @click.command()
@@ -156,13 +161,13 @@ def init():
     # generate user roles
     try:
         generate_user_roles()
-        print('Successfully generated user roles.')
+        click.echo('Successfully generated user roles.')
     except:
         print('Error generating user roles.')
     
     # import data
     try:
         import_data()
-        print('Successfully imported data.')
+        click.echo('Successfully imported data.')
     except:
-        print('Error importing data.')
+        click.echo('Error importing data.')

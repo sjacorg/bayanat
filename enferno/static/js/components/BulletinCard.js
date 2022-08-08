@@ -5,12 +5,17 @@ Vue.component("bulletin-card", {
         bulletin: function (val, old) {
 
 
+
             if (!this.$root.currentUser.view_simple_history) {
                 this.log = false;
             }
             if (this.$root.currentUser.view_full_history) {
                 this.diff = true;
             }
+
+            this.loadBulletinRelations();
+            this.loadActorRelations();
+            this.loadIncidentRelations();
 
             this.mapLocations = aggregateLocations(this.bulletin);
 
@@ -28,18 +33,72 @@ Vue.component("bulletin-card", {
 
     methods: {
 
+           loadBulletinRelations(page=1) {
+
+             // b2a
+            axios.get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=bulletin&page=${page}`).then(res=>{
+            this.bulletin.bulletin_relations.push.apply(this.bulletin. bulletin_relations,res.data.items);
+            this.bulletinPage +=1;
+            this.bulletinLM = res.data.more;
+
+            }).catch(err=>{
+                console.log(err.toJSON());
+            });
+
+        },
+
+        loadActorRelations(page = 1){
+
+             // b2a
+            axios.get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=actor&page=${page}`).then(res=>{
+            //console.log(this.bulletin.actor_relations, res.data.items);
+            this.bulletin.actor_relations.push.apply(this.bulletin.actor_relations,res.data.items);
+            this.actorPage +=1;
+            this.actorLM = res.data.more;
+
+            }).catch(err=>{
+                console.log(err.toJSON());
+            });
+
+
+
+        },
+        loadIncidentRelations(page =1){
+
+             // b2i
+            axios.get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=incident&page=${page}`).then(res=>{
+            this.bulletin.incident_relations.push.apply(this.bulletin.incident_relations, res.data.items);
+            this.incidentPage +=1;
+            this.incidentLM = res.data.more;
+            }).catch(err=>{
+                console.log(err.toJSON());
+            });
+
+        },
+
+
+        loadRelations(){
+
+
+
+
+
+        },
         probability(item) {
 
-            return translations.probs[item.probability][__lang__]
+            return translations.probs[item.probability].tr
         },
         actor_related_as(id) {
-            return translations.btoaRelateAs[id][__lang__];
+            return translations.btoaRelateAs[id].tr;
         },
         bulletin_related_as(item) {
-            return translations.btobRelateAs[item.related_as][__lang__];
+
+            return translations.btobRelateAs[item.related_as].tr;
         },
         incident_related_as(item) {
-            return translations.itobRelateAs[item.related_as][__lang__];
+
+
+            return translations.itobRelateAs[item.related_as].tr;
         },
 
 
@@ -140,13 +199,24 @@ Vue.component("bulletin-card", {
             hloading: false,
             mapLocations: [],
             iplayer: false,
+
+            // pagers for related entities
+            bulletinPage: 1,
+            actorPage: 1,
+            incidentPage: 1,
+
+            // load more buttons
+            bulletinLM: false,
+            actorLM: false,
+            incidentLM:false
         };
     },
 
     template: `
 
       <v-card color="grey lighten-3" class="mx-auto pa-3">
-      <v-btn v-if="close" @click="$emit('close',$event.target.value)" fab absolute top right x-small text
+        <v-card color="grey lighten-5" outlined class="header-fixed mx-2">
+        <v-btn v-if="close" @click="$emit('close',$event.target.value)" fab absolute top right x-small text
              class="mt-6">
         <v-icon>mdi-close</v-icon>
       </v-btn>
@@ -158,9 +228,10 @@ Vue.component("bulletin-card", {
                 class="white--text ml-1">
           # {{ bulletin.originid }}
         </v-chip>
-        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',bulletin)" x-small outlined>{{ i18n.edit_ }}
+        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',bulletin)" small outlined><v-icon color="primary" left>mdi-pencil</v-icon> {{ i18n.edit_ }}
         </v-btn>
-
+        
+        <v-btn @click.stop="$root.$refs.viz.visualize(bulletin)" class="ml-2" outlined small elevation="0"><v-icon color="primary" left>mdi-graph-outline</v-icon> {{ i18n.visualize_ }}</v-btn>
       </v-card-text>
 
 
@@ -172,29 +243,37 @@ Vue.component("bulletin-card", {
         <v-icon left>mdi-delta</v-icon>
         {{ bulletin._status }}
       </v-chip>
+        </v-card>
 
-
-      <v-sheet v-if="bulletin.ref && bulletin.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
+      <!-- Refs -->
+      <v-card v-if="bulletin.ref && bulletin.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
                color="yellow lighten-5 ">
         <div class="caption grey--text mr-2">{{ i18n.ref_ }}</div>
         <v-chip x-small v-for="e in bulletin.ref" class="caption black--text mx-1">{{ e }}</v-chip>
 
-      </v-sheet>
+      </v-card>
+      
 
+      <!-- Titles -->
       <uni-field :caption="i18n.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
       <uni-field :caption="i18n.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
 
+      <!-- Description -->
       <v-card outlined v-if="bulletin.description" class="ma-2 pa-2" color="grey lighten-5">
         <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
         <div class="rich-description" v-html="bulletin.description"></div>
       </v-card>
+      
+      
+      
 
+      <!-- Map -->
       <v-card outlined class="ma-2 pa-2" color="grey lighten-5">
         <global-map :i18n="i18n" :value="mapLocations"></global-map>
       </v-card>
 
       <!-- Sources -->
-      <v-card outlined class="ma-3" color="grey lighten-5" v-if="bulletin.sources && bulletin.sources.length">
+      <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.sources && bulletin.sources.length">
         <v-card-text>
           <div class="px-1 title black--text">{{ i18n.sources_ }}</div>
           <v-chip-group column>
@@ -216,7 +295,7 @@ Vue.component("bulletin-card", {
 
       <!-- Labels -->
 
-      <v-card outlined class="ma-3" color="grey lighten-5" v-if="bulletin.labels && bulletin.labels.length">
+      <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.labels && bulletin.labels.length">
         <v-card-text>
           <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
           <v-chip-group column>
@@ -229,7 +308,7 @@ Vue.component("bulletin-card", {
 
       <!-- Verified Labels -->
 
-      <v-card outlined class="ma-3" color="grey lighten-5" v-if="bulletin.verLabels && bulletin.verLabels.length">
+      <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.verLabels && bulletin.verLabels.length">
         <v-card-text>
           <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
           <v-chip-group column>
@@ -243,7 +322,7 @@ Vue.component("bulletin-card", {
 
       <!-- Media -->
 
-      <v-card outlined class="ma-3" v-if="bulletin.medias && bulletin.medias.length">
+      <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.medias && bulletin.medias.length">
         <v-card v-if="iplayer" elevation="0" id="iplayer" class="px-2 my-3">
           <video :id="'player'+_uid" controls class="video-js vjs-default-skin vjs-big-play-centered"
                  crossorigin="anonymous"
@@ -251,7 +330,7 @@ Vue.component("bulletin-card", {
 
         </v-card>
         <v-card-text>
-          <div class="px-1 mb-3 title black--text">{{ i18n.media_ }}</div>
+          <div class="pa-2 header-sticky mb-3 title black--text">{{ i18n.media_ }}</div>
 
           <div class="d-flex flex-wrap">
             <div class="pa-1" style="width: 50%" v-for="media in bulletin.medias" :key="media.id">
@@ -279,10 +358,10 @@ Vue.component("bulletin-card", {
 
       <!-- Related Bulletins -->
 
-      <v-card outlined class="ma-3" v-if="bulletin.bulletin_relations && bulletin.bulletin_relations.length">
+      <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.bulletin_relations && bulletin.bulletin_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedBulletins_ }}
-            <v-tooltip top>
+          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}
+          <v-tooltip top>
               <template v-slot:activator="{on,attrs}">
 
                 <a :href="'/admin/bulletins/?reltob='+bulletin.id" target="_self">
@@ -302,8 +381,8 @@ Vue.component("bulletin-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.btobRelateAs" color="grey lighten-4" small label>{{ bulletin_related_as(item) }}
+                <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                <v-chip v-if="item.related_as!== null" color="grey lighten-4" small label>{{ bulletin_related_as(item) }}
                 </v-chip>
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
@@ -312,12 +391,15 @@ Vue.component("bulletin-card", {
             </template>
           </bulletin-result>
         </v-card-text>
+         <v-card-actions>
+          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadBulletinRelations(bulletinPage)" v-if="bulletinLM">Load More <v-icon right>mdi-chevron-down</v-icon> </v-btn>
+        </v-card-actions>
       </v-card>
 
       <!-- Related Actors  -->
-      <v-card outlined class="ma-3" v-if="bulletin.actor_relations && bulletin.actor_relations.length">
+      <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.actor_relations && bulletin.actor_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedActors_ }}
+          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedActors_ }}
           <v-tooltip top>
               <template v-slot:activator="{on,attrs}">
 
@@ -338,10 +420,10 @@ Vue.component("bulletin-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability" class="ma-1" color="grey lighten-4" small label>
+                <v-chip v-if="item.probability!== null" class="ma-1" color="grey lighten-4" small label>
                   {{ probability(item) }}
                 </v-chip>
-                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-4" small
+                <v-chip class="ma-1" v-for="r in item.related_as" color="grey lighten-4" small
                         label>{{ actor_related_as(r) }}
                 </v-chip>
                 <v-chip v-if="item.comment" class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
@@ -351,13 +433,16 @@ Vue.component("bulletin-card", {
             </template>
           </actor-result>
         </v-card-text>
+        <v-card-actions>
+          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadActorRelations(actorPage)" v-if="actorLM">Load More <v-icon right>mdi-chevron-down</v-icon> </v-btn>
+        </v-card-actions>
       </v-card>
 
       <!-- Related Incidents -->
-      <v-card outlined class="ma-3" v-if="bulletin.incident_relations && bulletin.incident_relations.length">
+      <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.incident_relations && bulletin.incident_relations.length">
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.relatedIncidents_ }}
-           <v-tooltip top>
+          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedIncidents_ }}
+          <v-tooltip top>
               <template v-slot:activator="{on,attrs}">
                 <a :href="'/admin/incidents/?reltob='+bulletin.id" target="_self">
                   <v-icon v-on="on" small color="grey" class="mb-1">
@@ -369,15 +454,16 @@ Vue.component("bulletin-card", {
             </v-tooltip>
           
           </div>
-          <incident-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
+          <incident-result :i18n="i18n"  class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
                            :incident="item.incident">
             <template v-slot:header>
 
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as" color="grey lighten-4" small label>{{ incident_related_as(item) }}
+                <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                
+                <v-chip v-if="item.related_as!==null" color="grey lighten-4" small label>{{ incident_related_as(item) }}
                 </v-chip>
 
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
@@ -387,6 +473,9 @@ Vue.component("bulletin-card", {
             </template>
           </incident-result>
         </v-card-text>
+        <v-card-actions>
+          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">Load More <v-icon right>mdi-chevron-down</v-icon> </v-btn>
+        </v-card-actions>
       </v-card>
 
       <!-- Pub/Doc Dates -->
@@ -397,7 +486,7 @@ Vue.component("bulletin-card", {
 
       <uni-field :caption="i18n.sourceLink_" :english="bulletin.source_link"></uni-field>
 
-
+      <!-- Review -->
       <v-card v-if="showReview(bulletin)" outline elevation="0" class="ma-3" color="light-green lighten-5">
         <v-card-text>
           <div class="px-1 title black--text">{{ i18n.review_ }}</div>
@@ -408,17 +497,18 @@ Vue.component("bulletin-card", {
         </v-card-text>
       </v-card>
 
-      <v-card v-if="log" outline elevation="0" color="ma-3">
+      <!-- Log -->
+      <v-card v-if="log" outline elevation="0" class="ma-2">
         <v-card-text>
           <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
-            <v-btn fab small :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
+            <v-btn fab :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
               <v-icon>mdi-history</v-icon>
             </v-btn>
           </h3>
 
 
           <template v-for="(revision,index) in revisions">
-            <v-sheet color="grey lighten-4" dense flat class="my-1 pa-3 d-flex align-center">
+            <v-card color="grey lighten-4" dense flat class="my-1 pa-3 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
                                                                               color="gv lighten-3">{{ revision.data.status }}</v-chip> -
                 {{ revision.created_at }}
@@ -431,7 +521,7 @@ Vue.component("bulletin-card", {
                 <v-icon>mdi-compare</v-icon>
               </v-btn>
 
-            </v-sheet>
+            </v-card>
 
           </template>
 

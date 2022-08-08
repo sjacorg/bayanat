@@ -54,7 +54,7 @@ Vue.component("mp-card", {
     },
     template:
         `
-          <v-card class="pa-1 ma-3 elevation-1" color="yellow lighten-4">
+          <v-card class="pa-1 ma-2 elevation-1" color="yellow lighten-4">
           <v-card-title class="subtitle-2">
             <v-btn :loading="loading" @click="loadData" small color="yellow lighten-3 black--text" elevation="0">
               <v-icon color="deep-orange" left>mdi-chart-donut</v-icon>

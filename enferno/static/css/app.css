@@ -344,6 +344,14 @@ input[type="date"]::-webkit-input-placeholder {
 }
 
 
+/* quick initial dark mode support for leaflet map */
+
+.theme--dark .vue2leaflet-map, .theme--dark .map-legend .caption i {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+
+
 /* csv import */
 
 .drag-area {
@@ -429,6 +437,94 @@ input[type="date"]::-webkit-input-placeholder {
 
 }
 
+
+/* sticky related items headers */
+
+.header-sticky {
+    position: sticky;
+    top: 90px;
+    z-index: 10000;
+    background: rgba(250, 250, 250, 1);
+}
+
+.theme--dark .header-sticky {
+    background: rgba(51, 51, 51, 1);
+}
+.v-sheet.header-fixed {
+    position: sticky;
+    top:0;
+    z-index: 100000;
+    border-bottom: 3px solid #dddddd75;
+
+    background: rgba(255, 255, 255, 1);
+
+}
 .v-card a {
     text-decoration: none;
+}
+
+.graph-node {
+    max-width: 80px;
+    padding: 1px 2px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.28);
+    white-space: nowrap;
+    border-radius: 3px;
+    font-size: 9px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+
+
+}
+
+.graph-node:hover {
+    color: #fff;
+    white-space: break-spaces;
+
+}
+
+.graph-wrap {
+    position: relative;
+    display: grid;
+    place-content: center;
+
+}
+.graph-wrap .graph-legend {
+    padding: 12px;
+    height: 40px;
+    top: 10px;
+    left: 10px;
+    position: absolute;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    background: rgba(215, 215, 215, 0.15);
+
+
+}
+
+.graph-wrap .graph-tip {
+    padding: 12px;
+    height: 40px;
+    bottom: 20px;
+    left: 10px;
+    position: absolute;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    background: rgba(215, 215, 215, 0.15);
+
+
+}
+
+.graph-legend .caption {
+    display: flex;
+    align-items: center;
+}
+
+/* better dark mode style for media thumbs */
+
+.theme--dark .media-vid i {
+    background: #111;
 }

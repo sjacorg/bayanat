@@ -249,8 +249,8 @@ Vue.component('bulletin-search-box', {
 
                                 v-model="q.status"
                         >
-                            <v-chip :value="status.en" label small v-for="status in statuses" filter
-                                    outlined>{{status[__lang__]}}</v-chip>
+                            <v-chip :value="status.en" label small v-for="status in translations.statuses_"
+                                    filter outlined :key="status.en">{{status.tr}}</v-chip>
                         </v-chip-group>
 
                     </v-col>

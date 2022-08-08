@@ -434,7 +434,7 @@
                 },
 
                 appendFiles() {
-                    this.items = this.preprocess(this.files);
+                    this.items = this.preprocess(this.files.filter(x=> x.serverId));
                     this.uploadDlg = false;
                     this.files = [];
                     this.mode = 1;

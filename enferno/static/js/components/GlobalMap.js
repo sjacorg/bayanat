@@ -153,7 +153,7 @@ Vue.component('global-map', {
       <v-card outlined color="grey lighten-3">
 
         <v-card-text>
-          <div class="d-flex mb-3 align-center" style="column-gap: 10px">
+          <div class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
             <div class="caption">
               <v-icon small color="#00a1f1"> mdi-checkbox-blank-circle</v-icon>
               {{ i18n.locations_ }}
@@ -171,7 +171,7 @@ Vue.component('global-map', {
 
           <l-map @fullscreenchange="fsHandler" @dragend="redraw" ref="map" @ready="fitMarkers" :zoom="zoom"
                  :style=" 'resize:vertical;height:'+ mapHeight + 'px'"
-                 :center="[lat,lng]">
+                 :center="[lat,lng]" :options="{scrollWheelZoom:false}">
             <l-tile-layer v-if="defaultTile" :attribution="attribution" :key="mapKey" :url="mapsApiEndpoint" :subdomains="subdomains">
             </l-tile-layer>
             <l-control class="example-custom-control">

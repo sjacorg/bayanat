@@ -315,6 +315,10 @@ String.prototype.getFilename = function () {
     return this.substring(this.lastIndexOf('/') + 1).replace(/[\#\?].*$/, '').replace(/\.[^/.]+$/, "");
 
 }
+String.prototype.trunc = function(n){
+          return this.substr(0,n-1)+(this.length>n?'&hellip;':'');
+};
+
 
 //helper method to translate front-end strings using an array of translation objects (constructed in i18n.jinja2)
 String.prototype.translate = function (lang, search) {
@@ -385,14 +389,20 @@ var aggregateLocations = function (bulletin) {
     }
     // event locations
     if (bulletin.events && bulletin.events.length) {
-        let eventLocations = bulletin.events.filter(x => x.location).map((x, i) => {
-            //attach serial number to events for map reference
-            x.location.number = i + 1;
-            x.location.title = x.title;
-            x.location.color = '#f65314';
+        let eventLocations = bulletin.events.filter(x => x.location && x.location.lat && x.location.lng).map((x, i) => {
+            // exclude locations with null coordinates
 
-            return x.location
+                //attach serial number to events for map reference
+                x.location.number = i + 1;
+                x.location.title = x.title;
+                x.location.color = '#f65314';
+                return x.location
+
+
         });
+
+
+
 
         locations = locations.concat(eventLocations);
     }

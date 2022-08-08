@@ -41,7 +41,7 @@ Vue.component("bulletin-result", {
         <v-card-actions>
             <slot name="actions"></slot>  
             <v-btn v-if="showHide" @click="hidden=true" small depressed  color="grey lighten-4"> {{ i18n.hide_ }}</v-btn>
-          <v-btn @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id)" text small icon color="gv darken-1" ><v-icon>mdi-eye</v-icon></v-btn>
+          <v-btn @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')" text small icon color="gv darken-1" ><v-icon>mdi-eye</v-icon></v-btn>
         </v-card-actions>
       </v-card >
     `

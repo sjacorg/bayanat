@@ -77,6 +77,7 @@
                             {% endif %}
                             {% include 'admin/partials/incident_dialog.html' %}
                             {% include 'admin/partials/review_dialog.html' %}
+
                           </v-toolbar>
 
                           
@@ -217,6 +218,8 @@
 
                         </v-dialog>
 
+                    <visualization ref="viz" :i18n="translations"></visualization>
+
                       <v-snackbar v-model="snackbar">
                         ${snackMessage}
                         <v-btn color="secondary" text @click="snackbar = false">
@@ -227,6 +230,7 @@
                   </v-card>
 
       </v-container>
+
     </v-main>
       {% include 'footer.html' %}
   </v-app>
@@ -243,6 +247,9 @@
 <script src="/static/js/components/ActorResult.js?v={{g.version}}"></script>
 <script src="/static/js/components/MediaCard.js?v={{g.version}}"></script>
 <script src="/static/js/components/UniField.js?v={{g.version}}"></script>
+<script src="/static/js/components/Visualization.js?v={{g.version}}"></script>
+<script src="/static/js/element-resize-detector.min.js?v={{ g.version }}"></script>
+<script src="/static/js/force-graph.min.js?v={{ g.version }}"></script>
 <script src="/static/js/actorConfig.js?v={{g.version}}"></script>
 
 <script>
@@ -788,7 +795,7 @@ toggleAdvSearch() {
         this.incidentLoader = true;
         this.incidentDrawer = true;
 
-        axios.get(`/admin/api/incident/${id}`).then(response => {
+        axios.get(`/admin/api/incident/${id}?mode=3`).then(response => {
           this.incident = response.data;
           this.incidentLoader = false;
         }).catch(error => {
@@ -826,7 +833,7 @@ toggleAdvSearch() {
         // else is a standard user
           this.statusItems = this.statuses;
 
-          if (this.editedItem.status == 'Assigned'){
+          if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created'){
             this.editedItem.status = this.statusItems[2].en;
           }
 
@@ -864,7 +871,7 @@ toggleAdvSearch() {
         if (!this.has_role(this.currentUser,'DA')) {
           return false;
         }
-        const statuses = ['Assigned','Updated', 'Peer Reviewed', 'Revisited'];
+        const statuses = ['Human Created','Assigned','Updated', 'Peer Reviewed', 'Revisited'];
         if (incident.assigned_to && incident.assigned_to.id == this.currentUser.id && statuses.includes(incident.status)) {
           return true
         }

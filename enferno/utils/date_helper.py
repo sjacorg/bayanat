@@ -15,6 +15,14 @@ class DateHelper:
             print (e)
             return None
 
+    @staticmethod
+    def parse_datetime(dt):
+        try:
+            d = arrow.get(dt,'YYYY-MM-DDTHH:mm').datetime.replace(tzinfo=None) if dt else None
+            return d
+        except Exception as e:
+            print(e)
+            return None
 
 
     @staticmethod

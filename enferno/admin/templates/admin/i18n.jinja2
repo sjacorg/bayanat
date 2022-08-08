@@ -80,22 +80,23 @@ longitude_ : "{{ _('Longitude') }}",
 //bulletin/actor/incident cards
 id_: "{{ _('ID') }}",
 edit_: "{{ _('Edit') }}",
+visualize_: "{{ _('Visualize') }}",
 assignedUser_: "{{ _('Assigned User:') }}",
 description_ : "{{ _('Description') }}",
 title_: "{{ _('Title') }}",
-originalTitle_: "{{ _('Original title') }}",
+originalTitle_: "{{ _('Original Title') }}",
 sources_: "{{ _('Sources') }}",
 labels_: "{{ _('Labels') }}",
-verifiedLabels_: "{{ _('Verified labels') }}",
+verifiedLabels_: "{{ _('Verified Labels') }}",
 events_: "{{ _('Events') }}",
 media_: "{{ _('Media') }}",
 locations_: "{{ _('Locations') }}",
-relatedBulletins_: "{{ _('Related bulletins') }}",
-relatedActors_: "{{ _('Related actors') }}",
-relatedIncidents_: "{{ _('Related incidents') }}",
-relationshipInfo_: "{{ _('Relationship info') }}",
-publishDate_: "{{ _('Publish date') }}",
-documentationDate_: "{{ _('Documentation date') }}",
+relatedBulletins_: "{{ _('Related Bulletins') }}",
+relatedActors_: "{{ _('Related Actors') }}",
+relatedIncidents_: "{{ _('Related Incidents') }}",
+relationshipInfo_: "{{ _('Relationship Info') }}",
+publishDate_: "{{ _('Publish Date') }}",
+documentationDate_: "{{ _('Documentation Date') }}",
 sourceLink_: "{{ _('Source Link') }}",
 comment_ : "{{ _('Comments') }}",
 logHistory_: "{{ _('Log History') }}",
@@ -112,13 +113,13 @@ age_ : "{{ _('Age') }}",
 civilian_ : "{{ _('Civilian') }}",
 actorType_ : "{{ _('Actor Type') }}",
 
-birthDate_ : "{{ _('Date of birth') }}",
-birthPlace_ : "{{ _('Place of birth') }}",
+birthDate_ : "{{ _('Date of Birth') }}",
+birthPlace_ : "{{ _('Place of Birth') }}",
 originPlace_ : "{{ _('Place of Origin') }}",
 residencePlace_ : "{{ _('Place of Residence') }}",
 
 occupation_ : "{{ _('Occupation') }}",
-position_ : "{{ _('position') }}",
+position_ : "{{ _('Position') }}",
 spokenDialects_ : "{{ _('Spoken Dialects') }}",
 familyStatus_ : "{{ _('Family Status') }}",
 
@@ -195,6 +196,12 @@ contact_ : "{{ _('Contact') }}",
 // extras
 
 time_ : "{{ _('Time') }}",
+
+// visualization
+actors_ : "{{ _('Actors') }}",
+bulletins_ : "{{ _('Bulletins') }}",
+incidents_ : "{{ _('Incidents') }}",
+visInfo_ : "{{ _('Double click on a node to expand graph, click and hold CTRL to view') }}",
 
 
 // internal configuration strings
@@ -522,10 +529,12 @@ btobRelateAs : [
 {"en": "Other", "tr": "{{ _('Other') }}"},
 {"en": "Part of a Series", "tr": "{{ _('Part of a Series') }}"},
 {"en": "Same Object", "tr": "{{ _('Same Object') }}"},
-{"en": "Same Person", "tr": "{{ _('Same Person') }}"}
+{"en": "Same Person", "tr": "{{ _('Same Person') }}"},
+{"en": "Potentially Duplicate", "tr": "{{ _('Potentially Duplicate') }}"},
+{"en": "Potentially Related", "tr": "{{ _('Potentially Related') }}"},
 ],
-itobRelateAs : [{"en": "default", "tr": "{{ _('default') }}"}],
-itoiRelateAs : [{"en": "default", "tr": "{{ _('default') }}"}],
+itobRelateAs : [{"en": "Default", "tr": "{{ _('Default') }}"}],
+itoiRelateAs : [{"en": "Default", "tr": "{{ _('Default') }}"}],
 
 // Geo markers
 geoMarkers_: "{{ _('Geo Markers') }}",

@@ -70,6 +70,7 @@ class Source(db.Model, BaseMixin):
             if self.parent
             else None,
             "comments": self.comments,
+            "updated_at": DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
         }
 
     def __repr__(self):
@@ -204,7 +205,8 @@ class Label(db.Model, BaseMixin):
             "for_incident": self.for_incident,
             "for_offline": self.for_offline,
             "parent": {"id": self.parent.id, "title": self.parent.title}
-            if self.parent else None
+            if self.parent else None,
+            "updated_at": DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
         }
 
     # custom compact serialization
@@ -297,9 +299,15 @@ class Label(db.Model, BaseMixin):
         self.for_incident = json.get("for_incident", False)
         self.for_offline = json.get("for_offline", False)
         parent = json.get('parent')
-        # reject associating label with itself
-        if parent and parent.get('id') and parent.get('id') != self.id:
-            self.parent_label_id = parent.get('id')
+
+        # reject associating label with itself or circular relations
+        if parent and parent.get('id'):
+            p_label = Label.query.get(parent.get('id'))
+
+            if p_label.id != self.id and p_label.parent_label_id != self.id:
+                self.parent_label_id = p_label.id
+            else:
+                self.parent_label_id = None
         else:
             self.parent_label_id = None
         return self
@@ -353,7 +361,8 @@ class Eventtype(db.Model, BaseMixin):
             "title_ar": self.title_ar or None,
             "for_actor": self.for_actor,
             "for_bulletin": self.for_bulletin,
-            "comments": self.comments
+            "comments": self.comments,
+            "updated_at": DateHelper.serialize_datetime(self.updated_at)
 
         }
 
@@ -433,6 +442,7 @@ class Event(db.Model, BaseMixin):
             "from_date": DateHelper.serialize_datetime(self.from_date) if self.from_date else None,
             "to_date": DateHelper.serialize_datetime(self.to_date) if self.to_date else None,
             "estimated": self.estimated if self.estimated else None,
+            "updated_at": DateHelper.serialize_datetime(self.updated_at)
         }
 
     def to_json(self):
@@ -693,7 +703,9 @@ class Location(db.Model, BaseMixin):
             "parent": {"id": self.parent.id, "title": self.parent.title, }
             if self.parent
             else None,
+            "full_location": self.full_location,
             "full_string": '{} | {}'.format(self.full_location or '', self.title_ar or ''),
+            "updated_at": DateHelper.serialize_datetime(self.updated_at)
         }
 
     # custom compact serialization method
@@ -714,6 +726,7 @@ class Location(db.Model, BaseMixin):
         self.loc_type = jsn.get('loc_type')
         self.longitude = jsn.get('lng')
         self.latitude = jsn.get('lat')
+        self.full_location = jsn.get('full_location')
         if jsn.get('parent_g') and jsn.get('parent_g').get('id'):
             self.parent_g_id = jsn.get('parent_g').get('id')
         else:
@@ -823,6 +836,12 @@ class GeoLocation(db.Model, BaseMixin):
     latlng = db.Column(Geometry('POINT'))
     bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
 
+    def from_json(self,jsn):
+        self.title = jsn.get('title')
+        self.type = jsn.get('type')
+        self.latlng = 'POINT({} {})'.format(jsn.get('lat'), jsn.get('lng'))
+        self.comment = jsn.get('comment')
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -830,7 +849,8 @@ class GeoLocation(db.Model, BaseMixin):
             'type': self.type,
             'lat': to_shape(self.latlng).x,
             'lng': to_shape(self.latlng).y,
-            'comment': self.comment
+            'comment': self.comment,
+            'updated_at': DateHelper.serialize_datetime(self.updated_at)
         }
 
 
@@ -950,6 +970,10 @@ class Btob(db.Model, BaseMixin):
         f, t = min(a.id, b.id), max(a.id, b.id)
         return Btob(bulletin_id=f, related_bulletin_id=t)
 
+    @staticmethod
+    def relate_by_id(a,b):
+        f, t = min(a, b), max(a, b)
+        return Btob(bulletin_id=f, related_bulletin_id=t)
     # Exclude the primary bulletin from output to get only the related/relating bulletin
 
     def to_dict(self, exclude=None):
@@ -1308,6 +1332,8 @@ class Bulletin(db.Model, BaseMixin):
 
     # populate object from json dict
     def from_json(self, json):
+
+        self.originid = json["originid"] if "originid" in json else None 
         self.title = json["title"] if "title" in json else None
         self.sjac_title = json["sjac_title"] if "sjac_title" in json else None
 
@@ -1541,7 +1567,7 @@ class Bulletin(db.Model, BaseMixin):
         }
 
     # Helper method to handle logic of relating bulletins  (from bulletin)
-    def relate_bulletin(self, bulletin, relation=None):
+    def relate_bulletin(self, bulletin, relation=None, create_revision=True):
         # if a new bulletin is being created, we must save it to get the id
         if not self.id:
             self.save()
@@ -1570,11 +1596,12 @@ class Bulletin(db.Model, BaseMixin):
             new_relation.save()
 
             # ------- create revision on the other side of the relationship
-            bulletin.create_revision()
+            if create_revision:
+                bulletin.create_revision()
 
     # Helper method to handle logic of relating incidents (from a bulletin)
 
-    def relate_incident(self, incident, relation=None):
+    def relate_incident(self, incident, relation=None, create_revision=True):
         # if current bulletin is new, save it to get the id
         if not self.id:
             self.save()
@@ -1595,10 +1622,11 @@ class Bulletin(db.Model, BaseMixin):
             new_relation.save()
 
             # --revision relation
-            incident.create_revision()
+            if create_revision:
+                incident.create_revision()
 
     # helper method to relate actors
-    def relate_actor(self, actor, relation=None):
+    def relate_actor(self, actor, relation=None, create_revision=True):
         # if current bulletin is new, save it to get the id
         if not self.id:
             self.save()
@@ -1619,7 +1647,8 @@ class Bulletin(db.Model, BaseMixin):
             new_relation.save()
 
             # --revision relation
-            actor.create_revision()
+            if create_revision:
+                actor.create_revision()
 
     # custom serialization method
     def to_dict(self, mode=None):
@@ -1685,18 +1714,20 @@ class Bulletin(db.Model, BaseMixin):
         # Related bulletins json (actually the associated relationships)
         # - in this case the other bulletin carries the relationship
         bulletin_relations_dict = []
-        for relation in self.bulletin_relations:
-            bulletin_relations_dict.append(relation.to_dict(exclude=self))
-
-        # Related actors json (actually the associated relationships)
         actor_relations_dict = []
-        for relation in self.actor_relations:
-            actor_relations_dict.append(relation.to_dict())
-
-        # Related incidents json (actually the associated relationships)
         incident_relations_dict = []
-        for relation in self.incident_relations:
-            incident_relations_dict.append(relation.to_dict())
+
+        if str(mode) != '3':
+            for relation in self.bulletin_relations:
+               bulletin_relations_dict.append(relation.to_dict(exclude=self))
+
+            # Related actors json (actually the associated relationships)
+            for relation in self.actor_relations:
+               actor_relations_dict.append(relation.to_dict())
+
+            # Related incidents json (actually the associated relationships)
+            for relation in self.incident_relations:
+               incident_relations_dict.append(relation.to_dict())
 
         return {
             "class": "Bulletin",
@@ -1708,7 +1739,7 @@ class Bulletin(db.Model, BaseMixin):
             "originid": self.originid or None,
             # assigned to
             "assigned_to": self.assigned_to.to_compact()
-            if self.assigned_to_id
+            if self.assigned_to
             else None,
             # first peer reviewer
             "first_peer_reviewer": self.first_peer_reviewer.to_compact()
@@ -1735,6 +1766,7 @@ class Bulletin(db.Model, BaseMixin):
             "_status": gettext(self.status),
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
+            "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
         }
 
     # custom serialization mode
@@ -1785,7 +1817,12 @@ class Bulletin(db.Model, BaseMixin):
             columns.append(column.name)
         return columns
 
+    def get_modified_date(self):
 
+        if self.history:
+            return self.history[-1].updated_at
+        else:
+            return self.updated_at
 # joint table
 actor_sources = db.Table(
     "actor_sources",
@@ -2063,6 +2100,7 @@ class Actor(db.Model, BaseMixin):
     def from_json(self, json):
         # All text fields
 
+        self.originid = json["originid"] if "originid" in json else None 
         self.name = json["name"] if "name" in json else None
         self.name_ar = json["name_ar"] if "name_ar" in json else None
 
@@ -2433,9 +2471,15 @@ class Actor(db.Model, BaseMixin):
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
         }
 
+    def get_modified_date(self):
+        if self.history:
+            return self.history[-1].updated_at
+        else:
+            return self.updated_at
+
     # Helper method to handle logic of relating actors (from actor)
 
-    def relate_actor(self, actor, relation=None):
+    def relate_actor(self, actor, relation=None, create_revision=True):
 
         # if a new actor is being created, we must save it to get the id
         if not self.id:
@@ -2463,10 +2507,11 @@ class Actor(db.Model, BaseMixin):
             new_relation.save()
 
             # revision for related actor
-            actor.create_revision()
+            if create_revision:
+                actor.create_revision()
 
     # Helper method to handle logic of relating bulletin (from am actor)
-    def relate_bulletin(self, bulletin, relation=None):
+    def relate_bulletin(self, bulletin, relation=None, create_revision=True):
         # if current actor is new, save it to get the id
         if not self.id:
             self.save()
@@ -2487,10 +2532,11 @@ class Actor(db.Model, BaseMixin):
             new_relation.save()
 
             # revision for related bulletin
-            bulletin.create_revision()
+            if create_revision:
+                bulletin.create_revision()
 
     # Helper method to handle logic of relating incidents (from an actor)
-    def relate_incident(self, incident, relation=None):
+    def relate_incident(self, incident, relation=None, create_revision=True):
         # if current bulletin is new, save it to get the id
         if not self.id:
             self.save()
@@ -2511,7 +2557,8 @@ class Actor(db.Model, BaseMixin):
             new_relation.save()
 
             # revision for related incident
-            incident.create_revision()
+            if create_revision:
+                incident.create_revision()
 
     # custom serialization method
     def to_dict(self, mode=None):
@@ -2552,17 +2599,22 @@ class Actor(db.Model, BaseMixin):
             for media in self.medias:
                 medias_json.append(media.to_dict())
 
-        actor_relations_dict = []
-        for relation in self.actor_relations:
-            actor_relations_dict.append(relation.to_dict(exclude=self))
 
         bulletin_relations_dict = []
-        for relation in self.bulletin_relations:
-            bulletin_relations_dict.append(relation.to_dict())
-
+        actor_relations_dict = []
         incident_relations_dict = []
-        for relation in self.incident_relations:
-            incident_relations_dict.append(relation.to_dict())
+
+        if str(mode) != '3':
+            # lazy load if mode is 3
+            for relation in self.bulletin_relations:
+               bulletin_relations_dict.append(relation.to_dict())
+
+            for relation in self.actor_relations:
+               actor_relations_dict.append(relation.to_dict(exclude=self))
+
+            for relation in self.incident_relations:
+               incident_relations_dict.append(relation.to_dict())
+
 
         actor = {
             "class": "Actor",
@@ -2643,6 +2695,7 @@ class Actor(db.Model, BaseMixin):
             "_status": gettext(self.status),
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
+            "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
         }
         # custom translation handler for ethnography and nationality
         if self.ethnography:
@@ -3297,7 +3350,7 @@ class Incident(db.Model, BaseMixin):
         }
 
     # Helper method to handle logic of relating incidents
-    def relate_incident(self, incident, relation=None):
+    def relate_incident(self, incident, relation=None, create_revision=True):
 
         # if a new actor is being created, we must save it to get the id
         if not self.id:
@@ -3325,10 +3378,11 @@ class Incident(db.Model, BaseMixin):
             new_relation.save()
 
             # -revision related incident
-            incident.create_revision()
+            if create_revision:
+                incident.create_revision()
 
     # Helper method to handle logic of relating actors
-    def relate_actor(self, actor, relation=None):
+    def relate_actor(self, actor, relation=None, create_revision=True):
         # if current incident is new, save it to get the id
         if not self.id:
             self.save()
@@ -3349,10 +3403,11 @@ class Incident(db.Model, BaseMixin):
             new_relation.save()
 
             # -revision related actor
-            actor.create_revision()
+            if create_revision:
+                actor.create_revision()
 
     # Helper method to handle logic of relating bulletins
-    def relate_bulletin(self, bulletin, relation=None):
+    def relate_bulletin(self, bulletin, relation=None, create_revision=True):
         # if current incident is new, save it to get the id
         if not self.id:
             self.save()
@@ -3373,7 +3428,8 @@ class Incident(db.Model, BaseMixin):
             new_relation.save()
 
             # -revision related bulletin
-            bulletin.create_revision()
+            if create_revision:
+                bulletin.create_revision()
 
     # custom serialization method
     def to_dict(self, mode=None):
@@ -3416,17 +3472,20 @@ class Incident(db.Model, BaseMixin):
             for event in self.events:
                 events_json.append(event.to_dict())
 
-        actor_relations_dict = []
-        for relation in self.actor_relations:
-            actor_relations_dict.append(relation.to_dict())
-
         bulletin_relations_dict = []
-        for relation in self.bulletin_relations:
-            bulletin_relations_dict.append(relation.to_dict())
-
+        actor_relations_dict = []
         incident_relations_dict = []
-        for relation in self.incident_relations:
-            incident_relations_dict.append(relation.to_dict(exclude=self))
+
+        if str(mode) != '3':
+            # lazy load if mode is 3
+            for relation in self.bulletin_relations:
+                bulletin_relations_dict.append(relation.to_dict())
+
+            for relation in self.actor_relations:
+                actor_relations_dict.append(relation.to_dict())
+
+            for relation in self.incident_relations:
+                incident_relations_dict.append(relation.to_dict(exclude=self))
 
         return {
             "class": "Incident",
@@ -3461,6 +3520,7 @@ class Incident(db.Model, BaseMixin):
             "status": self.status if self.status else None,
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
+            "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
         }
 
     # custom serialization mode
@@ -3496,6 +3556,12 @@ class Incident(db.Model, BaseMixin):
     def to_json(self):
         return json.dumps(self.to_dict())
 
+    def get_modified_date(self):
+        if self.history:
+            return self.history[-1].updated_at
+        else:
+            return self.updated_at
+
 
 # ----------------------------------- History Tables (Versioning) ------------------------------------
 
@@ -3507,7 +3573,7 @@ class BulletinHistory(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     bulletin_id = db.Column(db.Integer, db.ForeignKey("bulletin.id"), index=True)
     bulletin = db.relationship(
-        "Bulletin", backref="history", foreign_keys=[bulletin_id]
+        "Bulletin", backref=db.backref("history", order_by='BulletinHistory.updated_at'), foreign_keys=[bulletin_id]
     )
     data = db.Column(JSON)
     # user tracking
@@ -3520,30 +3586,14 @@ class BulletinHistory(db.Model, BaseMixin):
             "id": self.id,
             "data": self.data,
             "created_at": DateHelper.serialize_datetime(self.created_at),
-            "user": self.user.to_compact(),
+            "user": self.user.to_compact() if self.user else None,
         }
 
     def to_json(self):
         return json.dumps(self.to_dict(), sort_keys=True)
 
-
-# how to search
-# Bulletin.query.filter(Bulletin.tsv.op('@@')(func.plainto_tsquery('search_term')))
-
-
-# register an event listener to store version histories History tables
-@event.listens_for(Bulletin, "after_insert")
-def version_trigger(mapper, connection, bulletin: Bulletin):
-    # user semi-raw query to avoid session conflicts
-    # connection.execute(BulletinHistory.__table__.insert().values(bulletin_id=bulletin.id,version=0,data=bulletin.to_dict(),user_id=current_user.id))
-    # bulletin.create_revision()
-    pass
-
-
-# unused for now
-@event.listens_for(db.session, "after_commit")
-def after_commit(x):
-    pass
+    def __repr__(self):
+        return '<BulletinHistory {} -- Target {}>'.format(self.id, self.bulletin_id)
 
 
 # --------------------------------- Actors History + Indexers -------------------------------------
@@ -3555,7 +3605,7 @@ class ActorHistory(db.Model, BaseMixin):
     """
     id = db.Column(db.Integer, primary_key=True)
     actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"), index=True)
-    actor = db.relationship("Actor", backref="history", foreign_keys=[actor_id])
+    actor = db.relationship("Actor", backref=db.backref("history", order_by='ActorHistory.updated_at'), foreign_keys=[actor_id])
     data = db.Column(JSON)
     # user tracking
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -3567,25 +3617,11 @@ class ActorHistory(db.Model, BaseMixin):
             "id": self.id,
             "data": self.data,
             "created_at": DateHelper.serialize_datetime(self.created_at),
-            "user": self.user.to_compact(),
+            "user": self.user.to_compact() if self.user else None,
         }
 
     def to_json(self):
         return json.dumps(self.to_dict(), sort_keys=True)
-
-
-# how to search
-# Bulletin.query.filter(Bulletin.tsv.op('@@')(func.plainto_tsquery('search_term')))
-
-
-# register an event listener to store version histories History tables
-@event.listens_for(Actor, "after_insert")
-def version_trigger(mapper, connection, bulletin: Bulletin):
-    # user semi-raw query to avoid session conflicts
-    # connection.execute(BulletinHistory.__table__.insert().values(bulletin_id=bulletin.id,version=0,data=bulletin.to_dict(),user_id=current_user.id))
-    # bulletin.create_revision()
-    pass
-
 
 # --------------------------------- Incident History + Indexers -------------------------------------
 
@@ -3597,7 +3633,7 @@ class IncidentHistory(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey("incident.id"), index=True)
     incident = db.relationship(
-        "Incident", backref="history", foreign_keys=[incident_id]
+        "Incident",  backref=db.backref("history", order_by='IncidentHistory.updated_at'), foreign_keys=[incident_id]
     )
     data = db.Column(JSON)
     # user tracking
@@ -3610,20 +3646,11 @@ class IncidentHistory(db.Model, BaseMixin):
             "id": self.id,
             "data": self.data,
             "created_at": DateHelper.serialize_datetime(self.created_at),
-            "user": self.user.to_compact(),
+            "user": self.user.to_compact() if self.user else None,
         }
 
     def to_json(self):
         return json.dumps(self.to_dict(), sort_keys=True)
-
-
-# register an event listener to store version histories History tables
-@event.listens_for(Incident, "after_insert")
-def version_trigger(mapper, connection, incident: Incident):
-    # user semi-raw query to avoid session conflicts
-    # connection.execute(BulletinHistory.__table__.insert().values(bulletin_id=bulletin.id,version=0,data=bulletin.to_dict(),user_id=current_user.id))
-    # bulletin.create_revision()
-    pass
 
 
 class Activity(db.Model, BaseMixin):
@@ -3686,12 +3713,33 @@ class Settings(db.Model, BaseMixin):
         else:
             return ''
 
+class APIKey(db.Model, BaseMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String, nullable=False)
+    access_type = db.Column(db.String, default='READ')
+    last_used_at = db.Column(db.DateTime)
+
+    @staticmethod
+    def get_global_key():
+        global_key = APIKey.query.first()
+        if global_key:
+            return global_key.key
+        else:
+            return ''
+
 
 class Etl(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
     bulletin = db.relationship('Bulletin', backref='etl')
     meta = db.Column(JSON)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'bulletin_id': self.bulletin_id,
+            'meta': self.meta
+        }
 
 
 class Query(db.Model, BaseMixin):

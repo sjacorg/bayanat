@@ -63,6 +63,7 @@ let mediaMixin = {
          };
 
         let video = this.$el.querySelector('#player video');
+        video.pause()
 
         this.cropper.canvas = document.createElement('canvas');
         this.cropper.canvas.width = this.videoMeta.width;
@@ -340,6 +341,16 @@ let mediaMixin = {
       onFileUploaded(error, file) {
           if (!error){
             this.upMediaBtnDisabled = false;
+          }
+          else {
+            if (error.code == 409){
+              this.showSnack("This file already exists in the system")
+            }
+            else {
+              this.showSnack("Error uploading media. Please check your network connection.")
+            }
+            console.log(error);
+
           }
 
 

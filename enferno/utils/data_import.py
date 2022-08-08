@@ -29,21 +29,19 @@ class DataImport():
         self.summary = ''
         self.log = open(log,'a')
 
-    '''
-    def s3_upload(self, file):
-        s3 = boto3.resource('s3', aws_access_key_id=cfg['AWS_ACCESS_KEY_ID'],
-                            aws_secret_access_key=cfg['AWS_SECRET_ACCESS_KEY'])
+
+    def s3_upload(self, file, target):
+        s3 = boto3.resource('s3', aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+                            aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY)
+        try:
+            response = s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(file, 'rb'))
+            return response
+        except Exception as e:
+            print (e)
 
 
 
-        # final file
-        filename = Media.generate_file_name(file)
-        # filepath = (Media.media_dir/filename).as_posix()
 
-        response = s3.Bucket(cfg['S3_BUCKET']).put_object(Key=filename, Body=f)
-        # print(response.get())
-        etag = response.get()['ETag'].replace('"', '')
-    '''
 
     def process(self, file):
 
@@ -51,6 +49,7 @@ class DataImport():
 
         print(file)
         duration = None
+        print(self.meta.get('mode'))
         if self.meta.get('mode') == 2:
             self.summary += '------------------------------------------------------------------------ \n'
             self.summary += now() + 'file: {}'.format(file.get('file').get('name')) + '\n'
@@ -102,10 +101,18 @@ class DataImport():
                         print ('An exception occurred while transcoding file {}'.format(e))
                         #copy the file as is instead
                         shutil.copy(old_path, filepath)
+                        self.s3_upload(old_path, os.path.basename(filepath))
 
 
             else:
+
                 shutil.copy(old_path, filepath)
+                self.s3_upload(old_path, os.path.basename(filepath))
+
+
+
+
+
             self.summary += now() + ' File saved as {}'.format(filename) + '\n'
 
 
@@ -116,6 +123,9 @@ class DataImport():
             n, ext = os.path.splitext(filename)
             title, ex = os.path.splitext(file.get('name'))
             filepath = (Media.media_dir / filename).as_posix()
+            if not cfg.FILESYSTEM_LOCAL:
+                s3_response = self.s3_upload(filepath, os.path.basename(filepath))
+                #print(s3_response.get('filename'))
             etag = file.get('etag')
             # check here for duplicate to skip unnecessary code execution
             exists = Media.query.filter(Media.etag == etag).first()
@@ -155,6 +165,7 @@ class DataImport():
                         os.remove(filepath)
                         #if op is successful update filepath
                         filepath = new_filepath
+                        self.s3_upload(filepath, os.path.basename(filepath))
 
                     except Exception as e:
                         print ('An exception occurred while transcoding file {}'.format(e))
@@ -167,6 +178,7 @@ class DataImport():
         # mime_type = mime.from_file(filepath)
 
         #print('Hash generated :: {}'.format(etag))
+
         info = exiflib.get_json(filepath)[0]
         #print(info.get('EXIF:CreateDate'))
         # bundle title with json info

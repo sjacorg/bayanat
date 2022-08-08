@@ -1,4 +1,7 @@
 import hashlib
+from functools import wraps
+
+import passlib
 import os
 from pathlib import Path
 import pandas as pd
@@ -14,7 +17,7 @@ from sqlalchemy import desc, or_, text
 from sqlalchemy.orm.attributes import flag_modified
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
                                   IncidentHistory, BulletinHistory, ActorHistory, PotentialViolation, ClaimedViolation,
-                                  Activity, Query, Mapping, Log)
+                                  Activity, Query, Mapping, Log, APIKey)
 from enferno.extensions import bouncer, rds, babel
 from enferno.extensions import cache
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file, \
@@ -31,6 +34,7 @@ admin = Blueprint('admin', __name__,
 
 # default global items per page
 PER_PAGE = 30
+REL_PER_PAGE = 5
 
 
 @babel.localeselector
@@ -802,22 +806,23 @@ def api_bulletins():
                     content_type='application/json'), 200
 
 
-@admin.route('/api/bulletin/', methods=['POST'])
+@admin.post('/api/bulletin/')
 @roles_accepted('Admin', 'DA')
 def api_bulletin_create():
     """Creates a new bulletin."""
+    bulletin = Bulletin()
+    bulletin.from_json(request.json['item'])
 
-    if request.method == 'POST':
-        bulletin = Bulletin()
-        bulletin.from_json(request.json['item'])
-        bulletin.save()
-        # the below will create the first revision by default 
-        bulletin.create_revision()
-        # Record activity
-        Activity.create(current_user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
-        return 'Created Bulletin #{}'.format(bulletin.id)
-    else:
-        return 'Save Failed', 417
+    # assign automatically to the creator user
+    bulletin.assigned_to_id = current_user.id
+    bulletin.save()
+
+    # the below will create the first revision by default
+    bulletin.create_revision()
+    # Record activity
+    Activity.create(current_user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
+    return 'Created Bulletin #{}'.format(bulletin.id)
+
 
 
 @admin.route('/api/bulletin/<int:id>', methods=['PUT'])
@@ -939,6 +944,61 @@ def api_bulletin_delete(id):
 def api_bulletin_get(id):
     """
     Endpoint to get a single bulletin
+    :param id: id of the bulletin
+    :return: bulletin in json format / success or error
+    """
+    bulletin = Bulletin.query.get(id)
+    mode = request.args.get('mode', None)
+    if not bulletin:
+        abort(404)
+    else:
+        # hide review from view-only users
+        if not current_user.roles:
+            bulletin.review = None
+        return json.dumps(bulletin.to_dict(mode)), 200
+
+
+# get bulletin relations
+@admin.get('/api/bulletin/relations/<int:id>')
+def bulletin_relations(id):
+    """
+    Endpoint to return related entities of a bulletin
+    :return:
+    """
+    cls = request.args.get('class', None)
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', REL_PER_PAGE, int)
+    if not cls or cls not in ['bulletin', 'actor', 'incident']:
+        abort(404)
+    bulletin = Bulletin.query.get(id)
+    if not bulletin:
+        abort(404)
+    items = []
+
+    if cls == 'bulletin':
+        items = bulletin.bulletin_relations
+    elif cls == 'actor':
+        items = bulletin.actor_relations
+    elif cls == 'incident':
+        items = bulletin.incident_relations
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    data = items[start:end]
+
+    load_more = False if end >= len(items) else True
+    if data:
+        if cls == 'bulletin':
+            data = [item.to_dict(exclude=bulletin) for item in data]
+        else:
+            data = [item.to_dict() for item in data]
+
+    return json.dumps({'items': data, 'more': load_more}), 200
+
+
+def api_bulletin_get(id):
+    """
+    Endpoint to get related entities of a bulletin
     :param id: id of the bulletin
     :return: bulletin in json format / success or error
     """
@@ -1087,7 +1147,7 @@ def api_medias_upload():
     """
 
     if 'media' in request.files:
-        if current_app.config['FILESYSTEM_LOCAL']:
+        if current_app.config['FILESYSTEM_LOCAL'] or ('etl' in request.referrer and not current_app.config['FILESYSTEM_LOCAL']):
             return api_local_medias_upload(request)
         else:
 
@@ -1103,6 +1163,10 @@ def api_medias_upload():
             response = s3.Bucket(current_app.config['S3_BUCKET']).put_object(Key=filename, Body=f)
             # print(response.get())
             etag = response.get()['ETag'].replace('"', '')
+
+            # check if file already exists
+            if Media.query.filter(Media.etag == etag).first():
+                return 'Error: File already exists', 409
 
             return json.dumps({'filename': filename, 'etag': etag}), 200
 
@@ -1141,7 +1205,9 @@ def serve_media(filename):
     else:
         s3 = boto3.client('s3',
                           aws_access_key_id=current_app.config['AWS_ACCESS_KEY_ID'],
-                          aws_secret_access_key=current_app.config['AWS_SECRET_ACCESS_KEY'])
+                          aws_secret_access_key=current_app.config['AWS_SECRET_ACCESS_KEY'],
+                          region_name=current_app.config['AWS_REGION']
+                          )
         params = {'Bucket': current_app.config['S3_BUCKET'], 'Key': filename}
         if filename.lower().endswith('pdf'):
             params['ResponseContentType'] = 'application/pdf'
@@ -1160,6 +1226,9 @@ def api_local_medias_upload(request):
         # get md5 hash
         f = open(filepath, 'rb').read()
         etag = hashlib.md5(f).hexdigest()
+        # check if file already exists
+        if Media.query.filter(Media.etag == etag).first():
+            return 'Error: File already exists', 409
 
         response = {'etag': etag, 'filename': filename}
 
@@ -1288,28 +1357,27 @@ def api_actors():
 
 
 # create actor endpoint
-@admin.route('/api/actor/', methods=['POST'])
+@admin.post('/api/actor/')
 @roles_accepted('Admin', 'DA')
 def api_actor_create():
     """
     Endpoint to create an Actor item
     :return: success/error based on the operation's result
     """
-    if request.method == 'POST':
-        actor = Actor()
-        actor.from_json(request.json['item'])
-        result = actor.save()
-        if result:
-
-            # the below will create the first revision by default
-            actor.create_revision()
-            # Record activity
-            Activity.create(current_user, Activity.ACTION_CREATE, actor.to_mini(), 'actor')
-            return 'Created Actor #{}'.format(actor.id)
-        else:
-            return 'Error creating actor', 417
+    actor = Actor()
+    actor.from_json(request.json['item'])
+    # assign actor to creator by default
+    actor.assigned_to_id = current_user.id
+    result = actor.save()
+    if result:
+        # the below will create the first revision by default
+        actor.create_revision()
+        # Record activity
+        Activity.create(current_user, Activity.ACTION_CREATE, actor.to_mini(), 'actor')
+        return 'Created Actor #{}'.format(actor.id)
     else:
-        return 'Save Failed', 417
+        return 'Error creating actor', 417
+
 
 
 # update actor endpoint 
@@ -1419,19 +1487,62 @@ def api_actor_delete(id):
 
 # get one actor
 
-@admin.route('/api/actor/<int:id>', methods=['GET'])
+@admin.get('/api/actor/<int:id>')
 def api_actor_get(id):
     """
     Endpoint to get a single actor
     :param id: id of the actor
     :return: actor data in json format + success or error in case of failure
     """
-    if request.method == 'GET':
-        actor = Actor.query.get(id)
-        if not actor:
-            abort(404)
+
+    actor = Actor.query.get(id)
+    if not actor:
+        abort(404)
+    else:
+        mode = request.args.get('mode', None)
+        return json.dumps(actor.to_dict(mode=mode)), 200
+
+
+# get actor relations
+@admin.get('/api/actor/relations/<int:id>')
+def actor_relations(id):
+    """
+    Endpoint to return related entities of an Actor
+    :return:
+    """
+    cls = request.args.get('class', None)
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', REL_PER_PAGE, int)
+    if not cls or cls not in ['bulletin', 'actor', 'incident']:
+        abort(404)
+    actor = Actor.query.get(id)
+    if not actor:
+        abort(404)
+    items = []
+
+    if cls == 'bulletin':
+        items = actor.bulletin_relations
+    elif cls == 'actor':
+        items = actor.actor_relations
+    elif cls == 'incident':
+        items = actor.incident_relations
+
+    # pagination
+    start = (page - 1) * per_page
+    end = start + per_page
+    data = items[start:end]
+
+    load_more = False if end >= len(items) else True
+
+    if data:
+        if cls == 'actor':
+            data = [item.to_dict(exclude=actor) for item in data]
         else:
-            return actor.to_json(), 200
+            data = [item.to_dict() for item in data]
+
+    return json.dumps({'items': data, 'more': load_more}), 200
+
+
 
 
 @admin.route('/api/actormp/<int:id>', methods=['GET'])
@@ -1459,7 +1570,7 @@ def api_bulletinhistory(bulletinid):
     :param bulletinid: id of the bulletin item
     :return: json feed of item's history , or error
     """
-    result = BulletinHistory.query.filter_by(bulletin_id=bulletinid).order_by(desc(BulletinHistory.id)).all()
+    result = BulletinHistory.query.filter_by(bulletin_id=bulletinid).order_by(desc(BulletinHistory.created_at)).all()
     # For standardization 
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
@@ -1476,7 +1587,7 @@ def api_actorhistory(actorid):
         :param actorid: id of the actor item
         :return: json feed of item's history , or error
         """
-    result = ActorHistory.query.filter_by(actor_id=actorid).order_by(desc(ActorHistory.id)).all()
+    result = ActorHistory.query.filter_by(actor_id=actorid).order_by(desc(ActorHistory.created_at)).all()
     # For standardization 
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
@@ -1493,7 +1604,7 @@ def api_incidenthistory(incidentid):
         :param incidentid: id of the incident item
         :return: json feed of item's history , or error
         """
-    result = IncidentHistory.query.filter_by(incident_id=incidentid).order_by(desc(IncidentHistory.id)).all()
+    result = IncidentHistory.query.filter_by(incident_id=incidentid).order_by(desc(IncidentHistory.created_at)).all()
     # For standardization 
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
@@ -1768,21 +1879,22 @@ def api_incidents():
                     content_type='application/json'), 200
 
 
-@admin.route('/api/incident/', methods=['POST'])
+@admin.post('/api/incident/')
 @roles_accepted('Admin', 'DA')
 def api_incident_create():
     """API endpoint to create an incident."""
-    if request.method == 'POST':
-        incident = Incident()
-        incident.from_json(request.json['item'])
-        incident.save()
-        # the below will create the first revision by default 
-        incident.create_revision()
-        # Record activity
-        Activity.create(current_user, Activity.ACTION_CREATE, incident.to_mini(), 'incident')
-        return 'Created Incident #{}'.format(incident.id)
-    else:
-        return 'Save Failed', 417
+
+    incident = Incident()
+    incident.from_json(request.json['item'])
+    # assign to creator by default
+    incident.assigned_to_id = current_user.id
+    incident.save()
+    # the below will create the first revision by default
+    incident.create_revision()
+    # Record activity
+    Activity.create(current_user, Activity.ACTION_CREATE, incident.to_mini(), 'incident')
+    return 'Created Incident #{}'.format(incident.id)
+
 
 
 # update incident endpoint 
@@ -1879,20 +1991,59 @@ def api_incident_delete(id):
 
 # get one incident
 
-@admin.route('/api/incident/<int:id>', methods=['GET'])
+@admin.get('/api/incident/<int:id>')
 def api_incident_get(id):
     """
     Endopint to get a single incident by id
     :param id: id of the incident item
     :return: successful incident item in json format or error
     """
-    if request.method == 'GET':
-        incident = Incident.query.get(id)
-        if not incident:
-            abort(404)
-        else:
-            return incident.to_json(), 200
+    incident = Incident.query.get(id)
+    if not incident:
+        abort(404)
+    else:
+        mode = request.args.get('mode',None)
+        return json.dumps(incident.to_dict(mode)), 200
 
+
+# get incident relations
+@admin.get('/api/incident/relations/<int:id>')
+def incident_relations(id):
+    """
+    Endpoint to return related entities of an Incident
+    :return:
+    """
+    cls = request.args.get('class', None)
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', REL_PER_PAGE, int)
+    if not cls or cls not in ['bulletin', 'actor', 'incident']:
+        abort(404)
+    incident = Incident.query.get(id)
+    if not incident:
+        abort(404)
+    items = []
+
+    if cls == 'bulletin':
+        items = incident.bulletin_relations
+    elif cls == 'actor':
+        items = incident.actor_relations
+    elif cls == 'incident':
+        items = incident.incident_relations
+
+    # pagination
+    start = (page - 1) * per_page
+    end = start + per_page
+    data = items[start:end]
+
+    load_more = False if end >= len(items) else True
+
+    if data:
+        if cls == 'incident':
+            data = [item.to_dict(exclude=incident) for item in data]
+        else:
+            data = [item.to_dict() for item in data]
+
+    return json.dumps({'items': data, 'more': load_more}), 200
 
 @admin.route('/api/incident/import/', methods=['POST'])
 @roles_required('Admin')
@@ -1975,22 +2126,21 @@ def bulk_status():
 
 """ 
 # Unused 
+@admin.route('/api/key', methods=['POST'])
 @roles_required('Admin')
-@admin.route('/api/key/', methods=['POST'])
 def gen_api_key():
-    s = Settings.query.first()
-    if not s:
-        s = Settings().save()
-    key = passlib.totp.generate_secret()
-    s.api_key = key
-    s.save()
-    return key, 200
+    global_key = APIKey.query.first()
+    if not global_key:
+        global_key = APIKey()
+    global_key.key = passlib.totp.generate_secret()
+    global_key.save()
+    return global_key.key, 200
 
 
 @roles_required(['Admin'])
-@admin.route('/api/key/')
+@admin.route('/api/key')
 def get_api_key():
-    return Settings.get_api_key(), 200
+    return APIKey.get_global_key(), 200
 
 """
 
@@ -2078,9 +2228,6 @@ def etl_process():
     process a single file
     :return: response contains the processing result
     """
-
-    if not current_app.config['FILESYSTEM_LOCAL']:
-        return 'Please use a local file system for data import', 417
 
     files = request.json.pop('files')
     meta = request.json
@@ -2306,3 +2453,4 @@ def api_logs():
     logs = [log.to_dict() for log in logs]
 
     return Response(json.dumps(logs), content_type='application/json'), 200
+
