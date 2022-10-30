@@ -20,7 +20,14 @@ Vue.component("actor-card", {
     },
 
 
+
+
+
+
     methods: {
+          translate_status(status){
+          return translate_status(status);
+        },
           loadBulletinRelations(page=1) {
 
              // b2a
@@ -188,7 +195,7 @@ Vue.component("actor-card", {
       
       <v-chip color="blue-grey lighten-5" small class="pa-2 mx-2 my-2" v-if="actor.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{actor.assigned_to['name']}}</v-chip>
-        <v-chip color="blue-grey lighten-5" small class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{actor.status}}</v-chip>
+        <v-chip color="blue-grey lighten-5" small class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(actor.status)}}</v-chip>
       </v-card>
 
       <v-card outlined class="ma-2" color="grey lighten-5">
@@ -447,7 +454,7 @@ Vue.component("actor-card", {
           <template v-for="(revision,index) in revisions">
             <v-card color="grey lighten-4" dense flat class="my-1 pa-2 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
-                                                                              color="gv lighten-3">{{ revision.data.status }}</v-chip> - {{ revision.created_at }}
+                                                                              color="gv lighten-3">{{ translate_status(revision.data.status) }}</v-chip> - {{ revision.created_at }}
                 - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 

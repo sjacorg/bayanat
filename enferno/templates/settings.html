@@ -54,6 +54,13 @@
                             </v-card-text>
 
 
+                             <v-snackbar v-model="snackbar">
+                                ${snackMessage}
+                                <v-btn color="secondary" text @click="snackbar = false">
+                                    Close
+                                </v-btn>
+                            </v-snackbar>
+
                         </v-card>
 
 
@@ -84,7 +91,9 @@
                 search: '',
                 dialog: dialog,
                 drawer: drawer,
-                sideNav: sideNav
+                sideNav: sideNav,
+                snackbar: false,
+                snackMessage: ''
 
             }),
 
@@ -114,11 +123,20 @@
 
 
                 },
+                  showSnack(message) {
+                    this.snackMessage = message;
+                    this.snackbar = true;
+                },
 
                 saveSettings() {
                     axios.put('/settings/save', {settings: this.settings}).then(res => {
                         this.showSnack(res.data);
                         this.$vuetify.theme.dark = this.settings.dark;
+                        this.showSnack('Settings have been saved !')
+                        setTimeout(()=>{
+                            window.location.reload()
+                        }, 1000)
+
                     }).catch(err => {
                         this.showSnack(err.body);
                     })

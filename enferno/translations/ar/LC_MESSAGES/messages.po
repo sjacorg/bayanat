@@ -5,19 +5,20 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Bayanat v1.13\n"
-"Report-Msgid-Bugs-To: tech@syriaaccountability.org \n"
-"POT-Creation-Date: 2022-08-03 12:45+0000\n"
-"PO-Revision-Date: 2022-03-08 19:33+0000\n"
+"Project-Id-Version: Bayanat v1.15\n"
+"Report-Msgid-Bugs-To: tech@syriaaccountability.org\n"
+"POT-Creation-Date: 2022-10-29 23:46+0000\n"
+"PO-Revision-Date: 2022-10-30 00:53+0100\n"
 "Last-Translator: SJAC <tech@syriaaccountability.org >\n"
-"Language: ar\n"
 "Language-Team: SJAC <tech@syriaaccountability.org >\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Generated-By: Babel 2.10.3\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: enferno/admin/templates/nav-bar.html:39
 msgid "Account Settings"
@@ -34,12 +35,13 @@ msgstr "تسجيل خروج"
 #: enferno/admin/templates/admin/etl-dashboard.html:355
 #: enferno/admin/templates/admin/etl-status.html:85
 #: enferno/admin/templates/admin/eventtypes.html:211
-#: enferno/admin/templates/admin/incidents.html:396
+#: enferno/admin/templates/admin/incidents.html:406
 #: enferno/admin/templates/admin/labels.html:286
-#: enferno/admin/templates/admin/locations.html:301
+#: enferno/admin/templates/admin/locations.html:376
 #: enferno/admin/templates/admin/roles.html:180
 #: enferno/admin/templates/admin/sources.html:233
-#: enferno/admin/templates/admin/users.html:206
+#: enferno/admin/templates/admin/system-administration.html:128
+#: enferno/admin/templates/admin/users.html:211
 #: enferno/deduplication/templates/deduplication.html:148
 msgid "Rows per page"
 msgstr "نتائج في الصفحة"
@@ -110,11 +112,13 @@ msgstr "المواد المختارة"
 #: enferno/admin/templates/admin/bulletins.html:456
 #: enferno/admin/templates/admin/eventtypes.html:215
 #: enferno/admin/templates/admin/i18n.jinja2:81
-#: enferno/admin/templates/admin/incidents.html:400
+#: enferno/admin/templates/admin/incidents.html:410
 #: enferno/admin/templates/admin/labels.html:290
-#: enferno/admin/templates/admin/locations.html:305
+#: enferno/admin/templates/admin/locations.html:380
 #: enferno/admin/templates/admin/roles.html:184
-#: enferno/admin/templates/admin/users.html:210
+#: enferno/admin/templates/admin/system-administration.html:133
+#: enferno/admin/templates/admin/system-administration.html:143
+#: enferno/admin/templates/admin/users.html:215
 #: enferno/deduplication/templates/deduplication.html:126
 msgid "ID"
 msgstr "الرقم التعريفي"
@@ -128,13 +132,13 @@ msgstr "الرقم التعريفي"
 #: enferno/admin/templates/admin/partials/actor_dialog.html:53
 #: enferno/admin/templates/admin/partials/actor_dialog.html:938
 #: enferno/admin/templates/admin/roles.html:185
-#: enferno/admin/templates/admin/users.html:213
+#: enferno/admin/templates/admin/users.html:218
 msgid "Name"
 msgstr "الاسم"
 
 #: enferno/admin/templates/admin/actors.html:435
 #: enferno/admin/templates/admin/bulletins.html:459
-#: enferno/admin/templates/admin/incidents.html:403
+#: enferno/admin/templates/admin/incidents.html:413
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:28
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:37
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:30
@@ -143,20 +147,20 @@ msgstr "موكل إلى"
 
 #: enferno/admin/templates/admin/actors.html:436
 #: enferno/admin/templates/admin/bulletins.html:460
-#: enferno/admin/templates/admin/incidents.html:404
+#: enferno/admin/templates/admin/incidents.html:414
 msgid "1st Reviewer"
 msgstr "المدقق الأول"
 
 #: enferno/admin/templates/admin/actors.html:438
 #: enferno/admin/templates/admin/bulletins.html:462
 #: enferno/admin/templates/admin/csv-dashboard.html:24
-#: enferno/admin/templates/admin/incidents.html:406
+#: enferno/admin/templates/admin/incidents.html:416
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1331
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:61
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:61
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:63
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:621
-#: enferno/admin/templates/admin/partials/incident_dialog.html:503
+#: enferno/admin/templates/admin/partials/incident_dialog.html:506
 #: enferno/deduplication/templates/deduplication.html:132
 msgid "Status"
 msgstr "الحالة"
@@ -164,12 +168,14 @@ msgstr "الحالة"
 #: enferno/admin/templates/admin/actors.html:439
 #: enferno/admin/templates/admin/bulletins.html:465
 #: enferno/admin/templates/admin/eventtypes.html:222
-#: enferno/admin/templates/admin/incidents.html:410
+#: enferno/admin/templates/admin/incidents.html:420
 #: enferno/admin/templates/admin/labels.html:300
-#: enferno/admin/templates/admin/locations.html:312
+#: enferno/admin/templates/admin/locations.html:388
 #: enferno/admin/templates/admin/roles.html:187
 #: enferno/admin/templates/admin/sources.html:245
-#: enferno/admin/templates/admin/users.html:218
+#: enferno/admin/templates/admin/system-administration.html:136
+#: enferno/admin/templates/admin/system-administration.html:145
+#: enferno/admin/templates/admin/users.html:223
 msgid "Actions"
 msgstr "العمليات"
 
@@ -193,16 +199,18 @@ msgstr "مرجع"
 #: enferno/admin/templates/admin/eventtypes.html:58
 #: enferno/admin/templates/admin/eventtypes.html:216
 #: enferno/admin/templates/admin/i18n.jinja2:86
-#: enferno/admin/templates/admin/incidents.html:401
+#: enferno/admin/templates/admin/incidents.html:411
 #: enferno/admin/templates/admin/labels.html:70
 #: enferno/admin/templates/admin/labels.html:291
-#: enferno/admin/templates/admin/locations.html:70
-#: enferno/admin/templates/admin/locations.html:306
+#: enferno/admin/templates/admin/locations.html:74
+#: enferno/admin/templates/admin/locations.html:381
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:81
 #: enferno/admin/templates/admin/partials/event_dialog.html:70
 #: enferno/admin/templates/admin/partials/incident_dialog.html:48
 #: enferno/admin/templates/admin/sources.html:66
 #: enferno/admin/templates/admin/sources.html:238
+#: enferno/admin/templates/admin/system-administration.html:135
+#: enferno/admin/templates/admin/system-administration.html:144
 msgid "Title"
 msgstr "العنوان"
 
@@ -361,7 +369,7 @@ msgstr "التوصيف"
 #: enferno/admin/templates/admin/partials/actor_dialog.html:253
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:126
 #: enferno/admin/templates/admin/sources.html:29
-#: enferno/templates/nav-drawer.html:71
+#: enferno/templates/nav-drawer.html:72
 msgid "Sources"
 msgstr "المصادر"
 
@@ -372,7 +380,7 @@ msgstr "المصادر"
 #: enferno/admin/templates/admin/partials/actor_dialog.html:267
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:152
 #: enferno/admin/templates/admin/partials/incident_dialog.html:130
-#: enferno/templates/nav-drawer.html:85
+#: enferno/templates/nav-drawer.html:86
 msgid "Labels"
 msgstr "الوسوم"
 
@@ -465,10 +473,10 @@ msgstr "نوع الحادثة"
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:506
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:605
 #: enferno/admin/templates/admin/partials/event_dialog.html:97
-#: enferno/admin/templates/admin/partials/incident_dialog.html:236
-#: enferno/admin/templates/admin/partials/incident_dialog.html:339
-#: enferno/admin/templates/admin/partials/incident_dialog.html:442
-#: enferno/admin/templates/admin/partials/incident_dialog.html:488
+#: enferno/admin/templates/admin/partials/incident_dialog.html:238
+#: enferno/admin/templates/admin/partials/incident_dialog.html:342
+#: enferno/admin/templates/admin/partials/incident_dialog.html:445
+#: enferno/admin/templates/admin/partials/incident_dialog.html:491
 #: enferno/admin/templates/admin/sources.html:96
 #: enferno/admin/templates/admin/sources.html:241
 msgid "Comments"
@@ -614,7 +622,7 @@ msgstr "ابدأ معالجة الجداول"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:750
 msgid "Batch ID:"
-msgstr "معرِّف الدفعة"
+msgstr "معرِّف الدفعة:"
 
 #: enferno/admin/templates/admin/etl-dashboard.html:15
 msgid "Upload or Select"
@@ -673,7 +681,7 @@ msgstr "تحسين ملفات الفيديو"
 #: enferno/admin/templates/admin/etl-dashboard.html:256
 #: enferno/admin/templates/admin/eventtypes.html:149
 #: enferno/admin/templates/admin/labels.html:167
-#: enferno/admin/templates/admin/locations.html:182
+#: enferno/admin/templates/admin/locations.html:230
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:70
 #: enferno/admin/templates/admin/roles.html:117
 msgid "Cancel"
@@ -685,10 +693,10 @@ msgstr "فحص"
 
 #: enferno/admin/templates/admin/etl-dashboard.html:524
 msgid "Files added to queue and will be imported in turn."
-msgstr "تم إضافة الملفات إلى قائمة الإنتظار وسيتم إستيرادها بحسب الترتيب"
+msgstr "تم إضافة الملفات إلى قائمة الإنتظار وسيتم إستيرادها بحسب الترتيب."
 
 #: enferno/admin/templates/admin/eventtypes.html:30
-#: enferno/templates/nav-drawer.html:97
+#: enferno/templates/nav-drawer.html:98
 msgid "Event Types"
 msgstr "أنواع الحوادث"
 
@@ -713,8 +721,8 @@ msgstr "المواد"
 #: enferno/admin/templates/admin/eventtypes.html:129
 #: enferno/admin/templates/admin/labels.html:190
 #: enferno/admin/templates/admin/labels.html:197
-#: enferno/admin/templates/admin/locations.html:205
-#: enferno/admin/templates/admin/locations.html:212
+#: enferno/admin/templates/admin/locations.html:255
+#: enferno/admin/templates/admin/locations.html:262
 #: enferno/admin/templates/admin/roles.html:91
 #: enferno/admin/templates/admin/sources.html:135
 #: enferno/admin/templates/admin/sources.html:142
@@ -723,33 +731,32 @@ msgstr "استيراد ملف CSV"
 
 #: enferno/admin/templates/admin/eventtypes.html:136
 #: enferno/admin/templates/admin/labels.html:204
-#: enferno/admin/templates/admin/locations.html:221
+#: enferno/admin/templates/admin/locations.html:271
 #: enferno/admin/templates/admin/roles.html:104
 #: enferno/admin/templates/admin/sources.html:151
 msgid "Select CSV File"
 msgstr "اختر ملف CSV"
 
 #: enferno/admin/templates/admin/eventtypes.html:217
-#: enferno/admin/templates/admin/locations.html:308
 msgid "Title (ar)"
 msgstr "العنوان (عربي)"
 
 #: enferno/admin/templates/admin/eventtypes.html:239
 #: enferno/admin/templates/admin/labels.html:55
 #: enferno/admin/templates/admin/labels.html:320
-#: enferno/admin/templates/admin/locations.html:54
-#: enferno/admin/templates/admin/locations.html:338
+#: enferno/admin/templates/admin/locations.html:51
+#: enferno/admin/templates/admin/locations.html:425
 #: enferno/admin/templates/admin/sources.html:51
 #: enferno/admin/templates/admin/sources.html:267
-#: enferno/admin/templates/admin/users.html:236
+#: enferno/admin/templates/admin/users.html:241
 msgid "New Item"
 msgstr "عنصر جديد"
 
 #: enferno/admin/templates/admin/eventtypes.html:239
 #: enferno/admin/templates/admin/labels.html:320
-#: enferno/admin/templates/admin/locations.html:338
+#: enferno/admin/templates/admin/locations.html:425
 #: enferno/admin/templates/admin/sources.html:267
-#: enferno/admin/templates/admin/users.html:236
+#: enferno/admin/templates/admin/users.html:241
 msgid "Edit Item"
 msgstr "تعديل العنصر"
 
@@ -996,11 +1003,11 @@ msgstr "العلاقة"
 
 #: enferno/admin/templates/admin/i18n.jinja2:74
 #: enferno/admin/templates/admin/labels.html:173
-#: enferno/admin/templates/admin/locations.html:188
+#: enferno/admin/templates/admin/locations.html:237
 #: enferno/admin/templates/admin/partials/bulletin_advsearch.html:71
 #: enferno/admin/templates/admin/partials/event_dialog.html:168
 #: enferno/admin/templates/admin/roles.html:123
-#: enferno/admin/templates/admin/users.html:158
+#: enferno/admin/templates/admin/users.html:163
 msgid "Save"
 msgstr "حفظ"
 
@@ -1009,12 +1016,12 @@ msgid "Type"
 msgstr "النوع"
 
 #: enferno/admin/templates/admin/i18n.jinja2:76
-#: enferno/admin/templates/admin/locations.html:94
+#: enferno/admin/templates/admin/locations.html:100
 msgid "Latitude"
 msgstr "خط العرض"
 
 #: enferno/admin/templates/admin/i18n.jinja2:77
-#: enferno/admin/templates/admin/locations.html:101
+#: enferno/admin/templates/admin/locations.html:107
 msgid "Longitude"
 msgstr "خط الطول"
 
@@ -1029,7 +1036,7 @@ msgstr "تمثيل مرئي"
 
 #: enferno/admin/templates/admin/i18n.jinja2:84
 msgid "Assigned User:"
-msgstr "المسؤول"
+msgstr "المسؤول:"
 
 #: enferno/admin/templates/admin/i18n.jinja2:87
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:49
@@ -1044,7 +1051,7 @@ msgstr "وسائط"
 #: enferno/admin/templates/admin/i18n.jinja2:94
 #: enferno/admin/templates/admin/partials/actor_dialog.html:682
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:231
-#: enferno/admin/templates/admin/partials/incident_dialog.html:273
+#: enferno/admin/templates/admin/partials/incident_dialog.html:275
 msgid "Related Bulletins"
 msgstr "المواد المرتبطة"
 
@@ -1058,7 +1065,7 @@ msgstr "الكيانات المرتبطة"
 #: enferno/admin/templates/admin/i18n.jinja2:96
 #: enferno/admin/templates/admin/partials/actor_dialog.html:786
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:442
-#: enferno/admin/templates/admin/partials/incident_dialog.html:377
+#: enferno/admin/templates/admin/partials/incident_dialog.html:379
 msgid "Related Incidents"
 msgstr "الوقائع المرتبطة"
 
@@ -1160,7 +1167,7 @@ msgstr "رقم الهاتف"
 #: enferno/admin/templates/admin/i18n.jinja2:148
 #: enferno/admin/templates/admin/partials/actor_dialog.html:948
 #: enferno/admin/templates/admin/users.html:90
-#: enferno/admin/templates/admin/users.html:212
+#: enferno/admin/templates/admin/users.html:217
 msgid "Email"
 msgstr "البريد الالكتروني"
 
@@ -1278,7 +1285,7 @@ msgstr "كسور / إصابات"
 
 #: enferno/admin/templates/admin/i18n.jinja2:173
 msgid "Implants "
-msgstr "عمليات زرع"
+msgstr "عمليات زرع "
 
 #: enferno/admin/templates/admin/i18n.jinja2:174
 msgid "Congenital malformations"
@@ -1307,7 +1314,7 @@ msgstr "مدخن"
 
 #: enferno/admin/templates/admin/i18n.jinja2:180
 msgid "Is there a Dental Record"
-msgstr "هل هناك سجل أسنان؟"
+msgstr "هل هناك سجل أسنان"
 
 #: enferno/admin/templates/admin/i18n.jinja2:181
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1193
@@ -2354,6 +2361,7 @@ msgstr "مشارك"
 #: enferno/admin/templates/admin/i18n.jinja2:499
 #: enferno/admin/templates/admin/labels.html:101
 #: enferno/admin/templates/admin/labels.html:293
+#: enferno/admin/templates/admin/locations.html:383
 #: enferno/admin/templates/admin/sources.html:78
 #: enferno/admin/templates/admin/sources.html:242
 msgid "Parent"
@@ -2610,11 +2618,11 @@ msgid "All Incidents"
 msgstr "جميع الوقائع"
 
 #: enferno/admin/templates/admin/incidents.html:75
-#: enferno/admin/templates/admin/incidents.html:497
+#: enferno/admin/templates/admin/incidents.html:507
 msgid "New Incident"
 msgstr "واقعة جديدة"
 
-#: enferno/admin/templates/admin/incidents.html:497
+#: enferno/admin/templates/admin/incidents.html:507
 msgid "Edit Incident"
 msgstr "تحرير الواقعة"
 
@@ -2648,38 +2656,40 @@ msgstr "واقعة"
 msgid "Offline"
 msgstr "غير متصل (بالشبكة)"
 
-#: enferno/admin/templates/admin/locations.html:76
+#: enferno/admin/templates/admin/locations.html:80
 msgid "Title (Ar)"
 msgstr "العنوان (عربي)"
 
-#: enferno/admin/templates/admin/locations.html:84
-#: enferno/admin/templates/admin/locations.html:309
+#: enferno/admin/templates/admin/locations.html:88
+#: enferno/admin/templates/admin/locations.html:382
 msgid "Full Location"
 msgstr "الموقع الكامل"
 
-#: enferno/admin/templates/admin/locations.html:107
-msgid "Location type"
-msgstr "نوع المكان"
-
-#: enferno/admin/templates/admin/locations.html:127
-msgid "Parent (G)"
-msgstr "محافظة"
-
-#: enferno/admin/templates/admin/locations.html:141
-msgid "Parent (D)"
-msgstr "منطقة"
-
-#: enferno/admin/templates/admin/locations.html:155
-msgid "Parent (S)"
-msgstr "ناحية"
-
-#: enferno/admin/templates/admin/locations.html:167
-msgid "Parent (C)"
-msgstr "مركز"
-
-#: enferno/admin/templates/admin/locations.html:307
+#: enferno/admin/templates/admin/locations.html:122
+#: enferno/admin/templates/admin/locations.html:384
 msgid "Location Type"
 msgstr "نوع المكان"
+
+#: enferno/admin/templates/admin/locations.html:151
+#: enferno/admin/templates/admin/locations.html:385
+msgid "Admin Level"
+msgstr ""
+
+#: enferno/admin/templates/admin/locations.html:169
+msgid "Parent Location"
+msgstr "الموقع الأب"
+
+#: enferno/admin/templates/admin/locations.html:184
+msgid "Postal Code"
+msgstr "الرمز البريدي"
+
+#: enferno/admin/templates/admin/locations.html:194
+msgid "Country"
+msgstr "الدولة"
+
+#: enferno/admin/templates/admin/locations.html:203
+msgid "Tags"
+msgstr "الوسوم"
 
 #: enferno/admin/templates/admin/roles.html:30
 msgid "Role Groups"
@@ -2703,6 +2713,10 @@ msgstr "تعديل المجموعة"
 msgid "ETL ID"
 msgstr "عنوان الETL"
 
+#: enferno/admin/templates/admin/system-administration.html:134
+msgid "Code"
+msgstr "رمز"
+
 #: enferno/admin/templates/admin/users.html:33
 msgid "System Users"
 msgstr "مستخدمي النظام"
@@ -2716,7 +2730,7 @@ msgid "Password"
 msgstr "كلمة المرور"
 
 #: enferno/admin/templates/admin/users.html:123
-#: enferno/admin/templates/admin/users.html:215
+#: enferno/admin/templates/admin/users.html:220
 msgid "Roles"
 msgstr "الأدوار"
 
@@ -2740,16 +2754,20 @@ msgstr "إمكانبة عرض تاريخ (نشاط) كامل"
 msgid "Can self assign"
 msgstr "الاسناد للذات"
 
+#: enferno/admin/templates/admin/users.html:153
+msgid "Can edit Locations"
+msgstr "تعديل المواقع"
+
 #: enferno/admin/templates/admin/partials/event_dialog.html:167
-#: enferno/admin/templates/admin/users.html:157
+#: enferno/admin/templates/admin/users.html:162
 msgid "Close"
 msgstr "اغلاق"
 
-#: enferno/admin/templates/admin/users.html:211
+#: enferno/admin/templates/admin/users.html:216
 msgid "Username"
 msgstr "إمكانية عرض أسماء المستخدمين"
 
-#: enferno/admin/templates/admin/users.html:214
+#: enferno/admin/templates/admin/users.html:219
 msgid "Google ID"
 msgstr "المعرِّف الخاص بـGoogle"
 
@@ -2759,7 +2777,7 @@ msgstr "حفظ الكيان"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:577
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:342
-#: enferno/admin/templates/admin/partials/incident_dialog.html:179
+#: enferno/admin/templates/admin/partials/incident_dialog.html:181
 msgid "Search & Relate Actors"
 msgstr "البحث عن الكيانات المرتبطة"
 
@@ -2769,9 +2787,9 @@ msgstr "البحث عن الكيانات المرتبطة"
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:263
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:367
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:473
-#: enferno/admin/templates/admin/partials/incident_dialog.html:204
-#: enferno/admin/templates/admin/partials/incident_dialog.html:305
-#: enferno/admin/templates/admin/partials/incident_dialog.html:408
+#: enferno/admin/templates/admin/partials/incident_dialog.html:206
+#: enferno/admin/templates/admin/partials/incident_dialog.html:308
+#: enferno/admin/templates/admin/partials/incident_dialog.html:411
 msgid "Relationship Information"
 msgstr "معلومات الارتباط"
 
@@ -2793,13 +2811,13 @@ msgstr "نوع الارتباط"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:688
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:237
-#: enferno/admin/templates/admin/partials/incident_dialog.html:279
+#: enferno/admin/templates/admin/partials/incident_dialog.html:282
 msgid "Search & Relate Bulletins"
 msgstr "البحث عن المواد المرتبطة"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:792
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:448
-#: enferno/admin/templates/admin/partials/incident_dialog.html:383
+#: enferno/admin/templates/admin/partials/incident_dialog.html:386
 msgid "Search & Relate Incidents"
 msgstr "البحث عن الوقائع المرتبطة"
 
@@ -2841,24 +2859,23 @@ msgstr "اسم ومعلومات الاتصال الخاصة بالطبيب"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1135
 msgid ""
-"Fractures / Injuries (indicate place, side, circumstances, age at the "
-"time of injury, treatment)"
+"Fractures / Injuries (indicate place, side, circumstances, age at the time of "
+"injury, treatment)"
 msgstr ""
-"كسور / إصابات (حدد مكان الإصابة، الطرف، الظروف والعمر عند الإصابة مع "
-"معلومات العلاج)"
+"كسور / إصابات (حدد مكان الإصابة، الطرف، الظروف والعمر عند الإصابة مع معلومات "
+"العلاج)"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1143
 msgid ""
-"Implants (pacemakers, orthopedic prostheses, screws or metal plates, "
-"etc...) with date or age"
+"Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) "
+"with date or age"
 msgstr ""
-"عمليات زرع (منظمات ضربات القلب، أطراف صناعية، براغي أو ألواح معدنية، "
-"إلخ...)"
+"عمليات زرع (منظمات ضربات القلب، أطراف صناعية، براغي أو ألواح معدنية، إلخ...)"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1148
 msgid ""
-"Congenital malformations (indicate type and whether there is more than "
-"one relative with the same pathology)"
+"Congenital malformations (indicate type and whether there is more than one "
+"relative with the same pathology)"
 msgstr "التشوهات الخلقية (حدد النوع واذا وُجد قريب آخر يعاني من ذات التشوه)"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1155
@@ -3010,33 +3027,37 @@ msgstr "آخر دخول"
 
 #: enferno/templates/footer.html:6
 msgid "All rights reserved."
-msgstr "جميع الحقوق محفوظة"
+msgstr "جميع الحقوق محفوظة/"
 
-#: enferno/templates/nav-drawer.html:114
+#: enferno/templates/nav-drawer.html:115
 msgid "Activity"
 msgstr "سجل النشاطات"
 
-#: enferno/templates/nav-drawer.html:128
+#: enferno/templates/nav-drawer.html:129
 msgid "Users Management"
 msgstr "إدارة المستخدمين"
 
-#: enferno/templates/nav-drawer.html:141
+#: enferno/templates/nav-drawer.html:142
 msgid "Groups & Permissions"
 msgstr "المجموعات والصلاحيات"
 
-#: enferno/templates/nav-drawer.html:153
+#: enferno/templates/nav-drawer.html:154
 msgid "Media Import"
 msgstr "استيراد الوسائط"
 
-#: enferno/templates/nav-drawer.html:166
+#: enferno/templates/nav-drawer.html:167
 msgid "Sheets Import"
 msgstr "استيراد جداول البيانات"
 
-#: enferno/templates/nav-drawer.html:182
+#: enferno/templates/nav-drawer.html:183
 msgid "Deduplication Dashbaord"
 msgstr "لوحة تحكم أداة المطابقة"
 
-#: enferno/templates/nav-drawer.html:196 enferno/templates/settings.html:16
+#: enferno/templates/nav-drawer.html:198
+msgid "System Administration"
+msgstr ""
+
+#: enferno/templates/nav-drawer.html:210 enferno/templates/settings.html:16
 msgid "Settings"
 msgstr "الإعدادت"
 
@@ -3074,11 +3095,11 @@ msgstr "تضيف عملية المصادقة على مرحلتين طبقة أم
 
 #: enferno/templates/security/two_factor_setup.html:28
 msgid ""
-"In addition to your username and password, you'll need to use a code that"
-" your phone will generate"
+"In addition to your username and password, you'll need to use a code that your "
+"phone will generate"
 msgstr ""
-"بالإصافة إلى اسم المستخدم وكلمة السر الخاصين بك، ستكون بحاجة إلى رمز "
-"سيقوم جهاز الجوال الخاص بك بتوليده"
+"بالإصافة إلى اسم المستخدم وكلمة السر الخاصين بك، ستكون بحاجة إلى رمز سيقوم "
+"جهاز الجوال الخاص بك بتوليده"
 
 #: enferno/templates/security/two_factor_setup.html:45
 msgid "To complete logging in, please enter the code sent to your mail"
@@ -3086,11 +3107,11 @@ msgstr ""
 
 #: enferno/templates/security/two_factor_setup.html:51
 msgid ""
-"Open an authenticator app on your device and scan the following QRcode, "
-"or enter the code below manually:"
+"Open an authenticator app on your device and scan the following QRcode, or "
+"enter the code below manually:"
 msgstr ""
 "افتح برنامج الموثّق على جهاز الموبايل الخاص بك وامسح رمز الاستجابة "
-"السريع(QRCode) التالي، أو قم بادخال الرمز التالي يدويا"
+"السريع(QRCode) التالي، أو قم بادخال الرمز التالي يدويا/"
 
 #: enferno/templates/security/two_factor_setup.html:54
 msgid "Two factor authentication code"
@@ -3127,11 +3148,11 @@ msgstr "قم بضبط خيارات تسجيل الدخول الموحد"
 
 #: enferno/templates/security/us_setup.html:28
 msgid ""
-"Open your authenticator app on your device and scan the following qrcode "
-"to start receiving codes:"
+"Open your authenticator app on your device and scan the following qrcode to "
+"start receiving codes:"
 msgstr ""
-"افتح برنامج الموثّق على جهاز الموبايل الخاص بك وامسح رمز الاستجابة السريع"
-" (QRCode) التالي"
+"افتح برنامج الموثّق على جهاز الموبايل الخاص بك وامسح رمز الاستجابة السريع "
+"(QRCode) التالي:"
 
 #: enferno/templates/security/us_setup.html:29
 msgid "Passwordless QRCode"
@@ -3163,7 +3184,7 @@ msgstr "الرجاء إعادة المصادقة"
 
 #: enferno/templates/security/email/change_notice.html:1
 msgid "Your password has been changed."
-msgstr "تم تغيير كلمة المرور الخاصة بك"
+msgstr "تم تغيير كلمة المرور الخاصة بك."
 
 #: enferno/templates/security/email/change_notice.html:3
 msgid "If you did not change your password,"
@@ -3226,7 +3247,7 @@ msgstr "يمكنك تأكيد حسابك باستخدام الرابط أدنا�
 
 #: enferno/user/views.py:209
 msgid "Password changed successfully."
-msgstr "تم تغيير كلمة السر بنجاح"
+msgstr "تم تغيير كلمة السر بنجاح."
 
 #~ msgid "First Peer Reviewer"
 #~ msgstr "المدقق الأول"
@@ -3261,3 +3282,17 @@ msgstr "تم تغيير كلمة السر بنجاح"
 #~ msgid "default"
 #~ msgstr "افتراضي"
 
+#~ msgid "Location type"
+#~ msgstr "نوع المكان"
+
+#~ msgid "Parent (G)"
+#~ msgstr "محافظة"
+
+#~ msgid "Parent (D)"
+#~ msgstr "منطقة"
+
+#~ msgid "Parent (S)"
+#~ msgstr "ناحية"
+
+#~ msgid "Parent (C)"
+#~ msgstr "مركز"

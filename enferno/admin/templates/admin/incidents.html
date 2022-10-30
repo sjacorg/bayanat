@@ -251,8 +251,11 @@
 <script src="/static/js/element-resize-detector.min.js?v={{ g.version }}"></script>
 <script src="/static/js/force-graph.min.js?v={{ g.version }}"></script>
 <script src="/static/js/actorConfig.js?v={{g.version}}"></script>
-
+<script src="/static/js/components/GlobalMap.js?v={{ g.version }}"></script>
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
 <script>
+
+window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
   let app = new Vue({
     el: "#app",
@@ -295,6 +298,13 @@
       
       fsloading : true,
 
+      // flags for lazy loaded relations state
+      br_loaded : false,
+      ar_loaded: false,
+      ir_loaded: false,
+      br_loading : false,
+      ar_loading: false,
+      ir_loading: false,
 
 
       dialog: dialog,
@@ -403,7 +413,7 @@
         { text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable:false },
         { text: "{{_('1st Reviewer')}}", value: "first_peer_reviewer.name", width: 130, sortable:false },
         {% endif %}
-        { text: "{{_('Status')}}", value: "status", width: 150, sortable:false },
+        { text: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
 
         
         
@@ -937,24 +947,96 @@ toggleAdvSearch() {
         
       },
 
+          loadBulletinRelations() {
+                // UI feedback
+              this.br_loading = true;
+                // pass page=0 to load all relations
+            axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=bulletin&page=0`).then(res=>{
+
+            this.editedItem.bulletin_relations  = res.data.items;
+            // update UI state / show related items
+            this.br_loaded = true;
+
+            // smart trick to pass relation update flag : attach a variable to the payload itself
+            this.editedItem.check_br = true;
+            }).catch(err=>{
+                console.log(err.toJSON());
+            }).finally(()=>{
+                this.br_loading=false;
+            });
+
+        },
+
+         loadActorRelations() {
+
+        //UI feedback
+             this.ar_loading = true;
+                // pass page=0 to load all relations
+            axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=actor&page=0`).then(res=>{
+
+            this.editedItem.actor_relations  = res.data.items;
+            // update UI state / show related items
+            this.ar_loaded = true;
+
+            // smart trick to pass relation update flag : attach a variable to the payload itself
+            this.editedItem.check_ar = true;
+            console.log(this.editedItem.check_ar);
+            }).catch(err=>{
+                console.log(err.toJSON());
+            }).finally(()=>{
+                this.ar_loading=false;
+            });
+
+        },
+
+         loadIncidentRelations() {
+
+        //UI Feedback
+             this.ir_loading = true;
+                // pass page=0 to load all relations
+            axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=incident&page=0`).then(res=>{
+
+            this.editedItem.incident_relations  = res.data.items;
+            // update UI state / show related items
+            this.ir_loaded = true;
+
+            // smart trick to pass relation update flag : attach a variable to the payload itself
+            this.editedItem.check_ir = true;
+            }).catch(err=>{
+                console.log(err.toJSON());
+            }).finally(()=>{
+                this.ir_loading=false;
+            });
+
+        },
+
 
 
       editItem(item) {
         
 
         if(!item.id)     {
+            // new incident
           this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+          this.editedItem.check_br = true;
+          this.br_loaded = true;
+          this.editedItem.check_ir = true;
+          this.ir_loaded = true;
+          this.editedItem.check_ar = true;
+          this.ar_loaded = true;
           this.source_alt = null;
           this.dialog = true;
           this.handleStatus(item);
         }
         else {
           this.loading = true;
-            axios.get(`/admin/api/incident/${item.id}`).then(response => {
+            axios.get(`/admin/api/incident/${item.id}?mode=3`).then(response => {
             this.dialog = true;
             this.$nextTick(()=>{
               this.loading= false
             this.editedItem = response.data;
+
+
             this.editedItem.comments = '';
             this.resetSwitchers();
             this.handleStatus(item);
@@ -993,11 +1075,7 @@ toggleAdvSearch() {
 
       confirmClose() {
        if(confirm('Are you sure?')){
-          this.dialog = false;
-        setTimeout(() => {
-          this.editedItem = Object.assign({}, this.defaultItem);
-          this.editedIndex = -1;
-        }, 300);
+        this.close();
        }
       },
       close() {
@@ -1005,6 +1083,10 @@ toggleAdvSearch() {
         setTimeout(() => {
           this.editedItem = Object.assign({}, this.defaultItem);
           this.editedIndex = -1;
+          this.br_loaded = false;
+          this.ir_loaded = false;
+          this.ar_loaded = false;
+
         }, 300);
       },
 
@@ -1019,7 +1101,11 @@ toggleAdvSearch() {
               this.showSnack(response.data);
               
               this.refresh(this.options);
-            });
+            }).finally(()=>{
+                this.br_loaded = false;
+                this.ir_loaded = false;
+                this.ar_loaded = false;
+          });
         } else {
           this.items.push(this.editedItem);
           //create new record

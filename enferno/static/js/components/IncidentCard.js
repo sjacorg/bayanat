@@ -1,14 +1,9 @@
 Vue.component("incident-card", {
     props: ['incident', 'close', 'log', 'diff', "showEdit", "i18n"],
     watch: {
+
+
         incident: function (b, n) {
-
-             if (__lang__ == 'ar'){
-
-                this.incident.status = this.incident.status.translate(__lang__,this.i18n.statuses_);
-
-
-            }
 
             if (!this.$root.currentUser.view_simple_history) {
                 this.log = false;
@@ -27,14 +22,49 @@ Vue.component("incident-card", {
 
     methods: {
 
+            loadGeoMap(){
+
+                this.geoMapLoading = true
+                //load again all bulletin relations without paging (soft limit is 1000 bulletin)
+
+                 axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`).then(res => {
+                    // Check if there are related bulletins / then fetch their full data to visualize location
+                     let relatedBulletins = res.data.items;
+                if (relatedBulletins && relatedBulletins.length) {
+                    getBulletinLocations(relatedBulletins.map(x => x.bulletin.id)).then(res => {
+                        this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
+                        this.geoMapLoading = false;
+                        this.geoMapOn = true;
+                    })
+                } else {
+                    this.mapLocations = aggregateIncidentLocations(this.incident);
+                    this.geoMapOn = true;
+                }
+
+            }).catch(err => {
+
+                console.log(err.toJSON());
+            });
+
+
+
+
+
+        },
+
+         translate_status(status){
+          return translate_status(status);
+        },
+
           loadBulletinRelations(page=1) {
 
-             // b2a
-            axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=${page}`).then(res=>{
-            this.incident.bulletin_relations.push.apply(this.incident.bulletin_relations,res.data.items);
-            this.bulletinPage +=1;
-            this.bulletinLM = res.data.more;
-            }).catch(err=>{
+
+            axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=${page}`).then(res => {
+
+                this.incident.bulletin_relations.push.apply(this.incident.bulletin_relations, res.data.items);
+                this.bulletinPage += 1;
+                this.bulletinLM = res.data.more;
+            }).catch(err => {
                 console.log(err.toJSON());
             });
 
@@ -130,12 +160,15 @@ Vue.component("incident-card", {
 
     data: function () {
         return {
+            geoMapLoading: false,
+            geoMapOn: false,
             diffResult: '',
             diffDialog: false,
             revisions: null,
             show: false,
             hloading: false,
-
+            //global map
+            mapLocations: [],
 
             // pagers for related entities
             bulletinPage: 1,
@@ -167,7 +200,7 @@ Vue.component("incident-card", {
       
       <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="incident.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{incident.assigned_to['name']}}</v-chip>
-        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{incident.status}}</v-chip>
+        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(incident.status) }}</v-chip>
         
       </v-sheet>
       
@@ -178,8 +211,14 @@ Vue.component("incident-card", {
         <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
         <div class="rich-description" v-html="incident.description"></div>
       </v-card>
-      
-     
+
+      <!-- Map -->
+      <v-card :loading="geoMapLoading" outlined class="ma-2 pa-2" color="grey lighten-5">
+        <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0" color="primary lighten-2"> <v-icon left>mdi-map</v-icon> Load Geo Map</v-btn>
+        <v-card-text v-if="geoMapOn">
+        <global-map :i18n="i18n" :value="mapLocations"></global-map>
+          </v-card-text>
+      </v-card>
 
       <v-card outlined class="ma-2" color="grey lighten-5"
               v-if="incident.potential_violations && incident.potential_violations.length">
@@ -365,7 +404,7 @@ Vue.component("incident-card", {
           <template v-for="(revision,index) in revisions">
             <v-card color="grey lighten-4" dense flat class="my-1 pa-2 d-flex align-center">
                             <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
-                                                                                            color="gv lighten-3">{{ revision.data.status }}</v-chip> - {{ revision.created_at }}
+                                                                                            color="gv lighten-3">{{ translate_status(revision.data.status) }}</v-chip> - {{ revision.created_at }}
                               - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 

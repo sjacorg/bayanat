@@ -20,6 +20,8 @@ Vue.component('global-map', {
             mapHeight: 300,
             zoom: 10,
             mapKey: 0,
+            //marker cluster
+            mcg : null,
             mapsApiEndpoint: mapsApiEndpoint,
             subdomains: null,
             lat: geoMapDefaultCenter.lat,
@@ -39,6 +41,21 @@ Vue.component('global-map', {
 
         let map = this.$refs.map.mapObject;
 
+        // let markers = L.markerClusterGroup();
+        // if(this.locations.length){
+        //    for (const loc of this.locations) {
+        //        markers.addLayer(L.marker([loc.lat,loc.lng]));
+        //
+        //    };
+        //    map.addLayer(markers);
+        //
+        // }
+        //
+
+
+        // map.addLayer(markers);
+
+
         map.addControl(new L.Control.Fullscreen({
             title: {
                 'false': 'View Fullscreen',
@@ -51,18 +68,17 @@ Vue.component('global-map', {
             })
 
 
-
     },
 
     watch: {
         value(val, old) {
 
-            if (val && val.length || val != old) {
 
+            if (val && val.length || val !== old) {
                 this.locations = val;
                 this.fitMarkers();
             }
-            if (val.length == 0) {
+            if (val.length === 0) {
                 this.$refs.map.mapObject.setView([this.lat, this.lng]);
 
             }
@@ -79,17 +95,14 @@ Vue.component('global-map', {
 
         toggleSatellite() {
             // use subdomains to identify state
-            if (this.defaultTile){
-            this.defaultTile = false;
-            this.satellite.addTo(this.$refs.map.mapObject);
-            }
-            else {
+            if (this.defaultTile) {
+                this.defaultTile = false;
+                this.satellite.addTo(this.$refs.map.mapObject);
+            } else {
                 this.defaultTile = true;
                 this.$refs.map.mapObject.removeLayer(this.satellite);
 
             }
-
-
 
 
             // Working hack : redraw the tile layer component via Vue key
@@ -117,17 +130,46 @@ Vue.component('global-map', {
 
             let markers = [];
 
+            if(this.mcg){
+                map.removeLayer(this.mcg);
+            }
+            this.mcg = L.markerClusterGroup();
             if (this.locations.length) {
 
                 for (loc of this.locations) {
-                    markers.push(L.marker(loc));
+                    //preprocess bulletinId
+                    loc.bulletinId = loc.bulletinId || '';
+                    let marker = L.circleMarker([loc.lat, loc.lng], {
+                        color: 'white',
+                        fillColor: loc.color,
+                        fillOpacity: 0.65,
+                        radius: 8,
+                        weight: 2,
+                        stroke: 'white'
+                    });
+                    const heading = loc.number ? loc.number + '. ' + loc.title : loc.title;
+
+                    marker.bindPopup(`
+                     <span ><span title="*Bulletin ID" class="map-bid">${loc.bulletinId}</span><strong>
+${heading}</strong> </span><br>
+                    
+                    <div class="mt-2">
+                    
+                    
+                    ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
+                    </div>
+                    <div class="mt-2 subtitle">${loc.full_string || ''}</div>
+                    <div>${loc.type|| ''}</div>
+                    `);
+                    this.mcg.addLayer(marker);
                 }
                 ;
 
 
                 // build a feature group
-                let fg = L.featureGroup(markers);
-                let bounds = fg.getBounds();
+
+                let bounds = this.mcg.getBounds();
+                this.mcg.addTo(map);
 
 
                 map.fitBounds(bounds, {padding: [20, 20]});
@@ -170,51 +212,17 @@ Vue.component('global-map', {
           </div>
 
           <l-map @fullscreenchange="fsHandler" @dragend="redraw" ref="map" @ready="fitMarkers" :zoom="zoom"
+                 :max-zoom="18"
                  :style=" 'resize:vertical;height:'+ mapHeight + 'px'"
                  :center="[lat,lng]" :options="{scrollWheelZoom:false}">
-            <l-tile-layer v-if="defaultTile" :attribution="attribution" :key="mapKey" :url="mapsApiEndpoint" :subdomains="subdomains">
+            <l-tile-layer v-if="defaultTile" :attribution="attribution" :key="mapKey" :url="mapsApiEndpoint"
+                          :subdomains="subdomains">
             </l-tile-layer>
             <l-control class="example-custom-control">
               <v-btn v-if="__GOOGLE_MAPS_API_KEY__" @click="toggleSatellite" small fab>
                 <img src="/static/img/satellite-icon.png" width="18"></img>
               </v-btn>
             </l-control>
-
-
-            <l-feature-group ref="featGroup">
-              <l-circle-marker class-name="circle-marker" radius="0" weight="16" fill-opacity="0.6"
-                               v-for="(marker, i) in locations" :color="marker.color"
-                               :lat-lng="[marker.lat,marker.lng]" :key="i">
-
-                <l-popup>
-                  <div style="position: relative;">
-                    <v-avatar v-if="marker.number" color="grey lighten-4 float-right " size="22">{{ marker.number }}
-                    </v-avatar>
-                    <h4 v-if="marker.title" class="my-1 subtitle-1" small color="grey lighten-3">{{ marker.title }}</h4>
-
-                    <v-chip small color="grey lighten-4" label class="caption black--text">{{ marker.lat.toFixed(6) }} |
-                      {{ marker.lng.toFixed(6) }}
-                    </v-chip>
-
-                    <v-chip v-if="marker.full_string" small color="grey lighten-4" label
-                            class="chipwrap my-2 caption black--text">
-                      <v-icon x-small left>mdi-map-marker</v-icon>
-                      {{ marker.full_string }}
-                    </v-chip>
-                    <div class="my-1">
-                      <v-chip label v-if="marker.type" class="my-1" small color="lime lighten-3">{{ marker.type }}
-                      </v-chip>
-                    </div>
-
-
-                  </div>
-
-
-                </l-popup>
-
-
-              </l-circle-marker>
-            </l-feature-group>
 
 
           </l-map>

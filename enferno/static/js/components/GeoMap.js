@@ -20,7 +20,7 @@ Vue.component("geo-map", {
             if (this.others && this.value) {
 
 
-                console.log(this.others.filter(x=> x.lat!=this.value.lat && x.lng != this.value.lng));
+                // console.log(this.others.filter(x=> x.lat!=this.value.lat && x.lng != this.value.lng));
                 return this.others.filter(x=> x.lat!=this.value.lat && x.lng != this.value.lng);
 
             }
@@ -144,8 +144,8 @@ Vue.component("geo-map", {
           <v-card-text>
             <h3 class=" mb-5">{{ title }}</h3>
             <div class="d-flex" style="column-gap: 20px;">
-              <v-text-field dense type="number" min="-90" max="90" label="Latitude" v-model="lat"></v-text-field>
-              <v-text-field dense type="number" min="-180" max="180" label="Longitude" v-model="lng"></v-text-field>
+              <v-text-field dense type="number" min="-90" max="90" :label="translations.latitude_" v-model="lat"></v-text-field>
+              <v-text-field dense type="number" min="-180" max="180" :label="translations.longitude_" v-model="lng"></v-text-field>
             </div>
 
 
@@ -155,7 +155,7 @@ Vue.component("geo-map", {
                             :subdomains="subdomains"></l-tile-layer>
               <l-control class="example-custom-control">
                 <v-btn v-if="__GOOGLE_MAPS_API_KEY__" @click="toggleSatellite" small fab>
-                  <img src="/static/img/satellite-icon.png" width="18"></img>
+                  <img src="/static/img/satellite-icon.png" width="18">
                 </v-btn>
               </l-control>
               <l-marker @update:latLng="updateLocation" :lat-lng="[lat,lng]" draggable="true"></l-marker>

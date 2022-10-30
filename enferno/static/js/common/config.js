@@ -244,23 +244,36 @@ const router = new VueRouter({
 
 // Rich text configurations for tinymce editor
 var tinyConfig = {
-    plugins: ["link autolink directionality fullscreen code"],
-    paste_data_images: true,
-
+    plugins: ["link autolink directionality fullscreen lists table searchreplace image"],
+    toolbar_mode: 'sliding',
+    images_upload_url: '/admin/api/inline/upload',
+    images_upload_base_path: '/admin/api/serve/inline/',
+    images_reuse_filename: true,
 
     block_formats: "Paragraph=p; Header 1=h1; Header 2=h2; Header 3=h3",
     branding: true,
     default_link_target: "_blank",
-
+    table_grid: false,
     menubar: false,
     toolbar:
-        "undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright | ltr rtl | removeformat |  code | fullscreen",
+        "undo redo | styleselect | bold italic underline strikethrough backcolor | outdent indent | numlist bullist | link image | align | ltr rtl | table | removeformat | searchreplace | fullscreen",
+    toolbar_groups: {
+        align: {
+            icon: 'aligncenter',
+            tooltip: 'Align',
+            items: 'alignleft aligncenter alignright alignjustify'
+        }
+    },
+    table_toolbar: 'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
 
     style_formats: [
+        {title: "Heading 1", format: "h1"},
         {title: "Heading 2", format: "h2"},
         {title: "Heading 3", format: "h3"},
         {title: "Paragraph", format: "p"}
     ]
+    ,
+    cleanup: true
 };
 
 // adjust rich text editor theme based on mode
@@ -277,7 +290,7 @@ let i = translations;
 // var btobRelateAs = [i.duplicate_, i.other_, i.partOfSeries_, i.sameObject_, i.samePerson_, i.potentiallyDuplicate_, i.potentiallyRelated_];
 // var itobRelateAs = [i.default_];
 // var itoiRelateAs = [i.default_];
- var statuses = i.statuses_;
+var statuses = i.statuses_;
 
 var geoLocationTypes = [
     i.default_,
@@ -321,20 +334,13 @@ String.prototype.trunc = function(n){
 
 
 //helper method to translate front-end strings using an array of translation objects (constructed in i18n.jinja2)
-String.prototype.translate = function (lang, search) {
-
-    if (lang == 'ar') {
-        let translation = search.filter(x => x.en == this).pop();
-
-        if (translation.ar) {
-            return translation.ar;
+function translate_status (str) {
+        const needle = i.statuses_.filter(x=> x.en == str).pop();
+        if (needle.tr) {
+            return needle.tr;
         } else {
-            return this;
+            return needle.en;
         }
-
-
-    }
-    return this
 }
 
 String.prototype.toHHMMSS = function () {
@@ -365,14 +371,14 @@ String.prototype.formatName = function () {
 // global helper methods for geolocations
 
 var aggregateLocations = function (bulletin) {
-
-    let locations = []
+    let locations = [];
 
     // aggregate locations, add a color identifier
     if (bulletin.locations && bulletin.locations.length) {
         let locs = bulletin.locations.filter(x => x.lat && x.lng);
         locs.map(x => {
             x.color = '#00a1f1';
+            x.bulletinId = bulletin.id;
             return x
         });
         locations = locations.concat(locs);
@@ -383,6 +389,7 @@ var aggregateLocations = function (bulletin) {
     if (bulletin.geoLocations && bulletin.geoLocations.length) {
         bulletin.geoLocations.map(x => {
             x.color = '#ffbb00';
+            x.bulletinId = bulletin.id;
             return x
         });
         locations = locations.concat(bulletin.geoLocations);
@@ -392,11 +399,57 @@ var aggregateLocations = function (bulletin) {
         let eventLocations = bulletin.events.filter(x => x.location && x.location.lat && x.location.lng).map((x, i) => {
             // exclude locations with null coordinates
 
-                //attach serial number to events for map reference
-                x.location.number = i + 1;
-                x.location.title = x.title;
-                x.location.color = '#f65314';
-                return x.location
+            //attach serial number to events for map reference
+            x.location.number = i + 1;
+            x.location.title = x.title;
+            x.bulletinId = bulletin.id;
+            x.location.color = '#f65314';
+            return x.location
+
+
+        });
+
+
+        locations = locations.concat(eventLocations);
+    }
+    return locations;
+
+}
+
+function getBulletinLocations(ids) {
+    promises = []
+    ids.forEach(x => {
+        promises.push(axios.get(`/admin/api/bulletin/${x}?mode=3`).then(response => {
+            return aggregateLocations(response.data);
+        }));
+    });
+    return Promise.all(promises);
+}
+
+var aggregateIncidentLocations = function (incident) {
+
+    let locations = [];
+
+    if (incident.locations && incident.locations.length) {
+        let locs = incident.locations.filter(x => x.lat && x.lng);
+        locs.map(x => {
+            x.color = '#00a1f1';
+            return x
+        });
+        locations = locations.concat(locs);
+
+    }
+
+    // event locations
+    if (incident.events && incident.events.length) {
+        let eventLocations = incident.events.filter(x => x.location && x.location.lat && x.location.lng).map((x, i) => {
+            // exclude locations with null coordinates
+
+            //attach serial number to events for map reference
+            x.location.number = i + 1;
+            x.location.title = x.title;
+            x.location.color = '#f65314';
+            return x.location
 
 
         });

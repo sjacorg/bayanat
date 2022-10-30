@@ -29,40 +29,94 @@ class DataImport():
         self.summary = ''
         self.log = open(log,'a')
 
+    def upload(self, file, target):
 
-    def s3_upload(self, file, target):
-        s3 = boto3.resource('s3', aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
-                            aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY)
+        if cfg.FILESYSTEM_LOCAL:
+            shutil.copy(file, target)
+        elif cfg.S3_BUCKET:
+            print(f'terget:{target} - {os.path.basename(target)}')
+            target = os.path.basename(target)
+            s3 = boto3.resource('s3', aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+                                aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+                                region_name=cfg.AWS_REGION
+                                )
+            try:
+                s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(file, 'rb'))
+            except Exception as e:
+                print(e)
+        else:
+            raise RuntimeError('Filesystem is not configured properly!')
+
+    def get_duration(self, path):
         try:
-            response = s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(file, 'rb'))
-            return response
+            # get video duration via ffprobe
+            cmd = f'ffprobe -i "{path}" -show_entries format=duration -v quiet -of csv="p=0"'
+            duration = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
+            return duration
         except Exception as e:
-            print (e)
+            print('Failed to get video duration')
+            print(e)
+            return None
 
+    def get_etag(self, path):
+        f = open(path, 'rb').read()
+        etag = hashlib.md5(f).hexdigest()
+        return etag
+    
+    def optimize(self, old_filename, old_path):
+        check = ''
+        _, ext = os.path.splitext(old_filename)
 
+        try:
+            # get video codec
+            cmd = f'ffprobe -i "{old_path}" -show_entries stream=codec_name -v quiet -of csv="p=0"'
+            check = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
 
+        except Exception as e:
+            print('Failed to get original video codec, optimizing anyway')
+            print(e)
+        
+        accepted_codecs = 'h264' in check or 'theora' in check or 'vp8' in check
+        accepted_formats = 'mp4' in ext or 'ogg' in ext or 'webm' in ext
+        accepted_codecs = accepted_formats 
+        
+        if not accepted_formats or (accepted_formats and not accepted_codecs):
+            #process video
+            try:
+                new_filename = f'{Media.generate_file_name(old_filename)}.mp4'
+                new_filepath = (Media.media_dir / new_filename).as_posix()
+                command = f'ffmpeg -i "{old_path}" -vcodec libx264  -acodec aac -strict -2 "{new_filepath}"'
+                subprocess.call(command, shell=True)
 
+                new_etag = self.get_etag(new_filepath)
+                return True, new_filename, new_filepath, new_etag
+
+            except Exception as e:
+                print(f'An exception occurred while transcoding file {e}')
+                return False, None, None, None
+        else:
+            return False, None, None, None
 
     def process(self, file):
-
         # handle file uploads based on mode of ETL
-
         print(file)
         duration = None
+        optimized = False
         print(self.meta.get('mode'))
+
+        # Server-side mode
         if self.meta.get('mode') == 2:
+
             self.summary += '------------------------------------------------------------------------ \n'
             self.summary += now() + 'file: {}'.format(file.get('file').get('name')) + '\n'
-
 
             # check here for duplicate to skip unnecessary code execution
             old_path = file.get('file').get('path')
             # get md5 hash directly from the source file (before copying it)
-            f = open(old_path, 'rb').read()
-            etag = hashlib.md5(f).hexdigest()
+            etag = self.get_etag(old_path)
 
+            # check if original file exists in db
             exists = Media.query.filter(Media.etag == etag).first()
-
             if exists:
                 self.summary += now() + ' File already exists:  {} \n'.format(old_path)
                 print('File already exists: {} \n'.format(old_path))
@@ -70,66 +124,46 @@ class DataImport():
                 self.log.write(self.summary)
                 return
 
-
-            #server side mode, need to copy files and generate etags
+            # server side mode, need to copy files and generate etags
             old_filename = file.get('file').get('name')
             title, ext = os.path.splitext(old_filename)
-
 
             filename = Media.generate_file_name(old_filename)
             filepath = (Media.media_dir / filename).as_posix()
 
+            # copy file to media dir or s3 bucket
+            self.upload(old_path, filepath)
+            self.summary += now() + f'File saved as {filename}'
+            info = exiflib.get_json(old_path)[0]
+
             # check if file is video (accepted extension)
             if ext[1:].lower() in cfg.ETL_VID_EXT:
-                try:
-                    # get video duration via ffprobe
-                    cmd = 'ffprobe -i "{}" -show_entries format=duration -v quiet -of csv="p=0"'.format(old_path)
-                    duration = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
-                except Exception as e:
-                    print('failed to get video duration')
-                    print(e)
+                duration = self.get_duration(old_path)
+
                 if self.meta.get('optimize'):
-                    #process video
-                    try:
-                        filepath = '{}.mp4'.format(os.path.splitext(filepath)[0])
-                        command = 'ffmpeg -i "{}" -vcodec libx264  -acodec aac -strict -2 "{}"'.format(old_path, filepath )
-                        subprocess.call(command, shell=True)
-                        #if conversion is successful / also update the filename passed to media creation code
-                        filename = os.path.basename(filepath)
-
-                    except Exception as e:
-                        print ('An exception occurred while transcoding file {}'.format(e))
-                        #copy the file as is instead
-                        shutil.copy(old_path, filepath)
-                        self.s3_upload(old_path, os.path.basename(filepath))
-
-
-            else:
-
-                shutil.copy(old_path, filepath)
-                self.s3_upload(old_path, os.path.basename(filepath))
-
-
-
-
-
-            self.summary += now() + ' File saved as {}'.format(filename) + '\n'
-
+                    optimized, new_filename, new_filepath, new_etag = self.optimize(old_filename, old_path)
+                    if optimized:
+                        self.summary += now() + f'Optimized version saved as {new_filename}\n'
 
         elif self.meta.get('mode') == 1:
             self.summary += now() + ' ------ Processing file: {} ------'.format(file.get('filename')) + '\n'
+
             # we already have the file and the etag
             filename = file.get('filename')
             n, ext = os.path.splitext(filename)
             title, ex = os.path.splitext(file.get('name'))
             filepath = (Media.media_dir / filename).as_posix()
+            info = exiflib.get_json(filepath)[0]
+
             if not cfg.FILESYSTEM_LOCAL:
-                s3_response = self.s3_upload(filepath, os.path.basename(filepath))
-                #print(s3_response.get('filename'))
+                self.upload(filepath, os.path.basename(filepath))
+
             etag = file.get('etag')
+
             # check here for duplicate to skip unnecessary code execution
+            # this is necessary even though upload function checks for duplicates
+            # as two identical files can be uploaded at the same import attempt 
             exists = Media.query.filter(Media.etag == etag).first()
-            #print (exists)
             if exists:
                 self.summary += now() + ' File already exists:  {} \n'.format(filepath)
                 try:
@@ -137,55 +171,33 @@ class DataImport():
                     print('duplicate file cleaned ')
                 except OSError:
                     pass
+
                 print ('File already exists: {} \n'.format(filepath))
                 self.summary += '------------------------------------------------------------------------\n\n'
                 self.log.write(self.summary)
-                return "This file already exists"
+                return 
+
             # else check if video processing is enabled
             if ext[1:].lower() in cfg.ETL_VID_EXT:
-                try:
-                    # get video duration via ffprobe
-                    cmd = 'ffprobe -i "{}" -show_entries format=duration -v quiet -of csv="p=0"'.format(filepath)
-                    duration = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
-
-
-                except Exception as e:
-                    print('failed to get video duration')
-                    print(e)
+                duration = self.get_duration(filepath)
 
                 if self.meta.get('optimize'):
-                    # process videos in the media
-                    try:
-                        new_filepath = '{}*.mp4'.format(os.path.splitext(filepath)[0])
-                        command = 'ffmpeg -i "{}" -vcodec libx264 -acodec aac -strict -2 "{}"'.format(filepath, new_filepath )
-                        subprocess.call(command, shell=True)
-                        #if conversion is successful / also update the filename passed to media creation code
-                        filename = os.path.basename(new_filepath)
-                        #clean up old file
-                        os.remove(filepath)
-                        #if op is successful update filepath
-                        filepath = new_filepath
-                        self.s3_upload(filepath, os.path.basename(filepath))
+                    optimized, new_filename, new_filepath, new_etag = self.optimize(filename, filepath)
+                    if optimized:
+                        self.summary += now() + f'Optimized version saved as {new_filename}\n'
 
-                    except Exception as e:
-                        print ('An exception occurred while transcoding file {}'.format(e))
-                        # do nothing
-
-
-
-        # get mime type
-        # mime = magic.Magic(mime=True)
-        # mime_type = mime.from_file(filepath)
-
-        #print('Hash generated :: {}'.format(etag))
-
-        info = exiflib.get_json(filepath)[0]
-        #print(info.get('EXIF:CreateDate'))
         # bundle title with json info
         info['bulletinTitle'] = title
         info['filename'] = filename
         # pass filepath for cleanup purposes
         info['filepath'] = filepath
+
+        # include details of optimized files
+        if optimized:
+            info['new_filename'] = new_filename
+            info['new_filepath'] = new_filepath
+            info['new_etag'] = new_etag
+
         info['etag'] = etag
         if self.meta.get('mode') == 2:
             info['old_path'] = old_path
@@ -197,7 +209,6 @@ class DataImport():
         print('Meta data parse success')
         result =  self.create_bulletin(info)
         return result
-
 
     def create_bulletin(self, info):
         """
@@ -220,14 +231,15 @@ class DataImport():
         if serial:
             refs.append(str(serial))
 
-        media = Media()
-        media.title = bulletin.title
-        media.media_file = info.get('filename')
+        # media for the orginal file
+        org_media = Media()
+        org_media.title = bulletin.title
+        org_media.media_file = info.get('filename')
         # handle mime type failure
         mime_type = info.get('File:MIMEType')
         duration = info.get('vduration')
         if duration:
-            media.duration = duration
+            org_media.duration = duration
             print ('duration set')
         if not mime_type:
             self.summary += now() + 'Problem retrieving file mime type !' + '\n'
@@ -240,12 +252,21 @@ class DataImport():
 
             self.summary += '------------------------------------------------------------------------\n\n'
             return
-        media.media_file_type = mime_type
 
+        org_media.media_file_type = mime_type
+        org_media.etag = info.get('etag')
+        bulletin.medias.append(org_media)
 
-        media.etag = info.get('etag')
-
-        bulletin.medias.append(media)
+        # additional media for optimized video
+        if info.get('new_filename'):
+            new_media = Media()
+            new_media.title = bulletin.title
+            new_media.media_file = info.get('new_filename')
+            new_media.media_file_type = 'video/mp4'
+            new_media.etag = info.get('new_etag')
+            if duration:
+                new_media.duration = duration
+            bulletin.medias.append(new_media)
 
         # add additional meta data
         sources = self.meta.get('sources')
@@ -270,7 +291,6 @@ class DataImport():
 
         mrefs = self.meta.get('refs')
 
-
         if mrefs:
             refs = refs + mrefs
         bulletin.ref = refs
@@ -287,11 +307,3 @@ class DataImport():
         Activity.create(user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
         self.summary += '------------------------------------------------------------------------\n\n'
         self.log.write(self.summary)
-
-
-
-
-
-
-
-

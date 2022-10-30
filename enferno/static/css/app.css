@@ -528,3 +528,21 @@ input[type="date"]::-webkit-input-placeholder {
 .theme--dark .media-vid i {
     background: #111;
 }
+
+/* better styles for inline tables (rich text) in preview cards */
+
+.rich-description table td, .rich-description table th {
+    padding: 4px;
+}
+
+/* map bulletin ids */
+span.map-bid {
+    background: #f0f0f0;
+    border: 1px dotted rgba(109, 109, 109, 0.84);
+    padding: 3px;
+    border-radius: 5px;
+}
+
+span.map-bid:empty {
+    display: none;
+}

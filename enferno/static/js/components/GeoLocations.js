@@ -204,11 +204,11 @@ Vue.component('geo-locations', {
 
           <v-card-text >
             <div  class="d-flex px-5" style="column-gap: 20px">
-            <v-text-field v-model="e.title" label="Title"></v-text-field>
-            <v-select :items="geoLocationTypes" v-model="e.type" label="Type"></v-select>
+            <v-text-field v-model="e.title" :label="translations.title_"></v-text-field>
+            <v-select :items="geoLocationTypes" v-model="e.type" :label="translations.type_"></v-select>
                 </div>
             <div class="px-5">
-              <v-text-field v-model="e.comment" label="Comment"></v-text-field>
+              <v-text-field v-model="e.comment" :label="translations.comment_"></v-text-field>
               
             </div>
 
@@ -218,7 +218,7 @@ Vue.component('geo-locations', {
           </v-card-text>
           <v-card-actions class="pb-3">
             <v-spacer></v-spacer>
-            <v-btn :disabled="!eformValid"  @click="saveLocation" width="220" color="primary">Save</v-btn>
+            <v-btn :disabled="!eformValid"  @click="saveLocation" width="220" color="primary">{{translations.save_}}</v-btn>
             <v-spacer></v-spacer>
           </v-card-actions>
         </v-card>

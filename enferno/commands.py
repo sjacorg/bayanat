@@ -8,7 +8,7 @@ from flask.cli import with_appcontext
 from flask_security.utils import hash_password
 
 from enferno.extensions import db
-from enferno.user.models import User
+from enferno.user.models import User, Role
 from enferno.tasks import import_data,generate_user_roles
 
 
@@ -23,7 +23,13 @@ def create_db():
     print('Postgis extension installed successfully')
     db.create_all()
     print('Database structure created successfully')
-
+    generate_user_roles()
+    click.echo('Generated user roles successfully.')
+    try:
+        import_data()
+        click.echo('Imported data successfully.')
+    except:
+        click.echo('Error importing data.')
     # possible optimization: SET enable_seqscan = off;
 
 
@@ -32,22 +38,31 @@ def create_db():
 def install():
     """Install a default Admin user and add an Admin role to it.
     """
-    # check if admin exists
-    from enferno.user.models import Role
-    a = Role.query.filter(Role.name == 'Admin').first()
-    if a is None:
-        # create admin role
-        r = Role(name='Admin').save()
-        u = click.prompt('Admin username?', default='admin')
-        p = click.prompt('Admin Password (min 6 characters)?')
-        user = User(username=u, password=hash_password(p), active=1)
-        user.name = 'Admin'
-        user.roles.append(r)
-        user.save()
-        click.echo('Admin user installed successfully!')
+    admin_role = Role.query.filter(Role.name == 'Admin').first()
 
+    # check if there's an existing admin
+    if admin_role.users.all():
+        click.echo('An admin user is already installed.')
+        return
+
+    # to make sure username doesn't already exist
+    while True:
+        u = click.prompt('Admin username?', default='admin')
+        check = User.query.filter(User.username == u.lower()).first()
+        if check is not None:
+            click.echo('Username already exists.')
+        else:
+            break
+
+    p = click.prompt('Admin Password?')
+    user = User(username=u, password=hash_password(p), active=1)
+    user.name = 'Admin'
+    user.roles.append(admin_role)
+    check = user.save()
+    if check:
+        click.echo('Admin user installed successfully.')
     else:
-        click.echo('Seems like an Admin is already installed')
+        click.echo('Error installing admin user.')
 
 
 @click.command()
@@ -151,23 +166,3 @@ def update():
 def compile():
     if os.system('pybabel compile -d enferno/translations'):
         raise RuntimeError('Compile command failed')
-
-@click.command()
-@with_appcontext
-def init():
-    '''
-    Command to initilize the system with SJAC's data.
-    '''
-    # generate user roles
-    try:
-        generate_user_roles()
-        click.echo('Successfully generated user roles.')
-    except:
-        print('Error generating user roles.')
-    
-    # import data
-    try:
-        import_data()
-        click.echo('Successfully imported data.')
-    except:
-        click.echo('Error importing data.')

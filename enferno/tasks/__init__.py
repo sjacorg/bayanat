@@ -183,6 +183,7 @@ def etl_process_file(batch_id, file, meta, user_id, log):
     di.process(file)
     return 'done'
 
+
 # this will publish a message to redis and will be captured by the front-end client
 def update_stats():
     # send any message to refresh the UI
@@ -200,6 +201,7 @@ def process_dedup(id, user_id):
         if rds.scard('dedq') == 0:
             rds.publish('dedprocess', 2)
 
+
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     seconds = int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))
@@ -209,21 +211,22 @@ def setup_periodic_tasks(sender, **kwargs):
 # @periodic_task(run_every=timedelta(seconds=int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))))
 @celery.task
 def dedup_cron():
-    #shut down processing when we hit 0 items in the queue or when we turn off the processing
-    if rds.get('dedup') != '1' or rds.scard('dedq') == 0:
-        rds.delete('dedup')
-        rds.publish('dedprocess', 0)
-        # Pause processing / do nothing
-        print("Process engine - off")
-        return
+    if cfg.DEDUP_TOOL == True:
+        #shut down processing when we hit 0 items in the queue or when we turn off the processing
+        if rds.get('dedup') != '1' or rds.scard('dedq') == 0:
+            rds.delete('dedup')
+            rds.publish('dedprocess', 0)
+            # Pause processing / do nothing
+            print("Process engine - off")
+            return
 
-    data = []
-    items = rds.spop('dedq', cfg.DEDUP_BATCH_SIZE)
-    for item in items:
-        data = item.split('|')
-        process_dedup.delay(data[0], data[1])
+        data = []
+        items = rds.spop('dedq', cfg.DEDUP_BATCH_SIZE)
+        for item in items:
+            data = item.split('|')
+            process_dedup.delay(data[0], data[1])
 
-    update_stats()
+        update_stats()
 
 
 @celery.task
@@ -258,12 +261,6 @@ def import_data():
     '''
     data_path = 'enferno/data/'
     from werkzeug.datastructures import FileStorage
-
-    # labels
-    if not Label.query.count():
-        f = data_path + 'label.csv'
-        fs = FileStorage(open(f, 'rb'))
-        Label.import_csv(fs)
 
     # Eventtypes
     if not Eventtype.query.count():

@@ -1244,6 +1244,36 @@ def api_local_serve_media(filename):
     """
     return send_from_directory('media', filename)
 
+@admin.post('/api/inline/upload')
+def api_inline_medias_upload():
+    # file pond sends multiple requests for multiple files (handle each request as a separate file )
+    try:
+        f = request.files.get('file')
+
+        # final file
+        filename = Media.generate_file_name(f.filename)
+        filepath = (Media.inline_dir / filename).as_posix()
+        f.save(filepath)
+        # get md5 hash
+        #f = open(filepath, 'rb').read()
+        #etag = hashlib.md5(f).hexdigest()
+        # check if file already exists
+        #if Media.query.filter(Media.etag == etag).first():
+        #    return 'Error: File already exists', 409
+        #response = {'etag': etag, 'filename': filename}
+        response = {'location': filename}
+
+        return Response(json.dumps(response), content_type='application/json'), 200
+    except Exception as e:
+        return 'Problem uploading file: {}'.format(e), 417
+
+@admin.route('/api/serve/inline/<filename>')
+def api_local_serve_inline_media(filename):
+    """
+    serves inline media files - only for authenticated users
+    """
+    return send_from_directory('inline', filename)
+
 
 # Medias routes
 
@@ -1258,8 +1288,9 @@ def api_medias(page):
     query = []
     q = request.args.get('q', None)
     if q is not None:
+        search = '%' + q.replace(' ', '%') + '%'
         query.append(
-            Media.title.ilike('%' + q + '%')
+            Media.search.ilike(search)
         )
     result = Media.query.filter(
         *query).order_by(Media.id).paginate(
@@ -2029,6 +2060,15 @@ def incident_relations(id):
         items = incident.actor_relations
     elif cls == 'incident':
         items = incident.incident_relations
+
+    # add support for loading all relations at once
+    if page == 0:
+        if cls == 'incident':
+            data = [item.to_dict(exclude=incident) for item in items]
+        else:
+            data = [item.to_dict() for item in items]
+
+        return json.dumps({'items': data, 'more': False}), 200
 
     # pagination
     start = (page - 1) * per_page

@@ -1,7 +1,7 @@
 <validation-observer v-slot="{invalid}">
-    <v-dialog persistent v-model="dialog" fullscreen>
+    <v-dialog persistent v-model="dialog" ref="editDialog" fullscreen>
 
-        <v-card class="overflow-hidden">
+        <v-card v-if="dialog" class="overflow-hidden">
 
             <v-app-bar
                     absolute
@@ -170,10 +170,12 @@
                                 <v-card outlined class="my-5">
                                     <v-card-title class="handle">
                                         <v-icon left>mdi-library-books</v-icon>
-                                        {{ _('Related Actors')}}
+                                        <v-btn :loading="ar_loading" :disabled="ar_loaded" @click.stop="loadActorRelations" outlined>{{ _('Related Actors')}}</v-btn>
+
                                         <v-spacer></v-spacer>
 
                                         <v-text-field
+                                                v-if="ar_loaded"
                                                 class="mx-5"
                                                 v-model="relateActorTerm"
                                                 label="{{_('Search & Relate Actors')}}"
@@ -270,10 +272,11 @@
                                 <v-card outlined class="my-5">
                                     <v-card-title class="handle">
                                         <v-icon left>mdi-library-books</v-icon>
-                                        {{ _('Related Bulletins')}}
+                                        <v-btn :loading="br_loading" :disabled="br_loaded" @click.stop="loadBulletinRelations" outlined>{{ _('Related Bulletins')}}</v-btn>
                                         <v-spacer></v-spacer>
 
                                         <v-text-field
+                                                v-if="br_loaded"
                                                 class="mx-5"
                                                 v-model="relateBulletinTerm"
                                                 label="{{_('Search & Relate Bulletins')}}"
@@ -373,11 +376,11 @@
 
                                 <v-card outlined class="my-5">
                                     <v-card-title class="handle">
-                                        <v-icon left>mdi-hazard-lights</v-icon>
-                                        {{ _('Related Incidents')}}
+                                        <v-btn :loading="ir_loading" :disabled="ir_loaded" @click.stop="loadIncidentRelations" outlined>{{ _('Related Incidents')}}</v-btn>
                                         <v-spacer></v-spacer>
 
                                         <v-text-field
+                                                v-if="ir_loaded"
                                                 class="mx-5"
                                                 v-model="relateIncidentTerm"
                                                 label="{{_('Search & Relate Incidents')}}"

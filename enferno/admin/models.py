@@ -331,7 +331,7 @@ class Label(db.Model, BaseMixin):
         df = df[df['parent_label_id'].notna()]
         db.session.bulk_update_mappings(Label, df.to_dict(orient="records"))
         db.session.commit()
-        
+
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from label").scalar()
         db.session.execute("alter sequence label_id_seq restart with {}".format(max_id))
@@ -485,7 +485,7 @@ class Media(db.Model, BaseMixin):
 
     # set media directory here (could be set in the settings)
     media_dir = Path("enferno/media")
-
+    inline_dir = Path("enferno/media/inline")
     id = db.Column(db.Integer, primary_key=True)
     media_file = db.Column(db.String, nullable=False)
     media_file_type = db.Column(db.String, nullable=False)
@@ -497,6 +497,14 @@ class Media(db.Model, BaseMixin):
     title_ar = db.Column(db.String)
     comments = db.Column(db.String)
     comments_ar = db.Column(db.String)
+    search = db.Column(db.Text, db.Computed(
+        '''
+        ((((((((id::text || ' '::text) || COALESCE(title, ''::character varying)::text) || ' '::text)
+         || COALESCE(media_file, ''::character varying)::text) || ' '::text) ||
+          COALESCE(media_file_type, ''::character varying)::text) || ' '::text) || 
+          COALESCE(comments, ''::character varying)::text) 
+        '''
+    ))
 
     time = db.Column(db.Float(precision=2))
 
@@ -836,7 +844,7 @@ class GeoLocation(db.Model, BaseMixin):
     latlng = db.Column(Geometry('POINT'))
     bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
 
-    def from_json(self,jsn):
+    def from_json(self, jsn):
         self.title = jsn.get('title')
         self.type = jsn.get('type')
         self.latlng = 'POINT({} {})'.format(jsn.get('lat'), jsn.get('lng'))
@@ -971,9 +979,10 @@ class Btob(db.Model, BaseMixin):
         return Btob(bulletin_id=f, related_bulletin_id=t)
 
     @staticmethod
-    def relate_by_id(a,b):
+    def relate_by_id(a, b):
         f, t = min(a, b), max(a, b)
         return Btob(bulletin_id=f, related_bulletin_id=t)
+
     # Exclude the primary bulletin from output to get only the related/relating bulletin
 
     def to_dict(self, exclude=None):
@@ -1333,7 +1342,7 @@ class Bulletin(db.Model, BaseMixin):
     # populate object from json dict
     def from_json(self, json):
 
-        self.originid = json["originid"] if "originid" in json else None 
+        self.originid = json["originid"] if "originid" in json else None
         self.title = json["title"] if "title" in json else None
         self.sjac_title = json["sjac_title"] if "sjac_title" in json else None
 
@@ -1719,15 +1728,15 @@ class Bulletin(db.Model, BaseMixin):
 
         if str(mode) != '3':
             for relation in self.bulletin_relations:
-               bulletin_relations_dict.append(relation.to_dict(exclude=self))
+                bulletin_relations_dict.append(relation.to_dict(exclude=self))
 
             # Related actors json (actually the associated relationships)
             for relation in self.actor_relations:
-               actor_relations_dict.append(relation.to_dict())
+                actor_relations_dict.append(relation.to_dict())
 
             # Related incidents json (actually the associated relationships)
             for relation in self.incident_relations:
-               incident_relations_dict.append(relation.to_dict())
+                incident_relations_dict.append(relation.to_dict())
 
         return {
             "class": "Bulletin",
@@ -1763,7 +1772,6 @@ class Bulletin(db.Model, BaseMixin):
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
             "status": self.status,
-            "_status": gettext(self.status),
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
             "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
@@ -1823,6 +1831,8 @@ class Bulletin(db.Model, BaseMixin):
             return self.history[-1].updated_at
         else:
             return self.updated_at
+
+
 # joint table
 actor_sources = db.Table(
     "actor_sources",
@@ -2100,7 +2110,7 @@ class Actor(db.Model, BaseMixin):
     def from_json(self, json):
         # All text fields
 
-        self.originid = json["originid"] if "originid" in json else None 
+        self.originid = json["originid"] if "originid" in json else None
         self.name = json["name"] if "name" in json else None
         self.name_ar = json["name_ar"] if "name_ar" in json else None
 
@@ -2414,7 +2424,6 @@ class Actor(db.Model, BaseMixin):
         if self.skin_markings and self.skin_markings.get('opts'):
             mp['_skin_markings'] = [gettext(item) for item in self.skin_markings['opts']]
 
-
         mp['handedness'] = getattr(self, 'handedness')
         mp['_handedness'] = gettext(self.handedness)
         mp['eye_color'] = getattr(self, 'eye_color')
@@ -2599,7 +2608,6 @@ class Actor(db.Model, BaseMixin):
             for media in self.medias:
                 medias_json.append(media.to_dict())
 
-
         bulletin_relations_dict = []
         actor_relations_dict = []
         incident_relations_dict = []
@@ -2607,14 +2615,13 @@ class Actor(db.Model, BaseMixin):
         if str(mode) != '3':
             # lazy load if mode is 3
             for relation in self.bulletin_relations:
-               bulletin_relations_dict.append(relation.to_dict())
+                bulletin_relations_dict.append(relation.to_dict())
 
             for relation in self.actor_relations:
-               actor_relations_dict.append(relation.to_dict(exclude=self))
+                actor_relations_dict.append(relation.to_dict(exclude=self))
 
             for relation in self.incident_relations:
-               incident_relations_dict.append(relation.to_dict())
-
+                incident_relations_dict.append(relation.to_dict())
 
         actor = {
             "class": "Actor",
@@ -2692,7 +2699,6 @@ class Actor(db.Model, BaseMixin):
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
             "status": self.status,
-            "_status": gettext(self.status),
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
             "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
@@ -2733,8 +2739,6 @@ class Actor(db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict())
-
-
 
     def validate(self):
         """
@@ -3170,7 +3174,7 @@ class Incident(db.Model, BaseMixin):
 
     search = db.Column(db.Text, db.Computed("""
              ((((((((id)::text || ' '::text) || (COALESCE(title, ''::character varying))::text) || ' '::text) ||
-                (COALESCE(title_ar, ''::character varying))::text) || ' '::text) || COALESCE(description, ''::text)) ||
+                (COALESCE(title_ar, ''::character varying))::text) || ' '::text) || COALESCE(regexp_replace(regexp_replace(description, E'<.*?>', '', 'g' ), E'&nbsp;', '', 'g'), ' '::text)) ||
              ' '::text) || COALESCE(comments, ''::text)
             """))
 
@@ -3257,7 +3261,7 @@ class Incident(db.Model, BaseMixin):
                 self.events = new_events
 
         # Related Actors (actor_relations)
-        if "actor_relations" in json:
+        if "actor_relations" in json and "check_ar" in json:
             # collect related actors ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["actor_relations"]:
@@ -3283,7 +3287,7 @@ class Incident(db.Model, BaseMixin):
                     rel_actor.create_revision()
 
         # Related Bulletins (bulletin_relations)
-        if "bulletin_relations" in json:
+        if "bulletin_relations" in json and "check_br" in json:
             # collect related bulletin ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["bulletin_relations"]:
@@ -3307,7 +3311,7 @@ class Incident(db.Model, BaseMixin):
                     rel_bulletin.create_revision()
 
         # Related Incidnets (incident_relations)
-        if "incident_relations" in json:
+        if "incident_relations" in json and "check_ir" in json:
             # collect related incident ids (helps with finding removed ones)
             rel_ids = []
             for relation in json["incident_relations"]:
@@ -3452,6 +3456,8 @@ class Incident(db.Model, BaseMixin):
                     "id": location.id,
                     "title": location.title,
                     "full_string": location.get_full_string(),
+                    "lat": location.latitude,
+                    "lng": location.longitude
                 })
 
         # potential violations json
@@ -3605,7 +3611,8 @@ class ActorHistory(db.Model, BaseMixin):
     """
     id = db.Column(db.Integer, primary_key=True)
     actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"), index=True)
-    actor = db.relationship("Actor", backref=db.backref("history", order_by='ActorHistory.updated_at'), foreign_keys=[actor_id])
+    actor = db.relationship("Actor", backref=db.backref("history", order_by='ActorHistory.updated_at'),
+                            foreign_keys=[actor_id])
     data = db.Column(JSON)
     # user tracking
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -3623,6 +3630,7 @@ class ActorHistory(db.Model, BaseMixin):
     def to_json(self):
         return json.dumps(self.to_dict(), sort_keys=True)
 
+
 # --------------------------------- Incident History + Indexers -------------------------------------
 
 
@@ -3633,7 +3641,7 @@ class IncidentHistory(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey("incident.id"), index=True)
     incident = db.relationship(
-        "Incident",  backref=db.backref("history", order_by='IncidentHistory.updated_at'), foreign_keys=[incident_id]
+        "Incident", backref=db.backref("history", order_by='IncidentHistory.updated_at'), foreign_keys=[incident_id]
     )
     data = db.Column(JSON)
     # user tracking
@@ -3712,6 +3720,7 @@ class Settings(db.Model, BaseMixin):
             return s.api_key
         else:
             return ''
+
 
 class APIKey(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
