@@ -105,11 +105,6 @@
 
             methods: {
 
-                showSnack(msg) {
-                    this.snackMessage = msg;
-                    this.snackBar = true;
-                },
-
 
                 loadSettings() {
                     axios.get('/settings/load').then(res => {

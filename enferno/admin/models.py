@@ -1,25 +1,24 @@
-# import datetime
 import json
-import os, re
+import os
 from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pandas as pd
+from flask_babelex import gettext
 from flask_login import current_user
-from sqlalchemy import JSON, ARRAY
-from sqlalchemy import event
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
+from sqlalchemy import JSON, ARRAY, text
+from sqlalchemy.orm import backref
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
-from flask_babelex import gettext
 
 from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
-from geoalchemy2 import Geometry
-from geoalchemy2.shape import to_shape
 
 # Load configuraitons based on environment settings
 if os.getenv("FLASK_DEBUG") == '0':
@@ -91,7 +90,7 @@ class Source(db.Model, BaseMixin):
             select x.id, x.parent_id, x.title from lcte c, source x where x.parent_id = c.id)
             select * from lcte;
             """.format(kw)
-        result = db.engine.execute(query)
+        result = db.engine.execute(text(query))
 
         return [{'id': x[0], 'title': x[2]} for x in result]
 
@@ -113,7 +112,7 @@ class Source(db.Model, BaseMixin):
                select x.id, x.parent_id, x.title from lcte c, source x where x.parent_id = c.id)
                select * from lcte;
                """.format(qstr)
-        result = db.engine.execute(query)
+        result = db.engine.execute(text(query))
 
         return [{'id': x[0], 'title': x[2]} for x in result]
 
@@ -234,7 +233,7 @@ class Label(db.Model, BaseMixin):
                select x.id, x.parent_label_id, x.title from lcte c, label x where x.parent_label_id = c.id)
                select * from lcte;
                """.format(kw)
-        result = db.engine.execute(query)
+        result = db.engine.execute(text(query))
 
         return [{'id': x[0], 'title': x[2]} for x in result]
 
@@ -257,7 +256,7 @@ class Label(db.Model, BaseMixin):
                   select x.id, x.parent_label_id, x.title from lcte c, label x where x.parent_label_id = c.id)
                   select * from lcte;
                   """.format(qstr)
-        result = db.engine.execute(query)
+        result = db.engine.execute(text(query))
 
         return [{'id': x[0], 'title': x[2]} for x in result]
 
@@ -553,104 +552,47 @@ class Location(db.Model, BaseMixin):
     """
     __table_args__ = {"extend_existing": True}
 
-    LOC_TYPE = {
-        "G": "Governates",
-        "D": "Districts",
-        "S": "Subdistricts",
-        "C": "Cities",
-        "N": "Neighborhoods",
-    }
-
     id = db.Column(db.Integer, primary_key=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('location.id'))
+    parent = db.relationship("Location", remote_side=id, backref="child_locations")
     title = db.Column(db.String)
     title_ar = db.Column(db.String)
+    location_type_id = db.Column(db.Integer, db.ForeignKey('location_type.id'))
+    location_type = db.relationship("LocationType", foreign_keys=[location_type_id])
+    admin_level_id = db.Column(db.Integer, db.ForeignKey('location_admin_level.id'))
+    admin_level = db.relationship("LocationAdminLevel", foreign_keys=[admin_level_id])
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
-    loc_type = db.Column(db.String)
-    parent_text = db.Column(db.String)
     description = db.Column(db.Text)
-    location_created = db.Column(
-        db.DateTime, default=datetime.utcnow(), onupdate=datetime.utcnow()
-    )
-    location_modified = db.Column(
-        db.DateTime, default=datetime.utcnow(), onupdate=datetime.utcnow()
-    )
-    pcode = db.Column(db.String)
-
-    parent_location_id = db.Column(
-        db.Integer, db.ForeignKey("location.id"), index=True, nullable=True
-    )
-    parent = db.relationship("Location", remote_side=id, backref="sub_location")
-
-    parent_g_en = db.Column(db.String)
-    parent_d_en = db.Column(db.String)
-    parent_s_en = db.Column(db.String)
-    parent_c_en = db.Column(db.String)
-
-    parent_g_ar = db.Column(db.String)
-    parent_d_ar = db.Column(db.String)
-    parent_s_ar = db.Column(db.String)
-    parent_c_ar = db.Column(db.String)
-
-    parent_g_id = db.Column(db.Integer)
-    parent_d_id = db.Column(db.Integer)
-    parent_s_id = db.Column(db.Integer)
-    parent_c_id = db.Column(db.Integer)
-
-    country_cd = db.Column(db.String)
-
+    postal_code = db.Column(db.String)
+    country_code = db.Column(db.String)
+    tags = db.Column(ARRAY(db.String))
     full_location = db.Column(db.String)
+    id_tree = db.Column(db.String)
+
+    def create_revision(self, user_id=None, created=None):
+        if not user_id:
+            user_id = getattr(current_user, 'id', 1)
+        l = LocationHistory(
+            location_id=self.id, data=self.to_dict(), user_id=user_id
+        )
+        if created:
+            l.created_at = created
+            l.updated_at = created
+        l.save()
+
+        print("Created Location revision")
+
+    def get_children_ids(self):
+        children = Location.query.with_entities(Location.id).filter(Location.id_tree.like(f'%[{self.id}]%')).all()
+        # leaf children will return at least their id
+        return [x[0] for x in children]
 
     @staticmethod
-    def find_by_ids(ids: list):
-        """
-        finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
-        :return: matching records
-        """
-        if not ids:
-            return []
-        if len(ids) == 1:
-            qstr = '= {} '.format(ids[0])
-        else:
-            qstr = 'in {} '.format(str(tuple(ids)))
-        query = """
-                  with  recursive lcte (id, parent_g_id,parent_d_id, parent_s_id, parent_c_id, title) as (
-                  select id, parent_g_id,parent_d_id, parent_s_id, parent_c_id, title from location where id {} union all 
-                  select x.id, x.parent_g_id, x.parent_d_id, x.parent_s_id, x.parent_c_id, x.title from lcte c, location x 
-                  where x.parent_g_id = c.id or x.parent_d_id = c.id or x.parent_s_id = c.id or x.parent_c_id = c.id)
-                  select * from lcte;
-                  """.format(qstr)
-        result = db.engine.execute(query)
-
-        return [{'id': x[0], 'title': x[5]} for x in result]
-
-    def find_children(self, include_self=True):
-        """
-        Helper method to find all child location
-        :return: list of ids for all child locations
-        """
-        if self.loc_type == 'G':
-            childs = self.query.filter_by(parent_g_id=self.id)
-
-        elif self.loc_type == 'D':
-            childs = self.query.filter_by(parent_d_id=self.id)
-
-        elif self.loc_type == 'S':
-            childs = self.query.filter_by(parent_s_id=self.id)
-
-        elif self.loc_type == 'C':
-            childs = self.query.filter_by(parent_c_id=self.id)
-
-        else:
-            if include_self:
-                return [self.id]
-            else:
-                return []
-        if include_self:
-
-            return [c.id for c in childs] + [self.id]
-        else:
-            return [c.id for c in childs]
+    def get_children_by_id(id: int):
+        children = Location.query.with_entities(Location.id).filter(Location.id_tree.like(f'%[{id}]%')).all()
+        # leaf children will return at least their id
+        return [x[0] for x in children]
 
     @staticmethod
     def find_by_title(title):
@@ -662,65 +604,44 @@ class Location(db.Model, BaseMixin):
 
     # custom serialization method
     def to_dict(self):
-        parent_g = None
-        if self.parent_g_id:
-            parent_g_ = self.query.get(self.parent_g_id)
-            parent_g = {
-                'id': self.parent_g_id,
-                'full_string': parent_g_.full_location
-            }
-
-        parent_s = None
-        if self.parent_s_id:
-            parent_s_ = self.query.get(self.parent_s_id)
-            parent_s = {
-                'id': self.parent_s_id,
-                'full_string': parent_s_.full_location
-            }
-
-        parent_d = None
-        if self.parent_d_id:
-            parent_d_ = self.query.get(self.parent_d_id)
-            parent_d = {
-                'id': self.parent_d_id,
-                'full_string': parent_d_.full_location
-            }
-
-        parent_c = None
-        if self.parent_c_id:
-            parent_c_ = self.query.get(self.parent_c_id)
-            parent_c = {
-                'id': self.parent_c_id,
-                'full_string': parent_c_.full_location
-            }
+        if self.parent:
+            if not self.parent.admin_level:
+                print (self.parent, ' <-')
 
         return {
             "id": self.id,
             "title": self.title,
             "title_ar": self.title_ar,
-            "loc_type": self.loc_type,
-            "loc_type_name": self.LOC_TYPE[self.loc_type]
-            if self.loc_type in self.LOC_TYPE.keys()
-            else "",
-            "lat": self.latitude,
-            "lng": self.longitude,
-            "parent_g": parent_g,
-            "parent_d": parent_d,
-            "parent_s": parent_s,
-            "parent_c": parent_c,
-            "parent": {"id": self.parent.id, "title": self.parent.title, }
-            if self.parent
-            else None,
+            "description": self.description,
+            "location_type": self.location_type.to_dict() if self.location_type else '',
+            "admin_level": self.admin_level.to_dict() if self.admin_level else '',
+            "latlng": {"lat": self.latitude, "lng": self.longitude},
+            "postal_code": self.postal_code,
+            "country": self.country_code,
+            "parent": self.to_parent_dict(),
+            "tags": self.tags or [],
+
             "full_location": self.full_location,
             "full_string": '{} | {}'.format(self.full_location or '', self.title_ar or ''),
             "updated_at": DateHelper.serialize_datetime(self.updated_at)
         }
 
+    def to_parent_dict(self):
+        if not self.parent:
+            return None
+        else:
+            return {
+                "id": self.parent_id, 
+                "title": self.parent.title, 
+                "full_string": '{} | {}'.format(self.parent.full_location or '', self.parent.title_ar or ''),
+                "admin_level": self.parent.admin_level.to_dict() if self.admin_level else ''
+                }
+
     # custom compact serialization method
     def min_json(self):
         return {
             'id': self.id,
-            'loc_type': self.loc_type,
+            'location_type': self.location_type,
             'full_string': '{} | {}'.format(self.full_location, self.title_ar)
         }
 
@@ -731,31 +652,38 @@ class Location(db.Model, BaseMixin):
     def from_json(self, jsn):
         self.title = jsn.get('title')
         self.title_ar = jsn.get('title_ar')
-        self.loc_type = jsn.get('loc_type')
-        self.longitude = jsn.get('lng')
-        self.latitude = jsn.get('lat')
+        self.description = jsn.get('description')
+        if jsn.get('latlng'):
+            self.longitude = jsn.get('latlng').get('lng')
+            self.latitude = jsn.get('latlng').get('lat')
+        else:
+            self.longitude = None
+            self.latitude = None
+
+        # little validation doesn't hurt
+        allowed_location_types = [l.title for l in LocationType.query.all()]
+        if jsn.get('location_type') and jsn.get('location_type').get('title') in allowed_location_types:
+            self.location_type_id = jsn.get('location_type').get('id')
+            self.location_type = LocationType.query.get(self.location_type_id)
+
+            if self.location_type.title == "Administrative Location":
+                self.admin_level_id = jsn.get('admin_level').get('id')
+                self.admin_level = LocationAdminLevel.query.get(self.admin_level_id)
+            else:
+                self.admin_level_id = None
+                self.admin_level = None
+        else:
+            self.location_type = None
+
         self.full_location = jsn.get('full_location')
-        if jsn.get('parent_g') and jsn.get('parent_g').get('id'):
-            self.parent_g_id = jsn.get('parent_g').get('id')
-        else:
-            self.parent_g_id = None
-        if jsn.get('parent_s') and jsn.get('parent_s').get('id'):
-            self.parent_s_id = jsn.get('parent_s').get('id')
-        else:
-            self.parent_s_id = None
-        if jsn.get('parent_d') and jsn.get('parent_d').get('id'):
-            self.parent_d_id = jsn.get('parent_d').get('id')
-        else:
-            self.parent_d_id = None
-        if jsn.get('parent_c') and jsn.get('parent_c').get('id'):
-            self.parent_c_id = jsn.get('parent_c').get('id')
-        else:
-            self.parent_c_id = None
+        self.postal_code = jsn.get('postal_code')
+        self.country_code = jsn.get('country')
+        self.tags = jsn.get('tags', [])
         parent = jsn.get('parent')
         if parent and parent.get('id'):
-            self.parent_location_id = parent.get('id')
+            self.parent_id = parent.get('id')
         else:
-            self.parent_location_id = None
+            self.parent_id = None
 
         return self
 
@@ -770,23 +698,61 @@ class Location(db.Model, BaseMixin):
             return locations
 
     # helper method to get full location hierarchy
-    def get_full_string(self):
-        name_str = str(self.title)
-        if self.loc_type == "D" and self.parent_g_id:
-            name_str = '{}, {}'.format(self.query.get(self.parent_g_id).title, self.title)
-        if self.loc_type == "S" and self.parent_g_id and self.parent_d_id:
-            name_str = '{}, {}, {}'.format(self.query.get(self.parent_g_id).title,
-                                           self.query.get(self.parent_d_id).title, self.title)
-        if self.loc_type == "C" and self.parent_g_id and self.parent_d_id and self.parent_s_id:
-            name_str = '{}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title,
-                                               self.query.get(self.parent_d_id).title,
-                                               self.query.get(self.parent_s_id).title, self.title)
-        if self.loc_type == "N" and self.parent_g_id and self.parent_d_id and self.parent_s_id and self.parent_c_id:
-            name_str = '{}, {}, {}, {}, {}'.format(self.query.get(self.parent_g_id).title,
-                                                   self.query.get(self.parent_d_id).title,
-                                                   self.query.get(self.parent_s_id).title,
-                                                   self.query.get(self.parent_c_id).title, self.title)
-        return name_str
+    def get_full_string(self, descending=True):
+        """
+        Generates full string of location and parents. 
+        """
+
+        pid = self.parent_id
+        if not pid or self.admin_level is None:
+            return self.title
+
+        string = []
+        string.append(self.title)
+        counter = self.admin_level.code
+
+        while True:
+            if pid:
+                parent = Location.query.get(pid)
+                if parent:
+                    if descending:
+                        string.insert(0, parent.title)
+                    else:
+                        string.append(parent.title)
+                    pid = parent.parent_id
+
+            counter -= 1
+            if counter == 0:
+                break
+
+        return ', '.join(string)
+
+    def get_id_tree(self):
+        """
+        use common table expressions to generate the full tree of ids, this is very useful to reduce
+        search complexity when using autocomplete locations
+        :return:
+        """
+        query = """
+        with recursive tree(id,depth) as (
+        select id, title, parent_id from location where id = {}
+        union all
+        select p.id, p.title, p.parent_id from location p, tree t
+        where p.id = t.parent_id
+        )
+        select * from tree;
+        """.format(self.id)
+        result = db.engine.execute(text(query))
+        return ' '.join(['[{}]'.format(loc[0]) for loc in result])
+
+    @staticmethod
+    def rebuild_id_trees():
+        for l in Location.query.all():
+            print('Generating id tree for Location - {}'.format(l.id))
+            l.id_tree = l.get_id_tree()
+            l.save()
+
+        print('ID tree generated successfuly for location table')
 
     # imports csv data into db
     @staticmethod
@@ -794,42 +760,76 @@ class Location(db.Model, BaseMixin):
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
+        no_df = df.drop('parent_id', axis=1)
+        no_df['deleted'] = no_df['deleted'].astype('bool')
 
-        # Replace NaN with proper defaults
+        # pick only locations with parents
+        df = df[df.parent_id.notnull()]
 
-        df.loc_type = df.loc_type.fillna("")
-        df.title = df.title.fillna("")
-        df.title_ar = df.title_ar.fillna("")
+        # convert parent to int
+        df['parent_id'] = df['parent_id'].astype('int')
 
-        df.parent_location_id = df.parent_location_id.fillna(0)
-        df.parent_g_id = df.parent_g_id.fillna(0)
-        df.parent_d_id = df.parent_d_id.fillna(0)
-        df.parent_s_id = df.parent_s_id.fillna(0)
-        df.parent_c_id = df.parent_c_id.fillna(0)
+        # limit data frame to only id/parent_id pairs
+        df = df[['id', 'parent_id']]
 
-        df.parent_d_id = df.parent_d_id.fillna(0)
+        # step.1 import locations - no parents
+        no_df.to_sql('location', con=db.engine, index=False, if_exists='append')
+        print('locations imported successfully')
 
-        db.session.bulk_insert_mappings(
-            Location, df.to_dict(orient="records"), render_nulls=True
-        )
+        # step.2 update locations - add parents
+        db.session.bulk_update_mappings(Location, df.to_dict(orient="records"))
         db.session.commit()
+        print ('locations parents imported successfully')
 
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from location").scalar()
-        db.session.execute(
-            "alter sequence location_id_seq restart with {}".format(max_id)
-        )
+        db.session.execute("alter sequence location_id_seq restart with {}".format(max_id))
         db.session.commit()
         print("Location ID counter updated.")
 
-        # generate locations full strings
-        for location in Location.query.all():
-            location.full_location = location.get_full_string()
-            print('generating full location string')
-
-        db.session.commit()
-
         return ""
+
+
+class LocationAdminLevel(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for location admin levels
+    """
+    __table_args__ = {"extend_existing": True}
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'code': self.code,
+            'title': self.title
+        }
+
+    def from_json(self, jsn):
+        self.code = jsn.get('code')
+        self.title = jsn.get('title')
+
+
+class LocationType(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for location types
+    """
+    __table_args__ = {"extend_existing": True}
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    description = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description
+        }
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title')
+        self.description = jsn.get('description')
 
 
 class GeoLocation(db.Model, BaseMixin):
@@ -1291,6 +1291,9 @@ class Bulletin(db.Model, BaseMixin):
     review = db.Column(db.Text)
     review_action = db.Column(db.String)
 
+    # metadata
+    meta = db.Column(JSON)
+
     tsv = db.Column(TSVECTOR)
 
     search = db.Column(db.Text, db.Computed(
@@ -1417,8 +1420,10 @@ class Bulletin(db.Model, BaseMixin):
         # Events
         if "events" in json:
             new_events = []
-            for event in json["events"]:
-                if not "id" in event:
+            events = json["events"]
+            events.sort(key=lambda events : events.get('from_date') or '0')
+            for event in events:
+                if "id" not in event:
                     # new event
                     e = Event()
                     e = e.from_json(event)
@@ -2003,6 +2008,9 @@ class Actor(db.Model, BaseMixin):
     review = db.Column(db.Text)
     review_action = db.Column(db.String)
 
+    # metadata
+    meta = db.Column(JSON)
+
     tsv = db.Column(TSVECTOR)
 
     if cfg.MISSING_PERSONS:
@@ -2196,8 +2204,10 @@ class Actor(db.Model, BaseMixin):
         # Events
         if "events" in json:
             new_events = []
-            for event in json["events"]:
-                if not "id" in event:
+            events = json["events"]
+            events.sort(key=lambda events : events.get('from_date') or '0')
+            for event in events:
+                if "id" not in event:
                     # new event
                     e = Event()
                     e = e.from_json(event)
@@ -3246,8 +3256,10 @@ class Incident(db.Model, BaseMixin):
         # Events
         if "events" in json:
             new_events = []
-            for event in json["events"]:
-                if not "id" in event:
+            events = json["events"]
+            events.sort(key=lambda events : events.get('from_date') or '0')
+            for event in events:
+                if "id" not in event:
                     # new event
                     e = Event()
                     e = e.from_json(event)
@@ -3661,6 +3673,36 @@ class IncidentHistory(db.Model, BaseMixin):
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
+class LocationHistory(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for location revisions
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    location_id = db.Column(db.Integer, db.ForeignKey("location.id"), index=True)
+    location = db.relationship(
+        "Location", backref=db.backref("history", order_by='LocationHistory.updated_at'), foreign_keys=[location_id]
+    )
+    data = db.Column(JSON)
+    # user tracking
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", backref="location_revisions", foreign_keys=[user_id])
+
+    # serialize
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "data": self.data,
+            "created_at": DateHelper.serialize_datetime(self.created_at),
+            "user": self.user.to_compact() if self.user else None,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict(), sort_keys=True)
+
+    def __repr__(self):
+        return '<LocationHistory {} -- Target {}>'.format(self.id, self.location_id)
+
+
 class Activity(db.Model, BaseMixin):
     """
     SQL Alchemy model for activity
@@ -3735,20 +3777,6 @@ class APIKey(db.Model, BaseMixin):
             return global_key.key
         else:
             return ''
-
-
-class Etl(db.Model, BaseMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
-    bulletin = db.relationship('Bulletin', backref='etl')
-    meta = db.Column(JSON)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'bulletin_id': self.bulletin_id,
-            'meta': self.meta
-        }
 
 
 class Query(db.Model, BaseMixin):

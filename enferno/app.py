@@ -9,7 +9,7 @@ import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
     Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation, Log
 from enferno.admin.views import admin
-from enferno.extensions import cache, db, mail, debug_toolbar, migrate, session, bouncer, babel
+from enferno.extensions import cache, db, mail, debug_toolbar, session, bouncer, babel
 from enferno.public.views import bp_public
 from enferno.settings import ProdConfig
 from enferno.user.forms import ExtendedRegisterForm
@@ -38,7 +38,6 @@ def register_extensions(app):
                         register_form=ExtendedRegisterForm)
     mail.init_app(app)
     debug_toolbar.init_app(app)
-    migrate.init_app(app, db)
     session.init_app(app)
     bouncer.init_app(app)
     babel.init_app(app)

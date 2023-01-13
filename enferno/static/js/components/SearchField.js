@@ -1,6 +1,6 @@
 Vue.component('search-field',
     {
-        props: ['value', 'label', 'multiple', 'itemText', 'itemValue', 'api', 'queryParams'],
+        props: ['value', 'label', 'multiple', 'itemText', 'itemValue', 'api', 'queryParams','disabled'],
         data: () => {
             return {
                 loading: false,
@@ -30,6 +30,15 @@ Vue.component('search-field',
 
 
         methods: {
+
+            emitChange(v){
+                if(v){
+                    this.$emit('change', v)
+                }
+                
+
+
+            },
 
 
             updateValue(val) {
@@ -65,6 +74,7 @@ Vue.component('search-field',
         },
         template: `
             <v-combobox
+                    :disabled="disabled"
                     menu-props="auto"
                     auto-select-first
                     v-bind:value="value"
@@ -86,7 +96,7 @@ Vue.component('search-field',
                     @focus="search"
                     return-object
                     :search-input.sync="searchInput"
-                    @change="searchInput=''"
+                    @change="emitChange"
 
                     :loading="loading"
 

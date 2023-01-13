@@ -40,7 +40,7 @@
                                   dark
                                   class="ma-2"
                                   v-on="on"
-                                  >New Item</v-btn
+                                  >{{_('New Item')}}</v-btn
                                 >
                               </template>
                               {% endif %}
@@ -95,13 +95,13 @@
                                     color="blue darken-1"
                                     text
                                     @click="close"
-                                    >Cancel</v-btn
+                                    >{{_('Cancel')}}</v-btn
                                   >
                                   <v-btn
                                     color="blue darken-1"
                                     text
                                     @click="save"
-                                    >Save</v-btn
+                                    >{{_('Save')}}</v-btn
                                   >
                                 </v-card-actions>
                               </v-card>
@@ -112,7 +112,7 @@
                             width="500"
                           >
 
-                          {% if current_user.roles_in(['Admin','Mod']) %}
+                          {% if current_user.has_role('Admin') %}
                             <template v-slot:activator="{ on }">
                                 <v-btn
                                 color="secondary"

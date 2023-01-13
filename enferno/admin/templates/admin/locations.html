@@ -2,7 +2,8 @@
 
     <div id="app">
         <v-app id="locations" v-cloak>
-            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
+                'admin/partials/location_drawer.html' %}
             <v-main>
                 <v-container class="container--fluid">
                     <v-row>
@@ -15,15 +16,17 @@
                                 <v-card-text>
 
                                     <v-data-table
-                                            height="calc(100vh - 335px)"
-                                            fixed-header
-                                            :headers="headers"
-                                            :items="items"
-                                            :options.sync="options"
-                                            :footer-props.sync="footerProps"
-                                            :loading="loading"
-                                            :server-items-length="itemsLength"
-                                            class="elevation-1"
+                                        height="calc(100vh - 335px)"
+                                        id="locations-dt"
+                                        fixed-header
+                                        :headers="headers"
+                                        @click:row="rowClick"
+                                        :items="items"
+                                        :options.sync="options"
+                                        :footer-props.sync="footerProps"
+                                        :loading="loading"
+                                        :server-items-length="itemsLength"
+                                        class="elevation-1"
                                     >
                                         <template v-slot:top>
                                             <v-toolbar flat color="white">
@@ -42,168 +45,28 @@
 
                                                 </v-text-field>
                                                 <v-spacer></v-spacer>
-                                                <v-dialog v-model="dialog" max-width="990px">
-                                                    {% if current_user.roles_in(['Admin','Mod']) %}
+                                                <v-btn @click="newItem"
+                                                    color="primary"
+                                                    dark
+                                                    class="ma-2"
+                                                    :disabled="!editAllowed()">
+                                                    {{ _('New Location') }}
+                                                </v-btn>
 
-                                                        <template v-slot:activator="{ on }">
-                                                            <v-btn
-                                                                    color="primary"
-                                                                    dark
-                                                                    class="ma-2"
-                                                                    v-on="on"
-                                                            >{{ _('New Item') }}</v-btn
-                                                            >
-                                                        </template>
-                                                    {% endif %}
-
-                                                    <v-card>
-                                                        <v-card-title>
-                                                            <span class="headline">${ formTitle }</span>
-                                                        </v-card-title>
-
-                                                        <v-card-text>
-                                                            <v-container>
-                                                                <v-row>
-                                                                    <v-col cols="12" md="3">
-                                                                        <v-text-field
-                                                                                v-model="editedItem.title"
-                                                                                label="{{ _('Title') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                    <v-col cols="12" md="3">
-                                                                        <v-text-field
-                                                                                v-model="editedItem.title_ar"
-                                                                                label="{{ _('Title (Ar)') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-
-                                                                    <v-col cols="12" md="6">
-                                                                        <v-text-field
-                                                                                disabled
-                                                                                v-model="editedItem.full_string"
-                                                                                label="{{ _('Full Location') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                </v-row>
-
-                                                                <v-row>
-                                                                    <v-col cols="12" md="3">
-                                                                        <v-text-field
-
-                                                                                v-model="editedItem.lat"
-                                                                                label="{{ _('Latitude') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                    <v-col cols="12" md="3">
-                                                                        <v-text-field
-
-                                                                                v-model="editedItem.lng"
-                                                                                label="{{ _('Longitude') }}"
-                                                                        ></v-text-field>
-                                                                    </v-col>
-                                                                    <v-col cols="12" md="3">
-
-                                                                        <v-select :items="['S','D','N','C','G']"
-                                                                                  label="{{ _('Location type') }}"
-                                                                                  v-model="editedItem.loc_type"></v-select>
-                                                                    </v-col>
-
-                                                                </v-row>
-
-
-                                                                <v-row>
-
-
-                                                                    <v-col cols="12" md="6">
-
-
-                                                                        <search-field
-                                                                                v-model="editedItem.parent_g"
-                                                                                api="/admin/api/locations/"
-                                                                                item-text="full_string"
-                                                                                item-value="id"
-                                                                                :multiple="false"
-                                                                                query-params="&typ=g"
-                                                                                label="{{ _('Parent (G)') }}"
-                                                                        ></search-field>
-
-
-                                                                    </v-col>
-
-                                                                    <v-col cols="12" md="6">
-                                                                        <search-field
-                                                                                v-model="editedItem.parent_d"
-                                                                                api="/admin/api/locations/"
-                                                                                item-text="full_string"
-                                                                                item-value="id"
-                                                                                :multiple="false"
-                                                                                query-params="&typ=d"
-                                                                                label="{{ _('Parent (D)') }}"
-                                                                        ></search-field>
-                                                                    </v-col>
-                                                                </v-row>
-                                                                <v-row>
-
-                                                                    <v-col cols="12" md="6">
-                                                                        <search-field
-                                                                                v-model="editedItem.parent_s"
-                                                                                api="/admin/api/locations/"
-                                                                                item-text="full_string"
-                                                                                item-value="id"
-                                                                                :multiple="false"
-                                                                                query-params="&typ=s"
-                                                                                label="{{ _('Parent (S)') }}"
-                                                                        ></search-field>
-                                                                    </v-col>
-
-                                                                    <v-col cols="12" md="6">
-                                                                        <search-field
-                                                                                v-model="editedItem.parent_c"
-                                                                                api="/admin/api/locations/"
-                                                                                item-text="full_string"
-                                                                                item-value="id"
-                                                                                :multiple="false"
-                                                                                query-params="&typ=c"
-                                                                                label="{{ _('Parent (C)') }}"
-                                                                        ></search-field>
-                                                                    </v-col>
-
-
-                                                                </v-row>
-                                                            </v-container>
-                                                        </v-card-text>
-
-                                                        <v-card-actions>
-                                                            <v-spacer></v-spacer>
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="close"
-                                                            >{{ _('Cancel') }}</v-btn
-                                                            >
-                                                            <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="save"
-                                                            >{{ _('Save') }}</v-btn
-                                                            >
-                                                        </v-card-actions>
-                                                    </v-card>
-                                                </v-dialog>
+                                                {% include 'admin/partials/location_dialog.html' %}
 
                                                 <v-dialog
-                                                        v-model="imDialog"
-                                                        width="500"
-                                                >
+                                                    v-model="imDialog"
+                                                    width="500">
                                                     <template v-slot:activator="{ on }">
-                                                        {% if current_user.roles_in(['Admin','Mod']) %}
-                                                            <v-btn
-                                                                    color="secondary"
-                                                                    dark
-                                                                    class="ma-2"
-                                                                    v-on="on"
-                                                            >{{ _('Import CSV') }}</v-btn
-                                                            >
+                                                        {% if current_user.roles_in(['Admin']) %}
+                                                        <v-btn
+                                                            color="secondary"
+                                                            dark
+                                                            class="ma-2"
+                                                            v-on="on">
+                                                            {{ _('Import CSV') }}
+                                                        </v-btn>
                                                         {% endif %}
                                                     </template>
 
@@ -216,10 +79,11 @@
                                                             <v-container>
                                                                 <v-row>
                                                                     <v-col cols="12" md="12">
-                                                                        <v-file-input v-model="csvFile" show-size
-                                                                                      accept=".csv"
-                                                                                      label="{{ _('Select CSV File') }}"></v-file-input>
-
+                                                                        <v-file-input 
+                                                                            v-model="csvFile" show-size
+                                                                            accept=".csv"
+                                                                            label="{{ _('Select CSV File') }}">
+                                                                        </v-file-input>
                                                                     </v-col>
                                                                 </v-row>
                                                             </v-container>
@@ -228,28 +92,35 @@
                                                         <v-card-actions>
                                                             <v-spacer></v-spacer>
                                                             <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="imDialog=false"
-                                                            >Cancel
-                                                            </v-btn
-                                                            >
+                                                                color="blue darken-1"
+                                                                text
+                                                                @click="imDialog=false">
+                                                                {{_('Cancel')}}
+                                                            </v-btn>
                                                             <v-btn
-                                                                    color="blue darken-1"
-                                                                    text
-                                                                    @click="importCSV"
-                                                            >Save
-                                                            </v-btn
-                                                            >
+                                                                color="blue darken-1"
+                                                                text
+                                                                @click="importCSV">
+                                                                {{_('Save')}}
+                                                            </v-btn>
                                                         </v-card-actions>
                                                     </v-card>
-
                                                 </v-dialog>
-
                                             </v-toolbar>
                                         </template>
+
+                                        <template v-slot:item.parent.title="{ item }">
+                                            <div v-if="item.parent">
+                                                <v-btn style="scale:0.76" depressed fab x-small>
+                                                    ${item.parent.id}
+                                                </v-btn>
+                                                ${item.parent.title}
+                                            </div>
+
+
+                                        </template>
                                         <template v-slot:item.action="{ item }">
-                                            <v-icon small class="mr-2" @click="editItem(item)">
+                                            <v-icon small class="mr-2" @click.stop="editItem(item)" v-if="editAllowed()">
                                                 mdi-pencil
                                             </v-icon>
                                             <v-icon small @click="deleteItem(item)">
@@ -259,9 +130,9 @@
                                         <template v-slot:no-data></template>
                                     </v-data-table>
 
-                                    <v-snackbar v-model="snackbar">
+                                    <v-snackbar v-model="snackbar" class="d-flex">
                                         ${snackMessage}
-                                        <v-btn color="pink" text @click="snackbar = false">
+                                        <v-btn color="grey lighten-4" text @click="confirmClose">
                                             Close
                                         </v-btn>
                                     </v-snackbar>
@@ -269,7 +140,7 @@
                             </v-card>
                         </v-col>
                     </v-row>
-                </v-container>
+
                 </v-container>
             </v-main>
             {% include 'footer.html' %}
@@ -277,22 +148,48 @@
     </div>
 
 {% endblock %} {% block js %}
-    <script>
+    <script
+        src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+        referrerpolicy="origin">
+    </script>
+    <script src="/static/js/tinymce-vue.min.js"></script>
+    <script src="/static/js/components/LocationCard.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/UniField.js?v={{ g.version }}"></script>
 
+    {% if config.GOOGLE_MAPS_API_KEY %}
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}" async defer></script>
+
+    {% endif %}
+    <script src="/static/js/Leaflet.GoogleMutant.js"></script>
+
+    <script>
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        
 
         let app = new Vue({
             el: "#app",
             vuetify: vuetify,
             delimiters: delimiters,
+            router,
+            components: {
+                "tinymce-editor": Editor, // <- Important part,
+            },
             data: () => ({
+                translations: translations,
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 dialog: dialog,
                 imDialog: false,
+
                 drawer: drawer,
                 sideNav: sideNav,
+                locationDrawer: false,
+                tinyConfig: tinyConfig,
+                locationKey: 1,
                 parentList: [],
                 snackbar: false,
                 snackMessage: '',
                 loading: true,
+                
                 csvFile: null,
                 q: '',
                 options: {},
@@ -304,18 +201,22 @@
                 headers: [
                     {text: "{{_('ID')}}", value: "id"},
                     {text: "{{_('Title')}}", value: "title"},
-                    {text: "{{_('Location Type')}}", value: "loc_type_name"},
-                    {text: "{{_('Title (ar)')}}", value: "title_ar"},
                     {text: "{{_('Full Location')}}", value: "full_string"},
+                    {text: "{{_('Parent')}}", value: "parent.title"},
+                    {text: "{{_('Location Type')}}", value: "location_type.title"},
+                    {text: "{{_('Admin Level')}}", value: "admin_level.title"},
 
-                    {% if current_user.roles_in(['Admin','Mod']) %}
+                    {% if current_user.roles_in(['Admin','Mod']) or current_user.can_edit_locations %}
                         {text: "{{_('Actions')}}", value: "action", sortable: false}
                     {% endif %}
                 ],
 
                 items: [],
+
                 itemsLength: 10,
                 editedIndex: -1,
+
+                locTypeParams: '',
                 editedItem: {
                     title: "",
                     parent: {
@@ -326,20 +227,51 @@
                 },
                 defaultItem: {
                     title: "",
-                    parent: {
-                        id: null,
-                        title: ''
-                    }
-                }
+                    admin_level: null,
+                    parent: null,
+                },
+                location: {},
+                locationLoader: false
             }),
 
             computed: {
+                checkAdminLevel() {
+                    if (this.editedItem.location_type?.title === 'Administrative Location') {
+
+                        return 'required';
+                    }
+
+
+                },
+
                 formTitle() {
-                    return this.editedIndex === -1 ? "{{_('New Item')}}" : "{{_('Edit Item')}}";
+                    return !this.editedItem.id ? "{{_('New Location')}}" : "{{_('Edit Location')}}";
+                },
+
+                latlngValid(){
+                    if(this.editedItem.latlng){
+                        if (this.editedItem.latlng.lat && this.editedItem.latlng.lng) {
+                            return true;
+                        }
+                        if (!this.editedItem.latlng.lat && !this.editedItem.latlng.lng) {
+                            return true;
+                        }
+                    }
+                    return false;
                 }
             },
 
             watch: {
+
+                locationDrawer: function (val) {
+                    if (val == false) {
+
+                        if (this.$route.path != '/admin/locations/')
+                            this.$router.push('/admin/locations/')
+                    }
+                },
+
+
                 dialog(val) {
                     val || this.close();
                 },
@@ -349,11 +281,85 @@
                     immdiate: true
                 }
             },
-            mounted() {
+
+            mounted: function() {
+                if (this.$route.params.id) {
+                    this.showLocation(this.$route.params.id);
+                }
+
+                this.$router.afterEach((to, from, next) => {
+
+
+                    if (this.$route.params.id) {
+                        this.showLocation(this.$route.params.id);
+                    } else {
+                        this.bulletinDrawer = false;
+                    }
+
+                })
 
             },
 
             methods: {
+
+                rowClick(item) {
+                    path = `/admin/locations/${item.id}`;
+                    if (this.$route.path !== path)
+                        this.$router.push(path);
+
+                },
+                showLocation(id) {
+                    this.locationLoader = true;
+                    this.locationDrawer = true;
+                    axios.get(`/admin/api/location/${id}`).then(response => {
+                        this.loading = false;
+                        this.location = response.data;
+                        this.locationLoader = false;
+                    }).catch(error => {
+                        this.locationDrawer = false;
+                        this.locationLoader = false;
+                        this.showSnack('Oops! We couldn\'t find this item.')
+                    });
+                },
+                restrictSearch() {
+                    if (this.editedItem.location_type?.title === 'Administrative Location') {
+                        const restrict = this.editedItem.admin_level.code - 1;
+                        if (this.editedItem.parent?.admin_level.code !== restrict) {
+                            // clear parent location
+                            this.editedItem.parent = null;
+                        }
+                        this.locTypeParams = `&lvl=${restrict}`;
+                    } else {
+                        this.locTypeParams = '';
+                    }
+                },
+
+                has_role(user, role) {
+                    for (r of user.roles) {
+                        if (r.name == role) {
+                            return true
+                        }
+                    }
+                    return false;
+                },
+
+                editAllowed() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return true;
+                    } else if (this.has_role(this.currentUser, 'Mod')) {
+                        return true;
+                    } else if (this.currentUser.can_edit_locations) {
+                        return true
+                    }
+                    return false;
+                },
+
+                checkLevel() {
+                    if (this.editedItem.location_type?.title !== 'Administrative Location') {
+                        this.editedItem.admin_level = null;
+                    }
+                },
+
                 preprocess(items) {
                     // adjust title
                     for (const i of items) {
@@ -371,12 +377,12 @@
 
                         this.itemsLength = response.data.total;
                         this.items = this.preprocess(response.data.items);
-                    }).catch(err=>{
+                    }).catch(err => {
                         console.log(err.response.data);
                     })
                         .finally(() => {
-                        this.loading = false;
-                    });
+                            this.loading = false;
+                        });
                 },
 
                 importCSV() {
@@ -386,18 +392,35 @@
 
                         this.imDialog = false;
                         this.refresh();
-                        this.snackMessage = response.data;
-                        this.snackbar = true;
+                        this.showSnack(response.data);
+
+                    })
+                },
+
+                showSnack(message) {
+                    this.snackMessage = message;
+                    this.snackbar = true;
+                },
+
+                newItem() {
+
+                    this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                    this.dialog = true;
+                    this.$nextTick(()=>{
+                        this.locationKey += 1;
                     })
 
                 },
 
                 editItem(item) {
-
+                    this.locationDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = Object.assign({}, item);
+                    this.restrictSearch()
                     this.dialog = true;
-
+                    this.$nextTick(() => {
+                        this.locationKey += 1;
+                    });
 
                 },
 
@@ -408,10 +431,21 @@
                     if (cfm) {
                         axios.delete(`/admin/api/location/${item.id}`)
                             .then(response => {
-                                this.snackMessage = response.data;
-                                this.snackbar = true;
+                                this.showSnack(response.data);
+
                                 this.refresh()
                             })
+                    }
+                },
+
+                confirmClose() {
+                    if (confirm('Are you sure?')) {
+                        this.dialog = false;
+                        this.snackbar = false;
+                        setTimeout(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem);
+                            this.editedIndex = -1;
+                        }, 300);
                     }
                 },
 
@@ -424,29 +458,35 @@
                 },
 
                 save() {
-                    if (this.editedIndex > -1) {
-                        Object.assign(this.items[this.editedIndex], this.editedItem);
-                        //update record
-                        axios.put(`/admin/api/location/${this.editedItem.id}`, {item: this.editedItem})
+                    if(!this.editedItem.latlng?.lat){
+                        this.editedItem.latlng = null;
+                    }
+                    if (this.editedItem.id) {
+                        axios.put(`/admin/api/location/${this.editedItem.id}`, {
+                            item: this.editedItem
+                        })
                             .then(response => {
-                                this.snackMessage = response.data;
-                                this.snackbar = true;
-                                this.refresh()
-                            })
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                                this.close();
+                            }).catch(err => {
+                            this.showSnack(err.response.data);
+                        }).then(() => {
+                            this.close()
+                        });
                     } else {
                         this.items.push(this.editedItem);
-
-                        //insert new record
-                        axios
-                            .post("/admin/api/location/", {item: this.editedItem})
+                        //create new record
+                        axios.post("/admin/api/location/", {item: this.editedItem})
                             .then(response => {
-
-                                this.snackMessage = response.data;
-                                this.snackbar = true;
-                                this.refresh()
-                            });
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                            }).catch(err => {
+                            this.showSnack(err.response.data);
+                        }).then(() => {
+                            this.close();
+                        });
                     }
-                    this.close();
                 }
             }
         });

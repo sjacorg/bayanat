@@ -1,0 +1,175 @@
+<validation-observer v-slot="{invalid}">
+    <v-dialog persistent v-if="dialog" v-model="dialog" fullscreen>
+
+        <v-card v-if="dialog" class="overflow-hidden card-edit">
+            <v-app-bar
+                absolute
+                color="pv"
+                dark
+                class="card-header">
+            <v-toolbar-title>${ formTitle }
+                <span class="gv--text" v-if="editedItem.id"> ${editedItem.id}</span>
+            </v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-btn 
+                    @click="save" 
+                    :disabled="invalid || !latlngValid" 
+                    dark color="primary darken-1" 
+                    small class="mx-2" 
+                    depressed>
+                    {{ _('Save Location') }}
+                    </v-btn>
+                <v-btn
+                    icon
+                    @click="confirmClose">
+                    <v-icon>mdi-close</v-icon>
+                </v-btn>
+            </v-app-bar>
+
+            <v-sheet 
+                id="card-content"
+                max-height="100vh"
+                class="overflow-y-auto pt-14">
+                <v-container>
+                    <v-row>
+                        <v-col cols="12" md="3">
+                            <validation-provider name="Title" rules="required" v-slot="{ errors }">
+                                <v-text-field
+                                    v-model="editedItem.title"
+                                    label="{{ _('Title') }}">
+                                </v-text-field>
+                                <span class="orange--text"> ${errors[0]}</span>
+                            </validation-provider>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-text-field
+                                v-model="editedItem.title_ar"
+                                label="{{ _('Title (Ar)') }}">
+                            </v-text-field>
+                        </v-col>
+
+                        <v-col cols="12" md="6">
+                            <v-text-field
+                                disabled
+                                v-model="editedItem.full_string"
+                                label="{{ _('Full Location') }}">
+                            </v-text-field>
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12" md="5">
+                            <validation-provider name="Location Type"
+                            rules="required"
+                            v-slot="{ errors }">
+                                <search-field
+                                    v-model="editedItem.location_type"
+                                    api="/admin/api/location-types/"
+                                    item-text="title"
+                                    item-value="id"
+                                    @input="checkLevel"
+                                    :return-object="false"
+                                    :multiple="false"
+                                    label="{{ _('Location Type') }}">
+                                </search-field>
+
+                                <span class="orange--text"> ${errors[0]}</span>
+
+                            </validation-provider>
+
+                        </v-col>
+                        
+                        <v-col cols="12" md="4">
+                            <validation-provider
+                                    name="Administration Level"
+                                    :rules="checkAdminLevel"
+                                    v-slot="{ errors }">
+
+                                <search-field
+                                    api="/admin/api/location-admin-levels/"
+                                    item-text="title"
+                                    item-value="id"
+                                    :disabled="editedItem.location_type?.title!=='Administrative Location'"
+                                    v-model="editedItem.admin_level"
+                                    @change="restrictSearch"
+                                    :return-object="false"
+                                    :multiple="false"
+                                    label="{{ _('Admin Level') }}">
+                                </search-field>
+
+                                <span class="orange--text"> ${errors[0]}</span>
+                            </validation-provider>
+                        </v-col>
+
+                        <v-col cols="12" md="3">
+                            <v-autocomplete
+                                :items="translations.countries"
+                                item-text="tr"
+                                item-value="en"
+                                v-model="editedItem.country"
+                                label="{{ _('Country') }}">
+                            </v-autocomplete>
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12" md="8">
+                            <search-field
+                                :disabled="editedItem.admin_level?.code == 1"
+                                v-model="editedItem.parent"
+                                api="/admin/api/locations/"
+
+                                :query-params="locTypeParams"
+                                item-text="full_string"
+                                item-value="id"
+                                :return-object="true"
+                                :multiple="false"
+                                label="{{ _('Parent Location') }}">
+                            </search-field>
+                        </v-col>
+
+                        <v-col cols="12" md="4">
+                            <v-text-field
+                                v-model="editedItem.postal_code"
+                                label="{{ _('Postal Code') }}">
+                            </v-text-field>
+                        </v-col>
+                        
+                    </v-row>
+                    
+                    <v-row>
+                        <v-col cols="12" md="12">
+                            <geo-map 
+                                class="flex-grow-1"
+                                v-model="editedItem.latlng"
+                                map-height="300">
+                            </geo-map>
+                        </v-col>        
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12" md="12">
+                            <tinymce-editor
+                                :key="locationKey"
+                                :init="tinyConfig"
+                                v-model="editedItem.description">
+                            </tinymce-editor>
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12" md="12">
+                            <v-combobox
+                                small-chips
+                                multiple
+                                v-model="editedItem.tags"
+                                label="{{ _('Tags') }}">
+                            </v-combobox>
+                        </v-col>
+                    </v-row>
+
+                </v-container>
+            </v-sheet>
+        </v-card>
+    </v-dialog>
+</validation-observer>

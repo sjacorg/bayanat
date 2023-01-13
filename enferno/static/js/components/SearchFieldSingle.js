@@ -1,6 +1,6 @@
 Vue.component('search-field-single',
     {
-        props: ['value', 'label', 'itemText', 'itemValue', 'api','queryParams', 'returnObject'],
+        props: ['value', 'label', 'itemText', 'itemValue', 'api','queryParams', 'returnObject','disabled'],
         data: () => {
             return {
                 loading: false,
@@ -46,6 +46,7 @@ Vue.component('search-field-single',
                     :item-text="itemText"
                     :item-value="itemValue"
                     prepend-inner-icon="mdi-magnify"
+                    :disabled="disabled"
                     
                     small-chips
                     clearable

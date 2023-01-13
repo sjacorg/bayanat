@@ -9,8 +9,7 @@ from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User, Role
-from enferno.tasks import import_data,generate_user_roles
-
+from enferno.tasks import import_data, generate_user_roles, create_default_location_data
 
 @click.command()
 @with_appcontext
@@ -25,6 +24,8 @@ def create_db():
     print('Database structure created successfully')
     generate_user_roles()
     click.echo('Generated user roles successfully.')
+    create_default_location_data()
+    click.echo('Generated location metadata successfully.')
     try:
         import_data()
         click.echo('Imported data successfully.')

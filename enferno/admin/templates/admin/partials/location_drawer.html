@@ -1,0 +1,22 @@
+<v-navigation-drawer
+      v-model="locationDrawer"
+      clipped
+      fixed
+      right
+      temporary
+      width="520"
+      app
+      disable-route-watcher
+
+
+
+    >
+      <v-container v-if="locationLoader" fluid fill-height>
+        <v-layout justify-center align-center>
+          <v-progress-circular indeterminate size="44"></v-progress-circular>
+        </v-layout>
+      </v-container>
+
+      
+       <location-card :i18n="translations" v-if="locationDrawer" :show-edit="true" @edit="editItem" v-if="location" :log="true" @close="locationDrawer=false" :location="location"></location-card>
+    </v-navigation-drawer>  

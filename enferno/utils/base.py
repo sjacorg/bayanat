@@ -50,6 +50,7 @@ class BaseMixin(object):
         try:
             db.session.delete(self)
             db.session.commit()
+            return True
         except Exception as e:
             print(str(e))
             db.session.rollback()

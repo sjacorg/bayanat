@@ -546,3 +546,10 @@ span.map-bid {
 span.map-bid:empty {
     display: none;
 }
+
+
+.log-dialog {
+    background-color: lightblue;
+    max-width: 770px;
+    overflow: auto;
+}

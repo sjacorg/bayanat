@@ -1,5 +1,10 @@
-import hashlib, os, boto3
+import hashlib, os, boto3, json
 import pyexifinfo as exiflib
+from docx import Document
+from PyPDF2 import PdfReader
+from PIL import Image
+from pdf2image import convert_from_path
+
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.user.models import User
 from enferno.utils.date_helper import DateHelper
@@ -10,13 +15,19 @@ import subprocess
 def now():
     return str(arrow.utcnow())
 
-#log_file = '{}.log'.format(uuid.uuid4().hex[:8])
-#log = open(log_file, 'a')
-
 if os.environ.get("FLASK_DEBUG") == '0':
     cfg = ProdConfig
 else:
     cfg = DevConfig
+
+if cfg.OCR_ENABLED:
+    from pytesseract import image_to_string, pytesseract
+    try:
+        pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
+        tesseract_langs = '+'.join(pytesseract.get_languages(config=''))
+    except Exception as e:
+        print(e)
+        print("Tesseract system package is missing or Bayanat's OCR settings are not set properly.")
 
 class DataImport():
 
@@ -29,28 +40,42 @@ class DataImport():
         self.summary = ''
         self.log = open(log,'a')
 
-    def upload(self, file, target):
+    def upload(self, filepath, target):
+        """
+        Copies file to media folder or S3 bucket.
+
+            Parameters:
+                filepath: filepath file
+                target: file name in media
+        """
 
         if cfg.FILESYSTEM_LOCAL:
-            shutil.copy(file, target)
+            shutil.copy(filepath, target)
         elif cfg.S3_BUCKET:
-            print(f'terget:{target} - {os.path.basename(target)}')
             target = os.path.basename(target)
             s3 = boto3.resource('s3', aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
                                 aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
-                                region_name=cfg.AWS_REGION
-                                )
+                                region_name=cfg.AWS_REGION)
             try:
-                s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(file, 'rb'))
+                s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(filepath, 'rb'))
             except Exception as e:
                 print(e)
         else:
             raise RuntimeError('Filesystem is not configured properly!')
 
-    def get_duration(self, path):
+    def get_duration(self, filepath):
+        """
+        Returns duration of a video file.
+
+            Parameters:
+                filepath: filepath of video file
+
+            Returns:
+                duration: flout duration of video
+        """
         try:
             # get video duration via ffprobe
-            cmd = f'ffprobe -i "{path}" -show_entries format=duration -v quiet -of csv="p=0"'
+            cmd = f'ffprobe -i "{filepath}" -show_entries format=duration -v quiet -of csv="p=0"'
             duration = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
             return duration
         except Exception as e:
@@ -58,12 +83,111 @@ class DataImport():
             print(e)
             return None
 
-    def get_etag(self, path):
-        f = open(path, 'rb').read()
+    def get_etag(self, filepath):
+        """
+        Returns MD5 hash of file.
+
+            Parameters:
+                filepath: filepath of file
+
+            Returns:
+                etag: md5 hash
+        """
+        f = open(filepath, 'rb').read()
         etag = hashlib.md5(f).hexdigest()
         return etag
+
+    def parse_docx(self, filepath):
+        """
+        Parses MS Word file.
+
+            Parameters:
+                filepath: filepath of MS Word file
+
+            Returns:
+                str: text content of the MS Word file
+        """
+        try:
+            doc = Document(filepath)
+            text_content = []
+
+            for p in doc.paragraphs:
+                if p.text:
+                    text_content.append(p.text)
+
+            return '<p>\n</p>'.join(text_content)
+        except Exception as e:
+            print(e)
+            return None
+
+
+    def parse_pdf(self, filepath, attempt_ocr=False):
+        """
+        Parses PDF file.
+
+            Parameters:
+                filepath: filepath of PDF file
+
+            Returns:
+                str: text content of the PDF file
+        """
+        try:
+            pdf = PdfReader(filepath)
+            text_content = []
+
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    text_content.append(text)
+
+            # if no text contect recognize
+            # attempt to use Tesseract OCR
+            if not text_content and attempt_ocr:
+                images = convert_from_path(filepath)
+                for image in images:
+                    text = image_to_string(image, lang=tesseract_langs)
+                    if text:
+                        text_content.append(text)
+
+            return '<p>\n</p>'.join(text_content)
+
+        except Exception as e:
+            print(e)
+            return None
+
+    def parse_pic(self, filepath):
+        """
+        Parses image files using Google's 
+        Tesseract OCR engine for text content.
+
+            Parameters:
+                filepath: filepath of image file
+
+            Returns:
+                str: text content of the image file
+        """
+        try:
+            text_content = image_to_string(filepath, lang=tesseract_langs)
+            return text_content
+        except Exception as e:
+            print(e)
+            return None
     
     def optimize(self, old_filename, old_path):
+        """
+        Converts a video to H.264 format.
+
+            Parameters:
+                old_filename: unoptimized video filename
+                old_path: video path
+
+            Returns:
+                True/Flase: whether op is successful
+                new_filename: optimized video filename
+                new_filepath: optimized video file path
+                new_etag: optimized video md5 hash 
+
+        """
         check = ''
         _, ext = os.path.splitext(old_filename)
 
@@ -75,7 +199,7 @@ class DataImport():
         except Exception as e:
             print('Failed to get original video codec, optimizing anyway')
             print(e)
-        
+
         accepted_codecs = 'h264' in check or 'theora' in check or 'vp8' in check
         accepted_formats = 'mp4' in ext or 'ogg' in ext or 'webm' in ext
         accepted_codecs = accepted_formats 
@@ -102,6 +226,7 @@ class DataImport():
         print(file)
         duration = None
         optimized = False
+        text_content = None
         print(self.meta.get('mode'))
 
         # Server-side mode
@@ -136,8 +261,11 @@ class DataImport():
             self.summary += now() + f'File saved as {filename}'
             info = exiflib.get_json(old_path)[0]
 
-            # check if file is video (accepted extension)
-            if ext[1:].lower() in cfg.ETL_VID_EXT:
+            # check file extension
+            file_ext = ext[1:].lower()
+
+            # get duration and optimize if video
+            if file_ext in cfg.ETL_VID_EXT:
                 duration = self.get_duration(old_path)
 
                 if self.meta.get('optimize'):
@@ -145,8 +273,28 @@ class DataImport():
                     if optimized:
                         self.summary += now() + f'Optimized version saved as {new_filename}\n'
 
+            # ocr pictures
+            elif cfg.OCR_ENABLED and self.meta.get('ocr') and file_ext in cfg.OCR_EXT:
+                parsed_text = self.parse_pic(filepath)
+                if parsed_text:
+                    text_content = parsed_text
+
+            # parse content of word
+            elif self.meta.get('parse') and file_ext == "docx":
+                parsed_text = self.parse_docx(filepath)
+                if parsed_text:
+                    text_content = parsed_text
+
+            # scan pdf for text
+            elif self.meta.get('parse') and file_ext == "pdf":
+                attempt_ocr = cfg.OCR_ENABLED and self.meta.get('ocr')
+                parsed_text = self.parse_pdf(filepath, attempt_ocr)
+
+                if parsed_text:
+                    text_content = parsed_text
+
         elif self.meta.get('mode') == 1:
-            self.summary += now() + ' ------ Processing file: {} ------'.format(file.get('filename')) + '\n'
+            self.summary += now() + '------ Processing file: {} ------'.format(file.get('filename')) + '\n'
 
             # we already have the file and the etag
             filename = file.get('filename')
@@ -165,10 +313,10 @@ class DataImport():
             # as two identical files can be uploaded at the same import attempt 
             exists = Media.query.filter(Media.etag == etag).first()
             if exists:
-                self.summary += now() + ' File already exists:  {} \n'.format(filepath)
+                self.summary += now() + 'File already exists: {} \n'.format(filepath)
                 try:
                     os.remove(filepath)
-                    print('duplicate file cleaned ')
+                    print('Duplicate file cleaned.')
                 except OSError:
                     pass
 
@@ -177,7 +325,9 @@ class DataImport():
                 self.log.write(self.summary)
                 return 
 
-            # else check if video processing is enabled
+            file_ext = ext[1:].lower()
+
+            # get duration and optimize if video
             if ext[1:].lower() in cfg.ETL_VID_EXT:
                 duration = self.get_duration(filepath)
 
@@ -185,6 +335,26 @@ class DataImport():
                     optimized, new_filename, new_filepath, new_etag = self.optimize(filename, filepath)
                     if optimized:
                         self.summary += now() + f'Optimized version saved as {new_filename}\n'
+
+            # ocr pictures
+            elif cfg.OCR_ENABLED and self.meta.get('ocr') and file_ext in cfg.OCR_EXT:
+                parsed_text = self.parse_pic(filepath)
+                if parsed_text:
+                    text_content = parsed_text
+
+            # parse content of word
+            elif self.meta.get('parse') and file_ext == "docx":
+                parsed_text = self.parse_docx(filepath)
+                if parsed_text:
+                    text_content = parsed_text
+
+            # scan pdf for text
+            elif self.meta.get('parse') and file_ext == "pdf":
+                attempt_ocr = cfg.OCR_ENABLED and self.meta.get('ocr')
+                parsed_text = self.parse_pdf(filepath, attempt_ocr)
+
+                if parsed_text:
+                    text_content = parsed_text
 
         # bundle title with json info
         info['bulletinTitle'] = title
@@ -197,6 +367,9 @@ class DataImport():
             info['new_filename'] = new_filename
             info['new_filepath'] = new_filepath
             info['new_etag'] = new_etag
+        
+        if text_content:
+            info['text_content'] = text_content
 
         info['etag'] = etag
         if self.meta.get('mode') == 2:
@@ -220,6 +393,10 @@ class DataImport():
         bulletin.title = info.get('bulletinTitle')
         bulletin.status = 'Machine Created'
         bulletin.comments = 'Created by ETL - {} '.format(self.batch_id)
+        
+        if info.get('text_content'):
+            bulletin.description = info.get('text_content')
+        
         create = info.get('EXIF:CreateDate')
         if create:
             create_date = DateHelper.file_date_parse(create)
@@ -240,13 +417,13 @@ class DataImport():
         duration = info.get('vduration')
         if duration:
             org_media.duration = duration
-            print ('duration set')
+
         if not mime_type:
             self.summary += now() + 'Problem retrieving file mime type !' + '\n'
-            print('Problem retrieving file mime type ! \n')
+            print('Problem retrieving file mime type!')
             try:
                 os.remove(info.get('filepath'))
-                print('unknown file type cleaned ')
+                print('Unknown file type cleaned.')
             except OSError:
                 pass
 
@@ -298,9 +475,11 @@ class DataImport():
         user = User.query.get(self.user_id)
 
         bulletin.source_link = info.get('old_path')
+        bulletin.meta = info
 
         bulletin.save()
         bulletin.create_revision(user_id=user.id)
+
         self.summary += 'Bulletin ID: {} \n'.format(bulletin.id)
         print ("bulletin ID : ", bulletin.id)
         # Record bulletin creation activity

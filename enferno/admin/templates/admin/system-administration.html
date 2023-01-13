@@ -1,0 +1,346 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+    <v-app id="app" cloak>
+        {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+        <v-main>
+            <v-container class="container--fluid">
+                <v-row>
+                    <v-col cols="12" md="6">
+                        <v-card>
+                            <v-card-title>Location Administrative Levels</v-card-title>
+
+                            <v-card-text>
+
+                                <v-data-table
+                                        :headers="alHeaders"
+                                        :items="alItems"
+                                        class="elevation-1"
+                                >
+
+
+                                    <template v-slot:item.title="{ item }">
+                                        <v-text-field v-model="alItem.title" :hide-details="true" dense
+                                                      single-line
+                                                      :autofocus="true" v-if="item.id === alItem.id"></v-text-field>
+                                        <span v-else>${item.title}</span>
+                                    </template>
+
+                                    <template v-slot:item.actions="{ item }">
+                                        <div v-if="item.id === alItem.id">
+                                            <v-icon small class="mr-3" @click="alCancel">
+                                                mdi-window-close
+                                            </v-icon>
+                                            <v-icon small @click="alSave(item)">
+                                                mdi-content-save
+                                            </v-icon>
+                                        </div>
+                                        <div v-else>
+                                            <v-icon small class="mr-3" @click="alEdit(item)">
+                                                mdi-pencil
+                                            </v-icon>
+
+                                        </div>
+                                    </template>
+
+                                </v-data-table>
+
+                            </v-card-text>
+                        </v-card>
+                        <h3></h3>
+
+
+                    </v-col>
+                    <v-col cols="12" md="6">
+                        <v-card>
+                            <v-card-title>Location Types <v-spacer></v-spacer> <v-btn @click="ltAdd" class="mx-3" elevation="0" color="primary" fab x-small><v-icon>mdi-plus</v-icon></v-btn></v-card-title>
+                            <v-card-text>
+                                <v-data-table
+                                        :headers="ltHeaders"
+                                        :items="ltItems"
+                                        class="elevation-1"
+                                >
+
+                                      <template v-slot:item.title="{ item }">
+                                        <v-text-field v-model="ltItem.title" :hide-details="true" dense
+                                                      single-line
+                                                      :autofocus="true" v-if="item.id === ltItem.id"></v-text-field>
+                                        <span v-else>${item.title}</span>
+                                    </template>
+
+                                    <template v-slot:item.actions="{ item }">
+                                        <div v-if="item.id === ltItem.id">
+                                            <v-icon small class="mr-3" @click="ltCancel">
+                                                mdi-window-close
+                                            </v-icon>
+                                            <v-icon small @click="ltSave(item)">
+                                                mdi-content-save
+                                            </v-icon>
+                                        </div>
+                                        <div v-else>
+                                            <template v-if="![1,2].includes(item.id)">
+                                            <v-icon  small class="mr-3" @click="ltEdit(item)">
+                                                mdi-pencil
+                                            </v-icon>
+                                            <v-icon small @click="ltDelete(item)">
+                                                mdi-delete
+                                            </v-icon>
+                                                </template>
+                                        </div>
+                                    </template>
+
+                                </v-data-table>
+
+                            </v-card-text>
+                        </v-card>
+
+
+                    </v-col>
+                </v-row>
+
+            </v-container>
+        </v-main>
+    </v-app>
+
+{% endblock %}
+
+{% block js %}
+
+    <script>
+        let app = new Vue({
+            el: "#app",
+            vuetify: vuetify,
+            delimiters: delimiters,
+            data: () => ({
+
+
+                drawer: drawer,
+                sideNav: sideNav,
+
+                snackbar: false,
+                snackMessage: '',
+                loading: true,
+
+
+                options: {},
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
+
+
+                alHeaders: [
+                    {text: "{{_('ID')}}", value: "id"},
+                    {text: "{{_('Code')}}", value: "code"},
+                    {text: "{{_('Title')}}", value: "title"},
+                    {text: "{{_('Actions')}}", value: "actions"},
+
+                ],
+                alItems: [],
+
+
+                ltHeaders: [
+                    {text: "{{_('ID')}}", value: "id"},
+                    {text: "{{_('Title')}}", value: "title"},
+                    {text: "{{_('Actions')}}", value: "actions"},
+                ],
+
+                ltItems: [],
+
+                items: [],
+
+
+                alItem: {},
+
+                ltItem: {},
+
+
+            }),
+
+
+            mounted() {
+
+                // load data for location admin level table
+                this.loadAdminLevelItems()
+
+                // load location types
+                this.loadLocationTypeItems();
+
+            },
+
+            methods: {
+
+                alSave(item) {
+
+                    if (item.id) {
+                        /* edit mode */
+                        axios.put(`/admin/api/location-admin-levels/${item.id}`, {item: this.alItem}).then(res => {
+                            // just reload the table
+                            this.loadAdminLevelItems();
+                            this.showSnack(res.data);
+                        }).catch(err => {
+                            this.showSnack(err.response.data);
+
+
+                        }).finally(() => {
+                            this.alItem = {};
+                        })
+
+
+                    } else {
+
+                        /* create mode */
+                        axios.post(`/admin/api/location-admin-level`, {item: this.alItem}).then(res => {
+                            // just reload the table
+                            this.loadAdminLevelItems();
+                            this.showSnack(res.data);
+                        }).catch(err => {
+                            this.showSnack(err.response.data);
+
+
+                        }).finally(() => {
+                            this.alItem = {};
+                        })
+
+                    }
+
+
+                },
+
+                alCancel(){
+                    this.alItem = {};
+                },
+
+
+                alEdit(item) {
+                    this.alItem = JSON.parse(JSON.stringify(item));
+                },
+
+                loadAdminLevelItems() {
+                    axios.get(`/admin/api/location-admin-levels/?per_page=1000`).then(res => {
+                        this.alItems = res.data.items;
+                    }).catch(e => {
+                        console.log(e.response.data);
+                    })
+
+                },
+
+                ltDelete(item){
+                    if (confirm(`Are you sure you want to delete location type: "${item.title}"`)){
+                        axios.delete(`/admin/api/location-type/${item.id}`).then(res=>{
+                            // success / reload items 
+                            this.loadLocationTypeItems();
+                            this.showSnack(res.data);
+
+                        }).catch(err=>{
+                            console.log(err.response.data);
+                            this.showSnack(err.response.data);
+                        })
+                    }
+                },
+
+                 ltSave(item) {
+
+                    if (item.id) {
+                        /* edit mode */
+                        axios.put(`/admin/api/location-type/${item.id}`, {item: this.ltItem}).then(res => {
+                            // just reload the table
+                            this.loadLocationTypeItems();
+                            this.showSnack(res.data);
+                        }).catch(err => {
+                            this.showSnack(err.response.data);
+
+
+                        }).finally(() => {
+                            this.ltItem = {};
+                        })
+
+
+                    } else {
+
+                        /* create mode */
+                        axios.post(`/admin/api/location-type`, {item: this.ltItem}).then(res => {
+                            // just reload the table
+                            this.loadLocationTypeItems();
+                            this.showSnack(res.data);
+                        }).catch(err => {
+                            this.showSnack(err.response.data);
+
+
+                        }).finally(() => {
+                            this.ltItem = {};
+                        })
+
+                    }
+
+
+                },
+
+
+                ltCancel(){
+                    this.ltItem = {};
+
+                },
+
+                ltEdit(item) {
+
+                    this.ltItem = JSON.parse(JSON.stringify(item));
+                },
+
+                ltAdd(){
+
+                    this.ltItems.unshift({});
+                },
+
+                loadLocationTypeItems() {
+                    axios.get(`/admin/api/location-types/?per_page=1000`).then(res => {
+                        this.ltItems = res.data.items;
+                    }).catch(e => {
+                        console.log(e.response.data);
+                    })
+
+                },
+
+
+
+
+                showSnack(message) {
+                    this.snackMessage = message;
+                    this.snackbar = true;
+                },
+
+                newItem() {
+                    this.editedItem = Object.assign({}, this.defaultItem);
+                    this.dialog = true;
+
+                },
+
+                editItem(item) {
+
+                    this.editedIndex = this.items.indexOf(item);
+                    this.editedItem = Object.assign({}, item);
+                    this.dialog = true;
+
+
+                },
+
+                deleteItem(item) {
+                    const index = this.items.indexOf(item);
+                    const cfm = confirm("Are you sure you want to delete this item?") &&
+                        this.items.splice(index, 1);
+                    if (cfm) {
+                        axios.delete(`/admin/api/location/${item.id}`)
+                            .then(response => {
+                                this.showSnack(response.data);
+
+                                this.refresh()
+                            })
+                    }
+                },
+
+            }
+        });
+    </script>
+
+
+{% endblock %}

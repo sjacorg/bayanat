@@ -134,7 +134,7 @@ const sideNav = [
     }
 ];
 
-const geoMapDefaultCenter = {lat: 33.510414, lng: 36.278336};
+var geoMapDefaultCenter = {lat: 33.510414, lng: 36.278336};
 
 // items per page for data tables
 // adjust items per page dynamically based on screen hight
@@ -233,12 +233,13 @@ axios.interceptors.response.use(function (response) {
 
 //  in-page router for bulleints/actors/incidents pages
 const router = new VueRouter({
-     mode: 'history',
+    mode: 'history',
     routes: [
 
         {path: '/admin/bulletins/:id'},
         {path: '/admin/actors/:id'},
-        {path: '/admin/incidents/:id'}
+        {path: '/admin/incidents/:id'},
+        {path: '/admin/locations/:id'}
     ]
 });
 
@@ -375,13 +376,16 @@ var aggregateLocations = function (bulletin) {
 
     // aggregate locations, add a color identifier
     if (bulletin.locations && bulletin.locations.length) {
-        let locs = bulletin.locations.filter(x => x.lat && x.lng);
+        let locs = bulletin.locations.filter(x => x.latlng);
         locs.map(x => {
             x.color = '#00a1f1';
             x.bulletinId = bulletin.id;
+            x.lat = x.latlng.lat;
+            x.lng = x.latlng.lng;
             return x
         });
         locations = locations.concat(locs);
+
 
     }
 
@@ -396,7 +400,8 @@ var aggregateLocations = function (bulletin) {
     }
     // event locations
     if (bulletin.events && bulletin.events.length) {
-        let eventLocations = bulletin.events.filter(x => x.location && x.location.lat && x.location.lng).map((x, i) => {
+        
+        let eventLocations = bulletin.events.filter(x => x.location && x.location.latlng).map((x, i) => {
             // exclude locations with null coordinates
 
             //attach serial number to events for map reference
@@ -404,6 +409,8 @@ var aggregateLocations = function (bulletin) {
             x.location.title = x.title;
             x.bulletinId = bulletin.id;
             x.location.color = '#f65314';
+            x.location.lat = x.location.latlng.lat;
+            x.location.lng = x.location.latlng.lng;
             return x.location
 
 
@@ -571,4 +578,5 @@ dataUriToBlob = function (dataURI) {
 }
 
 const VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
-const ETL_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "doc", "docx", "pdf", "txt", "ttf"].concat(VID_EXT)
+const OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp" ,"pnm"]
+const ETL_EXTENSIONS = ["gif", "doc", "docx", "pdf", "txt", "ttf"].concat(VID_EXT).concat(OCR_EXT)

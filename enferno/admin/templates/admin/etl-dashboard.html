@@ -153,11 +153,9 @@
                                             <v-card-title>
                                                 {{ _('Attach data to files')}}
                                             </v-card-title>
-
                                             <v-card-text>
-
                                                 <v-row>
-                                                    <v-col cols="12" md="4">
+                                                    <v-col cols="12" md="6">
                                                         <search-field
                                                                 api="/admin/api/labels/"
                                                                 query-params="&typ=for_bulletin"
@@ -168,7 +166,7 @@
                                                                 v-model="labels"
                                                         ></search-field>
                                                     </v-col>
-                                                    <v-col cols="12" md="4">
+                                                    <v-col cols="12" md="6">
                                                         <search-field
                                                                 api="/admin/api/labels/"
                                                                 query-params="&fltr=verified&typ=for_bulletin"
@@ -179,7 +177,8 @@
                                                                 v-model="verLabels"
                                                         ></search-field>
                                                     </v-col>
-
+                                                </v-row>
+                                                <v-row>
                                                     <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/locations/"
@@ -190,8 +189,6 @@
                                                                 v-model="locations"
                                                         ></search-field>
                                                     </v-col>
-                                                </v-row>
-                                                <v-row>
                                                     <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/sources/"
@@ -201,9 +198,7 @@
                                                                 label="{{ _('Sources') }}"
                                                                 v-model="sources"
                                                         ></search-field>
-
                                                     </v-col>
-
                                                     <v-col cols="12" md="4">
                                                         <v-combobox
                                                                 small-chips
@@ -213,13 +208,27 @@
                                                                 hint="Type and enter free tags"
 
                                                         ></v-combobox>
-
-                                                    </v-col>
-                                                    <v-col cols="12" md="4">
-                                                        <v-switch v-model="optimize" label="{{ _('Optimize Videos')}}"></v-switch>
                                                     </v-col>
                                                 </v-row>
+                                                
+                                                <v-row>
+                                                    <v-col cols="12" md="4">
+                                                        <v-switch v-model="optimize" label="{{ _('Optimize videos')}}"></v-switch>
+                                                    </v-col>
+                                                    <v-col cols="12" md="4">
+                                                        <v-switch v-model="parse" label="{{ _('Parse PDF & MS Word files')}}"></v-switch>
+                                                    </v-col>
+                                                    <v-col cols="12" md="4">
+                                                        <v-switch v-model="ocr"
+                                                        :disabled="!__OCR_ENABLED__" 
+                                                        label="{{ _('Scan images for text')}}"></v-switch>
+                                                        <div v-if="!__OCR_ENABLED__">
+                                                            <v-icon left>mdi-information-outline</v-icon>
+                                                            Tesseract OCR is disabled.
+                                                        </div>
 
+                                                    </v-col>
+                                                </v-row>
 
                                             </v-card-text>
 
@@ -323,7 +332,8 @@
     <script src="/static/js/filepond/dist/filepond.min.js"></script>
     <script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
     <script>
-
+        window.__OCR_ENABLED__ = ('{{ config.OCR_ENABLED }}' === 'True');
+        console.log(__OCR_ENABLED__)
         const app = new Vue({
             el: "#app",
             vuetify: vuetify,
@@ -369,6 +379,8 @@
                 files: [],
                 items: [],
                 optimize: null,
+                parse: null,
+                ocr: null,
                 selectedItems: [],
                 itemsLength: 100,
                 editedIndex: -1,
@@ -516,7 +528,9 @@
                         locations: this.locations,
                         refs: this.refs,
                         mode: this.mode,
-                        optimize: this.optimize
+                        optimize: this.optimize,
+                        parse: this.parse,
+                        ocr: this.ocr
                     }
 
                     axios.post('/admin/etl/process', data).then(res => {

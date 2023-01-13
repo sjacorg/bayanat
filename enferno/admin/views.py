@@ -1,13 +1,11 @@
 import hashlib
-from functools import wraps
-
-import passlib
 import os
 from pathlib import Path
-import pandas as pd
-import boto3
-import shortuuid
 from uuid import uuid4
+
+import boto3
+import passlib
+import shortuuid
 from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
 from flask.templating import render_template
 from flask_bouncer import requires
@@ -15,9 +13,10 @@ from flask_security.decorators import roles_required, login_required, current_us
 from flask_security.utils import hash_password
 from sqlalchemy import desc, or_, text
 from sqlalchemy.orm.attributes import flag_modified
+
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
-                                  IncidentHistory, BulletinHistory, ActorHistory, PotentialViolation, ClaimedViolation,
-                                  Activity, Query, Mapping, Log, APIKey)
+                                  IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation, ClaimedViolation,
+                                  Activity, Query, Mapping, Log, APIKey, LocationAdminLevel, LocationType)
 from enferno.extensions import bouncer, rds, babel
 from enferno.extensions import cache
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file, \
@@ -70,7 +69,7 @@ def before_request():
     :return: None
     """
     g.user = current_user
-    g.version = '3'
+    g.version = '4'
 
 
 @admin.app_context_processor
@@ -219,7 +218,7 @@ def api_label_update(id):
             label.save()
             return 'Saved Label #{}'.format(label.id), 200
         else:
-            return 'Not Found!', 417
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -325,7 +324,7 @@ def api_eventtype_update(id):
             eventtype.save()
             return 'Saved Event #{}'.format(eventtype.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -412,7 +411,7 @@ def api_potentialviolation_update(id):
             potentialviolation.save()
             return 'Saved Potential Violation #{}'.format(potentialviolation.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -499,7 +498,7 @@ def api_claimedviolation_update(id):
             claimedviolation.save()
             return 'Saved Claimed Violation #{}'.format(claimedviolation.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -615,7 +614,7 @@ def api_source_update(id):
             source.save()
             return 'Saved Source #{}'.format(source.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -651,22 +650,23 @@ def api_source_import():
 
 # locations routes
 
-@admin.route('/locations/')
-@roles_accepted('Admin', 'Mod')
-def locations():
+@admin.route('/locations/', defaults={'id': None})
+@admin.route('/locations/<int:id>')
+@roles_accepted('Admin', 'Mod', 'DA')
+def locations(id):
     """Endpoint for locations management."""
     return render_template('admin/locations.html')
 
 
-@admin.route('/api/locations/')
+@admin.get('/api/locations/')
 def api_locations():
     """Returns locations in JSON format, allows search and paging."""
     query = []
     q = request.args.get('q', None)
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
-    typ = request.args.get('typ', None)
-    if q is not None:
+
+    if q:
         search = '%' + q.replace(' ', '%') + '%'
         query.append(
             or_(
@@ -675,52 +675,69 @@ def api_locations():
             )
 
         )
-    res_type = 0
-    if typ and typ in ['s', 'g', 'c', 'd']:
-        # finds all children of specific location type
-        query.append(Location.loc_type == typ.upper())
 
-    result = Location.query.filter(*query).paginate(
+    lvl = request.args.get('lvl', None)
+    if lvl:
+        lvls = [al.code for al in LocationAdminLevel.query.all()]
+        if int(lvl) in lvls:
+            # finds all children of specific location type
+            lal = LocationAdminLevel.query.filter(LocationAdminLevel.code == int(lvl)).first()
+            query.append(Location.admin_level == lal)
+
+    result = Location.query.filter(*query).order_by(Location.id).paginate(
         page, per_page, True)
-    items = [item.to_dict() for item in result.items if item.id != 0] if res_type == 0 else [item.min_json() for item in
-                                                                                             result.items if
-                                                                                             item.id != 0]
+    items = [item.to_dict() for item in result.items]
     response = {'items': items, 'perPage': per_page,
                 'total': result.total}
+
     return Response(json.dumps(response),
                     content_type='application/json'), 200
 
 
-@admin.route('/api/location/', methods=['POST'])
-@roles_accepted('Admin', 'Mod')
+@admin.post('/api/location/')
+@roles_accepted('Admin', 'Mod', 'DA')
 def api_location_create():
     """Endpoint for creating locations."""
-    if request.method == 'POST':
-        location = Location()
-        created = location.from_json(request.json['item'])
-        created.full_location = created.get_full_string()
-        if created.save():
-            return 'Created Location #{}'.format(location.id)
-        else:
-            return 'Save Failed', 417
+
+    if not current_user.roles_in(['Admin', 'Mod']) and not current_user.can_edit_locations:
+        return 'User not allowed to create Locations', 400
 
 
-@admin.route('/api/location/<int:id>', methods=['PUT'])
-@roles_accepted('Admin', 'Mod')
+    location = Location()
+    location = location.from_json(request.json['item'])
+
+    if location.save():
+        location.full_location = location.get_full_string()
+        location.id_tree = location.get_id_tree()
+        location.create_revision()
+        return 'Created Location #{}'.format(location.id)
+
+
+
+@admin.put('/api/location/<int:id>')
+@roles_accepted('Admin', 'Mod', 'DA')
 def api_location_update(id):
     """Endpoint for updating locations. """
-    if request.method == 'PUT':
-        location = Location.query.get(id)
-        if location is not None:
-            location = location.from_json(request.json['item'])
+
+    if not current_user.roles_in(['Admin', 'Mod']) and not current_user.can_edit_locations:
+        return 'User not allowed to create Locations', 400
+    
+    location = Location.query.get(id)
+    if location is not None:
+        location = location.from_json(request.json.get('item'))
+        # we need to commit this change to db first, to utilize CTE
+        if location.save():
+            # then update the location full string
             location.full_location = location.get_full_string()
-            location.save()
+            location.id_tree = location.get_id_tree()
+            location.create_revision()
             return 'Saved Location #{}'.format(location.id), 200
         else:
-            return 'Not Found!'
-
+            return 'Save Failed', 417
     else:
-        return 'Unauthorized', 403
+        return 'Not Found!', 404
+
+
 
 
 @admin.route('/api/location/<int:id>', methods=['DELETE'])
@@ -744,6 +761,121 @@ def api_location_import():
     else:
         return 'Error', 400
 
+# get one location
+@admin.get('/api/location/<int:id>')
+def api_location_get(id):
+    """
+    Endpoint to get a single location
+    :param id: id of the location
+    :return: location in json format / success or error
+    """
+    location = Location.query.get(id)
+
+    if not location:
+        abort(404)
+    else:
+        return json.dumps(location.to_dict()), 200
+
+
+# location admin level endpoints
+@admin.route('/api/location-admin-levels/', methods=['GET', 'POST'])
+def api_location_admin_levels():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = LocationAdminLevel.query.filter(
+        *query).order_by(-LocationAdminLevel.id).paginate(
+        page, per_page, True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json')
+
+
+@admin.post('/api/location-admin-level')
+@roles_required('Admin')
+def api_location_admin_level_create():
+    admin_level = LocationAdminLevel()
+    admin_level.from_json(request.json['item'])
+
+    if admin_level.save():
+        return f'Item created successfully ID ${admin_level.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+
+@admin.put('/api/location-admin-levels/<int:id>')
+@roles_required('Admin')
+def api_location_admin_level_update(id):
+    admin_level = LocationAdminLevel.query.get(id)
+    if admin_level:
+        admin_level.from_json(request.json.get('item'))
+        if admin_level.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return 'Not Found!', 404
+
+
+# location type endpoints
+@admin.route('/api/location-types/', methods=['GET', 'POST'])
+def api_location_types():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = LocationType.query.filter(
+        *query).order_by(-LocationType.id).paginate(
+        page, per_page, True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json')
+
+
+@admin.post('/api/location-type')
+@roles_required('Admin')
+def api_location_type_create():
+    location_type = LocationType()
+    location_type.from_json(request.json['item'])
+
+    if location_type.save():
+        return f'Item created successfully ID ${location_type.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+
+@admin.put('/api/location-type/<int:id>')
+@roles_required('Admin')
+def api_location_type_update(id):
+    location_type = LocationType.query.get(id)
+
+    if location_type:
+        location_type.from_json(request.json.get('item'))
+        if location_type.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return 'Not Found!', 404
+
+
+@admin.delete('/api/location-type/<int:id>')
+@roles_required('Admin')
+def api_location_type_delete(id):
+    """
+    Endpoint to delete a location type
+    :param id: id of the location type to be deleted
+    :return: success/error
+    """
+    location_type = LocationType.query.get(id)
+    if location_type.delete():
+        return 'Location Type Deleted #{}'.format(location_type.id), 200
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, location_type.to_mini(), 'location_type')
+    else:
+        return 'Error deleting location type', 417
+
 
 # Bulletin routes
 @admin.route('/bulletins/', defaults={'id': None})
@@ -755,7 +887,7 @@ def bulletins(id):
 
 def make_cache_key(*args, **kwargs):
     json_key = str(hash(str(request.json)))
-    args_key = request.args.get('page') + request.args.get('per_page',PER_PAGE) + request.args.get('cache','')
+    args_key = request.args.get('page') + request.args.get('per_page', PER_PAGE) + request.args.get('cache', '')
     return json_key + args_key
 
 
@@ -781,7 +913,7 @@ def api_bulletins():
     per_page = request.args.get('per_page', PER_PAGE, int)
     # handle sort
     # default
-    sort = '-id'
+    sort = '-Bulletin.id'
 
     options = request.json.get('options')
     if options:
@@ -824,7 +956,6 @@ def api_bulletin_create():
     return 'Created Bulletin #{}'.format(bulletin.id)
 
 
-
 @admin.route('/api/bulletin/<int:id>', methods=['PUT'])
 @roles_accepted('Admin', 'DA')
 def api_bulletin_update(id):
@@ -843,11 +974,10 @@ def api_bulletin_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
             return 'Saved Bulletin #{}'.format(bulletin.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
-
 
 
 # Add/Update review bulletin endpoint
@@ -887,7 +1017,7 @@ def api_bulletin_review_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
             return 'Bulletin review updated #{}'.format(bulletin.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -996,22 +1126,6 @@ def bulletin_relations(id):
     return json.dumps({'items': data, 'more': load_more}), 200
 
 
-def api_bulletin_get(id):
-    """
-    Endpoint to get related entities of a bulletin
-    :param id: id of the bulletin
-    :return: bulletin in json format / success or error
-    """
-    bulletin = Bulletin.query.get(id)
-    if not bulletin:
-        abort(404)
-    else:
-        # hide review from view-only users
-        if not current_user.roles:
-            bulletin.review = None
-        return bulletin.to_json(), 200
-
-
 @admin.route('/api/bulletin/import/', methods=['POST'])
 @roles_required('Admin')
 def api_bulletin_import():
@@ -1031,7 +1145,6 @@ def api_bulletin_import():
 @admin.route('/api/bulletin/assign/<int:id>', methods=['PUT'])
 @roles_accepted('Admin', 'DA')
 def api_bulletin_self_assign(id):
-
     """assign a bulletin to the user"""
 
     # permission check
@@ -1049,7 +1162,7 @@ def api_bulletin_self_assign(id):
         bulletin.assigned_to_id = current_user.id
         bulletin.comments = b.get('comments')
         bulletin.ref = bulletin.ref or []
-        bulletin.ref = bulletin.ref + b.get('ref',[])
+        bulletin.ref = bulletin.ref + b.get('ref', [])
 
         # Change status to assigned if needed
         if bulletin.status == 'Machine Created' or bulletin.status == 'Human Created':
@@ -1070,7 +1183,6 @@ def api_bulletin_self_assign(id):
 @admin.route('/api/actor/assign/<int:id>', methods=['PUT'])
 @roles_accepted('Admin', 'DA')
 def api_actor_self_assign(id):
-
     """ self assign an actor to the user"""
 
     # permission check
@@ -1088,7 +1200,6 @@ def api_actor_self_assign(id):
         actor.assigned_to_id = current_user.id
         actor.comments = a.get('comments')
 
-
         # Change status to assigned if needed
         if actor.status == 'Machine Created' or actor.status == 'Human Created':
             actor.status = 'Assigned'
@@ -1105,7 +1216,6 @@ def api_actor_self_assign(id):
 @admin.route('/api/incident/assign/<int:id>', methods=['PUT'])
 @roles_accepted('Admin', 'DA')
 def api_incident_self_assign(id):
-
     """ self assign an incident to the user"""
 
     # permission check
@@ -1123,11 +1233,9 @@ def api_incident_self_assign(id):
         incident.assigned_to_id = current_user.id
         incident.comments = i.get('comments')
 
-
         # Change status to assigned if needed
         if incident.status == 'Machine Created' or incident.status == 'Human Created':
             incident.status = 'Assigned'
-
 
         incident.create_revision()
 
@@ -1136,6 +1244,7 @@ def api_incident_self_assign(id):
         return 'Saved Actor #{}'.format(incident.id), 200
     else:
         abort(404)
+
 
 # Media special endpoints
 @admin.route('/api/media/upload/', methods=['POST'])
@@ -1147,7 +1256,8 @@ def api_medias_upload():
     """
 
     if 'media' in request.files:
-        if current_app.config['FILESYSTEM_LOCAL'] or ('etl' in request.referrer and not current_app.config['FILESYSTEM_LOCAL']):
+        if current_app.config['FILESYSTEM_LOCAL'] or (
+                'etl' in request.referrer and not current_app.config['FILESYSTEM_LOCAL']):
             return api_local_medias_upload(request)
         else:
 
@@ -1272,7 +1382,7 @@ def api_local_serve_inline_media(filename):
     """
     serves inline media files - only for authenticated users
     """
-    return send_from_directory('inline', filename)
+    return send_from_directory('media/inline', filename)
 
 
 # Medias routes
@@ -1331,7 +1441,7 @@ def api_media_update(id):
             media.save()
             return 'Saved!', 200
         else:
-            return 'Not Found!', 417
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -1410,8 +1520,7 @@ def api_actor_create():
         return 'Error creating actor', 417
 
 
-
-# update actor endpoint 
+# update actor endpoint
 @admin.route('/api/actor/<int:id>', methods=['PUT'])
 @roles_accepted('Admin', 'DA')
 def api_actor_update(id):
@@ -1466,7 +1575,7 @@ def api_actor_review_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
             return 'Actor review updated #{}'.format(actor.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -1574,8 +1683,6 @@ def actor_relations(id):
     return json.dumps({'items': data, 'more': load_more}), 200
 
 
-
-
 @admin.route('/api/actormp/<int:id>', methods=['GET'])
 def api_actor_mp_get(id):
     """
@@ -1641,6 +1748,21 @@ def api_incidenthistory(incidentid):
     return Response(json.dumps(response),
                     content_type='application/json')
 
+# Location History Helpers
+
+@admin.route('/api/locationhistory/<int:locationid>')
+@requires('view', 'history')
+def api_locationhistory(locationid):
+    """
+    Endpoint to get revision history of a location
+    :param locationid: id of the location item
+    :return: json feed of item's history , or error
+    """
+    result = LocationHistory.query.filter_by(location_id=locationid).order_by(desc(LocationHistory.created_at)).all()
+    # For standardization 
+    response = {'items': [item.to_dict() for item in result]}
+    return Response(json.dumps(response),
+                    content_type='application/json')
 
 # user management routes
 
@@ -1734,6 +1856,7 @@ def api_user_update(uid):
             user.view_simple_history = request.json['item']['view_simple_history']
             user.view_full_history = request.json['item']['view_full_history']
             user.can_self_assign = request.json['item'].get('can_self_assign', False)
+            user.can_edit_locations = request.json['item'].get('can_edit_locations', False)
             user.name = request.json['item']['name']
             email = request.json.get('item').get('email')
             if email:
@@ -1839,7 +1962,7 @@ def api_role_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, role.to_mini(), 'user')
             return 'Saved!', 200
         else:
-            return 'Not Found!', 417
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -1927,8 +2050,7 @@ def api_incident_create():
     return 'Created Incident #{}'.format(incident.id)
 
 
-
-# update incident endpoint 
+# update incident endpoint
 @admin.route('/api/incident/<int:id>', methods=['PUT'])
 @roles_accepted('Admin', 'DA')
 def api_incident_update(id):
@@ -1945,7 +2067,7 @@ def api_incident_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
             return 'Saved Incident #{}'.format(incident.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -1976,7 +2098,7 @@ def api_incident_review_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
             return 'Bulletin review updated #{}'.format(incident.id), 200
         else:
-            return 'Not Found!'
+            return 'Not Found!', 404
 
     else:
         return 'Unauthorized', 403
@@ -2033,7 +2155,7 @@ def api_incident_get(id):
     if not incident:
         abort(404)
     else:
-        mode = request.args.get('mode',None)
+        mode = request.args.get('mode', None)
         return json.dumps(incident.to_dict(mode)), 200
 
 
@@ -2084,6 +2206,7 @@ def incident_relations(id):
             data = [item.to_dict() for item in data]
 
     return json.dumps({'items': data, 'more': load_more}), 200
+
 
 @admin.route('/api/incident/import/', methods=['POST'])
 @roles_required('Admin')
@@ -2494,3 +2617,9 @@ def api_logs():
 
     return Response(json.dumps(logs), content_type='application/json'), 200
 
+
+@admin.get('/system-administration/')
+@roles_accepted('Admin')
+def system_admin():
+    """Endpoint for system administration."""
+    return render_template('admin/system-administration.html')

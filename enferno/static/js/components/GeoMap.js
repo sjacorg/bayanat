@@ -9,12 +9,24 @@ Vue.component("geo-map", {
         mapZoom: {
             default: 10
         },
+        editMode : {
+            type: Boolean,
+            default: true
+        },
         others: []
 
 
     },
 
     computed: {
+
+        mapCenter() {
+          if (this.lat && this.lng){
+              return [this.lat,this.lng];
+          }
+          return geoMapDefaultCenter;
+
+        },
         extra() {
             // computed property to display other markers, it should exclude the main marker
             if (this.others && this.value) {
@@ -34,8 +46,8 @@ Vue.component("geo-map", {
 
         return {
             mapKey: 0,
-            lat: (this.value && this.value.lat) || geoMapDefaultCenter.lat,
-            lng: (this.value && this.value.lng) || geoMapDefaultCenter.lng,
+            lat: (this.value && this.value.lat),
+            lng: (this.value && this.value.lng),
             subdomains: null,
             mapsApiEndpoint: mapsApiEndpoint,
 
@@ -139,18 +151,20 @@ Vue.component("geo-map", {
     },
     template:
         `
-          <v-card class="pa-2" elevation="0">
+          <v-card class="pa-1" elevation="0">
 
           <v-card-text>
-            <h3 class=" mb-5">{{ title }}</h3>
-            <div class="d-flex" style="column-gap: 20px;">
+            <h3 v-if="title" class=" mb-5">{{ title }}</h3>
+            <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
               <v-text-field dense type="number" min="-90" max="90" :label="translations.latitude_" v-model="lat"></v-text-field>
               <v-text-field dense type="number" min="-180" max="180" :label="translations.longitude_" v-model="lng"></v-text-field>
             </div>
 
 
-            <l-map @click="setMarker" class="mt-4" ref="map" v-if="lat && lng" :zoom="mapZoom"
-                   :style="'border-radius: 8px;resize: vertical;height:'+ mapHeight + 'px'" :center="[lat,lng]" :options="{scrollWheelZoom:false}">
+            <l-map @click="setMarker" class="mt-4" ref="map" :zoom="mapZoom"
+                   :style="'border-radius: 8px;resize: vertical;height:'+ mapHeight + 'px'" 
+                   :center="mapCenter" 
+                   :options="{scrollWheelZoom:false}">
               <l-tile-layer :key="mapKey" v-if="defaultTile" :attribution="attribution" :url="mapsApiEndpoint"
                             :subdomains="subdomains"></l-tile-layer>
               <l-control class="example-custom-control">
@@ -158,7 +172,7 @@ Vue.component("geo-map", {
                   <img src="/static/img/satellite-icon.png" width="18">
                 </v-btn>
               </l-control>
-              <l-marker @update:latLng="updateLocation" :lat-lng="[lat,lng]" draggable="true"></l-marker>
+              <l-marker v-if="lat && lng" @update:latLng="updateLocation" :lat-lng="[lat,lng]" :draggable="editMode"></l-marker>
               <l-marker :draggable="false" opacity="0.4" v-for="marker in extra"
                         :lat-lng="[marker.lat,marker.lng]"></l-marker>
 

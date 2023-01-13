@@ -5,9 +5,10 @@ Vue.component('global-map', {
             default: []
         },
 
-        i18n: {}
-
-
+        i18n: {},
+        legend: {
+            default: true
+        }
     }
 
 
@@ -195,7 +196,7 @@ ${heading}</strong> </span><br>
       <v-card outlined color="grey lighten-3">
 
         <v-card-text>
-          <div class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
+          <div v-if="legend" class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
             <div class="caption">
               <v-icon small color="#00a1f1"> mdi-checkbox-blank-circle</v-icon>
               {{ i18n.locations_ }}

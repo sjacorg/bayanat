@@ -4,16 +4,14 @@ from collections import namedtuple
 
 from celery import Celery
 
-
-from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory, Label, Eventtype, PotentialViolation, ClaimedViolation
+from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory, \
+    Eventtype, PotentialViolation, ClaimedViolation, LocationAdminLevel, LocationType
+from enferno.deduplication.models import DedupRelation
 from enferno.extensions import db, rds
 from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import Role
 from enferno.utils.data_import import DataImport
-from enferno.deduplication.models import DedupRelation
-from datetime import timedelta
 from enferno.utils.sheet_utils import SheetUtils
-
 
 cfg = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
 
@@ -68,11 +66,13 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
 
         # handle automatic status assignement
         if not 'status' in tmp:
+            status = None
             if tmp.get('assigned_to_id'):
                 status = 'Assigned'
             if tmp.get('first_peer_reviewer_id'):
                 status = 'Peer Review Assigned'
-            tmp['status'] = status
+            if status:
+                tmp['status'] = status
 
         mappings.append(tmp)
 
@@ -110,11 +110,13 @@ def bulk_update_actors(ids, bulk, cur_user_id):
 
         # handle automatic status assignement
         if not 'status' in tmp:
+            status = None
             if tmp.get('assigned_to_id'):
                 status = 'Assigned'
             if tmp.get('first_peer_reviewer_id'):
                 status = 'Peer Review Assigned'
-            tmp['status'] = status
+            if status:
+                tmp['status'] = status
         mappings.append(tmp)
     db.session.bulk_update_mappings(Actor, mappings)
 
@@ -150,11 +152,13 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
 
         # handle automatic status assignement
         if not 'status' in tmp:
+            status = None
             if tmp.get('assigned_to_id'):
                 status = 'Assigned'
             if tmp.get('first_peer_reviewer_id'):
                 status = 'Peer Review Assigned'
-            tmp['status'] = status
+            if status:
+                tmp['status'] = status
 
         mappings.append(tmp)
     db.session.bulk_update_mappings(Incident, mappings)
@@ -279,3 +283,17 @@ def import_data():
         f = data_path + 'claimed_violation.csv'
         fs = FileStorage(open(f, 'rb'))
         ClaimedViolation.import_csv(fs)
+
+def create_default_location_data():
+    if not LocationAdminLevel.query.all():
+        db.session.add(LocationAdminLevel(code=1, title='Governorate'))
+        db.session.add(LocationAdminLevel(code=2, title='District'))
+        db.session.add(LocationAdminLevel(code=3, title='Subdistrict'))
+        db.session.add(LocationAdminLevel(code=4, title='Community'))
+        db.session.add(LocationAdminLevel(code=5, title='Neighbourhood'))
+        db.session.commit()
+
+    if not LocationType.query.all():
+        db.session.add(LocationType(title='Administrative Location'))
+        db.session.add(LocationType(title='Point of Interest'))
+        db.session.commit()

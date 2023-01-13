@@ -125,7 +125,7 @@
                                                         v-model="imDialog"
                                                         width="500"
                                                 >
-                                                    {% if current_user.roles_in(['Admin','Mod']) %}
+                                                    {% if current_user.has_role('Admin') %}
                                                         <template v-slot:activator="{ on }">
                                                             <v-btn
                                                                     color="secondary"

@@ -221,18 +221,19 @@ class SearchUtils:
             query.append(~Bulletin.sources.any(Source.id.in_(ids)))
 
         locations = q.get('locations', [])
-        if len(locations):
+        if locations:
             ids = [item.get('id') for item in locations]
-            children = Location.find_by_ids(ids)
-            all_ids =  [l.get('id')for l in children]
-
             if q.get('oplocations'):
-                query.append(Bulletin.locations.any(Location.id.in_(all_ids)))
+                # get all child locations
+                locs = Location.query.with_entities(Location.id).filter(
+                    or_(*[Location.id_tree.like('%[{}]%'.format(x)) for x in ids])).all()
+                loc_ids = [loc.id for loc in locs]
+                query.append(Bulletin.locations.any(Location.id.in_(loc_ids)))
             else:
-                for id in ids:
-                    children = Location.find_by_ids([id])
-                    all_ids = [l.get("id") for l in children]
-                    query.append(Bulletin.locations.any(Location.id.in_(all_ids)))
+                # get combined lists of ids for each location
+                id_mix = [Location.get_children_by_id(id) for id in ids]
+                query.extend(Bulletin.locations.any(Location.id.in_(i)) for i in id_mix)
+
 
                     
         # Excluded sources
@@ -434,21 +435,20 @@ class SearchUtils:
         res_locations = q.get('resLocations', [])
         if res_locations:
             ids = [item.get('id') for item in res_locations]
-            # query will always be or
-            # adding recursive search
-            children = Location.find_by_ids(ids)
-            all_ids = [l.get('id')for l in children]
-            query.append(Actor.residence_place_id.in_(all_ids))
+            # get all child locations
+            locs = Location.query.with_entities(Location.id).filter(
+                or_(*[Location.id_tree.like('%[{}]%'.format(x)) for x in ids])).all()
+            loc_ids = [loc.id for loc in locs]
+            query.append(Actor.residence_place_id.in_(loc_ids))
 
         origin_locations = q.get('originLocations', [])
         if origin_locations:
             ids = [item.get('id') for item in origin_locations]
-            # query will always be or
-            # recursive
-            # adding recursive search
-            children = Location.find_by_ids(ids)
-            all_ids = [l.get('id') for l in children]
-            query.append(Actor.origin_place_id.in_(all_ids))
+            # get all child locations
+            locs = Location.query.with_entities(Location.id).filter(
+                or_(*[Location.id_tree.like('%[{}]%'.format(x)) for x in ids])).all()
+            loc_ids = [loc.id for loc in locs]
+            query.append(Actor.origin_place_id.in_(loc_ids))
 
 
         # Excluded residence locations
@@ -677,16 +677,16 @@ class SearchUtils:
         locations = q.get('locations', [])
         if locations:
             ids = [item.get('id') for item in locations]
-            children = Location.find_by_ids(ids)
-            all_ids = [l.get('id') for l in children]
-
             if q.get('oplocations'):
-                query.append(Incident.locations.any(Location.id.in_(all_ids)))
+                # get all child locations
+                locs = Location.query.with_entities(Location.id).filter(
+                    or_(*[Location.id_tree.like('%[{}]%'.format(x)) for x in ids])).all()
+                loc_ids = [loc.id for loc in locs]
+                query.append(Incident.locations.any(Location.id.in_(loc_ids)))
             else:
-                for id in ids:
-                    children = Location.find_by_ids([id])
-                    all_ids = [l.get("id") for l in children]
-                    query.append(Incident.locations.any(Location.id.in_(all_ids)))
+                # get combined lists of ids for each location
+                id_mix = [Location.get_children_by_id(id) for id in ids]
+                query.extend(Incident.locations.any(Location.id.in_(i)) for i in id_mix)
 
 
         # Excluded sources
