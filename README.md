@@ -22,8 +22,8 @@ Live Demo
 ---------
 You can access a demo instance of Bayanat on [demo.bayanat.org](https://demo.bayanat.org/). You can use the following credentials to log in:
 
-- `demo@bayanat.org`/`demo` for [Data Analyst](https://docs.bayanat.org/en/users-groups#data-analyst-da) access level.
-- `admin@bayanat.org`/`admin` for [Administrator](https://docs.bayanat.org/en/users-groups#administrator) access level. 
+- `demo`/`demo` for [Data Analyst](https://docs.bayanat.org/en/users-groups#data-analyst-da) access level.
+- `admin-demo`/`admin` for [Administrator](https://docs.bayanat.org/en/users-groups#administrator) access level. 
 
 Please note:
 - This server will be reset every 15 minutes. Feel free to make changes to items in the database.
