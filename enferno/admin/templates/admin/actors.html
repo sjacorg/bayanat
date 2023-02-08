@@ -1,144 +1,179 @@
 {% extends 'layout.html' %} {% block css %}
-<link rel="stylesheet" href="/static/js/filepond/dist/filepond.min.css" />
-
+    <link rel="stylesheet" href="/static/js/dropzone/vue2Dropzone.min.css"/>
+    <link rel="stylesheet" href="/static/js/dropzone/basic.css"/>
 {% endblock %} {% block content %}
 
-<div id="app">
-  <v-app id="actors" v-cloak>
-    {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
+    <div id="app">
+        <v-app id="actors" v-cloak>
+            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
     'admin/partials/actor_drawer.html' %}
-    {% include
+            {% include
       'admin/partials/bulk_actor_drawer.html' %}
-    <v-main>
-      {% include 'admin/partials/actor_advsearch.html' %}
-      <v-container class="container--fluid" >
+            <v-main>
+                {% include 'admin/partials/actor_advsearch.html' %}
+                <v-container class="container--fluid">
 
-                  <v-card>
-                    <v-card-title>
-                      <div class="flex-grow-1"></div>
-                    </v-card-title>
-                    <v-card-text>
-                      <v-data-table
-                        fixed-header
-                        height="calc(100vh - 355px)"
-                        id="actors-dt"
-                        v-model="selected"
-                        :headers="headers"
-                        @click:row="rowClick"
+                    <v-card>
+                        <v-card-title>
+                            <div class="flex-grow-1"></div>
+                        </v-card-title>
+                        <v-card-text>
+                            <v-data-table
+                                    fixed-header
+                                    height="calc(100vh - 355px)"
+                                    id="actors-dt"
+                                    v-model="selected"
+                                    :headers="headers"
+                                    @click:row="rowClick"
+                                    :item-class="rowClass"
 
-                        show-select
+                                    show-select
 
-                        :items="items"
-                        :options.sync="options"
-                        :footer-props.sync="footerProps"
-                        :loading="loading"
-                        :server-items-length="itemsLength"
-                        class="elevation-1"
-                      >
-                        <template v-slot:top>
-                          <v-toolbar flat color="white">
-                            <v-btn class="hidden-sm-and-down" small @click="allActors" text>{{_('All Actors')}}</v-btn>
-                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                            <v-btn class="hidden-sm-and-down" small @click="myAssigned"  text>{{_('Assigned to me')}}</v-btn>
-                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                            <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down" text>{{_('My Review List')}}</v-btn>
+                                    :items="items"
+                                    :options.sync="options"
+                                    :footer-props.sync="footerProps"
+                                    :loading="loading"
+                                    :server-items-length="itemsLength"
+                                    class="elevation-1"
+                                    @toggle-select-all="selectAllRestrict"
+                            >
 
-                            <v-text-field
-                            flat
-                            dense
-                            outlined
-                            small
-                            v-model.trim="search[0].tsv"
-                            @keydown.enter="doSearch"
+                             <template v-slot:item.data-table-select="{ item, isSelected, select }">
+                                    <v-simple-checkbox
+                                            :value="isSelected"
+                                            :readonly="item.restricted"
+                                            :disabled="item.restricted"
+                                            @input="select($event)"
+                                    ></v-simple-checkbox>
+                                </template>
+                                <template v-slot:top>
+                                    <v-toolbar flat color="white">
+                                        <v-btn class="hidden-sm-and-down" small @click="allActors"
+                                               text>{{ _('All Actors') }}</v-btn>
+                                        <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                                        <v-btn class="hidden-sm-and-down" small @click="myAssigned"
+                                               text>{{ _('Assigned to me') }}</v-btn>
+                                        <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                                        <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down"
+                                               text>{{ _('My Review List') }}</v-btn>
 
-                            hide-details
-                            append-outer-icon="mdi-ballot"
-                            append-icon="mdi-close"
-                            @click:append-outer="toggleAdvSearch"
-                            @click:append="resetSearch"
-                            prepend-inner-icon="mdi-magnify"
-                            label="{{_('Search')}}"
-                          ></v-text-field>
+                                        <v-text-field
+                                                flat
+                                                dense
+                                                outlined
+                                                small
+                                                v-model.trim="search[0].tsv"
+                                                @keydown.enter="doSearch"
 
-
-
-                            <v-spacer></v-spacer>
-                            {% if current_user.roles_in(['Admin','DA']) %}
-                            <v-btn @click="editItem" color="primary" dark class="ma-2">{{ _('New Actor') }}</v-btn>
-                            {% endif %}
-                            {% include 'admin/partials/actor_dialog.html' %}
-                            {% include 'admin/partials/review_dialog.html' %}
-                          </v-toolbar>
-
-                          {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
-                          <v-toolbar dense  color="grey lighten-4" flat >
-                            <template v-if="bulkIcons">
-
-                                <v-btn @click="selected=[]" x-small fab
-                                       class="mr-3" elevation="0" color="white">
-                                    <v-icon>mdi-checkbox-blank-outline</v-icon>
-                                </v-btn>
-
-                              <v-btn @click="bulkActorDrawer=true" small   color="fifth" depressed  ><v-icon small left>mdi-circle-edit-outline</v-icon>{{ _('Bulk update') }}</v-btn>
-
-                            </template>
-
-                            <template>
-                              <v-progress-circular v-for="job in jobs"
-                                  size="20" small
-                                  :indeterminate="job.status!='SUCCESS'"
-                                  :color="job.status=='SUCCESS' ? 'success': 'amber'"
-                              :value="job.status=='SUCCESS'?100:null"
-                            class="mx-1"
-                                           stroke="1"
-                                ></v-progress-circular>
-                            </template>
-
-                            <v-spacer></v-spacer>
-
-                              <div>
-                             <v-tooltip top>
-                                  <template v-slot:activator="{ on, attrs }">
-                                       <v-chip v-on="on"  label small close color="yellow lighten-4" class="grey--text text--darken-2"
-                                       @click:close="allActors"
-                              >{{_('About')}} ${itemsLength} {{_('results')}} (${searchTime} {{_('seconds')}})</v-chip>
-                                  </template>
-                                  <span>${search}</span>
-                              </v-tooltip>
-                              </div>
-                            <v-spacer></v-spacer>
-
-                            <v-chip small color="accent"  v-if="selected.length" >${selected.length} {{_('Selected items')}}</v-chip>
-                            </v-toolbar>
-                          {% endif %}
+                                                hide-details
+                                                append-outer-icon="mdi-ballot"
+                                                append-icon="mdi-close"
+                                                @click:append-outer="toggleAdvSearch"
+                                                @click:append="resetSearch"
+                                                prepend-inner-icon="mdi-magnify"
+                                                label="{{ _('Search') }}"
+                                        ></v-text-field>
 
 
-                        </template>
+                                        <v-spacer></v-spacer>
+                                        {% if current_user.roles_in(['Admin','DA']) %}
+                                            <v-btn @click="editItem" color="primary" dark
+                                                   class="ma-2">{{ _('New Actor') }}</v-btn>
+                                        {% endif %}
+                                        {% include 'admin/partials/actor_dialog.html' %}
+                                        {% include 'admin/partials/review_dialog.html' %}
+                                    </v-toolbar>
 
-                        <template v-slot:item.status="{ item }">
-                          ${item.status}
-                          <v-chip x-small v-if="item.review_action"  color="grey lighten-4" class="secondary--text">${item.review_action}</v-chip>
-                        </template>
+                                    {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
+                                        <v-toolbar dense color="grey lighten-4" flat>
+                                            <template v-if="bulkIcons">
 
-                        <template v-slot:item.action="{ item }">
-                          <v-tooltip top>
-                            <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                color="ov darken-1"
-                                class="mr-2"
-                                @click.stop="editItem(item)"
-                                v-if="editAllowed(item)"
-                              >
-                                mdi-pencil
-                              </v-icon>
-                            </template>
-                            <span>Edit</span>
-                          </v-tooltip>
+                                                <v-btn @click="selected=[]" x-small fab
+                                                       class="mr-3" elevation="0" color="white">
+                                                    <v-icon>mdi-checkbox-blank-outline</v-icon>
+                                                </v-btn>
+
+                                                <v-btn @click="bulkActorDrawer=true" small color="fifth" depressed>
+                                                    <v-icon small left>mdi-circle-edit-outline</v-icon>
+                                                    {{ _('Bulk update') }}</v-btn>
+
+                                            </template>
+
+                                            <template>
+                                                <v-progress-circular v-for="job in jobs"
+                                                                     size="20" small
+                                                                     :indeterminate="job.status!='SUCCESS'"
+                                                                     :color="job.status=='SUCCESS' ? 'success': 'amber'"
+                                                                     :value="job.status=='SUCCESS'?100:null"
+                                                                     class="mx-1"
+                                                                     stroke="1"
+                                                ></v-progress-circular>
+                                            </template>
+
+                                            <v-spacer></v-spacer>
+
+                                            <div>
+                                                <v-tooltip top>
+                                                    <template v-slot:activator="{ on, attrs }">
+                                                        <v-chip v-on="on" label small close color="yellow lighten-4"
+                                                                class="grey--text text--darken-2"
+                                                                @click:close="allActors"
+                                                        >{{ _('About') }} ${itemsLength} {{ _('results') }}
+                                                            (${searchTime} {{ _('seconds') }})
+                                                        </v-chip>
+                                                    </template>
+                                                    <span>${search}</span>
+                                                </v-tooltip>
+                                            </div>
+                                            <v-spacer></v-spacer>
+
+                                            <v-chip small color="accent" v-if="selected.length">
+                                                ${selected.length} {{ _('Selected items') }}</v-chip>
+                                        </v-toolbar>
+                                    {% endif %}
 
 
+                                </template>
 
-                              <v-tooltip top>
+                                <template v-slot:item.roles="{item}">
+                                    <v-chip
+                                    class="mx-2" 
+                                    small
+                                    style="scale:0.7"
+                                    v-tippy
+                                    :content="role.name"
+                                    v-for="role in item.roles"
+                                    :color="role.color"
+                                    >
+
+                                    </v-chip>
+                                </template>
+
+                                <template v-slot:item.status="{ item }">
+                                    ${item.status}
+                                    <v-chip x-small v-if="item.review_action" color="grey lighten-4"
+                                            class="secondary--text">${item.review_action}
+                                    </v-chip>
+                                </template>
+
+                                <template v-slot:item.action="{ item }">
+                                    <v-tooltip top>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon
+                                                    v-on="on"
+                                                    color="ov darken-1"
+                                                    class="mr-2"
+                                                    @click.stop="editItem(item)"
+                                                    v-if="editAllowed(item)"
+                                            >
+                                                mdi-pencil
+                                            </v-icon>
+                                        </template>
+                                        <span>Edit</span>
+                                    </v-tooltip>
+
+
+                                    <v-tooltip top>
                                         <template v-slot:activator="{ on }">
                                             <v-icon
                                                     v-on="on"
@@ -152,100 +187,100 @@
                                             </v-icon>
 
 
-
                                         </template>
                                         <span>Assign to self</span>
                                     </v-tooltip>
 
 
+                                    <v-tooltip top>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon v-on="on"
+                                                    v-if="reviewAllowed(item)"
+                                                    @click.stop="addReview(item)"
+                                                    color="gv darken-1"
+                                                    class="mr-2"
+                                            >mdi-message-draw
+                                            </v-icon>
+                                        </template>
+                                        <span>Add Review</span>
+                                    </v-tooltip>
 
-                           <v-tooltip top>
-                            <template v-slot:activator="{ on }">
-                               <v-icon v-on="on"
-                            v-if="reviewAllowed(item)"
-                            @click.stop="addReview(item)"
-                            color="gv darken-1"
-                            class="mr-2"
-                            >mdi-message-draw</v-icon>
+
                                 </template>
-                            <span>Add Review</span>
-                          </v-tooltip>
+                                <template v-slot:no-data></template>
+                            </v-data-table>
+                            <v-overlay :value="loading">
+                                <v-progress-circular
+                                        indeterminate
+                                        size="64"
+                                ></v-progress-circular>
+                            </v-overlay>
+
+                            <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
+                                              ref="relateBulletins"></relate-bulletins>
+                            <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
+                                           ref="relateActors"></relate-actors>
+                            <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
+                                              ref="relateIncidents"></relate-incidents>
+
+                            {% include 'admin/partials/video_player_dialog.html' %}
+
+                            <visualization ref="viz" :i18n="translations"></visualization>
 
 
+                            <v-dialog width="600" v-model="selfAssignDialog">
+                                <v-card class="pa-3">
+                                    <v-card-title>Self Assign Actor #${assignActor.id}</v-card-title>
+                                    <v-card-text>
 
-                        </template>
-                        <template v-slot:no-data> </template>
-                      </v-data-table>
-                       <v-overlay :value="loading">
-                        <v-progress-circular
-                          indeterminate
-                          size="64"
-                        ></v-progress-circular>
-                      </v-overlay>
+                                        <v-textarea v-model="assignActor.comments" label="Comments"></v-textarea>
+                                    </v-card-text>
+                                    <v-card-actions>
+                                        <v-btn :disabled="!assignActor.comments" class="ma-auto" @click="selfAssign"
+                                               color="primary">Assign to self
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-card>
 
-                      <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"  ref="relateBulletins"></relate-bulletins>
-                      <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"  ref="relateActors"></relate-actors>
-                      <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"  ref="relateIncidents"></relate-incidents>
+                            </v-dialog>
 
-                      {% include 'admin/partials/relate_media_dialog.html' %}
-                      {% include 'admin/partials/video_player_dialog.html' %}
-
-                    <visualization ref="viz" :i18n="translations"></visualization>
-
-
-                        <v-dialog width="600" v-model="selfAssignDialog">
-                            <v-card class="pa-3">
-                                <v-card-title>Self Assign Actor #${assignActor.id}</v-card-title>
-                                <v-card-text>
-
-                                    <v-textarea v-model="assignActor.comments" label="Comments"></v-textarea>
-                                </v-card-text>
-                                <v-card-actions>
-                                    <v-btn :disabled="!assignActor.comments" class="ma-auto" @click="selfAssign"
-                                           color="primary">Assign to self
+                            <v-snackbar v-model="snackbar">
+                                <div class="d-flex justify-space-between align-center">
+                                    <span class="text-subtitle-1">${snackMessage}</span>
+                                    <v-btn color="white" fab small color="secondary" text @click="snackbar = false">
+                                        <v-icon small>mdi-close</v-icon>
                                     </v-btn>
-                                </v-card-actions>
-                            </v-card>
+                                </div>
+                            </v-snackbar>
+                        </v-card-text>
+                    </v-card>
 
-                        </v-dialog>
-
-
-                      <v-snackbar v-model="snackbar">
-                        ${snackMessage}
-                        <v-btn color="pink" text @click="snackbar = false">
-                          Close
-                        </v-btn>
-                      </v-snackbar>
-                    </v-card-text>
-                  </v-card>
-
-      </v-container>
-    </v-main>
-      {% include 'footer.html' %}
-  </v-app>
-</div>
+                </v-container>
+            </v-main>
+            {% include 'footer.html' %}
+        </v-app>
+    </div>
 
 {% endblock %} {% block js %}
-<script
-  src="/static/js/tinymce/js/tinymce/tinymce.min.js"
-  referrerpolicy="origin"
-></script>
-<script src="/static/js/tinymce-vue.min.js"></script>
+    <script
+            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            referrerpolicy="origin"
+    ></script>
+    <script src="/static/js/tinymce-vue.min.js"></script>
 
-<script src="/static/js/filepond/dist/filepond.min.js"></script>
-<script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
-<script src="/static/js/components/ActorResult.js?v={{g.version}}"></script>
-<script src="/static/js/components/BulletinResult.js?v={{g.version}}"></script>
-<script src="/static/js/components/IncidentResult.js?v={{g.version}}"></script>
-<script src="/static/js/components/MediaCard.js?v={{g.version}}"></script>
-<script src="/static/js/components/UniField.js?v={{g.version}}"></script>
-<script src="/static/js/components/Visualization.js?v={{ g.version }}"></script>
-<script src="/static/js/element-resize-detector.min.js?v={{ g.version }}"></script>
-<script src="/static/js/force-graph.min.js?v={{ g.version }}"></script>
+    <script src="/static/js/dropzone/vue2Dropzone.js"></script>
+    <script src="/static/js/components/ActorResult.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/BulletinResult.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/IncidentResult.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/MediaCard.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/UniField.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/Visualization.js?v={{ g.version }}"></script>
+    <script src="/static/js/element-resize-detector.min.js?v={{ g.version }}"></script>
+    <script src="/static/js/force-graph.min.js?v={{ g.version }}"></script>
 
-<script src="/static/js/components/GlobalMap.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/GlobalMap.js?v={{ g.version }}"></script>
 
-<script src="/static/js/Leaflet.GoogleMutant.js"></script>
+    <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
 
 {#Missing Persons Components#}
@@ -260,396 +295,428 @@
 <script src="/static/js/components/PdfViewer.js?v={{g.version}}"></script>
 
 
-<script>
-window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
-  let app = new Vue({
-    el: "#app",
-    vuetify: vuetify,
-    delimiters: delimiters,
-    router,
+    <script>
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        let app = new Vue({
+            el: "#app",
+            vuetify: vuetify,
+            delimiters: delimiters,
+            router,
 
-    components: {
-      "tinymce-editor": Editor, // <- Important part,
-      FilePond: vueFilePond.default()
-    },
-    mixins: [ mediaMixin],
+            components: {
+                "tinymce-editor": Editor,
+                vueDropzone: vue2Dropzone
 
-    data: () => ({
+            },
+            mixins: [mediaMixin],
 
-    translations: translations,
+            data: () => ({
 
-    assignActor: {},
-    selfAssignDialog: false,
+                translations: translations,
 
+                assignActor: {},
+                selfAssignDialog: false,
 
-   // missing person toggle
-    profile : false,
 
+                // missing person toggle
+                profile: false,
 
+                dzOpts: {
+                    url: '/admin/api/media/chunk',
+                    acceptedFiles: 'image/*, video/*, application/*',
+                    addRemoveLinks: true,
+                    chunking: true,
+                    forceChunking: true,
+                    chunkSize: 500000, // Bytes
+                    thumbnailWidth: 80, // px
+                    thumbnailHeight: 80,
+                    parallelUploads: 1
 
+                },
 
-      currentUser : JSON.parse(`{{ current_user.to_dict()|tojson }}`),
-      users : JSON.parse(`{{users|tojson}}`),
 
-      // advanced search
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+                users: JSON.parse(`{{users|tojson}}`),
 
-      advSearchExpand : false,
+                // advanced search
 
-      //global preview dialog
-      preview : false,
-      pitem: null,
+                advSearchExpand: false,
 
-      search : [{}],
-      saveQueryDialog: false,
-      searchPanels: 0,
+                //global preview dialog
+                preview: false,
+                pitem: null,
 
-      searchTime: null,
+                search: [{}],
+                saveQueryDialog: false,
+                searchPanels: 0,
 
-      fsloading : true,
+                searchTime: null,
 
+                roles: [],
+
+                fsloading: true,
 
+
+                // Load actor config
 
-      // Load actor config
-
-      // load countries from global config
-      countries: countries,
-      drawer: drawer,
-      sideNav: sideNav,
-      dialog: dialog,
-      //load advsearch constants
-
-
-
-      eventDialog: false,
-      eventParams: '&typ=for_actor',
-      reviewDialog: false,
-      reviewKey : 0,
-      videoDialog: false,
-      playerOptions: {},
-
-
-
-
-
-      // search and relate actor dialog vars
-      relateActorDialog: false,
-      relateActorLoader: true,
-      relateActorTerm: "",
-      relateActorResults: [],
-      selectedRelatedActors: [],
-
-      // search and relate bulletin dialog vars
-      relateBulletinDialog: false,
-      relateBulletinLoader: true,
-      relateBulletinTerm: "",
-      relateBulletinResults: [],
-      selectedRelatedBulletins: [],
-
-
-       // search and relate incident dialog vars
-       relateIncidentDialog: false,
-       relateIncidentLoader: true,
-       relateIncidentTerm: "",
-       relateIncidentResults: [],
-       selectedRelatedIncidents: [],
-
-
-
-
-
-
-      actorDrawer: false,
-      bulkActorDrawer: false,
-
-      sources: [],
-      locations: [],
-      labels: [],
-      verLabels: [],
-      eventtypes: [],
-
-      statuses: statuses,
-      statusItems: statuses,
-      statusDisabled : false,
-
-
-
-      //field language switchers
-      name__: true,
-      nickname__: true,
-      first_name__: true,
-      middle_name__: true,
-      mother_name__: true,
-      last_name__: true,
-      occupation__: true,
-      position__: true,
-      dialects__: true,
-      family_status__: true,
-
-      //events fields
-      eventTitle__: true,
-      eventComments__: true,
-
-
-      //source link extras
-      source_alt: null,
-      source_disabled: false,
-
-      //rich text config
-      tinyConfig: tinyConfig,
-
-      snackbar: false,
-      snackMessage: "",
-      loading: true,
-      parentLoading: false,
-      csvFile: null,
-      options: {},
-      searchLoading: {
-        assigned: false,
-        first: false,
-        second: false,
-        third: false
-      },
-      sourcesLoading: false,
-      locationsLoading: false,
-      eventLocationLoading: false,
-      labelsLoading: false,
-      eventtypeLoading: false,
-
-      //event dates popups
-      eventFromMenu: false,
-      eventToMenu: false,
-
-      //actor dates popups
-      publishDateMenu: false,
-      documentationDateMenu: false,
-
-      footerProps: {
-        itemsPerPageOptions: itemsPerPageOptions,
-            itemsPerPageText: "{{ _('Rows per page')}}"
-      },
-
-      headers: [
-        { text: "{{_('ID')}}", value: "id" },
-        { text: "{{_('Name')}}", value: "name" },
-        {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
-        { text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable:false },
-        { text: "{{_('1st Reviewer')}}", value: "first_peer_reviewer.name", width: 130, sortable:false },
-        {% endif %}
-        { text: "{{_('Status')}}", value: "_status",sortable: false },
-        { text: "{{_('Actions')}}", value: "action", sortable: false, width: 100 }
-      ],
-
-      items: [],
-      selected: [],
-      itemsLength: 10,
-
-      editedIndex: -1,
-      editedItem: {
-        title: "",
-        events: [],
-        medias: [],
-        actor_relations: [],
-        bulletin_relations: []
-
-      },
-      defaultItem: {
-        title: "",
-        description: "",
-
-        // related events
-        events: [],
-        // related media
-        medias: [],
-        // related actors
-        actor_relations: [],
-        bulletin_relations: [],
-        publish_date: '',
-        documentation_date: ''
-      },
-
-      //events
-      editedEventIndex: -1,
-      editedEvent: {
-        title: ""
-      },
-      defaultEvent: {
-       title: "",
-       from_date: '',
-       to_date:''
-
-      },
-
-
-
-
-      reviewItem: {
-
-      },
-
-      // bulk actions
-      bulk: {},
-      bulkIcons : false,
-      jobs: [],
-      bulkTimer: 0,
-
-      actor: {},
-      actorLoader: false
-    }),
-
-    computed: {
-
-
-          exBulletins(){
-              let ids = [];
-              if (this.editedItem.bulletin_relations){
-                  ids = ids.concat(this.editedItem.bulletin_relations.map(x=> x.bulletin.id))
-              }
-              return ids;
-          },
-
-          exActors(){
-              let ids = [this.editedItem.id];
-              if (this.editedItem.actor_relations){
-                  ids = ids.concat(this.editedItem.actor_relations.map(x=> x.actor.id))
-              }
-              return ids;
-          },
-
-          exIncidents(){
-              let ids = [];
-              if (this.editedItem.incident_relations){
-                  ids = ids.concat(this.editedItem.incident_relations.map(x=> x.incident.id))
-              }
-              return ids;
-          },
-
-
-
-      formTitle() {
-        return this.editedItem.id? this.translations.editActor_ : this.translations.newActr_;
-      },
-      videoPlayer() {
-        return document.querySelector("#player");
-      }
-    },
-
-    watch: {
-
-      actorDrawer : function(val){
-        if(val == false) {
-
-          if (this.$route.path !='/admin/actors/')
-          this.$router.push('/admin/actors/')
-        }
-      },
-
-
-
-      selected : function(val){
-        this.bulkIcons = val.length ? true: false;
-
-      },
-       source_alt: function(val) {
-
-        if (val) {
-            this.editedItem.source_link = 'NA';
-            this.source_disabled = true;
-          } else {
-            //this.editedItem.source_link = '';
-            this.source_disabled = false;
-          }
-        },
-
-
-
-      eventDialog(val) {
-        val || this.closeEvent();
-      },
-
-      mediaDialog(val) {
-        val || this.closeMedia();
-      },
-
-      options: {
-        handler: "refresh",
-        immdiate: true
-      }
-    },
-    mounted: function() {
-
-      // display confirmation alert if edit dialog is open.
-      let self = this;
-      window.addEventListener("beforeunload", function (e) {
-        if (self.dialog) {
-          var confirmationMessage = 'It looks like you have been editing something. '
-                  + 'If you leave before saving, your changes will be lost.';
-          (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-          return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
-        }
-      });
-
-
-      if (this.$route.params.id){
-        this.showActor(this.$route.params.id);
-      }
-
-        if (this.$route.query.reltob) {
-            this.filter_related_to_bulletin(this.$route.query.reltob);
-        }
-
-        if (this.$route.query.reltoa) {
-            this.filter_related_to_actor(this.$route.query.reltoa);
-        }
-
-        if (this.$route.query.reltoi) {
-            this.filter_related_to_incident(this.$route.query.reltoi);
-        }
-
-      this.$router.afterEach((to, from, next) => {
-
-          if (this.$route.query.reltob) {
-              this.filter_related_to_bulletin(this.$route.query.reltob);
-          }
-
-          if (this.$route.query.reltoa) {
-              this.filter_related_to_actor(this.$route.query.reltoa);
-          }
-
-          if (this.$route.query.reltoi) {
-              this.filter_related_to_incident(this.$route.query.reltoi);
-          }
-
-
-      if (this.$route.params.id){
-          this.showActor(this.$route.params.id);
-        }
-
-      })
-
-
-
-
-    },
-
-    methods: {
-
-            openSelfAssign(actor){
-                    this.assignActor = {id:actor.id};
+                // load countries from global config
+                countries: countries,
+                drawer: drawer,
+                sideNav: sideNav,
+                dialog: dialog,
+                //load advsearch constants
+
+
+                eventDialog: false,
+                eventParams: '&typ=for_actor',
+                reviewDialog: false,
+                reviewKey: 0,
+                videoDialog: false,
+                playerOptions: {},
+
+
+                // search and relate actor dialog vars
+                relateActorDialog: false,
+                relateActorLoader: true,
+                relateActorTerm: "",
+                relateActorResults: [],
+                selectedRelatedActors: [],
+
+                // search and relate bulletin dialog vars
+                relateBulletinDialog: false,
+                relateBulletinLoader: true,
+                relateBulletinTerm: "",
+                relateBulletinResults: [],
+                selectedRelatedBulletins: [],
+
+
+                // search and relate incident dialog vars
+                relateIncidentDialog: false,
+                relateIncidentLoader: true,
+                relateIncidentTerm: "",
+                relateIncidentResults: [],
+                selectedRelatedIncidents: [],
+
+
+                actorDrawer: false,
+                bulkActorDrawer: false,
+
+                sources: [],
+                locations: [],
+                labels: [],
+                verLabels: [],
+                eventtypes: [],
+
+                statuses: statuses,
+                statusItems: statuses,
+                statusDisabled: false,
+
+
+                //field language switchers
+                name__: true,
+                nickname__: true,
+                first_name__: true,
+                middle_name__: true,
+                mother_name__: true,
+                last_name__: true,
+                occupation__: true,
+                position__: true,
+                dialects__: true,
+                family_status__: true,
+
+                //events fields
+                eventTitle__: true,
+                eventComments__: true,
+
+
+                //source link extras
+                source_alt: null,
+                source_disabled: false,
+
+                //rich text config
+                tinyConfig: tinyConfig,
+
+                snackbar: false,
+                snackMessage: "",
+                loading: true,
+                parentLoading: false,
+                csvFile: null,
+                options: {},
+                searchLoading: {
+                    assigned: false,
+                    first: false,
+                    second: false,
+                    third: false
+                },
+                sourcesLoading: false,
+                locationsLoading: false,
+                eventLocationLoading: false,
+                labelsLoading: false,
+                eventtypeLoading: false,
+
+                //event dates popups
+                eventFromMenu: false,
+                eventToMenu: false,
+
+                //actor dates popups
+                publishDateMenu: false,
+                documentationDateMenu: false,
+
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
+
+                headers: [
+                    {text: "{{_('ID')}}", value: "id", width: 12, sortable: false},
+                    {text: "{{_('Name')}}", value: "name", width: 300, sortable: false},
+                    {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
+                        {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
+                        {text: "{{_('Roles')}}", value: "roles", width: 130, sortable: false},
+                    {% endif %}
+                    {text: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
+                    {text: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
+                ],
+
+                items: [],
+                selected: [],
+                itemsLength: 10,
+
+                editedIndex: -1,
+                editedItem: {
+                    title: "",
+                    events: [],
+                    medias: [],
+                    actor_relations: [],
+                    bulletin_relations: [],
+                    incident_relations: []
+
+                },
+                defaultItem: {
+                    title: "",
+                    description: "",
+
+                    // related events
+                    events: [],
+                    // related media
+                    medias: [],
+                    // related actors
+                    actor_relations: [],
+
+                    // related bulletins
+                    bulletin_relations: [],
+
+                    // related incidents
+                    incident_relations: [],
+                    publish_date: '',
+                    documentation_date: ''
+                },
+
+                //events
+                editedEventIndex: -1,
+                editedEvent: {
+                    title: ""
+                },
+                defaultEvent: {
+                    title: "",
+                    from_date: '',
+                    to_date: ''
+
+                },
+
+
+                reviewItem: {},
+
+                // bulk actions
+                bulk: {},
+                bulkIcons: false,
+                jobs: [],
+                bulkTimer: 0,
+
+                actor: {},
+                actorLoader: false
+            }),
+
+            computed: {
+
+
+                exBulletins() {
+                    let ids = [];
+                    if (this.editedItem.bulletin_relations) {
+                        ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id))
+                    }
+                    return ids;
+                },
+
+                exActors() {
+                    let ids = [this.editedItem.id];
+                    if (this.editedItem.actor_relations) {
+                        ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id))
+                    }
+                    return ids;
+                },
+
+                exIncidents() {
+                    let ids = [];
+                    if (this.editedItem.incident_relations) {
+                        ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id))
+                    }
+                    return ids;
+                },
+
+
+                formTitle() {
+                    return this.editedItem.id ? this.translations.editActor_ : this.translations.newActr_;
+                },
+                videoPlayer() {
+                    return document.querySelector("#player");
+                }
+            },
+
+            watch: {
+
+                actorDrawer: function (val) {
+                    if (val == false) {
+
+                        if (this.$route.path != '/admin/actors/')
+                            this.$router.push('/admin/actors/')
+                    }
+                },
+
+
+                selected: function (val) {
+                    this.bulkIcons = val.length ? true : false;
+
+                },
+                source_alt: function (val) {
+
+                    if (val) {
+                        this.editedItem.source_link = 'NA';
+                        this.source_disabled = true;
+                    } else {
+                        //this.editedItem.source_link = '';
+                        this.source_disabled = false;
+                    }
+                },
+
+
+                eventDialog(val) {
+                    val || this.closeEvent();
+                },
+
+                mediaDialog(val) {
+                    val || this.closeMedia();
+                },
+
+                options: {
+                    handler: "refresh",
+                    immdiate: true
+                }
+            },
+            mounted: function () {
+
+               // populate roles for advanced search for admins
+                {% if current_user.has_role('Admin') %}
+                    axios.get('/admin/api/roles/').then(res => {
+                        this.roles = res.data.items;
+                    }).catch(e => {
+                        this.roles = [];
+                        console.log(e.message);
+                    });
+                {% endif  %}
+
+
+
+
+                // display confirmation alert if edit dialog is open.
+                let self = this;
+                window.addEventListener("beforeunload", function (e) {
+                    if (self.dialog) {
+                        var confirmationMessage = 'It looks like you have been editing something. '
+                            + 'If you leave before saving, your changes will be lost.';
+                        (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+                        return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+                    }
+                });
+
+
+                if (this.$route.params.id) {
+                    this.showActor(this.$route.params.id);
+                }
+
+                if (this.$route.query.reltob) {
+                    this.filter_related_to_bulletin(this.$route.query.reltob);
+                }
+
+                if (this.$route.query.reltoa) {
+                    this.filter_related_to_actor(this.$route.query.reltoa);
+                }
+
+                if (this.$route.query.reltoi) {
+                    this.filter_related_to_incident(this.$route.query.reltoi);
+                }
+
+                this.$router.afterEach((to, from, next) => {
+
+                    if (this.$route.query.reltob) {
+                        this.filter_related_to_bulletin(this.$route.query.reltob);
+                    }
+
+                    if (this.$route.query.reltoa) {
+                        this.filter_related_to_actor(this.$route.query.reltoa);
+                    }
+
+                    if (this.$route.query.reltoi) {
+                        this.filter_related_to_incident(this.$route.query.reltoi);
+                    }
+
+
+                    if (this.$route.params.id) {
+                        this.showActor(this.$route.params.id);
+                    }
+
+                })
+
+
+            },
+
+            methods: {
+
+                  selectAllRestrict(props) {
+
+                    if (this.selected.length > 0) {
+                        // untoggle on next tick
+                        this.$nextTick(() => {
+                            this.selected = [];
+                        })
+
+                    }
+                    this.selected = props.items.filter(x => !x.restricted);
+                },
+
+                rowClass(item) {
+                    if (item.restricted) {
+                        return 'restricted'
+                    }
+                    return ''
+                },
+
+                openSelfAssign(actor) {
+                    this.assignActor = {id: actor.id};
                     this.selfAssignDialog = true;
 
                 },
 
-                selfAssign(){
+                selfAssign() {
 
 
-
-                    axios.put(`/admin/api/actor/assign/${this.assignActor.id}`,{actor:this.assignActor}).then(res=>{
+                    axios.put(`/admin/api/actor/assign/${this.assignActor.id}`, {actor: this.assignActor}).then(res => {
                         this.showSnack('Actor assigned successfully.')
                         this.searchActors(true)
 
-                    }).catch(err=>{
+                    }).catch(err => {
                         this.showSnack(err.response.data);
-                    }).finally(()=>{
+                    }).finally(() => {
                         this.selfAssignDialog = false;
                         this.assignActor = {};
 
@@ -658,7 +725,7 @@ window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
                 },
 
 
-               filter_related_to_bulletin(id) {
+                filter_related_to_bulletin(id) {
                     this.bulletinDrawer = false;
                     this.search = [{rel_to_bulletin: id}];
                     this.searchActors();
@@ -676,608 +743,596 @@ window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
                     this.searchActors();
                 },
 
-      previewItem(endpoint)
-        {
+                previewItem(endpoint) {
 
-          axios.get(endpoint).then(res => {
-            this.pitem = res.data;
-            this.preview = true;
+                    axios.get(endpoint).then(res => {
+                        this.pitem = res.data;
+                        this.preview = true;
 
-          })
+                    })
 
 
-        }
-      ,
-
-      bulkStatus() {
-
-            axios.get('/admin/api/bulk/status/?type=actor').then(res => {
-              this.jobs = res.data;
-              if (!this.jobs.length) {
-                clearInterval(this.bulkTimer);
-                this.options.page = 1;
-                this.refresh();
-                this.showSnack('Bulk Update is finished!')
-              }
-            });
-
-        },
-
-
-       // bulk updates
-
-
-       bulk_update(){
-          let ids = this.selected.map(x => x.id);
-          this.loading = true;
-          axios.put(`/admin/api/actor/bulk/`, {
-                items: ids,
-                bulk: this.bulk
-              })
-              .then(response => {
-                this.loading = false;
-                this.showSnack(response.data);
-                this.refresh(this.options);
-                //reset bulk drawer, and bulk data
-                this.bulkActorDrawer = false;
-                this.selected = [];
-                this.bulk = {};
-                clearInterval(this.bulkTimer);
-               // if (!this.bulkProcInterval)
-                  this.bulkTimer = setInterval(this.bulkStatus,3000);
-
-              });
-        },
-
-
-
-      // ---------------- advanced search -----------------------
-      toggleAdvSearch() {
-          this.advSearchExpand = !this.advSearchExpand
-          this.advSearchMenu = !this.advSearchMenu;
-          this.$nextTick(()=>{
-            // trick to just invoke the binding
-
-          })
-
-      },
-
-      doSearch() {
-      this.options.page = 1;
-
-       // some good UX
-          if (this.advSearchExpand){
-          this.advSearchExpand = false;
-          }else {
-            //this.search = Object.assign({},{tsv:this.search.tsv})
-          }
-
-      this.searchActors();
-      },
-
-
-      searchActors() {
-
-          this.loading = true;
-          const startTime = new Date();
-          axios.post(`/admin/api/actors/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q:this.search}).then(response => {
-            this.loading = false;
-            const endTime = new Date();
-            this.searchTime = (endTime - startTime)  / 1000;
-            this.itemsLength = response.data.total;
-            this.items = response.data.items;
-          });
-
-
-
-      },
-
-       removeQueryAt(i) {
-
-        this.search.splice(i,1);
-
-        },
-
-         addQuery(){
-          this.search.push({})
-          this.searchPanels= this.search.length-1;
-        },
-
-
-         resetSearch(){
-          this.search = [{}];
-          this.doSearch()
-        },
-
-
-
-
-      // ---------------- end advanced search -----------------------
-
-
-       /* Actors Custom Lists */
-
- allActors() {
-        this.search = [{}];
-        this.doSearch();
-
-      },
-      myAssigned() {
-        q = {};
-        this.options.page = 1;
-        q.assigned =  [this.currentUser.id];
-        q.status = "Assigned";
-        this.search = [q];
-        this.searchActors();
-      },
-
-      myReview() {
-        q = {};
-        this.options.page = 1;
-        q.reviewer =  [this.currentUser.id];
-        q.status = "Peer Review Assigned";
-        this.search = [q]
-        this.searchActors();
-      },
-
-
-
-
-
-
-
-
-
-
-      removeEvent: function(evt, index) {
-        if (confirm('Confirm deleting this event?')) {
-          this.editedItem.events.splice(index, 1);
-        }
-      },
-
-
-      //reset initial visible fields to english language
-
-      resetSwitchers: function() {
-        this.name__ = true;
-        this.nickname__ = true;
-        this.first_name__ = true;
-        this.middle_name__ = true;
-        this.mother_name__ = true;
-        this.last_name__ = true;
-        this.occupation__ = true;
-        this.position__ = true;
-        this.dialects__ = true;
-        this.family_status__ = true;
-      },
-
-      refresh(options) {
-        this.searchActors();
-      },
-
-      rowClick(item){
-        path = `/admin/actors/${item.id}`;
-        if (this.$route.path !== path)
-        this.$router.push(path);
-
-      },
-
-      showActor(id) {
-        this.actorLoader = true;
-        this.actorDrawer = true;
-
-        axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
-          this.actor = response.data;
-          this.actorLoader = false;
-        }).catch(error => {
-          this.actorDrawer = false;
-          this.actorLoader = false;
-          this.showSnack('Oops! We couldn\'t find this item.')
-
-        });
-      },
-
-      searchUsers: debounce(function(evt) {
-        this.searchLoading[evt.target.dataset.loader] = true;
-
-        axios.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
-          this.users = response.data.items;
-          this.searchLoading[evt.target.dataset.loader] = false;
-        });
-      }, 350),
-
-
-      handleStatus(actor) {
-
-
-        if (this.editedItem.id) {
-          // edit existing bulletin mode
-          if (this.has_role(this.currentUser, 'Admin')){
-
-          this.statusDisabled = false;
-          return;
-        }
-
-        // else is a standard user
-          this.statusItems = this.statuses;
-
-          if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created'){
-            this.editedItem.status = this.statusItems[2].en;
-          }
-
-          if (this.editedItem.status == 'Peer Reviewed'){
-            this.editedItem.status = this.statusItems[9].en;
-          }
-
-          this.statusDisabled = true;
-        } else {
-          // new bulletin mode
-
-          this.editedItem.status = this.statusItems[1].en;
-          this.statusDisabled = true;
-
-        }
-      },
-
-
-      showSnack(message){
-        this.snackMessage = message;
-        this.snackbar = true;
-  },
-  has_role(user,role) {
-    for (r of user.roles){
-      if (r.name == role) {
-        return true
-      }
-    }
-    return false;
-  },
-
-  editAllowed(actor) {
-    if (this.has_role(this.currentUser,'Admin')) {
-      return true;
-    }
-    if (!this.has_role(this.currentUser,'DA')) {
-      return false;
-    }
-    const statuses = ['Human Created','Assigned','Updated', 'Peer Reviewed', 'Revisited'];
-    if (actor.assigned_to && actor.assigned_to.id == this.currentUser.id && statuses.includes(actor.status)) {
-      return true
-    }
-    return false;
-  },
-
-   reviewAllowed(actor) {
-
-       if (!this.currentUser.roles.length) {
-           return false;
-       }
-
-    const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
-    if (actor.first_peer_reviewer && actor.first_peer_reviewer.id == this.currentUser.id && statuses.includes(actor.status)) {
-      return true
-    }
-    return false;
-  },
-
-        selfAssignAllowed(actor) {
-            if (this.currentUser.can_self_assign) {
-                if ((!actor.assigned_to) || (actor.assigned_to && !actor.assigned_to.active)) {
-                    return true
                 }
+                ,
+
+                bulkStatus() {
+
+                    axios.get('/admin/api/bulk/status/?type=actor').then(res => {
+                        this.jobs = res.data;
+                        if (!this.jobs.length) {
+                            clearInterval(this.bulkTimer);
+                            this.options.page = 1;
+                            this.refresh();
+                            this.showSnack('Bulk Update is finished!')
+                        }
+                    });
+
+                },
+
+
+                // bulk updates
+
+
+                bulk_update() {
+                    let ids = this.selected.map(x => x.id);
+                    this.loading = true;
+                    axios.put(`/admin/api/actor/bulk/`, {
+                        items: ids,
+                        bulk: this.bulk
+                    })
+                        .then(response => {
+                            this.loading = false;
+                            this.showSnack(response.data);
+                            this.refresh(this.options);
+                            //reset bulk drawer, and bulk data
+                            this.bulkActorDrawer = false;
+                            this.selected = [];
+                            this.bulk = {};
+                            clearInterval(this.bulkTimer);
+                            // if (!this.bulkProcInterval)
+                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
+
+                        });
+                },
+
+
+                // ---------------- advanced search -----------------------
+                toggleAdvSearch() {
+                    this.advSearchExpand = !this.advSearchExpand
+                    this.advSearchMenu = !this.advSearchMenu;
+                    this.$nextTick(() => {
+                        // trick to just invoke the binding
+
+                    })
+
+                },
+
+                doSearch() {
+                    this.options.page = 1;
+
+                    // some good UX
+                    if (this.advSearchExpand) {
+                        this.advSearchExpand = false;
+                    } else {
+                        //this.search = Object.assign({},{tsv:this.search.tsv})
+                    }
+
+                    this.searchActors();
+                },
+
+
+                searchActors() {
+
+                    this.loading = true;
+                    const startTime = new Date();
+                    axios.post(`/admin/api/actors/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
+                        this.loading = false;
+                        const endTime = new Date();
+                        this.searchTime = (endTime - startTime) / 1000;
+                        this.itemsLength = response.data.total;
+                        this.items = response.data.items;
+                    });
+
+
+                },
+
+                removeQueryAt(i) {
+
+                    this.search.splice(i, 1);
+
+                },
+
+                addQuery() {
+                    this.search.push({})
+                    this.searchPanels = this.search.length - 1;
+                },
+
+
+                resetSearch() {
+                    this.search = [{}];
+                    this.doSearch()
+                },
+
+
+                // ---------------- end advanced search -----------------------
+
+
+                /* Actors Custom Lists */
+
+                allActors() {
+                    this.search = [{}];
+                    this.doSearch();
+
+                },
+                myAssigned() {
+                    q = {};
+                    this.options.page = 1;
+                    q.assigned = [this.currentUser.id];
+                    q.status = "Assigned";
+                    this.search = [q];
+                    this.searchActors();
+                },
+
+                myReview() {
+                    q = {};
+                    this.options.page = 1;
+                    q.reviewer = [this.currentUser.id];
+                    q.status = "Peer Review Assigned";
+                    this.search = [q]
+                    this.searchActors();
+                },
+
+
+                removeEvent: function (evt, index) {
+                    if (confirm('Confirm deleting this event?')) {
+                        this.editedItem.events.splice(index, 1);
+                    }
+                },
+
+
+                //reset initial visible fields to english language
+
+                resetSwitchers: function () {
+                    this.name__ = true;
+                    this.nickname__ = true;
+                    this.first_name__ = true;
+                    this.middle_name__ = true;
+                    this.mother_name__ = true;
+                    this.last_name__ = true;
+                    this.occupation__ = true;
+                    this.position__ = true;
+                    this.dialects__ = true;
+                    this.family_status__ = true;
+                },
+
+                refresh(options) {
+                    this.searchActors();
+                },
+
+                rowClick(item) {
+                    if (item.restricted) {
+                        this.showSnack('This item is restricted.')
+                        return
+                    }
+                    path = `/admin/actors/${item.id}`;
+                    if (this.$route.path !== path)
+                        this.$router.push(path);
+
+                },
+
+                showActor(id) {
+                    this.actorLoader = true;
+                    this.actorDrawer = true;
+                    axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
+                        this.actor = response.data;
+                    }).catch(error => {
+                        this.actorDrawer = false;
+                        if (error.response) {
+                            this.showSnack(error.response.data)
+                            this.snackbar = true;
+                        }
+                    }).finally(()=>{
+                        this.actorLoader = false;
+                    });
+                },
+
+                searchUsers: debounce(function (evt) {
+                    this.searchLoading[evt.target.dataset.loader] = true;
+
+                    axios.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
+                        this.users = response.data.items;
+                        this.searchLoading[evt.target.dataset.loader] = false;
+                    });
+                }, 350),
+
+
+                handleStatus(actor) {
+
+
+                    if (this.editedItem.id) {
+                        // edit existing bulletin mode
+                        if (this.has_role(this.currentUser, 'Admin')) {
+
+                            this.statusDisabled = false;
+                            return;
+                        }
+
+                        // else is a standard user
+                        this.statusItems = this.statuses;
+
+                        if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created') {
+                            this.editedItem.status = this.statusItems[2].en;
+                        }
+
+                        if (this.editedItem.status == 'Peer Reviewed') {
+                            this.editedItem.status = this.statusItems[9].en;
+                        }
+
+                        this.statusDisabled = true;
+                    } else {
+                        // new bulletin mode
+
+                        this.editedItem.status = this.statusItems[1].en;
+                        this.statusDisabled = true;
+
+                    }
+                },
+
+
+                showSnack(message) {
+                    this.snackMessage = message;
+                    this.snackbar = true;
+                },
+                has_role(user, role) {
+                    for (r of user.roles) {
+                        if (r.name == role) {
+                            return true
+                        }
+                    }
+                    return false;
+                },
+
+                editAllowed(actor) {
+
+                    if(actor.restricted){
+                        return false;
+                    }
+
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return true;
+                    }
+                    if (!this.has_role(this.currentUser, 'DA')) {
+                        return false;
+                    }
+                    const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
+                    if (actor.assigned_to && actor.assigned_to.id == this.currentUser.id && statuses.includes(actor.status)) {
+                        return true
+                    }
+                    return false;
+                },
+
+                reviewAllowed(actor) {
+
+                    if(actor.restricted){
+                        return false;
+                    }
+
+                    if (!this.currentUser.roles.length) {
+                        return false;
+                    }
+
+                    const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
+                    if (actor.first_peer_reviewer && actor.first_peer_reviewer.id == this.currentUser.id && statuses.includes(actor.status)) {
+                        return true
+                    }
+                    return false;
+                },
+
+                selfAssignAllowed(actor) {
+
+                    if(actor.restricted){
+                        return false;
+                    }
+
+                    if (this.currentUser.can_self_assign) {
+                        if ((!actor.assigned_to) || (actor.assigned_to && !actor.assigned_to.active)) {
+                            return true
+                        }
+
+                    }
+
+                    return false;
+
+                },
+
+
+                addReview(item) {
+                    this.loading = true;
+                    this.reviewDialog = true;
+                    axios.get(`/admin/api/actor/${item.id}`).then(response => {
+                        this.loading = false;
+                        this.$nextTick(() => {
+                            this.reviewItem = response.data;
+                            this.reviewKey += 1;
+                            if (!response.data.review) {
+                                this.reviewItem.review = '';
+                            }
+
+                        })
+
+
+                    })
+
+                },
+
+                saveReview() {
+
+                    axios.put(`/admin/api/actor/review/${this.reviewItem.id}`, {
+                        item: this.reviewItem
+                    })
+                        .then(response => {
+                            this.reviewDialog = false;
+                            this.showSnack(response.data);
+                            this.refresh(this.options);
+                        });
+
+                },
+
+
+                editItem(item) {
+                    this.actorDrawer = false;
+
+                    if (!item.id) {
+                        this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                        this.source_alt = null;
+                        this.dialog = true;
+                        this.handleStatus(item);
+                    } else {
+
+                        this.loading = true;
+                        axios.get(`/admin/api/actor/${item.id}`).then(response => {
+                            this.dialog = true;
+
+                            this.$nextTick(() => {
+                                this.loading = false;
+                                if (this.editedItem.source_link == 'NA') {
+                                    this.source_alt = true;
+                                } else {
+                                    this.source_alt = false;
+                                }
+                                this.editedItem = response.data;
+                                this.editedItem.comments = '';
+                                this.editedItem.comments = '';
+                                this.resetSwitchers();
+                                this.handleStatus(item);
+
+                            });
+
+
+                        }).catch(error => {
+                            this.showSnack('Oops! We couldn\'t find this item.')
+
+                        });
+
+                    }
+
+
+                    //this.locations = this.editedItem.locations;
+                },
+
+                deleteItem(item) {
+                    const index = this.items.indexOf(item);
+                    const cfm =
+                        confirm("Are you sure you want to delete this item?") &&
+                        this.items.splice(index, 1);
+                    if (cfm) {
+                        axios.delete(`/admin/api/actor/${item.id}`).then(response => {
+                            this.showSnack(response.data);
+
+                            this.refresh(this.options);
+                        });
+                    }
+                },
+
+
+                confirmClose() {
+                    if (confirm('Are you sure?')) {
+                        this.dialog = false;
+                        setTimeout(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem);
+                            this.editedIndex = -1;
+                        }, 300);
+                    }
+                },
+                close() {
+
+                    this.dialog = false;
+                    setTimeout(() => {
+                        this.editedItem = Object.assign({}, this.defaultItem);
+                        this.editedIndex = -1;
+                    }, 300);
+
+                },
+
+                save() {
+                    if (this.editedItem.id) {
+                        //update record
+                        this.loading = true;
+                        axios
+                            .put(`/admin/api/actor/${this.editedItem.id}`, {
+                                item: this.editedItem
+                            })
+                            .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                            }).catch(err => {
+                            console.log(err.response.data);
+                            this.showSnack(err.response.data)
+                        }).finally(() => {
+                            this.loading = false;
+
+
+                        });
+                    } else {
+
+                        //create new record
+                        this.loading = true;
+                        axios
+                            .post("/admin/api/actor/", {item: this.editedItem})
+                            .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                            }).catch(err => {
+                            console.log(err.response.data);
+                            this.showSnack(err.response.data)
+                        }).finally(() => {
+                            this.loading = false;
+                        });
+                    }
+                    this.close();
+                },
+
+                editEvent(evt, item, index) {
+                    this.editedEvent = Object.assign({}, item);
+                    //console.log(this.editedEvent);
+                    this.editedEventIndex = index;
+
+                    //reset dual fields display to english
+                    this.eventTitle__ = true;
+                    this.eventComments__ = true;
+                    this.eventDialog = true;
+                    //this.locations = this.editedItem.locations;
+                },
+
+                closeEvent() {
+                    this.eventDialog = false;
+                    setTimeout(() => {
+                        this.editedEvent = Object.assign({}, this.defaultEvent);
+                        this.editedEventIndex = -1;
+                    }, 300);
+                },
+
+                saveEvent() {
+                    if (this.editedEventIndex > -1) {
+                        Object.assign(
+                            this.editedItem.events[this.editedEventIndex],
+                            this.editedEvent
+                        );
+                        //update record
+                    } else {
+                        this.editedItem.events.push(this.editedEvent);
+                        //create new record
+                    }
+                    this.closeEvent();
+                },
+
+                // related actors functions --------------------
+
+                detectDirection(editedItem, actor) {
+                    // Since relationships always enforced to flow from smaller id to bigger id
+                    // this can be used to determine the relationship label displayed
+                    // one special case needs handling is when a new actor is created (id is null) in this case
+                    // new actor id will be definitely larger than any id in the system
+
+                    if (!editedItem.id) {
+                        return false;
+                    } else {
+                        return editedItem.id < actor.id
+                    }
+
+                },
+
+                searchRelatedActors() {
+                    this.$refs.relateActors.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateActors.q = {tsv: this.relateActorTerm};
+                        this.$refs.relateActors.reSearch();
+                    });
+                },
+
+                relateActor(actor) {
+                    // get list of existing attached actors
+                    let ex = this.editedItem.actor_relations.map(x => x.actor.id);
+
+                    if (!ex.includes(actor.id)) {
+                        relation = {
+                            actor: actor
+                        };
+                        this.editedItem.actor_relations.push(relation);
+                        this.relateActorResults.removeById(actor.id);
+                    }
+                },
+
+                removeActor: function (evt, index) {
+                    if (confirm("Are you sure?")) {
+                        this.editedItem.actor_relations.splice(index, 1);
+                    }
+                },
+
+
+                // related bulletins functions --------------------
+
+                searchRelatedBulletins() {
+
+                    this.$refs.relateBulletins.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
+                        this.$refs.relateBulletins.reSearch();
+                    });
+                },
+
+                relateBulletin(bulletin) {
+                    // get list of existing attached bulletins
+                    let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
+
+                    if (!ex.includes(bulletin.id)) {
+                        relation = {
+                            bulletin: bulletin
+                        };
+                        this.editedItem.bulletin_relations.push(relation);
+                        this.relateBulletinResults.removeById(bulletin.id);
+                    }
+                },
+
+                removeBulletin: function (evt, index) {
+                    if (confirm("Are you sure?")) {
+                        this.editedItem.bulletin_relations.splice(index, 1);
+                    }
+                },
+
+
+                // related incidents functions ------------------------
+
+                searchRelatedIncidents() {
+
+                    this.$refs.relateIncidents.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
+                        this.$refs.relateIncidents.reSearch();
+                    });
+
+                },
+                relateIncident(incident) {
+                    // get list of existing attached actors
+                    let ex = this.editedItem.incident_relations.map(x => x.incident.id);
+
+                    if (!ex.includes(incident.id)) {
+                        relation = {
+                            incident: incident
+                        };
+                        this.editedItem.incident_relations.push(relation);
+                        this.relateIncidentResults.removeById(incident.id);
+                    }
+                },
+
+                removeIncident: function (evt, index) {
+                    if (confirm("Are you sure?")) {
+                        this.editedItem.incident_relations.splice(index, 1);
+                    }
+                },
+
 
             }
-
-            return false;
-
-        },
-
-
-
-
-
-      addReview(item) {
-       this.loading = true;
-          this.reviewDialog = true;
-          axios.get(`/admin/api/actor/${item.id}`).then(response => {
-            this.loading = false;
-            this.$nextTick(() => {
-              this.reviewItem = response.data;
-              this.reviewKey += 1;
-              if (!response.data.review){
-                  this.reviewItem.review = '';
-              }
-
-            })
-
-
-          })
-
-    },
-
-    saveReview(){
-
-      axios.put(`/admin/api/actor/review/${this.reviewItem.id}`, {
-            item: this.reviewItem
-          })
-          .then(response => {
-            this.reviewDialog = false;
-            this.showSnack(response.data);
-            this.refresh(this.options);
-          });
-
-    },
-
-
-
-      editItem(item) {
-        this.actorDrawer = false;
-
-        if(!item.id)     {
-          this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
-          this.source_alt = null;
-          this.dialog = true;
-          this.handleStatus(item);
-        }
-        else {
-
-            this.loading = true;
-            axios.get(`/admin/api/actor/${item.id}`).then(response => {
-              this.dialog = true;
-
-              this.$nextTick(()=>{
-                this.loading= false;
-                if (this.editedItem.source_link == 'NA') {
-                  this.source_alt = true;
-                }
-                else{
-                  this.source_alt = false;
-                }
-                this.editedItem = response.data;
-                this.editedItem.comments = '';
-            this.editedItem.comments = '';
-            this.resetSwitchers();
-            this.handleStatus(item);
-
-              });
-
-
-
-
-
-          }).catch(error => {
-            this.showSnack('Oops! We couldn\'t find this item.')
-
-          });
-
-        }
-
-
-
-        //this.locations = this.editedItem.locations;
-      },
-
-      deleteItem(item) {
-        const index = this.items.indexOf(item);
-        const cfm =
-          confirm("Are you sure you want to delete this item?") &&
-          this.items.splice(index, 1);
-        if (cfm) {
-          axios.delete(`/admin/api/actor/${item.id}`).then(response => {
-            this.showSnack(response.data);
-
-            this.refresh(this.options);
-          });
-        }
-      },
-
-
-
-      confirmClose() {
-       if (confirm('Are you sure?')) {
-          this.dialog = false;
-        setTimeout(() => {
-          this.editedItem = Object.assign({}, this.defaultItem);
-          this.editedIndex = -1;
-        }, 300);
-       }
-      },
-      close() {
-
-          this.dialog = false;
-        setTimeout(() => {
-          this.editedItem = Object.assign({}, this.defaultItem);
-          this.editedIndex = -1;
-        }, 300);
-
-      },
-
-      save() {
-        if (this.editedItem.id) {
-          //update record
-            this.loading = true;
-          axios
-            .put(`/admin/api/actor/${this.editedItem.id}`, {
-              item: this.editedItem
-            })
-            .then(response => {
-              this.showSnack(response.data);
-              this.refresh(this.options);
-            }).catch(err=>{
-                console.log(err.response.data);
-                this.showSnack(err.response.data)
-          }).finally(()=>{
-              this.loading = false;
-
-
-          });
-        } else {
-
-          //create new record
-            this.loading = true;
-          axios
-            .post("/admin/api/actor/", { item: this.editedItem })
-            .then(response => {
-              this.showSnack(response.data);
-              this.refresh(this.options);
-            }).catch(err=>{
-                console.log(err.response.data);
-                this.showSnack(err.response.data)
-          }).finally(()=>{
-              this.loading = false;
-          });
-        }
-        this.close();
-      },
-
-      editEvent(evt, item, index) {
-        this.editedEvent = Object.assign({}, item);
-        //console.log(this.editedEvent);
-        this.editedEventIndex = index;
-
-        //reset dual fields display to english
-        this.eventTitle__ = true;
-        this.eventComments__ = true;
-        this.eventDialog = true;
-        //this.locations = this.editedItem.locations;
-      },
-
-      closeEvent() {
-        this.eventDialog = false;
-        setTimeout(() => {
-          this.editedEvent = Object.assign({}, this.defaultEvent);
-          this.editedEventIndex = -1;
-        }, 300);
-      },
-
-      saveEvent() {
-        if (this.editedEventIndex > -1) {
-          Object.assign(
-            this.editedItem.events[this.editedEventIndex],
-            this.editedEvent
-          );
-          //update record
-        } else {
-          this.editedItem.events.push(this.editedEvent);
-          //create new record
-        }
-        this.closeEvent();
-      },
-
-      // related actors functions --------------------
-
-      detectDirection(editedItem, actor) {
-        // Since relationships always enforced to flow from smaller id to bigger id
-        // this can be used to determine the relationship label displayed
-        // one special case needs handling is when a new actor is created (id is null) in this case
-        // new actor id will be definitely larger than any id in the system
-
-        if (!editedItem.id){
-          return false;
-        }
-        else {
-          return editedItem.id < actor.id
-        }
-
-      },
-
-      searchRelatedActors() {
-          this.$refs.relateActors.open();
-          this.$nextTick(()=> {
-            this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-            this.$refs.relateActors.reSearch();
-          });
-      },
-
-      relateActor(actor) {
-        // get list of existing attached actors
-        let ex = this.editedItem.actor_relations.map(x => x.actor.id);
-
-        if (!ex.includes(actor.id)) {
-          relation = {
-            actor: actor
-          };
-          this.editedItem.actor_relations.push(relation);
-          this.relateActorResults.removeById(actor.id);
-        }
-      },
-
-      removeActor: function(evt, index) {
-        if (confirm("Are you sure?")) {
-          this.editedItem.actor_relations.splice(index, 1);
-        }
-      },
-
-
-      // related bulletins functions --------------------
-
-      searchRelatedBulletins() {
-
-         this.$refs.relateBulletins.open();
-        this.$nextTick(()=> {
-          this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-          this.$refs.relateBulletins.reSearch();
         });
-      },
-
-      relateBulletin(bulletin) {
-        // get list of existing attached bulletins
-        let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
-
-        if (!ex.includes(bulletin.id)) {
-          relation = {
-            bulletin: bulletin
-          };
-          this.editedItem.bulletin_relations.push(relation);
-          this.relateBulletinResults.removeById(bulletin.id);
-        }
-      },
-
-      removeBulletin: function(evt, index) {
-        if (confirm("Are you sure?")) {
-          this.editedItem.bulletin_relations.splice(index, 1);
-        }
-      },
-
-
-
-       // related incidents functions ------------------------
-
-       searchRelatedIncidents() {
-
-       this.$refs.relateIncidents.open();
-        this.$nextTick(()=> {
-          this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-          this.$refs.relateIncidents.reSearch();
-        });
-
-      },
-      relateIncident(incident) {
-        // get list of existing attached actors
-        let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-        if (!ex.includes(incident.id)) {
-          relation = {
-            incident: incident
-          };
-          this.editedItem.incident_relations.push(relation);
-          this.relateIncidentResults.removeById(incident.id);
-        }
-      },
-
-      removeIncident: function(evt, index) {
-        if (confirm("Are you sure?")) {
-          this.editedItem.incident_relations.splice(index, 1);
-        }
-      },
-
-
-
-
-
-
-
-    }
-  });
-</script>
+    </script>
 {% endblock %}

@@ -1,87 +1,110 @@
 <v-navigation-drawer
-  v-model="bulkActorDrawer"
-  clipped
-  right
-  temporary
-  width="440"
-  app
+        v-model="bulkActorDrawer"
+        clipped
+        right
+        temporary
+        width="440"
+        app
 >
-  <validation-observer v-slot="{invalid}">
-  <v-card flat color="grey lighten-3" class="mx-auto pa-3">
-    <v-card-title>
-      {{ _('Bulk Update') }}
-    </v-card-title>
-    <v-btn
-      @click="bulkActorDrawer=false"
-      fab
-      absolute
-      top
-      right
-      x-small
-      text
-      class="mt-6"
-      ><v-icon>mdi-close</v-icon></v-btn
-    >
-    <v-card-text>
-      <v-autocomplete
-        v-model="bulk.assigned_to_id"
-        label="{{ _('Assigned To') }}"
-        :items="users"
-        @input.native="searchUsers"
-        @focus="searchUsers"
-        outline
-        item-text="name"
-        item-value="id"
-        clearable
-      >
-      </v-autocomplete>
-    </v-card-text>
+    <validation-observer v-slot="{invalid}">
+        <v-card flat color="grey lighten-3" class="mx-auto pa-3">
+            <v-card-title>
+                {{ _('Bulk Update') }}
+            </v-card-title>
+            <v-btn
+                    @click="bulkActorDrawer=false"
+                    fab
+                    absolute
+                    top
+                    right
+                    x-small
+                    text
+                    class="mt-6"
+            >
+                <v-icon>mdi-close</v-icon>
+            </v-btn
+            >
+            <v-card-text>
+                <v-autocomplete
+                        v-model="bulk.assigned_to_id"
+                        label="{{ _('Assigned To') }}"
+                        :items="users"
+                        @input.native="searchUsers"
+                        @focus="searchUsers"
+                        outline
+                        item-text="name"
+                        item-value="id"
+                        clearable
+                >
+                </v-autocomplete>
+            </v-card-text>
 
-    <v-card-text>
-      <v-autocomplete
-        v-model="bulk.first_peer_reviewer_id"
-        label="{{ _('Peer Reviewer') }}"
-        :items="users"
-        @input.native="searchUsers"
-        @focus="searchUsers"
-        outline
-        item-text="name"
-        item-value="id"
-        clearable
-      >
-      </v-autocomplete>
-    </v-card-text>
-    <v-card-text>
-     
-      <v-select    
-                    :items="statuses"
-                    item-text="tr"
-                    item-value="en"
-                    v-model="bulk.status"
-                    label="{{ _('Status') }}"
-                    clearable
-                  ></v-select>
-    </v-card-text>
+            <v-card-text>
+                <v-autocomplete
+                        v-model="bulk.first_peer_reviewer_id"
+                        label="{{ _('Peer Reviewer') }}"
+                        :items="users"
+                        @input.native="searchUsers"
+                        @focus="searchUsers"
+                        outline
+                        item-text="name"
+                        item-value="id"
+                        clearable
+                >
+                </v-autocomplete>
+            </v-card-text>
+            <v-card-text>
 
-     <v-card-text>
+                <v-select
+                        :items="statuses"
+                        item-text="tr"
+                        item-value="en"
+                        v-model="bulk.status"
+                        label="{{ _('Status') }}"
+                        clearable
+                ></v-select>
+            </v-card-text>
 
-       <validation-provider name="Comments" rules="required" v-slot="{ errors }">
 
-      <v-textarea
-              v-model="bulk.comments"
-              label="{{ _('Comments') }}"
-      >
 
-      </v-textarea>
-         <span class="orange--text"> ${errors[0]}</span>
-       </validation-provider>
-    </v-card-text>
+            <v-card-text v-if="has_role(currentUser,'Admin')">
 
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn :disabled="invalid" @click="bulk_update" color="primary">{{ _('Bulk Update Actors') }}</v-btn>
-      <v-spacer></v-spacer>
-    </v-card-actions>
-  </v-card>
-  </validation-observer>
+                <div class="d-flex">
+                <search-field
+                        api="/admin/api/roles/"
+                        query-params=""
+                        item-text="name"
+                        item-value="id"
+                        :multiple="true"
+                        label="{{ _('Access Roles') }}"
+                        v-model="bulk.roles"
+                ></search-field>
+                <v-checkbox small v-model="bulk.rolesReplace" label="{{ _('Replace') }}"></v-checkbox>
+                </div>
+
+            </v-card-text>
+            <v-card-text>
+
+
+
+                <validation-provider name="Comments" rules="required" v-slot="{ errors }">
+
+                    <v-textarea
+                            v-model="bulk.comments"
+                            label="{{ _('Comments') }}"
+                            outlined
+                    >
+
+                    </v-textarea>
+                    <span class="orange--text"> ${errors[0]}</span>
+                </validation-provider>
+            </v-card-text>
+
+            <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn :disabled="invalid" @click="bulk_update" color="primary">{{ _('Bulk Update Actors') }}</v-btn>
+                <v-spacer></v-spacer>
+            </v-card-actions>
+        </v-card>
+    </validation-observer>
 </v-navigation-drawer>

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import shutil
 from pathlib import Path
 from uuid import uuid4
 
@@ -15,7 +16,8 @@ from sqlalchemy import desc, or_, text
 from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
-                                  IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation, ClaimedViolation,
+                                  IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation,
+                                  ClaimedViolation,
                                   Activity, Query, Mapping, Log, APIKey, LocationAdminLevel, LocationType)
 from enferno.extensions import bouncer, rds, babel
 from enferno.extensions import cache
@@ -69,7 +71,7 @@ def before_request():
     :return: None
     """
     g.user = current_user
-    g.version = '4'
+    g.version = '5'
 
 
 @admin.app_context_processor
@@ -134,7 +136,6 @@ def labels():
 def api_labels():
     """
     API endpoint feed and filter labels with paging
-    :param page: db query offset
     :return: json response of label objects.
     """
     query = []
@@ -187,23 +188,22 @@ def api_labels():
                     content_type='application/json')
 
 
-@admin.route('/api/label/', methods=['POST'])
+@admin.post('/api/label/')
 @roles_accepted('Admin', 'Mod')
 def api_label_create():
     """
     Endpoint to create a label.
     :return: success/error based on the operation result.
     """
-    if request.method == 'POST':
-        label = Label()
-        created = label.from_json(request.json['item'])
-        if created.save():
-            return 'Created Label #{}'.format(label.id)
-        else:
-            return 'Save Failed', 417
+    label = Label()
+    created = label.from_json(request.json['item'])
+    if created.save():
+        return 'Created Label #{}'.format(label.id)
+    else:
+        return 'Save Failed', 417
 
 
-@admin.route('/api/label/<int:id>', methods=['PUT'])
+@admin.put('/api/label/<int:id>')
 @roles_accepted('Admin', 'Mod')
 def api_label_update(id):
     """
@@ -211,20 +211,16 @@ def api_label_update(id):
     :param id: id of the label
     :return: success/error based on the operation result.
     """
-    if request.method == 'PUT':
-        label = Label.query.get(id)
-        if label is not None:
-            label = label.from_json(request.json['item'])
-            label.save()
-            return 'Saved Label #{}'.format(label.id), 200
-        else:
-            return 'Not Found!', 404
-
+    label = Label.query.get(id)
+    if label is not None:
+        label = label.from_json(request.json['item'])
+        label.save()
+        return 'Saved Label #{}'.format(label.id), 200
     else:
-        return 'Unauthorized', 403
+        return 'Not Found!', 404
 
 
-@admin.route('/api/label/<int:id>', methods=['DELETE'])
+@admin.delete('/api/label/<int:id>')
 @roles_required('Admin')
 def api_label_delete(id):
     """
@@ -232,15 +228,12 @@ def api_label_delete(id):
     :param id: id of the label
     :return: Success/error based on operation's result.
     """
-    if request.method == 'DELETE':
-        label = Label.query.get(id)
-        label.delete()
-        return 'Deleted Label #{}'.format(label.id)
-    else:
-        return 'Error', 417
+    label = Label.query.get(id)
+    label.delete()
+    return 'Deleted Label #{}'.format(label.id)
 
 
-@admin.route('/api/label/import/', methods=['POST'])
+@admin.post('/api/label/import/')
 @roles_required('Admin')
 def api_label_import():
     """
@@ -269,7 +262,6 @@ def eventtypes():
 def api_eventtypes():
     """
     API endpoint to serve json feed of even types with paging support
-    :param page: db query offset
     :return: json feed/success or error/404 based on request data
     """
     query = []
@@ -293,23 +285,22 @@ def api_eventtypes():
                     content_type='application/json')
 
 
-@admin.route('/api/eventtype/', methods=['POST'])
+@admin.post('/api/eventtype/')
 @roles_accepted('Admin', 'Mod')
 def api_eventtype_create():
     """
     Endpoint to create an Event Type
     :return: Success/Error based on operation's result
     """
-    if request.method == 'POST':
-        eventtype = Eventtype()
-        created = eventtype.from_json(request.json['item'])
-        if created.save():
-            return 'Created Event #{}'.format(eventtype.id)
-        else:
-            return 'Save Failed', 417
+    eventtype = Eventtype()
+    created = eventtype.from_json(request.json['item'])
+    if created.save():
+        return 'Created Event #{}'.format(eventtype.id)
+    else:
+        return 'Save Failed', 417
 
 
-@admin.route('/api/eventtype/<int:id>', methods=['PUT'])
+@admin.put('/api/eventtype/<int:id>')
 @roles_accepted('Admin', 'Mod')
 def api_eventtype_update(id):
     """
@@ -317,20 +308,16 @@ def api_eventtype_update(id):
     :param id: id of the item to be updated
     :return: success/error based on the operation's result
     """
-    if request.method == 'PUT':
-        eventtype = Eventtype.query.get(id)
-        if eventtype is not None:
-            eventtype = eventtype.from_json(request.json['item'])
-            eventtype.save()
-            return 'Saved Event #{}'.format(eventtype.id), 200
-        else:
-            return 'Not Found!', 404
+    eventtype = Eventtype.query.get(id)
+    if eventtype is None:
+        return 'Not Found!', 404
 
-    else:
-        return 'Unauthorized', 403
+    eventtype = eventtype.from_json(request.json['item'])
+    eventtype.save()
+    return 'Saved Event #{}'.format(eventtype.id), 200
 
 
-@admin.route('/api/eventtype/<int:id>', methods=['DELETE'])
+@admin.delete('/api/eventtype/<int:id>')
 @roles_required('Admin')
 def api_eventtype_delete(id):
     """
@@ -338,15 +325,15 @@ def api_eventtype_delete(id):
     :param id: id of the item
     :return: success/error based on the operation's result
     """
-    if request.method == 'DELETE':
-        eventtype = Eventtype.query.get(id)
-        eventtype.delete()
-        return 'Deleted Event #{}'.format(eventtype.id)
-    else:
-        return 'Error', 417
+    eventtype = Eventtype.query.get(id)
+    if eventtype is None:
+        return 'Not Found!', 404
+
+    eventtype.delete()
+    return 'Deleted Event #{}'.format(eventtype.id)
 
 
-@admin.route('/api/eventtype/import/', methods=['POST'])
+@admin.post('/api/eventtype/import/')
 @roles_required('Admin')
 def api_eventtype_import():
     """
@@ -380,23 +367,22 @@ def api_potentialviolations(page):
                     content_type='application/json')
 
 
-@admin.route('/api/potentialviolation/', methods=['POST'])
+@admin.post('/api/potentialviolation/')
 @roles_accepted('Admin', 'Mod')
 def api_potentialviolation_create():
     """
     Endpoint to create a potential violation
     :return: success/error based on operation's result
     """
-    if request.method == 'POST':
-        potentialviolation = PotentialViolation()
-        created = potentialviolation.from_json(request.json['item'])
-        if created.save():
-            return 'Created Potential Violation #{}'.format(potentialviolation.id)
-        else:
-            return 'Save Failed', 417
+    potentialviolation = PotentialViolation()
+    created = potentialviolation.from_json(request.json['item'])
+    if created.save():
+        return 'Created Potential Violation #{}'.format(potentialviolation.id), 200
+    else:
+        return 'Save Failed', 417
 
 
-@admin.route('/api/potentialviolation/<int:id>', methods=['PUT'])
+@admin.put('/api/potentialviolation/<int:id>')
 @roles_accepted('Admin', 'Mod')
 def api_potentialviolation_update(id):
     """
@@ -404,20 +390,16 @@ def api_potentialviolation_update(id):
     :param id: id of the item to be updated
     :return: success/error based on the operation's result
     """
-    if request.method == 'PUT':
-        potentialviolation = PotentialViolation.query.get(id)
-        if potentialviolation is not None:
-            potentialviolation = potentialviolation.from_json(request.json['item'])
-            potentialviolation.save()
-            return 'Saved Potential Violation #{}'.format(potentialviolation.id), 200
-        else:
-            return 'Not Found!', 404
-
-    else:
-        return 'Unauthorized', 403
+    potentialviolation = PotentialViolation.query.get(id)
+    if potentialviolation is None:
+        return 'Not Found!', 404
+    
+    potentialviolation = potentialviolation.from_json(request.json['item'])
+    potentialviolation.save()
+    return 'Saved Potential Violation #{}'.format(potentialviolation.id), 200        
 
 
-@admin.route('/api/potentialviolation/<int:id>', methods=['DELETE'])
+@admin.delete('/api/potentialviolation/<int:id>')
 @roles_required('Admin')
 def api_potentialviolation_delete(id):
     """
@@ -425,15 +407,14 @@ def api_potentialviolation_delete(id):
     :param id: id of the item to delete
     :return: success/error based on the operation's result
     """
-    if request.method == 'DELETE':
-        potentialviolation = PotentialViolation.query.get(id)
-        potentialviolation.delete()
-        return 'Deleted Potential Violation #{}'.format(potentialviolation.id)
-    else:
-        return 'Error', 417
+    potentialviolation = PotentialViolation.query.get(id)
+    if potentialviolation is None:
+        return 'Not Found!', 404
+    potentialviolation.delete()
+    return 'Deleted Potential Violation #{}'.format(potentialviolation.id), 200
 
 
-@admin.route('/api/potentialviolation/import/', methods=['POST'])
+@admin.post('/api/potentialviolation/import/')
 @roles_required('Admin')
 def api_potentialviolation_import():
     """
@@ -467,23 +448,22 @@ def api_claimedviolations(page):
                     content_type='application/json')
 
 
-@admin.route('/api/claimedviolation/', methods=['POST'])
+@admin.post('/api/claimedviolation/')
 @roles_accepted('Admin', 'Mod')
 def api_claimedviolation_create():
     """
     Endpoint to create a claimed violation
     :return: success / error based on operation's result
     """
-    if request.method == 'POST':
-        claimedviolation = ClaimedViolation()
-        created = claimedviolation.from_json(request.json['item'])
-        if created.save():
-            return 'Created Claimed Violation #{}'.format(claimedviolation.id)
-        else:
-            return 'Save Failed', 417
+    claimedviolation = ClaimedViolation()
+    created = claimedviolation.from_json(request.json['item'])
+    if created.save():
+        return 'Created Claimed Violation #{}'.format(claimedviolation.id)
+    else:
+        return 'Save Failed', 417
 
 
-@admin.route('/api/claimedviolation/<int:id>', methods=['PUT'])
+@admin.put('/api/claimedviolation/<int:id>')
 @roles_accepted('Admin', 'Mod')
 def api_claimedviolation_update(id):
     """
@@ -491,20 +471,17 @@ def api_claimedviolation_update(id):
     :param id: id of the item to update
     :return: success/error based on operation's result
     """
-    if request.method == 'PUT':
-        claimedviolation = ClaimedViolation.query.get(id)
-        if claimedviolation is not None:
-            claimedviolation = claimedviolation.from_json(request.json['item'])
-            claimedviolation.save()
-            return 'Saved Claimed Violation #{}'.format(claimedviolation.id), 200
-        else:
-            return 'Not Found!', 404
-
-    else:
-        return 'Unauthorized', 403
+    claimedviolation = ClaimedViolation.query.get(id)
+    if claimedviolation is None:
+        return 'Not Found!', 404
+        
+    claimedviolation = claimedviolation.from_json(request.json['item'])
+    claimedviolation.save()
+    return 'Saved Claimed Violation #{}'.format(claimedviolation.id), 200
+            
 
 
-@admin.route('/api/claimedviolation/<int:id>', methods=['DELETE'])
+@admin.delete('/api/claimedviolation/<int:id>')
 @roles_required('Admin')
 def api_claimedviolation_delete(id):
     """
@@ -512,13 +489,15 @@ def api_claimedviolation_delete(id):
     :param id: id of the item to delete
     :return: success/ error based on operation's result
     """
-    if request.method == 'DELETE':
-        claimedviolation = ClaimedViolation.query.get(id)
-        claimedviolation.delete()
-        return 'Deleted Claimed Violation #{}'.format(claimedviolation.id)
+    claimedviolation = ClaimedViolation.query.get(id)
+    if claimedviolation is None:
+        return 'Not Found!', 404
+
+    claimedviolation.delete()
+    return 'Deleted Claimed Violation #{}'.format(claimedviolation.id)
 
 
-@admin.route('/api/claimedviolation/import/', methods=['POST'])
+@admin.post('/api/claimedviolation/import/')
 @roles_required('Admin')
 def api_claimedviolation_import():
     """
@@ -547,7 +526,6 @@ def sources():
 def api_sources():
     """
     API Endpoint to feed json data of sources, supports paging and search
-    :param page: db query offset
     :return: json feed of sources or error code based on operation's result
     """
     query = []
@@ -583,23 +561,22 @@ def api_sources():
                     content_type='application/json'), 200
 
 
-@admin.route('/api/source/', methods=['POST'])
+@admin.post('/api/source/')
 @roles_accepted('Admin', 'Mod')
 def api_source_create():
     """
     Endpoint to create a source
     :return: success/error based on operation's result
     """
-    if request.method == 'POST':
-        source = Source()
-        created = source.from_json(request.json['item'])
-        if created.save():
-            return 'Created Source #{}'.format(source.id)
-        else:
-            return 'Save Failed', 417
+    source = Source()
+    created = source.from_json(request.json['item'])
+    if created.save():
+        return 'Created Source #{}'.format(source.id)
+    else:
+        return 'Save Failed', 417
 
 
-@admin.route('/api/source/<int:id>', methods=['PUT'])
+@admin.put('/api/source/<int:id>')
 @roles_accepted('Admin', 'Mod')
 def api_source_update(id):
     """
@@ -607,20 +584,16 @@ def api_source_update(id):
     :param id: id of the item to update
     :return: success/error based on the operation's result
     """
-    if request.method == 'PUT':
-        source = Source.query.get(id)
-        if source is not None:
-            source = source.from_json(request.json['item'])
-            source.save()
-            return 'Saved Source #{}'.format(source.id), 200
-        else:
-            return 'Not Found!', 404
+    source = Source.query.get(id)
+    if source is not None:
+        return 'Not Found!', 404
 
-    else:
-        return 'Unauthorized', 403
+    source = source.from_json(request.json['item'])
+    source.save()
+    return 'Saved Source #{}'.format(source.id), 200
 
 
-@admin.route('/api/source/<int:id>', methods=['DELETE'])
+@admin.delete('/api/source/<int:id>')
 @roles_required('Admin')
 def api_source_delete(id):
     """
@@ -628,10 +601,11 @@ def api_source_delete(id):
     :param id: id of the item to delete
     :return: success/error based on operation's result
     """
-    if request.method == 'DELETE':
-        source = Source.query.get(id)
-        source.delete()
-        return 'Deleted Source #{}'.format(source.id)
+    source = Source.query.get(id)
+    if source is None:
+        return 'Not Found!', 404
+    source.delete()
+    return 'Deleted Source #{}'.format(source.id)
 
 
 @admin.route('/api/source/import/', methods=['POST'])
@@ -689,7 +663,6 @@ def api_locations():
     items = [item.to_dict() for item in result.items]
     response = {'items': items, 'perPage': per_page,
                 'total': result.total}
-
     return Response(json.dumps(response),
                     content_type='application/json'), 200
 
@@ -721,7 +694,7 @@ def api_location_update(id):
 
     if not current_user.roles_in(['Admin', 'Mod']) and not current_user.can_edit_locations:
         return 'User not allowed to create Locations', 400
-    
+
     location = Location.query.get(id)
     if location is not None:
         location = location.from_json(request.json.get('item'))
@@ -740,7 +713,7 @@ def api_location_update(id):
 
 
 
-@admin.route('/api/location/<int:id>', methods=['DELETE'])
+@admin.delete('/api/location/<int:id>')
 @roles_required('Admin')
 def api_location_delete(id):
     """Endpoint for deleting locations. """
@@ -751,7 +724,7 @@ def api_location_delete(id):
         return 'Deleted Location #{}'.format(location.id)
 
 
-@admin.route('/api/location/import/', methods=['POST'])
+@admin.post('/api/location/import/')
 @roles_required('Admin')
 def api_location_import():
     """Endpoint for importing locations."""
@@ -771,8 +744,8 @@ def api_location_get(id):
     """
     location = Location.query.get(id)
 
-    if not location:
-        abort(404)
+    if location is None:
+        return 'Not Found!', 404
     else:
         return json.dumps(location.to_dict()), 200
 
@@ -870,9 +843,9 @@ def api_location_type_delete(id):
     """
     location_type = LocationType.query.get(id)
     if location_type.delete():
-        return 'Location Type Deleted #{}'.format(location_type.id), 200
         # Record Activity
         Activity.create(current_user, Activity.ACTION_DELETE, location_type.to_mini(), 'location_type')
+        return 'Location Type Deleted #{}'.format(location_type.id), 200
     else:
         return 'Error deleting location type', 417
 
@@ -906,9 +879,9 @@ def api_bulletins():
             nextOp = ops.pop(0)
             nextQuery = queries.pop(0)
             if nextOp == 'union':
-                result = result.union(Bulletin.query.filter(*nextQuery))
+                result = result.union_all(Bulletin.query.filter(*nextQuery)).distinct(Bulletin.id)
             elif nextOp == 'intersect':
-                result = result.intersect(Bulletin.query.filter(*nextQuery))
+                result = result.intersect_all(Bulletin.query.filter(*nextQuery)).distinct(Bulletin.id)
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
     # handle sort
@@ -956,32 +929,26 @@ def api_bulletin_create():
     return 'Created Bulletin #{}'.format(bulletin.id)
 
 
-@admin.route('/api/bulletin/<int:id>', methods=['PUT'])
+@admin.put('/api/bulletin/<int:id>')
 @roles_accepted('Admin', 'DA')
 def api_bulletin_update(id):
     """Updates a bulletin."""
 
-    if request.method == 'PUT':
-        bulletin = Bulletin.query.get(id)
-        if bulletin is not None:
-            bulletin = bulletin.from_json(request.json['item'])
-            # Create a revision using latest values
-            # this method automatically commits
-            # bulletin changes (referenced)           
-            bulletin.create_revision()
-
-            # Record Activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
-            return 'Saved Bulletin #{}'.format(bulletin.id), 200
-        else:
-            return 'Not Found!', 404
-
+    bulletin = Bulletin.query.get(id)
+    if bulletin is not None:
+        if not current_user.can_access(bulletin):
+            return 'Restricted Access', 403
+        bulletin = bulletin.from_json(request.json['item'])
+        bulletin.create_revision()
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
+        return 'Saved Bulletin #{}'.format(bulletin.id), 200
     else:
-        return 'Unauthorized', 403
+        return 'Not Found!', 404
 
 
 # Add/Update review bulletin endpoint
-@admin.route('/api/bulletin/review/<int:id>', methods=['PUT'])
+@admin.put('/api/bulletin/review/<int:id>')
 @roles_accepted('Admin', 'DA')
 def api_bulletin_review_update(id):
     """
@@ -989,25 +956,28 @@ def api_bulletin_review_update(id):
     :param id: id of the bulletin
     :return: success/error based on the outcome
     """
-    if request.method == 'PUT':
-        bulletin = Bulletin.query.get(id)
-        if bulletin is not None:
-            bulletin.review = request.json['item']['review'] if 'review' in request.json['item'] else ''
-            bulletin.review_action = request.json['item']['review_action'] if 'review_action' in request.json[
-                'item'] else ''
+    bulletin = Bulletin.query.get(id)
+    if bulletin is not None:
+        if not current_user.can_access(bulletin):
+            return 'Restricted Access', 403
 
-            if bulletin.status == 'Peer Review Assigned':
-                bulletin.comments = 'Added Peer Review'
-            if bulletin.status == 'Peer Reviewed':
-                bulletin.comments = 'Updated Peer Review'
+        bulletin.review = request.json['item']['review'] if 'review' in request.json['item'] else ''
+        bulletin.review_action = request.json['item']['review_action'] if 'review_action' in request.json[
+            'item'] else ''
 
-            bulletin.status = 'Peer Reviewed'
+        if bulletin.status == 'Peer Review Assigned':
+            bulletin.comments = 'Added Peer Review'
+        if bulletin.status == 'Peer Reviewed':
+            bulletin.comments = 'Updated Peer Review'
 
-            # append refs
-            refs = request.json.get('item', {}).get('revrefs', [])
+        bulletin.status = 'Peer Reviewed'
 
-            bulletin.ref = bulletin.ref + refs
+        # append refs
+        refs = request.json.get('item', {}).get('revrefs', [])
 
+        bulletin.ref = bulletin.ref + refs
+
+        if bulletin.save():
             # Create a revision using latest values
             # this method automatically commits
             #  bulletin changes (referenced)           
@@ -1017,56 +987,38 @@ def api_bulletin_review_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
             return 'Bulletin review updated #{}'.format(bulletin.id), 200
         else:
-            return 'Not Found!', 404
-
+            return f'Error saving Bulletin #{id}', 417
     else:
-        return 'Unauthorized', 403
+        return 'Not Found!', 404
 
 
 # bulk update bulletin endpoint
-@admin.route('/api/bulletin/bulk/', methods=['PUT'])
+@admin.put('/api/bulletin/bulk/')
 @roles_accepted('Admin', 'Mod')
 def api_bulletin_bulk_update():
     """
     Endpoint to bulk update bulletins
     :return: success / error
     """
-    if request.method == 'PUT':
-        ids = request.json['items']
-        bulk = request.json['bulk']
 
-        if ids and len(bulk):
-            job = bulk_update_bulletins.delay(ids, bulk, current_user.id)
-            # store job id in user's session for status monitoring
-            key = 'user{}:{}'.format(current_user.id, job.id)
-            rds.set(key, job.id)
-            # expire in 3 hour
-            rds.expire(key, 60 * 60 * 3)
-            return '{}'.format('Bulk update queued successfully.'), 200
-        else:
-            return 'No items selected, or nothing to update', 417
+    ids = request.json['items']
+    bulk = request.json['bulk']
 
+    # non-intrusive hard validation for access roles based on user
+    if not current_user.has_role('Admin'):
+        # silently discard access roles
+        bulk.pop('roles', None)
+
+    if ids and len(bulk):
+        job = bulk_update_bulletins.delay(ids, bulk, current_user.id)
+        # store job id in user's session for status monitoring
+        key = 'user{}:{}'.format(current_user.id, job.id)
+        rds.set(key, job.id)
+        # expire in 3 hours
+        rds.expire(key, 60 * 60 * 3)
+        return '{}'.format('Bulk update queued successfully.'), 200
     else:
-        return 'Unauthorized', 403
-
-
-'''
-@admin.route('/api/bulletin/<int:id>', methods=['DELETE'])
-@roles_required('Admin')
-def api_bulletin_delete(id):
-    """
-    Endpoint to delete a bulletin
-    :param id: id of the bulletin to be deleted
-    :return: success/error
-    """
-    if request.method == 'DELETE':
-        bulletin = Bulletin.query.get(id)
-        bulletin.delete()
-
-        # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, bulletin.to_mini(), 'bulletin')
-        return 'Deleted!'
-'''
+        return 'No items selected, or nothing to update', 417
 
 
 # get one bulletin
@@ -1080,12 +1032,16 @@ def api_bulletin_get(id):
     bulletin = Bulletin.query.get(id)
     mode = request.args.get('mode', None)
     if not bulletin:
-        abort(404)
+        return 'Not found', 404
     else:
         # hide review from view-only users
         if not current_user.roles:
             bulletin.review = None
-        return json.dumps(bulletin.to_dict(mode)), 200
+        if current_user.can_access(bulletin):
+            return json.dumps(bulletin.to_dict(mode)), 200
+        else:
+            # block access altogether here, doesn't make sense to send only the id
+            return 'Restricted Access', 403
 
 
 # get bulletin relations
@@ -1099,10 +1055,10 @@ def bulletin_relations(id):
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', REL_PER_PAGE, int)
     if not cls or cls not in ['bulletin', 'actor', 'incident']:
-        abort(404)
+        return 'Not Found!', 404
     bulletin = Bulletin.query.get(id)
     if not bulletin:
-        abort(404)
+        return 'Not Found!', 404
     items = []
 
     if cls == 'bulletin':
@@ -1152,6 +1108,10 @@ def api_bulletin_self_assign(id):
         return 'User not allowed to self assign', 400
 
     bulletin = Bulletin.query.get(id)
+
+    if not current_user.can_access(bulletin):
+        return 'Restricted Access', 403
+
     if bulletin:
         b = request.json.get('bulletin')
         # workflow check
@@ -1177,7 +1137,7 @@ def api_bulletin_self_assign(id):
         Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
         return 'Saved Bulletin #{}'.format(bulletin.id), 200
     else:
-        abort(404)
+        return 'Not Found!', 404
 
 
 @admin.route('/api/actor/assign/<int:id>', methods=['PUT'])
@@ -1190,6 +1150,10 @@ def api_actor_self_assign(id):
         return 'User not allowed to self assign', 400
 
     actor = Actor.query.get(id)
+
+    if not current_user.can_access(actor):
+        return 'Restricted Access', 403
+
     if actor:
         a = request.json.get('actor')
         # workflow check
@@ -1210,7 +1174,7 @@ def api_actor_self_assign(id):
         Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
         return 'Saved Actor #{}'.format(actor.id), 200
     else:
-        abort(404)
+        return 'Not Found!', 404
 
 
 @admin.route('/api/incident/assign/<int:id>', methods=['PUT'])
@@ -1223,6 +1187,10 @@ def api_incident_self_assign(id):
         return 'User not allowed to self assign', 400
 
     incident = Incident.query.get(id)
+
+    if not current_user.can_access(incident):
+        return 'Restricted Access', 403
+
     if incident:
         i = request.json.get('incident')
         # workflow check
@@ -1243,10 +1211,83 @@ def api_incident_self_assign(id):
         Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
         return 'Saved Actor #{}'.format(incident.id), 200
     else:
-        abort(404)
+        return 'Not Found!', 404
 
 
 # Media special endpoints
+
+@admin.post('/api/media/chunk')
+@roles_accepted('Admin', 'DA')
+def api_medias_chunk():
+    file = request.files['file']
+    filename = Media.generate_file_name(file.filename)
+    filepath = (Media.media_dir / filename).as_posix()
+
+    dz_uuid = request.form.get("dzuuid")
+    if not dz_uuid:
+        # Assume this file has not been chunked
+        with open(f"{filepath}", "wb") as f:
+            file.save(f)
+        return "File Saved"
+
+    # Chunked upload
+    try:
+        current_chunk = int(request.form["dzchunkindex"])
+        total_chunks = int(request.form["dztotalchunkcount"])
+        total_size = int(request.form["dztotalfilesize"])
+    except KeyError as err:
+        raise abort(400, body=f"Not all required fields supplied, missing {err}")
+    except ValueError:
+        raise abort(400, body=f"Values provided were not in expected format")
+
+    save_dir = Media.media_dir / dz_uuid
+
+    if not save_dir.exists():
+        save_dir.mkdir(exist_ok=True, parents=True)
+
+    # Save the individual chunk
+    with open(save_dir / str(request.form["dzchunkindex"]), "wb") as f:
+        file.save(f)
+
+    # See if we have all the chunks downloaded
+    completed = current_chunk == total_chunks - 1
+
+    # Concat all the files into the final file when all are downloaded
+    if completed:
+        with open(filepath, "wb") as f:
+            for file_number in range(total_chunks):
+                f.write((save_dir / str(file_number)).read_bytes())
+
+        if os.stat(filepath).st_size != total_size:
+            raise abort(400, body=f"Error uploading the file")
+
+        print(f"{file.filename} has been uploaded")
+        shutil.rmtree(save_dir)
+        # get md5 hash
+        f = open(filepath, 'rb').read()
+        etag = hashlib.md5(f).hexdigest()
+
+        # validate etag here // if it exists // reject the upload and send an error code
+        if Media.query.filter(Media.etag == etag).first():
+            return 'Error, file already exists', 409
+
+        if not current_app.config.get('FILESYSTEM_LOCAL') and not 'etl' in request.referrer:
+            print('uploading file to s3 :::>')
+            s3 = boto3.resource('s3')
+            s3.Bucket(current_app.config['S3_BUCKET']).upload_file(filepath, filename)
+            # Clean up file if s3 mode is selected
+            try:
+                os.remove(filepath)
+            except Exception as e:
+                print(e)
+
+        response = {'etag': etag, 'filename': filename}
+        return Response(json.dumps(response), content_type='application/json'), 200
+
+    return "Chunk upload successful", 200
+
+
+
 @admin.route('/api/media/upload/', methods=['POST'])
 @roles_accepted('Admin', 'DA')
 def api_medias_upload():
@@ -1254,8 +1295,8 @@ def api_medias_upload():
     Endpoint to upload files (based on file system settings : s3 or local file system)
     :return: success /error based on operation's result
     """
-
-    if 'media' in request.files:
+    file = request.files.get('file')
+    if file:
         if current_app.config['FILESYSTEM_LOCAL'] or (
                 'etl' in request.referrer and not current_app.config['FILESYSTEM_LOCAL']):
             return api_local_medias_upload(request)
@@ -1264,13 +1305,11 @@ def api_medias_upload():
             s3 = boto3.resource('s3', aws_access_key_id=current_app.config['AWS_ACCESS_KEY_ID'],
                                 aws_secret_access_key=current_app.config['AWS_SECRET_ACCESS_KEY'])
 
-            f = request.files.get('media')
-
             # final file
-            filename = Media.generate_file_name(f.filename)
+            filename = Media.generate_file_name(file.filename)
             # filepath = (Media.media_dir/filename).as_posix()
 
-            response = s3.Bucket(current_app.config['S3_BUCKET']).put_object(Key=filename, Body=f)
+            response = s3.Bucket(current_app.config['S3_BUCKET']).put_object(Key=filename, Body=file)
             # print(response.get())
             etag = response.get()['ETag'].replace('"', '')
 
@@ -1281,24 +1320,6 @@ def api_medias_upload():
             return json.dumps({'filename': filename, 'etag': etag}), 200
 
     return 'Invalid request params', 417
-
-
-''' #File delete is disabled for now 
-@admin.route('/api/media/upload/', methods=['DELETE'])
-@roles_required('Admin')
-def api_media_file_delete():
-    """
-    Endpoint to handle file deletions
-    :return: success/error
-    """
-    data = request.get_json(force=True)
-    try:
-        os.remove((Media.media_dir / data['filename']).as_posix())
-        return 'Removed', 200
-    except Exception as e:
-        print(str(e))
-        return 'Error', 417
-'''
 
 
 # return signed url from s3 valid for some time
@@ -1313,6 +1334,10 @@ def serve_media(filename):
     if current_app.config['FILESYSTEM_LOCAL']:
         return '/admin/api/serve/media/{}'.format(filename)
     else:
+        # validate access control
+        media = Media.query.filter(Media.media_file == filename).first()
+        if not current_user.can_access(media):
+            return 'Restricted Access', 403
         s3 = boto3.client('s3',
                           aws_access_key_id=current_app.config['AWS_ACCESS_KEY_ID'],
                           aws_secret_access_key=current_app.config['AWS_SECRET_ACCESS_KEY'],
@@ -1328,11 +1353,11 @@ def serve_media(filename):
 def api_local_medias_upload(request):
     # file pond sends multiple requests for multiple files (handle each request as a separate file )
     try:
-        f = request.files.get('media')
+        file = request.files.get('file')
         # final file
-        filename = Media.generate_file_name(f.filename)
+        filename = Media.generate_file_name(file.filename)
         filepath = (Media.media_dir / filename).as_posix()
-        f.save(filepath)
+        file.save(filepath)
         # get md5 hash
         f = open(filepath, 'rb').read()
         etag = hashlib.md5(f).hexdigest()
@@ -1352,11 +1377,16 @@ def api_local_serve_media(filename):
     """
     serves file from local file system
     """
-    return send_from_directory('media', filename)
+
+    media = Media.query.filter(Media.media_file == filename).first()
+    if media and not current_user.can_access(media):
+        return 'Restricted Access', 403
+    else:
+        return send_from_directory('media', filename)
+
 
 @admin.post('/api/inline/upload')
 def api_inline_medias_upload():
-    # file pond sends multiple requests for multiple files (handle each request as a separate file )
     try:
         f = request.files.get('file')
 
@@ -1364,13 +1394,6 @@ def api_inline_medias_upload():
         filename = Media.generate_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
-        # get md5 hash
-        #f = open(filepath, 'rb').read()
-        #etag = hashlib.md5(f).hexdigest()
-        # check if file already exists
-        #if Media.query.filter(Media.etag == etag).first():
-        #    return 'Error: File already exists', 409
-        #response = {'etag': etag, 'filename': filename}
         response = {'location': filename}
 
         return Response(json.dumps(response), content_type='application/json'), 200
@@ -1387,43 +1410,33 @@ def api_local_serve_inline_media(filename):
 
 # Medias routes
 
-@admin.route('/api/medias/', defaults={'page': 1})
-@admin.route('/api/medias/<int:page>/')
-def api_medias(page):
-    """
-    Endopint to feed json data of media items , supports paging and search
-    :param page: db query offset
-    :return: success + json feed or error in case of failure
-    """
-    query = []
-    q = request.args.get('q', None)
-    if q is not None:
-        search = '%' + q.replace(' ', '%') + '%'
-        query.append(
-            Media.search.ilike(search)
-        )
-    result = Media.query.filter(
-        *query).order_by(Media.id).paginate(
-        page, PER_PAGE, True)
-    response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
-    return Response(json.dumps(response),
-                    content_type='application/json')
+# @admin.route('/api/medias/', defaults={'page': 1})
+# @admin.route('/api/medias/<int:page>/')
+# def api_medias(page):
+#     """
+#     Endopint to feed json data of media items , supports paging and search
+#     :param page: db query offset
+#     :return: success + json feed or error in case of failure
+#     """
+#     result = Media.query.order_by(Media.id).paginate(page, PER_PAGE, True)
+#     response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
+#     return Response(json.dumps(response), content_type='application/json')
 
 
-@admin.route('/api/media/', methods=['POST'])
-@roles_accepted('Admin', 'DA')
-def api_media_create():
-    """
-    Endpoint to create a media item
-    :return: success / error
-    """
-    if request.method == 'POST':
-        media = Media()
-        created = media.from_json(request.json['item'])
-        if created.save():
-            return 'Created!'
-        else:
-            return 'Save Failed', 417
+# @admin.route('/api/media/', methods=['POST'])
+# @roles_accepted('Admin', 'DA')
+# def api_media_create():
+#     """
+#     Endpoint to create a media item
+#     :return: success / error
+#     """
+#     if request.method == 'POST':
+#         media = Media()
+#         created = media.from_json(request.json['item'])
+#         if created.save():
+#             return 'Created!'
+#         else:
+#             return 'Save Failed', 417
 
 
 @admin.route('/api/media/<int:id>', methods=['PUT'])
@@ -1444,21 +1457,9 @@ def api_media_update(id):
             return 'Not Found!', 404
 
     else:
-        return 'Unauthorized', 403
+        return 'Forbidden', 403
 
 
-@admin.route('/api/media/<int:id>', methods=['DELETE'])
-@roles_required('Admin')
-def api_media_delete(id):
-    """
-    Endpoint to handle media deletion
-    :param id: id of the media to be deleted
-    :return: success / error
-    """
-    if request.method == 'DELETE':
-        media = Media.query.get(id)
-        media.delete()
-        return 'Deleted!'
 
 
 # Actor routes
@@ -1521,7 +1522,7 @@ def api_actor_create():
 
 
 # update actor endpoint
-@admin.route('/api/actor/<int:id>', methods=['PUT'])
+@admin.put('/api/actor/<int:id>')
 @roles_accepted('Admin', 'DA')
 def api_actor_update(id):
     """
@@ -1529,27 +1530,29 @@ def api_actor_update(id):
     :param id: id of the actor to be updated
     :return: success/error
     """
-
     actor = Actor.query.get(id)
-    if not actor:
-        abort(404)
+    if actor is not None:
+        # check for restrictions
+        if not current_user.can_access(actor):
+            return 'Restricted Access', 403
 
-    actor = actor.from_json(request.json['item'])
-    # Create a revision using latest values
-    # this method automatically commits
-    #  actor changes (referenced)
-    result = actor.save()
-    if result:
-        actor.create_revision()
-        # Record Activity
-        Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-        return 'Saved Actor #{}'.format(actor.id), 200
+        actor = actor.from_json(request.json['item'])
+        # Create a revision using latest values
+        # this method automatically commits
+        # actor changes (referenced)   
+        if actor:
+            actor.create_revision()
+            # Record activity
+            Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
+            return 'Saved Actor #{}'.format(actor.id), 200
+        else:
+            return f'Error saving Actor #{id}', 417
     else:
-        return 'Error saving actor', 417
+        return 'Not Found!', 404
 
 
 # Add/Update review actor endpoint
-@admin.route('/api/actor/review/<int:id>', methods=['PUT'])
+@admin.put('/api/actor/review/<int:id>')
 @roles_accepted('Admin', 'DA')
 def api_actor_review_update(id):
     """
@@ -1557,72 +1560,58 @@ def api_actor_review_update(id):
     :param id: id of the actor
     :return: success/error
     """
-    if request.method == 'PUT':
-        actor = Actor.query.get(id)
-        if actor is not None:
-            actor.review = request.json['item']['review'] if 'review' in request.json['item'] else ''
-            actor.review_action = request.json['item']['review_action'] if 'review_action' in request.json[
-                'item'] else ''
+    actor = Actor.query.get(id)
+    if actor is not None:
+        if not current_user.can_access(actor):
+            return 'Restricted Access', 403
 
-            actor.status = 'Peer Reviewed'
+        actor.review = request.json['item']['review'] if 'review' in request.json['item'] else ''
+        actor.review_action = request.json['item']['review_action'] if 'review_action' in request.json[
+            'item'] else ''
 
-            # Create a revision using latest values
-            # this method automatically commi
-            #  bulletin changes (referenced)           
+        actor.status = 'Peer Reviewed'
+
+        # Create a revision using latest values
+        # this method automatically commi
+        #  bulletin changes (referenced) 
+        if actor.save():          
             actor.create_revision()
-
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-            return 'Actor review updated #{}'.format(actor.id), 200
+            return f'Actor review updated #{id}', 200
         else:
-            return 'Not Found!', 404
-
+            return f'Error saving Actor #{id}\'s Review', 417
     else:
-        return 'Unauthorized', 403
+        return 'Not Found!', 404
 
 
 # bulk update actor endpoint
-@admin.route('/api/actor/bulk/', methods=['PUT'])
+@admin.put('/api/actor/bulk/')
 @roles_accepted('Admin', 'Mod')
 def api_actor_bulk_update():
     """
     Endpoint to bulk update actors
     :return: success/error
     """
-    if request.method == 'PUT':
-        ids = request.json['items']
-        bulk = request.json['bulk']
-        if ids and len(bulk):
-            job = bulk_update_actors.delay(ids, bulk, current_user.id)
-            # store job id in user's session for status monitoring
-            key = 'user{}:{}'.format(current_user.id, job.id)
-            rds.set(key, job.id)
-            # expire in 3 hour
-            rds.expire(key, 60 * 60 * 3)
-            return '{}'.format('Bulk update queued successfully.'), 200
-        else:
-            return 'No items selected, or nothing to update', 417
 
+    ids = request.json['items']
+    bulk = request.json['bulk']
+
+    # non-intrusive hard validation for access roles based on user
+    if not current_user.has_role('Admin'):
+        # silently discard access roles
+        bulk.pop('roles', None)
+
+    if ids and len(bulk):
+        job = bulk_update_actors.delay(ids, bulk, current_user.id)
+        # store job id in user's session for status monitoring
+        key = 'user{}:{}'.format(current_user.id, job.id)
+        rds.set(key, job.id)
+        # expire in 3 hour
+        rds.expire(key, 60 * 60 * 3)
+        return '{}'.format('Bulk update queued successfully.'), 200
     else:
-        return 'Unauthorized', 403
-
-
-'''
-@roles_required('Admin')
-@admin.route('/api/actor/<int:id>', methods=['DELETE'])
-def api_actor_delete(id):
-    """
-    Endpoint to delete an actor
-    :param id: id of the actor to be deleted
-    :return: success/error
-    """
-    if request.method == 'DELETE':
-        actor = Actor.query.get(id)
-        actor.delete()
-        # Record activity
-        Activity.create(current_user, Activity.ACTION_DELETE, actor.to_mini(), 'actor')
-        return 'Deleted!'
-'''
+        return 'No items selected, or nothing to update', 417
 
 
 # get one actor
@@ -1634,13 +1623,16 @@ def api_actor_get(id):
     :param id: id of the actor
     :return: actor data in json format + success or error in case of failure
     """
-
     actor = Actor.query.get(id)
     if not actor:
-        abort(404)
+        return 'Not found', 404
     else:
         mode = request.args.get('mode', None)
-        return json.dumps(actor.to_dict(mode=mode)), 200
+        if current_user.can_access(actor):
+            return json.dumps(actor.to_dict(mode)), 200
+        else:
+            # block access altogether here, doesn't make sense to send only the id
+            return 'Restricted Access', 403
 
 
 # get actor relations
@@ -1654,10 +1646,10 @@ def actor_relations(id):
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', REL_PER_PAGE, int)
     if not cls or cls not in ['bulletin', 'actor', 'incident']:
-        abort(404)
+        return 'Not Found!', 404
     actor = Actor.query.get(id)
     if not actor:
-        abort(404)
+        return 'Not Found!', 404
     items = []
 
     if cls == 'bulletin':
@@ -1693,7 +1685,7 @@ def api_actor_mp_get(id):
     if request.method == 'GET':
         actor = Actor.query.get(id)
         if not actor:
-            abort(404)
+            return 'Not Found!', 404
         else:
             return json.dumps(actor.mp_json()), 200
 
@@ -1759,7 +1751,7 @@ def api_locationhistory(locationid):
     :return: json feed of item's history , or error
     """
     result = LocationHistory.query.filter_by(location_id=locationid).order_by(desc(LocationHistory.created_at)).all()
-    # For standardization 
+    # For standardization
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
                     content_type='application/json')
@@ -1771,7 +1763,6 @@ def api_locationhistory(locationid):
 def api_users():
     """
     API endpoint to feed users data in json format , supports paging and search
-    :param page: db query offset
     :return: success and json feed of items or error
     """
     page = request.args.get('page', 1, int)
@@ -1885,6 +1876,8 @@ def api_user_delete(id):
     """
     if request.method == 'DELETE':
         user = User.query.get(id)
+        if user.active:
+            'User is active, make inactive before deleting', 403
         user.delete()
 
         # Record activity
@@ -1916,7 +1909,7 @@ def api_roles(page):
     q = request.args.get('q', None)
     if q is not None:
         query.append(
-            Role.title.ilike('%' + q + '%')
+            Role.name.ilike('%' + q + '%')
         )
     result = Role.query.filter(
         *query).order_by(Role.id).paginate(
@@ -1926,26 +1919,25 @@ def api_roles(page):
                     content_type='application/json')
 
 
-@admin.route('/api/role/', methods=['POST'])
+@admin.post('/api/role/')
 @roles_required('Admin')
 def api_role_create():
     """
     Endpoint to create a role item
     :return: success/error
     """
-    if request.method == 'POST':
-        role = Role()
-        created = role.from_json(request.json['item'])
-        if created.save():
-            # Record activity
-            Activity.create(current_user, Activity.ACTION_CREATE, role.to_mini(), 'user')
-            return 'Created!'
+    role = Role()
+    created = role.from_json(request.json['item'])
+    if created.save():
+        # Record activity
+        Activity.create(current_user, Activity.ACTION_CREATE, role.to_mini(), 'role')
+        return 'Created!'
 
-        else:
-            return 'Save Failed', 417
+    else:
+        return 'Save Failed', 417
 
 
-@admin.route('/api/role/<int:id>', methods=['PUT'])
+@admin.put('/api/role/<int:id>')
 @roles_required('Admin')
 def api_role_update(id):
     """
@@ -1953,22 +1945,22 @@ def api_role_update(id):
     :param id: id of the role to be updated
     :return: success / error
     """
-    if request.method == 'PUT':
-        role = Role.query.get(id)
-        if role is not None:
-            role = role.from_json(request.json['item'])
-            role.save()
-            # Record activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, role.to_mini(), 'user')
-            return 'Saved!', 200
-        else:
-            return 'Not Found!', 404
+    role = Role.query.get(id)
+    if role is None:
+        return 'Not Found!', 404
 
-    else:
-        return 'Unauthorized', 403
+    if role.name in ['Admin', 'Mod', 'DA']:
+        return 'Cannot edit System Roles', 403
+
+    role = role.from_json(request.json['item'])
+    role.save()
+    # Record activity
+    Activity.create(current_user, Activity.ACTION_UPDATE, role.to_mini(), 'role')
+    return 'Saved!', 200
+        
 
 
-@admin.route('/api/role/<int:id>', methods=['DELETE'])
+@admin.delete('/api/role/<int:id>')
 @roles_required('Admin')
 def api_role_delete(id):
     """
@@ -1976,15 +1968,25 @@ def api_role_delete(id):
     :param id: id of the role to be deleted
     :return: success / error
     """
-    if request.method == 'DELETE':
-        role = Role.query.get(id)
-        role.delete()
-        # Record activity
-        Activity.create(current_user, Activity.ACTION_DELETE, role.to_mini(), 'user')
-        return 'Deleted!'
+    role = Role.query.get(id)
+    
+    if role is None:
+        return 'Not Found!', 404
+
+    # forbid deleting system roles
+    if role.name in ['Admin', 'Mod', 'DA']:
+        return 'Cannot delete System Roles', 403
+    # forbid delete roles assigned to restricted items
+    if role.bulletins.first() or role.actors.first() or role.incidents.first():
+        return 'Role assigned to restricted items', 403
+
+    role.delete()
+    # Record activity
+    Activity.create(current_user, Activity.ACTION_DELETE, role.to_mini(), 'role')
+    return 'Deleted!', 200
 
 
-@admin.route('/api/role/import/', methods=['POST'])
+@admin.post('/api/role/import/')
 @roles_required('Admin')
 def api_role_import():
     """
@@ -2051,30 +2053,33 @@ def api_incident_create():
 
 
 # update incident endpoint
-@admin.route('/api/incident/<int:id>', methods=['PUT'])
+@admin.put('/api/incident/<int:id>')
 @roles_accepted('Admin', 'DA')
 def api_incident_update(id):
     """API endpoint to update an incident."""
-    if request.method == 'PUT':
-        incident = Incident.query.get(id)
-        if incident is not None:
-            incident = incident.from_json(request.json['item'])
-            # Create a revision using latest values
-            # this method automatically commits
-            # incident changes (referenced)           
+    
+    incident = Incident.query.get(id)
+
+    if incident is not None:
+        if not current_user.can_access(incident):
+            return 'Restricted Access', 403
+        incident = incident.from_json(request.json['item'])
+        # Create a revision using latest values
+        # this method automatically commits
+        # incident changes (referenced) 
+        if incident:         
             incident.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-            return 'Saved Incident #{}'.format(incident.id), 200
+            return f'Saved Incident #{id}', 200
         else:
-            return 'Not Found!', 404
-
+            return f'Error saving Incident {id}', 417
     else:
-        return 'Unauthorized', 403
+        return 'Not Found!', 404
 
 
 # Add/Update review incident endpoint
-@admin.route('/api/incident/review/<int:id>', methods=['PUT'])
+@admin.put('/api/incident/review/<int:id>')
 @roles_accepted('Admin', 'DA')
 def api_incident_review_update(id):
     """
@@ -2082,68 +2087,59 @@ def api_incident_review_update(id):
     :param id: id of the incident
     :return: success / error
     """
-    if request.method == 'PUT':
-        incident = Incident.query.get(id)
-        if incident is not None:
-            incident.review = request.json['item']['review'] if 'review' in request.json['item'] else ''
-            incident.review_action = request.json['item']['review_action'] if 'review_action' in request.json[
-                'item'] else ''
+    incident = Incident.query.get(id)
+    if incident is not None:
+        if not current_user.can_access(incident):
+            return 'Restricted Access', 403
 
-            incident.status = 'Peer Reviewed'
+        incident.review = request.json['item']['review'] if 'review' in request.json['item'] else ''
+        incident.review_action = request.json['item']['review_action'] if 'review_action' in request.json[
+            'item'] else ''
+
+        incident.status = 'Peer Reviewed'
+        if incident.save():
             # Create a revision using latest values
             # this method automatically commi
-            #  incident changes (referenced)           
+            # incident changes (referenced)
             incident.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-            return 'Bulletin review updated #{}'.format(incident.id), 200
+            return f'Bulletin review updated #{id}', 200
         else:
-            return 'Not Found!', 404
-
+            return f'Error saving Incident #{id}\'s Review', 200
     else:
-        return 'Unauthorized', 403
+        return 'Not Found!', 404
 
 
 # bulk update incident endpoint
-@admin.route('/api/incident/bulk/', methods=['PUT'])
+@admin.put('/api/incident/bulk/')
 @roles_accepted('Admin', 'Mod')
 def api_incident_bulk_update():
     """endpoint to handle bulk incidents updates."""
-    if request.method == 'PUT':
-        ids = request.json['items']
-        bulk = request.json['bulk']
-        if ids and len(bulk):
-            job = bulk_update_incidents.delay(ids, bulk, current_user.id)
-            # store job id in user's session for status monitoring
-            key = 'user{}:{}'.format(current_user.id, job.id)
-            rds.set(key, job.id)
-            # expire in 3 hour
-            rds.expire(key, 60 * 60 * 3)
-            return '{}'.format('Bulk update queued successfully.'), 200
-        else:
-            return 'No items selected, or nothing to update', 417
 
+    ids = request.json['items']
+    bulk = request.json['bulk']
+
+    # non-intrusive hard validation for access roles based on user
+    if not current_user.has_role('Admin'):
+        # silently discard access roles
+        bulk.pop('roles', None)
+        bulk.pop('rolesReplace', None)
+        bulk.pop('restrictRelated', None)
+
+    if ids and len(bulk):
+        job = bulk_update_incidents.delay(ids, bulk, current_user.id)
+        # store job id in user's session for status monitoring
+        key = 'user{}:{}'.format(current_user.id, job.id)
+        rds.set(key, job.id)
+        # expire in 3 hour
+        rds.expire(key, 60 * 60 * 3)
+        return '{}'.format('Bulk update queued successfully.'), 200
     else:
-        return 'Unauthorized', 403
-
-
-'''
-@admin.route('/api/incident/<int:id>', methods=['DELETE'])
-@roles_required('Admin')
-def api_incident_delete(id):
-    """endpoint handles deletion of incidents."""
-    if request.method == 'DELETE':
-        incident = Incident.query.get(id)
-        incident.delete()
-
-        # Record activity
-        Activity.create(current_user, Activity.ACTION_DELETE, incident.to_mini(), 'incident')
-        return 'Deleted!'
-'''
+        return 'No items selected, or nothing to update', 417
 
 
 # get one incident
-
 @admin.get('/api/incident/<int:id>')
 def api_incident_get(id):
     """
@@ -2153,10 +2149,14 @@ def api_incident_get(id):
     """
     incident = Incident.query.get(id)
     if not incident:
-        abort(404)
+        return 'Not Found', 404
     else:
         mode = request.args.get('mode', None)
-        return json.dumps(incident.to_dict(mode)), 200
+        if current_user.can_access(incident):
+            return json.dumps(incident.to_dict(mode)), 200
+        else:
+            # block access altogether here, doesn't make sense to send only the id
+            return 'Restricted Access', 403
 
 
 # get incident relations
@@ -2170,10 +2170,10 @@ def incident_relations(id):
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', REL_PER_PAGE, int)
     if not cls or cls not in ['bulletin', 'actor', 'incident']:
-        abort(404)
+        return 'Not Found!', 404
     incident = Incident.query.get(id)
     if not incident:
-        abort(404)
+        return 'Not Found!', 404
     items = []
 
     if cls == 'bulletin':
@@ -2263,8 +2263,9 @@ def bulk_status():
     tasks = []
     for key in jobs:
         result = {}
-        id = key.split(':')[-1]
+        id = key.decode('utf-8').split(':')[-1]
         type = request.args.get('type')
+        status = None
         if type == 'bulletin':
             status = bulk_update_bulletins.AsyncResult(id).status
         elif type == 'actor':
@@ -2272,7 +2273,7 @@ def bulk_status():
         elif type == 'incident':
             status = bulk_update_actors.AsyncResult(id).status
         else:
-            abort(404)
+            return 'Not Found!', 404
 
         # handle job failure
         if status == 'FAILURE':
@@ -2287,27 +2288,6 @@ def bulk_status():
     return json.dumps(tasks)
 
 
-""" 
-# Unused 
-@admin.route('/api/key', methods=['POST'])
-@roles_required('Admin')
-def gen_api_key():
-    global_key = APIKey.query.first()
-    if not global_key:
-        global_key = APIKey()
-    global_key.key = passlib.totp.generate_secret()
-    global_key.save()
-    return global_key.key, 200
-
-
-@roles_required(['Admin'])
-@admin.route('/api/key')
-def get_api_key():
-    return APIKey.get_global_key(), 200
-
-"""
-
-
 # Saved Searches
 @admin.route('/api/queries/')
 def api_queries():
@@ -2320,7 +2300,7 @@ def api_queries():
     return json.dumps([query.to_dict() for query in queries]), 200
 
 
-@admin.route('/api/query/', methods=['POST'])
+@admin.post('/api/query/')
 @roles_accepted('Admin', 'DA')
 def api_query_create():
     """
@@ -2350,7 +2330,7 @@ def etl_dashboard():
     :return: html page of the users backend.
     """
     if not current_app.config['ETL_TOOL']:
-        abort(404)
+        return 'Not Found!', 404
     return render_template('admin/etl-dashboard.html')
 
 
@@ -2364,9 +2344,13 @@ def etl_status():
     return render_template('admin/etl-status.html')
 
 
-@admin.route('/etl/path/', methods=['POST'])
+@admin.post('/etl/path/')
 @roles_required('Admin')
 def path_process():
+    # Check if path import is enabled
+    if not current_app.config.get('ETL_PATH_IMPORT'):
+        return 'Forbidden', 403
+
     path = request.json.get('path')
     recursive = request.json.get('recursive', False)
     if not path or not os.path.isdir(path):
@@ -2379,12 +2363,12 @@ def path_process():
         items = p.glob('*')
     files = [str(file) for file in items]
 
-    output = [{'file': {'name': os.path.basename(file), 'path': file}} for file in files]
+    output = [{'filename': os.path.basename(file), 'path': file} for file in files]
 
     return json.dumps(output), 200
 
 
-@admin.route('/etl/process', methods=['POST'])
+@admin.post('/etl/process')
 @roles_required('Admin')
 def etl_process():
     """
@@ -2397,7 +2381,7 @@ def etl_process():
     results = []
     batch_id = 'ETL' + shortuuid.uuid()[:9]
     batch_log = batch_id + '.log'
-    open(batch_log, 'a')
+    open('logs/'+batch_log, 'a')
 
     for file in files:
         results.append(etl_process_file.delay(batch_id, file, meta, user_id=current_user.id, log=batch_log))
@@ -2431,17 +2415,17 @@ def csv_dashboard():
     :return: html page of the csv backend.
     """
     if not current_app.config.get('SHEET_IMPORT'):
-        abort(404)
+        return 'Not Found!', 404
     return render_template('admin/csv-dashboard.html')
 
 
-@admin.post('/api/csv/upload/')
+@admin.post('/api/csv/upload')
 @roles_required('Admin')
 def api_local_csv_upload():
     import_dir = Path(current_app.config.get('IMPORT_DIR'))
     # file pond sends multiple requests for multiple files (handle each request as a separate file )
     try:
-        f = request.files.get('media')
+        f = request.files.get('file')
         # final file
         filename = Media.generate_file_name(f.filename)
         filepath = (import_dir / filename).as_posix()
@@ -2578,7 +2562,7 @@ def api_mapping_update(id):
             return "Update request missing parameters data", 417
 
     else:
-        abort(404)
+        return 'Not Found!', 404
 
 
 @admin.post('/api/process-sheet')
@@ -2594,13 +2578,14 @@ def api_process_sheet():
     vmap = request.json.get('vmap')
     batch_id = request.json.get('batch')
     sheet = request.json.get('sheet')
+    lang = request.json.get('lang', 'en')
     actor_config = request.json.get('actorConfig')
+    roles = request.json.get('roles')
 
-    for file in files:
-        filename = file.get('filename')
+    for filename in files:
         filepath = (import_dir / filename).as_posix()
         target = request.json.get('target')
-        process_sheet.delay(filepath, map, 'actor', batch_id, vmap, sheet, actor_config)
+        process_sheet.delay(filepath, map, 'actor', batch_id, vmap, sheet, actor_config, lang, roles)
 
     return 'Import process queued successfully! batch id: {}'.format(batch_id)
 

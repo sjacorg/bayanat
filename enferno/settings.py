@@ -27,10 +27,13 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Redis
+    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
     # Celery
-    celery_broker_url = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/10')
-    REDIS_BULK_DB = 11
-    result_backend = os.environ.get('result_backend', 'redis://localhost:6379/{}'.format(REDIS_BULK_DB))
+    # Has to be in small case
+    celery_broker_url = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/2')
+    result_backend = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/3')
 
 
     # Security
@@ -46,7 +49,6 @@ class Config(object):
     SECURITY_USER_IDENTITY_ATTRIBUTES = [{"username": {"mapper": uia_username_mapper, "case_insensitive": True}}]
 
     #disabel token apis
-    SECURITY_API_ENABLED_METHODS = ['session']
 
     SECURITY_TWO_FACTOR_ENABLED_METHODS= ['authenticator']  # 'sms' also valid but requires an sms provider
     SECURITY_TWO_FACTOR = os.environ.get('SECURITY_TWO_FACTOR')
@@ -64,12 +66,12 @@ class Config(object):
     SECURITY_TOTP_SECRETS = {"1": os.environ.get('SECURITY_TOTP_SECRETS')}
     SECURITY_TOTP_ISSUER = 'Bayanat'
 
-    # Reaphtcha
+    # Recaptcha
     RECAPTCHA_ENABLED = (os.environ.get('RECAPTCHA_ENABLED', 'False') == 'True')
     RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
     RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
-    # Redis
+    # Session
     SESSION_TYPE = 'redis'
     SESSION_REDIS = redis.from_url(os.environ.get('SESSION_REDIS', 'redis://localhost:6379/1'))
     PERMANENT_SESSION_LIFETIME = 3600
@@ -97,6 +99,7 @@ class Config(object):
 
     # Enable data import tool
     ETL_TOOL = (os.environ.get('ETL_TOOL', 'False') == 'True')
+    ETL_PATH_IMPORT = (os.environ.get('ETL_PATH_IMPORT', 'False') == 'True')
 
     # Enable data deduplication tool
     DEDUP_TOOL = (os.environ.get('DEDUP_TOOL', 'False') == 'True')

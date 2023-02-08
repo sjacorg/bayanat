@@ -80,7 +80,7 @@ def create(username, password):
     if len(password < 8):
         click.echo('Password should be at least 8 characters long!')
         return
-    user = User(username=username,  password=hash_password(password), active=1)
+    user = User(username=username, password=hash_password(password), active=1)
     if user.save():
         click.echo('User created successfully')
     else:
@@ -97,7 +97,7 @@ def add_role(username, role):
     from enferno.user.models import Role
     user = User.query.filter(User.username == username).first()
 
-    if not user :
+    if not user:
         click.echo('Sorry, this user does not exist!')
     else:
         r = Role.query.filter(Role.name == role).first()
@@ -108,7 +108,7 @@ def add_role(username, role):
                 r = Role(name=role).save()
         # add role to user
         user.roles.append(r)
-        click.echo('Role {} added successfully to user {}'.format(username,role))
+        click.echo('Role {} added successfully to user {}'.format(username, role))
 
 
 @click.command()
@@ -130,8 +130,6 @@ def reset(username, password):
         click.echo('User password has been reset successfully.')
         if not user.active:
             click.echo('Warning: User is not active!')
-
-
 
 
 @click.command()

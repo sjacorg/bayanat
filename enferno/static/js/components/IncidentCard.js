@@ -198,11 +198,17 @@ Vue.component("incident-card", {
 
       </v-card-text>
       
-      <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="incident.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
+      <v-chip color="white lighten-3" small label class="pa-2 mx-2 my-2" v-if="incident.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{incident.assigned_to['name']}}</v-chip>
-        <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(incident.status) }}</v-chip>
+        <v-chip color="white lighten-3" small label class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(incident.status) }}</v-chip>
         
       </v-sheet>
+      
+      <v-card v-if="incident.roles?.length" color="blue" class="ma-2 pa-2 d-flex align-center flex-grow-1" elevation="0">
+          <v-icon content="Access Roles" v-tippy color="blue lighten-5">mdi-lock</v-icon>
+        <v-chip label color="gray darken-3" small v-for="role in incident.roles" :color="role.color" class="caption mx-1">{{ role.name }}</v-chip>
+          
+        </v-card>
       
       
       <uni-field :caption="i18n.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>

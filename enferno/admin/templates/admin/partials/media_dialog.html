@@ -1,18 +1,11 @@
 <v-dialog v-model="mediaDialog" max-width="500px">
-  <template v-slot:activator="{ on }">
-    <v-card outlined>
-      <v-card-title class="handle">
-        <v-icon left>mdi-folder-multiple-image </v-icon>
-        {{_('Media')}}
-        <v-spacer></v-spacer>
+    <template v-slot:activator="{ on }">
+        <v-card outlined>
+            <v-card-title class="handle">
+                <v-icon left>mdi-folder-multiple-image</v-icon>
+                {{ _('Media') }}
+                <v-spacer></v-spacer>
 
-        <v-text-field
-          class="mx-5"
-          v-model="relateMediaTerm"
-          label="{{_('Search & Relate Media')}}"
-          @keydown.enter.prevent="searchRelatedMedia"
-          append-icon="mdi-magnify"
-        ></v-text-field>
         <v-btn
           class="mx-2 white--text"
           x-small
@@ -26,123 +19,126 @@
         >
       </v-card-title>
 
-      <!--  Grid of Media Items -->
+            <!--  Grid of Media Items -->
 
-      <v-card-text id="medias">
-        <v-layout wrap>
-          <v-flex
-            class="pa-2"
-            md3
-            v-for="(item,index) in editedItem.medias"
-            :key="index"
-          >
-            <media-card
-            conf="simple"
-              @thumb-click="viewImage"
-              @video-click="viewPlayer"
-              :media="item"
-            :key="index+editedItem.medias.length"
+            <v-card-text id="medias">
+                <v-layout wrap>
+                    <v-flex
+                            class="pa-2"
+                            md3
+                            v-for="(item,index) in editedItem.medias"
+                            :key="index"
+                    >
+                        <media-card
+                                conf="simple"
+                                @thumb-click="viewImage"
+                                @video-click="viewPlayer"
+                                :media="item"
+                                :key="index+editedItem.medias.length"
+                        >
+                            <template v-slot:actions>
+                                <v-spacer></v-spacer>
+                                <v-btn
+                                        v-if="!item.main"
+                                        @click="removeMedia($event,index)"
+                                        x-small
+                                        depressed
+                                        fab
+                                        outlined
+                                        color="red lighten-1"
+                                >
+                                    <v-icon>mdi-delete-sweep</v-icon>
+                                </v-btn
+                                >
+                            </template>
+                        </media-card>
+                    </v-flex>
+                </v-layout>
+            </v-card-text>
+        </v-card>
+    </template>
+    <v-card>
+        <v-card-title>
+            <span class="headline">Media File</span>
+        </v-card-title>
+        <v-card-text>
+            <v-container>
+                <v-row>
+                    <v-col cols="12">
+
+
+                        <vue-dropzone ref="dropzone" id="dropzone" :options="dzOpts"
+                                      @vdropzone-error="showError"
+                                      @vdropzone-removed-file="fileRemoved"
+                                      @vdropzone-success="uploadSuccess"></vue-dropzone>
+
+
+                    </v-col>
+                </v-row>
+                <v-row>
+                    <v-col cols="12" md="6">
+                        <v-card class="d-flex" flat>
+                            <v-text-field
+                                    v-if="mediaTitle__"
+                                    v-model="editedMedia.title"
+                                    label="Title"
+                            ></v-text-field>
+
+                            <v-text-field
+                                    v-else
+                                    v-model="editedMedia.title_ar"
+                                    label="Title (AR)"
+                                    background-color="lime lighten-5"
+                            ></v-text-field>
+
+                            <v-btn
+                                    color="grey lighten-2"
+                                    outlined
+                                    x-small
+                                    fab
+                                    class="swh d-inline"
+                                    @click="mediaTitle__=!mediaTitle__"
+                            >
+                                <v-icon>mdi-web</v-icon>
+                            </v-btn
+                            >
+                        </v-card>
+                    </v-col>
+
+                    <v-col cols="12" md="6">
+                        <v-card class="d-flex" flat>
+                            <!-- cagtegory -->
+                            <v-select
+                                    v-model="editedMedia.category"
+                                    item-text="tr"
+                                    item-value="en"
+                                    :items="translations.mediaCats"
+                                    label="Media Category"
+                            ></v-select>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
+                <v-row>
+                    <v-col cols="12" md="8"></v-col>
+                    <v-col md="4"></v-col>
+                </v-row>
+
+                <v-row></v-row>
+            </v-container>
+        </v-card-text>
+        <v-card-actions class="pa-5">
+            <v-spacer></v-spacer>
+            <v-btn color="grey lighten-1" text @click="closeMedia">Cancel</v-btn>
+            <v-btn
+                    color="primary"
+
+                    :disabled="!enableAttach"
+
+                    @click="attachMedia"
+            >Attach Media
+            </v-btn
             >
-              <template v-slot:actions>
-              <v-spacer></v-spacer>
-              <v-btn                
-                  @click="removeMedia($event,index)"
-                  x-small
-                    depressed
-                    fab
-                    outlined
-                  color="red lighten-1"
-                  ><v-icon>mdi-delete-sweep</v-icon></v-btn
-                >
-              </template>
-            </media-card>
-          </v-flex>
-        </v-layout>
-      </v-card-text>
+        </v-card-actions>
     </v-card>
-  </template>
-  <v-card>
-    <v-card-title>
-      <span class="headline">Media File</span>
-    </v-card-title>
-    <v-card-text>
-      <v-container>
-        <v-row>
-          <v-col cols="12">
-            <file-pond
-              name="media"
-              ref="media"
-              label-idle="Click/Drop to Upload..."
-              v-bind:allow-multiple="true"
-              accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"
-              server="/admin/api/media/upload/"
-              v-model="editedMedia.files"
-              v-bind:files="editedMedia.files"
-              v-on:processfile="onFileUploaded"
-              
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-card class="d-flex" flat>
-              <v-text-field
-                v-if="mediaTitle__"
-                v-model="editedMedia.title"
-                label="Title"
-              ></v-text-field>
-
-              <v-text-field
-                v-else
-                v-model="editedMedia.title_ar"
-                label="Title (AR)"
-                background-color="lime lighten-5"
-              ></v-text-field>
-
-              <v-btn
-                color="grey lighten-2"
-                outlined
-                x-small
-                fab
-                class="swh d-inline"
-                @click="mediaTitle__=!mediaTitle__"
-                ><v-icon>mdi-web</v-icon></v-btn
-              >
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <v-card class="d-flex" flat>
-              <!-- cagtegory -->
-              <v-select
-                v-model="editedMedia.category"
-                item-text="tr"
-                item-value="en"
-                :items="translations.mediaCats"
-                label="Media Category"
-              ></v-select>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12" md="8"> </v-col>
-          <v-col md="4"> </v-col>
-        </v-row>
-
-        <v-row> </v-row>
-      </v-container>
-    </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" text @click="closeMedia">Cancel</v-btn>
-      <v-btn
-        color="blue darken-1"
-        :disabled="upMediaBtnDisabled"
-        text
-        @click="attachFilepondMedia"
-        >Attach Media</v-btn
-      >
-    </v-card-actions>
-  </v-card>
 </v-dialog>

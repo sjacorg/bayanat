@@ -18,18 +18,17 @@
                                         {% include "security/_messages.html" %}
                                     </v-card-text>
                                     <v-card-title>
-                                        {{ _('Welcome') }},
+                                        {{ _('Welcome') }}, {{ g.user.username }}!
                                     </v-card-title>
+                                    {% if g.user.last_login_at %}
                                     <v-card-text>
-                                        <p>
-                                            {{ g.user.username }}
-                                        </p>
-                                        {% if g.user.last_login_at %}
                                         <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
-                                        {% endif %}
-
-
+                                    {% endif %}
+                                    {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
+                                        <v-icon>mdi-alert</v-icon>
+                                        Warning: Media Import's path processing is enabled!
                                     </v-card-text>
+                                    {% endif %}
 
 
                                 </v-card>

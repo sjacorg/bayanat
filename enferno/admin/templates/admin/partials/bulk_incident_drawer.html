@@ -65,12 +65,33 @@
                 ></v-select>
             </v-card-text>
 
+            <v-card-text v-if="has_role(currentUser,'Admin')">
+                <div class="d-flex">
+                    <search-field
+                            api="/admin/api/roles/"
+                            query-params=""
+                            item-text="name"
+                            item-value="id"
+                            :multiple="true"
+                            label="{{ _('Access Roles') }}"
+                            v-model="bulk.roles"
+                    ></search-field>
+                    <v-checkbox small v-model="bulk.rolesReplace" label="{{ _('Replace') }}"></v-checkbox>
+                </div>
+            </v-card-text>
+
+            <v-card-text>
+                    <v-checkbox small v-model="bulk.assignRelated" label="{{ _('Assign Related Items') }}"></v-checkbox>
+                    <v-checkbox v-if="has_role(currentUser,'Admin')" small v-model="bulk.restrictRelated" label="{{ _('Restrict Related Items') }}"></v-checkbox>
+            </v-card-text>
+            
             <v-card-text>
                 <validation-provider name="Comments" rules="required" v-slot="{ errors }">
 
                     <v-textarea
                             v-model="bulk.comments"
                             label="{{ _('Comments') }}"
+                            outlined
                     >
 
                     </v-textarea>

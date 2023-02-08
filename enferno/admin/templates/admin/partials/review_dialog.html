@@ -26,9 +26,9 @@
                 max-height="100vh"
                 class="overflow-y-auto pt-11">
 
-            <bulletin-card :i18n="translations" v-if="reviewItem.class=='Bulletin'" @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
-            <actor-card :i18n="translations" v-if="reviewItem.class=='Actor'" @thumb-click="viewImage" :close="false" :actor="reviewItem"></actor-card>
-            <incident-card :i18n="translations" v-if="reviewItem.class=='Incident'" :close="false" :incident="reviewItem"></incident-card>
+            <bulletin-card :i18n="translations" v-if="reviewItem.class=='bulletin'" @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
+            <actor-card :i18n="translations" v-if="reviewItem.class=='actor'" @thumb-click="viewImage" :close="false" :actor="reviewItem"></actor-card>
+            <incident-card :i18n="translations" v-if="reviewItem.class=='incident'" :close="false" :incident="reviewItem"></incident-card>
 
 
             <v-card-text class="mt-5">

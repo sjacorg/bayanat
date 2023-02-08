@@ -1,31 +1,72 @@
 import json
 import os
 from datetime import datetime
+from functools import wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pandas as pd
-from flask_babelex import gettext
 from flask_login import current_user
-from geoalchemy2 import Geometry
-from geoalchemy2.shape import to_shape
 from sqlalchemy import JSON, ARRAY, text
-from sqlalchemy.orm import backref
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
+from flask_babelex import gettext
 
 from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
 
-# Load configuraitons based on environment settings
+# Load configurations based on environment settings
 if os.getenv("FLASK_DEBUG") == '0':
     cfg = ProdConfig
 else:
     cfg = DevConfig
 
+
+######  Role based Access Control Decorator for Bulletins / Actors  / Incidents  ######
+def check_roles(method):
+    @wraps(method)
+    def _impl(self, *method_args, **method_kwargs):
+        method_output = method(self, *method_args, **method_kwargs)
+        if current_user:
+            if not current_user.can_access(self):
+                return self.restricted_json()
+        return method_output
+    return _impl
+
+def check_relation_roles(method):
+    @wraps(method)
+    def _impl(self, *method_args, **method_kwargs):
+        method_output = method(self, *method_args, **method_kwargs)
+        bulletin = method_output.get('bulletin')
+        if bulletin and bulletin.get('restricted'):
+            return {
+                'bulletin': bulletin,
+                'restricted': True
+            }
+
+        actor = method_output.get('actor')
+        if actor and actor.get('restricted'):
+            return {
+                'actor': actor,
+                'restricted': True
+            }
+
+        incident = method_output.get('incident')
+        if incident and incident.get('restricted'):
+            return {
+                'incident': incident,
+                'restricted': True
+            }
+        return method_output
+    return _impl
+
+
+######  -----  ######
 
 class Source(db.Model, BaseMixin):
     """
@@ -149,7 +190,6 @@ class Source(db.Model, BaseMixin):
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
         df.comments = df.comments.fillna("")
-        # print (df.to_dict(orient='records')[:10])
         db.session.bulk_insert_mappings(Source, df.to_dict(orient="records"))
         db.session.commit()
 
@@ -455,23 +495,16 @@ class Event(db.Model, BaseMixin):
         self.comments = json["comments"] if "comments" in json else None
         self.comments_ar = json["comments_ar"] if "comments_ar" in json else None
 
-        if "location" in json:
-            if json["location"]:
-                self.location_id = json["location"]["id"]
-        if "eventtype" in json:
-            if json["eventtype"]:
-                self.eventtype_id = json["eventtype"]["id"]
+        self.location_id = json["location"]["id"] if "location" in json and json["location"] else None 
+        self.eventtype_id = json["eventtype"]["id"] if "eventtype" in json and json["eventtype"] else None
 
         from_date = json.get('from_date', None)
-        if from_date:
-            self.from_date = DateHelper.parse_date(from_date)
+        self.from_date = DateHelper.parse_date(from_date) if from_date else None
 
         to_date = json.get('to_date', None)
-        if to_date:
-            self.to_date = DateHelper.parse_date(to_date)
+        self.to_date = DateHelper.parse_date(to_date) if to_date else None
 
-        if "estimated" in json:
-            self.estimated = json["estimated"]
+        self.estimated = json["estimated"] if "estimated" in json else None
 
         return self
 
@@ -510,7 +543,16 @@ class Media(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_medias", foreign_keys=[user_id])
 
+    bulletin_id = db.Column(db.Integer, db.ForeignKey("bulletin.id"))
+    bulletin = db.relationship("Bulletin", backref="medias", foreign_keys=[bulletin_id])
+
+    actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"))
+    actor = db.relationship("Actor", backref="medias", foreign_keys=[actor_id])
+
+    main = db.Column(db.Boolean, default=False)
+
     # custom serialization method
+    @check_roles
     def to_dict(self):
         return {
             "id": self.id,
@@ -520,7 +562,9 @@ class Media(db.Model, BaseMixin):
             "filename": self.media_file if self.media_file else None,
             "etag": getattr(self, 'etag', None),
             "time": getattr(self, 'time', None),
-            "duration": self.duration
+            "duration": self.duration,
+            "main": self.main,
+            "updated_at": DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
         }
 
     def to_json(self):
@@ -631,8 +675,8 @@ class Location(db.Model, BaseMixin):
             return None
         else:
             return {
-                "id": self.parent_id, 
-                "title": self.parent.title, 
+                "id": self.parent_id,
+                "title": self.parent.title,
                 "full_string": '{} | {}'.format(self.parent.full_location or '', self.parent.title_ar or ''),
                 "admin_level": self.parent.admin_level.to_dict() if self.admin_level else ''
                 }
@@ -700,7 +744,7 @@ class Location(db.Model, BaseMixin):
     # helper method to get full location hierarchy
     def get_full_string(self, descending=True):
         """
-        Generates full string of location and parents. 
+        Generates full string of location and parents.
         """
 
         pid = self.parent_id
@@ -910,9 +954,9 @@ bulletin_events = db.Table(
 )
 
 # joint table
-bulletin_medias = db.Table(
-    "bulletin_medias",
-    db.Column("media_id", db.Integer, db.ForeignKey("media.id"), primary_key=True),
+bulletin_roles = db.Table(
+    "bulletin_roles",
+    db.Column("role_id", db.Integer, db.ForeignKey("role.id"), primary_key=True),
     db.Column(
         "bulletin_id", db.Integer, db.ForeignKey("bulletin.id"), primary_key=True
     ),
@@ -984,7 +1028,7 @@ class Btob(db.Model, BaseMixin):
         return Btob(bulletin_id=f, related_bulletin_id=t)
 
     # Exclude the primary bulletin from output to get only the related/relating bulletin
-
+    @check_relation_roles
     def to_dict(self, exclude=None):
         if not exclude:
             return {
@@ -996,11 +1040,8 @@ class Btob(db.Model, BaseMixin):
                 "user_id": self.user_id,
             }
         else:
-            bulletin = (
-                self.bulletin_to
-                if exclude == self.bulletin_from
-                else self.bulletin_from
-            )
+            bulletin = self.bulletin_to if exclude == self.bulletin_from else self.bulletin_from
+
             return {
                 "bulletin": bulletin.to_compact(),
                 "related_as": self.related_as,
@@ -1135,6 +1176,7 @@ class Atoa(db.Model, BaseMixin):
     # Exclude the primary actor from output to get only the related/relating actor
 
     # custom serialization method
+    @check_relation_roles
     def to_dict(self, exclude=None):
         if not exclude:
             return {
@@ -1158,7 +1200,6 @@ class Atoa(db.Model, BaseMixin):
     # this will update only relationship data
     def from_json(self, relation=None):
         if relation:
-            print(self.actor_id, self.related_actor_id, self.related_as)
             self.probability = (
                 relation["probability"] if "probability" in relation else None
             )
@@ -1241,12 +1282,13 @@ class Bulletin(db.Model, BaseMixin):
         "Event",
         secondary=bulletin_events,
         backref=db.backref("bulletins", lazy="dynamic"),
+        order_by="Event.from_date"
     )
 
-    medias = db.relationship(
-        "Media",
-        secondary=bulletin_medias,
-        backref=db.backref("bulletins", lazy="dynamic"),
+    roles = db.relationship(
+        "Role",
+        secondary=bulletin_roles,
+        backref=db.backref("bulletins", lazy="dynamic")
     )
 
     # Bulletins that this bulletin relate to ->
@@ -1292,7 +1334,7 @@ class Bulletin(db.Model, BaseMixin):
     review_action = db.Column(db.String)
 
     # metadata
-    meta = db.Column(JSON)
+    meta = db.Column(JSONB)
 
     tsv = db.Column(TSVECTOR)
 
@@ -1376,12 +1418,12 @@ class Bulletin(db.Model, BaseMixin):
             locations = Location.query.filter(Location.id.in_(ids)).all()
             self.locations = locations
 
-        geo_locations = json.get('geoLocations')
-        if geo_locations:
+        # geo_locations = json.get('geoLocations')
+        if "geoLocations" in json:
+            geo_locations = json["geoLocations"]
             final_locations = []
             for geo in geo_locations:
-                gid = geo.get('id')
-                if not gid:
+                if id not in geo:
                     # new geolocation
                     g = GeoLocation()
                     g.title = geo.get('title')
@@ -1391,7 +1433,7 @@ class Bulletin(db.Model, BaseMixin):
                     g.save()
                 else:
                     # geolocation exists // update
-                    g = GeoLocation.query.get(gid)
+                    g = GeoLocation.query.get(geo['id'])
                     g.title = geo.get('title')
                     g.type = geo.get('type')
                     g.latlng = 'POINT({} {})'.format(geo.get('lat'), geo.get('lng'))
@@ -1421,7 +1463,7 @@ class Bulletin(db.Model, BaseMixin):
         if "events" in json:
             new_events = []
             events = json["events"]
-            events.sort(key=lambda events : events.get('from_date') or '0')
+            
             for event in events:
                 if "id" not in event:
                     # new event
@@ -1438,22 +1480,33 @@ class Bulletin(db.Model, BaseMixin):
 
         # Related Media
         if "medias" in json:
-            new_medias = []
-            for media in json["medias"]:
-                # create new medias (new items has no existing id)
-                if not "id" in media:
-                    m = Media()
-                    m = m.from_json(media)
-                    m.save()
-                else:
-                    # must be an existing media
-                    m = Media.query.get(media["id"])
-                    # update the media (only the title might have changed for now, but possible to update the whole file later)
-                    m.from_json(media)
-                    m.save()
+            # untouchable main medias
+            main = [m for m in self.medias if m.main is True]
+            others = [m for m in self.medias if not m.main]
+            to_keep_ids = [m.get('id') for m in json.get('medias') if m.get('id')]
 
+            # handle removed medias
+            to_be_deleted = [m for m in others if m.id not in to_keep_ids]
+
+            others = [m for m in others if m.id in to_keep_ids]
+            to_be_created = [m for m in json.get('medias') if not m.get('id')]
+
+            new_medias = []
+            #create new medias
+            for media in to_be_created:
+                m = Media()
+                m = m.from_json(media)
+                m.save()
                 new_medias.append(m)
-            self.medias = new_medias
+
+            self.medias = main + others + new_medias
+
+            # mark removed media as deleted
+            for media in to_be_deleted:
+                media.deleted = True
+                delete_comment = f'Removed from Bulletin #{self.id}'
+                media.comments = media.comments + '\n' + delete_comment if media.comments else delete_comment
+                media.save()
 
         # Related Bulletins (bulletin_relations)
         if "bulletin_relations" in json:
@@ -1461,7 +1514,6 @@ class Bulletin(db.Model, BaseMixin):
             rel_ids = []
             for relation in json["bulletin_relations"]:
                 bulletin = Bulletin.query.get(relation["bulletin"]["id"])
-                # print ('bulletin to relate', bulletin)
                 # Extra (check those bulletins exit)
 
                 if bulletin:
@@ -1542,6 +1594,7 @@ class Bulletin(db.Model, BaseMixin):
         return self
 
     # Compact dict for relationships
+    @check_roles
     def to_compact(self):
         # locations json
         locations_json = []
@@ -1591,13 +1644,12 @@ class Bulletin(db.Model, BaseMixin):
 
         # reject self relation
         if self == bulletin:
-            # print ('Cant relate bulletin to itself')
+            # Cant relate bulletin to itself
             return
 
         existing_relation = Btob.are_related(self.id, bulletin.id)
 
         if existing_relation:
-            # print ("Relationship exists :: Updating the attributes")
             existing_relation.from_json(relation)
             existing_relation.save()
 
@@ -1665,6 +1717,7 @@ class Bulletin(db.Model, BaseMixin):
                 actor.create_revision()
 
     # custom serialization method
+    @check_roles
     def to_dict(self, mode=None):
         if mode == '2':
             return self.to_mode2()
@@ -1744,7 +1797,7 @@ class Bulletin(db.Model, BaseMixin):
                 incident_relations_dict.append(relation.to_dict())
 
         return {
-            "class": "Bulletin",
+            "class": self.__tablename__,
             "id": self.id,
             "title": self.title,
             "title_ar": self.title_ar,
@@ -1779,7 +1832,9 @@ class Bulletin(db.Model, BaseMixin):
             "status": self.status,
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
-            "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
+            "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
+            "roles": [role.to_dict() for role in self.roles] if self.roles else [],
+
         }
 
     # custom serialization mode
@@ -1869,10 +1924,12 @@ actor_events = db.Table(
 )
 
 # joint table
-actor_medias = db.Table(
-    "actor_medias",
-    db.Column("media_id", db.Integer, db.ForeignKey("media.id"), primary_key=True),
-    db.Column("actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True),
+actor_roles = db.Table(
+    "actor_roles",
+    db.Column("role_id", db.Integer, db.ForeignKey("role.id"), primary_key=True),
+    db.Column(
+        "actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True
+    ),
 )
 
 
@@ -1933,12 +1990,17 @@ class Actor(db.Model, BaseMixin):
         "Label", secondary=actor_verlabels, backref=db.backref("verlabels_actors", lazy="dynamic"),
     )
 
-    medias = db.relationship(
-        "Media", secondary=actor_medias, backref=db.backref("actors", lazy="dynamic")
+    roles = db.relationship(
+        "Role",
+        secondary=actor_roles,
+        backref=db.backref("actors", lazy="dynamic")
     )
 
     events = db.relationship(
-        "Event", secondary=actor_events, backref=db.backref("actors", lazy="dynamic")
+        "Event", 
+        secondary=actor_events, 
+        backref=db.backref("actors", lazy="dynamic"),
+        order_by="Event.from_date"
     )
 
     # Actors that this actor relate to ->
@@ -2009,30 +2071,30 @@ class Actor(db.Model, BaseMixin):
     review_action = db.Column(db.String)
 
     # metadata
-    meta = db.Column(JSON)
+    meta = db.Column(JSONB)
 
     tsv = db.Column(TSVECTOR)
 
     if cfg.MISSING_PERSONS:
         last_address = db.Column(db.Text)
-        social_networks = db.Column(JSON)
+        social_networks = db.Column(JSONB)
         marriage_history = db.Column(db.String)
         bio_children = db.Column(db.Integer)
         pregnant_at_disappearance = db.Column(db.String)
-        months_pregnant = db.Column(db.NUMERIC)
+        months_pregnant = db.Column(db.Integer)
         missing_relatives = db.Column(db.Boolean)
         saw_name = db.Column(db.String)
         saw_address = db.Column(db.Text)
         saw_email = db.Column(db.String)
         saw_phone = db.Column(db.String)
         detained_before = db.Column(db.String)
-        seen_in_detention = db.Column(JSON)
-        injured = db.Column(JSON)
-        known_dead = db.Column(JSON)
+        seen_in_detention = db.Column(JSONB)
+        injured = db.Column(JSONB)
+        known_dead = db.Column(JSONB)
         death_details = db.Column(db.Text)
         personal_items = db.Column(db.Text)
-        height = db.Column(db.NUMERIC)
-        weight = db.Column(db.NUMERIC)
+        height = db.Column(db.Integer)
+        weight = db.Column(db.Integer)
         physique = db.Column(db.String)
         hair_loss = db.Column(db.String)
         hair_type = db.Column(db.String)
@@ -2040,7 +2102,7 @@ class Actor(db.Model, BaseMixin):
         hair_color = db.Column(db.String)
         facial_hair = db.Column(db.String)
         posture = db.Column(db.Text)
-        skin_markings = db.Column(JSON)
+        skin_markings = db.Column(JSONB)
         handedness = db.Column(db.String)
         glasses = db.Column(db.String)
         eye_color = db.Column(db.String)
@@ -2065,7 +2127,7 @@ class Actor(db.Model, BaseMixin):
         dental_habits = db.Column(db.Text)
         case_status = db.Column(db.String)
         # array of objects: name, email,phone, email, address, relationship
-        reporters = db.Column(JSON)
+        reporters = db.Column(JSONB)
         identified_by = db.Column(db.String)
         family_notified = db.Column(db.Boolean)
         hypothesis_based = db.Column(db.Text)
@@ -2205,7 +2267,6 @@ class Actor(db.Model, BaseMixin):
         if "events" in json:
             new_events = []
             events = json["events"]
-            events.sort(key=lambda events : events.get('from_date') or '0')
             for event in events:
                 if "id" not in event:
                     # new event
@@ -2222,22 +2283,33 @@ class Actor(db.Model, BaseMixin):
 
         # Related Media
         if "medias" in json:
-            new_medias = []
-            for media in json["medias"]:
-                # create new medias (new items has no existing id)
-                if not "id" in media:
-                    m = Media()
-                    m = m.from_json(media)
-                    m.save()
-                else:
-                    # must be an existing media
-                    m = Media.query.get(media["id"])
-                    # update the media (only the title might have changed for now, but possible to update the whole file later)
-                    m.from_json(media)
-                    m.save()
+            # untouchable main medias
+            main = [m for m in self.medias if m.main is True]
+            others = [m for m in self.medias if not m.main]
+            to_keep_ids = [m.get('id') for m in json.get('medias') if m.get('id')]
 
+            # handle removed medias
+            to_be_deleted = [m for m in others if m.id not in to_keep_ids]
+
+            others = [m for m in others if m.id in to_keep_ids]
+            to_be_created = [m for m in json.get('medias') if not m.get('id')]
+
+            new_medias = []
+            #create new medias
+            for media in to_be_created:
+                m = Media()
+                m = m.from_json(media)
+                m.save()
                 new_medias.append(m)
-            self.medias = new_medias
+
+            self.medias = main + others + new_medias
+
+            # mark removed media as deleted
+            for media in to_be_deleted:
+                media.deleted = True
+                delete_comment = f'Removed from Actor #{self.id}'
+                media.comments = media.comments + '\n' + delete_comment if media.comments else delete_comment
+                media.save()
 
         self.publish_date = json.get('publish_date', None)
         if self.publish_date == '':
@@ -2267,7 +2339,6 @@ class Actor(db.Model, BaseMixin):
                 # get related actor (in or out)
                 rid = r.get_other_id(self.id)
                 if not (rid in rel_ids):
-                    # print ('deleting', r)
                     r.delete()
 
                     # -revision related
@@ -2290,7 +2361,6 @@ class Actor(db.Model, BaseMixin):
             # just loop existing relations and remove if the destination bulletin not in the related ids
             for r in self.bulletin_relations:
                 if not (r.bulletin_id in rel_ids):
-                    # print ('deleting', r)
                     rel_bulletin = r.bulletin
                     r.delete()
 
@@ -2470,8 +2540,8 @@ class Actor(db.Model, BaseMixin):
         return mp
 
     # Compact dict for relationships
+    @check_roles
     def to_compact(self):
-
         # sources json
         sources_json = []
         if self.sources and len(self.sources):
@@ -2509,12 +2579,11 @@ class Actor(db.Model, BaseMixin):
 
         # reject self relation
         if self == actor:
-            # print ('Cant relate bulletin to itself')
+            # Cant relate bulletin to itself
             return
 
         existing_relation = Atoa.are_related(self.id, actor.id)
         if existing_relation:
-            # print ("Relationship exists :: Updating the attributes")
             existing_relation.from_json(relation)
             existing_relation.save()
 
@@ -2579,7 +2648,7 @@ class Actor(db.Model, BaseMixin):
             if create_revision:
                 incident.create_revision()
 
-    # custom serialization method
+    @check_roles
     def to_dict(self, mode=None):
 
         if mode == '1':
@@ -2634,7 +2703,7 @@ class Actor(db.Model, BaseMixin):
                 incident_relations_dict.append(relation.to_dict())
 
         actor = {
-            "class": "Actor",
+            "class": self.__tablename__,
             "id": self.id,
             "originid": self.originid or None,
             "name": self.name or None,
@@ -2711,7 +2780,8 @@ class Actor(db.Model, BaseMixin):
             "status": self.status,
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
-            "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
+            "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
+            "roles": [role.to_dict() for role in self.roles] if self.roles else []
         }
         # custom translation handler for ethnography and nationality
         if self.ethnography:
@@ -2922,6 +2992,7 @@ class Itoi(db.Model, BaseMixin):
         return Itoi(incident_id=f, related_incident_id=t)
 
     # custom serialization method
+    @check_relation_roles
     def to_dict(self, exclude=None):
         if not exclude:
             return {
@@ -3093,6 +3164,15 @@ incident_claimed_violations = db.Table(
     ),
 )
 
+# joint table
+incident_roles = db.Table(
+    "incident_roles",
+    db.Column("role_id", db.Integer, db.ForeignKey("role.id"), primary_key=True),
+    db.Column(
+        "incident_id", db.Integer, db.ForeignKey("incident.id"), primary_key=True
+    ),
+)
+
 
 class Incident(db.Model, BaseMixin):
     """
@@ -3150,6 +3230,13 @@ class Incident(db.Model, BaseMixin):
         "Event",
         secondary=incident_events,
         backref=db.backref("incidents", lazy="dynamic"),
+        order_by="Event.from_date"
+    )
+
+    roles = db.relationship(
+        "Role",
+        secondary=incident_roles,
+        backref=db.backref("incidents", lazy="dynamic")
     )
 
     # Related Actors
@@ -3257,7 +3344,6 @@ class Incident(db.Model, BaseMixin):
         if "events" in json:
             new_events = []
             events = json["events"]
-            events.sort(key=lambda events : events.get('from_date') or '0')
             for event in events:
                 if "id" not in event:
                     # new event
@@ -3292,7 +3378,6 @@ class Incident(db.Model, BaseMixin):
             for r in self.actor_relations:
                 if not (r.actor_id in rel_ids):
                     rel_actor = r.actor
-                    # print ('deleting', r)
                     r.delete()
 
                     # -revision related actor
@@ -3315,7 +3400,6 @@ class Incident(db.Model, BaseMixin):
             # just loop existing relations and remove if the destination bulletin not in the related ids
             for r in self.bulletin_relations:
                 if not (r.bulletin_id in rel_ids):
-                    # print ('deleting', r)
                     rel_bulletin = r.bulletin
                     r.delete()
 
@@ -3328,7 +3412,6 @@ class Incident(db.Model, BaseMixin):
             rel_ids = []
             for relation in json["incident_relations"]:
                 incident = Incident.query.get(relation["incident"]["id"])
-                # print ('incident to relate', incident)
                 # Extra (check those incidents exit)
 
                 if incident:
@@ -3343,7 +3426,6 @@ class Incident(db.Model, BaseMixin):
                 # get related incident (in or out)
                 rid = r.get_other_id(self.id)
                 if not (rid in rel_ids):
-                    print("deleting", r)
                     r.delete()
 
                     # - revision related incident
@@ -3358,6 +3440,7 @@ class Incident(db.Model, BaseMixin):
         return self
 
     # Compact dict for relationships
+    @check_roles
     def to_compact(self):
         return {
             "id": self.id,
@@ -3377,12 +3460,10 @@ class Incident(db.Model, BaseMixin):
 
         # reject self relation
         if self == incident:
-            # print ('Cant relate incident to itself')
             return
 
         existing_relation = Itoi.are_related(self.id, incident.id)
         if existing_relation:
-            # print ("Relationship exists :: Updating the attributes")
             existing_relation.from_json(relation)
             existing_relation.save()
 
@@ -3447,8 +3528,14 @@ class Incident(db.Model, BaseMixin):
             if create_revision:
                 bulletin.create_revision()
 
-    # custom serialization method
+    @check_roles
     def to_dict(self, mode=None):
+
+        # Try to detect a user session
+        if current_user:
+            if not current_user.can_access(self):
+                return self.restricted_json()
+
         if mode == '1':
             return self.min_json()
         if mode == '2':
@@ -3506,7 +3593,7 @@ class Incident(db.Model, BaseMixin):
                 incident_relations_dict.append(relation.to_dict(exclude=self))
 
         return {
-            "class": "Incident",
+            "class": self.__tablename__,
             "id": self.id,
             "title": self.title or None,
             "description": self.description or None,
@@ -3538,7 +3625,8 @@ class Incident(db.Model, BaseMixin):
             "status": self.status if self.status else None,
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
-            "updated_at": DateHelper.serialize_datetime(self.get_modified_date())
+            "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
+            "roles": [role.to_dict() for role in self.roles] if self.roles else []
         }
 
     # custom serialization mode

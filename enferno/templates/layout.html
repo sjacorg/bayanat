@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css">
 
 
-    <!-- favicon -->
+<!-- favicon -->
 
     <link rel="apple-touch-icon" sizes="57x57" href="/static/img/favicon/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="/static/img/favicon/apple-icon-60x60.png">
@@ -54,19 +54,21 @@
     window.__settings__ = JSON.parse('{{settings|tojson|safe }}');
     window.__lang__ = "{{session.get('lang','en')}}";
     window.__MAPS_API_ENDPOINT__ = '{{config.MAPS_API_ENDPOINT}}';
-
 </script>
 
 
-<script src="/static/js/vue.min.js?v={{ g.version }}"></script>
-<script src="/static/js/vuetify.min.js?v={{ g.version }}"></script>
-<script src="/static/js/vue-router.min.js"></script>
-<script src="/static/js/axios.min.js?v={{ g.version }}"></script>
-<script src="/static/js/vee-validate.full.min.js?v={{ g.version }}"></script>
-<script src="/static/js/iv-viewer.min.js?v={{ g.version }}"></script>
-<script src="/static/js/leaflet.js?v={{ g.version }}"></script>
-<script src="/static/js/vue2-leaflet.min.js?v={{ g.version }}"></script>
-<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
+
+
+    <script src="/static/js/vue.min.js?v={{g.version}}"></script>
+    <script src="/static/js/vuetify.min.js?v={{g.version}}"></script>
+    <script src="/static/js/vue-router.min.js"></script>
+    <script src="/static/js/axios.min.js?v={{g.version}}"></script>
+    <script src="/static/js/vee-validate.full.min.js?v={{g.version}}"></script>
+    <script src="/static/js/iv-viewer.min.js?v={{g.version}}"></script>
+    <script src="/static/js/leaflet.js?v={{g.version}}"></script>
+    <script src="/static/js/vue2-leaflet.min.js?v={{g.version}}"></script>
+    <script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
+    <script src="/static/js/vue-tippy.min.js?v={{g.version}}"></script>
 <script>
     {%  include 'admin/i18n.jinja2' %}
 

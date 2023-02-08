@@ -30,6 +30,7 @@ Flask-DebugToolbar==0.13.1
 Flask-Login==0.6.2
 Flask-Mail==0.9.1
 Flask-Principal==0.4.0
+flask-redis==0.4.0
 Flask-Script==2.0.6
 Flask-Security-Too==4.1.4
 Flask-Session==0.4.0

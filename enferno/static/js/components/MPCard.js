@@ -82,9 +82,9 @@ Vue.component("mp-card", {
                   <mp-field :field="this.mp.saw_email" :title="i18n.email_"></mp-field>
                 </v-card-text>
               </v-card>
-              <mp-field :field="this.mp.seen_in_detention" type="1" :title="i18n.seenInDetentionCenter_"></mp-field>
-              <mp-field :field="this.mp.injured" type="1" :title="i18n.injuredDisappearance_"></mp-field>
-              <mp-field :field="this.mp.known_dead" type="1" :title="i18n.knownDead_"></mp-field>
+              <mp-field :field="this.mp.seen_in_detention" :type="1" :title="i18n.seenInDetentionCenter_"></mp-field>
+              <mp-field :field="this.mp.injured" :type="1" :title="i18n.injuredDisappearance_"></mp-field>
+              <mp-field :field="this.mp.known_dead" :type="1" :title="i18n.knownDead_"></mp-field>
               <mp-field :field="this.mp.death_details" :title="i18n.deathDetails_"></mp-field>
               <mp-field :field="this.mp.personal_items" :title="i18n.personalItemsEg_"></mp-field>
               <mp-field :field="this.mp.height" :title="i18n.height_"></mp-field>
@@ -96,7 +96,7 @@ Vue.component("mp-card", {
               <mp-field :field="this.mp._hair_color" :title="i18n.haircolor_"></mp-field>
               <mp-field :field="this.mp._facial_hair" :title="i18n.facialhair_"></mp-field>
               <mp-field :field="this.mp.posture" :title="i18n.postureNotes_"></mp-field>
-              <mp-field type="1" :field="this.mp.skin_markings" :title="i18n.skinMarkings_"></mp-field>
+              <mp-field :type="1" :field="this.mp.skin_markings" :title="i18n.skinMarkings_"></mp-field>
               <mp-field :field="this.mp._handedness" :title="i18n.handness_"></mp-field>
               <mp-field :field="this.mp.glasses" :title="i18n.glasses_"></mp-field>
               <mp-field :field="this.mp._eye_color" :title="i18n.eyecolor_"></mp-field>

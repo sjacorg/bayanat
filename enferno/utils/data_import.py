@@ -6,7 +6,7 @@ from PIL import Image
 from pdf2image import convert_from_path
 
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
-from enferno.user.models import User
+from enferno.user.models import User, Role
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
 from enferno.settings import ProdConfig, DevConfig
@@ -38,7 +38,7 @@ class DataImport():
         self.batch_id = batch_id
         self.user_id = user_id
         self.summary = ''
-        self.log = open(log,'a')
+        self.log = open('logs/'+log,'a')
 
     def upload(self, filepath, target):
         """
@@ -233,10 +233,10 @@ class DataImport():
         if self.meta.get('mode') == 2:
 
             self.summary += '------------------------------------------------------------------------ \n'
-            self.summary += now() + 'file: {}'.format(file.get('file').get('name')) + '\n'
+            self.summary += now() + 'file: {}'.format(file.get('filename')) + '\n'
 
             # check here for duplicate to skip unnecessary code execution
-            old_path = file.get('file').get('path')
+            old_path = file.get('path')
             # get md5 hash directly from the source file (before copying it)
             etag = self.get_etag(old_path)
 
@@ -250,7 +250,7 @@ class DataImport():
                 return
 
             # server side mode, need to copy files and generate etags
-            old_filename = file.get('file').get('name')
+            old_filename = file.get('filename')
             title, ext = os.path.splitext(old_filename)
 
             filename = Media.generate_file_name(old_filename)
@@ -263,6 +263,7 @@ class DataImport():
 
             # check file extension
             file_ext = ext[1:].lower()
+            print(file_ext)
 
             # get duration and optimize if video
             if file_ext in cfg.ETL_VID_EXT:
@@ -410,6 +411,8 @@ class DataImport():
 
         # media for the orginal file
         org_media = Media()
+        # mark as undeletable
+        org_media.main = True
         org_media.title = bulletin.title
         org_media.media_file = info.get('filename')
         # handle mime type failure
@@ -471,6 +474,18 @@ class DataImport():
         if mrefs:
             refs = refs + mrefs
         bulletin.ref = refs
+
+        # access roles restrictions
+        roles = self.meta.get('roles')
+        if roles:
+
+            # Fetch foles
+            bulletin_roles = Role.query.filter(Role.id.in_([r.get('id') for r in roles])).all()
+            bulletin.roles = []
+            bulletin.roles.extend(bulletin_roles)
+
+
+
 
         user = User.query.get(self.user_id)
 

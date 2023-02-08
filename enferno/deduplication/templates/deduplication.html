@@ -286,7 +286,7 @@
             },
 
             validFile(filename) {
-                const ext = filename.split(".").pop().toLowerCase();
+                const ext = ".".concat("",filename.split(".").pop().toLowerCase());
                 if (ETL_EXTENSIONS.includes(ext)) {
                     return true;
 

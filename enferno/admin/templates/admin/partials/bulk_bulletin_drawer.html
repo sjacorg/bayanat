@@ -64,31 +64,50 @@
             </v-card-text>
             <v-card-text>
                 <div class="d-flex">
-                   <v-combobox
+                    <v-combobox
 
-                    small-chips
-                  multiple
-                  v-model="bulk.ref"
-                  label="{{ _('Ref') }}"
-                    class="mr-2"
-                ></v-combobox>
+                            small-chips
+                            multiple
+                            v-model="bulk.ref"
+                            label="{{ _('Ref') }}"
+                            class="mr-2"
+                    ></v-combobox>
 
-                    <v-checkbox small v-model="bulk.refReplace" label="{{ _('Replace Existing') }}"></v-checkbox>
-                    </div>
+                    <v-checkbox small v-model="bulk.refReplace" label="{{ _('Replace') }}"></v-checkbox>
+                </div>
+
+            </v-card-text>
+
+            <v-card-text v-if="has_role(currentUser,'Admin')">
+                <div class="d-flex">
+                    <search-field
+                        api="/admin/api/roles/"
+                        query-params=""
+                        item-text="name"
+                        item-value="id"
+                        :multiple="true"
+                        label="{{ _('Access Roles') }}"
+                        v-model="bulk.roles"
+                ></search-field>
+
+
+                    <v-checkbox small v-model="bulk.rolesReplace" label="{{ _('Replace') }}"></v-checkbox>
+                </div>
+
 
             </v-card-text>
 
             <v-card-text>
                 <validation-provider name="Comments" rules="required" v-slot="{ errors }">
 
-                <v-textarea
-                        v-model="bulk.comments"
-                        label="{{ _('Comments') }}"
-                >
+                    <v-textarea outlined
+                                v-model="bulk.comments"
+                                label="{{ _('Comments') }}"
+                    >
 
-                </v-textarea>
+                    </v-textarea>
                     <span class="orange--text"> ${errors[0]}</span>
-                    </validation-provider>
+                </validation-provider>
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>

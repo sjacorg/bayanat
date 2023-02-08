@@ -128,7 +128,9 @@ Vue.component("bulletin-card", {
                 .then((response) => {
                     this.revisions = response.data.items;
                 }).catch(error => {
-                console.log(error.response.data)
+                  if(error.response){
+                    console.log(error.response.data)
+                  }
             }).finally(() => {
                 this.hloading = false;
             });
@@ -154,7 +156,7 @@ Vue.component("bulletin-card", {
 
             this.$nextTick(() => {
 
-                const video = document.querySelector('#iplayer video');
+                const video = this.$el.querySelector('#iplayer video');
 
                 videojs(video, {
                     playbackRates: VIDEO_RATES,
@@ -242,11 +244,11 @@ Vue.component("bulletin-card", {
       </v-card-text>
 
 
-      <v-chip color="white lighten-3" small class="pa-2 mx-2 my-2" v-if="bulletin.assigned_to">
+      <v-chip color="white lighten-3" small label class="pa-2 mx-2 my-2" v-if="bulletin.assigned_to">
         <v-icon left>mdi-account-circle-outline</v-icon>
         {{ i18n.assignedUser_ }} {{ bulletin.assigned_to['name'] }}
       </v-chip>
-      <v-chip color="white lighten-3" small class="mx-2 my-2" v-if="bulletin.status">
+      <v-chip color="white lighten-3" small label class="mx-2 my-2" v-if="bulletin.status">
         <v-icon left>mdi-delta</v-icon>
         {{ translate_status(bulletin.status) }}
       </v-chip>
@@ -254,10 +256,17 @@ Vue.component("bulletin-card", {
 
       <!-- Refs -->
       <v-card v-if="bulletin.ref && bulletin.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
-               color="yellow lighten-5 ">
+      color="grey lighten-5">
         <div class="caption grey--text mr-2">{{ i18n.ref_ }}</div>
         <v-chip x-small v-for="e in bulletin.ref" class="caption black--text mx-1">{{ e }}</v-chip>
 
+      </v-card>
+
+      <!-- Roles -->
+      <v-card v-if="bulletin.roles?.length" color="blue darken-1" class="ma-2 pa-2 d-flex align-center flex-grow-1" elevation="0">
+        <v-icon content="Access Roles" v-tippy color="white">mdi-lock</v-icon>
+      <v-chip label small v-for="role in bulletin.roles" :color="role.color" class="mx-1">{{ role.name}}</v-chip>
+        
       </v-card>
       
 

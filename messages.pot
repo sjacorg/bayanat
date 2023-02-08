@@ -1,13 +1,13 @@
 # Translations template for Bayanat.
-# Copyright (C) 2022 Syria Justice and Accountability Centre
+# Copyright (C) 2023 Syria Justice and Accountability Centre
 # This file is distributed under the same license as the Bayanat project.
 # SJAC <tech@syriaaccountability.org >, 2023.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Bayanat v1.17\n"
+"Project-Id-Version: Bayanat v1.18\n"
 "Report-Msgid-Bugs-To: tech@syriaaccountability.org\n"
-"POT-Creation-Date: 2023-01-06 02:51+0000\n"
+"POT-Creation-Date: 2023-02-02 03:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: SJAC <tech@syriaaccountability.org >\n"
 "Language: ar\n"
@@ -26,342 +26,342 @@ msgid "Logout"
 msgstr ""
 
 #: enferno/admin/templates/admin/activity.html:94
-#: enferno/admin/templates/admin/actors.html:428
-#: enferno/admin/templates/admin/bulletins.html:452
-#: enferno/admin/templates/admin/csv-dashboard.html:900
-#: enferno/admin/templates/admin/etl-dashboard.html:365
+#: enferno/admin/templates/admin/actors.html:465
+#: enferno/admin/templates/admin/bulletins.html:493
+#: enferno/admin/templates/admin/csv-dashboard.html:947
+#: enferno/admin/templates/admin/etl-dashboard.html:385
 #: enferno/admin/templates/admin/etl-status.html:85
 #: enferno/admin/templates/admin/eventtypes.html:211
-#: enferno/admin/templates/admin/incidents.html:406
+#: enferno/admin/templates/admin/incidents.html:435
 #: enferno/admin/templates/admin/labels.html:286
-#: enferno/admin/templates/admin/locations.html:198
-#: enferno/admin/templates/admin/roles.html:180
+#: enferno/admin/templates/admin/locations.html:196
+#: enferno/admin/templates/admin/roles.html:230
 #: enferno/admin/templates/admin/sources.html:233
-#: enferno/admin/templates/admin/system-administration.html:128
+#: enferno/admin/templates/admin/system-administration.html:148
 #: enferno/admin/templates/admin/users.html:211
 #: enferno/deduplication/templates/deduplication.html:148
 msgid "Rows per page"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:40
+#: enferno/admin/templates/admin/actors.html:52
 msgid "All Actors"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:42
-#: enferno/admin/templates/admin/bulletins.html:45
-#: enferno/admin/templates/admin/incidents.html:44
+#: enferno/admin/templates/admin/actors.html:55
+#: enferno/admin/templates/admin/bulletins.html:59
+#: enferno/admin/templates/admin/incidents.html:54
 msgid "Assigned to me"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:44
-#: enferno/admin/templates/admin/bulletins.html:49
-#: enferno/admin/templates/admin/incidents.html:46
+#: enferno/admin/templates/admin/actors.html:58
+#: enferno/admin/templates/admin/bulletins.html:63
+#: enferno/admin/templates/admin/incidents.html:57
 msgid "My Review List"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:60
-#: enferno/admin/templates/admin/bulletins.html:65
+#: enferno/admin/templates/admin/actors.html:74
+#: enferno/admin/templates/admin/bulletins.html:79
 #: enferno/admin/templates/admin/i18n.jinja2:48
-#: enferno/admin/templates/admin/incidents.html:65
+#: enferno/admin/templates/admin/incidents.html:74
 #: enferno/admin/templates/admin/labels.html:42
 #: enferno/admin/templates/admin/locations.html:44
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:46
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:60
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:49
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:65
 msgid "Search"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:67
+#: enferno/admin/templates/admin/actors.html:81
 #: enferno/admin/templates/admin/i18n.jinja2:4
 msgid "New Actor"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:82
-#: enferno/admin/templates/admin/bulletins.html:108
-#: enferno/admin/templates/admin/incidents.html:99
+#: enferno/admin/templates/admin/actors.html:98
+#: enferno/admin/templates/admin/bulletins.html:122
+#: enferno/admin/templates/admin/incidents.html:107
 msgid "Bulk update"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:104
-#: enferno/admin/templates/admin/bulletins.html:132
-#: enferno/admin/templates/admin/incidents.html:122
+#: enferno/admin/templates/admin/actors.html:121
+#: enferno/admin/templates/admin/bulletins.html:146
+#: enferno/admin/templates/admin/incidents.html:131
 msgid "About"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:104
-#: enferno/admin/templates/admin/bulletins.html:132
-#: enferno/admin/templates/admin/incidents.html:122
+#: enferno/admin/templates/admin/actors.html:121
+#: enferno/admin/templates/admin/bulletins.html:146
+#: enferno/admin/templates/admin/incidents.html:131
 msgid "results"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:104
-#: enferno/admin/templates/admin/bulletins.html:133
-#: enferno/admin/templates/admin/incidents.html:122
+#: enferno/admin/templates/admin/actors.html:122
+#: enferno/admin/templates/admin/bulletins.html:147
+#: enferno/admin/templates/admin/incidents.html:132
 msgid "seconds"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:111
-#: enferno/admin/templates/admin/bulletins.html:143
-#: enferno/admin/templates/admin/incidents.html:128
+#: enferno/admin/templates/admin/actors.html:131
+#: enferno/admin/templates/admin/bulletins.html:157
+#: enferno/admin/templates/admin/incidents.html:140
 msgid "Selected items"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:432
-#: enferno/admin/templates/admin/bulletins.html:456
+#: enferno/admin/templates/admin/actors.html:469
+#: enferno/admin/templates/admin/bulletins.html:497
 #: enferno/admin/templates/admin/eventtypes.html:215
 #: enferno/admin/templates/admin/i18n.jinja2:83
-#: enferno/admin/templates/admin/incidents.html:410
+#: enferno/admin/templates/admin/incidents.html:439
 #: enferno/admin/templates/admin/labels.html:290
-#: enferno/admin/templates/admin/locations.html:202
-#: enferno/admin/templates/admin/roles.html:184
-#: enferno/admin/templates/admin/system-administration.html:133
-#: enferno/admin/templates/admin/system-administration.html:143
+#: enferno/admin/templates/admin/locations.html:200
+#: enferno/admin/templates/admin/roles.html:234
+#: enferno/admin/templates/admin/system-administration.html:153
+#: enferno/admin/templates/admin/system-administration.html:163
 #: enferno/admin/templates/admin/users.html:215
 #: enferno/deduplication/templates/deduplication.html:126
 msgid "ID"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:433
-#: enferno/admin/templates/admin/csv-dashboard.html:230
-#: enferno/admin/templates/admin/csv-dashboard.html:904
-#: enferno/admin/templates/admin/etl-dashboard.html:369
+#: enferno/admin/templates/admin/actors.html:470
+#: enferno/admin/templates/admin/csv-dashboard.html:247
+#: enferno/admin/templates/admin/csv-dashboard.html:951
+#: enferno/admin/templates/admin/etl-dashboard.html:389
 #: enferno/admin/templates/admin/i18n.jinja2:70
 #: enferno/admin/templates/admin/i18n.jinja2:147
 #: enferno/admin/templates/admin/partials/actor_dialog.html:53
 #: enferno/admin/templates/admin/partials/actor_dialog.html:938
-#: enferno/admin/templates/admin/roles.html:185
+#: enferno/admin/templates/admin/roles.html:235
 #: enferno/admin/templates/admin/users.html:218
 msgid "Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:435
-#: enferno/admin/templates/admin/bulletins.html:459
-#: enferno/admin/templates/admin/incidents.html:413
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:28
+#: enferno/admin/templates/admin/actors.html:472
+#: enferno/admin/templates/admin/bulletins.html:501
+#: enferno/admin/templates/admin/incidents.html:442
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:30
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:37
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:30
 msgid "Assigned To"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:436
-#: enferno/admin/templates/admin/bulletins.html:460
-#: enferno/admin/templates/admin/incidents.html:414
-msgid "1st Reviewer"
+#: enferno/admin/templates/admin/actors.html:473
+#: enferno/admin/templates/admin/bulletins.html:502
+#: enferno/admin/templates/admin/incidents.html:443
+#: enferno/admin/templates/admin/users.html:123
+#: enferno/admin/templates/admin/users.html:220
+msgid "Roles"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:438
-#: enferno/admin/templates/admin/bulletins.html:462
-#: enferno/admin/templates/admin/csv-dashboard.html:24
-#: enferno/admin/templates/admin/incidents.html:416
+#: enferno/admin/templates/admin/actors.html:475
+#: enferno/admin/templates/admin/bulletins.html:504
+#: enferno/admin/templates/admin/csv-dashboard.html:28
+#: enferno/admin/templates/admin/incidents.html:445
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1331
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:61
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:63
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:61
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:63
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:621
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:624
 #: enferno/admin/templates/admin/partials/incident_dialog.html:506
 #: enferno/deduplication/templates/deduplication.html:132
 msgid "Status"
 msgstr ""
 
-#: enferno/admin/templates/admin/actors.html:439
-#: enferno/admin/templates/admin/bulletins.html:465
+#: enferno/admin/templates/admin/actors.html:476
+#: enferno/admin/templates/admin/bulletins.html:507
 #: enferno/admin/templates/admin/eventtypes.html:222
-#: enferno/admin/templates/admin/incidents.html:420
+#: enferno/admin/templates/admin/incidents.html:448
 #: enferno/admin/templates/admin/labels.html:300
-#: enferno/admin/templates/admin/locations.html:210
-#: enferno/admin/templates/admin/roles.html:187
+#: enferno/admin/templates/admin/locations.html:208
+#: enferno/admin/templates/admin/roles.html:240
 #: enferno/admin/templates/admin/sources.html:245
-#: enferno/admin/templates/admin/system-administration.html:136
-#: enferno/admin/templates/admin/system-administration.html:145
+#: enferno/admin/templates/admin/system-administration.html:156
+#: enferno/admin/templates/admin/system-administration.html:165
 #: enferno/admin/templates/admin/users.html:223
 msgid "Actions"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:41
+#: enferno/admin/templates/admin/bulletins.html:55
 msgid "All Bulletins"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:77
+#: enferno/admin/templates/admin/bulletins.html:91
 #: enferno/admin/templates/admin/i18n.jinja2:2
 msgid "New Bulletin"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:252
+#: enferno/admin/templates/admin/bulletins.html:271
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:72
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:110
 msgid "Ref"
 msgstr ""
 
-#: enferno/admin/templates/admin/bulletins.html:457
-#: enferno/admin/templates/admin/csv-dashboard.html:359
+#: enferno/admin/templates/admin/bulletins.html:498
+#: enferno/admin/templates/admin/csv-dashboard.html:376
 #: enferno/admin/templates/admin/eventtypes.html:58
 #: enferno/admin/templates/admin/eventtypes.html:216
 #: enferno/admin/templates/admin/i18n.jinja2:88
-#: enferno/admin/templates/admin/incidents.html:411
+#: enferno/admin/templates/admin/incidents.html:440
 #: enferno/admin/templates/admin/labels.html:70
 #: enferno/admin/templates/admin/labels.html:291
-#: enferno/admin/templates/admin/locations.html:203
+#: enferno/admin/templates/admin/locations.html:201
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:81
 #: enferno/admin/templates/admin/partials/event_dialog.html:70
 #: enferno/admin/templates/admin/partials/incident_dialog.html:48
 #: enferno/admin/templates/admin/partials/location_dialog.html:39
 #: enferno/admin/templates/admin/sources.html:66
 #: enferno/admin/templates/admin/sources.html:238
-#: enferno/admin/templates/admin/system-administration.html:135
-#: enferno/admin/templates/admin/system-administration.html:144
+#: enferno/admin/templates/admin/system-administration.html:155
+#: enferno/admin/templates/admin/system-administration.html:164
 msgid "Title"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:17
+#: enferno/admin/templates/admin/csv-dashboard.html:21
 msgid "Upload Sheet / Select Map"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:20
+#: enferno/admin/templates/admin/csv-dashboard.html:24
 msgid "Fields Map"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:22
+#: enferno/admin/templates/admin/csv-dashboard.html:26
 msgid "Bulk Upload & Import"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:33
-#: enferno/admin/templates/admin/csv-dashboard.html:218
+#: enferno/admin/templates/admin/csv-dashboard.html:37
+#: enferno/admin/templates/admin/csv-dashboard.html:234
 msgid "Create a new map"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:34
+#: enferno/admin/templates/admin/csv-dashboard.html:38
 msgid "Select an existing map"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:45
-msgid "Click here or Drop a Sheet to Start"
-msgstr ""
-
-#: enferno/admin/templates/admin/csv-dashboard.html:58
+#: enferno/admin/templates/admin/csv-dashboard.html:65
 msgid "Select Sheet to continue"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:69
-#: enferno/admin/templates/admin/csv-dashboard.html:117
+#: enferno/admin/templates/admin/csv-dashboard.html:80
+#: enferno/admin/templates/admin/csv-dashboard.html:128
 msgid "Load existing map"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:87
+#: enferno/admin/templates/admin/csv-dashboard.html:98
 msgid "Continue"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:111
+#: enferno/admin/templates/admin/csv-dashboard.html:122
 #: enferno/admin/templates/admin/etl-dashboard.html:140
 msgid "Back"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:138
+#: enferno/admin/templates/admin/csv-dashboard.html:149
 #: enferno/admin/templates/admin/etl-dashboard.html:111
 msgid "Next"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:149
+#: enferno/admin/templates/admin/csv-dashboard.html:160
 msgid "Sheet Fields"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:152
+#: enferno/admin/templates/admin/csv-dashboard.html:163
 msgid "Reset"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:155
+#: enferno/admin/templates/admin/csv-dashboard.html:167
 msgid "Search Fields"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:183
+#: enferno/admin/templates/admin/csv-dashboard.html:196
 msgid "Sample Data"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:204
+#: enferno/admin/templates/admin/csv-dashboard.html:218
 msgid "Actor Fields"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:209
+#: enferno/admin/templates/admin/csv-dashboard.html:223
 msgid "Map Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:217
+#: enferno/admin/templates/admin/csv-dashboard.html:232
 msgid "Update map"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:220
+#: enferno/admin/templates/admin/csv-dashboard.html:237
 msgid "Delete"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:226
+#: enferno/admin/templates/admin/csv-dashboard.html:243
 msgid "Origin ID"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:243
+#: enferno/admin/templates/admin/csv-dashboard.html:260
 #: enferno/admin/templates/admin/partials/actor_dialog.html:65
 #: enferno/admin/templates/admin/partials/incident_dialog.html:55
 msgid "Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:246
+#: enferno/admin/templates/admin/csv-dashboard.html:263
 #: enferno/admin/templates/admin/partials/actor_dialog.html:88
 msgid "Nickname"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:249
+#: enferno/admin/templates/admin/csv-dashboard.html:266
 #: enferno/admin/templates/admin/partials/actor_dialog.html:94
 msgid "Nickname (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:266
+#: enferno/admin/templates/admin/csv-dashboard.html:282
 #: enferno/admin/templates/admin/i18n.jinja2:109
 #: enferno/admin/templates/admin/partials/actor_dialog.html:119
 msgid "First Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:269
+#: enferno/admin/templates/admin/csv-dashboard.html:285
 #: enferno/admin/templates/admin/partials/actor_dialog.html:125
 msgid "First Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:273
+#: enferno/admin/templates/admin/csv-dashboard.html:289
 #: enferno/admin/templates/admin/partials/actor_dialog.html:149
 msgid "Middle/Father's Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:276
+#: enferno/admin/templates/admin/csv-dashboard.html:292
 #: enferno/admin/templates/admin/partials/actor_dialog.html:155
 msgid "Middle/Father's Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:280
+#: enferno/admin/templates/admin/csv-dashboard.html:296
 #: enferno/admin/templates/admin/i18n.jinja2:111
 #: enferno/admin/templates/admin/partials/actor_dialog.html:179
 msgid "Last Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:283
+#: enferno/admin/templates/admin/csv-dashboard.html:299
 #: enferno/admin/templates/admin/partials/actor_dialog.html:185
 msgid "Last Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:286
+#: enferno/admin/templates/admin/csv-dashboard.html:302
 #: enferno/admin/templates/admin/i18n.jinja2:112
 #: enferno/admin/templates/admin/partials/actor_dialog.html:208
 msgid "Mother's Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:289
+#: enferno/admin/templates/admin/csv-dashboard.html:305
 #: enferno/admin/templates/admin/partials/actor_dialog.html:214
 msgid "Mother's Name (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:299
+#: enferno/admin/templates/admin/csv-dashboard.html:315
 #: enferno/admin/templates/admin/i18n.jinja2:87
 #: enferno/admin/templates/admin/partials/actor_dialog.html:236
+#: enferno/admin/templates/admin/roles.html:89
+#: enferno/admin/templates/admin/roles.html:237
 msgid "Description"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:317
-#: enferno/admin/templates/admin/etl-dashboard.html:198
+#: enferno/admin/templates/admin/csv-dashboard.html:333
+#: enferno/admin/templates/admin/etl-dashboard.html:211
 #: enferno/admin/templates/admin/i18n.jinja2:90
 #: enferno/admin/templates/admin/partials/actor_dialog.html:253
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:126
@@ -370,8 +370,8 @@ msgstr ""
 msgid "Sources"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:319
-#: enferno/admin/templates/admin/etl-dashboard.html:165
+#: enferno/admin/templates/admin/csv-dashboard.html:335
+#: enferno/admin/templates/admin/etl-dashboard.html:178
 #: enferno/admin/templates/admin/i18n.jinja2:91
 #: enferno/admin/templates/admin/labels.html:32
 #: enferno/admin/templates/admin/partials/actor_dialog.html:267
@@ -381,78 +381,78 @@ msgstr ""
 msgid "Labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:321
-#: enferno/admin/templates/admin/etl-dashboard.html:176
+#: enferno/admin/templates/admin/csv-dashboard.html:337
+#: enferno/admin/templates/admin/etl-dashboard.html:189
 #: enferno/admin/templates/admin/i18n.jinja2:92
 #: enferno/admin/templates/admin/partials/actor_dialog.html:282
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:167
 msgid "Verified Labels"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:327
+#: enferno/admin/templates/admin/csv-dashboard.html:344
 #: enferno/admin/templates/admin/i18n.jinja2:57
 #: enferno/admin/templates/admin/i18n.jinja2:113
 #: enferno/admin/templates/admin/partials/actor_dialog.html:299
 msgid "Sex"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:329
+#: enferno/admin/templates/admin/csv-dashboard.html:346
 #: enferno/admin/templates/admin/i18n.jinja2:58
 #: enferno/admin/templates/admin/partials/actor_dialog.html:309
 msgid "Minor/Adult"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:331
+#: enferno/admin/templates/admin/csv-dashboard.html:348
 #: enferno/admin/templates/admin/i18n.jinja2:59
 #: enferno/admin/templates/admin/partials/actor_dialog.html:319
 msgid "Civilian/Non Civilian"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:335
+#: enferno/admin/templates/admin/csv-dashboard.html:352
 #: enferno/admin/templates/admin/i18n.jinja2:60
 #: enferno/admin/templates/admin/i18n.jinja2:116
 #: enferno/admin/templates/admin/partials/actor_dialog.html:329
 msgid "Actor Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:337
+#: enferno/admin/templates/admin/csv-dashboard.html:354
 #: enferno/admin/templates/admin/i18n.jinja2:118
 #: enferno/admin/templates/admin/partials/actor_dialog.html:335
 msgid "Date of Birth"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:343
+#: enferno/admin/templates/admin/csv-dashboard.html:360
 #: enferno/admin/templates/admin/i18n.jinja2:119
 #: enferno/admin/templates/admin/partials/actor_dialog.html:353
 msgid "Place of Birth"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:345
+#: enferno/admin/templates/admin/csv-dashboard.html:362
 #: enferno/admin/templates/admin/i18n.jinja2:121
 #: enferno/admin/templates/admin/partials/actor_dialog.html:366
 msgid "Place of Residence"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:347
+#: enferno/admin/templates/admin/csv-dashboard.html:364
 #: enferno/admin/templates/admin/i18n.jinja2:120
 #: enferno/admin/templates/admin/partials/actor_dialog.html:377
 msgid "Place of Origin"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:353
+#: enferno/admin/templates/admin/csv-dashboard.html:370
 #: enferno/admin/templates/admin/i18n.jinja2:93
 #: enferno/admin/templates/admin/i18n.jinja2:544
 #: enferno/admin/templates/admin/partials/event_dialog.html:6
 msgid "Events"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:365
-#: enferno/admin/templates/admin/csv-dashboard.html:371
+#: enferno/admin/templates/admin/csv-dashboard.html:382
+#: enferno/admin/templates/admin/csv-dashboard.html:388
 #: enferno/admin/templates/admin/partials/event_dialog.html:142
 msgid "Event Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:380
+#: enferno/admin/templates/admin/csv-dashboard.html:397
 #: enferno/admin/templates/admin/eventtypes.html:83
 #: enferno/admin/templates/admin/eventtypes.html:220
 #: enferno/admin/templates/admin/i18n.jinja2:103
@@ -462,13 +462,13 @@ msgstr ""
 #: enferno/admin/templates/admin/partials/actor_dialog.html:749
 #: enferno/admin/templates/admin/partials/actor_dialog.html:839
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1319
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:72
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:86
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:73
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:297
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:404
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:506
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:605
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:94
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:105
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:93
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:298
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:406
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:509
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:608
 #: enferno/admin/templates/admin/partials/event_dialog.html:97
 #: enferno/admin/templates/admin/partials/incident_dialog.html:238
 #: enferno/admin/templates/admin/partials/incident_dialog.html:342
@@ -479,27 +479,27 @@ msgstr ""
 msgid "Comments"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:382
+#: enferno/admin/templates/admin/csv-dashboard.html:399
 #: enferno/admin/templates/admin/partials/event_dialog.html:128
 msgid "Location"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:386
+#: enferno/admin/templates/admin/csv-dashboard.html:403
 #: enferno/admin/templates/admin/partials/event_dialog.html:151
 msgid "From"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:388
+#: enferno/admin/templates/admin/csv-dashboard.html:405
 #: enferno/admin/templates/admin/partials/event_dialog.html:154
 msgid "To"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:390
+#: enferno/admin/templates/admin/csv-dashboard.html:407
 #: enferno/admin/templates/admin/partials/event_dialog.html:158
 msgid "Estimated Time"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:409
+#: enferno/admin/templates/admin/csv-dashboard.html:426
 #: enferno/admin/templates/admin/i18n.jinja2:52
 #: enferno/admin/templates/admin/i18n.jinja2:53
 #: enferno/admin/templates/admin/i18n.jinja2:123
@@ -507,129 +507,133 @@ msgstr ""
 msgid "Occupation"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:412
+#: enferno/admin/templates/admin/csv-dashboard.html:429
 #: enferno/admin/templates/admin/partials/actor_dialog.html:411
 msgid "Occupation (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:416
+#: enferno/admin/templates/admin/csv-dashboard.html:433
 #: enferno/admin/templates/admin/i18n.jinja2:54
 #: enferno/admin/templates/admin/i18n.jinja2:124
 #: enferno/admin/templates/admin/partials/actor_dialog.html:435
 msgid "Position"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:418
+#: enferno/admin/templates/admin/csv-dashboard.html:435
 #: enferno/admin/templates/admin/partials/actor_dialog.html:441
 msgid "Position (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:422
+#: enferno/admin/templates/admin/csv-dashboard.html:439
 #: enferno/admin/templates/admin/i18n.jinja2:125
 #: enferno/admin/templates/admin/partials/actor_dialog.html:465
 msgid "Spoken Dialects"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:424
+#: enferno/admin/templates/admin/csv-dashboard.html:441
 #: enferno/admin/templates/admin/partials/actor_dialog.html:471
 msgid "Spoken Dialects (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:428
+#: enferno/admin/templates/admin/csv-dashboard.html:445
 #: enferno/admin/templates/admin/i18n.jinja2:56
 #: enferno/admin/templates/admin/i18n.jinja2:126
 #: enferno/admin/templates/admin/partials/actor_dialog.html:494
 msgid "Family Status"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:430
+#: enferno/admin/templates/admin/csv-dashboard.html:447
 #: enferno/admin/templates/admin/partials/actor_dialog.html:500
 msgid "Family Status (AR)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:435
+#: enferno/admin/templates/admin/csv-dashboard.html:452
 #: enferno/admin/templates/admin/partials/actor_dialog.html:529
 msgid "Ethnographic Information"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:437
+#: enferno/admin/templates/admin/csv-dashboard.html:454
 #: enferno/admin/templates/admin/i18n.jinja2:62
 #: enferno/admin/templates/admin/partials/actor_dialog.html:540
 msgid "Nationality"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:439
+#: enferno/admin/templates/admin/csv-dashboard.html:456
 #: enferno/admin/templates/admin/i18n.jinja2:65
 #: enferno/admin/templates/admin/i18n.jinja2:130
 #: enferno/admin/templates/admin/partials/actor_dialog.html:546
 msgid "National ID Card"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:445
+#: enferno/admin/templates/admin/csv-dashboard.html:462
 #: enferno/admin/templates/admin/i18n.jinja2:102
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1279
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:557
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:560
 msgid "Source Link"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:458
+#: enferno/admin/templates/admin/csv-dashboard.html:475
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1286
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:566
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:569
 msgid "Private"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:460
+#: enferno/admin/templates/admin/csv-dashboard.html:477
 #: enferno/admin/templates/admin/i18n.jinja2:100
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1296
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:577
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:580
 msgid "Publish Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:462
+#: enferno/admin/templates/admin/csv-dashboard.html:479
 #: enferno/admin/templates/admin/i18n.jinja2:101
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1303
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:585
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:588
 msgid "Documentation Date"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:680
+#: enferno/admin/templates/admin/csv-dashboard.html:697
 msgid "Sheet file:"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:681
-#: enferno/admin/templates/admin/csv-dashboard.html:689
+#: enferno/admin/templates/admin/csv-dashboard.html:699
+#: enferno/admin/templates/admin/csv-dashboard.html:707
 msgid "Selected"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:685
+#: enferno/admin/templates/admin/csv-dashboard.html:703
 msgid "Map:"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:709
+#: enferno/admin/templates/admin/csv-dashboard.html:727
 msgid "Optional: Upload more sheets to process"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:721
-msgid "Select More CSV/XLS(x) Files"
+#: enferno/admin/templates/admin/csv-dashboard.html:744
+#: enferno/admin/templates/admin/etl-dashboard.html:165
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:79
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:89
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:76
+msgid "Access Roles"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:734
+#: enferno/admin/templates/admin/csv-dashboard.html:756
 msgid "Process File(s)"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:750
+#: enferno/admin/templates/admin/csv-dashboard.html:772
 msgid "Batch ID:"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:15
+#: enferno/admin/templates/admin/etl-dashboard.html:18
 msgid "Upload or Select"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:18
+#: enferno/admin/templates/admin/etl-dashboard.html:21
 msgid "Add Data"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:20
+#: enferno/admin/templates/admin/etl-dashboard.html:23
 msgid "Finish"
 msgstr ""
 
@@ -657,7 +661,7 @@ msgstr ""
 msgid "Attach data to files"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:188
+#: enferno/admin/templates/admin/etl-dashboard.html:201
 #: enferno/admin/templates/admin/i18n.jinja2:95
 #: enferno/admin/templates/admin/locations.html:33
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:182
@@ -666,38 +670,38 @@ msgstr ""
 msgid "Locations"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:206
+#: enferno/admin/templates/admin/etl-dashboard.html:219
 #: enferno/admin/templates/admin/i18n.jinja2:14
 msgid "Refs"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:216
+#: enferno/admin/templates/admin/etl-dashboard.html:229
 msgid "Optimize videos"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:219
+#: enferno/admin/templates/admin/etl-dashboard.html:232
 msgid "Parse PDF & MS Word files"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:224
+#: enferno/admin/templates/admin/etl-dashboard.html:237
 msgid "Scan images for text"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:265
+#: enferno/admin/templates/admin/etl-dashboard.html:276
 #: enferno/admin/templates/admin/eventtypes.html:98
 #: enferno/admin/templates/admin/eventtypes.html:149
 #: enferno/admin/templates/admin/labels.html:167
 #: enferno/admin/templates/admin/locations.html:98
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:70
-#: enferno/admin/templates/admin/roles.html:117
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:75
+#: enferno/admin/templates/admin/roles.html:155
 msgid "Cancel"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:266
+#: enferno/admin/templates/admin/etl-dashboard.html:277
 msgid "Scan"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:538
+#: enferno/admin/templates/admin/etl-dashboard.html:582
 msgid "Files added to queue and will be imported in turn."
 msgstr ""
 
@@ -737,9 +741,9 @@ msgstr ""
 #: enferno/admin/templates/admin/i18n.jinja2:74
 #: enferno/admin/templates/admin/labels.html:173
 #: enferno/admin/templates/admin/locations.html:104
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:71
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:76
 #: enferno/admin/templates/admin/partials/event_dialog.html:168
-#: enferno/admin/templates/admin/roles.html:123
+#: enferno/admin/templates/admin/roles.html:161
 #: enferno/admin/templates/admin/users.html:163
 msgid "Save"
 msgstr ""
@@ -750,7 +754,7 @@ msgstr ""
 #: enferno/admin/templates/admin/labels.html:197
 #: enferno/admin/templates/admin/locations.html:68
 #: enferno/admin/templates/admin/locations.html:75
-#: enferno/admin/templates/admin/roles.html:91
+#: enferno/admin/templates/admin/roles.html:127
 #: enferno/admin/templates/admin/sources.html:135
 #: enferno/admin/templates/admin/sources.html:142
 msgid "Import CSV"
@@ -759,7 +763,7 @@ msgstr ""
 #: enferno/admin/templates/admin/eventtypes.html:136
 #: enferno/admin/templates/admin/labels.html:204
 #: enferno/admin/templates/admin/locations.html:85
-#: enferno/admin/templates/admin/roles.html:104
+#: enferno/admin/templates/admin/roles.html:142
 #: enferno/admin/templates/admin/sources.html:151
 msgid "Select CSV File"
 msgstr ""
@@ -801,7 +805,6 @@ msgid "Hide"
 msgstr ""
 
 #: enferno/admin/templates/admin/i18n.jinja2:11
-#: enferno/admin/templates/admin/partials/relate_media_dialog.html:49
 msgid "Relate"
 msgstr ""
 
@@ -942,14 +945,14 @@ msgid "Event type"
 msgstr ""
 
 #: enferno/admin/templates/admin/i18n.jinja2:47
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:44
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:58
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:47
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:63
 msgid "Clear Search"
 msgstr ""
 
 #: enferno/admin/templates/admin/i18n.jinja2:49
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:45
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:59
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:48
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:64
 msgid "Save Search"
 msgstr ""
 
@@ -1033,7 +1036,7 @@ msgstr ""
 #: enferno/admin/templates/admin/i18n.jinja2:501
 #: enferno/admin/templates/admin/labels.html:101
 #: enferno/admin/templates/admin/labels.html:293
-#: enferno/admin/templates/admin/locations.html:205
+#: enferno/admin/templates/admin/locations.html:203
 #: enferno/admin/templates/admin/sources.html:78
 #: enferno/admin/templates/admin/sources.html:242
 msgid "Parent"
@@ -1076,14 +1079,14 @@ msgstr ""
 
 #: enferno/admin/templates/admin/i18n.jinja2:97
 #: enferno/admin/templates/admin/partials/actor_dialog.html:571
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:336
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:337
 #: enferno/admin/templates/admin/partials/incident_dialog.html:173
 msgid "Related Actors"
 msgstr ""
 
 #: enferno/admin/templates/admin/i18n.jinja2:98
 #: enferno/admin/templates/admin/partials/actor_dialog.html:786
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:442
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:444
 #: enferno/admin/templates/admin/partials/incident_dialog.html:379
 msgid "Related Incidents"
 msgstr ""
@@ -1391,8 +1394,8 @@ msgstr ""
 #: enferno/admin/templates/admin/i18n.jinja2:200
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1296
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1303
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:577
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:585
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:580
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:588
 #: enferno/admin/templates/admin/partials/event_dialog.html:151
 #: enferno/admin/templates/admin/partials/event_dialog.html:154
 msgid "Time"
@@ -2622,16 +2625,16 @@ msgstr ""
 msgid "Identified"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:42
+#: enferno/admin/templates/admin/incidents.html:51
 msgid "All Incidents"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:75
-#: enferno/admin/templates/admin/incidents.html:507
+#: enferno/admin/templates/admin/incidents.html:81
+#: enferno/admin/templates/admin/incidents.html:531
 msgid "New Incident"
 msgstr ""
 
-#: enferno/admin/templates/admin/incidents.html:507
+#: enferno/admin/templates/admin/incidents.html:531
 msgid "Edit Incident"
 msgstr ""
 
@@ -2666,26 +2669,26 @@ msgid "Offline"
 msgstr ""
 
 #: enferno/admin/templates/admin/locations.html:53
-#: enferno/admin/templates/admin/locations.html:248
+#: enferno/admin/templates/admin/locations.html:246
 msgid "New Location"
 msgstr ""
 
-#: enferno/admin/templates/admin/locations.html:204
+#: enferno/admin/templates/admin/locations.html:202
 #: enferno/admin/templates/admin/partials/location_dialog.html:55
 msgid "Full Location"
 msgstr ""
 
-#: enferno/admin/templates/admin/locations.html:206
+#: enferno/admin/templates/admin/locations.html:204
 #: enferno/admin/templates/admin/partials/location_dialog.html:73
 msgid "Location Type"
 msgstr ""
 
-#: enferno/admin/templates/admin/locations.html:207
+#: enferno/admin/templates/admin/locations.html:205
 #: enferno/admin/templates/admin/partials/location_dialog.html:97
 msgid "Admin Level"
 msgstr ""
 
-#: enferno/admin/templates/admin/locations.html:248
+#: enferno/admin/templates/admin/locations.html:246
 msgid "Edit Location"
 msgstr ""
 
@@ -2694,15 +2697,19 @@ msgid "Role Groups"
 msgstr ""
 
 #: enferno/admin/templates/admin/roles.html:40
-#: enferno/admin/templates/admin/roles.html:204
+#: enferno/admin/templates/admin/roles.html:272
 msgid "New Group"
 msgstr ""
 
-#: enferno/admin/templates/admin/roles.html:56
+#: enferno/admin/templates/admin/roles.html:55
 msgid "Group Name"
 msgstr ""
 
-#: enferno/admin/templates/admin/roles.html:204
+#: enferno/admin/templates/admin/roles.html:236
+msgid "Color"
+msgstr ""
+
+#: enferno/admin/templates/admin/roles.html:272
 msgid "Edit Group"
 msgstr ""
 
@@ -2711,7 +2718,7 @@ msgstr ""
 msgid "ETL ID"
 msgstr ""
 
-#: enferno/admin/templates/admin/system-administration.html:134
+#: enferno/admin/templates/admin/system-administration.html:154
 msgid "Code"
 msgstr ""
 
@@ -2725,11 +2732,6 @@ msgstr ""
 
 #: enferno/admin/templates/admin/users.html:100
 msgid "Password"
-msgstr ""
-
-#: enferno/admin/templates/admin/users.html:123
-#: enferno/admin/templates/admin/users.html:220
-msgid "Roles"
 msgstr ""
 
 #: enferno/admin/templates/admin/users.html:130
@@ -2774,7 +2776,7 @@ msgid "Save Actor"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:577
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:342
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:343
 #: enferno/admin/templates/admin/partials/incident_dialog.html:181
 msgid "Search & Relate Actors"
 msgstr ""
@@ -2782,9 +2784,9 @@ msgstr ""
 #: enferno/admin/templates/admin/partials/actor_dialog.html:603
 #: enferno/admin/templates/admin/partials/actor_dialog.html:714
 #: enferno/admin/templates/admin/partials/actor_dialog.html:818
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:263
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:367
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:473
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:264
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:369
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:476
 #: enferno/admin/templates/admin/partials/incident_dialog.html:206
 #: enferno/admin/templates/admin/partials/incident_dialog.html:308
 #: enferno/admin/templates/admin/partials/incident_dialog.html:411
@@ -2794,16 +2796,16 @@ msgstr ""
 #: enferno/admin/templates/admin/partials/actor_dialog.html:610
 #: enferno/admin/templates/admin/partials/actor_dialog.html:720
 #: enferno/admin/templates/admin/partials/actor_dialog.html:824
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:269
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:373
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:479
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:270
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:375
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:482
 msgid "Probability"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:623
 #: enferno/admin/templates/admin/partials/actor_dialog.html:731
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:280
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:385
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:281
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:387
 msgid "Related As"
 msgstr ""
 
@@ -2814,7 +2816,7 @@ msgid "Search & Relate Bulletins"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:792
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:448
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:450
 #: enferno/admin/templates/admin/partials/incident_dialog.html:386
 msgid "Search & Relate Incidents"
 msgstr ""
@@ -2914,7 +2916,7 @@ msgid "Location of reburial (full address)"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:1284
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:562
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:565
 msgid "Not Available"
 msgstr ""
 
@@ -2924,29 +2926,40 @@ msgstr ""
 msgid "Bulk Update"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:43
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:45
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:50
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:45
 msgid "Peer Reviewer"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:82
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:76
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:94
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:79
+msgid "Replace"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:105
 msgid "Bulk Update Actors"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:76
-msgid "Replace Existing"
-msgstr ""
-
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:95
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:114
 msgid "Bulk Update Bulletins"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:83
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:84
+msgid "Assign Related Items"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:85
+msgid "Restrict Related Items"
+msgstr ""
+
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:104
 msgid "Bulk Update Incidents"
 msgstr ""
 
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:66
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:71
 msgid "Name this search"
 msgstr ""
 
@@ -2984,10 +2997,6 @@ msgstr ""
 
 #: enferno/admin/templates/admin/partials/location_dialog.html:166
 msgid "Tags"
-msgstr ""
-
-#: enferno/admin/templates/admin/partials/media_dialog.html:12
-msgid "Search & Relate Media"
 msgstr ""
 
 #: enferno/admin/templates/admin/partials/review_dialog.html:129
@@ -3053,7 +3062,7 @@ msgid "Users Management"
 msgstr ""
 
 #: enferno/templates/nav-drawer.html:142
-msgid "Groups & Permissions"
+msgid "Groups Management"
 msgstr ""
 
 #: enferno/templates/nav-drawer.html:154

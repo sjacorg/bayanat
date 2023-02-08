@@ -26,15 +26,22 @@ class BaseMixin(object):
             fp = self.first_peer_reviewer.to_compact()
         output = {
             'id': self.id,
-            'title': getattr(self, 'title', ''),
-            'name': getattr(self, 'name', ''),
+            'title': getattr(self,'title', ''),
+            'name': getattr(self,'name', ''),
             'assigned_to': at,
             'first_peer_reviewer': fp,
-            'status': getattr(self, 'status', ''),
-            "_status": gettext(self.status)
+            'status': self.status or '',
+            "_status": gettext(self.status),
+            "roles": [role.to_dict() for role in self.roles] if hasattr(self, 'roles') else '',
 
         }
         return output
+
+    def restricted_json(self):
+        return {
+            'id': self.id,
+            'restricted': True
+        }
 
     def save(self):
         try:

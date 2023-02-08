@@ -547,6 +547,19 @@ span.map-bid:empty {
     display: none;
 }
 
+/* tippy */
+
+.tippy-tooltip {
+    font-family: "Roboto", sans-serif;
+}
+
+/* access roles styles */
+.restricted {
+    opacity: 0.5;
+    filter: blur(1px);
+    font-style: italic;
+}
+
 
 .log-dialog {
     background-color: lightblue;

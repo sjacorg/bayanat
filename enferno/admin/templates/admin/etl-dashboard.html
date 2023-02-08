@@ -1,7 +1,10 @@
-{% extends 'layout.html' %} {% block content %}
-    {% block css %}
-        <link rel="stylesheet" href="/static/js/filepond/dist/filepond.min.css"/>
-    {% endblock %}
+{% extends 'layout.html' %}
+{% block css %}
+    <link rel="stylesheet" href="/static/js/dropzone/vue2Dropzone.min.css"/>
+    <link rel="stylesheet" href="/static/js/dropzone/basic.css"/>
+
+{% endblock %}
+{% block content %}
     <div id="app">
         <v-app v-cloak>
             {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
@@ -52,26 +55,23 @@
                                                     <v-divider vertical></v-divider>
 
 
+                                                    <v-btn :disabled="mode==2" x-small fab
+                                                           class="mx-3 hidden-md-and-up"
+                                                           @click="uploadFiles"
+                                                           color="primary"
+                                                           elevation="1"
+                                                    >
+                                                        <v-icon>mdi-upload</v-icon>
 
-                                                     <v-btn :disabled="mode==2" x-small fab
-                                                                   class="mx-3 hidden-md-and-up"
-                                                                   @click="uploadFiles"
-                                                                   color="primary"
-                                                            elevation="1"
-                                                            >
-                                                                <v-icon >mdi-upload</v-icon>
-
-                                                            </v-btn>
-
-
-                                                     <v-btn :disabled="mode==1" @click="selectPath" x-small fab
-                                                                    color="primary"
-                                                            elevation="1"
-                                                            class="hidden-md-and-up">
-                                                                <v-icon> mdi-folder-open</v-icon>
-                                                            </v-btn>
+                                                    </v-btn>
 
 
+                                                    <v-btn :disabled="mode==1" @click="selectPath" x-small fab
+                                                           color="primary"
+                                                           elevation="1"
+                                                           class="hidden-md-and-up">
+                                                        <v-icon> mdi-folder-open</v-icon>
+                                                    </v-btn>
 
 
                                                     <v-tooltip top>
@@ -89,7 +89,8 @@
                                                     </v-tooltip>
                                                     <v-tooltip top>
                                                         <template v-slot:activator="{on}">
-                                                            <v-btn :disabled="mode==1" @click="selectPath" small
+                                                            <v-btn :disabled="mode==1 || !__ETL_PATH_IMPORT__"
+                                                                   @click="selectPath" small
                                                                    v-on="on" color="primary" class="hidden-sm-and-down">
                                                                 <v-icon left> mdi-folder-open</v-icon>
                                                                 {{ _('Process path') }}
@@ -111,8 +112,8 @@
                                                         {{ _('Next') }}
                                                     </v-btn>
 
-                                                     <v-btn x-small class="mx-2 hidden-md-and-up" @click="stepTwo"
-                                                            fab
+                                                    <v-btn x-small class="mx-2 hidden-md-and-up" @click="stepTwo"
+                                                           fab
                                                            :disabled="!selectedItems.length"
                                                            :dark="selectedItems.length?true:false" color="green"
                                                            elevation="1">
@@ -151,11 +152,24 @@
 
                                         <v-card class="pa-3" color="yellow lighten-4">
                                             <v-card-title>
-                                                {{ _('Attach data to files')}}
+                                                {{ _('Attach data to files') }}
                                             </v-card-title>
                                             <v-card-text>
                                                 <v-row>
-                                                    <v-col cols="12" md="6">
+                                                    <v-col cols="12" md="4">
+
+                                                        <search-field
+                                                                api="/admin/api/roles/"
+                                                                item-text="name"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                label="{{ _('Access Roles') }}"
+                                                                v-model="roles"
+                                                        ></search-field>
+
+
+                                                    </v-col>
+                                                    <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/labels/"
                                                                 query-params="&typ=for_bulletin"
@@ -166,7 +180,7 @@
                                                                 v-model="labels"
                                                         ></search-field>
                                                     </v-col>
-                                                    <v-col cols="12" md="6">
+                                                    <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/labels/"
                                                                 query-params="&fltr=verified&typ=for_bulletin"
@@ -210,26 +224,26 @@
                                                         ></v-combobox>
                                                     </v-col>
                                                 </v-row>
-                                                
+
                                                 <v-row>
                                                     <v-col cols="12" md="4">
-                                                        <v-switch v-model="optimize" label="{{ _('Optimize videos')}}"></v-switch>
+                                                        <v-switch v-model="optimize"
+                                                                  label="{{ _('Optimize videos') }}"></v-switch>
                                                     </v-col>
                                                     <v-col cols="12" md="4">
-                                                        <v-switch v-model="parse" label="{{ _('Parse PDF & MS Word files')}}"></v-switch>
+                                                        <v-switch v-model="parse"
+                                                                  label="{{ _('Parse PDF & MS Word files') }}"></v-switch>
                                                     </v-col>
                                                     <v-col cols="12" md="4">
                                                         <v-switch v-model="ocr"
-                                                        :disabled="!__OCR_ENABLED__" 
-                                                        label="{{ _('Scan images for text')}}"></v-switch>
+                                                                  :disabled="!__OCR_ENABLED__"
+                                                                  label="{{ _('Scan images for text') }}"></v-switch>
                                                         <div v-if="!__OCR_ENABLED__">
                                                             <v-icon left>mdi-information-outline</v-icon>
                                                             Tesseract OCR is disabled.
                                                         </div>
-
                                                     </v-col>
                                                 </v-row>
-
                                             </v-card-text>
 
                                         </v-card>
@@ -280,18 +294,12 @@
                                     </v-card-title>
                                     <v-card-text class="align-center">
 
-                                        <file-pond class="ma-auto"
-                                                   name="media"
-                                                   ref="media"
-                                                   label-idle="Click/Drop files here to Upload..."
-                                                   v-bind:allow-multiple="true"
-                                                {#                                                   accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"#}
-                                                   server="/admin/api/media/upload/"
-                                                   v-model="files"
-                                                   v-bind:files="files"
-                                                   v-on:processfile="onFileUploaded"
 
-                                        ></file-pond>
+                                        <vue-dropzone ref="dropzone" id="dropzone" class="ma-auto" :options="dzOpts"
+                                                      @vdropzone-removed-file="fileRemoved"
+                                                      @vdropzone-error="showError"
+                                                      @vdropzone-success="uploadSuccess"></vue-dropzone>
+
 
                                     </v-card-text>
                                     <v-card-actions>
@@ -329,11 +337,13 @@
 
 {% endblock %} {% block js %}
 
-    <script src="/static/js/filepond/dist/filepond.min.js"></script>
-    <script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
+    <script src="/static/js/dropzone/vue2Dropzone.js"></script>
+
+
     <script>
         window.__OCR_ENABLED__ = ('{{ config.OCR_ENABLED }}' === 'True');
-        console.log(__OCR_ENABLED__)
+        window.__ETL_PATH_IMPORT__ = ('{{ config.ETL_PATH_IMPORT }}' === 'True');
+
         const app = new Vue({
             el: "#app",
             vuetify: vuetify,
@@ -346,6 +356,21 @@
                 snackMessage: '',
                 loading: false,
                 status: '',
+
+                dzOpts: {
+                    url: '/admin/api/media/chunk',
+                    // accept any file
+                    acceptedFiles: ETL_EXTENSIONS.toString(),
+                    addRemoveLinks: true,
+                    chunking: true,
+                    forceChunking: true,
+                    chunkSize: 500000, // Bytes
+                    thumbnailWidth: 80, // px
+                    thumbnailHeight: 80,
+                    parallelUploads: 1
+
+                },
+
 
                 selAllDisabled: true,
 
@@ -366,7 +391,7 @@
                 },
 
                 headers: [
-                    {text: "{{_('Name')}}", value: 'file.name', sortable: false},
+                    {text: "{{_('Name')}}", value: 'filename', sortable: false},
 
 
                 ],
@@ -376,7 +401,7 @@
                 sources: [],
                 locations: [],
                 refs: [],
-                files: [],
+                roles: [],
                 items: [],
                 optimize: null,
                 parse: null,
@@ -384,7 +409,6 @@
                 selectedItems: [],
                 itemsLength: 100,
                 editedIndex: -1,
-                roles: [],
                 editedItem: {
                     title: ""
                 },
@@ -394,14 +418,13 @@
                 }
             }),
             components: {
-                FilePond: vueFilePond.default(),
+                vueDropzone: vue2Dropzone
             },
 
             computed: {},
 
 
             watch: {
-
                 items(val) {
                     if (val.length) {
                         this.selAllDisabled = false;
@@ -420,6 +443,36 @@
 
             methods: {
 
+
+                showError(err, message) {
+                    this.showSnack(message);
+                },
+
+                fileRemoved(file, error, xhr) {
+                    if (!error) {
+                        // pop out that specific removed file
+                        this.files = this.files.filter(x =>
+                            x.uuid !== file.upload.uuid
+                        );
+                    }
+                },
+
+                uploadSuccess(dzfile) {
+
+                    // pick file from dropzone files list
+                    const needle = this.$refs.dropzone.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
+
+
+                    const file = parseResponse(needle);
+
+
+                    // parse the response in xhr
+                    this.files.push(file);
+
+
+                },
+
+
                 selectAll() {
                     if (this.items.length) {
                         this.selectedItems = this.items;
@@ -431,7 +484,7 @@
                     this.selectedItems = [];
                 },
                 preprocess(files) {
-                    files = files.filter(x => this.validFile(x.file.name))
+                    files = files.filter(x => this.validFile(x.filename))
                     for (i = 1; i < files.length; i++) {
                         files[i].id = i;
 
@@ -446,7 +499,8 @@
                 },
 
                 appendFiles() {
-                    this.items = this.preprocess(this.files.filter(x=> x.serverId));
+                    // in dropzone files are already uploaded and filtered
+                    this.items = this.preprocess(this.files);
                     this.uploadDlg = false;
                     this.files = [];
                     this.mode = 1;
@@ -468,7 +522,10 @@
                         this.mode = 2;
 
                     }).catch(error => {
-                        this.showSnack(error.response.data)
+                        if (error.response) {
+                            this.showSnack(error.response.data)
+                            this.snackbar = true;
+                        }
                     }).finally(() => {
                         this.selectDlg = false;
                         this.loading = false;
@@ -491,7 +548,7 @@
                 },
 
                 validFile(filename) {
-                    const ext = filename.split(".").pop().toLowerCase();
+                    const ext = ".".concat("", filename.split(".").pop().toLowerCase());
                     if (ETL_EXTENSIONS.includes(ext)) {
                         return true;
 
@@ -512,9 +569,8 @@
                     let files;
                     if (this.mode == 1) {
                         files = this.selectedItems.map(x => {
-                            let f = JSON.parse(x.serverId)
-                            f.name = x.file.name;
-                            return f
+                            x.name = x.filename;
+                            return x
                         })
 
                     } else {
@@ -527,6 +583,7 @@
                         sources: this.sources,
                         locations: this.locations,
                         refs: this.refs,
+                        roles: this.roles,
                         mode: this.mode,
                         optimize: this.optimize,
                         parse: this.parse,
@@ -548,7 +605,9 @@
                 },
 
                 selectPath() {
-                    this.selectDlg = true;
+                    if (window.__ETL_PATH_IMPORT__) {
+                        this.selectDlg = true;
+                    }
                 }
                 ,
                 uploadFiles() {

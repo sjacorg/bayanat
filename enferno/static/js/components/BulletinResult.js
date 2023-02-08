@@ -2,7 +2,8 @@ Vue.component("bulletin-result", {
   props: ['bulletin','hidden','showHide', 'i18n'],
 
   template: `
-    <v-card outlined class="ma-2"  v-if="!hidden">     
+    <template v-if="!hidden">
+    <v-card v-if="!bulletin.restricted" outlined class="ma-1"  >     
         <v-card-title class="d-flex">
             <v-chip label small color="gv darken-2" dark>{{ i18n.id_ }} {{bulletin.id}} </v-chip>
             <v-chip :href="bulletin.source_link" target="_blank" color="lime darken-3" class="white--text ml-1"  label small ># {{bulletin.originid}}</v-chip>
@@ -44,5 +45,12 @@ Vue.component("bulletin-result", {
           <v-btn @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')" text small icon color="gv darken-1" ><v-icon>mdi-eye</v-icon></v-btn>
         </v-card-actions>
       </v-card >
+    
+      <v-card disabled elevation="0" v-else class="restricted">
+      
+    <v-card-text >{{bulletin.id}} - Restricted</v-card-text>
+    
+    </v-card>
+      </template>
     `
 });

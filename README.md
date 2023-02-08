@@ -20,15 +20,7 @@ You can help by translating Bayanat to your language. `messages.pot` file is the
 
 Live Demo
 ---------
-You can access a demo instance of Bayanat on [demo.bayanat.org](https://demo.bayanat.org/). You can use the following credentials to log in:
-
-- `demo@bayanat.org`/`demo` for [Data Analyst](https://docs.bayanat.org/en/users-groups#data-analyst-da) access level.
-- `admin@bayanat.org`/`admin` for [Administrator](https://docs.bayanat.org/en/users-groups#administrator) access level. 
-
-Please note:
-- This server will be reset every 15 minutes. Feel free to make changes to items in the database.
-- Upload feature is disabled on this server to prevent abuse.
-- Please avoid changing the passwords or setting up two factor authentication as this will deny other users access to the server until it's reset.
+You can access a demo instance of Bayanat on [demo.bayanat.org](https://demo.bayanat.org/). Login instructions can be found on [docs.bayanat.org](https://docs.bayanat.org/en/demo).
 
 Updates
 -------

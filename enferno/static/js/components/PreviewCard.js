@@ -33,10 +33,10 @@ Vue.component('preview-card', {
                 </v-toolbar>
 
 
-                <bulletin-card :i18n="i18n" v-if="item && item.class=='Bulletin'" :close="false"
+                <bulletin-card :i18n="i18n" v-if="item && item.class=='bulletin'" :close="false"
                                :bulletin="item"></bulletin-card>
-                <actor-card :i18n="i18n" v-if="item && item.class=='Actor'" :close="false" :actor="item"></actor-card>
-                <incident-card :i18n="i18n" v-if="item && item.class=='Incident'" :close="false"
+                <actor-card :i18n="i18n" v-if="item && item.class=='actor'" :close="false" :actor="item"></actor-card>
+                <incident-card :i18n="i18n" v-if="item && item.class=='incident'" :close="false"
                                :incident="item"></incident-card>
 
             </v-card>

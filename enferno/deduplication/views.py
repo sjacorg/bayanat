@@ -167,7 +167,7 @@ def fast_process(no_of_processes):
 def process_stream():
     pubsub = rds.pubsub()
     pubsub.subscribe('dedprocess')
-    # avoid sending first subscribtion message
+    # avoid sending first subscription message
     for msg in pubsub.listen():
         if msg['type'] == 'message':
             yield 'data:{}\n\n'.format(msg['data'])

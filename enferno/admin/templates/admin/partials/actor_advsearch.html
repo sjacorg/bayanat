@@ -23,7 +23,10 @@
                                 @close="advSearchExpand=false"
                                 close-btn="true"
                                 v-model="search[i]"
-                                :users="users">
+                                :users="users"
+                                :roles="roles"
+                                :is-admin="has_role(currentUser,'Admin')"
+                        >
                         </actor-search-box>
                     </v-expansion-panel-content>
                 </v-expansion-panel>

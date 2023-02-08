@@ -1,305 +1,375 @@
 {% extends 'layout.html' %} {% block content %}
 
-<div id="app">
-  <v-app id="inspire" v-cloak>
-    {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-    <v-main>
+    <div id="app">
+        <v-app id="inspire" v-cloak>
+            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+            <v-main>
 
-            <v-container class="container--fluid">
-              <v-row>
-                <v-col cols="12">
-                  <v-card>
-                    <v-card-title>
-                      <div class="flex-grow-1"></div>
-                    </v-card-title>
-
-                    <v-card-text>
-                      <v-data-table
-                      height="calc(100vh - 335px)"
-                      fixed-header
-                        :headers="headers"
-                        :items="items"
-                        :options.sync="options"
-                        :footer-props.sync="footerProps"
-                        :loading="loading"
-                        :server-items-length="itemsLength"
-                        class="elevation-1"
-                      >
-                        <template v-slot:top>
-                          <v-toolbar flat color="white">
-                            <v-toolbar-title>{{_('Role Groups')}}</v-toolbar-title>
-
-                            <v-divider class="mx-4" inset vertical></v-divider>
-                            <v-spacer></v-spacer>
-                            <v-btn
-                                  @click="newItem"
-                                  color="primary"
-                                  dark
-                                  class="ma-2"
-                                  
-                                  >{{_('New Group')}}</v-btn>
-                            <v-dialog v-model="dialog" max-width="900px">
-                              
-                                
-                              
-                              <v-card>
+                <v-container class="container--fluid">
+                    <v-row>
+                        <v-col cols="12">
+                            <v-card>
                                 <v-card-title>
-                                  <span class="headline">${ formTitle }</span>
+                                    <div class="flex-grow-1"></div>
                                 </v-card-title>
 
                                 <v-card-text>
-                                  <v-container>
-                                    <v-row>
-                                      <v-col cols="12" md="12">
-                                        <v-text-field
-                                          v-model="editedItem.name"
-                                          label="{{_('Group Name')}}"
-                                        ></v-text-field>
-                                      </v-col>
-                                    </v-row>                                  
-                                  </v-container>
+                                    <v-data-table
+                                            height="calc(100vh - 335px)"
+                                            fixed-header
+                                            :headers="headers"
+                                            :items="items"
+                                            :options.sync="options"
+                                            :footer-props.sync="footerProps"
+                                            :loading="loading"
+                                            :server-items-length="itemsLength"
+                                            class="elevation-1"
+                                    >
+                                        <template v-slot:top>
+                                            <v-toolbar flat color="white">
+                                                <v-toolbar-title>{{ _('Role Groups') }}</v-toolbar-title>
+
+                                                <v-divider class="mx-4" inset vertical></v-divider>
+                                                <v-spacer></v-spacer>
+                                                <v-btn
+                                                        @click="newItem"
+                                                        color="primary"
+                                                        dark
+                                                        class="ma-2"
+
+                                                >{{ _('New Group') }}</v-btn>
+                                                <v-dialog v-model="dialog" max-width="700px">
+
+
+                                                    <v-card>
+                                                        <v-card-title>
+                                                            <span class="headline">${ formTitle }</span>
+                                                        </v-card-title>
+
+                                                        <v-card-text>
+                                                            <v-container>
+                                                                <v-row>
+                                                                    <v-col cols="12" md="8">
+                                                                        <v-text-field
+                                                                                v-model="editedItem.name"
+                                                                                label="{{ _('Group Name') }}"
+                                                                        ></v-text-field>
+                                                                    </v-col>
+                                                                    <v-col cols="12" md="4">
+                                                                        <v-text-field v-model="editedItem.color" v-mask="mask"
+
+                                                                                      >
+                                                                            <template v-slot:append>
+                                                                                <v-menu v-model="menu" top
+                                                                                        nudge-bottom="105"
+                                                                                        nudge-left="16"
+                                                                                        :close-on-content-click="false">
+                                                                                    <template v-slot:activator="{ on }">
+                                                                                        <div :style="swatchStyle"
+                                                                                             v-on="on"/>
+                                                                                    </template>
+                                                                                    <v-card>
+                                                                                        <v-card-text class="pa-0">
+                                                                                            <v-color-picker
+                                                                                                    v-model="editedItem.color"
+                                                                                                    />
+                                                                                        </v-card-text>
+                                                                                    </v-card>
+                                                                                </v-menu>
+                                                                            </template>
+                                                                        </v-text-field>
+
+                                                                    </v-col>
+                                                                </v-row>
+
+                                                                <v-row>
+                                                                    <v-col cols="12" md="12">
+                                                                        <v-textarea outlined
+                                                                                    v-model="editedItem.description"
+                                                                                    label="{{ _('Description') }}"
+                                                                        ></v-textarea>
+                                                                    </v-col>
+                                                                </v-row>
+
+                                                            </v-container>
+                                                        </v-card-text>
+
+                                                        <v-card-actions>
+                                                            <v-spacer></v-spacer>
+                                                            <v-btn
+                                                                    color="blue darken-1"
+                                                                    text
+                                                                    @click="close"
+                                                            >Cancel
+                                                            </v-btn
+                                                            >
+                                                            <v-btn
+                                                                    color="blue darken-1"
+                                                                    text
+                                                                    @click="save"
+                                                            >Save
+                                                            </v-btn
+                                                            >
+                                                        </v-card-actions>
+                                                    </v-card>
+                                                </v-dialog>
+
+                                                <v-dialog
+                                                        v-model="imDialog"
+                                                        width="500"
+                                                >
+                                                    <template v-slot:activator="{ on }">
+                                                        <v-btn
+                                                                color="secondary"
+                                                                dark
+                                                                class="ma-2"
+                                                                v-on="on"
+                                                        >{{ _('Import CSV') }}</v-btn
+                                                        >
+                                                    </template>
+
+                                                    <v-card>
+                                                        <v-card-title>
+                                                            <span class="headline">Import CSV</span>
+                                                        </v-card-title>
+
+                                                        <v-card-text>
+                                                            <v-container>
+                                                                <v-row>
+                                                                    <v-col cols="12" md="12">
+                                                                        <v-file-input v-model="csvFile" show-size
+                                                                                      accept=".csv"
+                                                                                      label="{{ _('Select CSV File') }}"></v-file-input>
+
+                                                                    </v-col>
+                                                                </v-row>
+                                                            </v-container>
+                                                        </v-card-text>
+
+                                                        <v-card-actions>
+                                                            <v-spacer></v-spacer>
+                                                            <v-btn
+                                                                    color="blue darken-1"
+                                                                    text
+                                                                    @click="imDialog=false"
+                                                            >{{ _('Cancel') }}</v-btn
+                                                            >
+                                                            <v-btn
+                                                                    color="blue darken-1"
+                                                                    text
+                                                                    @click="importCSV"
+                                                            >{{ _('Save') }}</v-btn
+                                                            >
+                                                        </v-card-actions>
+                                                    </v-card>
+
+                                                </v-dialog>
+
+                                            </v-toolbar>
+                                        </template>
+
+                                        <template v-slot:item.color="{item}">
+                                            <v-chip v-if="item.color" dark small :color="item.color"></v-chip>
+                                        </template>
+                                        <template v-slot:item.action="{ item }">
+                                            <v-template v-if="!['Admin','Mod','DA'].includes(item.name)">
+                                            <v-icon small class="mr-2" @click="editItem(item)">
+                                                mdi-pencil
+                                            </v-icon>
+                                            <v-icon small @click="deleteItem(item)">
+                                                mdi-delete-sweep
+                                            </v-icon></template>
+                                        </template>
+
+                                        <template v-slot:no-data></template>
+                                    </v-data-table>
+
+                                    <v-snackbar v-model="snackbar">
+                                        <div class="d-flex justify-lg-space-between align-center">
+                                            ${snackMessage}
+                                            <v-btn color="grey lighten-3" text @click="snackbar = false">
+                                                Close
+                                            </v-btn>
+                                        </div>
+                                    </v-snackbar>
                                 </v-card-text>
-
-                                <v-card-actions>
-                                  <v-spacer></v-spacer>
-                                  <v-btn
-                                    color="blue darken-1"
-                                    text
-                                    @click="close"
-                                    >Cancel</v-btn
-                                  >
-                                  <v-btn
-                                    color="blue darken-1"
-                                    text
-                                    @click="save"
-                                    >Save</v-btn
-                                  >
-                                </v-card-actions>
-                              </v-card>
-                            </v-dialog>
-
-                            <v-dialog
-                            v-model="imDialog"
-                            width="500"
-                          >
-                            <template v-slot:activator="{ on }">
-                                <v-btn
-                                color="secondary"
-                                dark
-                                class="ma-2"
-                                v-on="on"
-                                >{{ _('Import CSV')}}</v-btn
-                              >
-                            </template>
-                      
-                            <v-card>
-                            <v-card-title>
-                                <span class="headline">Import CSV</span>
-                              </v-card-title>
-
-                              <v-card-text>
-                                <v-container>
-                                  <v-row>
-                                    <v-col cols="12" md="12">
-                                        <v-file-input v-model="csvFile" show-size accept=".csv" label="{{_('Select CSV File')}}"></v-file-input>
-
-                                    </v-col>
-                                  </v-row>
-                                </v-container>
-                              </v-card-text>
-
-                              <v-card-actions>
-                                <v-spacer></v-spacer>
-                                <v-btn
-                                  color="blue darken-1"
-                                  text
-                                  @click="imDialog=false"
-                                  >{{_('Cancel')}}</v-btn
-                                >
-                                <v-btn
-                                  color="blue darken-1"
-                                  text
-                                  @click="importCSV"
-                                  >{{_('Save')}}</v-btn
-                                >
-                              </v-card-actions>
                             </v-card>
+                        </v-col>
+                    </v-row>
+                </v-container>
 
-                          </v-dialog>
-
-                          </v-toolbar>
-                        </template>
-                        <template v-slot:item.action="{ item }">
-                          <v-icon small class="mr-2" @click="editItem(item)">
-                            mdi-pencil
-                          </v-icon>
-                          <v-icon small @click="deleteItem(item)">
-                            mdi-delete-sweep
-                          </v-icon>
-                        </template>
-
-                        <template v-slot:no-data> </template>
-                      </v-data-table>
-
-                      <v-snackbar v-model="snackbar">
-                        ${snackMessage}
-                        <v-btn color="pink" text @click="snackbar = false">
-                          Close
-                        </v-btn>
-                      </v-snackbar>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
-            </v-container>
-
-    </v-main>
-      {% include 'footer.html' %}
-  </v-app>
-</div>
+            </v-main>
+            {% include 'footer.html' %}
+        </v-app>
+    </div>
 
 {% endblock %} {% block js %}
-<script>
+    <script>
 
-  new Vue({
-    el: "#app",
-    vuetify: vuetify,
-    delimiters: delimiters,
-    data: () => ({
-      dialog: dialog,
-      imDialog: false,
-      drawer: drawer,
-      sideNav: sideNav,
-      snackbar: false,
-      snackMessage: '',
-      loading: true,
-      csvFile: null,
-      options: {},
-      footerProps: {
-        itemsPerPageOptions: itemsPerPageOptions,
-          itemsPerPageText: "{{ _('Rows per page')}}"
-      },
+        Vue.use('VueTheMask');
 
-      headers: [
-        { text: "{{_('ID')}}", value: "id" },
-        { text: "{{_('Name')}}", value: "name" },
-        
-        { text: "{{_('Actions')}}", value: "action", sortable: false }
-      ],
+      let app =   new Vue({
+            el: "#app",
+            vuetify: vuetify,
+            delimiters: delimiters,
 
-      items: [],
-      itemsLength: 10,
-      editedIndex: -1,
-      editedItem: {
-        title: ""
-      },
-      defaultItem: {
-        title: "", 
+            data: () => ({
 
-      }
-    }),
+                mask: '!#XXXXXXXX',
+                menu: false,
+                dialog: dialog,
+                imDialog: false,
+                drawer: drawer,
+                sideNav: sideNav,
+                snackbar: false,
+                snackMessage: '',
+                loading: true,
+                csvFile: null,
+                options: {},
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
 
-    computed: {
-      formTitle() {
-        return this.editedIndex === -1 ? "{{_('New Group')}}" : "{{_('Edit Group')}}";
-      }
-    },
+                headers: [
+                    {text: "{{_('ID')}}", value: "id"},
+                    {text: "{{_('Name')}}", value: "name"},
+                    {text: "{{_('Color')}}", value: "color"},
+                    {text: "{{_('Description')}}", value: "description"},
 
-    watch: {
-      dialog(val) {
-        val || this.close();
-      },
 
-      options: {
-        handler: "refresh",
-        immdiate: true
-      }
-    },
+                    {text: "{{_('Actions')}}", value: "action", sortable: false}
+                ],
 
-    methods: {
-      refresh(options) {
-        axios.get(`/admin/api/roles/`).then(response => {
-          this.loading = false;
-          this.itemsLength = response.data.total;
-          this.items = response.data.items;
-        });
-      },
+                items: [],
+                itemsLength: 10,
+                editedIndex: -1,
+                editedItem: {
+                    title: ""
+                },
+                defaultItem: {
+                    title: "",
+                    color: '#439d92',
 
-      importCSV () {
-        const reqData = new FormData();
-        reqData.append('csv',this.csvFile)
-        axios.post('/admin/api/role/import/',reqData).then(response => {
-          this.imDialog = false;
-          this.refresh(this.options);
-          this.snackMessage = response.data;
-          this.snackbar = true;
-        })
+                }
+            }),
 
-      },
-      newItem(){
+            computed: {
+                swatchStyle() {
+                    const {color, menu} = this
+                    return {
+                        backgroundColor: this.editedItem.color,
+                        cursor: 'pointer',
+                        height: '24px',
+                        width: '24px',
+                        margin: '2px',
+                        border: '1px dotted #ddd',
+                        borderRadius: menu ? '50%' : '4px',
+                        transition: 'border-radius 200ms ease-in-out'
+                    }
+                },
+                        formTitle()
+                    {
+                        return this.editedIndex === -1 ? "{{_('New Group')}}" : "{{_('Edit Group')}}";
+                    }
+                },
 
-        this.editedItem = Object.assign({}, this.defaultItem);
-        this.dialog = true;
+                watch: {
+                    dialog(val) {
+                        val || this.close();
+                    },
 
-      },
+                    options: {
+                        handler: "refresh",
+                        immdiate: true
+                    }
+                },
 
-      editItem(item) {
-        this.editedIndex = this.items.indexOf(item);
-        this.editedItem = Object.assign({}, item);
-        this.dialog = true;
-      },
+                methods: {
+                    refresh(options) {
+                        axios.get(`/admin/api/roles/`).then(response => {
+                            this.loading = false;
+                            this.itemsLength = response.data.total;
+                            this.items = response.data.items;
+                        });
+                    },
 
-      deleteItem(item) {
-        const index = this.items.indexOf(item);
-        const cfm = confirm("Are you sure you want to delete this item?") &&
-          this.items.splice(index, 1);
-          if (cfm){
-          axios.delete(`/admin/api/role/${item.id}`)
-          .then(response => {
-            this.snackMessage = response.data;
-             this.snackbar = true;
-             this.refresh(this.options)
-          })
-        }
-      },
+                    importCSV() {
+                        const reqData = new FormData();
+                        reqData.append('csv', this.csvFile)
+                        axios.post('/admin/api/role/import/', reqData).then(response => {
+                            this.imDialog = false;
+                            this.refresh(this.options);
+                            this.snackMessage = response.data;
+                            this.snackbar = true;
+                        })
 
-      close() {
-        this.dialog = false;
-        setTimeout(() => {
-          this.editedItem = Object.assign({}, this.defaultItem);
-          this.editedIndex = -1;
-        }, 300);
-      },
+                    },
+                    newItem() {
 
-      save() {
-        if (this.editedIndex > -1) {
-          Object.assign(this.items[this.editedIndex], this.editedItem);
-          axios.put(`/admin/api/role/${this.editedItem.id}`,{item: this.editedItem})
-          .then(response => {
-            this.snackMessage = response.data;
-             this.snackbar = true;
-             this.refresh(this.options)
-          })
-        } else {
-          this.items.push(this.editedItem);
-          
-          axios
-            .post("/admin/api/role/", { item: this.editedItem })
-            .then(response => {
-              
-              this.snackMessage = response.data;
-             this.snackbar = true;
-             this.refresh(this.options)
-            }).catch(error => {
-              
-              this.snackMessage = error.response.data
-              this.snackbar = true;
-              
+                        this.editedItem = Object.assign({}, this.defaultItem);
+                        this.dialog = true;
+
+                    },
+
+                    editItem(item) {
+                        this.editedIndex = this.items.indexOf(item);
+                        this.editedItem = Object.assign({}, item);
+                        this.dialog = true;
+                    },
+
+                    deleteItem(item) {
+                        const index = this.items.indexOf(item);
+                        const cfm = confirm("Are you sure you want to delete this item?")
+                        if (cfm) {
+                            axios.delete(`/admin/api/role/${item.id}`)
+                                .then(response => {
+                                    this.snackMessage = response.data;
+                                    this.snackbar = true;
+                                    this.items.splice(index, 1);
+                                    this.refresh(this.options);
+                                }).catch(error => {
+                                    this.snackMessage = error.response.data
+                                    this.snackbar = true;
+                                    });
+                        }
+                    },
+
+                    close() {
+                        this.dialog = false;
+                        setTimeout(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem);
+                            this.editedIndex = -1;
+                        }, 300);
+                    },
+
+                    save() {
+                        if (this.editedIndex > -1) {
+                            Object.assign(this.items[this.editedIndex], this.editedItem);
+                            axios.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
+                                .then(response => {
+                                    this.snackMessage = response.data;
+                                    this.snackbar = true;
+                                    this.refresh(this.options)
+                                })
+                        } else {
+                            this.items.push(this.editedItem);
+
+                            axios
+                                .post("/admin/api/role/", {item: this.editedItem})
+                                .then(response => {
+
+                                    this.snackMessage = response.data;
+                                    this.snackbar = true;
+                                    this.refresh(this.options)
+                                }).catch(error => {
+                                this.snackMessage = error.response.data
+                                this.snackbar = true;
+                            });
+                        }
+                        this.close();
+                    }
+                }
             });
-        }
-        this.close();
-      }
-    }
-  });
-</script>
+    </script>
 {% endblock %}

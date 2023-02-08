@@ -1,46 +1,37 @@
 Vue.component('incident-search-box', {
     props: {
         value: {
-            type: Object,
-            required: true
-        },
-        users: {
+            type: Object, required: true
+        }, users: {
             type: Array
-        },
-        closeBtn: {
+        }, closeBtn: {
             type: String
-        },
-        extraFilters: {
+        }, extraFilters: {
             type: Boolean
-        },
-        i18n: {
+        }, i18n: {
             type: Object
+        }, roles: {
+            type: Array
+        }, isAdmin: {
+            type: Boolean, default: false
         }
     },
 
     data: () => {
         return {
-            repr: '',
-            q: {},
-
-
-
+            repr: '', q: {},
 
 
         }
-    },
-    watch: {
+    }, watch: {
 
 
         q: {
             handler(newVal) {
 
                 this.$emit('input', newVal)
-            }
-            ,
-            deep: true
-        },
-        value: function (newVal, oldVal) {
+            }, deep: true
+        }, value: function (newVal, oldVal) {
 
 
             if (newVal != oldVal) {
@@ -48,14 +39,10 @@ Vue.component('incident-search-box', {
             }
         }
 
-    },
-     created() {
+    }, created() {
         this.q = this.value;
 
-    },
-    methods: {
-
-    },
+    }, methods: {},
 
     template: `
 <v-sheet>
@@ -90,6 +77,26 @@ Vue.component('incident-search-box', {
                         ></v-text-field>
                     </v-col>
                 </v-row>
+                
+                
+                <v-row v-if="isAdmin" > 
+                    <v-col md="9">
+                        <span class="caption">Access Roles</span>
+                        <v-chip-group
+                                column
+                                multiple
+                                v-model="q.roles">
+                            <v-chip v-if="roles" :value="role.id" small v-for="role in roles" filter
+                                    outlined>{{role.name}}</v-chip>
+                        </v-chip-group>
+                    </v-col>
+                    <v-col md="3">
+                        <span class="caption">Unrestricted</span>
+                        <v-switch v-model="q.norole"></v-switch>
+                    </v-col>
+                </v-row>
+                
+                
 
 
                 <v-row v-if="extraFilters">

@@ -156,8 +156,8 @@ Vue.component("geo-map", {
           <v-card-text>
             <h3 v-if="title" class=" mb-5">{{ title }}</h3>
             <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
-              <v-text-field dense type="number" min="-90" max="90" :label="translations.latitude_" v-model="lat"></v-text-field>
-              <v-text-field dense type="number" min="-180" max="180" :label="translations.longitude_" v-model="lng"></v-text-field>
+              <v-text-field dense type="number" min="-90" max="90" :label="translations.latitude_" v-model.number="lat"></v-text-field>
+              <v-text-field dense type="number" min="-180" max="180" :label="translations.longitude_" v-model.number="lng"></v-text-field>
             </div>
 
 

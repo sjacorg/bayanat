@@ -47,7 +47,8 @@ Vue.component('visualization', {
 
             function find_relation_type(item, relation, target) {
 
-                if (item.class == 'Bulletin' && target == 'Bulletin') {
+
+                if (item.class === 'bulletin' && target === 'bulletin') {
                     if (relation.related_as) {
                         return translations.btobRelateAs[relation.related_as].en;
                     }
@@ -55,14 +56,14 @@ Vue.component('visualization', {
 
                 }
                 ;
-                if ((item.class == 'Bulletin' && target == 'Actor') || (item.class == 'Actor' && target == 'Bulletin')) {
+                if ((item.class === 'bulletin' && target === 'actor') || (item.class === 'actor' && target === 'bulletin')) {
                     // relation is an array here
 
                     return relation.related_as.reduce((p, a) => p + translations.btoaRelateAs[a].en + ' ', '');
                 }
                 ;
 
-                if (item.class == 'Actor' && target == 'Actor') {
+                if (item.class === 'actor' && target === 'actor') {
 
                     if (relation.related_as) {
                         if (relation.actor.id > item.id) {
@@ -76,7 +77,7 @@ Vue.component('visualization', {
                 }
 
 
-                if (target == 'Incident') {
+                if (target === 'incident') {
                     return 'default'
                 }
                 ;
@@ -89,7 +90,7 @@ Vue.component('visualization', {
             // prepend a/b/i based on entity type (actor/bulletin/incident) to avoid clashes during graph construction
             const bulletins = item.bulletin_relations.map(x => {
                 return {
-                    id: 'B' + x.bulletin.id,
+                    id: 'b' + x.bulletin.id,
                     related_as: find_relation_type(item, x, 'Bulletin'),
                     title: x.bulletin.title,
                     color: this.BULLETINCOLOR,
@@ -101,7 +102,7 @@ Vue.component('visualization', {
             });
             const actors = item.actor_relations.map(x => {
                 return {
-                    id: 'A' + x.actor.id,
+                    id: 'a' + x.actor.id,
                     related_as: find_relation_type(item, x, 'Actor'),
                     title: x.actor.name,
                     color: this.ACTORCOLOR,
@@ -112,7 +113,7 @@ Vue.component('visualization', {
             });
             const incidents = item.incident_relations.map(x => {
                 return {
-                    id: 'I' + x.incident.id,
+                    id: 'i' + x.incident.id,
                     related_as: find_relation_type(item, x, 'Incident'),
                     title: x.incident.title,
                     color: this.INCIDENTCOLOR,
@@ -225,7 +226,7 @@ Vue.component('visualization', {
             // merge only nodes that don't already exist
 
             graphData.nodes.forEach(x => {
-                    if (!this.graphData.nodes.some(e => (e.id == x.id))) {
+                    if (!this.graphData.nodes.some(e => (e.id === x.id))) {
                         this.graphData.nodes.push(x);
                     }
                 }
@@ -237,7 +238,7 @@ Vue.component('visualization', {
             const id = node.id.substring(1);
 
             const type = node.type.toLowerCase();
-            if (type == 'bulletin') {
+            if (type === 'bulletin') {
                 axios.get(`/admin/api/${type}/${id}`).then(res => {
                     const bulletin = res.data;
                     const extraGraph = this.generateGraph(bulletin)
@@ -253,7 +254,7 @@ Vue.component('visualization', {
                     node.collapsed = false;
                     node.color = node.color + '66';
                 })
-            } else if (type == 'actor') {
+            } else if (type === 'actor') {
                 axios.get(`/admin/api/${type}/${id}`).then(res => {
                     const actor = res.data;
                     //console.log(actor);
@@ -272,7 +273,7 @@ Vue.component('visualization', {
                     node.collapsed = false;
                     node.color = node.color + '66';
                 })
-            } else if (type == 'incident') {
+            } else if (type === 'incident') {
                 axios.get(`/admin/api/${type}/${id}`).then(res => {
                     const actor = res.data;
                     //console.log(actor);
@@ -369,7 +370,7 @@ Vue.component('visualization', {
                 .onNodeClick((node, event) => {
 
                     if (event.ctrlKey || event.metaKey) {
-                        console.log(node);
+
                         // command click or ctrl click
                         const id = node.id.substring(1);
                         const type = node.type.toLowerCase();

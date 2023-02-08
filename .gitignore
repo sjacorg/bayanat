@@ -18,3 +18,4 @@ enferno/media/*
 *.csv
 *.xls
 *.xlsx
+.aws

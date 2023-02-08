@@ -1,7 +1,11 @@
-{% extends 'layout.html' %} {% block content %}
-    {% block css %}
-        <link rel="stylesheet" href="/static/js/filepond/dist/filepond.min.css"/>
-    {% endblock %}
+{% extends 'layout.html' %}
+{% block css %}
+    <link rel="stylesheet" href="/static/js/dropzone/vue2Dropzone.min.css"/>
+    <link rel="stylesheet" href="/static/js/dropzone/basic.css"/>
+{% endblock %}
+
+{% block content %}
+
     <div id="app">
         <v-app v-cloak>
             {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
@@ -36,27 +40,34 @@
                                         </v-sheet>
 
                                         <v-sheet max-width="800" class="mx-auto fp-wrap">
-                                            <file-pond v-show="firstAction!=1" class="mx-auto my-8"
-                                                       name="media"
-                                                       ref="media"
-                                                       key="media"
-                                                       @removefile="fileRemoved"
+                                            <v-card elevation="1" class="text-center my-3">
+                                                <v-card-title class="subtitle-1">Select Sheet Language</v-card-title>
+                                                <v-card-text>
+                                                    <v-chip-group class="mx-auto"
+                                                                  column
+                                                                  mandatory
 
-                                                       label-idle="{{_('Click here or Drop a Sheet to Start')}}"
-                                                       v-bind:allow-multiple="false"
-                                                    {#  accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"#}
-                                                       server="/admin/api/csv/upload/"
-                                                       v-model="files"
-                                                       v-bind:files="files"
-                                                       v-on:processfile="onFileUploaded"
-                                                       max-files="1"
+                                                                  v-model="lang"
+                                                    >
+                                                        <v-chip :value="lang" small label filter outlined
+                                                                v-for="lang in languages">
+                                                            ${lang}
+                                                        </v-chip>
+                                                    </v-chip-group>
+                                                </v-card-text>
 
+                                            </v-card>
 
-                                            ></file-pond>
+                                            <vue-dropzone ref="dropzone" id="dropzone" class="ma-auto" :options="dzOpts"
+                                                          @vdropzone-error="showError"
+                                                          @vdropzone-success="uploadSuccess"></vue-dropzone>
 
-
-                                            <v-select label="{{_('Select Sheet to continue')}}" @change="sheetSelected" v-if="sheets.length && files.length" class="my-3" :items="sheets" v-model="selectedSheet">
+                                            <v-select label="{{ _('Select Sheet to continue') }}"
+                                                      @change="sheetSelected" v-if="sheets.length && files.length"
+                                                      class="my-3" :items="sheets" v-model="selectedSheet">
                                             </v-select>
+
+
                                         </v-sheet>
 
 
@@ -66,7 +77,7 @@
                                             <v-autocomplete
                                                     outlined
                                                     class="mt-2 mx-2"
-                                                    label="{{_('Load existing map')}}"
+                                                    label="{{ _('Load existing map') }}"
                                                     :items="maps"
                                                     item-text="name"
                                                     item-value="id"
@@ -81,23 +92,23 @@
                                             </v-autocomplete>
 
 
-                                            <div v-if="selectedMap">
+                                            <template v-if="selectedMap">
                                                 <v-btn @click="step=3" class=" mx-2" color="primary" elevation="0">
 
-                                                    {{_('Continue')}}
+                                                    {{ _('Continue') }}
 
                                                 </v-btn>
-                                            </div>
+                                            </template>
 
 
                                         </v-sheet>
 
                                         <v-sheet max-height="calc(100vh - 560px)">
-                                        <v-img v-show="firstAction!=1" style="max-width: 75%; margin:auto"
-                                               src="/static/img/csv-tool-bg.jpg">
+                                            <v-img v-show="firstAction!=1" style="max-width: 75%; margin:auto"
+                                                   src="/static/img/csv-tool-bg.jpg">
 
-                                        </v-img>
-                                    </v-sheet>
+                                            </v-img>
+                                        </v-sheet>
 
 
                                     </v-stepper-content>
@@ -108,13 +119,13 @@
                                             <v-btn small @click="step=1"
                                                    color="grey"
                                                    elevation="0">
-                                                   {{ _('Back') }}
+                                                {{ _('Back') }}
                                             </v-btn>
                                             <v-spacer></v-spacer>
                                             <v-select dense
                                                       @click:clear="resetFields"
                                                       class="mt-2 mx-2"
-                                                      label="{{_('Load existing map')}}"
+                                                      label="{{ _('Load existing map') }}"
                                                       :items="maps"
                                                       item-text="name"
                                                       item-value="id"
@@ -149,10 +160,12 @@
                                                             {{ _('Sheet Fields') }}
 
                                                             <v-btn @click="resetFields" small color="alert" text
-                                                                   class="mx-2">{{_('Reset')}}
+                                                                   class="mx-2">{{ _('Reset') }}
                                                             </v-btn>
                                                         </h3>
-                                                        <v-text-field @keydown.enter="filterFields" label="{{_('Search Fields')}}" v-model="ffilter" clearable  ></v-text-field>
+                                                        <v-text-field @keydown.enter="filterFields"
+                                                                      label="{{ _('Search Fields') }}" v-model="ffilter"
+                                                                      clearable></v-text-field>
 
 
                                                         <draggable
@@ -180,7 +193,7 @@
                                                                         </v-icon>
                                                                     </template>
                                                                     <v-sheet class="pa-3 ">
-                                                                        <h6 class="font-italic text--black mb-2">{{_('Sample Data')}}</h6>
+                                                                        <h6 class="font-italic text--black mb-2">{{ _('Sample Data') }}</h6>
                                                                         <div class="caption text--disabled my-2"
                                                                              v-for="s in structure.head[item]"> ${s}
                                                                         </div>
@@ -198,15 +211,16 @@
 
                                                 <v-col cols="12" md="9">
                                                     <v-sheet elevation="0" color="white lighten-5"
-                                                             class="csv-panel pa-5" max-height="calc(100vh - 400px)" max-width=100%>
+                                                             class="csv-panel pa-5" max-height="calc(100vh - 400px)"
+                                                             max-width=100%>
                                                         <div class="d-flex align-center">
                                                             <h3 class="my-3">
-                                                                {{_('Actor Fields')}}
+                                                                {{ _('Actor Fields') }}
 
                                                             </h3>
                                                             <v-divider vertical class="mx-3"></v-divider>
                                                             <v-text-field
-                                                                    label="{{_('Map Name')}}"
+                                                                    label="{{ _('Map Name') }}"
                                                                     v-model="mapName"
 
                                                                     class="ml-5 "
@@ -214,10 +228,13 @@
 
                                                             </v-text-field>
                                                             <v-spacer></v-spacer>
-                                                            <v-btn v-if="mapid" @click="updateMap" primary small class="mx-2">{{_('Update map')}}</v-btn>
-                                                            <v-btn @click="createMap" primary small class="mx-2">{{ _('Create a new map') }}
+                                                            <v-btn v-if="mapid" @click="updateMap" primary small
+                                                                   class="mx-2">{{ _('Update map') }}</v-btn>
+                                                            <v-btn @click="createMap" primary small
+                                                                   class="mx-2">{{ _('Create a new map') }}
                                                             </v-btn>
-                                                            <v-btn v-if="mapid" x-small class="mx-2">{{_('Delete')}}</v-btn>
+                                                            <v-btn v-if="mapid" x-small
+                                                                   class="mx-2">{{ _('Delete') }}</v-btn>
                                                         </div>
 
                                                         <v-divider class="mb-2"></v-divider>
@@ -232,7 +249,7 @@
                                                                     <v-btn-toggle v-model="vmap.name" borderless
                                                                                   color="primary accent-3"
                                                                                   group>
-                                                                        <v-btn value="1" small text>
+                                                                        <v-btn v-tippy content="Make it Unique!"  value="1" small text>
                                                                             <v-icon small>mdi-key</v-icon>
                                                                         </v-btn>
                                                                     </v-btn-toggle>
@@ -245,20 +262,19 @@
                                                             <drop-field v-model="map.nickname"
                                                                         caption="{{ _('Nickname') }}"></drop-field>
 
-                                                               <drop-field v-model="map.nickname_ar"
+                                                            <drop-field v-model="map.nickname_ar"
                                                                         caption="{{ _('Nickname (AR)') }}"></drop-field>
 
 
-
-                                                                <template v-slot:extra>
-                                                                    <v-btn-toggle v-model="vmap.originid" borderless
-                                                                                  color="primary accent-3"
-                                                                                  group>
-                                                                        <v-btn value="1" small text>
-                                                                            <v-icon small>mdi-key</v-icon>
-                                                                        </v-btn>
-                                                                    </v-btn-toggle>
-                                                                </template>
+                                                            <template v-slot:extra>
+                                                                <v-btn-toggle v-model="vmap.originid" borderless
+                                                                              color="primary accent-3"
+                                                                              group>
+                                                                    <v-btn v-tippy content="Make it Unique!"  value="1" small text>
+                                                                        <v-icon small>mdi-key</v-icon>
+                                                                    </v-btn>
+                                                                </v-btn-toggle>
+                                                            </template>
                                                             </drop-field>
                                                         </v-row>
                                                         <v-row>
@@ -324,7 +340,8 @@
 
 
                                                         <v-row>
-                                                            <drop-field v-model="map.sex" caption="{{ _('Sex') }}"></drop-field>
+                                                            <drop-field v-model="map.sex"
+                                                                        caption="{{ _('Sex') }}"></drop-field>
                                                             <drop-field v-model="map.age"
                                                                         caption="{{ _('Minor/Adult') }}"></drop-field>
                                                             <drop-field v-model="map.civilian"
@@ -350,25 +367,25 @@
 
 
                                                             <div>
-                                                                <v-subheader>{{_('Events')}}</v-subheader>
+                                                                <v-subheader>{{ _('Events') }}</v-subheader>
                                                             </div>
 
                                                             <v-sheet class="pa-3 my-2 d-flex flex-wrap align-center"
                                                                      outlined
                                                                      v-for="event,i in map.events" :key="i">
-                                                                <drop-field caption="{{_('Title')}}"
+                                                                <drop-field caption="{{ _('Title') }}"
                                                                             v-model="map.events[i].title"></drop-field>
 
                                                                 <v-sheet class="d-flex align-center">
 
                                                                     <drop-field v-if="!dynamicEtype"
-                                                                                caption="{{_('Event Type')}}"
+                                                                                caption="{{ _('Event Type') }}"
                                                                                 v-model="map.events[i].type"></drop-field>
 
                                                                     <v-select v-if="dynamicEtype" dense
                                                                               class="ml-3 mt-2" :items="eventtypes"
                                                                               item-text="title" item-value="title"
-                                                                              label="{{_('Event Type')}}"
+                                                                              label="{{ _('Event Type') }}"
                                                                               v-model="map.events[i].etype"></v-select>
 
                                                                     <v-icon @click="switchEtype" x-small
@@ -377,17 +394,17 @@
 
                                                                 </v-sheet>
 
-                                                                <drop-field caption="{{_('Comments')}}"
+                                                                <drop-field caption="{{ _('Comments') }}"
                                                                             v-model="map.events[i].comments"></drop-field>
-                                                                <drop-field caption="{{_('Location')}}"
+                                                                <drop-field caption="{{ _('Location') }}"
                                                                             v-model="map.events[i].location"></drop-field>
 
 
-                                                                <drop-field caption="{{_('From')}}"
+                                                                <drop-field caption="{{ _('From') }}"
                                                                             v-model="map.events[i].from_date"></drop-field>
-                                                                <drop-field caption="{{_('To')}}"
+                                                                <drop-field caption="{{ _('To') }}"
                                                                             v-model="map.events[i].to_date"></drop-field>
-                                                                <drop-field caption="{{_('Estimated Time')}}"
+                                                                <drop-field caption="{{ _('Estimated Time') }}"
                                                                             v-model="map.events[i].estimated"></drop-field>
 
                                                                 <v-btn v-if="i==map.events.length-1" small fab text
@@ -442,24 +459,24 @@
                                                         </v-row>
                                                         <v-row>
                                                             <drop-field v-model="map.source_link"
-                                                                        caption="{{ _('Source Link') }}"></drop-field>
-                                                                <template v-slot:extra>
-                                                                    <v-btn-toggle v-model="vmap.source_link" borderless
-                                                                                  color="primary accent-3"
-                                                                                  group>
-                                                                        <v-btn value="1" small text>
-                                                                            <v-icon small>mdi-key</v-icon>
-                                                                        </v-btn>
-                                                                    </v-btn-toggle>
-                                                                </template>
+                                                                        caption="{{ _('Source Link') }}">
+                                                            <template v-slot:extra>
+                                                                <v-btn-toggle v-model="vmap.source_link" borderless
+                                                                              color="primary accent-3"
+                                                                              group>
+                                                                    <v-btn v-tippy content="Make it Unique!" value="1" small text>
+                                                                        <v-icon small>mdi-key</v-icon>
+                                                                    </v-btn>
+                                                                </v-btn-toggle>
+                                                            </template>
 
                                                             </drop-field>
                                                             <drop-field v-model="map.source_link_type"
                                                                         caption="{{ _('Private') }}"></drop-field>
                                                             <drop-field v-model="map.publish_date"
-                                                                        caption="{{ _('Publish Date')}}"></drop-field>
+                                                                        caption="{{ _('Publish Date') }}"></drop-field>
                                                             <drop-field v-model="map.documentation_date"
-                                                                        caption="{{ _('Documentation Date')}}"></drop-field>
+                                                                        caption="{{ _('Documentation Date') }}"></drop-field>
 
                                                         </v-row>
 
@@ -678,7 +695,8 @@
                                                 <v-sheet>
                                                     <v-list color="yellow lighten-4" dense>
                                                         <v-list-item> {{ _('Sheet file:') }}
-                                                            <v-chip small dark class="mx-2" color="green">{{ _('Selected') }}
+                                                            <v-chip small dark class="mx-2"
+                                                                    color="green">{{ _('Selected') }}
                                                                 <v-icon right>mdi-check</v-icon>
                                                             </v-chip>
                                                         </v-list-item>
@@ -706,32 +724,37 @@
                                             </v-card-text>
 
                                             <v-card-title>
-                                                {{_('Optional: Upload more sheets to process')}}
+                                                {{ _('Optional: Upload more sheets to process') }}
                                             </v-card-title>
 
 
                                             <v-card-text>
 
+                                                 <vue-dropzone ref="extradropzone" id="dropzone" class="ma-auto" :options="dzMoreOpts"
+                                                          @vdropzone-error="showError"
+                                                               @vdropzone-removed-file="fileRemoveHandler"
+                                                          @vdropzone-success="extraUploadSuccess"></vue-dropzone>
 
-                                                <file-pond class="mx-auto my-8"
-                                                           name="media"
-                                                           ref="extra"
-                                                           key="extra"
-                                                           @processfilestart="processStarted"
-                                                           label-idle="{{_('Select More CSV/XLS(x) Files')}}"
-                                                           v-bind:allow-multiple="true"
-                                                        {# accepted-file-types="image/jpeg, image/png, video/mp4, video/webm, application/pdf"#}
-                                                           server="/admin/api/csv/upload/"
-                                                           v-model="extra"
-                                                           v-bind:files="extra"
-                                                           v-on:processfile="onExtraFilesUploaded"
 
-                                                ></file-pond>
+
+                                                  <search-field
+                                                                api="/admin/api/roles/"
+                                                                item-text="name"
+                                                                item-value="id"
+                                                                :multiple="true"
+                                                                label="{{ _('Access Roles') }}"
+                                                                v-model="roles"
+                                                        ></search-field>
+
+
+
+
+                                                
 
                                             </v-card-text>
                                             <v-card-actions class="d-flex justify-center">
                                                 <v-btn @click="toStepFour" :disabled="processDisabled" color="primary">
-                                                    {{_('Process File(s)')}}
+                                                    {{ _('Process File(s)') }}
                                                 </v-btn>
 
                                             </v-card-actions>
@@ -747,7 +770,7 @@
                                             </template>
 
                                             <v-card-title v-if="batchId">
-                                                {{_('Batch ID:')}} ${batchId}
+                                                {{ _('Batch ID:') }} ${batchId}
                                             </v-card-title>
 
                                             <v-virtual-scroll
@@ -767,7 +790,7 @@
                                                                 <v-chip color="white lighten-4 mx-1">${item.status}
                                                                 </v-chip>
                                                                 <v-chip v-if="item.meta"
-                                                                        :href="'/admin/actors/#/admin/actors/'+item.meta.id"
+                                                                        :href="'/admin/actors/'+item.meta.id"
                                                                         target="_blank" color="white lighten-4 mx-3">
                                                                     Actor ${item.meta.id}
                                                                     <v-icon
@@ -822,10 +845,10 @@
         </v-app>
     </div>
 
-{% endblock %} {% block js %}
+{% endblock %}
+{% block js %}
 
-    <script src="/static/js/filepond/dist/filepond.min.js"></script>
-    <script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
+    <script src="/static/js/dropzone/vue2Dropzone.js"></script>
     <script src="/static/js/Sortable.min.js"></script>
     <script src="/static/js/vuedraggable.umd.min.js"></script>
     <script src="/static/js/components/DropField.js"></script>
@@ -846,6 +869,30 @@
                 loading: false,
                 status: '',
                 firstAction: 0,
+
+                dzOpts: {
+                    url: '/admin/api/csv/upload',
+                    // accept any file
+                    acceptedFiles: '.csv,.xls,.xlsx',
+                    addRemoveLinks: true,
+                    thumbnailWidth: 80, // px
+                    thumbnailHeight: 80,
+                    maxFiles: 1
+
+                },
+                dzMoreOpts : {
+                    url: '/admin/api/csv/upload',
+                    // accept any file
+                    acceptedFiles: '.csv,.xls,.xlsx',
+                    addRemoveLinks: true,
+                    thumbnailWidth: 80, // px
+                    thumbnailHeight: 80,
+                    maxFiles: null
+
+                },
+
+                languages: {{ config.LANGUAGES|safe }},
+                lang: 'en',
 
                 structure: null,
                 fields: null,
@@ -891,6 +938,7 @@
                 ffilter: null,
                 files: [],
                 extra: [],
+                roles : [],
                 options: {
                     page: 1,
                     itemsPerPage: 100
@@ -913,7 +961,7 @@
 
             }),
             components: {
-                FilePond: vueFilePond.default(),
+                vueDropzone: vue2Dropzone,
                 draggable
             },
 
@@ -926,11 +974,7 @@
 
             computed: {
                 mapValid() {
-                    if (this.map.name && this.map.name.length > 0) {
-                        return true;
-                    }
-                    return false;
-
+                    return this.map.name && this.map.name.length > 0;
                 },
 
                 allFiles() {
@@ -960,25 +1004,45 @@
 
             methods: {
 
-                filterFields(){
-                    if (this.ffilter){
-                    this.fields = this.structure.columns.filter(x=> x.toLowerCase().includes(this.ffilter.toLowerCase()));
-                    }else {
-                        this.fields = this.structure.columns;
+                showError(err, message) {
+                    this.showSnack(message);
+                },
+
+                fileRemoveHandler(file, error, xhr) {
+                    if (!error) {
+                        // pop out that specific removed file
+                        this.extra = this.extra.filter(x =>
+                            x.uuid !== file.upload.uuid
+                        );
                     }
-
-
                 },
 
-                returnToStack(item){
-                    let field = item.pop();
-                    this.fields.indexOf(field) === -1 ? this.fields.unshift(field) : console.log("This item already exists");
+                extraUploadSuccess(dzfile) {
 
+                    // pick file from dropzone files list
+                    const needle = this.$refs.extradropzone.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
+
+
+                    const file = parseResponse(needle);
+
+                    this.extra.push(file);
                 },
 
+                uploadSuccess(dzfile) {
 
-                sheetSelected(){
-                  axios.post('/admin/api/xls/analyze', {file: JSON.parse(this.files[0].serverId), sheet: this.selectedSheet}).then(res => {
+                    // pick file from dropzone files list
+                    const needle = this.$refs.dropzone.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
+
+
+                    const file = parseResponse(needle);
+
+                    this.files.push(file);
+
+                     const ext = file.filename.split('.').at(-1);
+
+                        if (ext === 'csv') {
+
+                            axios.post('/admin/api/csv/analyze', {file: file}).then(res => {
                                 this.structure = res.data;
                                 this.fields = this.structure.columns;
                                 this.backup = this.fields.slice();
@@ -994,9 +1058,63 @@
 
                                 }
                             );
+                        } else if (ext === 'xls' || ext === 'xlsx') {
+                            axios.post('/admin/api/xls/sheets', {file: file}).then(res => {
+                                this.sheets = res.data;
+                            }).catch(
+                                err => {
+                                    console.log(err.response.data)
+                                }
+                            ).finally(
+                                () => {
+
+                                }
+                            );
+                        }
+
                 },
 
-                fileRemoved(){
+
+                filterFields() {
+                    if (this.ffilter) {
+                        this.fields = this.structure.columns.filter(x => x.toLowerCase().includes(this.ffilter.toLowerCase()));
+                    } else {
+                        this.fields = this.structure.columns;
+                    }
+
+
+                },
+
+                returnToStack(item) {
+                    let field = item.pop();
+                    this.fields.indexOf(field) === -1 ? this.fields.unshift(field) : console.log("This item already exists");
+
+                },
+
+
+                sheetSelected() {
+                    axios.post('/admin/api/xls/analyze', {
+                        file: this.files[0],
+                        sheet: this.selectedSheet
+                    }).then(res => {
+                        this.structure = res.data;
+                        this.fields = this.structure.columns;
+                        this.backup = this.fields.slice();
+                        // since we are mapping, make sure selectedMap is not populated
+                        this.selectedMap = null;
+                        this.step = 2;
+                    }).catch(
+                        err => {
+                            console.log(err.response.data)
+                        }
+                    ).finally(
+                        () => {
+
+                        }
+                    );
+                },
+
+                fileRemoved() {
                     this.selectedSheet = null;
                     this.sheets = [];
                 },
@@ -1009,11 +1127,9 @@
 
                     if (this.dynamicEtype == true) {
                     } else {
-                        for (const ev of this.map.events){
-                        delete (ev.etype)
+                        for (const ev of this.map.events) {
+                            delete (ev.etype)
                         }
-
-
 
 
                     }
@@ -1048,21 +1164,19 @@
                     this.batchId = Date.now()
 
 
-                    const files = this.allFiles.map(x => JSON.parse(x.serverId));
+                    const files = this.allFiles.map(x => x.filename);
 
                     // add countries to actor config
                     let config = translations;
-
-
-
-
 
 
                     axios.post('/admin/api/process-sheet', {
                         map: this.map,
                         vmap: this.vmap,
                         sheet: this.selectedSheet,
+                        roles: this.roles,
                         target: 'actor',
+                        lang: this.lang,
                         files: files,
                         batch: this.batchId,
                         actorConfig: config
@@ -1079,7 +1193,6 @@
                     );
 
                 },
-
 
 
                 loadMap(m) {
@@ -1128,7 +1241,7 @@
                     axios.get(`/admin/api/logs?batch=${this.batchId}`).then(res => {
 
 
-                        if (this.log.length == res.data.length) {
+                        if (this.log.length === res.data.length) {
                             clearInterval(this.statusTimer);
                             this.statusTimer = null;
                             this.showSnack('Import complete !')
@@ -1192,24 +1305,24 @@
                 }
                 ,
 
-                createMap(){
-                     //create new
-                        axios.post('/admin/api/mapping/', {
-                            name: this.mapName,
-                            data: {
-                                map: this.map,
-                                vmap: this.vmap
-                            }
-                        }).then(res => {
-                            this.showSnack(res.data.message);
-                            this.mapid = res.data.id;
-                        }).catch(err => {
-                            console.log(err.response);
-                        }).finally(
-                            () => {
+                createMap() {
+                    //create new
+                    axios.post('/admin/api/mapping/', {
+                        name: this.mapName,
+                        data: {
+                            map: this.map,
+                            vmap: this.vmap
+                        }
+                    }).then(res => {
+                        this.showSnack(res.data.message);
+                        this.mapid = res.data.id;
+                    }).catch(err => {
+                        console.log(err.response);
+                    }).finally(
+                        () => {
 
-                            }
-                        );
+                        }
+                    );
                 },
 
                 processStarted() {
@@ -1251,10 +1364,9 @@
 
                                 }
                             );
-                        }
-                        else if (ext == 'xls' || ext=='xlsx') {
-                             axios.post('/admin/api/xls/sheets', {file: JSON.parse(this.files[0].serverId)}).then(res => {
-                               this.sheets = res.data;
+                        } else if (ext == 'xls' || ext == 'xlsx') {
+                            axios.post('/admin/api/xls/sheets', {file: JSON.parse(this.files[0].serverId)}).then(res => {
+                                this.sheets = res.data;
                             }).catch(
                                 err => {
                                     console.log(err.response.data)

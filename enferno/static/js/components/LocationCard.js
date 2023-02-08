@@ -42,7 +42,9 @@ Vue.component("location-card", {
                 .then((response) => {
                     this.revisions = response.data.items;
                 }).catch(error => {
-                console.log(error.response.data)
+                  if(error.response){
+                    console.log(error.response.data)
+                  }
             }).finally(() => {
                 this.hloading = false;
             });

@@ -9,7 +9,7 @@ import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
     Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation, Log
 from enferno.admin.views import admin
-from enferno.extensions import cache, db, mail, debug_toolbar, session, bouncer, babel
+from enferno.extensions import cache, db, mail, debug_toolbar, session, bouncer, babel, rds
 from enferno.public.views import bp_public
 from enferno.settings import ProdConfig
 from enferno.user.forms import ExtendedRegisterForm
@@ -41,6 +41,7 @@ def register_extensions(app):
     session.init_app(app)
     bouncer.init_app(app)
     babel.init_app(app)
+    rds.init_app(app)
 
     return None
 
@@ -70,13 +71,11 @@ def register_blueprints(app):
     app.register_blueprint(admin)
 
     if app.config.get('DEDUP_TOOL'):
-
         try:
             from enferno.deduplication.views import deduplication
             app.register_blueprint(deduplication)
         except ImportError as e:
-            pass
-
+            print(e)
 
     return None
 
@@ -136,3 +135,4 @@ def register_commands(app):
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
+

@@ -21,6 +21,14 @@ Vue.component('actor-search-box', {
         i18n: {
             type: Object,
 
+        },
+
+         roles: {
+            type: Array
+        },
+         isAdmin : {
+        type: Boolean,
+        default: false
         }
     },
 
@@ -29,7 +37,8 @@ Vue.component('actor-search-box', {
             searches: [],
             repr: '',
             q: {},
-            qName: ''
+            qName: '',
+
 
 
         }
@@ -149,6 +158,24 @@ Vue.component('actor-search-box', {
             </div>
           </v-col>
         </v-row>
+        
+           <v-row v-if="isAdmin" > 
+                    <v-col md="9">
+                        <span class="caption">Access Roles</span>
+                        <v-chip-group
+                                column
+                                multiple
+                                v-model="q.roles"                                
+                        >
+                            <v-chip v-if="roles" :value="role.id" small v-for="role in roles" filter
+                                    outlined>{{role.name}}</v-chip>
+                        </v-chip-group>
+                    </v-col>
+                    <v-col md="3">
+                        <span class="caption">Unrestricted</span>
+                        <v-switch v-model="q.norole"></v-switch>
+                    </v-col>
+            </v-row>
 
 
         <v-row v-if="extraFilters">

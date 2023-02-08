@@ -6,7 +6,11 @@
             close-btn="true"
             v-model="search"
             @search="doSearch"
-            :users="users"></incident-search-box>
+            :users="users"
+            :roles="roles"
+            :is-admin="has_role(currentUser,'Admin')"
+
+    ></incident-search-box>
 </v-dialog>
 
 

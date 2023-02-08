@@ -21,6 +21,7 @@ class Role(db.Model, RoleMixin, BaseMixin):
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
+    color = db.Column(db.String(10))
     description = db.Column(db.String(255))
 
     # Permissions List
@@ -39,14 +40,18 @@ class Role(db.Model, RoleMixin, BaseMixin):
         return {
             'id': self.id,
             'name': self.name,
+            'description': self.description,
+            'color': self.color or ''
 
         }
 
     def to_json(self):
         return json.dumps(self.to_dict())
 
-    def from_json(self, json):
-        self.name = json.get('name', '')
+    def from_json(self, jsn):
+        self.name = jsn.get('name', '')
+        self.description = jsn.get('description', '')
+        self.color = jsn.get('color')
         return self
 
     def __repr__(self):
@@ -102,6 +107,34 @@ class User(UserMixin, db.Model, BaseMixin):
     def __repr__(self):
         return "%s %s %s" % (self.name, self.id, self.email)
 
+    def can_access(self, obj):
+        """
+        check if user can access a specific entity
+        :param user: user to check
+        :param obj: entity (Bulletin, Actor etc ..)
+        :return: True or False based on access roles
+        """
+        # grant admin access always to restricted items
+        if self.has_role('Admin'):
+            return True
+
+        # handle primary entities (bulletins, actors, incidents)
+        if obj.__tablename__ in ['bulletin','actor','incident']:
+            # intersect roles
+            if not obj.roles or set(self.roles) & set(obj.roles):
+                return True
+
+        # handle media access
+        elif obj.__tablename__ == 'media':
+            # media can be related to either an actor or a bulletin
+            # find out which one
+            parent = obj.bulletin or obj.actor
+            # Restrict all medias without a parent
+            # intersect roles with parent
+            if parent and (not parent.roles or set(self.roles) & set(parent.roles)):
+                return True
+        return False
+
     def from_json(self, item):
         self.email = item.get('email')
         self.username = item.get('username')
@@ -130,7 +163,9 @@ class User(UserMixin, db.Model, BaseMixin):
 
         try:
             hide = True
-            if current_user.view_usernames or current_user.has_role('Admin'):
+            # calls from shell (during sync) can be identified by a null user
+            # any call from a http request will have a context and at least an anonymous user object (not null) 
+            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
                 hide = False
         except Exception:
             hide = True
@@ -141,7 +176,6 @@ class User(UserMixin, db.Model, BaseMixin):
         else:
             name = self.name
             username = self.username
-
 
         return {
             'id': self.id,
@@ -171,7 +205,6 @@ class User(UserMixin, db.Model, BaseMixin):
                 'view_full_history': self.view_full_history,
                 'can_self_assign': self.can_self_assign,
                 'can_edit_locations': self.can_edit_locations
-
             }
 
     def to_json(self):

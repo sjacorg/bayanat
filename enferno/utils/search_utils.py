@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from sqlalchemy import or_, not_, func, and_
 
 from enferno.admin.models import Bulletin, Actor, Incident, Label, Source, Location, Event
-
+from enferno.user.models import Role
 
 
 class SearchUtils:
@@ -306,7 +306,16 @@ class SearchUtils:
                 query.append((func.date(Bulletin.updated_at) >= updated - diff) & (func.date(Bulletin.updated_at) <= updated + diff))
             else:
                 query.append(func.date(Bulletin.updated_at) == updated)
-                
+
+        # Access Roles
+        roles = q.get('roles')
+
+
+        if roles:
+            query.append(Bulletin.roles.any(Role.id.in_(roles)))
+        if q.get('norole'):
+            query.append(~Bulletin.roles.any())
+
 
         # assigned user(s)
         assigned = q.get('assigned', [])
@@ -494,6 +503,14 @@ class SearchUtils:
                 query.append(Actor.documentation_date.between(docdate - diff, docdate + diff))
             else:
                 query.append(Actor.documentation_date == docdate)
+
+        # Access Roles
+        roles = q.get('roles')
+
+        if roles:
+            query.append(Actor.roles.any(Role.id.in_(roles)))
+        if q.get('norole'):
+            query.append(~Actor.roles.any())
 
         # assigned user(s)
         assigned = q.get('assigned', [])
@@ -722,6 +739,14 @@ class SearchUtils:
                 diff = timedelta(days=int(docdatewithin[:-1]))
                 docdate = parse(docdate)
                 query.append(Incident.documentation_date.between(docdate - diff, docdate + diff))
+
+        # Access Roles
+        roles = q.get('roles')
+
+        if roles:
+            query.append(Incident.roles.any(Role.id.in_(roles)))
+        if q.get('norole'):
+            query.append(~Incident.roles.any())
 
         # assigned user(s)
         assigned = q.get('assigned', [])

@@ -193,10 +193,16 @@ Vue.component("actor-card", {
         <v-btn @click.stop="$root.$refs.viz.visualize(actor)" class="ml-2" outlined small elevation="0"><v-icon color="primary" left>mdi-graph-outline</v-icon> {{ i18n.visualize_ }}</v-btn>
       </v-card-text>
       
-      <v-chip color="blue-grey lighten-5" small class="pa-2 mx-2 my-2" v-if="actor.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
+      <v-chip color="blue-grey lighten-5" label small class="pa-2 mx-2 my-2" v-if="actor.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{actor.assigned_to['name']}}</v-chip>
-        <v-chip color="blue-grey lighten-5" small class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(actor.status)}}</v-chip>
+        <v-chip color="blue-grey lighten-5" small label class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(actor.status)}}</v-chip>
       </v-card>
+        
+        <v-card v-if="actor.roles?.length" color="blue darken-1" class="ma-2 pa-2 d-flex align-center flex-grow-1" elevation="0">
+        <v-icon content="Access Roles" v-tippy color="white">mdi-lock</v-icon>
+        <v-chip label color="gray darken-3" small v-for="role in actor.roles"  :color="role.color" class="caption mx-1">{{ role.name }}</v-chip>
+          
+        </v-card>
 
       <v-card outlined class="ma-2" color="grey lighten-5">
       <v-card-text>

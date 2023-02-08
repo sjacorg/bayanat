@@ -32,6 +32,7 @@
                     </v-expansion-panel-header>
                     <v-expansion-panel-content>
                         {{ i }}
+
                         <bulletin-search-box
                                 :i18n="translations"
                                 :show-op="!i==0"
@@ -39,7 +40,11 @@
                                 @close="advSearchExpand=false"
                                 close-btn="true"
                                 v-model="search[i]"
-                                :users="users">
+                                :users="users"
+                                :roles="roles"
+                                :is-admin="has_role(currentUser,'Admin')"
+
+                        >
                         </bulletin-search-box>
                     </v-expansion-panel-content>
                 </v-expansion-panel>

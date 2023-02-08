@@ -119,7 +119,7 @@ const sideNav = [
 
     {
         icon: "mdi-shield-lock",
-        text: "Groups & Permissions",
+        text: "Groups Management",
         href: "/admin/roles/"
     },
 
@@ -171,6 +171,8 @@ Vue.component('l-circle-marker', window.Vue2Leaflet.LCircleMarker);
 Vue.component('l-popup', window.Vue2Leaflet.LPopup);
 Vue.component('l-icon', window.Vue2Leaflet.LIcon);
 Vue.component('l-control', window.Vue2Leaflet.LControl);
+
+Vue.use(VueTippy);
 
 const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 
@@ -329,19 +331,19 @@ String.prototype.getFilename = function () {
     return this.substring(this.lastIndexOf('/') + 1).replace(/[\#\?].*$/, '').replace(/\.[^/.]+$/, "");
 
 }
-String.prototype.trunc = function(n){
-          return this.substr(0,n-1)+(this.length>n?'&hellip;':'');
+String.prototype.trunc = function (n) {
+    return this.substr(0, n - 1) + (this.length > n ? '&hellip;' : '');
 };
 
 
 //helper method to translate front-end strings using an array of translation objects (constructed in i18n.jinja2)
-function translate_status (str) {
-        const needle = i.statuses_.filter(x=> x.en == str).pop();
-        if (needle.tr) {
-            return needle.tr;
-        } else {
-            return needle.en;
-        }
+function translate_status(str) {
+    const needle = i.statuses_.filter(x => x.en == str).pop();
+    if (needle.tr) {
+        return needle.tr;
+    } else {
+        return needle.en;
+    }
 }
 
 String.prototype.toHHMMSS = function () {
@@ -423,6 +425,21 @@ var aggregateLocations = function (bulletin) {
 
 }
 
+function parseResponse(dzFile) {
+    // helper method to convert xml response to friendly json format
+    const response = JSON.parse(dzFile.xhr.response);
+
+    return {
+
+        uuid: dzFile.upload.uuid,
+        type: dzFile.type,
+        s3url: response.filename,
+        filename: response.filename,
+        etag: response.etag
+    }
+
+}
+
 function getBulletinLocations(ids) {
     promises = []
     ids.forEach(x => {
@@ -460,8 +477,6 @@ var aggregateIncidentLocations = function (incident) {
 
 
         });
-
-
 
 
         locations = locations.concat(eventLocations);
@@ -577,6 +592,6 @@ dataUriToBlob = function (dataURI) {
     return new Blob([ia], {type: mimeString});
 }
 
-const VID_EXT = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv", "mng", "mov", "avi", "qt", "wmv", "yuv", "rm", "asf", "amv", "mp4", "m4p", "m4v", "mpg", "mp2", "mpeg", "mpe", "mpv", "m4v", "svi", "3gp", "3g2", "mxf", "roq", "nsv", "flv", "f4v", "f4p", "f4a", "f4b", "mts", "lvr", "m2ts"]
-const OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp" ,"pnm"]
-const ETL_EXTENSIONS = ["gif", "doc", "docx", "pdf", "txt", "ttf"].concat(VID_EXT).concat(OCR_EXT)
+const VID_EXT = [".webm", ".mkv", ".flv", ".vob", ".ogv", ".ogg", ".rrc", ".gifv", ".mng", ".mov", ".avi", ".qt", ".wmv", ".yuv", ".rm", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".mts", ".lvr", ".m2ts"]
+const OCR_EXT = [".png", ".jpeg", ".tiff", ".jpg", ".gif", ".webp", ".bmp" ,".pnm"]
+const ETL_EXTENSIONS = [".gif", ".doc", ".docx", ".pdf", ".txt", ".ttf"].concat(VID_EXT).concat(OCR_EXT)

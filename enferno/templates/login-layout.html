@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>SJAC Bayanat V1.0 </title>
-    <meta name="description" content="Bayanat V1" />
-    <meta name="author" content="SJAC" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+    <meta charset="utf-8"/>
+    <title>SJAC Bayanat </title>
+    <meta name="description" content="Bayanat | A Data Management Solution by SJAC"/>
+    <meta name="author" content="SJAC"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
 
-    <link rel="stylesheet" href="/static/css/vuetify.min.css?v={{g.version}}" />
-    <link rel="stylesheet" href="/static/css/app.css?v={{g.version}}" />
-    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css?v={{g.version}}" />
-    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css" />
+    <link rel="stylesheet" href="/static/css/vuetify.min.css?v={{ g.version }}"/>
+    <link rel="stylesheet" href="/static/css/app.css?v={{ g.version }}"/>
+    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css?v={{ g.version }}"/>
+    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css"/>
 
-    <link rel="shortcut icon" type="image/png" href="/static/img/favicon.ico" />
+    <link rel="shortcut icon" type="image/png" href="/static/img/favicon.ico"/>
     {% block css %}{% endblock %}
-  </head>
+</head>
 
-  <body>
+<body>
 
 
-  <v-app id="app" v-cloak>
-     {% include 'nav-bar.html' %}
+<v-app id="app" v-cloak>
+    {% include 'nav-bar.html' %}
 
     <v-content>
         <v-container
@@ -31,49 +31,47 @@
         >
             <v-row>
                 <v-col class="pa-10">
-{% block content %} {% endblock %}
+                    {% block content %} {% endblock %}
                 </v-col>
             </v-row>
         </v-container>
 
 
-
     </v-content>
-  </v-app>
+</v-app>
 
 
 <script>
-      {% set settings = current_user.settings or {} %}
-      window.__settings__ = JSON.parse('{{settings|tojson|safe }}');
-      window.__lang__ = "{{session.get('lang')}}";
+    {% set settings = current_user.settings or {} %}
+    window.__settings__ = JSON.parse('{{settings|tojson|safe }}');
+    window.__lang__ = "{{session.get('lang')}}";
 
-  </script>
-
-
-
-    <script src="/static/js/vue.min.js?v={{g.version}}"></script>
-    <script src="/static/js/vuetify.min.js?v={{g.version}}"></script>
-    <script src="/static/js/vue-router.min.js"></script>
-    <script src="/static/js/axios.min.js?v={{g.version}}"></script>
-    <script src="/static/js/vee-validate.full.min.js?v={{g.version}}"></script>
-    <script src="/static/js/common/config.js?v={{g.version}}"></script>
+</script>
 
 
-
-    {% block js %}
-  <script>
-      const app = new Vue({
-          vuetify: vuetify,
-          el: '#app',
-          data: {
-              activeTab: null
-          }
-      })
-  </script>
-  {% endblock %}
+<script src="/static/js/vue.min.js?v={{ g.version }}"></script>
+<script src="/static/js/vuetify.min.js?v={{ g.version }}"></script>
+<script src="/static/js/vue-router.min.js"></script>
+<script src="/static/js/axios.min.js?v={{ g.version }}"></script>
+<script src="/static/js/vee-validate.full.min.js?v={{ g.version }}"></script>
+<script src="/static/js/common/config.js?v={{ g.version }}"></script>
 
 
-    <script type="text/javascript" src="/static/js/app.js?v={{g.version}}"></script>
 
-  </body>
+{% block js %}
+    <script>
+        const app = new Vue({
+            vuetify: vuetify,
+            el: '#app',
+            data: {
+                activeTab: null
+            }
+        })
+    </script>
+{% endblock %}
+
+
+<script type="text/javascript" src="/static/js/app.js?v={{ g.version }}"></script>
+
+</body>
 </html>

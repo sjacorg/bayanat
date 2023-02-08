@@ -2,13 +2,13 @@ Vue.component("mp-field", {
     props: {
         title: String,
         field: String,
-        type: String,
+        type: Number,
         i18n: Object
 
     },
     data: function () {
         return {
-            output: null
+            output: ''
         }
     },
     methods: {
@@ -28,7 +28,59 @@ Vue.component("mp-field", {
             }
             return output;
 
+        },
+
+        formatOutput() {
+            // format the display this field based on its type
+
+
+            // do some preprocessing for boolean fields
+            if (this.field === true) {
+                this.output = 'Yes'
+                return;
+            }
+
+            if (this.field === false) {
+                this.output = 'No'
+                return;
+            }
+
+
+            if (this.type === 1) {
+
+                // type 1 =  options + details
+                if (this.field?.opts) {
+
+                    this.output = this.field.opts + ': ';
+                }
+
+                if (this.field?.details) {
+                    this.output += this.field.details || '-';
+                }
+                return
+
+            }
+
+            if (this.type === 2) {
+                // type 2 = Reporters : list of objects
+                let out = ''
+                if (this.field?.length) {
+                    for (const x of this.field) {
+                        out += this.formatReporter(x);
+                    }
+                    this.output = out;
+                    return
+                }
+                return '-'
+            }
+            // final case : simple field
+
+            this.output = this.field;
+
+
         }
+
+
     },
     computed: {
         show() {
@@ -50,41 +102,7 @@ Vue.component("mp-field", {
         }
     },
     mounted() {
-        this.output = this.field;
-
-        // do some preprocessing for boolean fields
-        if (this.field === true) {
-            this.output = 'Yes'
-        }
-
-        if (this.field === false) {
-            this.output = 'No'
-        }
-
-
-        if (this.type == 1) {
-
-            if (this.field && this.field.opts) {
-                this.output = this.field.opts + ': ';
-            }
-
-            if (this.field && this.field.details) {
-                this.output += this.field.details || '-';
-            }
-
-        }
-
-        if (this.type == 2) {
-            let out = ''
-            if (this.field && this.field.length) {
-                for (x of this.field) {
-                    out += this.formatReporter(x);
-
-
-                }
-                this.output = out;
-            }
-        }
+        this.formatOutput();
 
 
     },

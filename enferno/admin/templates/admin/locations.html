@@ -79,7 +79,7 @@
                                                             <v-container>
                                                                 <v-row>
                                                                     <v-col cols="12" md="12">
-                                                                        <v-file-input 
+                                                                        <v-file-input
                                                                             v-model="csvFile" show-size
                                                                             accept=".csv"
                                                                             label="{{ _('Select CSV File') }}">
@@ -179,7 +179,6 @@
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 dialog: dialog,
                 imDialog: false,
-
                 drawer: drawer,
                 sideNav: sideNav,
                 locationDrawer: false,
@@ -189,7 +188,6 @@
                 snackbar: false,
                 snackMessage: '',
                 loading: true,
-                
                 csvFile: null,
                 q: '',
                 options: {},
@@ -336,7 +334,7 @@
 
                 has_role(user, role) {
                     for (r of user.roles) {
-                        if (r.name == role) {
+                        if (r.name === role) {
                             return true
                         }
                     }

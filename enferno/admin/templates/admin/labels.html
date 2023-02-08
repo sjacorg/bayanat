@@ -404,13 +404,14 @@
             .post("/admin/api/label/", { item: this.editedItem })
             .then(response => {
               
-              this.snackMessage = response.data;
+             this.snackMessage = response.data;
              this.snackbar = true;
              this.refresh()
             }).catch(error => {
-              
-              this.snackMessage = error.response.data
-              this.snackbar = true;
+              if(error.response){
+                this.snackMessage = error.response.data
+                this.snackbar = true;
+              }
               
             });
         }

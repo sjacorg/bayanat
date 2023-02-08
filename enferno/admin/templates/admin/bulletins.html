@@ -1,5 +1,7 @@
 {% extends 'layout.html' %} {% block css %}
-    <link rel="stylesheet" href="/static/js/filepond/dist/filepond.min.css"/>
+
+    <link rel="stylesheet" href="/static/js/dropzone/vue2Dropzone.min.css"/>
+    <link rel="stylesheet" href="/static/js/dropzone/basic.css"/>
 
 {% endblock %} {% block content %}
 
@@ -33,7 +35,19 @@
                                     :loading="loading"
                                     :server-items-length="itemsLength"
                                     class="elevation-1"
+                                    :item-class="rowClass"
+                                    @toggle-select-all="selectAllRestrict"
                             >
+
+                                <template v-slot:item.data-table-select="{ item, isSelected, select }">
+                                    <v-simple-checkbox
+                                            :value="isSelected"
+                                            :readonly="item.restricted"
+                                            v-if="!item.restricted"
+
+                                            @input="select($event)"
+                                    ></v-simple-checkbox>
+                                </template>
                                 <template v-slot:top>
                                     <v-toolbar flat color="white">
 
@@ -148,6 +162,19 @@
 
                                 </template>
 
+                                <template v-slot:item.roles="{item}">
+                                    <v-chip
+                                    small
+                                    v-for="role in item.roles"
+                                    :color="role.color"
+                                    style="scale:0.7"
+                                    v-tippy
+                                    :content="role.name"
+                                    >
+
+                                    </v-chip>
+                                </template>
+
                                 <template v-slot:item.status="{ item }">
                                     ${item.status}
                                     <v-chip
@@ -173,12 +200,11 @@
                                             </v-icon>
 
 
-
                                         </template>
                                         <span>Edit</span>
                                     </v-tooltip>
 
-                                      <v-tooltip top>
+                                    <v-tooltip top>
                                         <template v-slot:activator="{ on }">
                                             <v-icon
                                                     v-on="on"
@@ -192,14 +218,9 @@
                                             </v-icon>
 
 
-
                                         </template>
                                         <span>Assign to self</span>
                                     </v-tooltip>
-
-
-
-
 
 
                                     <v-tooltip top>
@@ -235,7 +256,6 @@
                                               ref="relateIncidents"></relate-incidents>
 
 
-                            {% include 'admin/partials/relate_media_dialog.html' %}
                             {% include 'admin/partials/video_player_dialog.html' %}
 
                             <visualization ref="viz" :i18n="translations"></visualization>
@@ -255,7 +275,8 @@
                                         <v-textarea v-model="assignBulletin.comments" label="Comments"></v-textarea>
                                     </v-card-text>
                                     <v-card-actions>
-                                        <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign" color="primary">Assign to self
+                                        <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign"
+                                               color="primary">Assign to self
                                         </v-btn>
                                     </v-card-actions>
                                 </v-card>
@@ -264,10 +285,13 @@
 
 
                             <v-snackbar v-model="snackbar">
-                                ${snackMessage}
-                                <v-btn color="secondary" text @click="snackbar = false">
-                                    Close
-                                </v-btn>
+                                <div class="d-flex justify-space-between align-center">
+                                    <span class="text-subtitle-1">${snackMessage}</span>
+                                    <v-btn color="white" fab small color="secondary" text @click="snackbar = false">
+                                        <v-icon small>mdi-close</v-icon>
+                                    </v-btn>
+                                </div>
+
                             </v-snackbar>
                         </v-card-text>
                     </v-card>
@@ -285,8 +309,8 @@
             referrerpolicy="origin"
     ></script>
     <script src="/static/js/tinymce-vue.min.js"></script>
-    <script src="/static/js/filepond/dist/filepond.min.js"></script>
-    <script src="/static/js/vue-filepond/dist/vue-filepond.min.js"></script>
+
+    <script src="/static/js/dropzone/vue2Dropzone.js"></script>
     <script src="/static/js/components/MediaCard.js?v={{ g.version }}"></script>
     <script src="/static/js/components/BulletinResult.js?v={{ g.version }}"></script>
     <script src="/static/js/components/ActorResult.js?v={{ g.version }}"></script>
@@ -326,7 +350,7 @@
             components: {
 
                 "tinymce-editor": Editor, // <- Important part,
-                FilePond: vueFilePond.default(),
+                vueDropzone: vue2Dropzone
 
             },
 
@@ -335,6 +359,23 @@
 
 
                 translations: translations,
+
+                dzOpts: {
+                    url: '/admin/api/media/chunk',
+                    acceptedFiles: 'image/*, video/*, application/*',
+                    addRemoveLinks: true,
+                    chunking: true,
+                    forceChunking: true,
+                    chunkSize: 500000, // Bytes
+                    thumbnailWidth: 80, // px
+                    thumbnailHeight: 80,
+                    parallelUploads: 1
+
+                },
+
+
+
+
 
                 assignBulletin: {},
                 selfAssignDialog: false,
@@ -353,6 +394,7 @@
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 users: JSON.parse(`{{users|tojson}}`),
 
+                roles: [],
                 // advanced search
                 q: {},
 
@@ -455,9 +497,10 @@
                 headers: [
                     {text: "{{_('ID')}}", value: "id", width: 12, sortable: true},
                     {text: "{{_('Title')}}", value: "title", width: 300, sortable: false},
+
                     {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
                         {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
-                        {text: "{{_('1st Reviewer')}}", value: "first_peer_reviewer.name", width: 130, sortable: false},
+                        {text: "{{_('Roles')}}", value: "roles", width: 130, sortable: false},
                     {% endif %}
                     {text: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
 
@@ -476,7 +519,9 @@
                     title: "",
                     events: [],
                     medias: [],
-                    bulletin_relations: []
+                    bulletin_relations: [],
+                    actor_relations: [],
+                    incident_relations: []
                 },
                 defaultItem: {
                     title: "",
@@ -491,10 +536,11 @@
 
                     // related actors
                     actor_relations: [],
+
+                    // related incidents
+                    incident_relations: [],
                     publish_date: '',
-                    documentation_date: '',
-
-
+                    documentation_date: ''
                 },
 
                 reviewItem: {},
@@ -619,6 +665,18 @@
             },
             mounted: function () {
 
+                // populate roles for advanced search for admins
+                {% if current_user.has_role('Admin') %}
+                    axios.get('/admin/api/roles/').then(res => {
+                        this.roles = res.data.items;
+                    }).catch(e => {
+                        this.roles = [];
+                        console.log(e.message);
+                    });
+                {% endif  %}
+
+
+
                 // display confirmation alert if edit dialog is open.
                 let self = this;
                 window.addEventListener("beforeunload", function (e) {
@@ -677,8 +735,28 @@
 
             methods: {
 
-                openSelfAssign(bulletin){
-                    this.assignBulletin = {id:bulletin.id};
+
+                selectAllRestrict(props) {
+                    if (props.value === false) {
+                        // untoggle on next tick
+                        this.$nextTick(() => {
+                            this.selected = [];
+                        })
+                    }
+
+                    console.log(props.items);
+                    this.selected = this.selected.concat(props.items.filter(x => !x.restricted))
+                },
+
+                rowClass(item) {
+                    if (item.restricted) {
+                        return 'restricted'
+                    }
+                    return ''
+                },
+
+                openSelfAssign(bulletin) {
+                    this.assignBulletin = {id: bulletin.id};
                     this.selfAssignDialog = true;
 
                 },
@@ -686,14 +764,13 @@
                 selfAssign(){
 
 
-
-                    axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`,{bulletin:this.assignBulletin}).then(res=>{
+                    axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
                         this.showSnack('Bulletin assigned successfully.')
                         this.searchBulletins(true)
 
-                    }).catch(err=>{
+                    }).catch(err => {
                         this.showSnack(err.response.data);
-                    }).finally(()=>{
+                    }).finally(() => {
                         this.selfAssignDialog = false;
                         this.assignBulletin = {};
 
@@ -926,6 +1003,10 @@
                 },
 
                 rowClick(item) {
+                    if (item.restricted) {
+                        this.showSnack('This item is restricted.')
+                        return
+                    }
                     path = `/admin/bulletins/${item.id}`;
                     if (this.$route.path !== path)
                         this.$router.push(path);
@@ -933,21 +1014,18 @@
                 },
 
                 showBulletin(id) {
-
-
                     this.bulletinLoader = true
                     this.bulletinDrawer = true;
                     axios.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
-                        this.loading = false;
                         this.bulletin = response.data;
-                        this.bulletinLoader = false;
-
-
                     }).catch(error => {
                         this.bulletinDrawer = false;
+                        if (error.response) {
+                            this.showSnack(error.response.data)
+                            this.snackbar = true;
+                        }
+                    }).finally(()=>{
                         this.bulletinLoader = false;
-                        this.showSnack('Oops! We couldn\'t find this item.')
-
                     });
                 },
 
@@ -998,8 +1076,8 @@
                     this.snackbar = true;
                 },
                 has_role(user, role) {
-                    for (r of user.roles) {
-                        if (r.name == role) {
+                    for (const r of user.roles) {
+                        if (r.name === role) {
                             return true
                         }
                     }
@@ -1007,13 +1085,18 @@
                 },
 
                 editAllowed(bulletin) {
+
+                    if(bulletin.restricted){
+                        return false;
+                    }
+                    
                     if (this.has_role(this.currentUser, 'Admin')) {
                         return true;
                     }
                     if (!this.has_role(this.currentUser, 'DA')) {
                         return false;
                     }
-                    const statuses = ['Human Created','Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
+                    const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
                     if (bulletin.assigned_to && bulletin.assigned_to.id == this.currentUser.id && statuses.includes(bulletin.status)) {
                         return true
                     }
@@ -1021,6 +1104,11 @@
                 },
 
                 reviewAllowed(bulletin) {
+
+                    if(bulletin.restricted){
+                        return false;
+                    }
+
                     if (!this.currentUser.roles.length) {
                         return false;
                     }
@@ -1032,7 +1120,12 @@
                     return false;
                 },
 
-                selfAssignAllowed(bulletin){
+                selfAssignAllowed(bulletin) {
+                    
+                    if(bulletin.restricted){
+                        return false;
+                    }
+
                     if (this.currentUser.can_self_assign) {
                         if ((!bulletin.assigned_to) || (bulletin.assigned_to && !bulletin.assigned_to.active)) {
                             return true
@@ -1327,6 +1420,7 @@
 
                 },
                 relateIncident(incident) {
+                    
                     // get list of existing attached actors
                     let ex = this.editedItem.incident_relations.map(x => x.incident.id);
 
