@@ -3842,7 +3842,7 @@ class Settings(db.Model, BaseMixin):
     darkmode = db.Column(db.Boolean, default=False)
     api_key = db.Column(db.String)
 
-    # can be used to generate custom api keys for different integratinos
+    # can be used to generate custom api keys for different integrations
     @staticmethod
     def get_api_key():
         s = Settings.query.first()

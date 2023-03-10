@@ -35,27 +35,39 @@ def create_db():
 
 
 @click.command()
+@click.option('--username', default="admin", help="Username for the admin user")
+@click.option('--password', help="Password for the admin user")
 @with_appcontext
-def install():
+def install(password, username):
     """Install a default Admin user and add an Admin role to it.
     """
     admin_role = Role.query.filter(Role.name == 'Admin').first()
 
-    # check if there's an existing admin
-    if admin_role.users.all():
+    if not admin_role:
+        admin_role = Role(name='Admin').save()
+    elif admin_role.users.all():
+        # check if there's an existing admin
         click.echo('An admin user is already installed.')
         return
 
     # to make sure username doesn't already exist
     while True:
-        u = click.prompt('Admin username?', default='admin')
+        if username:
+            u = username
+        else:
+            u = click.prompt('Admin username?', default='admin')
+
         check = User.query.filter(User.username == u.lower()).first()
         if check is not None:
             click.echo('Username already exists.')
         else:
             break
 
-    p = click.prompt('Admin Password?')
+    if password:
+        p = password
+    else:
+        p = click.prompt('Admin Password?')
+    
     user = User(username=u, password=hash_password(p), active=1)
     user.name = 'Admin'
     user.roles.append(admin_role)

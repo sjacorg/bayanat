@@ -13,9 +13,16 @@ flask_session
 .history
 celerybeat-schedule.db
 .env
+exports.env
 enferno/media/*
 *.log
 *.csv
 *.xls
 *.xlsx
 .aws
+.env*
+Pipfile
+
+# Ignore scripts in `./bin/` except the entrypoint file as the Docker Compose build uses them
+bin/*
+!bin/*-entry.sh

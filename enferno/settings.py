@@ -14,8 +14,6 @@ class Config(object):
 
         return bleach.clean(identity, strip=True)
 
-
-
     SECRET_KEY = os.environ.get('SECRET_KEY')
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
@@ -23,18 +21,27 @@ class Config(object):
     DEBUG_TB_INTERCEPT_REDIRECTS = False
     CACHE_TYPE = 'simple'  # Can be "memcached", "redis", etc.
 
-    # Databaset 
+    # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": os.environ.get('SQLALCHEMY_ENGINE_OPTIONS_POOL_PRE_PING', True)
+    }
 
     # Redis
-    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    REDIS_HOSTNAME = os.environ.get('REDIS_HOSTNAME', 'redis')
+    REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD', 'verystrongpass')
+    REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+    REDIS_URL_BASE = f'redis://redis:{REDIS_PASSWORD}@{REDIS_HOSTNAME}:{REDIS_PORT}'
 
     # Celery
-    # Has to be in small case
-    celery_broker_url = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/2')
-    result_backend = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/3')
-
+    REDIS_BROKER_DB = os.environ.get('REDIS_BROKER_DB', '2')
+    REDIS_DB = os.environ.get('REDIS_DB', '0')
+    REDIS_RESULT_DB = os.environ.get('REDIS_DB', '3')
+    REDIS_URL = os.environ.get('REDIS_URL', f'{REDIS_URL_BASE}/{REDIS_DB}')
+    ## Has to be in small case
+    celery_broker_url = os.environ.get('CELERY_BROKER_URL', f'{REDIS_URL_BASE}/{REDIS_BROKER_DB}')
+    result_backend = os.environ.get('CELERY_RESULT_BACKEND', f'{REDIS_URL_BASE}/{REDIS_RESULT_DB}')
 
     # Security
     SECURITY_REGISTERABLE = False
@@ -72,10 +79,10 @@ class Config(object):
     RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
     # Session
+    SESSION_DB_REDIS = os.environ.get('SESSION_DB_REDIS', 1)
     SESSION_TYPE = 'redis'
-    SESSION_REDIS = redis.from_url(os.environ.get('SESSION_REDIS', 'redis://localhost:6379/1'))
+    SESSION_REDIS = redis.from_url(os.environ.get('SESSION_REDIS', f'{REDIS_URL_BASE}/{SESSION_DB_REDIS}'))
     PERMANENT_SESSION_LIFETIME = 3600
-
 
     # flask mail settings
     MAIL_SERVER = os.environ.get('MAIL_SERVER')
@@ -152,7 +159,6 @@ class Config(object):
     #Sheet import tool settings
     SHEET_IMPORT = (os.environ.get('SHEET_IMPORT', 'False') == 'True')
     IMPORT_DIR = 'enferno/imports'
-
 
 class ProdConfig(Config):
     """Production configuration."""

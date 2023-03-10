@@ -1,0 +1,23 @@
+version: '3.6'
+
+services:
+  celery:
+    volumes:
+      - .:/app
+  
+  nginx:
+    build: ./nginx/
+    ports:
+      - ${NGINX_PORT:-80}:80
+    profiles:
+      - nginx
+    restart: always
+    volumes:
+      - nginx:/etc/nginx
+
+  website:
+    volumes:
+      - .:/app
+
+volumes:
+  nginx: null

@@ -1,0 +1,23 @@
+version: '3.6'
+
+services:
+  celery:
+    image: ${COMPOSE_REGISTRY}bayanat/celery:${CI_COMMIT_SHA}
+  
+  postgres:
+    image: ${COMPOSE_REGISTRY}bayanat/postgres:${CI_COMMIT_SHA}
+    volumes:
+      - ${COMPOSE_DB_BACKUP_DIR}:/opt/backup
+  
+  redis:
+    image: redis:4.0-alpine
+
+  website:
+    image: ${COMPOSE_REGISTRY}bayanat/website:${CI_COMMIT_SHA}
+    volumes:
+      - ${COMPOSE_MEDIA_DIR}:/app/enferno/media
+
+volumes:
+  db_data: null
+  nginx: null
+  redis_data: null
