@@ -14,6 +14,7 @@ from flask_security.decorators import roles_required, login_required, current_us
 from flask_security.utils import hash_password
 from sqlalchemy import desc, or_
 from sqlalchemy.orm.attributes import flag_modified
+from werkzeug.utils import safe_join
 
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
                                   IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation,
@@ -58,11 +59,7 @@ def ctx():
     """
     users = User.query.order_by(User.username).all()
     if current_user.is_authenticated:
-        if current_user.has_role('Admin') or current_user.view_usernames:
-            hide_name = False
-        else:
-            hide_name = True
-        users = [u.to_dict(hide_name=hide_name) for u in users]
+        users = [u.to_compact() for u in users]
         return {'users': users}
     return {}
 
@@ -1192,12 +1189,20 @@ def api_medias_chunk():
     except ValueError:
         raise abort(400, body=f"Values provided were not in expected format")
 
+    # validate dz_uuid
+    if not safe_join(str(Media.media_file), dz_uuid):
+        return 'Invalid Request', 425
+
     save_dir = Media.media_dir / dz_uuid
+
+    # validate current chunk
+    if not safe_join(str(save_dir), str(current_chunk)) or current_chunk.__class__ != int:
+        return 'Invalid Request', 425
+
 
     if not save_dir.exists():
         save_dir.mkdir(exist_ok=True, parents=True)
-    print(request.form["dzchunkindex"])
-    print(current_chunk)
+
     # Save the individual chunk
     with open(save_dir / str(current_chunk), "wb") as f:
         file.save(f)
@@ -1280,11 +1285,15 @@ def serve_media(filename):
     """
     Endpoint to generate  file urls to be served (based on file system type)
     :param filename: name of the file
-    :return: temporarily accesssible url of the file
+    :return: temporarily accessible url of the file
     """
 
     if current_app.config['FILESYSTEM_LOCAL']:
-        return F'/admin/api/serve/media/{filename}', 200
+        file_path = safe_join('/admin/api/serve/media', filename)
+        if file_path:
+            return file_path, 200
+        else:
+            return 'Invalid Request', 425
     else:
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
@@ -1321,7 +1330,8 @@ def api_local_medias_upload(request):
 
         return Response(json.dumps(response), content_type='application/json'), 200
     except Exception as e:
-        return F'Problem uploading file: {e}', 417
+        print(e)
+        return F'Request Failed', 417
 
 
 @admin.route('/api/serve/media/<filename>')
@@ -1350,7 +1360,8 @@ def api_inline_medias_upload():
 
         return Response(json.dumps(response), content_type='application/json'), 200
     except Exception as e:
-        return F'Problem uploading file: {e}', 417
+        print(e)
+        return F'Request Failed', 417
 
 
 @admin.route('/api/serve/inline/<filename>')
@@ -1696,7 +1707,12 @@ def api_users():
         query.append(User.name.ilike('%' + q + '%'))
     result = User.query.filter(
         *query).order_by(User.username).paginate(page=page, per_page=per_page, count=True)
-    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+        
+    response = {'items':    [item.to_dict() if current_user.has_role('Admin')
+                            else item.to_compact()
+                            for item in result.items], 
+                            'perPage': per_page, 'total': result.total}
+
     return Response(json.dumps(response),
                     content_type='application/json'), 200
 
@@ -2389,7 +2405,8 @@ def api_local_csv_upload():
         response = {'etag': etag, 'filename': filename}
         return Response(json.dumps(response), content_type='application/json'), 200
     except Exception as e:
-        return F'Problem uploading file: {e}', 417
+        print(e)
+        return F'Request Failed', 417
 
 
 @admin.delete('/api/csv/upload/')

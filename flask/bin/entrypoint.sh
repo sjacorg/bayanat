@@ -2,6 +2,7 @@
 set -e
 
 if [ "$ROLE" = "flask" ]; then
+  echo ":: Creating Bayanat Database ::"
   flask create-db-exts
   flask create-db
   echo ":: Starting Bayanat ::"

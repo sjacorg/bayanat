@@ -132,6 +132,33 @@ class User(UserMixin, db.Model, BaseMixin):
     def __repr__(self):
         return "%s %s %s" % (self.name, self.id, self.email)
 
+    @property
+    def secure_email(self):
+        try:
+            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
+                return self.email
+        except Exception as ex:
+            pass
+        return f'user-{self.id}'
+
+    @property
+    def secure_name(self):
+        try:
+            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
+                return self.name
+        except Exception as ex:
+            pass
+        return f'user-{self.id}'
+
+    @property
+    def secure_username(self):
+        try:
+            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
+                return self.username
+        except Exception as ex:
+            pass
+        return f'user-{self.id}'
+
     def can_access(self, obj):
         """
         check if user can access a specific entity
@@ -183,46 +210,28 @@ class User(UserMixin, db.Model, BaseMixin):
         return self
 
     def to_compact(self):
-
-        """Automatically detect permissions of the user"""
-
-        try:
-            hide = True
-            # calls from shell (during sync) can be identified by a null user
-            # any call from a http request will have a context and at least an anonymous user object (not null) 
-            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
-                hide = False
-        except Exception:
-            hide = True
-
-        if hide:
-            name = ''
-            username = ''
-        else:
-            name = self.name
-            username = self.username
-
+        """
+        Compact serializer for User class. 
+        Hides user data from users without 
+        permissions.
+        """
         return {
             'id': self.id,
-            'name': name,
-            'username': username,
+            'name': self.secure_name,
+            'username': self.secure_username,
             'active': self.active
-
         }
 
-    def to_dict(self, hide_name=False):
-        name = self.name
-        if hide_name:
-            name = ''
-            email = ''
-            name = ''
-
+    def to_dict(self):
+        """
+        Main serializer for User class.
+        """
         return {
                 'id': self.id,
-                'name': name,
+                'name': self.secure_name,
                 'google_id': self.google_id,
-                'email': self.email,
-                'username': self.username ,
+                'email': self.secure_email,
+                'username': self.secure_username,
                 'active': self.active,
                 'roles': [role.to_dict() for role in self.roles],
                 'view_usernames': self.view_usernames,

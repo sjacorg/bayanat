@@ -2714,20 +2714,12 @@ class Actor(db.Model, BaseMixin):
             "nationality": self.nationality or None,
             "national_id_card": self.national_id_card or None,
             # assigned to
-            "assigned_to": {
-                "id": self.assigned_to.id,
-                "name": self.assigned_to.name,
-                "email": self.assigned_to.email,
-            }
-            if self.assigned_to_id
+            "assigned_to": self.assigned_to.to_compact()
+            if self.assigned_to
             else None,
             # first peer reviewer
-            "first_peer_reviewer": {
-                "id": self.first_peer_reviewer.id,
-                "name": self.first_peer_reviewer.name,
-                "email": self.first_peer_reviewer.email,
-            }
-            if self.first_peer_reviewer_id
+            "first_peer_reviewer": self.first_peer_reviewer.to_compact()
+            if self.first_peer_reviewer
             else None,
             "source_link": self.source_link or None,
             "source_link_type": getattr(self, "source_link_type"),
@@ -3570,20 +3562,12 @@ class Incident(db.Model, BaseMixin):
             "title": self.title or None,
             "description": self.description or None,
             # assigned to
-            "assigned_to": {
-                "id": self.assigned_to.id,
-                "name": self.assigned_to.name,
-                "email": self.assigned_to.email,
-            }
-            if self.assigned_to_id
+            "assigned_to": self.assigned_to.to_compact()
+            if self.assigned_to
             else None,
             # first peer reviewer
-            "first_peer_reviewer": {
-                "id": self.first_peer_reviewer.id,
-                "name": self.first_peer_reviewer.name,
-                "email": self.first_peer_reviewer.email,
-            }
-            if self.first_peer_reviewer_id
+            "first_peer_reviewer": self.first_peer_reviewer.to_compact()
+            if self.first_peer_reviewer
             else None,
             "labels": labels_json,
             "locations": locations_json,
