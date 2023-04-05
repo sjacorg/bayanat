@@ -153,11 +153,11 @@
         referrerpolicy="origin">
     </script>
     <script src="/static/js/tinymce-vue.min.js"></script>
-    <script src="/static/js/components/LocationCard.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/UniField.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/LocationCard.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}" async defer></script>
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe}}
 
     {% endif %}
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>

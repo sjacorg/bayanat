@@ -24,22 +24,36 @@ class Config(object):
     CACHE_TYPE = 'simple'  # Can be "memcached", "redis", etc.
 
     # Databaset 
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    # SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    POSTGRES_USER = os.environ.get('POSTGRES_USER', '')
+    POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD', '')
+    POSTGRES_DB = os.environ.get('POSTGRES_DB', 'bayanat')
+    POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'localhost')
+
+    if (POSTGRES_USER and POSTGRES_PASSWORD) or POSTGRES_HOST != 'localhost':
+        SQLALCHEMY_DATABASE_URI = F'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}'
+    else: 
+        SQLALCHEMY_DATABASE_URI = F'postgresql:///{POSTGRES_DB}'
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Redis
-    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+    REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD', '')
+    REDIS_URL = F'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0'
 
     # Celery
     # Has to be in small case
-    celery_broker_url = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/2')
-    result_backend = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/3')
+    celery_broker_url = F'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/2'
+    result_backend = F'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/3'
 
 
     # Security
     SECURITY_REGISTERABLE = False
     SECURITY_RECOVERABLE = False
     SECURITY_CONFIRMABLE = False
+    SECURITY_CHANGEABLE = True
+    SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
     SECURITY_TRACKABLE = True
     SECURITY_PASSWORD_HASH = 'bcrypt'
     SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT')
@@ -47,6 +61,12 @@ class Config(object):
     SECURITY_POST_CONFIRM_VIEW = '/dashboard/'
 
     SECURITY_USER_IDENTITY_ATTRIBUTES = [{"username": {"mapper": uia_username_mapper, "case_insensitive": True}}]
+    SECURITY_USERNAME_ENABLE = True
+
+    SECURITY_MULTI_FACTOR_RECOVERY_CODES = True
+    SECURITY_MULTI_FACTOR_RECOVERY_CODES_N = 3
+    SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS = None
+    SECURITY_MULTI_FACTOR_RECOVERY_CODE_TTL = None
 
     #disabel token apis
 
@@ -73,17 +93,8 @@ class Config(object):
 
     # Session
     SESSION_TYPE = 'redis'
-    SESSION_REDIS = redis.from_url(os.environ.get('SESSION_REDIS', 'redis://localhost:6379/1'))
+    SESSION_REDIS = redis.from_url(F'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/1')
     PERMANENT_SESSION_LIFETIME = 3600
-
-
-    # flask mail settings
-    MAIL_SERVER = os.environ.get('MAIL_SERVER')
-    MAIL_PORT = 465
-    MAIL_USE_SSL = True
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    SECURITY_EMAIL_SENDER = os.environ.get('SECURITY_EMAIL_SENDER')
 
     # Google 0Auth
     GOOGLE_CLIENT_ID = os.environ.get(
@@ -94,12 +105,15 @@ class Config(object):
         "https://accounts.google.com/.well-known/openid-configuration"
     )
 
+    GOOGLE_CLIENT_ALLOWED_DOMAIN = os.environ.get('GOOGLE_CLIENT_ALLOWED_DOMAIN', 'gmail.com')
+
     # File Upload Settings: switch to True to store files privately within the enferno/media directory
     FILESYSTEM_LOCAL = (os.environ.get('FILESYSTEM_LOCAL', 'False') == 'True')
 
     # Enable data import tool
     ETL_TOOL = (os.environ.get('ETL_TOOL', 'False') == 'True')
     ETL_PATH_IMPORT = (os.environ.get('ETL_PATH_IMPORT', 'False') == 'True')
+    ETL_ALLOWED_PATH = os.environ.get('ETL_ALLOWED_PATH', None)
 
     # Enable data deduplication tool
     DEDUP_TOOL = (os.environ.get('DEDUP_TOOL', 'False') == 'True')
@@ -112,6 +126,10 @@ class Config(object):
     OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp" ,"pnm"]
     TESSERACT_CMD = os.environ.get('TESSERACT_CMD', r'/usr/bin/tesseract')
 
+    # Allowed file upload extensions
+    MEDIA_ALLOWED_EXTENSIONS = ['.' + ext for ext in ETL_VID_EXT] + ['.' + ext for ext in OCR_EXT] + ['.pdf']
+    SHEETS_ALLOWED_EXTENSIONS = ['.csv', '.xls', '.xlsx']
+
     # S3 settings
     # Bucket needs to be private with public access blocked 
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
@@ -120,8 +138,8 @@ class Config(object):
     AWS_REGION = os.environ.get('AWS_REGION')
 
     # i18n
-    LANGUAGES = ['en', 'ar', 'uk']
-    DEFAULT_LANGUAGE = os.environ.get('DEFAULT_LANGUAGE','en')
+    LANGUAGES = ['en', 'ar', 'uk', 'fr']
+    BABEL_DEFAULT_LOCALE = os.environ.get('DEFAULT_LANGUAGE','en')
     # extract messages with the following command
     # pybabel extract -F babel.cfg -k _l -o messages.pot .
     # generate a new language using the following command

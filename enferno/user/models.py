@@ -4,10 +4,33 @@ from uuid import uuid4
 from flask_security import UserMixin, RoleMixin
 from flask_security import current_user
 from flask_security.utils import hash_password
-from sqlalchemy import JSON
+from sqlalchemy import JSON, ARRAY
 
 from enferno.utils.base import BaseMixin
 from ..extensions import db
+
+from sqlalchemy.ext.mutable import Mutable
+
+class MutableList(Mutable, list):
+    def append(self, value):
+        list.append(self, value)
+        self.changed()
+
+    def pop(self, index=0):
+        value = list.pop(self, index)
+        self.changed()
+        return value
+
+    @classmethod
+    def coerce(cls, key, value):
+        if not isinstance(value, MutableList):
+            if isinstance(value, list):
+                return MutableList(value)
+            return Mutable.coerce(key, value)
+        else:
+            return value
+
+
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(),
@@ -84,6 +107,8 @@ class User(UserMixin, db.Model, BaseMixin):
     tf_phone_number = db.Column(db.String(64))
     tf_primary_method = db.Column(db.String(140))
     tf_totp_secret = db.Column(db.String(255))
+
+    mf_recovery_codes = db.Column(MutableList.as_mutable(ARRAY(db.String) ), nullable=True)
 
     # individual abilities
     view_usernames = db.Column(db.Boolean, default=True)

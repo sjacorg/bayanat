@@ -136,10 +136,12 @@ Vue.component('global-map', {
             }
             this.mcg = L.markerClusterGroup();
             if (this.locations.length) {
-
                 for (loc of this.locations) {
-                    //preprocess bulletinId
-                    loc.bulletinId = loc.bulletinId || '';
+                    mainStr = false
+                    if (loc.main){
+                        mainStr = this.i18n.mainIncident_;
+                        loc.color = '#000000';
+                    }
                     let marker = L.circleMarker([loc.lat, loc.lng], {
                         color: 'white',
                         fillColor: loc.color,
@@ -148,19 +150,20 @@ Vue.component('global-map', {
                         weight: 2,
                         stroke: 'white'
                     });
-                    const heading = loc.number ? loc.number + '. ' + loc.title : loc.title;
 
                     marker.bindPopup(`
-                     <span ><span title="*Bulletin ID" class="map-bid">${loc.bulletinId}</span><strong>
-${heading}</strong> </span><br>
+
+                    <span title="No." class="map-bid">${loc.number || ''}</span>
+                    <span title="Bulletin ID" class="map-bid">${loc.bulletinId || ''}</span>
+                    <strong>${loc.title || ''}</strong> </span><br>
                     
                     <div class="mt-2">
-                    
-                    
                     ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
                     </div>
+
                     <div class="mt-2 subtitle">${loc.full_string || ''}</div>
-                    <div>${loc.type|| ''}</div>
+                    <span title="Geo Marker Type" class="map-bid">${loc.type || ''}</span>
+                    <span title="Main Incident" class="map-bid">${mainStr || ''}</span>
                     `);
                     this.mcg.addLayer(marker);
                 }

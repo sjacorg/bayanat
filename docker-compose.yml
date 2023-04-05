@@ -3,58 +3,109 @@ version: '3'
 services:
   postgres:
     container_name: postgres
-    image: 'postgres:9.5'
+    image: 'postgis/postgis:15-3.3'
     env_file:
-      - '.env'
+      - ${ENV_FILE:-.env}
     volumes:
-      - './postgres-data:/var/lib/postgresql'
+      - 'postgres_data:/var/lib/postgresql/data'
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/run/postgresql
+    healthcheck:
+      test: "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"
+      interval: 3s
+      retries: 10
 
   redis:
-    container_name: redis 
-    image: 'redis:4.0-alpine'
-    command: redis-server --requirepass verystrongpass
-    volumes:
-      - './redis-data:/var/lib/redis/data'
+    container_name: redis
+    image: 'redis:latest'
     ports:
-      - '6379:6379'
-
-  website:
-    container_name: website
-    build: .
-    env_file:
-      - '.env'
+      - '127.0.0.1:6379:6379'
+    command: redis-server --requirepass '${REDIS_PASSWORD}'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     volumes:
-      - '.:/app'
-    links:
-      - redis
-    ports:
-      - '8000:5000'
+      - './redis-data:/var/lib/redis/data:rw'
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 3s
+      retries: 10
 
+  bayanat:
+    container_name: bayanat
+    image: bayanat
+    build:
+      context: .
+      dockerfile: ./flask/Dockerfile
+      args:
+        - ROLE=flask
+        - ENV_FILE=${ENV_FILE:-.env}
+    volumes:
+      - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media:rw'
+      - './enferno/imports:/app/enferno/imports:rw'
+      - './logs:/app/logs:rw'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - '127.0.0.1:5000:5000'
+
+  celery:
+    container_name: celery
+    image: celery
+    build:
+      context: .
+      dockerfile: ./flask/Dockerfile
+      args:
+        - ROLE=celery
+        - ENV_FILE=${ENV_FILE:-.env}
+    volumes_from:
+      - bayanat
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   nginx:
     container_name: nginx
     restart: always
-    build: ./nginx/
+    image: 'bitnami/nginx:latest'
     ports:
-      - "80:80"
-    links:
-      - website
-
-  celery:
-    container_name: celery
-    build: .
-    command: celery worker -B -l info -A enferno.tasks
-    env_file:
-      - '.env'
-    links:
-      - redis
+      - '80:80'
     volumes:
-      - '.:/enferno-plat'
-
+      - './enferno/static/:/app/static/:ro'
+      - './nginx/nginx.conf:/opt/bitnami/nginx/conf/nginx.conf:ro'
+      - './nginx/bayanat.conf:/opt/bitnami/nginx/conf/server_blocks/bayanat.conf:ro'
+    depends_on:
+      - bayanat
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /opt/bitnami/nginx/tmp/
+    healthcheck:
+      test: [ "CMD", "service", "nginx", "status" ]
+      interval: 3s
+      retries: 10
 
 volumes:
-  enferno:
-  redis:
-  db:
+  redis_data:
+  postgres_data:

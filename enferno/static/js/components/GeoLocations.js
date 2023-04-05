@@ -143,13 +143,15 @@ Vue.component('geo-locations', {
               <v-col v-for="(loc,i) in locations" :key="i" cols="12" md="4">
                 <v-card elevation="0">
                   <v-card-text>
+                  <v-chip small class="primary">{{i+1}}</v-chip>
                     <v-chip small v-if="loc.type" class="grey lighten-3">{{ loc.type }}</v-chip>
+                    <v-chip small v-if="loc.main" class="grey lighten-3">{{translations.mainIncident_}}</v-chip>
                     <h4 class="pa-3 mb-2caption black--text">{{ loc.title }}</h4>
                     <div class="heading black--text"> <v-icon small left >mdi-map-marker</v-icon>
                       {{loc.lat.toFixed(4)}} , {{loc.lng.toFixed(4)}}</div>
                     
                     <div v-if="loc.comment" class="comments pa-3 mt-2" v-html="loc.comment">
-                      
+
                     </div>
                     
                     
@@ -207,9 +209,9 @@ Vue.component('geo-locations', {
             <v-text-field v-model="e.title" :label="translations.title_"></v-text-field>
             <v-select :items="geoLocationTypes" v-model="e.type" :label="translations.type_"></v-select>
                 </div>
-            <div class="px-5">
+            <div  class="d-flex px-5" style="column-gap: 20px">
               <v-text-field v-model="e.comment" :label="translations.comment_"></v-text-field>
-              
+              <v-checkbox :label="translations.mainIncident_" v-model="e.main"></v-checkbox>
             </div>
 
           </v-card-text>

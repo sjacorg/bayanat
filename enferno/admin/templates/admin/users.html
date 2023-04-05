@@ -107,7 +107,7 @@
                           <v-row>
                               <v-col>
 
-                                  <validation-provider vid="username" name="Username" rules="required" v-slot="{errors}">
+                                  <validation-provider vid="username" name="Username" rules="required|min:4|max:32" v-slot="{errors}">
 
                                   <v-text-field @blur="checkUsername" @input="checkUsername" label="Username" :disabled="editUserDisabled" v-model="editedItem.username"></v-text-field>
                                       <span class="orange--text">${errors[0]}</span>

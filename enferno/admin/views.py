@@ -12,14 +12,14 @@ from flask.templating import render_template
 from flask_bouncer import requires
 from flask_security.decorators import roles_required, login_required, current_user, roles_accepted
 from flask_security.utils import hash_password
-from sqlalchemy import desc, or_, text
+from sqlalchemy import desc, or_
 from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
                                   IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation,
                                   ClaimedViolation,
                                   Activity, Query, Mapping, Log, APIKey, LocationAdminLevel, LocationType)
-from enferno.extensions import bouncer, rds, babel
+from enferno.extensions import bouncer, rds
 from enferno.extensions import cache
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file, \
     process_sheet
@@ -36,30 +36,6 @@ admin = Blueprint('admin', __name__,
 # default global items per page
 PER_PAGE = 30
 REL_PER_PAGE = 5
-
-
-@babel.localeselector
-def get_locale():
-    """
-    Sets the system global language.
-    :return: system language from the current session.
-    """
-    # override = request.args.get('lang')
-    # if override:
-    #     session['lang'] = override
-    try:
-        default = current_app.config.get('DEFAULT_LANGUAGE')
-    except Exception as e:
-        print(e)
-        default = 'en'
-    if not current_user.is_authenticated:
-        # will return default language
-        pass
-    else:
-        if current_user.settings:
-            if current_user.settings.get('language'):
-                session['lang'] = current_user.settings.get('language')
-    return session.get('lang', default)
 
 
 @admin.before_request
@@ -143,7 +119,7 @@ def api_labels():
 
     if q:
         words = q.split(' ')
-        query.extend([Label.title.ilike('%{}%'.format(word)) for word in words])
+        query.extend([Label.title.ilike(F'%{word}%') for word in words])
 
     typ = request.args.get('typ', None)
     if typ and typ in ['for_bulletin', 'for_actor', 'for_incident', 'for_offline']:
@@ -178,14 +154,14 @@ def api_labels():
         ids = list(set(ids))
         result = Label.query.filter(
             Label.id.in_(ids)).paginate(
-            page, per_page, True)
+            page=page, per_page=per_page, count=True)
     else:
-        result = Label.query.filter(*query).paginate(page, per_page, True)
+        result = Label.query.filter(*query).paginate(page=page, per_page=per_page, count=True)
 
     response = {'items': [item.to_dict(request.args.get('mode', 1)) for item in result.items], 'perPage': per_page,
                 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.post('/api/label/')
@@ -198,7 +174,7 @@ def api_label_create():
     label = Label()
     created = label.from_json(request.json['item'])
     if created.save():
-        return 'Created Label #{}'.format(label.id)
+        return F'Created Label #{label.id}', 200
     else:
         return 'Save Failed', 417
 
@@ -215,7 +191,7 @@ def api_label_update(id):
     if label is not None:
         label = label.from_json(request.json['item'])
         label.save()
-        return 'Saved Label #{}'.format(label.id), 200
+        return F'Saved Label #{label.id}', 200
     else:
         return 'Not Found!', 404
 
@@ -230,7 +206,7 @@ def api_label_delete(id):
     """
     label = Label.query.get(id)
     label.delete()
-    return 'Deleted Label #{}'.format(label.id)
+    return F'Deleted Label #{label.id}', 200
 
 
 @admin.post('/api/label/import/')
@@ -278,11 +254,10 @@ def api_eventtypes():
             getattr(Eventtype, typ) == True
         )
     result = Eventtype.query.filter(
-        *query).order_by(Eventtype.id).paginate(
-        page, per_page, True)
+        *query).order_by(Eventtype.id).paginate(page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.post('/api/eventtype/')
@@ -295,7 +270,7 @@ def api_eventtype_create():
     eventtype = Eventtype()
     created = eventtype.from_json(request.json['item'])
     if created.save():
-        return 'Created Event #{}'.format(eventtype.id)
+        return F'Created Event #{eventtype.id}', 200
     else:
         return 'Save Failed', 417
 
@@ -314,7 +289,7 @@ def api_eventtype_update(id):
 
     eventtype = eventtype.from_json(request.json['item'])
     eventtype.save()
-    return 'Saved Event #{}'.format(eventtype.id), 200
+    return F'Saved Event #{eventtype.id}', 200
 
 
 @admin.delete('/api/eventtype/<int:id>')
@@ -330,7 +305,7 @@ def api_eventtype_delete(id):
         return 'Not Found!', 404
 
     eventtype.delete()
-    return 'Deleted Event #{}'.format(eventtype.id)
+    return F'Deleted Event #{eventtype.id}', 200
 
 
 @admin.post('/api/eventtype/import/')
@@ -360,11 +335,10 @@ def api_potentialviolations(page):
     if q is not None:
         query.append(PotentialViolation.title.ilike('%' + q + '%'))
     result = PotentialViolation.query.filter(
-        *query).order_by(PotentialViolation.id).paginate(
-        page, PER_PAGE, True)
+        *query).order_by(PotentialViolation.id).paginate(page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.post('/api/potentialviolation/')
@@ -377,7 +351,7 @@ def api_potentialviolation_create():
     potentialviolation = PotentialViolation()
     created = potentialviolation.from_json(request.json['item'])
     if created.save():
-        return 'Created Potential Violation #{}'.format(potentialviolation.id), 200
+        return F'Created Potential Violation #{potentialviolation.id}', 200
     else:
         return 'Save Failed', 417
 
@@ -393,10 +367,10 @@ def api_potentialviolation_update(id):
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
         return 'Not Found!', 404
-    
+
     potentialviolation = potentialviolation.from_json(request.json['item'])
     potentialviolation.save()
-    return 'Saved Potential Violation #{}'.format(potentialviolation.id), 200        
+    return F'Saved Potential Violation #{potentialviolation.id}', 200
 
 
 @admin.delete('/api/potentialviolation/<int:id>')
@@ -411,7 +385,7 @@ def api_potentialviolation_delete(id):
     if potentialviolation is None:
         return 'Not Found!', 404
     potentialviolation.delete()
-    return 'Deleted Potential Violation #{}'.format(potentialviolation.id), 200
+    return F'Deleted Potential Violation #{potentialviolation.id}', 200
 
 
 @admin.post('/api/potentialviolation/import/')
@@ -441,11 +415,10 @@ def api_claimedviolations(page):
     if q is not None:
         query.append(ClaimedViolation.title.ilike('%' + q + '%'))
     result = ClaimedViolation.query.filter(
-        *query).order_by(ClaimedViolation.id).paginate(
-        page, PER_PAGE, True)
+        *query).order_by(ClaimedViolation.id).paginate(page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.post('/api/claimedviolation/')
@@ -458,7 +431,7 @@ def api_claimedviolation_create():
     claimedviolation = ClaimedViolation()
     created = claimedviolation.from_json(request.json['item'])
     if created.save():
-        return 'Created Claimed Violation #{}'.format(claimedviolation.id)
+        return F'Created Claimed Violation #{claimedviolation.id}', 200
     else:
         return 'Save Failed', 417
 
@@ -474,11 +447,10 @@ def api_claimedviolation_update(id):
     claimedviolation = ClaimedViolation.query.get(id)
     if claimedviolation is None:
         return 'Not Found!', 404
-        
+
     claimedviolation = claimedviolation.from_json(request.json['item'])
     claimedviolation.save()
-    return 'Saved Claimed Violation #{}'.format(claimedviolation.id), 200
-            
+    return F'Saved Claimed Violation #{claimedviolation.id}', 200
 
 
 @admin.delete('/api/claimedviolation/<int:id>')
@@ -494,7 +466,7 @@ def api_claimedviolation_delete(id):
         return 'Not Found!', 404
 
     claimedviolation.delete()
-    return 'Deleted Claimed Violation #{}'.format(claimedviolation.id)
+    return F'Deleted Claimed Violation #{claimedviolation.id}', 200
 
 
 @admin.post('/api/claimedviolation/import/')
@@ -536,7 +508,7 @@ def api_sources():
 
     if q is not None:
         words = q.split(' ')
-        query.extend([Source.title.ilike('%{}%'.format(word)) for word in words])
+        query.extend([Source.title.ilike(F'%{word}%') for word in words])
 
     # ignore complex recursion when pulling all sources without filters
     if q:
@@ -552,10 +524,10 @@ def api_sources():
 
         result = Source.query.filter(
             Source.id.in_(ids)).order_by(-Source.id).paginate(
-            page, per_page, True)
+            page=page, per_page=per_page, count=True)
     else:
         result = Source.query.filter(*query).paginate(
-            page, per_page, True)
+            page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
                     content_type='application/json'), 200
@@ -571,7 +543,7 @@ def api_source_create():
     source = Source()
     created = source.from_json(request.json['item'])
     if created.save():
-        return 'Created Source #{}'.format(source.id)
+        return F'Created Source #{source.id}', 200
     else:
         return 'Save Failed', 417
 
@@ -590,7 +562,7 @@ def api_source_update(id):
 
     source = source.from_json(request.json['item'])
     source.save()
-    return 'Saved Source #{}'.format(source.id), 200
+    return F'Saved Source #{source.id}', 200
 
 
 @admin.delete('/api/source/<int:id>')
@@ -605,7 +577,7 @@ def api_source_delete(id):
     if source is None:
         return 'Not Found!', 404
     source.delete()
-    return 'Deleted Source #{}'.format(source.id)
+    return F'Deleted Source #{source.id}', 200
 
 
 @admin.route('/api/source/import/', methods=['POST'])
@@ -658,8 +630,7 @@ def api_locations():
             lal = LocationAdminLevel.query.filter(LocationAdminLevel.code == int(lvl)).first()
             query.append(Location.admin_level == lal)
 
-    result = Location.query.filter(*query).order_by(Location.id).paginate(
-        page, per_page, True)
+    result = Location.query.filter(*query).order_by(Location.id).paginate(page=page, per_page=per_page, count=True)
     items = [item.to_dict() for item in result.items]
     response = {'items': items, 'perPage': per_page,
                 'total': result.total}
@@ -675,7 +646,6 @@ def api_location_create():
     if not current_user.roles_in(['Admin', 'Mod']) and not current_user.can_edit_locations:
         return 'User not allowed to create Locations', 400
 
-
     location = Location()
     location = location.from_json(request.json['item'])
 
@@ -683,8 +653,7 @@ def api_location_create():
         location.full_location = location.get_full_string()
         location.id_tree = location.get_id_tree()
         location.create_revision()
-        return 'Created Location #{}'.format(location.id)
-
+        return F'Created Location #{location.id}', 200
 
 
 @admin.put('/api/location/<int:id>')
@@ -704,13 +673,11 @@ def api_location_update(id):
             location.full_location = location.get_full_string()
             location.id_tree = location.get_id_tree()
             location.create_revision()
-            return 'Saved Location #{}'.format(location.id), 200
+            return F'Saved Location #{location.id}', 200
         else:
             return 'Save Failed', 417
     else:
         return 'Not Found!', 404
-
-
 
 
 @admin.delete('/api/location/<int:id>')
@@ -721,7 +688,7 @@ def api_location_delete(id):
     if request.method == 'DELETE':
         location = Location.query.get(id)
         location.delete()
-        return 'Deleted Location #{}'.format(location.id)
+        return F'Deleted Location #{location.id}', 200
 
 
 @admin.post('/api/location/import/')
@@ -733,6 +700,7 @@ def api_location_import():
         return 'Success', 200
     else:
         return 'Error', 400
+
 
 # get one location
 @admin.get('/api/location/<int:id>')
@@ -758,11 +726,10 @@ def api_location_admin_levels():
 
     query = []
     result = LocationAdminLevel.query.filter(
-        *query).order_by(-LocationAdminLevel.id).paginate(
-        page, per_page, True)
+        *query).order_by(-LocationAdminLevel.id).paginate(page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.post('/api/location-admin-level')
@@ -772,7 +739,7 @@ def api_location_admin_level_create():
     admin_level.from_json(request.json['item'])
 
     if admin_level.save():
-        return f'Item created successfully ID ${admin_level.id} !', 200
+        return F'Item created successfully ID ${admin_level.id} !', 200
     else:
         return 'Creation failed.', 417
 
@@ -799,11 +766,10 @@ def api_location_types():
 
     query = []
     result = LocationType.query.filter(
-        *query).order_by(-LocationType.id).paginate(
-        page, per_page, True)
+        *query).order_by(-LocationType.id).paginate(page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.post('/api/location-type')
@@ -813,7 +779,7 @@ def api_location_type_create():
     location_type.from_json(request.json['item'])
 
     if location_type.save():
-        return f'Item created successfully ID ${location_type.id} !', 200
+        return F'Item created successfully ID ${location_type.id} !', 200
     else:
         return 'Creation failed.', 417
 
@@ -845,7 +811,7 @@ def api_location_type_delete(id):
     if location_type.delete():
         # Record Activity
         Activity.create(current_user, Activity.ACTION_DELETE, location_type.to_mini(), 'location_type')
-        return 'Location Type Deleted #{}'.format(location_type.id), 200
+        return F'Location Type Deleted #{location_type.id}', 200
     else:
         return 'Error deleting location type', 417
 
@@ -872,9 +838,7 @@ def api_bulletins():
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
 
-    nested = False
     if len(queries) > 0:
-        nested = True
         while queries:
             nextOp = ops.pop(0)
             nextQuery = queries.pop(0)
@@ -884,24 +848,8 @@ def api_bulletins():
                 result = result.intersect_all(Bulletin.query.filter(*nextQuery)).distinct(Bulletin.id)
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
-    # handle sort
-    # default
-    sort = '-Bulletin.id'
 
-    options = request.json.get('options')
-    if options:
-        sort_by = options.get('sortBy')
-        sort_desc = options.get('sortDesc')
-        if sort_by:
-            sort = sort_by[0]
-            if sort_desc and sort_desc[0]:
-                sort = '{} desc'.format(sort)
-
-    # can't sort nested queries
-    if nested:
-        result = result.paginate(page, per_page, True)
-    else:
-        result = result.order_by(text(sort)).paginate(page, per_page, True)
+    result = result.order_by(-Bulletin.id).paginate(page=page, per_page=per_page, count=True)
 
     # Select json encoding type
     mode = request.args.get('mode', '1')
@@ -926,7 +874,7 @@ def api_bulletin_create():
     bulletin.create_revision()
     # Record activity
     Activity.create(current_user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
-    return 'Created Bulletin #{}'.format(bulletin.id)
+    return F'Created Bulletin #{bulletin.id}', 200
 
 
 @admin.put('/api/bulletin/<int:id>')
@@ -942,7 +890,7 @@ def api_bulletin_update(id):
         bulletin.create_revision()
         # Record Activity
         Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
-        return 'Saved Bulletin #{}'.format(bulletin.id), 200
+        return F'Saved Bulletin #{bulletin.id}', 200
     else:
         return 'Not Found!', 404
 
@@ -985,9 +933,9 @@ def api_bulletin_review_update(id):
 
             # Record Activity
             Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
-            return 'Bulletin review updated #{}'.format(bulletin.id), 200
+            return F'Bulletin review updated #{bulletin.id}', 200
         else:
-            return f'Error saving Bulletin #{id}', 417
+            return F'Error saving Bulletin #{id}', 417
     else:
         return 'Not Found!', 404
 
@@ -1012,11 +960,11 @@ def api_bulletin_bulk_update():
     if ids and len(bulk):
         job = bulk_update_bulletins.delay(ids, bulk, current_user.id)
         # store job id in user's session for status monitoring
-        key = 'user{}:{}'.format(current_user.id, job.id)
+        key = F'user{current_user.id}:{job.id}'
         rds.set(key, job.id)
         # expire in 3 hours
         rds.expire(key, 60 * 60 * 3)
-        return '{}'.format('Bulk update queued successfully.'), 200
+        return 'Bulk update queued successfully', 200
     else:
         return 'No items selected, or nothing to update', 417
 
@@ -1135,7 +1083,7 @@ def api_bulletin_self_assign(id):
 
         # Record Activity
         Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
-        return 'Saved Bulletin #{}'.format(bulletin.id), 200
+        return F'Saved Bulletin #{bulletin.id}', 200
     else:
         return 'Not Found!', 404
 
@@ -1172,7 +1120,7 @@ def api_actor_self_assign(id):
 
         # Record Activity
         Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-        return 'Saved Actor #{}'.format(actor.id), 200
+        return F'Saved Actor #{actor.id}', 200
     else:
         return 'Not Found!', 404
 
@@ -1209,7 +1157,7 @@ def api_incident_self_assign(id):
 
         # Record Activity
         Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-        return 'Saved Actor #{}'.format(incident.id), 200
+        return F'Saved Incident #{incident.id}', 200
     else:
         return 'Not Found!', 404
 
@@ -1220,6 +1168,10 @@ def api_incident_self_assign(id):
 @roles_accepted('Admin', 'DA')
 def api_medias_chunk():
     file = request.files['file']
+
+    # we can immediately validate the file type here
+    if not Media.validate_media_extension(file.filename):
+        return 'This file type is not allowed', 415
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -1228,7 +1180,7 @@ def api_medias_chunk():
         # Assume this file has not been chunked
         with open(f"{filepath}", "wb") as f:
             file.save(f)
-        return "File Saved"
+        return "File Saved", 200
 
     # Chunked upload
     try:
@@ -1244,9 +1196,10 @@ def api_medias_chunk():
 
     if not save_dir.exists():
         save_dir.mkdir(exist_ok=True, parents=True)
-
+    print(request.form["dzchunkindex"])
+    print(current_chunk)
     # Save the individual chunk
-    with open(save_dir / str(request.form["dzchunkindex"]), "wb") as f:
+    with open(save_dir / str(current_chunk), "wb") as f:
         file.save(f)
 
     # See if we have all the chunks downloaded
@@ -1285,7 +1238,6 @@ def api_medias_chunk():
         return Response(json.dumps(response), content_type='application/json'), 200
 
     return "Chunk upload successful", 200
-
 
 
 @admin.route('/api/media/upload/', methods=['POST'])
@@ -1332,7 +1284,7 @@ def serve_media(filename):
     """
 
     if current_app.config['FILESYSTEM_LOCAL']:
-        return '/admin/api/serve/media/{}'.format(filename)
+        return F'/admin/api/serve/media/{filename}', 200
     else:
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
@@ -1347,7 +1299,7 @@ def serve_media(filename):
         if filename.lower().endswith('pdf'):
             params['ResponseContentType'] = 'application/pdf'
         url = s3.generate_presigned_url('get_object', Params=params, ExpiresIn=36000)
-        return url
+        return url, 200
 
 
 def api_local_medias_upload(request):
@@ -1369,7 +1321,7 @@ def api_local_medias_upload(request):
 
         return Response(json.dumps(response), content_type='application/json'), 200
     except Exception as e:
-        return 'Problem uploading file: {}'.format(e), 417
+        return F'Problem uploading file: {e}', 417
 
 
 @admin.route('/api/serve/media/<filename>')
@@ -1398,7 +1350,8 @@ def api_inline_medias_upload():
 
         return Response(json.dumps(response), content_type='application/json'), 200
     except Exception as e:
-        return 'Problem uploading file: {}'.format(e), 417
+        return F'Problem uploading file: {e}', 417
+
 
 @admin.route('/api/serve/inline/<filename>')
 def api_local_serve_inline_media(filename):
@@ -1409,35 +1362,6 @@ def api_local_serve_inline_media(filename):
 
 
 # Medias routes
-
-# @admin.route('/api/medias/', defaults={'page': 1})
-# @admin.route('/api/medias/<int:page>/')
-# def api_medias(page):
-#     """
-#     Endopint to feed json data of media items , supports paging and search
-#     :param page: db query offset
-#     :return: success + json feed or error in case of failure
-#     """
-#     result = Media.query.order_by(Media.id).paginate(page, PER_PAGE, True)
-#     response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
-#     return Response(json.dumps(response), content_type='application/json')
-
-
-# @admin.route('/api/media/', methods=['POST'])
-# @roles_accepted('Admin', 'DA')
-# def api_media_create():
-#     """
-#     Endpoint to create a media item
-#     :return: success / error
-#     """
-#     if request.method == 'POST':
-#         media = Media()
-#         created = media.from_json(request.json['item'])
-#         if created.save():
-#             return 'Created!'
-#         else:
-#             return 'Save Failed', 417
-
 
 @admin.route('/api/media/<int:id>', methods=['PUT'])
 @roles_accepted('Admin', 'DA')
@@ -1458,8 +1382,6 @@ def api_media_update(id):
 
     else:
         return 'Forbidden', 403
-
-
 
 
 # Actor routes
@@ -1488,8 +1410,7 @@ def api_actors():
 
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
-    result = result.order_by(Actor.id.desc()).paginate(
-        page, per_page, True)
+    result = result.order_by(Actor.id.desc()).paginate(page=page, per_page=per_page, count=True)
     # Select json encoding type
     mode = request.args.get('mode', '1')
     response = {'items': [item.to_dict(mode=mode) for item in result.items], 'perPage': per_page, 'total': result.total}
@@ -1516,7 +1437,7 @@ def api_actor_create():
         actor.create_revision()
         # Record activity
         Activity.create(current_user, Activity.ACTION_CREATE, actor.to_mini(), 'actor')
-        return 'Created Actor #{}'.format(actor.id)
+        return F'Created Actor #{actor.id}', 200
     else:
         return 'Error creating actor', 417
 
@@ -1539,14 +1460,14 @@ def api_actor_update(id):
         actor = actor.from_json(request.json['item'])
         # Create a revision using latest values
         # this method automatically commits
-        # actor changes (referenced)   
+        # actor changes (referenced)
         if actor:
             actor.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-            return 'Saved Actor #{}'.format(actor.id), 200
+            return F'Saved Actor #{actor.id}', 200
         else:
-            return f'Error saving Actor #{id}', 417
+            return F'Error saving Actor #{id}', 417
     else:
         return 'Not Found!', 404
 
@@ -1573,14 +1494,14 @@ def api_actor_review_update(id):
 
         # Create a revision using latest values
         # this method automatically commi
-        #  bulletin changes (referenced) 
-        if actor.save():          
+        #  bulletin changes (referenced)
+        if actor.save():
             actor.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
-            return f'Actor review updated #{id}', 200
+            return F'Actor review updated #{id}', 200
         else:
-            return f'Error saving Actor #{id}\'s Review', 417
+            return F'Error saving Actor #{id}\'s Review', 417
     else:
         return 'Not Found!', 404
 
@@ -1605,11 +1526,11 @@ def api_actor_bulk_update():
     if ids and len(bulk):
         job = bulk_update_actors.delay(ids, bulk, current_user.id)
         # store job id in user's session for status monitoring
-        key = 'user{}:{}'.format(current_user.id, job.id)
+        key = F'user{current_user.id}:{job.id}'
         rds.set(key, job.id)
         # expire in 3 hour
         rds.expire(key, 60 * 60 * 3)
-        return '{}'.format('Bulk update queued successfully.'), 200
+        return 'Bulk update queued successfully.', 200
     else:
         return 'No items selected, or nothing to update', 417
 
@@ -1704,7 +1625,7 @@ def api_bulletinhistory(bulletinid):
     # For standardization 
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 # Actor History Helpers 
@@ -1721,7 +1642,7 @@ def api_actorhistory(actorid):
     # For standardization 
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 # Incident History Helpers
@@ -1738,7 +1659,8 @@ def api_incidenthistory(incidentid):
     # For standardization 
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
+
 
 # Location History Helpers
 
@@ -1754,7 +1676,8 @@ def api_locationhistory(locationid):
     # For standardization
     response = {'items': [item.to_dict() for item in result]}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
+
 
 # user management routes
 
@@ -1772,11 +1695,10 @@ def api_users():
     if q is not None:
         query.append(User.name.ilike('%' + q + '%'))
     result = User.query.filter(
-        *query).order_by(User.username).paginate(
-        page, per_page, True)
+        *query).order_by(User.username).paginate(page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.route('/users/')
@@ -1789,7 +1711,7 @@ def users():
     return render_template('admin/users.html')
 
 
-@admin.route('/api/user/', methods=['POST'])
+@admin.post('/api/user/')
 @roles_required('Admin')
 def api_user_create():
     """
@@ -1801,6 +1723,10 @@ def api_user_create():
     username = u.get('username')
 
     exists = User.query.filter(User.username == username).first()
+    if len(username) < 4:
+        return 'Error, username too short', 417
+    if len(username) > 32:
+        return 'Error, username too long', 417
     if exists:
         return 'Error, username already exists', 417
     user = User()
@@ -1810,7 +1736,7 @@ def api_user_create():
     if result:
         # Record activity
         Activity.create(current_user, Activity.ACTION_CREATE, user.to_mini(), 'user')
-        return 'User {} has been created successfully'.format(username), 200
+        return F'User {username} has been created successfully', 200
     else:
         return 'Error creating user', 417
 
@@ -1882,7 +1808,7 @@ def api_user_delete(id):
 
         # Record activity
         Activity.create(current_user, Activity.ACTION_DELETE, user.to_mini(), 'user')
-        return 'Deleted!'
+        return 'Deleted!', 200
 
 
 # Roles routes
@@ -1912,11 +1838,10 @@ def api_roles(page):
             Role.name.ilike('%' + q + '%')
         )
     result = Role.query.filter(
-        *query).order_by(Role.id).paginate(
-        page, PER_PAGE, True)
+        *query).order_by(Role.id).paginate(page=page, per_page=PER_PAGE, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.post('/api/role/')
@@ -1931,7 +1856,7 @@ def api_role_create():
     if created.save():
         # Record activity
         Activity.create(current_user, Activity.ACTION_CREATE, role.to_mini(), 'role')
-        return 'Created!'
+        return 'Created!', 200
 
     else:
         return 'Save Failed', 417
@@ -1957,7 +1882,6 @@ def api_role_update(id):
     # Record activity
     Activity.create(current_user, Activity.ACTION_UPDATE, role.to_mini(), 'role')
     return 'Saved!', 200
-        
 
 
 @admin.delete('/api/role/<int:id>')
@@ -1969,7 +1893,7 @@ def api_role_delete(id):
     :return: success / error
     """
     role = Role.query.get(id)
-    
+
     if role is None:
         return 'Not Found!', 404
 
@@ -2025,8 +1949,7 @@ def api_incidents():
     per_page = request.args.get('per_page', PER_PAGE, int)
 
     result = Incident.query.filter(
-        *query).order_by(Incident.id.desc()).paginate(
-        page, per_page, True)
+        *query).order_by(Incident.id.desc()).paginate(page=page, per_page=per_page, count=True)
     # Select json encoding type
     mode = request.args.get('mode', '1')
     response = {'items': [item.to_dict(mode=mode) for item in result.items], 'perPage': per_page, 'total': result.total}
@@ -2049,7 +1972,7 @@ def api_incident_create():
     incident.create_revision()
     # Record activity
     Activity.create(current_user, Activity.ACTION_CREATE, incident.to_mini(), 'incident')
-    return 'Created Incident #{}'.format(incident.id)
+    return F'Created Incident #{incident.id}', 200
 
 
 # update incident endpoint
@@ -2057,7 +1980,7 @@ def api_incident_create():
 @roles_accepted('Admin', 'DA')
 def api_incident_update(id):
     """API endpoint to update an incident."""
-    
+
     incident = Incident.query.get(id)
 
     if incident is not None:
@@ -2066,14 +1989,14 @@ def api_incident_update(id):
         incident = incident.from_json(request.json['item'])
         # Create a revision using latest values
         # this method automatically commits
-        # incident changes (referenced) 
-        if incident:         
+        # incident changes (referenced)
+        if incident:
             incident.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-            return f'Saved Incident #{id}', 200
+            return F'Saved Incident #{id}', 200
         else:
-            return f'Error saving Incident {id}', 417
+            return F'Error saving Incident {id}', 417
     else:
         return 'Not Found!', 404
 
@@ -2104,9 +2027,9 @@ def api_incident_review_update(id):
             incident.create_revision()
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
-            return f'Bulletin review updated #{id}', 200
+            return F'Bulletin review updated #{id}', 200
         else:
-            return f'Error saving Incident #{id}\'s Review', 200
+            return F'Error saving Incident #{id}\'s Review', 200
     else:
         return 'Not Found!', 404
 
@@ -2130,11 +2053,11 @@ def api_incident_bulk_update():
     if ids and len(bulk):
         job = bulk_update_incidents.delay(ids, bulk, current_user.id)
         # store job id in user's session for status monitoring
-        key = 'user{}:{}'.format(current_user.id, job.id)
+        key = F'user{current_user.id}:{job.id}'
         rds.set(key, job.id)
         # expire in 3 hour
         rds.expire(key, 60 * 60 * 3)
-        return '{}'.format('Bulk update queued successfully.'), 200
+        return 'Bulk update queued successfully', 200
     else:
         return 'No items selected, or nothing to update', 417
 
@@ -2248,18 +2171,17 @@ def api_activity():
         query.append(Activity.tag == tag)
 
     result = Activity.query.filter(
-        *query).order_by(-Activity.id).paginate(
-        page, per_page, True)
+        *query).order_by(-Activity.id).paginate(page=page, per_page=per_page, count=True)
     response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
     return Response(json.dumps(response),
-                    content_type='application/json')
+                    content_type='application/json'), 200
 
 
 @admin.route('/api/bulk/status/')
 def bulk_status():
     """Endpoint to get status update about background bulk operations"""
     uid = current_user.id
-    cursor, jobs = rds.scan(0, 'user{}:*'.format(uid), 1000)
+    cursor, jobs = rds.scan(0, F'user{uid}:*', 1000)
     tasks = []
     for key in jobs:
         result = {}
@@ -2286,6 +2208,23 @@ def bulk_status():
         else:
             rds.delete(key)
     return json.dumps(tasks)
+
+
+@admin.post('/api/key')
+@roles_required('Admin')
+def gen_api_key():
+    global_key = APIKey.query.first()
+    if not global_key:
+        global_key = APIKey()
+    global_key.key = passlib.totp.generate_secret()
+    global_key.save()
+    return global_key.key, 200
+
+
+@roles_required(['Admin'])
+@admin.route('/api/key')
+def get_api_key():
+    return APIKey.get_global_key(), 200
 
 
 # Saved Searches
@@ -2347,20 +2286,30 @@ def etl_status():
 @admin.post('/etl/path/')
 @roles_required('Admin')
 def path_process():
-    # Check if path import is enabled
-    if not current_app.config.get('ETL_PATH_IMPORT'):
+    # Check if path import is enabled and allowed path is set
+    if not current_app.config.get('ETL_PATH_IMPORT') \
+            or current_app.config.get('ETL_ALLOWED_PATH') is None:
         return 'Forbidden', 403
 
-    path = request.json.get('path')
-    recursive = request.json.get('recursive', False)
-    if not path or not os.path.isdir(path):
-        return "invalid path specified ", 417
-    p = Path(path)
+    allowed_path = Path(current_app.config.get('ETL_ALLOWED_PATH'))
+    path = Path(request.json.get('path'))
 
+    if not allowed_path.is_dir():
+        return "Allowed import path is not configured correctly", 417
+
+    if not request.json.get('path') or not path.is_dir():
+        return "Invalid path specified", 417
+
+    # check if supplied path is either the allowed path or a sub-path
+    if not (path == allowed_path or allowed_path in path.parents):
+        return 'Forbidden path', 403
+
+    recursive = request.json.get('recursive', False)
     if recursive:
-        items = p.rglob('*')
+        items = path.rglob('*')
     else:
-        items = p.glob('*')
+        items = path.glob('*')
+
     files = [str(file) for file in items]
 
     output = [{'filename': os.path.basename(file), 'path': file} for file in files]
@@ -2381,7 +2330,7 @@ def etl_process():
     results = []
     batch_id = 'ETL' + shortuuid.uuid()[:9]
     batch_log = batch_id + '.log'
-    open('logs/'+batch_log, 'a')
+    open('logs/' + batch_log, 'a')
 
     for file in files:
         results.append(etl_process_file.delay(batch_id, file, meta, user_id=current_user.id, log=batch_log))
@@ -2426,6 +2375,9 @@ def api_local_csv_upload():
     # file pond sends multiple requests for multiple files (handle each request as a separate file )
     try:
         f = request.files.get('file')
+        # validate immediately
+        if not Media.validate_sheet_extension(f.filename):
+            return 'This file type is not allowed', 415
         # final file
         filename = Media.generate_file_name(f.filename)
         filepath = (import_dir / filename).as_posix()
@@ -2437,7 +2389,7 @@ def api_local_csv_upload():
         response = {'etag': etag, 'filename': filename}
         return Response(json.dumps(response), content_type='application/json'), 200
     except Exception as e:
-        return 'Problem uploading file: {}'.format(e), 417
+        return F'Problem uploading file: {e}', 417
 
 
 @admin.delete('/api/csv/upload/')
@@ -2535,7 +2487,7 @@ def api_mapping_create():
         flag_modified(map, 'data')
 
         map.save()
-        return {'message': 'Mapping saved successfully - Mapping ID : {}'.format(map.id), 'id': map.id}, 200
+        return {'message': F'Mapping saved successfully - Mapping ID : {map.id}', 'id': map.id}, 200
     else:
         return 'Error saving mapping data', 417
 
@@ -2557,7 +2509,7 @@ def api_mapping_update(id):
             map.data = data
             map.user_id = current_user.id
             map.save()
-            return {'message': 'Mapping saved successfully - Mapping ID : {}'.format(map.id), 'id': map.id}, 200
+            return {'message': F'Mapping saved successfully - Mapping ID : {map.id}', 'id': map.id}, 200
         else:
             return "Update request missing parameters data", 417
 
@@ -2587,7 +2539,7 @@ def api_process_sheet():
         target = request.json.get('target')
         process_sheet.delay(filepath, map, 'actor', batch_id, vmap, sheet, actor_config, lang, roles)
 
-    return 'Import process queued successfully! batch id: {}'.format(batch_id)
+    return F'Import process queued successfully! batch id: {batch_id}', 200
 
 
 @admin.get('/api/logs')

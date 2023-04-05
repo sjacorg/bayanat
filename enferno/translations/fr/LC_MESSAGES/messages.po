@@ -1,0 +1,2105 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: lokalise.com\n"
+"Project-Id-Version: Bayanat\n"
+"PO-Revision-Date: 2023-02-28 15:08\n"
+"Last-Translator: lokalise.com\n"
+"Language-Team: lokalise.com\n\n"
+"Language: fr\n"
+
+msgid "Account Settings"
+msgstr "Paramètres du compte"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Rows per page"
+msgstr "Lignes par page"
+
+msgid "All Actors"
+msgstr "Tous les acteurs"
+
+msgid "Assigned to me"
+msgstr "Attribué à moi-même"
+
+msgid "My Review List"
+msgstr "Ma liste d'examens"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "New Actor"
+msgstr "Nouvel acteur"
+
+msgid "Bulk update"
+msgstr "Mise à jour en masse"
+
+msgid "About"
+msgstr "À propos"
+
+msgid "results"
+msgstr "résultats"
+
+msgid "seconds"
+msgstr "secondes"
+
+msgid "Selected items"
+msgstr "Éléments sélectionnés"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Assigned To"
+msgstr "Attribué à"
+
+msgid "Roles"
+msgstr "Rôles"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "All Bulletins"
+msgstr "Tous les bulletins"
+
+msgid "New Bulletin"
+msgstr "Nouveau bulletin"
+
+msgid "Ref"
+msgstr "Référence"
+
+msgid "Title"
+msgstr "Titre"
+
+msgid "Upload Sheet / Select Map"
+msgstr "Importer la feuille / sélectionner la carte"
+
+msgid "Fields Map"
+msgstr "Champs de la carte"
+
+msgid "Bulk Upload & Import"
+msgstr "Téléversement et importation en masse"
+
+msgid "Create a new map"
+msgstr "Créer une nouvelle carte"
+
+msgid "Select an existing map"
+msgstr "Sélectionnez une carte existante"
+
+msgid "Select Sheet to continue"
+msgstr "Sélectionnez la feuille pour continuer"
+
+msgid "Load existing map"
+msgstr "Charger la carte existante"
+
+msgid "Continue"
+msgstr "Continuer"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "Next"
+msgstr "Suivant"
+
+msgid "Sheet Fields"
+msgstr "Champs de la feuille"
+
+msgid "Reset"
+msgstr "Réinitialiser"
+
+msgid "Search Fields"
+msgstr "Champs de recherche"
+
+msgid "Sample Data"
+msgstr "Données d'échantillons"
+
+msgid "Actor Fields"
+msgstr "Champs des acteurs"
+
+msgid "Map Name"
+msgstr "Nom de la carte"
+
+msgid "Update map"
+msgstr "Mettre à jour la carte"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Origin ID"
+msgstr "ID d'origine"
+
+msgid "Name (AR)"
+msgstr "Nom (RA)"
+
+msgid "Nickname"
+msgstr "Surnom"
+
+msgid "Nickname (AR)"
+msgstr "Surnom (RA)"
+
+msgid "First Name"
+msgstr "Prénom"
+
+msgid "First Name (AR)"
+msgstr "Prénom (RA)"
+
+msgid "Middle/Father's Name"
+msgstr "Deuxième nom/Nom du père"
+
+msgid "Middle/Father's Name (AR)"
+msgstr "Deuxième nom/nom du père (RA)"
+
+msgid "Last Name"
+msgstr "Nom"
+
+msgid "Last Name (AR)"
+msgstr "Nom (RA)"
+
+msgid "Mother's Name"
+msgstr "Nom de la mère"
+
+msgid "Mother's Name (AR)"
+msgstr "Nom de la mère (RA)"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Sources"
+msgstr "Sources"
+
+msgid "Labels"
+msgstr "Étiquettes"
+
+msgid "Verified Labels"
+msgstr "Étiquettes vérifiées"
+
+msgid "Sex"
+msgstr "Sexe"
+
+msgid "Minor/Adult"
+msgstr "Mineur(e)/Adulte"
+
+msgid "Civilian/Non Civilian"
+msgstr "Civil/Non civil"
+
+msgid "Actor Type"
+msgstr "Type d'acteur"
+
+msgid "Date of Birth"
+msgstr "Date de naissance"
+
+msgid "Place of Birth"
+msgstr "Lieu de naissance"
+
+msgid "Place of Residence"
+msgstr "Lieu de résidence"
+
+msgid "Place of Origin"
+msgstr "Lieu d'origine"
+
+msgid "Events"
+msgstr "Événements"
+
+msgid "Event Type"
+msgstr "Type d'événement"
+
+msgid "Comments"
+msgstr "Commentaires"
+
+msgid "Location"
+msgstr "Lieu"
+
+msgid "From"
+msgstr "De"
+
+msgid "To"
+msgstr "À"
+
+msgid "Estimated Time"
+msgstr "Heure estimée"
+
+msgid "Occupation"
+msgstr "Profession"
+
+msgid "Occupation (AR)"
+msgstr "Profession (RA)"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Position (AR)"
+msgstr "Position (RA)"
+
+msgid "Spoken Dialects"
+msgstr "Dialectes parlés"
+
+msgid "Spoken Dialects (AR)"
+msgstr "Dialectes parlés (RA)"
+
+msgid "Family Status"
+msgstr "Situation familiale"
+
+msgid "Family Status (AR)"
+msgstr "Situation familiale (RA)"
+
+msgid "Ethnographic Information"
+msgstr "Informations ethnographiques"
+
+msgid "Nationality"
+msgstr "Nationalité"
+
+msgid "National ID Card"
+msgstr "Carte nationale d'identité"
+
+msgid "Source Link"
+msgstr "Lien de la source"
+
+msgid "Private"
+msgstr "Privé"
+
+msgid "Publish Date"
+msgstr "Date de publication"
+
+msgid "Documentation Date"
+msgstr "Date du document"
+
+msgid "Sheet file:"
+msgstr "Fichier de feuille(s) :"
+
+msgid "Selected"
+msgstr "Sélectionné"
+
+msgid "Map:"
+msgstr "Carte :"
+
+msgid "Optional: Upload more sheets to process"
+msgstr "Facultatif : importation d'autres feuilles à traiter"
+
+msgid "Access Roles"
+msgstr "Rôles d'accès"
+
+msgid "Process File(s)"
+msgstr "Fichier(s) traité(s)"
+
+msgid "Batch ID:"
+msgstr "ID de lot :"
+
+msgid "Upload or Select"
+msgstr "Importer ou sélectionner"
+
+msgid "Add Data"
+msgstr "Ajouter des données"
+
+msgid "Finish"
+msgstr "Terminer"
+
+msgid "Upload files"
+msgstr "Importer des fichiers"
+
+msgid "Manual web upload"
+msgstr "Importation manuelle sur le web"
+
+msgid "Process path"
+msgstr "Chemin d'accès du processus"
+
+msgid "Process existing files at path, server side(Faster)"
+msgstr "Traitement des fichiers existants au niveau du chemin d'accès, côté serveur (plus rapide)"
+
+msgid "Process"
+msgstr "Processus"
+
+msgid "Attach data to files"
+msgstr "Joindre des données aux fichiers"
+
+msgid "Locations"
+msgstr "Lieux"
+
+msgid "Refs"
+msgstr "Références"
+
+msgid "Optimize videos"
+msgstr "Optimiser les vidéos"
+
+msgid "Parse PDF & MS Word files"
+msgstr "Analyser les fichiers PDF et MS Word"
+
+msgid "Scan images for text"
+msgstr "Numériser des images pour en extraire du texte"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Scan"
+msgstr "Numériser"
+
+msgid "Files added to queue and will be imported in turn."
+msgstr "Fichiers ajoutés à la file d'attente et qui seront importés successivement."
+
+msgid "Event Types"
+msgstr "Types d'événements"
+
+msgid "New Item"
+msgstr "Nouvel élément"
+
+msgid "Title (AR)"
+msgstr "Titre (RA)"
+
+msgid "For Actors"
+msgstr "Pour des acteurs"
+
+msgid "For Bulletins"
+msgstr "Pour des bulletins"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Import CSV"
+msgstr "Importe un CSV"
+
+msgid "Select CSV File"
+msgstr "Sélectionner un fichier CSV"
+
+msgid "Title (ar)"
+msgstr "Titre (ra)"
+
+msgid "Edit Item"
+msgstr "Modifier l'élément"
+
+msgid "Edit Bulletin"
+msgstr "Modifier le bulletin"
+
+msgid "Edit Actor"
+msgstr "Modifier l'acteur"
+
+msgid "Query"
+msgstr "Requête"
+
+msgid "Advanced Search"
+msgstr "Recherche avancée"
+
+msgid "No (more) items found."
+msgstr "Plus (aucun) élément trouvé."
+
+msgid "Hide"
+msgstr "Masquer"
+
+msgid "Relate"
+msgstr "Lier"
+
+msgid "contains"
+msgstr "contient"
+
+msgid "Does not contain"
+msgstr "Ne contient pas"
+
+msgid "Include Refs"
+msgstr "Inclure les références"
+
+msgid "Exclude Refs"
+msgstr "Exclure les références"
+
+msgid "Publish date"
+msgstr "Date de publication"
+
+msgid "Documentation date"
+msgstr "Date de documentation"
+
+msgid "Creation date"
+msgstr "Date de création"
+
+msgid "Last modified date"
+msgstr "Date de la dernière modification"
+
+msgid "Event date"
+msgstr "Date de l'événement"
+
+msgid "Within"
+msgstr "Sous"
+
+msgid "Assigned user"
+msgstr "Utilisateur attribué"
+
+msgid "Unassigned"
+msgstr "Non attribué"
+
+msgid "Reviewer"
+msgstr "Examinateur"
+
+msgid "Workflow Status"
+msgstr "Statut du flux de travail"
+
+msgid "Review Action"
+msgstr "Action d'examen"
+
+msgid "Include sources"
+msgstr "Inclure les sources"
+
+msgid "Exclude sources (All)"
+msgstr "Exclure les sources (Toutes)"
+
+msgid "Also include child sources"
+msgstr "Inclure également les sources des enfants"
+
+msgid "Any"
+msgstr "Tout"
+
+msgid "All"
+msgstr "Tou(te)s"
+
+msgid "Include labels"
+msgstr "Inclure les étiquettes"
+
+msgid "Exclude labels (All)"
+msgstr "Exclure les étiquettes (Toutes)"
+
+msgid "Also include child labels"
+msgstr "Inclure également les étiquettes des enfants"
+
+msgid "Include verified labels"
+msgstr "Inclure les étiquettes de vérification"
+
+msgid "Exclude verified labels (All)"
+msgstr "Exclure les étiquettes de vérification (Toutes)"
+
+msgid "Also include verified child labels"
+msgstr "Inclure également des étiquettes vérifiées pour les enfants"
+
+msgid "Include locations"
+msgstr "Inclure les lieux"
+
+msgid "Exclude locations (All)"
+msgstr "Exclure les lieux (tous)"
+
+msgid "Include residence locations (Any)"
+msgstr "Inclure les lieux de résidence (n'importe lesquels)"
+
+msgid "Exclude residence locations (All)"
+msgstr "Exclure les lieux de résidence (Tous)"
+
+msgid "Include origin locations (Any)"
+msgstr "Inclure les lieux d'origine (n'importe lesquels)"
+
+msgid "Exclude origin locations (All)"
+msgstr "Exclure les lieux d'origine (Tous)"
+
+msgid "Include event locations"
+msgstr "Inclure les lieux de l'événement"
+
+msgid "Event type"
+msgstr "Type d'événement"
+
+msgid "Clear Search"
+msgstr "Effacer la recherche"
+
+msgid "Save Search"
+msgstr "Enregistrer la recherche"
+
+msgid "Refine/Extend Search"
+msgstr "Affiner/élargir la recherche"
+
+msgid "Load existing search"
+msgstr "Charger la recherche existante"
+
+msgid "Spoken dialects"
+msgstr "Dialectes parlés"
+
+msgid "Ethnography"
+msgstr "Ethnographie"
+
+msgid "Place of birth"
+msgstr "Lieu de naissance"
+
+msgid "Date of birth"
+msgstr "Date de naissance"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "No"
+msgstr "Non"
+
+msgid "Unknown"
+msgstr "Inconnu"
+
+msgid "details"
+msgstr "détails"
+
+msgid "Reporting Persons"
+msgstr "Personnes ayant fourni le signalement"
+
+msgid "Contact info ( phone, email, address)"
+msgstr "Coordonnées (téléphone, e-mail, adresse)"
+
+msgid "Relationship"
+msgstr "Relation"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Latitude"
+msgstr "Latitude"
+
+msgid "Longitude"
+msgstr "Longitude"
+
+msgid "Parent"
+msgstr "Parent"
+
+msgid "Postal Code"
+msgstr "Code postal"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Visualize"
+msgstr "Visualiser"
+
+msgid "Assigned User:"
+msgstr "Utilisateur attribué :"
+
+msgid "Original Title"
+msgstr "Titre original"
+
+msgid "Media"
+msgstr "Média"
+
+msgid "Related Bulletins"
+msgstr "Bulletins liés"
+
+msgid "Related Actors"
+msgstr "Acteurs liés"
+
+msgid "Related Incidents"
+msgstr "Incidents liés"
+
+msgid "Relationship Info"
+msgstr "Informations sur la relation"
+
+msgid "Log History"
+msgstr "Historique du journal"
+
+msgid "Full Name"
+msgstr "Nom complet"
+
+msgid "Nick Name"
+msgstr "Surnom"
+
+msgid "Middle Name"
+msgstr "Deuxième prénom"
+
+msgid "Age"
+msgstr "Âge"
+
+msgid "Civilian"
+msgstr "Civil"
+
+msgid "Ethnographic Info"
+msgstr "Informations ethnographiques"
+
+msgid "Nationalities"
+msgstr "Nationalités"
+
+msgid "Overview"
+msgstr "Aperçu"
+
+msgid "Claimed Violations Categories"
+msgstr "Catégories d'infractions présumées"
+
+msgid "Potential violation categories"
+msgstr "Catégories d'infractions potentielles"
+
+msgid "Missing Person"
+msgstr "Personne disparue"
+
+msgid "Last Address"
+msgstr "Dernière adresse"
+
+msgid "Marriage History"
+msgstr "Historique des unions"
+
+msgid "Bio Children"
+msgstr "Enfants biologiques"
+
+msgid "Pregnant at Disappearance"
+msgstr "Enceinte au moment de la disparition"
+
+msgid "Months Pregnant at Disappearance"
+msgstr "Mois de grossesse au moment de la disparition"
+
+msgid "Missing Relatives"
+msgstr "Proches disparus"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Email"
+msgstr "E-mail"
+
+msgid "Seen in a detention center?"
+msgstr "Aperçu(e) dans un centre de détention ?"
+
+msgid "Injured around time of disappearance?"
+msgstr "Blessé(e) au moment de la disparition ?"
+
+msgid "Known to be dead?"
+msgstr "Réputé(e) décédé(e) ?"
+
+msgid "Details about circumstances of death"
+msgstr "Détails relatifs aux circonstances du décès"
+
+msgid "Personal Items (watch,ring,chains etc)"
+msgstr "Articles personnels (montre, bague, chaînes, etc.)"
+
+msgid "Height"
+msgstr "Taille"
+
+msgid "Weight"
+msgstr "Poids"
+
+msgid "Physique"
+msgstr "Physique"
+
+msgid "Hair Loss"
+msgstr "Perte de cheveux"
+
+msgid "Hair Type"
+msgstr "Type de cheveux"
+
+msgid "Hair Length"
+msgstr "Longueur des cheveux"
+
+msgid "Hair Color"
+msgstr "Couleur des cheveux"
+
+msgid "Facial Hair"
+msgstr "Pilosité faciale"
+
+msgid "Notes on posture and walking style"
+msgstr "Remarques sur la posture et la démarche"
+
+msgid "Skin Markings"
+msgstr "Marques sur la peau"
+
+msgid "Handness"
+msgstr "Manualité"
+
+msgid "Glasses"
+msgstr "Lunettes"
+
+msgid "Eye Color"
+msgstr "Couleur des yeux"
+
+msgid "Distinctive characteristics (congenital)"
+msgstr "Caractéristiques particulières (congénitales)"
+
+msgid "Distinctive characteristics (acquired)"
+msgstr "Caractéristiques particulières (acquises)"
+
+msgid "Physical habits"
+msgstr "Habitudes physiques"
+
+msgid "Other comments"
+msgstr "Autres commentaires"
+
+msgid "Physician\\u2019s name and contact"
+msgstr "Nom et coordonnées du médecin"
+
+msgid "Fractures / Injuries"
+msgstr "Fractures / Blessures"
+
+msgid "Implants "
+msgstr "Implants "
+
+msgid "Congenital malformations"
+msgstr "Malformations congénitales"
+
+msgid "Pain and / or ailments"
+msgstr "Douleurs et / ou troubles"
+
+msgid "Other medical conditions"
+msgstr "Autres pathologies"
+
+msgid "Accidents"
+msgstr "Accidents"
+
+msgid "Prescription drugs taken"
+msgstr "Prise de médicaments sous ordonnance"
+
+msgid "Smoker"
+msgstr "Fumeur(se)"
+
+msgid "Is there a Dental Record"
+msgstr "Existe-t-il un dossier dentaire"
+
+msgid "Dentist’s name and contact"
+msgstr "Nom et coordonnées du dentiste"
+
+msgid "Teeth features"
+msgstr "Caractéristiques des dents"
+
+msgid "Dental problems"
+msgstr "Problèmes dentaires"
+
+msgid "Dental treatments"
+msgstr "Traitements dentaires"
+
+msgid "Dental habits"
+msgstr "Habitudes dentaires"
+
+msgid "Case status"
+msgstr "Statut de l'affaire"
+
+msgid "Reporters"
+msgstr "Rapporteurs"
+
+msgid "Identified by (responsible institution)"
+msgstr "Identifié(e) par (institution responsable)"
+
+msgid "Was the family notified?"
+msgstr "La famille a-t-elle été prévenue ?"
+
+msgid "Location of reburial"
+msgstr "Lieu de la réinhumation"
+
+msgid "Details of the person who saw them last"
+msgstr "Coordonnées de la personne l'ayant vu(e) pour la dernière fois"
+
+msgid "Contact"
+msgstr "Contact"
+
+msgid "Time"
+msgstr "Heure"
+
+msgid "Actors"
+msgstr "Acteurs"
+
+msgid "Bulletins"
+msgstr "Bulletins"
+
+msgid "Incidents"
+msgstr "Incidents"
+
+msgid "Double click on a node to expand graph, click and hold CTRL to view"
+msgstr "Double-cliquez sur un nœud pour élargir le graphique, cliquez et maintenez la touche CTRL enfoncée pour l'afficher"
+
+msgid "Generic"
+msgstr "Générique"
+
+msgid "Humans"
+msgstr "Humains"
+
+msgid "Signs/Text"
+msgstr "Signes/Texte"
+
+msgid "Maybe"
+msgstr "Peut-être"
+
+msgid "Likely"
+msgstr "Probable"
+
+msgid "Certain"
+msgstr "Certain"
+
+msgid "Duplicate"
+msgstr "Doublon"
+
+msgid "Other"
+msgstr "Autre"
+
+msgid "Part of a Series"
+msgstr "Partie d'une série"
+
+msgid "Same Object"
+msgstr "Même objet"
+
+msgid "Same Person"
+msgstr "Même personne"
+
+msgid "Potentially Duplicate"
+msgstr "Doublon potentiel"
+
+msgid "Potentially Related"
+msgstr "Personne potentiellement liée"
+
+msgid "Default"
+msgstr "Défaillance"
+
+msgid "Machine Created"
+msgstr "Créé par la machine"
+
+msgid "Human Created"
+msgstr "Créé par un humain"
+
+msgid "Updated"
+msgstr "Mis à jour"
+
+msgid "Peer Reviewed"
+msgstr "Examiné par un pair"
+
+msgid "Finalized"
+msgstr "Finalisé"
+
+msgid "Senior Reviewed"
+msgstr "Révisé par un senior"
+
+msgid "Machine Updated"
+msgstr "Mis à jour par la machine"
+
+msgid "Assigned"
+msgstr "Attribué"
+
+msgid "Second Peer Review"
+msgstr "Deuxième examen par un pair"
+
+msgid "Revisited"
+msgstr "Réexaminé"
+
+msgid "Senior Updated"
+msgstr "Mis à jour par un(e) senior"
+
+msgid "Peer Review Assigned"
+msgstr "Examen par un pair attribué"
+
+msgid "Educational Structure"
+msgstr "Structure éducative"
+
+msgid "Religious Structure"
+msgstr "Structure religieuse"
+
+msgid "Military Structure"
+msgstr "Structure militaire"
+
+msgid "Infrastructure"
+msgstr "Infrastructure"
+
+msgid "Medical Structure"
+msgstr "Structure médicale"
+
+msgid "Afghanistan"
+msgstr "Afghanistan"
+
+msgid "Albania"
+msgstr "Albanie"
+
+msgid "Algeria"
+msgstr "Algérie"
+
+msgid "Andorra"
+msgstr "Andorre"
+
+msgid "Angola"
+msgstr "Angola"
+
+msgid "Argentina"
+msgstr "Argentine"
+
+msgid "Armenia"
+msgstr "Arménie"
+
+msgid "Aruba"
+msgstr "Aruba"
+
+msgid "Australia"
+msgstr "Australie"
+
+msgid "Austria"
+msgstr "Autriche"
+
+msgid "Azerbaijan"
+msgstr "Azerbaïdjan"
+
+msgid "Bahrain"
+msgstr "Bahreïn"
+
+msgid "Bangladesh"
+msgstr "Bangladesh"
+
+msgid "Barbados"
+msgstr "Barbade"
+
+msgid "Belarus"
+msgstr "Biélorussie"
+
+msgid "Belgium"
+msgstr "Belgique"
+
+msgid "Belize"
+msgstr "Belize"
+
+msgid "Benin"
+msgstr "Bénin"
+
+msgid "Bhutan"
+msgstr "Bhoutan"
+
+msgid "Bosnia and Herzegovina"
+msgstr "Bosnie-Herzégovine"
+
+msgid "Botswana"
+msgstr "Botswana"
+
+msgid "Brazil"
+msgstr "Brésil"
+
+msgid "Brunei"
+msgstr "Brunei"
+
+msgid "Bulgaria"
+msgstr "Bulgarie"
+
+msgid "Burkina Faso"
+msgstr "Burkina Faso"
+
+msgid "Burma"
+msgstr "Birmanie"
+
+msgid "Burundi"
+msgstr "Burundi"
+
+msgid "Cambodia"
+msgstr "Cambodge"
+
+msgid "Cameroon"
+msgstr "Cameroun"
+
+msgid "Canada"
+msgstr "Canada"
+
+msgid "Central African Republic"
+msgstr "République centrafricaine"
+
+msgid "Chad"
+msgstr "Tchad"
+
+msgid "Chile"
+msgstr "Chili"
+
+msgid "China"
+msgstr "Chine"
+
+msgid "Colombia"
+msgstr "Colombie"
+
+msgid "Comoros"
+msgstr "Comores"
+
+msgid "Democratic Republic of the Congo"
+msgstr "République démocratique du Congo"
+
+msgid "Republic of the Congo"
+msgstr "République du Congo"
+
+msgid "Cote d'Ivoire"
+msgstr "Côte d'Ivoire"
+
+msgid "Croatia"
+msgstr "Croatie"
+
+msgid "Cuba"
+msgstr "Cuba"
+
+msgid "Cyprus"
+msgstr "Chypre"
+
+msgid "Czechia"
+msgstr "République tchèque"
+
+msgid "Denmark"
+msgstr "Danemark"
+
+msgid "Djibouti"
+msgstr "Djibouti"
+
+msgid "Dominica"
+msgstr "Dominique"
+
+msgid "Dominican Republic"
+msgstr "République dominicaine"
+
+msgid "Egypt"
+msgstr "Égypte"
+
+msgid "Eritrea"
+msgstr "Érythrée"
+
+msgid "Estonia"
+msgstr "Estonie"
+
+msgid "Ethiopia"
+msgstr "Éthiopie"
+
+msgid "Finland"
+msgstr "Finlande"
+
+msgid "France"
+msgstr "France"
+
+msgid "Gabon"
+msgstr "Gabon"
+
+msgid "Gambia"
+msgstr "Gambie"
+
+msgid "Georgia"
+msgstr "Géorgie"
+
+msgid "Germany"
+msgstr "Allemagne"
+
+msgid "Ghana"
+msgstr "Ghana"
+
+msgid "Greece"
+msgstr "Grèce"
+
+msgid "Guinea"
+msgstr "Guinée"
+
+msgid "Guinea-Bissau"
+msgstr "Guinée-Bissau"
+
+msgid "Guyana"
+msgstr "Guyane"
+
+msgid "Haiti"
+msgstr "Haïti"
+
+msgid "Honduras"
+msgstr "Honduras"
+
+msgid "Hungary"
+msgstr "Hongrie"
+
+msgid "Iceland"
+msgstr "Islande"
+
+msgid "India"
+msgstr "Inde"
+
+msgid "Indonesia"
+msgstr "Indonésie"
+
+msgid "Iran"
+msgstr "Iran"
+
+msgid "Iraq"
+msgstr "Irak"
+
+msgid "Ireland"
+msgstr "Irlande"
+
+msgid "Israel"
+msgstr "Israël"
+
+msgid "Italy"
+msgstr "Italie"
+
+msgid "Jamaica"
+msgstr "Jamaïque"
+
+msgid "Japan"
+msgstr "Japon"
+
+msgid "Jordan"
+msgstr "Jordanie"
+
+msgid "Kazakhstan"
+msgstr "Kazakhstan"
+
+msgid "Kenya"
+msgstr "Kenya"
+
+msgid "Kosovo"
+msgstr "Kosovo"
+
+msgid "Kuwait"
+msgstr "Koweït"
+
+msgid "Kyrgyzstan"
+msgstr "Kirghizistan"
+
+msgid "Laos"
+msgstr "Laos"
+
+msgid "Latvia"
+msgstr "Lettonie"
+
+msgid "Lebanon"
+msgstr "Liban"
+
+msgid "Liberia"
+msgstr "Liberia"
+
+msgid "Libya"
+msgstr "Libye"
+
+msgid "Liechtenstein"
+msgstr "Liechtenstein"
+
+msgid "Lithuania"
+msgstr "Lituanie"
+
+msgid "Luxembourg"
+msgstr "Luxembourg"
+
+msgid "Macedonia"
+msgstr "Macédoine"
+
+msgid "Madagascar"
+msgstr "Madagascar"
+
+msgid "Malawi"
+msgstr "Malawi"
+
+msgid "Malaysia"
+msgstr "Malaisie"
+
+msgid "Mali"
+msgstr "Mali"
+
+msgid "Malta"
+msgstr "Malte"
+
+msgid "Mauritania"
+msgstr "Mauritanie"
+
+msgid "Mauritius"
+msgstr "Île Maurice"
+
+msgid "Micronesia"
+msgstr "Micronésie"
+
+msgid "Moldova"
+msgstr "Moldavie"
+
+msgid "Monaco"
+msgstr "Monaco"
+
+msgid "Mongolia"
+msgstr "Mongolie"
+
+msgid "Montenegro"
+msgstr "Monténégro"
+
+msgid "Morocco"
+msgstr "Maroc"
+
+msgid "Mozambique"
+msgstr "Mozambique"
+
+msgid "Namibia"
+msgstr "Namibie"
+
+msgid "Nauru"
+msgstr "Nauru"
+
+msgid "Nepal"
+msgstr "Népal"
+
+msgid "Netherlands"
+msgstr "Pays-Bas"
+
+msgid "New Zealand"
+msgstr "Nouvelle-Zélande"
+
+msgid "Nicaragua"
+msgstr "Nicaragua"
+
+msgid "Niger"
+msgstr "Niger"
+
+msgid "Nigeria"
+msgstr "Nigeria"
+
+msgid "North Korea"
+msgstr "Corée du Nord"
+
+msgid "Norway"
+msgstr "Norvège"
+
+msgid "Oman"
+msgstr "Oman"
+
+msgid "Pakistan"
+msgstr "Pakistan"
+
+msgid "Palestine"
+msgstr "Palestine"
+
+msgid "Panama"
+msgstr "Panama"
+
+msgid "Philippines"
+msgstr "Philippines"
+
+msgid "Poland"
+msgstr "Pologne"
+
+msgid "Portugal"
+msgstr "Portugal"
+
+msgid "Qatar"
+msgstr "Qatar"
+
+msgid "Romania"
+msgstr "Roumanie"
+
+msgid "Russia"
+msgstr "Russie"
+
+msgid "Rwanda"
+msgstr "Rwanda"
+
+msgid "Saudi Arabia"
+msgstr "Arabie Saoudite"
+
+msgid "Senegal"
+msgstr "Sénégal"
+
+msgid "Serbia"
+msgstr "Serbie"
+
+msgid "Seychelles"
+msgstr "Seychelles"
+
+msgid "Sierra Leone"
+msgstr "Sierra Leone"
+
+msgid "Slovakia"
+msgstr "Slovaquie"
+
+msgid "Slovenia"
+msgstr "Slovénie"
+
+msgid "Somalia"
+msgstr "Somalie"
+
+msgid "South Africa"
+msgstr "Afrique du Sud"
+
+msgid "South Sudan"
+msgstr "Soudan du Sud"
+
+msgid "Spain"
+msgstr "Espagne"
+
+msgid "Sri Lanka"
+msgstr "Sri Lanka"
+
+msgid "Sudan"
+msgstr "Soudan"
+
+msgid "Swaziland"
+msgstr "Swaziland"
+
+msgid "Sweden"
+msgstr "Suède"
+
+msgid "Switzerland"
+msgstr "Suisse"
+
+msgid "Syria"
+msgstr "Syrie"
+
+msgid "Taiwan"
+msgstr "Taïwan"
+
+msgid "Tajikistan"
+msgstr "Tadjikistan"
+
+msgid "Tanzania"
+msgstr "Tanzanie"
+
+msgid "Thailand"
+msgstr "Thaïlande"
+
+msgid "Togo"
+msgstr "Togo"
+
+msgid "Tonga"
+msgstr "Tonga"
+
+msgid "Trinidad and Tobago"
+msgstr "Trinité-et-Tobago"
+
+msgid "Tunisia"
+msgstr "Tunisie"
+
+msgid "Turkey"
+msgstr "Turquie"
+
+msgid "Turkmenistan"
+msgstr "Turkménistan"
+
+msgid "Tuvalu"
+msgstr "Tuvalu"
+
+msgid "Uganda"
+msgstr "Ouganda"
+
+msgid "Ukraine"
+msgstr "Ukraine"
+
+msgid "United Arab Emirates"
+msgstr "Émirats Arabes Unis"
+
+msgid "United Kingdom"
+msgstr "Royaume-Uni"
+
+msgid "United States"
+msgstr "États-Unis"
+
+msgid "Uruguay"
+msgstr "Uruguay"
+
+msgid "Uzbekistan"
+msgstr "Ouzbékistan"
+
+msgid "Venezuela"
+msgstr "Venezuela"
+
+msgid "Vietnam"
+msgstr "Vietnam"
+
+msgid "Yemen"
+msgstr "Yémen"
+
+msgid "Zambia"
+msgstr "Zambie"
+
+msgid "Zimbabwe"
+msgstr "Zimbabwe"
+
+msgid "Person"
+msgstr "Personne"
+
+msgid "Entity"
+msgstr "Entité"
+
+msgid "Male"
+msgstr "Homme"
+
+msgid "Female"
+msgstr "Femme"
+
+msgid "Minor"
+msgstr "Mineur(e)"
+
+msgid "Adult"
+msgstr "Adulte"
+
+msgid "Non-Civilian"
+msgstr "Non civil"
+
+msgid "Police"
+msgstr "Police"
+
+msgid "Other Security Forces"
+msgstr "Autres forces de sécurité"
+
+msgid "Alawite"
+msgstr "Alaouite"
+
+msgid "Arab"
+msgstr "Arabe"
+
+msgid "Armenian"
+msgstr "Arménien(ne)"
+
+msgid "Christian"
+msgstr "Chrétien(ne)"
+
+msgid "Circassian"
+msgstr "Circassien(ne)"
+
+msgid "Druze"
+msgstr "Druze"
+
+msgid "Ismaili"
+msgstr "Ismaélien(ne)"
+
+msgid "Kurd"
+msgstr "Kurde"
+
+msgid "Shiaa"
+msgstr "Chiite"
+
+msgid "Sunni"
+msgstr "Sunnite"
+
+msgid "Syriac"
+msgstr "Syriaque"
+
+msgid "Turkmen"
+msgstr "Turkmène"
+
+msgid "1 Day"
+msgstr "1 jour"
+
+msgid "2 Days"
+msgstr "2 jours"
+
+msgid "3 Days"
+msgstr "3 jours"
+
+msgid "4 Days"
+msgstr "4 jours"
+
+msgid "5 Days"
+msgstr "5 jours"
+
+msgid "6 Days"
+msgstr "6 jours"
+
+msgid "7 Days"
+msgstr "7 jours"
+
+msgid "1 Month"
+msgstr "1 mois"
+
+msgid "3 Months"
+msgstr "3 mois"
+
+msgid "6 Months"
+msgstr "6 mois"
+
+msgid "1 Year"
+msgstr "1 an"
+
+msgid "Victim"
+msgstr "Victime"
+
+msgid "Witness"
+msgstr "Témoin"
+
+msgid "Perpetrator"
+msgstr "Auteur"
+
+msgid "Appeared"
+msgstr "Est apparu(e)"
+
+msgid "Participant"
+msgstr "Participant"
+
+msgid "Child"
+msgstr "Enfant"
+
+msgid "Sibling"
+msgstr "Frère/sœur"
+
+msgid "Spouse"
+msgstr "Conjoint(e)"
+
+msgid "Superior officer"
+msgstr "Officier supérieur"
+
+msgid "Subordinate officer"
+msgstr "Officier subalterne"
+
+msgid "Subunit"
+msgstr "Sous-unité"
+
+msgid "Alleged Perpetrator"
+msgstr "Auteur présumé"
+
+msgid "Member"
+msgstr "Membre"
+
+msgid "Group"
+msgstr "Groupe"
+
+msgid "Unit"
+msgstr "Unité"
+
+msgid "Geo Markers"
+msgstr "Marqueurs géographiques"
+
+msgid "Add Geo Marker"
+msgstr "Ajouter un marqueur géographique"
+
+msgid "Very thin"
+msgstr "Très mince"
+
+msgid "Thin"
+msgstr "Mince"
+
+msgid "Average"
+msgstr "Moyen(ne)"
+
+msgid "Muscular"
+msgstr "Musclé(e)"
+
+msgid "Overweight"
+msgstr "En surpoids"
+
+msgid "Obese"
+msgstr "Obèse"
+
+msgid "Pregnant"
+msgstr "Enceinte"
+
+msgid "Not Pregnant"
+msgstr "Pas enceinte"
+
+msgid "Not Applicable"
+msgstr "Ne s'applique pas"
+
+msgid "The Question Was Not Asked"
+msgstr "La question n'a pas été posée"
+
+msgid "Full"
+msgstr "Entièrement"
+
+msgid "Bald"
+msgstr "Chauve"
+
+msgid "Partial hair loss"
+msgstr "Perte de cheveux partielle"
+
+msgid "Straight"
+msgstr "Lisses"
+
+msgid "Wavy"
+msgstr "Ondulés"
+
+msgid "Curly"
+msgstr "Bouclés"
+
+msgid "Very curly"
+msgstr "Très bouclés"
+
+msgid "Very short"
+msgstr "Très courts"
+
+msgid "Short"
+msgstr "Courts"
+
+msgid "Medium"
+msgstr "Moyennement longs"
+
+msgid "Long"
+msgstr "Longs"
+
+msgid "Very long"
+msgstr "Très longs"
+
+msgid "Black"
+msgstr "Noirs"
+
+msgid "Brown"
+msgstr "Bruns"
+
+msgid "Blonde"
+msgstr "Blonds"
+
+msgid "Grey"
+msgstr "Gris"
+
+msgid "Turning grey"
+msgstr "Grisonnants"
+
+msgid "Red"
+msgstr "Roux"
+
+msgid "none"
+msgstr "aucun(e)"
+
+msgid "Beard"
+msgstr "Barbe"
+
+msgid "Moustache"
+msgstr "Moustache"
+
+msgid "Beard and moustache"
+msgstr "Barbe et moustache"
+
+msgid "Goatee"
+msgstr "Bouc"
+
+msgid "Whiskers"
+msgstr "Favoris"
+
+msgid "Scar"
+msgstr "Cicatrice"
+
+msgid "Tattoo"
+msgstr "Tatouage"
+
+msgid "piercing"
+msgstr "piercing"
+
+msgid "Mole"
+msgstr "Grain de beauté"
+
+msgid "Birthmarks"
+msgstr "Taches de naissance"
+
+msgid "Cuts"
+msgstr "Incisions"
+
+msgid "Right"
+msgstr "Droite"
+
+msgid "Left"
+msgstr "Gauche"
+
+msgid "Both Hands"
+msgstr "Les deux mains"
+
+msgid "Question Not Asked"
+msgstr "Question non posée"
+
+msgid "Green"
+msgstr "Verts"
+
+msgid "Blue"
+msgstr "Bleus"
+
+msgid "Missing"
+msgstr "Disparu(e)"
+
+msgid "Identified"
+msgstr "Identifié(e)"
+
+msgid "All Incidents"
+msgstr "Tous les incidents"
+
+msgid "New Incident"
+msgstr "Nouvel incident"
+
+msgid "Edit Incident"
+msgstr "Modifier l'incident"
+
+msgid "Comments (AR)"
+msgstr "Commentaires (RA)"
+
+msgid "Verified"
+msgstr "Vérifié"
+
+msgid "Bulletin"
+msgstr "Bulletin"
+
+msgid "Actor"
+msgstr "Acteur"
+
+msgid "Incident"
+msgstr "Incident"
+
+msgid "Offline"
+msgstr "Hors ligne"
+
+msgid "New Location"
+msgstr "Nouveau lieu"
+
+msgid "Full Location"
+msgstr "Lieu complet"
+
+msgid "Location Type"
+msgstr "Type de lieu"
+
+msgid "Admin Level"
+msgstr "Niveau administrateur"
+
+msgid "Edit Location"
+msgstr "Modifier le lieu"
+
+msgid "Role Groups"
+msgstr "Groupes de rôles"
+
+msgid "New Group"
+msgstr "Nouveau groupe"
+
+msgid "Group Name"
+msgstr "Nom du groupe"
+
+msgid "Color"
+msgstr "Couleur"
+
+msgid "Edit Group"
+msgstr "Modifier le groupe"
+
+msgid "ETL ID"
+msgstr "ID ETL"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "System Users"
+msgstr "Utilisateurs du système"
+
+msgid "New User"
+msgstr "Nouvel utilisateur"
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "Active"
+msgstr "Actif"
+
+msgid "Can view usernames"
+msgstr "Peut consulter les noms d'utilisateur"
+
+msgid "Can view simple history"
+msgstr "Peut consulter l'historique simple"
+
+msgid "Can view Full History"
+msgstr "Peut consulter l'Historique complet"
+
+msgid "Can self assign"
+msgstr "Peut s'auto-attribuer"
+
+msgid "Can edit Locations"
+msgstr "Peut modifier les Lieux"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+msgid "Google ID"
+msgstr "ID Google"
+
+msgid "Save Actor"
+msgstr "Enregistrer l'acteur"
+
+msgid "Search & Relate Actors"
+msgstr "Rechercher et associer des acteurs"
+
+msgid "Relationship Information"
+msgstr "Informations sur la relation"
+
+msgid "Probability"
+msgstr "Probabilité"
+
+msgid "Related As"
+msgstr "Lien de parenté"
+
+msgid "Search & Relate Bulletins"
+msgstr "Rechercher et associer des bulletins"
+
+msgid "Search & Relate Incidents"
+msgstr "Rechercher et signaler des incidents"
+
+msgid "Missing Person Profile"
+msgstr "Profil de la personne disparue"
+
+msgid "Months Pregnant at time of disappearance"
+msgstr "Mois de grossesse au moment de la disparition"
+
+msgid "Hair loss"
+msgstr "Perte de cheveux"
+
+msgid "Hair type"
+msgstr "Type de cheveux"
+
+msgid "Hair length"
+msgstr "Longueur des cheveux"
+
+msgid "Hair color"
+msgstr "Couleur des cheveux"
+
+msgid "Facial hair"
+msgstr "Pilosité faciale"
+
+msgid "Eye color"
+msgstr "Couleur des yeux"
+
+msgid "Physician’s name and contact"
+msgstr "Nom et coordonnées du médecin"
+
+msgid "Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)"
+msgstr "Fractures / Blessures (indiquez l'endroit, le côté, les circonstances, l'âge au moment de la blessure, le traitement)"
+
+msgid "Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age"
+msgstr "Implants (stimulateurs cardiaques, prothèses orthopédiques, vis ou plaques métalliques, etc.) avec la date ou l'âge"
+
+msgid "Congenital malformations (indicate type and whether there is more than one relative with the same pathology)"
+msgstr "Malformations congénitales (indiquez le type et si plusieurs membres de la famille présentent la même pathologie)"
+
+msgid "Pain and/or ailments"
+msgstr "Douleurs et/ou troubles"
+
+msgid "Other medical conditions (specify type and age of occurrence)"
+msgstr "Autres pathologies (précisez le type et l'âge de l'apparition)"
+
+msgid "Accidents (indicate age of occurrence)"
+msgstr "Accidents (indiquez l'âge des faits)"
+
+msgid "Prescription drugs taken (indicate at what age and reason)"
+msgstr "Prise de médicaments sur ordonnance (indiquez à quel âge et les raisons)"
+
+msgid "Is there a Dental Record?"
+msgstr "Existe-t-il un dossier dentaire ?"
+
+msgid "Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)"
+msgstr "Caractéristiques des dents (espacement, dents supplémentaires, dents manquantes, dents en avant, etc.)"
+
+msgid "Dental problems (absences, infections, bleeding, etc...)"
+msgstr "Problèmes dentaires (absences, infections, saignements, etc.)"
+
+msgid "Dental treatments (extractions, fillings, etc...) with dates"
+msgstr "Traitements dentaires (extractions, plombages, etc.) avec dates"
+
+msgid "Dental habits (toothpicks, smoking, etc...)"
+msgstr "Habitudes dentaires (curage des dents, tabagisme, etc.)"
+
+msgid "Location of reburial (full address)"
+msgstr "Lieu de réinhumation (adresse complète)"
+
+msgid "Not Available"
+msgstr "Indisponible"
+
+msgid "Bulk Update"
+msgstr "Mettre à jour en masse"
+
+msgid "Peer Reviewer"
+msgstr "Examinateur pair"
+
+msgid "Replace"
+msgstr "Remplacer"
+
+msgid "Bulk Update Actors"
+msgstr "Mettre à jour en masse les acteurs"
+
+msgid "Bulk Update Bulletins"
+msgstr "Mettre à jour en masse les bulletins"
+
+msgid "Assign Related Items"
+msgstr "Attribuer des éléments connexes"
+
+msgid "Restrict Related Items"
+msgstr "Restreindre les éléments connexes"
+
+msgid "Bulk Update Incidents"
+msgstr "Mettre à jour en masse les incidents"
+
+msgid "Name this search"
+msgstr "Nommer cette recherche"
+
+msgid "Save Bulletin"
+msgstr "Enregistrer le bulletin"
+
+msgid "Original Title (AR)"
+msgstr "Titre original (RA)"
+
+msgid "Event"
+msgstr "Événement"
+
+msgid "Save Incident"
+msgstr "Enregistrer l'incident"
+
+msgid "Save Location"
+msgstr "Enregistrer le lieu"
+
+msgid "Title (Ar)"
+msgstr "Titre (RA)"
+
+msgid "Country"
+msgstr "Pays"
+
+msgid "Parent Location"
+msgstr "Emplacement du parent"
+
+msgid "Tags"
+msgstr "Tags"
+
+msgid "Needs Review"
+msgstr "Nécessite un examen"
+
+msgid "No Review Needed"
+msgstr "Aucun examen nécessaire"
+
+msgid "Start"
+msgstr "Commencer"
+
+msgid "Stop"
+msgstr "Interrompre"
+
+msgid "Match"
+msgstr "Correspondance"
+
+msgid "Distance"
+msgstr "Distance"
+
+msgid "Data"
+msgstr "Données"
+
+msgid "Old Password"
+msgstr "Ancien mot de passe"
+
+msgid "New Password"
+msgstr "Nouveau mot de passe"
+
+msgid "Confirm Password"
+msgstr "Confirmer le mot de passe"
+
+msgid "Welcome"
+msgstr "Bienvenue"
+
+msgid "Last login"
+msgstr "Dernière connexion"
+
+msgid "All rights reserved."
+msgstr "Tous droits réservés."
+
+msgid "Activity"
+msgstr "Activité"
+
+msgid "Users Management"
+msgstr "Gestion des utilisateurs"
+
+msgid "Groups Management"
+msgstr "Gestion des groupes"
+
+msgid "Media Import"
+msgstr "Importation de média"
+
+msgid "Sheets Import"
+msgstr "Importation de feuilles"
+
+msgid "Deduplication Dashbaord"
+msgstr "Tableau de bord de déduplication"
+
+msgid "System Administration"
+msgstr "Administration du système"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "User Interface"
+msgstr "Interface utilisateur"
+
+msgid "Dark Mode"
+msgstr "Mode sombre"
+
+msgid "Interface Language"
+msgstr "Langue de l'interface"
+
+msgid "Profile Settings"
+msgstr "Paramètres du profil"
+
+msgid "Change Password"
+msgstr "Modifier le mot de passe"
+
+msgid "Security"
+msgstr "Sécurité"
+
+msgid "Setup Two-Factor Auth"
+msgstr "Configurer l'authentification à double facteur"
+
+msgid "Two-factor authentication adds an extra layer of security to your account"
+msgstr "L'authentification à double facteur ajoute une couche supplémentaire de sécurité à votre compte"
+
+msgid "In addition to your username and password, you'll need to use a code that your phone will generate"
+msgstr "En plus de votre nom d'utilisateur et de votre mot de passe, vous devrez utiliser un code généré par votre téléphone"
+
+msgid "To complete logging in, please enter the code sent to your mail"
+msgstr "Pour terminer la connexion, veuillez saisir le code envoyé à votre adresse e-mail"
+
+msgid "Open an authenticator app on your device and scan the following QRcode, or enter the code below manually:"
+msgstr "Ouvrez une application d'authentification sur votre appareil et scannez le code QR suivant, ou saisissez manuellement le code ci-dessous :"
+
+msgid "Two factor authentication code"
+msgstr "Code d'authentification à double facteur"
+
+msgid "To Which Phone Number Should We Send Code To?"
+msgstr "À quel numéro de téléphone devons-nous envoyer le code ?"
+
+msgid "Two-factor Authentication"
+msgstr "Authentification à double facteur"
+
+msgid "Please enter your authentication code"
+msgstr "Veuillez saisir votre code d'authentification"
+
+msgid "The code for authentication was sent to your email address"
+msgstr "Le code d'authentification a été envoyé à votre adresse e-mail"
+
+msgid "A mail was sent to us in order to reset your application account"
+msgstr "Un e-mail nous a été envoyé afin de réinitialiser votre compte d'application"
+
+msgid "Please Enter Your Password"
+msgstr "Veuillez saisir votre mot de passe"
+
+msgid "Setup Unified Sign In options"
+msgstr "Configurer les options de connexion unifiée"
+
+msgid "Open your authenticator app on your device and scan the following qrcode to start receiving codes:"
+msgstr "Ouvrez votre application d'authentification sur votre appareil et scannez le code QR suivant pour commencer à recevoir des codes :"
+
+msgid "Passwordless QRCode"
+msgstr "Code QR sans mot de passe"
+
+msgid "Code has been sent"
+msgstr "Le code a été envoyé"
+
+msgid "No methods have been enabled - nothing to setup"
+msgstr "Aucune méthode n'a été activée et il n'y a rien à configurer"
+
+msgid "Sign In"
+msgstr "Connexion"
+
+msgid "Request one-time code be sent"
+msgstr "Demander l'envoi d'un code à usage unique"
+
+msgid "Please re-authenticate"
+msgstr "Veuillez vous authentifier à nouveau"
+
+msgid "Your password has been changed."
+msgstr "Votre mot de passe a été modifié"
+
+msgid "If you did not change your password,"
+msgstr "Si vous n'avez pas modifié votre mot de passe,"
+
+msgid "click here to reset it"
+msgstr "cliquez ici pour le réinitialiser"
+
+msgid "Please confirm your email through the link below:"
+msgstr "Veuillez confirmer votre adresse e-mail en cliquant sur le lien ci-dessous :"
+
+msgid "Confirm my account"
+msgstr "Confirmer mon compte"
+
+msgid "Welcome %(email)s!"
+msgstr "Bienvenue %(email)s !"
+
+msgid "You can log into your account through the link below:"
+msgstr "Vous pouvez vous connecter à votre compte via le lien ci-dessous :"
+
+msgid "Login now"
+msgstr "Se connecter maintenant"
+
+msgid "Click here to reset your password"
+msgstr "Cliquez ici pour réinitialiser votre mot de passe"
+
+msgid "Your password has been reset"
+msgstr "Votre mot de passe a été réinitialisé"
+
+msgid "You can log into your account using the following code:"
+msgstr "Vous pouvez vous connecter à votre compte à l'aide du code suivant :"
+
+msgid "can not access mail account"
+msgstr "impossible d'accéder au compte de messagerie"
+
+msgid "You can sign into your account using the following code:"
+msgstr "Vous pouvez vous connecter à votre compte à l'aide du code suivant :"
+
+msgid "Or use the the link below:"
+msgstr "Ou utilisez le lien ci-dessous:"
+
+msgid "You can confirm your email through the link below:"
+msgstr "Vous pouvez confirmer votre adresse e-mail en cliquant sur le lien ci-dessous :"
+
+msgid "Password changed successfully."
+msgstr "Le mot de passe a bien été modifié."

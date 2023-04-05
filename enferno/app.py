@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import pandas  as pd
-from flask import Flask, render_template, request
+from flask import Flask, render_template, current_app, request
+from flask_security import  current_user
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 
@@ -9,7 +10,7 @@ import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
     Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation, Log
 from enferno.admin.views import admin
-from enferno.extensions import cache, db, mail, debug_toolbar, session, bouncer, babel, rds
+from enferno.extensions import cache, db, debug_toolbar, session, bouncer, babel, rds
 from enferno.public.views import bp_public
 from enferno.settings import ProdConfig
 from enferno.user.forms import ExtendedRegisterForm
@@ -17,6 +18,28 @@ from enferno.user.models import User, Role
 from enferno.user.views import bp_user
 
 
+def get_locale():
+    """
+    Sets the system global language.
+    :return: system language from the current session.
+    """
+    from flask import session
+    # override = request.args.get('lang')
+    # if override:
+    #     session['lang'] = override
+    try:
+        default = current_app.config.get('BABEL_DEFAULT_LOCALE')
+    except Exception as e:
+        print(e)
+        default = 'en'
+    if not current_user.is_authenticated:
+        # will return default language
+        pass
+    else:
+        if current_user.settings:
+            if current_user.settings.get('language'):
+                session['lang'] = current_user.settings.get('language')
+    return session.get('lang', default)
 def create_app(config_object=ProdConfig):
     app = Flask(__name__)
     app.config.from_object(config_object)
@@ -36,10 +59,10 @@ def register_extensions(app):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security = Security(app, user_datastore,
                         register_form=ExtendedRegisterForm)
-    mail.init_app(app)
     debug_toolbar.init_app(app)
     session.init_app(app)
     bouncer.init_app(app)
+    babel.init_app(app,locale_selector=get_locale, default_domain='messages', default_locale='en')
     babel.init_app(app)
     rds.init_app(app)
 
@@ -130,6 +153,7 @@ def register_commands(app):
 
     app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create_db)
+    app.cli.add_command(commands.create_db_exts)
     app.cli.add_command(commands.install)
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)

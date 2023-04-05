@@ -2,18 +2,16 @@ import json
 import os
 
 import requests
-from flask import Blueprint, request, session, redirect, flash, g, Response, current_app
+from flask import Blueprint, request, session, redirect, g, Response, current_app
 from flask.templating import render_template
 from flask_security import login_required, login_user, current_user
-from flask_security.utils import hash_password, verify_password
+from flask_security.forms import LoginForm
 from oauthlib.oauth2 import WebApplicationClient
+from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.settings import ProdConfig, DevConfig
-from enferno.user.models import User
 from enferno.user.forms import ExtendedLoginForm
-from flask_security.forms import LoginForm
-from flask_babelex import gettext
-from sqlalchemy.orm.attributes import flag_modified
+from enferno.user.models import User
 
 bp_user = Blueprint('users', __name__, static_folder='../static')
 
@@ -126,7 +124,7 @@ def auth_callback():
         users_name = userinfo_response.json()["name"]
     else:
         return "User email not available or not verified by Google.", 400
-    if not users_email.endswith('syriaaccountability.org'):
+    if not users_email.endswith(current_app.config.get('GOOGLE_CLIENT_ALLOWED_DOMAIN')):
         return "User email rejected!  ", 403
 
     # Create a user in our db with the information provided
@@ -191,23 +189,4 @@ def load_settings():
     settings = user.settings or {}
 
     return Response(json.dumps(settings), content_type='Application/json'), 200
-
-@bp_user.route('/change-password/', methods=['GET', 'POST'])
-@login_required
-def change_password():
-    """API Endpoint to handle user password change"""
-    if request.method == 'POST':
-        user = User.query.get(current_user.id)
-        oldpass = request.form.get("oldpass")
-        if not verify_password(oldpass, user.password):
-            flash('Wrong password entered.')
-        else:
-            password = request.form.get('password')
-            if password != '':
-                user.password = hash_password(password)
-                user.save()
-                flash(gettext('Password changed successfully.') )
-                return redirect('/dashboard')
-    return render_template('change-password.html')
-
 

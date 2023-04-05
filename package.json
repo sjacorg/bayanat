@@ -12,7 +12,7 @@
     "jsondiffpatch": "^0.4.1",
     "leaflet": "^1.7.1",
     "leaflet.markercluster": "^1.5.3",
-    "npm": "^8.15.0",
+    "npm": "^8.19.4",
     "sortablejs": "^1.14.0",
     "vee-validate": "^3.4.5",
     "video.js": "^7.*",

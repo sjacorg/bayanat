@@ -12,8 +12,10 @@ import arrow, shutil
 from enferno.settings import ProdConfig, DevConfig
 import subprocess
 
+
 def now():
     return str(arrow.utcnow())
+
 
 if os.environ.get("FLASK_DEBUG") == '0':
     cfg = ProdConfig
@@ -22,12 +24,14 @@ else:
 
 if cfg.OCR_ENABLED:
     from pytesseract import image_to_string, pytesseract
+
     try:
         pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
         tesseract_langs = '+'.join(pytesseract.get_languages(config=''))
     except Exception as e:
         print(e)
         print("Tesseract system package is missing or Bayanat's OCR settings are not set properly.")
+
 
 class DataImport():
 
@@ -38,7 +42,7 @@ class DataImport():
         self.batch_id = batch_id
         self.user_id = user_id
         self.summary = ''
-        self.log = open('logs/'+log,'a')
+        self.log = open('logs/' + log, 'a')
 
     def upload(self, filepath, target):
         """
@@ -75,8 +79,10 @@ class DataImport():
         """
         try:
             # get video duration via ffprobe
-            cmd = f'ffprobe -i "{filepath}" -show_entries format=duration -v quiet -of csv="p=0"'
-            duration = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
+            # cmd = f'ffprobe -i "{filepath}" -show_entries format=duration -v quiet -of csv="p=0"'
+            cmd = ['ffprobe', '-i', f'{filepath}', '-show_entries', 'format=duration',
+                   '-v', 'quiet', '-of', 'csv=p=0']
+            duration = subprocess.check_output(cmd, shell=False).strip().decode('utf-8')
             return duration
         except Exception as e:
             print('Failed to get video duration')
@@ -119,7 +125,6 @@ class DataImport():
         except Exception as e:
             print(e)
             return None
-
 
     def parse_pdf(self, filepath, attempt_ocr=False):
         """
@@ -172,7 +177,7 @@ class DataImport():
         except Exception as e:
             print(e)
             return None
-    
+
     def optimize(self, old_filename, old_path):
         """
         Converts a video to H.264 format.
@@ -193,8 +198,10 @@ class DataImport():
 
         try:
             # get video codec
-            cmd = f'ffprobe -i "{old_path}" -show_entries stream=codec_name -v quiet -of csv="p=0"'
-            check = subprocess.check_output(cmd, shell=True).strip().decode('utf-8')
+            # cmd = f'ffprobe -i "{old_path}" -show_entries stream=codec_name -v quiet -of csv="p=0"'
+            cmd = ['ffprobe', '-i', f'{old_path}', '-show_entries', 'stream=codec_name',
+                   '-v', 'quiet', '-of', 'csv=p=0']
+            check = subprocess.check_output(cmd, shell=False).strip().decode('utf-8')
 
         except Exception as e:
             print('Failed to get original video codec, optimizing anyway')
@@ -202,15 +209,17 @@ class DataImport():
 
         accepted_codecs = 'h264' in check or 'theora' in check or 'vp8' in check
         accepted_formats = 'mp4' in ext or 'ogg' in ext or 'webm' in ext
-        accepted_codecs = accepted_formats 
-        
+        accepted_codecs = accepted_formats
+
         if not accepted_formats or (accepted_formats and not accepted_codecs):
-            #process video
+            # process video
             try:
                 new_filename = f'{Media.generate_file_name(old_filename)}.mp4'
                 new_filepath = (Media.media_dir / new_filename).as_posix()
                 command = f'ffmpeg -i "{old_path}" -vcodec libx264  -acodec aac -strict -2 "{new_filepath}"'
-                subprocess.call(command, shell=True)
+                command = ['ffmpeg', '-i', f'{old_path}', '-vcodec', 'libx264', '-acodec', 'aac', '-strict', '-2',
+                           f'{new_filepath}']
+                subprocess.call(command, shell=False)
 
                 new_etag = self.get_etag(new_filepath)
                 return True, new_filename, new_filepath, new_etag
@@ -263,14 +272,13 @@ class DataImport():
 
             # check file extension
             file_ext = ext[1:].lower()
-            print(file_ext)
 
             # get duration and optimize if video
             if file_ext in cfg.ETL_VID_EXT:
                 duration = self.get_duration(old_path)
 
                 if self.meta.get('optimize'):
-                    optimized, new_filename, new_filepath, new_etag = self.optimize(old_filename, old_path)
+                    optimized, new_filename, new_filepath, new_etag = self.optimize(filename, filepath)
                     if optimized:
                         self.summary += now() + f'Optimized version saved as {new_filename}\n'
 
@@ -321,10 +329,10 @@ class DataImport():
                 except OSError:
                     pass
 
-                print ('File already exists: {} \n'.format(filepath))
+                print('File already exists: {} \n'.format(filepath))
                 self.summary += '------------------------------------------------------------------------\n\n'
                 self.log.write(self.summary)
-                return 
+                return
 
             file_ext = ext[1:].lower()
 
@@ -368,7 +376,7 @@ class DataImport():
             info['new_filename'] = new_filename
             info['new_filepath'] = new_filepath
             info['new_etag'] = new_etag
-        
+
         if text_content:
             info['text_content'] = text_content
 
@@ -378,10 +386,10 @@ class DataImport():
         # pass duration
         if duration:
             info['vduration'] = duration
-        print ('=====================')
+        print('=====================')
 
         print('Meta data parse success')
-        result =  self.create_bulletin(info)
+        result = self.create_bulletin(info)
         return result
 
     def create_bulletin(self, info):
@@ -394,10 +402,10 @@ class DataImport():
         bulletin.title = info.get('bulletinTitle')
         bulletin.status = 'Machine Created'
         bulletin.comments = 'Created by ETL - {} '.format(self.batch_id)
-        
+
         if info.get('text_content'):
             bulletin.description = info.get('text_content')
-        
+
         create = info.get('EXIF:CreateDate')
         if create:
             create_date = DateHelper.file_date_parse(create)
@@ -478,14 +486,10 @@ class DataImport():
         # access roles restrictions
         roles = self.meta.get('roles')
         if roles:
-
             # Fetch foles
             bulletin_roles = Role.query.filter(Role.id.in_([r.get('id') for r in roles])).all()
             bulletin.roles = []
             bulletin.roles.extend(bulletin_roles)
-
-
-
 
         user = User.query.get(self.user_id)
 
@@ -496,7 +500,7 @@ class DataImport():
         bulletin.create_revision(user_id=user.id)
 
         self.summary += 'Bulletin ID: {} \n'.format(bulletin.id)
-        print ("bulletin ID : ", bulletin.id)
+        print("bulletin ID : ", bulletin.id)
         # Record bulletin creation activity
         Activity.create(user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
         self.summary += '------------------------------------------------------------------------\n\n'

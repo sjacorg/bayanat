@@ -393,7 +393,8 @@ var aggregateLocations = function (bulletin) {
 
     // geolocations
     if (bulletin.geoLocations && bulletin.geoLocations.length) {
-        bulletin.geoLocations.map(x => {
+        bulletin.geoLocations.map((x, i) => {
+            x.number = i + 1;
             x.color = '#ffbb00';
             x.bulletinId = bulletin.id;
             return x

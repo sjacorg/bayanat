@@ -14,12 +14,9 @@ from enferno.tasks import import_data, generate_user_roles, create_default_locat
 @click.command()
 @with_appcontext
 def create_db():
-    """creates db tables - import your models within commands.py to create the models.
     """
-    db.engine.execute('CREATE EXTENSION if not exists pg_trgm ;')
-    print('Trigram extension installed successfully')
-    db.engine.execute('CREATE EXTENSION if not exists postgis ;')
-    print('Postgis extension installed successfully')
+    Creates db tables - import your models within commands.py to create the models.
+    """
     db.create_all()
     print('Database structure created successfully')
     generate_user_roles()
@@ -32,6 +29,19 @@ def create_db():
     except:
         click.echo('Error importing data.')
     # possible optimization: SET enable_seqscan = off;
+
+@click.command()
+@with_appcontext
+def create_db_exts():
+    """
+    Creates db extension. This is not normally
+    needed and will require the pg user to have
+    superuser permissions
+    """
+    db.engine.execute('CREATE EXTENSION if not exists pg_trgm ;')
+    print('Trigram extension installed successfully')
+    db.engine.execute('CREATE EXTENSION if not exists postgis ;')
+    print('Postgis extension installed successfully')
 
 
 @click.command()
@@ -55,7 +65,7 @@ def install():
         else:
             break
 
-    p = click.prompt('Admin Password?')
+    p = click.prompt('Admin Password?', hide_input=True)
     user = User(username=u, password=hash_password(p), active=1)
     user.name = 'Admin'
     user.roles.append(admin_role)
@@ -73,8 +83,11 @@ def install():
 def create(username, password):
     """Creates a user.
     """
-    a = User.query.filter(User.username == username).first()
-    if a:
+    if len(username) < 4:
+        click.echo('Username must be at least 4 characters long')
+        return
+    user = User.query.filter(User.username == username).first()
+    if user:
         click.echo('User already exists!')
         return
     if len(password < 8):

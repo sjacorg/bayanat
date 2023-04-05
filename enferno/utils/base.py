@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask_babelex import gettext
+from flask_babel import gettext
 from enferno.extensions import db
 
 

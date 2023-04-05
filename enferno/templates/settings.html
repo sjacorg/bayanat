@@ -29,7 +29,7 @@
                                     <v-card-title>{{ _('Interface Language') }}</v-card-title>
                                     <v-card-text>
 
-                                        <v-select v-model="settings.language" @change="saveSettings"
+                                        <v-select outlined dense color="third"  v-model="settings.language" @change="saveSettings"
                                                   :items="languages"></v-select>
                                     </v-card-text>
 
@@ -37,7 +37,7 @@
                                 <v-card outlined class="ma-2">
                                     <v-card-title>{{ _('Profile Settings') }}</v-card-title>
                                     <v-card-text>
-                                        <v-btn href="/change-password/">{{ _('Change Password') }}</v-btn>
+                                        <v-btn class="fifth" outlined href="/change">{{ _('Change Password') }}</v-btn>
                                     </v-card-text>
 
                                 </v-card>
@@ -45,7 +45,10 @@
                                 <v-card outlined class="ma-2">
                                     <v-card-title>{{ _('Security') }}</v-card-title>
                                     <v-card-text>
-                                        <v-btn href="/tf-setup">{{ _('Setup Two-Factor Auth') }}</v-btn>
+                                        <v-btn class="fifth" outlined href="/tf-setup">{{ _('Setup Two-Factor Auth') }}</v-btn>
+                                    </v-card-text>
+                                    <v-card-text>
+                                        <v-btn  outlined   class="fifth" href="/mf-recovery-codes">{{ _('Recovery Codes') }}</v-btn>
                                     </v-card-text>
 
                                 </v-card>

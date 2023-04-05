@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
@@ -11,7 +12,7 @@ from sqlalchemy import JSON, ARRAY, text
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
-from flask_babelex import gettext
+from flask_babel import gettext
 
 from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
@@ -120,22 +121,6 @@ class Source(db.Model, BaseMixin):
         return json.dumps(self.to_dict())
 
     @staticmethod
-    def search(kw):
-        """
-        Enhanced method to search all hierarchy from the db side, using raw sql query instead of the orm.
-        :return: matching records
-        """
-        query = """
-            with  recursive lcte (id, parent_id, title) as (
-            select id, parent_id, title from source where title ilike '%%{}%%' union all 
-            select x.id, x.parent_id, x.title from lcte c, source x where x.parent_id = c.id)
-            select * from lcte;
-            """.format(kw)
-        result = db.engine.execute(text(query))
-
-        return [{'id': x[0], 'title': x[2]} for x in result]
-
-    @staticmethod
     def find_by_ids(ids: list):
         """
         finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
@@ -143,17 +128,14 @@ class Source(db.Model, BaseMixin):
         """
         if not ids:
             return []
-        if len(ids) == 1:
-            qstr = '= {} '.format(ids[0])
-        else:
-            qstr = 'in {} '.format(str(tuple(ids)))
+        qstr = tuple(ids)
         query = """
                with  recursive lcte (id, parent_id, title) as (
-               select id, parent_id, title from source where id {} union all 
+               select id, parent_id, title from source where id in :qstr union all 
                select x.id, x.parent_id, x.title from lcte c, source x where x.parent_id = c.id)
                select * from lcte;
-               """.format(qstr)
-        result = db.engine.execute(text(query))
+               """
+        result = db.engine.execute(text(query), qstr=qstr)
 
         return [{'id': x[0], 'title': x[2]} for x in result]
 
@@ -196,8 +178,7 @@ class Source(db.Model, BaseMixin):
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from source").scalar()
         db.session.execute(
-            "alter sequence source_id_seq restart with {}".format(max_id)
-        )
+            "alter sequence source_id_seq restart with :m", {'m': max_id})
         db.session.commit()
         print("Source ID counter updated.")
 
@@ -262,22 +243,6 @@ class Label(db.Model, BaseMixin):
         return '<Label {} {}>'.format(self.id, self.title)
 
     @staticmethod
-    def search(kw):
-        """
-        Enhanced method to search all hierarchy from the db side, using raw sql query instead of the orm.
-        :return: matching records
-        """
-        query = """
-               with  recursive lcte (id, parent_id, title) as (
-               select id, parent_label_id, title from label where title ilike '%%{}%%' union all 
-               select x.id, x.parent_label_id, x.title from lcte c, label x where x.parent_label_id = c.id)
-               select * from lcte;
-               """.format(kw)
-        result = db.engine.execute(text(query))
-
-        return [{'id': x[0], 'title': x[2]} for x in result]
-
-    @staticmethod
     def find_by_ids(ids: list):
         """
         finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
@@ -285,18 +250,15 @@ class Label(db.Model, BaseMixin):
         """
         if not ids:
             return []
-        if len(ids) == 1:
-            qstr = '= {} '.format(ids[0])
-        else:
-            qstr = 'in {} '.format(str(tuple(ids)))
+        qstr = tuple(ids)
 
         query = """
                   with  recursive lcte (id, parent_label_id, title) as (
-                  select id, parent_label_id, title from label where id {} union all 
+                  select id, parent_label_id, title from label where id in :qstr union all 
                   select x.id, x.parent_label_id, x.title from lcte c, label x where x.parent_label_id = c.id)
                   select * from lcte;
-                  """.format(qstr)
-        result = db.engine.execute(text(query))
+                  """
+        result = db.engine.execute(text(query), qstr=qstr)
 
         return [{'id': x[0], 'title': x[2]} for x in result]
 
@@ -373,7 +335,7 @@ class Label(db.Model, BaseMixin):
 
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from label").scalar()
-        db.session.execute("alter sequence label_id_seq restart with {}".format(max_id))
+        db.session.execute("alter sequence label_id_seq restart with :m", {'m': max_id})
         db.session.commit()
         print("Label ID counter updated.")
         return ""
@@ -437,8 +399,7 @@ class Eventtype(db.Model, BaseMixin):
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from eventtype").scalar()
         db.session.execute(
-            "alter sequence eventtype_id_seq restart with {}".format(max_id)
-        )
+            "alter sequence eventtype_id_seq restart with :m", {'m': max_id})
         db.session.commit()
         print("Eventtype ID counter updated.")
         return ""
@@ -588,6 +549,13 @@ class Media(db.Model, BaseMixin):
             secure_filename(filename).lower(),
         )
 
+    @staticmethod
+    def validate_media_extension(filename):
+        return pathlib.Path(filename).suffix.lower() in cfg.MEDIA_ALLOWED_EXTENSIONS
+    
+    @staticmethod
+    def validate_sheet_extension(filename):
+        return pathlib.Path(filename).suffix in cfg.SHEETS_ALLOWED_EXTENSIONS
 
 # Structure is copied over from previous system
 class Location(db.Model, BaseMixin):
@@ -779,14 +747,14 @@ class Location(db.Model, BaseMixin):
         """
         query = """
         with recursive tree(id,depth) as (
-        select id, title, parent_id from location where id = {}
+        select id, title, parent_id from location where id = :id
         union all
         select p.id, p.title, p.parent_id from location p, tree t
         where p.id = t.parent_id
         )
         select * from tree;
-        """.format(self.id)
-        result = db.engine.execute(text(query))
+        """
+        result = db.engine.execute(text(query), id=self.id)
         return ' '.join(['[{}]'.format(loc[0]) for loc in result])
 
     @staticmethod
@@ -827,7 +795,7 @@ class Location(db.Model, BaseMixin):
 
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from location").scalar()
-        db.session.execute("alter sequence location_id_seq restart with {}".format(max_id))
+        db.session.execute("alter sequence location_id_seq restart with :m", {'m': max_id})
         db.session.commit()
         print("Location ID counter updated.")
 
@@ -884,21 +852,25 @@ class GeoLocation(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
     type = db.Column(db.String)
-    comment = db.Column(db.Text)
+    main = db.Column(db.Boolean)
     latlng = db.Column(Geometry('POINT'))
+    comment = db.Column(db.Text)
     bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
 
     def from_json(self, jsn):
         self.title = jsn.get('title')
         self.type = jsn.get('type')
+        self.main = jsn.get('main')
         self.latlng = 'POINT({} {})'.format(jsn.get('lat'), jsn.get('lng'))
         self.comment = jsn.get('comment')
+        return self
 
     def to_dict(self):
         return {
             'id': self.id,
             'title': self.title,
             'type': self.type,
+            'main': self.main,
             'lat': to_shape(self.latlng).x,
             'lng': to_shape(self.latlng).y,
             'comment': self.comment,
@@ -1428,6 +1400,7 @@ class Bulletin(db.Model, BaseMixin):
                     g = GeoLocation()
                     g.title = geo.get('title')
                     g.type = geo.get('type')
+                    g.main = geo.get('main')
                     g.latlng = 'POINT({} {})'.format(geo.get('lat'), geo.get('lng'))
                     g.comment = geo.get('comment')
                     g.save()
@@ -1436,6 +1409,7 @@ class Bulletin(db.Model, BaseMixin):
                     g = GeoLocation.query.get(geo['id'])
                     g.title = geo.get('title')
                     g.type = geo.get('type')
+                    g.main = geo.get('main')
                     g.latlng = 'POINT({} {})'.format(geo.get('lat'), geo.get('lng'))
                     g.save()
                 final_locations.append(g)
@@ -3068,8 +3042,7 @@ class PotentialViolation(db.Model, BaseMixin):
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from potential_violation").scalar()
         db.session.execute(
-            "alter sequence potential_violation_id_seq restart with {}".format(max_id)
-        )
+            "alter sequence potential_violation_id_seq restart with :m", {'m': max_id})
         db.session.commit()
         print("Potential Violation ID counter updated.")
         return ""
@@ -3110,8 +3083,7 @@ class ClaimedViolation(db.Model, BaseMixin):
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from claimed_violation").scalar()
         db.session.execute(
-            "alter sequence claimed_violation_id_seq restart with {}".format(max_id)
-        )
+            "alter sequence claimed_violation_id_seq restart with :m", {'m': max_id})
         db.session.commit()
         print("Claimed Violation ID counter updated.")
         return ""

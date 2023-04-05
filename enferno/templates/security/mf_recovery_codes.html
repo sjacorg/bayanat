@@ -1,0 +1,53 @@
+{% extends "login-layout.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
+
+{% block content %}
+    {% include "security/_messages.html" %}
+    <v-card class="my-3">
+        <v-card-title>{{ _fsdomain("Recovery Codes") }}</v-card-title>
+        <v-card-text>
+            {% if recovery_codes %}
+                <v-list>
+                    {% for rc in recovery_codes %}
+                        <v-chip color="grey lighten-4" label type="success" colored-border color="grey"
+                                class="mx-2">{{ rc }}</v-chip>
+                    {% endfor %}
+                </v-list>
+                <v-chip label color="green darken-2" dark class="my-4">
+                    {{ _fsdomain("Be sure to copy these and store in a safe place. Each code can be used only once.") }}
+                </v-chip>
+
+                </v-card-text>
+
+
+
+            {% else %}
+                 <v-card-actions>
+                    <form action="{{ url_for_security("mf_recovery_codes") }}" method="GET"
+                          name="mf_recovery_codes_form">
+                        <input type="hidden" name="show_codes" value="Show Recovery Codes">
+                        <v-btn name="show_codes" type="submit" color="primary" class="my-4">Show Recovery Codes</v-btn>
+                    </form>
+                </v-card-actions>
+
+            {% endif %}
+    </v-card>
+    <v-divider></v-divider>
+
+    <v-card>
+    <v-card-title>Generate new Recovery Codes</v-card-title>
+    <v-card-text>
+
+         <form action="{{ url_for_security("mf_recovery_codes") }}" method="POST"
+          name="mf_recovery_codes_form">
+        {{ mf_recovery_codes_form.hidden_tag() }}
+        {{ render_field_errors(mf_recovery_codes_form.csrf_token) }}
+        <v-btn color="primary" class="my-4" type="submit">Generate New Recovery Codes</v-btn>
+    </form>
+
+
+    </v-card-text>
+    </v-card>
+
+
+{% endblock %}

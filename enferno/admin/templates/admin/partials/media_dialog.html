@@ -70,6 +70,7 @@
                         <vue-dropzone ref="dropzone" id="dropzone" :options="dzOpts"
                                       @vdropzone-error="showError"
                                       @vdropzone-removed-file="fileRemoved"
+                                      @vdropzone-file-added="fileAdded"
                                       @vdropzone-success="uploadSuccess"></vue-dropzone>
 
 

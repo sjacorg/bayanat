@@ -54,6 +54,22 @@ let mediaMixin = {
             this.showSnack(message);
         },
 
+        fileAdded(file) {
+
+            const dropzone = this.$refs.dropzone.dropzone;
+            if (dropzone.files.length) {
+                var _i, _len;
+                for (_i = 0, _len = dropzone.files.length; _i < _len - 1; _i++) // -1 to exclude current file
+                {
+                    if (dropzone.files[_i].name === file.name && dropzone.files[_i].size === file.size && dropzone.files[_i].lastModified.toString() === file.lastModified.toString()) {
+                        dropzone.removeFile(file);
+                    }
+                }
+            }
+
+
+        },
+
         fileRemoved(file, error, xhr) {
             if (!error) {
                 // pop out that specific removed file based on UUID

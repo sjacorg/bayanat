@@ -8,13 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
 
-    <link rel="stylesheet" href="/static/css/vuetify.min.css?v={{ g.version }}"/>
-    <link rel="stylesheet" href="/static/css/iv-viewer.min.css?v={{ g.version }}"/>
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css?v={{ g.version }}"/>
-    <link rel="stylesheet" href="/static/js/videojs/video.css?v={{ g.version }}"/>
+    <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
+    <link rel="stylesheet" href="/static/css/iv-viewer.min.css"/>
+    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css"/>
+    <link rel="stylesheet" href="/static/js/videojs/video.css"/>
     <link rel="stylesheet" href="/static/js/jsondiffpatch/formatters-styles/html.css">
-    <link rel="stylesheet" href="/static/css/app.css?v={{ g.version }}"/>
-    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css?v={{ g.version }}"/>
+    <link rel="stylesheet" href="/static/css/app.css"/>
+    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css"/>
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css"/>
     <link rel="stylesheet" href="/static/css/leaflet.css">
     <link rel="stylesheet" href="/static/css/MarkerCluster.css">
@@ -49,32 +49,38 @@
 
 {% block content %} {% endblock %}
 {% set messages = get_flashed_messages() %}
+{% if current_user.is_authenticated %}
+<div class="d-none" data-settings='{{ current_user.settings|tojson if current_user.settings else '{}' }}'></div>
+    {% else %}
+    <div class="d-none" data-settings='{}'></div>
+{% endif %}
+<div class="d-none" data-lang='{{session.get('lang','en')}}'></div>
+<div class="d-none" data-maps-api-endpoint='{{config.MAPS_API_ENDPOINT}}'></div>
 <script>
-    {% set settings = current_user.settings or {} %}
-    window.__settings__ = JSON.parse('{{settings|tojson|safe }}');
-    window.__lang__ = "{{session.get('lang','en')}}";
-    window.__MAPS_API_ENDPOINT__ = '{{config.MAPS_API_ENDPOINT}}';
+    window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
+    window.__lang__ =  document.querySelector('[data-lang]').dataset.lang;
+    window.__MAPS_API_ENDPOINT__ =  document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
 </script>
 
 
 
 
-    <script src="/static/js/vue.min.js?v={{g.version}}"></script>
-    <script src="/static/js/vuetify.min.js?v={{g.version}}"></script>
+    <script src="/static/js/vue.min.js"></script>
+    <script src="/static/js/vuetify.min.js"></script>
     <script src="/static/js/vue-router.min.js"></script>
-    <script src="/static/js/axios.min.js?v={{g.version}}"></script>
-    <script src="/static/js/vee-validate.full.min.js?v={{g.version}}"></script>
-    <script src="/static/js/iv-viewer.min.js?v={{g.version}}"></script>
-    <script src="/static/js/leaflet.js?v={{g.version}}"></script>
-    <script src="/static/js/vue2-leaflet.min.js?v={{g.version}}"></script>
+    <script src="/static/js/axios.min.js"></script>
+    <script src="/static/js/vee-validate.full.min.js"></script>
+    <script src="/static/js/iv-viewer.min.js"></script>
+    <script src="/static/js/leaflet.js"></script>
+    <script src="/static/js/vue2-leaflet.min.js"></script>
     <script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
-    <script src="/static/js/vue-tippy.min.js?v={{g.version}}"></script>
+    <script src="/static/js/vue-tippy.min.js"></script>
 <script>
     {%  include 'admin/i18n.jinja2' %}
 
 </script>
 
-<script src="/static/js/common/config.js?v={{ g.version }}"></script>
+<script src="/static/js/common/config.js"></script>
 
 {% if current_user.is_authenticated %}
 
@@ -84,23 +90,23 @@
     <script src="/static/js/croppr/croppr.min.js"></script>
     <script src="/static/js/date_fns.min.js"></script>
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
-    <script src="/static/js/components/SearchField.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/SearchFieldSingle.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/PopDateField.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/PopDateTimeField.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/EventCard.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/ActorCard.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/BulletinCard.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/IncidentCard.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/RelateBulletins.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/RelateActors.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/RelateIncidents.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/BulletinSearchBox.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/ActorSearchBox.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/IncidentSearchBox.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/PreviewCard.js?v={{ g.version }}"></script>
-    <script src="/static/js/components/GeoMap.js?v={{ g.version }}"></script>
-    <script src="/static/js/leaflet.markercluster.js?v={{ g.version }}"></script>
+    <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/SearchFieldSingle.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateTimeField.js"></script>
+    <script src="/static/js/components/EventCard.js"></script>
+    <script src="/static/js/components/ActorCard.js"></script>
+    <script src="/static/js/components/BulletinCard.js"></script>
+    <script src="/static/js/components/IncidentCard.js"></script>
+    <script src="/static/js/components/RelateBulletins.js"></script>
+    <script src="/static/js/components/RelateActors.js"></script>
+    <script src="/static/js/components/RelateIncidents.js"></script>
+    <script src="/static/js/components/BulletinSearchBox.js"></script>
+    <script src="/static/js/components/ActorSearchBox.js"></script>
+    <script src="/static/js/components/IncidentSearchBox.js"></script>
+    <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/leaflet.markercluster.js"></script>
 
 
 
@@ -111,7 +117,7 @@
 {% block js %}{% endblock %}
 
 
-<script type="text/javascript" src="/static/js/app.js?v={{ g.version }}"></script>
+<script type="text/javascript" src="/static/js/app.js"></script>
 
 </body>
 </html>

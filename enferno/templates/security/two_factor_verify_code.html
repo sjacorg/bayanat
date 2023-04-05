@@ -2,15 +2,29 @@
 {% from "security/_macros.html" import render_field_with_errors, render_field %}
 
 {% block content %}
+
     {% include "security/_messages.html" %}
-    <h1>{{ _("Two-factor Authentication") }}</h1>
-    <h2>{{ _("Please enter your authentication code") }}</h2>
-    <form action="{{ url_for_security('two_factor_token_validation') }}" method="POST"
+    <v-card elevation="4"  style="width:min(90%,500px)" class="ma-auto pa-3">
+    <v-card-title>{{ _("Two-factor Authentication") }}</v-card-title>
+    <v-card-subtitle>{{ _("Please enter your authentication code") }}</v-card-subtitle>
+        <form action="{{ url_for_security('two_factor_token_validation') }}" method="POST"
           name="two_factor_verify_code_form">
-        {{ two_factor_verify_code_form.hidden_tag() }}
-        <v-text-field style="width: 200px" name="code" placeholder="Enter code"></v-text-field>
+            {{ two_factor_verify_code_form.hidden_tag() }}
+    <v-card-text>
+
+
+        <v-text-field name="code" placeholder="Enter code"></v-text-field>
+
+        <a href="/mf-recovery">Trouble Accessing Your Account?/Lost Mobile/TFA Device?</a>
+
+    </v-card-text>
+    <v-card-actions class="justify-end">
         <v-btn color="primary" type="submit"> Submit</v-btn>
+    </v-card-actions>
     </form>
+    </v-card>
+
+
     <v-card  class="elevation-0 my-5 d-none" color="grey lighten-4">
         <v-card-text>
     <form action="{{ url_for_security('two_factor_rescue') }}" method="POST" name="two_factor_rescue_form" >

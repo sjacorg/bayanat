@@ -3,7 +3,20 @@
 
 {% block metas %}
     <link rel="stylesheet" href="/static/css/vuetify.min.css">
+
 {% endblock %}
+{% block css %}
+    <style>
+    .fs-div {
+        display: flex;
+        flex-direction: row-reverse;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-bottom:20px;
+    }
+    </style>
+{% endblock %}
+
 
 
 {% block content %}
