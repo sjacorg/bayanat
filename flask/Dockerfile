@@ -1,8 +1,22 @@
 # ---- use a base image to compile requirements / save image size -----
-FROM ubuntu as base
+FROM ubuntu:20.04 as base
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y && \
-    apt install -yq python3-dev python3.10-venv libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools python3-pip libpq-dev libimage-exiftool-perl
+    apt install -yq \
+        libffi-dev \
+        libimage-exiftool-perl \
+        libjpeg8-dev \
+        libmysqlclient-dev \
+        libncurses5-dev \
+        libpq-dev \
+        libssl-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libzip-dev \
+        python-setuptools \
+        python3.8-dev \
+        python3-pip \
+        python3.8-venv
 
 WORKDIR /app
 
@@ -34,9 +48,9 @@ ARG ROLE
 ENV ROLE=${ROLE}
 RUN echo "Building ${ROLE} container."
 RUN if [ "$ROLE" = "flask" ]; then \
-    apt update -y && apt install -yq python3-dev python3.10-venv postgis; \
+    apt update -y && apt install -yq python3.8-dev python3.8-venv postgis; \
     elif [ "$ROLE" = "celery" ]; then \
-    apt update -y && apt install -yq python3-dev python3.10-venv postgis libimage-exiftool-perl ffmpeg; \
+    apt update -y && apt install -yq python3.8-dev python3.8-venv postgis libimage-exiftool-perl ffmpeg; \
     fi
 RUN apt clean
 RUN apt autoremove
@@ -63,15 +77,14 @@ COPY . /app
 # copy compiled virtualenv
 COPY --from=base /opt/venv /opt/venv
 
-# environments are passed directly to the image
-ARG ENV_FILE
-COPY ${ENV_FILE:-.env} /app
-
 COPY --chown=bayanat:bayanat ./flask/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod 550 /usr/local/bin/entrypoint.sh
 
 ENV PATH="/opt/venv/bin:$PATH"
+
+ENV ADMIN_USERNAME=admin
+ENV ADMIN_PASSWORD=change_this_password
 
 USER bayanat
 

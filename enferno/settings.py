@@ -36,6 +36,9 @@ class Config(object):
         SQLALCHEMY_DATABASE_URI = F'postgresql:///{POSTGRES_DB}'
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": os.environ.get('SQLALCHEMY_ENGINE_OPTIONS_POOL_PRE_PING', True)
+    }
 
     # Redis
     REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')

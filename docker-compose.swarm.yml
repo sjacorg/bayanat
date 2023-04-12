@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  bayanat:
+    image: ${COMPOSE_REGISTRY}bayanat:${CI_COMMIT_SHA}
+
+  celery:
+    image: ${COMPOSE_REGISTRY}celery:${CI_COMMIT_SHA}
+  
+  postgres:
+    image: ${COMPOSE_REGISTRY}bayanat/postgres:${CI_COMMIT_SHA}
+    volumes:
+      - postgres_backup:/opt/backup
+
+volumes:
+  postgres_backup:

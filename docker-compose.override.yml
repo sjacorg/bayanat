@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  bayanat:
+    volumes:
+      - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media:rw'
+      - './enferno/imports:/app/enferno/imports:rw'
+      - './logs:/app/logs:rw'

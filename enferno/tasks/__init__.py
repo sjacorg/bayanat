@@ -22,6 +22,7 @@ celery.conf.update(
     {'accept_content': ['pickle', 'json', 'msgpack', 'yaml']})
 celery.conf.update({'result_backend': os.environ.get('CELERY_RESULT_BACKEND', cfg.result_backend)})
 celery.conf.update({'SQLALCHEMY_DATABASE_URI': os.environ.get('SQLALCHEMY_DATABASE_URI', cfg.SQLALCHEMY_DATABASE_URI)})
+celery.conf.update({'database_engine_options': cfg.SQLALCHEMY_ENGINE_OPTIONS})
 celery.conf.update({'SECRET_KEY': os.environ.get('SECRET_KEY', cfg.SECRET_KEY)})
 celery.conf.add_defaults(cfg)
 
