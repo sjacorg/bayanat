@@ -274,8 +274,6 @@ class SheetUtils:
             events.append(e)
 
         if events:
-            if actor.name == None:
-                actor.name = 'temp'
             for event in events:
                 if not event:
                     continue
@@ -308,6 +306,8 @@ class SheetUtils:
                 # validate event here
                 if (from_date and not pd.isnull(from_date)) or loc:
                     actor.events.append(e)
+                else:
+                    print(f'Invalid event .. Skipped due to invalid from_date or missing location {e.__dict__}')
 
         return actor
     
@@ -345,7 +345,11 @@ class SheetUtils:
         :param map_item: mapping value
         :return: value based on row data and mapping provided
         """
-        value = row.get(map_item[0])
+
+        # more generic solution // get field value for simple mapped columns
+        if map_item[0].__class__ == str:
+            value = row.get(map_item[0])
+
         print(f'Processing field: {field}, map_item: {map_item}')
         
         # handle complex list of dicts for reporters
@@ -359,7 +363,7 @@ class SheetUtils:
 
         elif field == 'reporters':
             return self.set_reporters(actor, row, map_item)
-        
+
         elif field in config_dict.keys():
             return self.set_from_list(actor, field, value)
 
@@ -424,11 +428,13 @@ class SheetUtils:
                 # ----------
                 # Create a new actor for each csv row
                 actor = Actor()
+                actor.name = 'temp' # this is temp
+                # better to get name col from map first instead
                 actor.description = ''
-                row_id = 'row-{}'.format(i)
+                row_id = F'row-{i}'
                 for item in map:
                     # loop only selected mapped columns
-
+                    failed = 0
                     if len(map.get(item)) > 0:
                         try:
                             actor = self.gen_value(actor, row, item, map.get(item))
@@ -436,7 +442,11 @@ class SheetUtils:
                             Log.create(row_id, 'actor', 'import', batch_id, 'failed')
                             print(f"Failed to create Actor from row {row_id}")
                             print(e)
+                            failed = 1
                             break
+                if failed:
+                    # no need to continue in this actor if it failed
+                    continue
 
                 if vmap:
                     skip = False

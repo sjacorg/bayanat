@@ -68,7 +68,7 @@ class Config(object):
     SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS = None
     SECURITY_MULTI_FACTOR_RECOVERY_CODE_TTL = None
 
-    #disabel token apis
+    # Disable token apis
 
     SECURITY_TWO_FACTOR_ENABLED_METHODS= ['authenticator']  # 'sms' also valid but requires an sms provider
     SECURITY_TWO_FACTOR = os.environ.get('SECURITY_TWO_FACTOR')
@@ -115,6 +115,9 @@ class Config(object):
     ETL_PATH_IMPORT = (os.environ.get('ETL_PATH_IMPORT', 'False') == 'True')
     ETL_ALLOWED_PATH = os.environ.get('ETL_ALLOWED_PATH', None)
 
+    EXPORT_TOOL = (os.environ.get('EXPORT_TOOL', 'False') == 'True')
+    # Export file expiry in seconds (2 hours)
+    EXPORT_DEFAULT_EXPIRY = 7200
     # Enable data deduplication tool
     DEDUP_TOOL = (os.environ.get('DEDUP_TOOL', 'False') == 'True')
 
@@ -127,7 +130,7 @@ class Config(object):
     TESSERACT_CMD = os.environ.get('TESSERACT_CMD', r'/usr/bin/tesseract')
 
     # Allowed file upload extensions
-    MEDIA_ALLOWED_EXTENSIONS = ['.' + ext for ext in ETL_VID_EXT] + ['.' + ext for ext in OCR_EXT] + ['.pdf']
+    MEDIA_ALLOWED_EXTENSIONS = ['.' + ext for ext in ETL_VID_EXT] + ['.' + ext for ext in OCR_EXT] + ['.pdf', '.docx']
     SHEETS_ALLOWED_EXTENSIONS = ['.csv', '.xls', '.xlsx']
 
     # S3 settings
@@ -177,6 +180,20 @@ class ProdConfig(Config):
     ENV = 'prod'
     DEBUG = False
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
+
+    # secure cookies (flask core)
+    SESSION_COOKIE_SECURE = os.environ.get('SECURE_COOKIES', 'True') == 'True'
+    print(SESSION_COOKIE_SECURE)
+    REMEMBER_COOKIE_SECURE = os.environ.get('SECURE_COOKIES', 'True') == 'True'
+    SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+
+    # flask-security cookie
+    SECURITY_CSRF_COOKIE ={
+        # Overrides default secure = False to require HTTPS.
+        "samesite": "Strict", "httponly": False, "secure": os.environ.get('SECURE_COOKIES', 'True') == 'True'
+    }
 
 class DevConfig(Config):
     """Development configuration."""

@@ -241,7 +241,8 @@ const router = new VueRouter({
         {path: '/admin/bulletins/:id'},
         {path: '/admin/actors/:id'},
         {path: '/admin/incidents/:id'},
-        {path: '/admin/locations/:id'}
+        {path: '/admin/locations/:id'},
+        {path: '/export/dashboard/:id'}
     ]
 });
 

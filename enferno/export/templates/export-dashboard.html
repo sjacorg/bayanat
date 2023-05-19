@@ -1,0 +1,345 @@
+{% extends 'layout.html' %}
+{% block css %}
+{% endblock %}
+{% block content %}
+    <div id="app">
+        <v-app id="inspire" v-cloak>
+            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+
+            {% include 'export_drawer.html' %}
+            <v-main>
+                <v-container class="container--fluid">
+                    <v-row>
+                        <v-col cols="12">
+                            <v-card>
+                                <v-card-text>
+
+                                    <v-data-table
+                                            fixed-header
+                                            height="calc(100vh - 291px)"
+                                            id="export-dt"
+                                            v-model="selected"
+                                            :headers="headers"
+                                            @click:row="rowClick"
+                                            show-select
+                                            :items="items"
+                                            :options.sync="options"
+                                            :footer-props.sync="footerProps"
+                                            :loading="loading"
+                                            :server-items-length="itemsLength"
+                                            class="elevation-1"
+                                    >
+
+                                        <template v-slot:top>
+                                            <v-toolbar flat color="white">
+                                                <v-toolbar-title>{{ _('Exports') }}</v-toolbar-title>
+                                                <v-spacer></v-spacer>
+
+                                            </v-toolbar>
+                                        </template>
+
+                                        <template v-slot:item.expires_on="{item}">
+                                            ${item.expires_on|localDate}
+                                        </template>
+
+                                        <template v-slot:item.created_at="{item}">
+                                            ${item.created_at|localDate}
+                                        </template>
+
+                                        <template v-slot:item.download="{item}">
+
+                                            <!-- adding 2px to better align with icons -->
+                                            <v-btn @click.stop="" :disabled="item.expired" v-tippy content="Download" style="margin-left:2px"
+                                                   download :href="`/export/api/exports/download?exportId=${item.uid}`"
+                                                   v-if="item.status==='Approved'" icon color="success">
+                                                <v-icon>mdi-download-circle</v-icon>
+                                            </v-btn>
+
+                                            <v-icon v-tippy content="Pending" class="ml-2"
+                                                    v-if="item.status==='Pending'">mdi-clock-time-eleven-outline
+                                            </v-icon>
+                                            <v-icon v-tippy content="Not Approved" class="ml-2"
+                                                    v-if="item.status==='Rejected'" color="error">mdi-cancel
+                                            </v-icon>
+                                            <v-icon v-tippy content="Failed" class="ml-2"
+                                                    v-if="item.status==='Failed'" color="error">mdi-alert-circle
+                                            </v-icon>
+                                            <v-icon v-tippy content="Expired" class="ml-2"
+                                                    v-if="item.status==='Expired'"
+                                                    color="grey">mdi-close-circle
+                                            </v-icon>
+
+                                        </template>
+
+                                        <template v-slot:item.format="{item}">
+
+                                            <v-icon v-tippy content="JSON" class="ml-2" v-if="item.file_format === 'json'">mdi-code-json</v-icon>
+
+                                            <v-icon v-tippy content="PDF" class="ml-2" v-if="item.file_format === 'pdf'">mdi-file-pdf-box</v-icon>
+                                            
+                                            <v-icon v-tippy content="CSV" class="ml-2" v-if="item.file_format === 'csv'">mdi-file-delimited-outline</v-icon>
+
+                                        </template>
+
+                                        <template v-slot:item.media="{item}">
+
+                                            <v-icon v-tippy content="Include Media" class="ml-2"
+                                                    v-if="item.include_media" color="success">mdi-check-circle
+                                            </v-icon>
+
+                                            <v-icon v-tippy content="Don't Include Media" class="ml-2" 
+                                            v-if="!item.include_media">mdi-close-circle
+                                            </v-icon>
+
+                                        </template>
+
+                                    </v-data-table>
+
+                                </v-card-text>
+                            </v-card>
+
+                            <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+
+                            <v-snackbar v-model="snackbar" class="">
+                                <div class="d-flex justify-space-between align-center">
+                                    ${snackMessage}
+
+                                    <v-btn icon fab small color="white" text @click="snackbar = false">
+                                        <v-icon>mdi-close</v-icon>
+                                    </v-btn>
+                                </div>
+                            </v-snackbar>
+
+
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-main>
+
+            {% include 'footer.html' %}
+
+            <v-overlay v-model="loading">
+            </v-overlay>
+        </v-app>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/components/ExportCard.js" ></script>
+<script src="/static/js/components/BulletinResult.js"></script>
+<script src="/static/js/components/UniField.js"></script>
+<script src="/static/js/mixins/global-mixin.js" ></script>
+    <script>
+
+        const app = new Vue({
+            el: "#app",
+            vuetify: vuetify,
+            delimiters: delimiters,
+            router,
+            mixins: [globalMixin],
+            data: () => ({
+
+                translations: translations,
+
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+                drawer: drawer,
+                exportDrawer: false,
+                exportLoader: true,
+                preview: false,
+                pitem: null,
+                eitem: {},
+                mode: null,
+                sideNav: sideNav,
+                snackbar: false,
+                snackMessage: '',
+                loading: false,
+                status: '',
+                items: [],
+                itemsLength: 10,
+                selected: [],
+                options: {
+                    page: 1,
+                    itemsPerPage: 100
+                },
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
+                headers: [
+                    {text: "{{_('ID')}}", value: 'id', sortable: false},
+                    {text: "{{_('Requester')}}", value: 'requester.name', sortable: false},
+                    {text: "{{_('Table')}}", value: 'table', sortable: false},
+                    {text: "{{_('# of items')}}", value: 'items.length', sortable: false},
+                    {text: "{{_('Format')}}", value: 'format', sortable: false},
+                    {text: "{{_('Include Media')}}", value: 'media', sortable: false},
+                    {text: "{{_('Requested time')}}", value: 'created_at', sortable: false},
+                    {text: "{{_('Expiry time')}}", value: 'expires_on', sortable: false},
+                    {text: "{{_('Status')}}", value: 'status', sortable: false},
+                    {text: "{{_('Download')}}", value: 'download', sortable: false},
+                ],
+
+            }),
+
+            watch: {
+                 exportDrawer: function (val) {
+                    if (val === false) {
+
+                        if (this.$route.path !== '/export/dashboard/')
+                            this.$router.push('/export/dashboard/')
+                    }
+                },
+
+                options: {
+                    handler: "refresh",
+                }
+            },
+
+        filters : {
+
+            localDate: function (dt) {
+                if (dt === null || dt === '') {
+                    return '';
+                }
+                // Z tells it's a UTC time
+                const utcDate = new Date(`${dt}Z`);
+                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                return utcDate.toLocaleString('en-US', {timeZone: userTimezone});
+            }
+        },
+
+        mounted () {
+            if (this.$route.params.id) {
+                this.showExport(this.$route.params.id);
+            }
+
+            this.$router.afterEach((to, from, next) => {
+
+                if (this.$route.params.id) {
+                    this.showExport(this.$route.params.id);
+                } else {
+                    this.exportDrawer = false;
+                }
+            })
+        },
+
+            methods: {
+
+                rowClick(item) {
+                    path = `/export/dashboard/${item.id}`;
+                    if (this.$route.path !== path)
+                        this.$router.push(path);
+
+                },
+
+                showExport(id) {
+                    this.exportLoader = true;
+                    this.exportDrawer = true;
+                    axios.get(`/export/api/export/${id}`).then(response => {
+                        this.eitem = response.data;
+                    }).catch(error => {
+                        this.exportDrawer = false;
+                        this.showSnack('Oops! We couldn\'t find this item.')
+                    }).finally(()=>{
+                        this.exportLoader = false;
+                    });
+                },
+
+                showActions(item) {
+                    return !(item.status === 'Approved' || item.status === 'Rejected' || item.status === 'Expired');
+                },
+
+                approveExport(exportId) {
+
+                    const data = {
+                        exportId: exportId,
+                        action: 'approve'
+                    }
+
+                    axios.put('/export/api/exports/status', data).then(res => {
+                        // close drawer
+                        this.exportDrawer = false;
+                        this.refresh(3000);
+                        this.showSnack(res.data);
+
+                    }).catch(error => {
+
+                    }).finally(() => {
+
+                    })
+                },
+
+                rejectExport(exportId) {
+                    const data = {
+                        exportId: exportId,
+                        action: 'reject'
+                    }
+
+                    axios.put('/export/api/exports/status', data).then(res => {
+                        // close drawer
+                        this.exportDrawer = false;
+                        this.refresh();
+                        this.showSnack(res.data);
+
+                    }).catch(error => {
+
+                    }).finally(() => {
+
+                    })
+
+                },
+
+                setExpiry(exportId, newDate) {
+                    const utc_expiry = new Date(newDate).toISOString();
+
+                    const data = {
+                        exportId: exportId,
+                        expiry: utc_expiry
+                    }
+
+                    axios.put('/export/api/exports/expiry', data).then(res => {
+                        // close drawer
+                        this.exportDrawer = false;
+                        this.refresh();
+                        this.showSnack(res.data);
+                    }).catch(err => {
+                        console.log(err.response.data);
+                        this.$root.showSnack(err.response.data);
+                    }).finally(() => {
+
+                    })
+                },
+
+                previewItem(endpoint) {
+                    axios.get(endpoint).then(res => {
+                        this.pitem = res.data;
+                        this.preview = true;
+                    })
+                },
+
+                editAllowed() {
+                    return false;
+                },
+
+                refresh(timeout = 300) {
+                    this.loading = true;
+                    
+                    // using timeout here is a temp measure
+                    // this is to allow system a few seconds 
+                    // to generate the export or fail
+                    // will replace with proper handling 
+                    // similar to bulk operations
+                    setTimeout(() => {
+                        axios.get('/export/api/exports/').then(res => {
+                            this.items = res.data.items;
+                        }).catch(error => {
+                            console.error(error.response?.data);
+                        }).finally(() => {
+                            this.loading = false;
+                        })
+                    }, timeout); 
+                }
+            }
+        });
+    </script>
+{% endblock %}

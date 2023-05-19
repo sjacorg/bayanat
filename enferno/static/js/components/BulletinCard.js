@@ -144,7 +144,7 @@ Vue.component("bulletin-card", {
 
         },
         viewThumb(s3url) {
-            console.log(s3url);
+            
             this.$emit('thumb-click', s3url);
         },
 

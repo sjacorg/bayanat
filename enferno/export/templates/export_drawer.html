@@ -1,0 +1,22 @@
+<v-navigation-drawer
+      v-model="exportDrawer"
+      clipped
+      fixed
+      right
+      temporary
+      width="520"
+      app
+      disable-route-watcher
+    >
+  <v-container v-if="exportLoader"  fluid fill-height>
+    <v-layout justify-center align-center>
+      <v-progress-circular indeterminate size="44"></v-progress-circular>
+    </v-layout>
+  </v-container>
+
+  <div v-else>
+    <!-- @ emit events passed to card to approve, reject and set expiry datetime -->
+    <export-card :admin-mode="has_role(currentUser, 'Admin')" @approve="approveExport" @reject="rejectExport" @change="setExpiry" :i18n="translations" v-if="exportDrawer && eitem"  @close="exportDrawer=false" :exp="eitem" />
+
+  </div>
+    </v-navigation-drawer>

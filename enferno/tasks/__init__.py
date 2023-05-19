@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
-import os, time
+import os, time, shutil
+from datetime import datetime
 from collections import namedtuple
-from celery import Celery
-from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory, \
-    Label, Eventtype, PotentialViolation, ClaimedViolation, LocationAdminLevel, LocationType
+from sqlalchemy import and_
+from celery import Celery, chain
+from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory
+from enferno.export.models import Export
 from enferno.extensions import db, rds
 from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import Role, User
 from enferno.utils.data_import import DataImport
+from enferno.utils.pdf_utils import BulletinPDFUtil
 from enferno.deduplication.models import DedupRelation
-from datetime import timedelta
+import boto3
 from enferno.utils.sheet_utils import SheetUtils
 
 cfg = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
@@ -38,7 +41,8 @@ class ContextTask(celery.Task):
 celery.Task = ContextTask
 
 # splitting db operations for performance
-BULK_CHUNK_SIZE = 2
+BULK_CHUNK_SIZE = 250
+
 
 def chunk_list(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -47,11 +51,12 @@ def chunk_list(lst, n):
 
 @celery.task
 def bulk_update_bulletins(ids, bulk, cur_user_id):
+    print('processing bulletin bulk update')
     # build mappings
     u = {'id': cur_user_id}
     cur_user = namedtuple('cur_user', u.keys())(*u.values())
     user = User.query.get(cur_user_id)
-    chunks = chunk_list(ids,BULK_CHUNK_SIZE)
+    chunks = chunk_list(ids, BULK_CHUNK_SIZE)
 
     for group in chunks:
 
@@ -122,6 +127,7 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
             # add only to session
             db.session.add(bulletin)
 
+        print('creating revisions ...')
         revmaps = []
         bulletins = Bulletin.query.filter(Bulletin.id.in_(ids)).all()
         for bulletin in bulletins:
@@ -142,7 +148,9 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
         updated = [b.to_mini() for b in bulletins]
         Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, 'bulletin')
         # perhaps allow a little time out
-        time.sleep(.25)
+        time.sleep(.1)
+        print('chunk processed')
+
 
     print("Bulletins Bulk Update Successful")
 
@@ -236,6 +244,7 @@ def bulk_update_actors(ids, bulk, cur_user_id):
         Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, 'actor')
         # perhaps allow a little time out
         time.sleep(.25)
+        print('Chunk Processed')
 
     print("Actors Bulk Update Successful")
 
@@ -391,29 +400,33 @@ def process_dedup(id, user_id):
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    seconds = int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))
-    sender.add_periodic_task(seconds, dedup_cron.s(), name='Deduplication Cron')
+    # Deduplication periodic task
+    if cfg.DEDUP_TOOL == True:
+        seconds = int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))
+        sender.add_periodic_task(seconds, dedup_cron.s(), name='Deduplication Cron')
+        print("Deduplication periodic task is set up")
+    # Export expiry periodic task
+    if 'export' in db.metadata.tables.keys():
+        sender.add_periodic_task(300, export_cleanup_cron.s(), name='Exports Cleanup Cron')
+        print("Export cleanup periodic task is set up")
 
-
-# @periodic_task(run_every=timedelta(seconds=int(os.environ.get('DEDUP_INTERVAL', cfg.DEDUP_INTERVAL))))
 @celery.task
 def dedup_cron():
-    if cfg.DEDUP_TOOL == True:
-        #shut down processing when we hit 0 items in the queue or when we turn off the processing
-        if rds.get('dedup') != b'1' or rds.scard('dedq') == 0:
-            rds.delete('dedup')
-            rds.publish('dedprocess', 0)
-            # Pause processing / do nothing
-            print("Process engine - off")
-            return
+    #shut down processing when we hit 0 items in the queue or when we turn off the processing
+    if rds.get('dedup') != b'1' or rds.scard('dedq') == 0:
+        rds.delete('dedup')
+        rds.publish('dedprocess', 0)
+        # Pause processing / do nothing
+        print("Process engine - off")
+        return
 
-        data = []
-        items = rds.spop('dedq', cfg.DEDUP_BATCH_SIZE).decode('utf-8')
-        for item in items:
-            data = item.split('|')
-            process_dedup.delay(data[0], data[1])
+    data = []
+    items = rds.spop('dedq', cfg.DEDUP_BATCH_SIZE).decode('utf-8')
+    for item in items:
+        data = item.split('|')
+        process_dedup.delay(data[0], data[1])
 
-        update_stats()
+    update_stats()
 
 
 @celery.task
@@ -421,71 +434,165 @@ def process_sheet(filepath, map, target, batch_id, vmap, sheet, actorConfig, lan
     su = SheetUtils(filepath, actorConfig, lang)
     su.import_sheet(map, target, batch_id, vmap, sheet, roles)
 
+# ---- Export tasks ----
 
-def generate_user_roles():
-    '''
-    Generates standard user roles.
-    '''
-    # create admin role if it doesn't exist
-    r = Role.query.filter_by(name='Admin').first()
-    if not r:
-        role = Role()
-        role.name = 'Admin'
-        role.description = 'System Role'
-        role.save()
+def generate_export(export_id):
+    """
+    Main Export generator task.
+    """
+    export_request = Export.query.get(export_id)
 
-    # create DA role, if not exists
-    r = Role.query.filter_by(name='DA').first()
-    if not r:
-        role = Role()
-        role.name = 'DA'
-        role.description = 'System Role'
-        role.save()
+    if export_request.file_format == 'json':
+        return chain(generate_json_file.s([export_id]),
+                     generate_export_media.s(),
+                     generate_export_zip.s())()
+    
+    elif export_request.file_format == 'pdf':
+        return chain(generate_pdf_files.s([export_id]), 
+                     generate_export_media.s(), 
+                     generate_export_zip.s())()
+    
+    elif export_request.file_format == 'csv':
+        raise NotImplementedError
+    
+def clear_failed_export(export_request):
+    shutil.rmtree(f'{Export.export_dir}/{export_request.file_id}')
+    export_request.status = "Failed"
+    export_request.file_id = None
+    export_request.save()
 
-    # create MOD role, if not exists
-    r = Role.query.filter_by(name='Mod').first()
-    if not r:
-        role = Role()
-        role.name = 'Mod'
-        role.description = 'System Role'
-        role.save()
+@celery.task
+def generate_pdf_files(export_id):
+    """
+    PDF export generator task.
+    """
+    export_request = Export.query.get(export_id)
+
+    chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
+    dir_id = Export.generate_export_dir()
+    try:
+        for group in chunks:
+            if export_request.table == 'bulletin':
+                for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)):
+                    pdf = BulletinPDFUtil(bulletin)
+                    pdf.write_to_pdf(f'{Export.export_dir}/{dir_id}/{pdf.filename}')
+                time.sleep(0.2)
+
+        export_request.file_id = dir_id
+        export_request.save()
+        print(f'---- Export generated successfully for Id: {export_request.id} ----')
+        # pass the ids to the next celery task
+        return export_id
+    except Exception as e:
+        print(f'Error writing export file: {e}')
+        clear_failed_export(export_request)
+        return False # to stop chain
+
+@celery.task
+def generate_json_file(export_id: int) :
+    """
+    JSON export generator task.
+    """
+    export_request = Export.query.get(export_id)
+    chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
+    file_path, dir_id = Export.generate_export_file()
+    try:
+        with file_path.open('a') as file:
+            file.write('{ \n')
+            file.write('"bulletins": [ \n')
+            for group in chunks:
+                if export_request.table == 'bulletin':
+                    batch = ','.join (bulletin.to_json() for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)))
+                    file.write(f'{batch}\n')
+                # less db overhead
+                time.sleep(0.2)
+            file.write('] \n }')
+        export_request.file_id = dir_id
+        export_request.save()
+        print(f'---- Export File generated successfully for Id: {export_request.id} ----')
+        # pass the ids to the next celery task
+        return export_id
+    except Exception as e:
+        print(f'Error writing export file: {e}')
+        clear_failed_export(export_request)
+        return False # to stop chain
+
+@celery.task
+def generate_export_media(previous_result: int):
+    """
+    Task to attach media files to export.
+    """
+    if previous_result == False:
+        return False
+    
+    export_request = Export.query.get(previous_result)
+
+    # check if we need to export media files
+    if not export_request.include_media:
+        return export_request.id
+
+    # get list of previous bulletin ids and export their medias
+    for bulletin in Bulletin.query.filter(Bulletin.id.in_(export_request.items)):
+        if bulletin.medias:
+            media = bulletin.medias[0]
+            target_file = f'{Export.export_dir}/{export_request.file_id}/{media.media_file}'
+
+            if cfg.FILESYSTEM_LOCAL:
+                print('Downloading file locally')
+                # copy file (including metadata)
+                shutil.copy2(f'{media.media_dir}/{media.media_file}', target_file)
+            else:
+                print('Downloading S3 file')
+                s3 = boto3.client('s3',
+                                  aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+                                  aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+                                  region_name=cfg.AWS_REGION
+                                  )
+                try:
+                    s3.download_file(cfg.S3_BUCKET,media.media_file, target_file)
+                except Exception as e:
+                    print(f"Error downloading file from s3: {e}")
 
 
-def import_data():
-    '''
-    Imports SJAC data from data dir.
-    '''
-    data_path = 'enferno/data/'
-    from werkzeug.datastructures import FileStorage
+        time.sleep(0.05)
+    return export_request.id
 
-    # Eventtypes
-    if not Eventtype.query.count():
-        f = data_path + 'eventtypes.csv'
-        fs = FileStorage(open(f, 'rb'))
-        Eventtype.import_csv(fs)
+@celery.task
+def generate_export_zip(previous_result:int):
+    """
+    Final export task to compress export folder
+    into a zip archive.
+    """
+    if previous_result == False:
+        return False
+    
+    print("Generating zip archive")
+    export_request = Export.query.get(previous_result)
 
-    # potential violations
-    if not PotentialViolation.query.count():
-        f = data_path + 'potential_violation.csv'
-        fs = FileStorage(open(f, 'rb'))
-        PotentialViolation.import_csv(fs)
+    shutil.make_archive(f'{Export.export_dir}/{export_request.file_id}', 'zip', f'{Export.export_dir}/{export_request.file_id}')
+    print(f"Export Complete {export_request.file_id}.zip")
 
-    # claimed violations
-    if not ClaimedViolation.query.count():
-        f = data_path + 'claimed_violation.csv'
-        fs = FileStorage(open(f, 'rb'))
-        ClaimedViolation.import_csv(fs)
+    # Remove export folder after completion
+    shutil.rmtree(f'{Export.export_dir}/{export_request.file_id}')
 
-def create_default_location_data():
-    if not LocationAdminLevel.query.all():
-        db.session.add(LocationAdminLevel(code=1, title='Governorate'))
-        db.session.add(LocationAdminLevel(code=2, title='District'))
-        db.session.add(LocationAdminLevel(code=3, title='Subdistrict'))
-        db.session.add(LocationAdminLevel(code=4, title='Community'))
-        db.session.add(LocationAdminLevel(code=5, title='Neighbourhood'))
-        db.session.commit()
+@celery.task
+def export_cleanup_cron():
+    """
+    Periodic task to change status of 
+    expired Exports to 'Expired'.
+    """
+    expired_exports = Export.query.filter(and_(
+        Export.expires_on < datetime.utcnow(),  # expiry time before now 
+        Export.status != 'Expired')).all()      # status is not expired
 
-    if not LocationType.query.all():
-        db.session.add(LocationType(title='Administrative Location'))
-        db.session.add(LocationType(title='Point of Interest'))
-        db.session.commit()
+    if expired_exports:
+        for export_request in expired_exports:
+            export_request.status = 'Expired'
+            if export_request.save():
+                print(F"Expired Export #{export_request.id}")
+                try:
+                    os.remove(f'{Export.export_dir}/{export_request.file_id}.zip')
+                except FileNotFoundError:
+                    print(F"Export #{export_request.id}'s files not found to delete.")
+            else: 
+                print(F"Error expiring Export #{export_request.id}")

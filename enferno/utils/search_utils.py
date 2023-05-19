@@ -71,6 +71,11 @@ class SearchUtils:
     def bulletin_query(self, q):
         query = []
 
+        # Support query using a range of ids
+        ids = q.get('ids')
+        if ids:
+            query.append(Bulletin.id.in_(ids))
+
         tsv = q.get('tsv')
         if tsv:
             words = tsv.split(' ')

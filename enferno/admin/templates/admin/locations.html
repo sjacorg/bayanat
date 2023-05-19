@@ -262,9 +262,9 @@
             watch: {
 
                 locationDrawer: function (val) {
-                    if (val == false) {
+                    if (val === false) {
 
-                        if (this.$route.path != '/admin/locations/')
+                        if (this.$route.path !== '/admin/locations/')
                             this.$router.push('/admin/locations/')
                     }
                 },

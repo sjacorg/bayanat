@@ -83,7 +83,7 @@ button.swh {
     font-size: 14px;
 }
 
-#bulletins-dt tr {
+#bulletins-dt tr, #export-dt tr {
     cursor: pointer;
 }
 

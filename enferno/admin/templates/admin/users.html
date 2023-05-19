@@ -147,13 +147,15 @@
                               <v-col cols="12" md="3">
                                   <v-switch label="{{_('Can self assign')}}"
                                         v-model="editedItem.can_self_assign"></v-switch>
-
                               </v-col>
                               <v-col cols="12" md="3">
                                 <v-switch label="{{_('Can edit Locations')}}"
                                       v-model="editedItem.can_edit_locations"></v-switch>
-
-                            </v-col>
+                              </v-col>
+                              <v-col cols="12" md="3">
+                                <v-switch label="{{_('Can Request Exports')}}"
+                                      v-model="editedItem.can_export"></v-switch>
+                              </v-col>
                           </v-row>
                         </v-container>
                       </v-card-text>

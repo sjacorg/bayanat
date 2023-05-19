@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import pandas  as pd
+import pandas as pd
 from flask import Flask, render_template, current_app, request
-from flask_security import  current_user
+from flask_security import current_user
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 
@@ -40,6 +40,8 @@ def get_locale():
             if current_user.settings.get('language'):
                 session['lang'] = current_user.settings.get('language')
     return session.get('lang', default)
+
+
 def create_app(config_object=ProdConfig):
     app = Flask(__name__)
     app.config.from_object(config_object)
@@ -62,26 +64,22 @@ def register_extensions(app):
     debug_toolbar.init_app(app)
     session.init_app(app)
     bouncer.init_app(app)
-    babel.init_app(app,locale_selector=get_locale, default_domain='messages', default_locale='en')
-    babel.init_app(app)
+    babel.init_app(app, locale_selector=get_locale, default_domain='messages', default_locale='en')
     rds.init_app(app)
 
     return None
 
 
-
 def register_signals(app):
     @user_logged_in.connect_via(app)
     def _after_login_hook(sender, user, **extra):
-        #clear login counter
+        # clear login counter
         from flask import session
         if session.get('failed'):
             session.pop('failed')
-            print ('login counter cleared')
+            print('login counter cleared')
 
         Activity.create(user, Activity.ACTION_LOGIN, user.to_mini(), 'user')
-
-
 
     @user_logged_out.connect_via(app)
     def _after_logout_hook(sender, user, **extra):
@@ -92,6 +90,13 @@ def register_blueprints(app):
     app.register_blueprint(bp_public)
     app.register_blueprint(bp_user)
     app.register_blueprint(admin)
+
+    if app.config.get('EXPORT_TOOL'):
+        try:
+            from enferno.export.views import export
+            app.register_blueprint(export)
+        except ImportError as e:
+            print(e)
 
     if app.config.get('DEDUP_TOOL'):
         try:
@@ -153,7 +158,6 @@ def register_commands(app):
 
     app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create_db)
-    app.cli.add_command(commands.create_db_exts)
     app.cli.add_command(commands.install)
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)

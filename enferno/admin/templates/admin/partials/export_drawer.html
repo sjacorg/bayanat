@@ -1,0 +1,66 @@
+<v-navigation-drawer
+        v-model="exportDrawer"
+        clipped
+        right
+        temporary
+        width="440"
+        app>
+
+    <validation-observer v-slot="{invalid}">
+        <v-card flat color=" lighten-3" class="mx-auto pa-3">
+            <v-card-title>
+                {{ _('Export Data') }}
+            </v-card-title>
+            <v-btn
+                @click="exportDrawer=false"
+                fab
+                absolute
+                top
+                right
+                x-small
+                text
+                class="mt-6">
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+            <v-card-text>
+
+                <div class="caption mb-2">Export format</div>
+
+                <v-btn-toggle color="primary" mandatory v-model="exportConfig.format">
+                            <v-btn small value="json"><v-icon left>mdi-code-json</v-icon> json</v-btn>
+                            <v-btn small value="pdf"><v-icon left>mdi-file-pdf-box</v-icon> pdf</v-btn>
+                            <!-- CSV disabled for now
+                            <v-btn small value="csv"><v-icon left>mdi-file-delimited</v-icon> csv</v-btn> 
+                            -->
+
+                </v-btn-toggle>
+            </v-card-text>
+
+            <v-card-text>
+                <v-switch v-model="exportConfig.includeMedia" label="Include media"></v-switch>
+
+                 <v-combobox
+                            small-chips
+                            multiple
+                            v-model="exportConfig.ref"
+                            label="{{ _('Refs') }}"
+                            class="mr-2"
+                    ></v-combobox>
+
+            </v-card-text>
+
+            <v-card-text>
+
+                    <v-textarea outlined
+                                v-model="exportConfig.comment"
+                                label="{{ _('Comments') }}">
+
+                    </v-textarea>
+            </v-card-text>
+            <v-card-actions>
+                <v-btn @click.stop="exportRequest" style="width:min(300px,90%)" class="primary mx-auto">Create Export Request</v-btn>
+            </v-card-actions>
+        </v-card>
+    </validation-observer>
+
+</v-navigation-drawer>

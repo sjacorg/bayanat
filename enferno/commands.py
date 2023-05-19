@@ -9,16 +9,24 @@ from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User, Role
-from enferno.tasks import import_data, generate_user_roles, create_default_location_data
+from enferno.utils.data_helpers import import_data, generate_user_roles, create_default_location_data
 
 @click.command()
+@click.option('--create-exts', is_flag=True)
 @with_appcontext
-def create_db():
+def create_db(create_exts):
     """
     Creates db tables - import your models within commands.py to create the models.
     """
+    # create db exts if required, needs superuser db permissions
+    if create_exts:
+        db.engine.execute('CREATE EXTENSION if not exists pg_trgm ;')
+        click.echo('Trigram extension installed successfully')
+        db.engine.execute('CREATE EXTENSION if not exists postgis ;')
+        click.echo('Postgis extension installed successfully')
+
     db.create_all()
-    print('Database structure created successfully')
+    click.echo('Database structure created successfully')
     generate_user_roles()
     click.echo('Generated user roles successfully.')
     create_default_location_data()
@@ -29,20 +37,6 @@ def create_db():
     except:
         click.echo('Error importing data.')
     # possible optimization: SET enable_seqscan = off;
-
-@click.command()
-@with_appcontext
-def create_db_exts():
-    """
-    Creates db extension. This is not normally
-    needed and will require the pg user to have
-    superuser permissions
-    """
-    db.engine.execute('CREATE EXTENSION if not exists pg_trgm ;')
-    print('Trigram extension installed successfully')
-    db.engine.execute('CREATE EXTENSION if not exists postgis ;')
-    print('Postgis extension installed successfully')
-
 
 @click.command()
 @with_appcontext

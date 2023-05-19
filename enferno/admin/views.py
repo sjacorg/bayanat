@@ -1,3 +1,4 @@
+
 import hashlib
 import os
 import shutil
@@ -11,14 +12,12 @@ from flask import request, abort, Response, Blueprint, current_app, json, g, ses
 from flask.templating import render_template
 from flask_bouncer import requires
 from flask_security.decorators import roles_required, login_required, current_user, roles_accepted
-from flask_security.utils import hash_password
 from sqlalchemy import desc, or_
 from sqlalchemy.orm.attributes import flag_modified
-from werkzeug.utils import safe_join
+from werkzeug.utils import safe_join, secure_filename
 
-from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
-                                  IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation,
-                                  ClaimedViolation,
+from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident, IncidentHistory,
+                                  BulletinHistory, ActorHistory, LocationHistory, PotentialViolation, ClaimedViolation,
                                   Activity, Query, Mapping, Log, APIKey, LocationAdminLevel, LocationType)
 from enferno.extensions import bouncer, rds
 from enferno.extensions import cache
@@ -27,6 +26,7 @@ from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update
 from enferno.user.models import User, Role
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.sheet_utils import SheetUtils
+from enferno.utils.http_response import HTTPResponse
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
@@ -190,7 +190,7 @@ def api_label_update(id):
         label.save()
         return F'Saved Label #{label.id}', 200
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 @admin.delete('/api/label/<int:id>')
@@ -282,7 +282,7 @@ def api_eventtype_update(id):
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     eventtype = eventtype.from_json(request.json['item'])
     eventtype.save()
@@ -299,7 +299,7 @@ def api_eventtype_delete(id):
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     eventtype.delete()
     return F'Deleted Event #{eventtype.id}', 200
@@ -363,7 +363,7 @@ def api_potentialviolation_update(id):
     """
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     potentialviolation = potentialviolation.from_json(request.json['item'])
     potentialviolation.save()
@@ -380,7 +380,7 @@ def api_potentialviolation_delete(id):
     """
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     potentialviolation.delete()
     return F'Deleted Potential Violation #{potentialviolation.id}', 200
 
@@ -443,7 +443,7 @@ def api_claimedviolation_update(id):
     """
     claimedviolation = ClaimedViolation.query.get(id)
     if claimedviolation is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     claimedviolation = claimedviolation.from_json(request.json['item'])
     claimedviolation.save()
@@ -460,7 +460,7 @@ def api_claimedviolation_delete(id):
     """
     claimedviolation = ClaimedViolation.query.get(id)
     if claimedviolation is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     claimedviolation.delete()
     return F'Deleted Claimed Violation #{claimedviolation.id}', 200
@@ -555,7 +555,7 @@ def api_source_update(id):
     """
     source = Source.query.get(id)
     if source is not None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     source = source.from_json(request.json['item'])
     source.save()
@@ -572,7 +572,7 @@ def api_source_delete(id):
     """
     source = Source.query.get(id)
     if source is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     source.delete()
     return F'Deleted Source #{source.id}', 200
 
@@ -652,7 +652,6 @@ def api_location_create():
         location.create_revision()
         return F'Created Location #{location.id}', 200
 
-
 @admin.put('/api/location/<int:id>')
 @roles_accepted('Admin', 'Mod', 'DA')
 def api_location_update(id):
@@ -674,7 +673,7 @@ def api_location_update(id):
         else:
             return 'Save Failed', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 @admin.delete('/api/location/<int:id>')
@@ -698,7 +697,6 @@ def api_location_import():
     else:
         return 'Error', 400
 
-
 # get one location
 @admin.get('/api/location/<int:id>')
 def api_location_get(id):
@@ -710,7 +708,7 @@ def api_location_get(id):
     location = Location.query.get(id)
 
     if location is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     else:
         return json.dumps(location.to_dict()), 200
 
@@ -752,7 +750,7 @@ def api_location_admin_level_update(id):
         else:
             return 'Error saving item', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # location type endpoints
@@ -793,7 +791,7 @@ def api_location_type_update(id):
         else:
             return 'Error saving item', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 @admin.delete('/api/location-type/<int:id>')
@@ -889,7 +887,7 @@ def api_bulletin_update(id):
         Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
         return F'Saved Bulletin #{bulletin.id}', 200
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # Add/Update review bulletin endpoint
@@ -934,7 +932,7 @@ def api_bulletin_review_update(id):
         else:
             return F'Error saving Bulletin #{id}', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # bulk update bulletin endpoint
@@ -1000,10 +998,10 @@ def bulletin_relations(id):
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', REL_PER_PAGE, int)
     if not cls or cls not in ['bulletin', 'actor', 'incident']:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     bulletin = Bulletin.query.get(id)
     if not bulletin:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     items = []
 
     if cls == 'bulletin':
@@ -1082,7 +1080,7 @@ def api_bulletin_self_assign(id):
         Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), 'bulletin')
         return F'Saved Bulletin #{bulletin.id}', 200
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 @admin.route('/api/actor/assign/<int:id>', methods=['PUT'])
@@ -1119,7 +1117,7 @@ def api_actor_self_assign(id):
         Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), 'actor')
         return F'Saved Actor #{actor.id}', 200
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 @admin.route('/api/incident/assign/<int:id>', methods=['PUT'])
@@ -1156,7 +1154,7 @@ def api_incident_self_assign(id):
         Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
         return F'Saved Incident #{incident.id}', 200
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # Media special endpoints
@@ -1193,18 +1191,17 @@ def api_medias_chunk():
     if not safe_join(str(Media.media_file), dz_uuid):
         return 'Invalid Request', 425
 
-    save_dir = Media.media_dir / dz_uuid
+    save_dir = Media.media_dir / secure_filename(dz_uuid)
 
     # validate current chunk
     if not safe_join(str(save_dir), str(current_chunk)) or current_chunk.__class__ != int:
         return 'Invalid Request', 425
 
-
     if not save_dir.exists():
         save_dir.mkdir(exist_ok=True, parents=True)
 
     # Save the individual chunk
-    with open(save_dir / str(current_chunk), "wb") as f:
+    with open(save_dir / secure_filename(str(current_chunk)), "wb") as f:
         file.save(f)
 
     # See if we have all the chunks downloaded
@@ -1389,10 +1386,10 @@ def api_media_update(id):
             media.save()
             return 'Saved!', 200
         else:
-            return 'Not Found!', 404
+            return HTTPResponse.NOT_FOUND
 
     else:
-        return 'Forbidden', 403
+        return HTTPResponse.FORBIDDEN
 
 
 # Actor routes
@@ -1480,7 +1477,7 @@ def api_actor_update(id):
         else:
             return F'Error saving Actor #{id}', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # Add/Update review actor endpoint
@@ -1504,8 +1501,8 @@ def api_actor_review_update(id):
         actor.status = 'Peer Reviewed'
 
         # Create a revision using latest values
-        # this method automatically commi
-        #  bulletin changes (referenced)
+        # this method automatically commits
+        #  actor changes (referenced)
         if actor.save():
             actor.create_revision()
             # Record activity
@@ -1514,7 +1511,7 @@ def api_actor_review_update(id):
         else:
             return F'Error saving Actor #{id}\'s Review', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # bulk update actor endpoint
@@ -1578,10 +1575,10 @@ def actor_relations(id):
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', REL_PER_PAGE, int)
     if not cls or cls not in ['bulletin', 'actor', 'incident']:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     actor = Actor.query.get(id)
     if not actor:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     items = []
 
     if cls == 'bulletin':
@@ -1617,7 +1614,7 @@ def api_actor_mp_get(id):
     if request.method == 'GET':
         actor = Actor.query.get(id)
         if not actor:
-            return 'Not Found!', 404
+            return HTTPResponse.NOT_FOUND
         else:
             return json.dumps(actor.mp_json()), 200
 
@@ -1707,10 +1704,10 @@ def api_users():
         query.append(User.name.ilike('%' + q + '%'))
     result = User.query.filter(
         *query).order_by(User.username).paginate(page=page, per_page=per_page, count=True)
-        
+
     response = {'items':    [item.to_dict() if current_user.has_role('Admin')
                             else item.to_compact()
-                            for item in result.items], 
+                            for item in result.items],
                             'perPage': per_page, 'total': result.total}
 
     return Response(json.dumps(response),
@@ -1770,45 +1767,26 @@ def api_user_check():
         return 'Username ok', 200
 
 
-@admin.route('/api/user/<int:uid>', methods=['PUT'])
+@admin.put('/api/user/<int:uid>')
 @roles_required('Admin')
 def api_user_update(uid):
     """Endpoint to update a user."""
-    if request.method == 'PUT':
-        user = User.query.get(uid)
-        if user is not None:
-            # set password only if user updated it 
-            if len(request.json['item']['password']) > 0:
-                user.password = hash_password(request.json['item']['password'])
-            user.active = request.json['item']['active']
-            if 'roles' in request.json['item']:
-                role_ids = [r['id'] for r in request.json['item']['roles']]
-                roles = Role.query.filter(Role.id.in_(role_ids)).all()
-                user.roles = roles
-            user.view_usernames = request.json['item']['view_usernames']
-            user.view_simple_history = request.json['item']['view_simple_history']
-            user.view_full_history = request.json['item']['view_full_history']
-            user.can_self_assign = request.json['item'].get('can_self_assign', False)
-            user.can_edit_locations = request.json['item'].get('can_edit_locations', False)
-            user.name = request.json['item']['name']
-            email = request.json.get('item').get('email')
-            if email:
-                user.email = email
-            else:
-                user.email = None
-            user.save()
 
+    user = User.query.get(uid)
+    if user is not None:
+        u = request.json.get('item')
+        user = user.from_json(u)
+        if user.save():
             # Record activity
             Activity.create(current_user, Activity.ACTION_UPDATE, user.to_mini(), 'user')
-            return 'Success.', 200
+            return F'Saved User {user.id} {user.name}', 200
         else:
-            return 'Not Found!', 404
-
+            return F'Error saving User {user.id} {user.name}', 417
     else:
-        return 'Error', 417
+        return HTTPResponse.NOT_FOUND
 
 
-@admin.route('/api/user/<int:id>', methods=['DELETE'])
+@admin.delete('/api/user/<int:id>')
 @roles_required('Admin')
 def api_user_delete(id):
     """
@@ -1819,7 +1797,7 @@ def api_user_delete(id):
     if request.method == 'DELETE':
         user = User.query.get(id)
         if user.active:
-            'User is active, make inactive before deleting', 403
+            return 'User is active, make inactive before deleting', 403
         user.delete()
 
         # Record activity
@@ -1888,7 +1866,7 @@ def api_role_update(id):
     """
     role = Role.query.get(id)
     if role is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     if role.name in ['Admin', 'Mod', 'DA']:
         return 'Cannot edit System Roles', 403
@@ -1911,7 +1889,7 @@ def api_role_delete(id):
     role = Role.query.get(id)
 
     if role is None:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
     # forbid deleting system roles
     if role.name in ['Admin', 'Mod', 'DA']:
@@ -2014,7 +1992,7 @@ def api_incident_update(id):
         else:
             return F'Error saving Incident {id}', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # Add/Update review incident endpoint
@@ -2045,9 +2023,9 @@ def api_incident_review_update(id):
             Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), 'incident')
             return F'Bulletin review updated #{id}', 200
         else:
-            return F'Error saving Incident #{id}\'s Review', 200
+            return F'Error saving Incident #{id}\'s Review', 417
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 # bulk update incident endpoint
@@ -2109,10 +2087,10 @@ def incident_relations(id):
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', REL_PER_PAGE, int)
     if not cls or cls not in ['bulletin', 'actor', 'incident']:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     incident = Incident.query.get(id)
     if not incident:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     items = []
 
     if cls == 'bulletin':
@@ -2211,7 +2189,7 @@ def bulk_status():
         elif type == 'incident':
             status = bulk_update_actors.AsyncResult(id).status
         else:
-            return 'Not Found!', 404
+            return HTTPResponse.NOT_FOUND
 
         # handle job failure
         if status == 'FAILURE':
@@ -2285,7 +2263,7 @@ def etl_dashboard():
     :return: html page of the users backend.
     """
     if not current_app.config['ETL_TOOL']:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     return render_template('admin/etl-dashboard.html')
 
 
@@ -2305,7 +2283,7 @@ def path_process():
     # Check if path import is enabled and allowed path is set
     if not current_app.config.get('ETL_PATH_IMPORT') \
             or current_app.config.get('ETL_ALLOWED_PATH') is None:
-        return 'Forbidden', 403
+        return HTTPResponse.FORBIDDEN
 
     allowed_path = Path(current_app.config.get('ETL_ALLOWED_PATH'))
     path = Path(request.json.get('path'))
@@ -2318,7 +2296,7 @@ def path_process():
 
     # check if supplied path is either the allowed path or a sub-path
     if not (path == allowed_path or allowed_path in path.parents):
-        return 'Forbidden path', 403
+        return HTTPResponse.FORBIDDEN
 
     recursive = request.json.get('recursive', False)
     if recursive:
@@ -2380,7 +2358,7 @@ def csv_dashboard():
     :return: html page of the csv backend.
     """
     if not current_app.config.get('SHEET_IMPORT'):
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
     return render_template('admin/csv-dashboard.html')
 
 
@@ -2531,7 +2509,7 @@ def api_mapping_update(id):
             return "Update request missing parameters data", 417
 
     else:
-        return 'Not Found!', 404
+        return HTTPResponse.NOT_FOUND
 
 
 @admin.post('/api/process-sheet')
@@ -2577,3 +2555,5 @@ def api_logs():
 def system_admin():
     """Endpoint for system administration."""
     return render_template('admin/system-administration.html')
+
+

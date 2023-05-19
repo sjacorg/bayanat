@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@mdi/font": "^6.5.95",
+    "@mdi/font": "^7.*",
     "axios": "^0.*",
     "cropperjs": "^1.5.11",
     "date-fns": "^2.19.0",

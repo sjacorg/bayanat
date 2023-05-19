@@ -104,7 +104,7 @@ Vue.component("incident-card", {
         },
         actor_related_as(item) {
 
-            return translations.btoaRelateAs[item.related_as].tr;
+            return translations.itoaRelateAs[item.related_as].tr;
         },
 
         bulletin_related_as(item) {

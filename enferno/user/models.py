@@ -116,6 +116,8 @@ class User(UserMixin, db.Model, BaseMixin):
     view_full_history = db.Column(db.Boolean, default=True)
     can_self_assign = db.Column(db.Boolean, default=False)
     can_edit_locations = db.Column(db.Boolean, default=False)
+    can_export = db.Column(db.Boolean, default=False)
+
 
     # oauth
     google_id = db.Column(db.String(255))
@@ -188,25 +190,29 @@ class User(UserMixin, db.Model, BaseMixin):
         return False
 
     def from_json(self, item):
+
         self.email = item.get('email')
         self.username = item.get('username')
-        password = item.get('password')
-        self.password = hash_password(password)
+        self.password = hash_password(item.get('password'))
         self.name = item.get('name')
+
+        # roles
         roles = item.get('roles', [])
-        rs = []
+        new_roles = []
         if len(roles):
             ids = [r.get('id', -1) for r in roles]
-            rs = Role.query.filter(Role.id.in_(ids)).all()
-            self.roles = rs
+            new_roles = Role.query.filter(Role.id.in_(ids)).all()
+            self.roles = new_roles
 
+        # permissions
         self.view_usernames = item.get('view_usernames', False)
         self.view_simple_history = item.get('view_simple_history', False)
         self.view_full_history = item.get('view_full_history', False)
         self.can_self_assign = item.get('can_self_assign', False)
         self.can_edit_locations = item.get('can_edit_locations', False)
+        self.can_export = item.get('can_export', False)
 
-        self.active = item['active']
+        self.active = item.get('active')
         return self
 
     def to_compact(self):
@@ -238,7 +244,8 @@ class User(UserMixin, db.Model, BaseMixin):
                 'view_simple_history': self.view_simple_history,
                 'view_full_history': self.view_full_history,
                 'can_self_assign': self.can_self_assign,
-                'can_edit_locations': self.can_edit_locations
+                'can_edit_locations': self.can_edit_locations,
+                'can_export': self.can_export
             }
 
     def to_json(self):

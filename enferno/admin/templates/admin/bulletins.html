@@ -10,6 +10,9 @@
             {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
     'admin/partials/bulletin_drawer.html' %} {% include
     'admin/partials/bulk_bulletin_drawer.html' %}
+
+        {% include
+    'admin/partials/export_drawer.html' %}
             <v-main>
                 {% include 'admin/partials/bulletin_advsearch.html' %}
                 <v-container class="container--fluid">
@@ -95,70 +98,77 @@
                             'admin/partials/review_dialog.html' %}
                                     </v-toolbar>
 
+                                    <v-toolbar v-if="bulkAllowed() || exportAllowed()" dense color="white" flat>
+                                        <template v-if="bulkIcons">
 
+                                            <v-btn @click="selected=[]" x-small fab
+                                                    class="mr-3" elevation="0" color="white">
+                                                <v-icon>mdi-checkbox-blank-outline</v-icon>
+                                            </v-btn>
 
-
-
-                                    {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
-                                        <v-toolbar dense color="grey lighten-4" flat>
-                                            <template v-if="bulkIcons">
-
-                                                <v-btn @click="selected=[]" x-small fab
-                                                       class="mr-3" elevation="0" color="white">
-                                                    <v-icon>mdi-checkbox-blank-outline</v-icon>
-                                                </v-btn>
-
-
-                                                <v-btn
-                                                        @click="bulkBulletinDrawer=true"
-                                                        small
-                                                        color="fifth"
-                                                        depressed
-                                                >
-                                                    <v-icon small left
-                                                    >mdi-circle-edit-outline
-                                                    </v-icon
-                                                    >
-                                                    {{ _('Bulk update') }}
-                                                </v-btn
-                                                >
-                                            </template>
-                                            <template>
-                                                <v-progress-circular v-for="job in jobs"
-                                                                     size="20" small
-                                                                     :indeterminate="job.status!='SUCCESS'"
-
-                                                                     :color="job.status=='SUCCESS' ? 'success': 'amber'"
-                                                                     :value="job.status=='SUCCESS'?100:null"
-                                                                     class="mx-1"
-                                                                     stroke="1"
-                                                ></v-progress-circular>
-                                            </template>
-                                            <v-spacer></v-spacer>
-
-                                            <div>
-
-                                                <v-tooltip top>
-                                                    <template v-slot:activator="{ on, attrs }">
-                                                        <v-chip v-on="on" label small close color="yellow lighten-4"
-                                                                class="grey--text text--darken-2"
-                                                                @click:close="allBulletins"
-                                                        >{{ _('About') }} ${itemsLength} {{ _('results') }}
-                                                            (${searchTime} {{ _('seconds') }})
-                                                        </v-chip>
-                                                    </template>
-                                                    <span>${search}</span>
-                                                </v-tooltip>
-                                            </div>
-
-
-                                            <v-spacer></v-spacer>
-                                            <v-chip small color="accent" v-if="selected.length"
-                                            >${selected.length} {{ _('Selected items') }}</v-chip
+                                            <v-btn
+                                                    @click="bulkBulletinDrawer=true"
+                                                    small
+                                                    color="primary"
+                                                    class="mx-2"
+                                                    depressed
+                                                    v-if="bulkAllowed()"
                                             >
-                                        </v-toolbar>
-                                    {% endif %}
+                                                <v-icon small left
+                                                >mdi-circle-edit-outline
+                                                </v-icon>
+                                                {{ _('Bulk update') }}
+                                            </v-btn>
+                                            {% if config.EXPORT_TOOL %}
+                                            <v-btn
+                                                @click="exportDrawer=true"
+                                                small
+                                                color="primary"
+                                                class="mx-2"
+                                                depressed
+                                                v-if="exportAllowed()"
+                                            >
+                                                <v-icon small left
+                                                >mdi-file-export-outline
+                                                </v-icon>
+                                            {{ _('Export') }}
+                                            </v-btn>
+                                            {% endif %}
+                                        </template>
+                                        <template>
+                                            <v-progress-circular v-for="job in jobs"
+                                                                    size="20" small
+                                                                    :indeterminate="job.status!='SUCCESS'"
 
+                                                                    :color="job.status=='SUCCESS' ? 'success': 'amber'"
+                                                                    :value="job.status=='SUCCESS'?100:null"
+                                                                    class="mx-1"
+                                                                    stroke="1"
+                                            ></v-progress-circular>
+                                        </template>
+                                        <v-spacer></v-spacer>
+
+                                        <div>
+
+                                            <v-tooltip top>
+                                                <template v-slot:activator="{ on, attrs }">
+                                                    <v-chip v-on="on" label small close color="yellow lighten-4"
+                                                            class="grey--text text--darken-2"
+                                                            @click:close="allBulletins"
+                                                    >{{ _('About') }} ${itemsLength} {{ _('results') }}
+                                                        (${searchTime} {{ _('seconds') }})
+                                                    </v-chip>
+                                                </template>
+                                                <span>${search}</span>
+                                            </v-tooltip>
+                                        </div>
+
+
+                                        <v-spacer></v-spacer>
+                                        <v-chip small color="accent" v-if="selected.length"
+                                        >${selected.length} {{ _('Selected items') }}</v-chip
+                                        >
+                                    </v-toolbar>
 
                                 </template>
 
@@ -180,7 +190,7 @@
                                     <v-chip
                                             x-small
                                             v-if="item.review_action"
-                                            color="grey lighten-4"
+                                           v-if="  color="grey lighten-4"
                                             class="secondary--text"
                                     >${item.review_action}
                                     </v-chip
@@ -336,6 +346,7 @@
 
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
         let app = new Vue({
             el: "#app",
@@ -438,7 +449,8 @@
                 bulletinDrawer: false,
                 bulkBulletinDrawer: false,
 
-
+                exportDrawer: false,
+                exportConfig: {},
                 sources: [],
                 locations: [],
                 labels: [],
@@ -734,6 +746,28 @@
 
             methods: {
 
+                exportRequest(){
+
+                    let ids = this.selected.map(x => x.id);
+                    this.loading = true;
+                    axios.post(`/export/api/bulletin/export`, {
+                        items: ids,
+                        config: this.exportConfig
+                    })
+                        .then(response => {
+                            this.showSnack(response.data);
+                        }).catch(error=>{
+                            console.error(error.response?.data);
+                            this.showSnack(error.response?.data)
+                    }).finally(()=>{
+                            this.loading = false;
+                            this.exportDrawer = false;
+                            this.selected = [];
+                            this.exportConfig = {};
+
+                    });
+                },
+
 
                 selectAllRestrict(props) {
                     if (props.value === false) {
@@ -743,7 +777,7 @@
                         })
                     }
 
-                    console.log(props.items);
+
                     this.selected = this.selected.concat(props.items.filter(x => !x.restricted))
                 },
 
@@ -1074,10 +1108,33 @@
                     this.snackMessage = message;
                     this.snackbar = true;
                 },
+
                 has_role(user, role) {
                     for (const r of user.roles) {
                         if (r.name === role) {
                             return true
+                        }
+                    }
+                    return false;
+                },
+
+                bulkAllowed() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return true;
+                    }
+                    if (this.has_role(this.currentUser, 'Mod')) {
+                        return true;
+                    }
+                    return false;
+                },
+
+                exportAllowed() {
+                    if(__EXPORT_TOOL__){
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (this.currentUser.can_export) {
+                            return true;
                         }
                     }
                     return false;

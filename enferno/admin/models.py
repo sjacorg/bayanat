@@ -5,21 +5,20 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-
 import pandas as pd
+from flask_babel import gettext
 from flask_login import current_user
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
 from sqlalchemy import JSON, ARRAY, text
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
-from flask_babel import gettext
 
 from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
-from geoalchemy2 import Geometry
-from geoalchemy2.shape import to_shape
 
 # Load configurations based on environment settings
 if os.getenv("FLASK_DEBUG") == '0':
@@ -1345,6 +1344,19 @@ class Bulletin(db.Model, BaseMixin):
     @property
     def bulletin_relations(self):
         return self.bulletins_to + self.bulletins_from
+
+    @property
+    def bulletin_relations_dict(self):
+        return [relation.to_dict(exclude=self) for relation in self.bulletin_relations]
+
+    @property
+    def actor_relations_dict(self):
+        return [relation.to_dict() for relation in self.actor_relations]
+
+    @property
+    def incident_relations_dict(self):
+        return [relation.to_dict() for relation in self.incident_relations]
+
 
     # helper property returns all actor relations
     @property
@@ -3756,6 +3768,8 @@ class Activity(db.Model, BaseMixin):
     ACTION_DELETE = 'DELETE'
     ACTION_CREATE = 'CREATE-REVISION'
     ACTION_BULK_UPDATE = "BULK-UPDATE"
+    ACTION_APPROVE_EXPORT = "APPROVE-EXPORT"
+    ACTION_REJECT_EXPORT = "REJECT-EXPORT"
     ACTION_LOGIN = 'LOGIN'
     ACTION_LOGOUT = 'LOGOUT'
 
@@ -3907,3 +3921,4 @@ class Log(db.Model, BaseMixin):
 
     def __repr__(self):
         return '<{} - {}>'.format(self.id, self.name)
+
