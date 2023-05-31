@@ -11,7 +11,7 @@ import shortuuid
 from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
 from flask.templating import render_template
 from flask_bouncer import requires
-from flask_security.decorators import roles_required, login_required, current_user, roles_accepted
+from flask_security.decorators import roles_required, auth_required, current_user, roles_accepted
 from sqlalchemy import desc, or_
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import safe_join, secure_filename
@@ -40,7 +40,7 @@ REL_PER_PAGE = 5
 
 
 @admin.before_request
-@login_required
+@auth_required('session')
 def before_request():
     """
     Attaches the user object to all requests
@@ -58,7 +58,7 @@ def ctx():
     :return: None
     """
     users = User.query.order_by(User.username).all()
-    if current_user.is_authenticated:
+    if current_user and current_user.is_authenticated:
         users = [u.to_compact() for u in users]
         return {'users': users}
     return {}
@@ -329,6 +329,7 @@ def api_potentialviolations(page):
     """
     query = []
     q = request.args.get('q', None)
+    per_page = request.args.get('per_page', PER_PAGE, int)
     if q is not None:
         query.append(PotentialViolation.title.ilike('%' + q + '%'))
     result = PotentialViolation.query.filter(
@@ -409,6 +410,7 @@ def api_claimedviolations(page):
     """
     query = []
     q = request.args.get('q', None)
+    per_page = request.args.get('per_page', PER_PAGE, int)
     if q is not None:
         query.append(ClaimedViolation.title.ilike('%' + q + '%'))
     result = ClaimedViolation.query.filter(
@@ -2286,23 +2288,28 @@ def path_process():
         return HTTPResponse.FORBIDDEN
 
     allowed_path = Path(current_app.config.get('ETL_ALLOWED_PATH'))
-    path = Path(request.json.get('path'))
 
     if not allowed_path.is_dir():
         return "Allowed import path is not configured correctly", 417
+    
+    sub_path = request.json.get('path')
+    if sub_path == "":
+        import_path = allowed_path
+    else:
+        safe_path = safe_join(allowed_path, sub_path)
+        if safe_path:
+            import_path = Path(safe_path)
+        else:
+            return HTTPResponse.FORBIDDEN
 
-    if not request.json.get('path') or not path.is_dir():
+    if not import_path.is_dir():
         return "Invalid path specified", 417
-
-    # check if supplied path is either the allowed path or a sub-path
-    if not (path == allowed_path or allowed_path in path.parents):
-        return HTTPResponse.FORBIDDEN
 
     recursive = request.json.get('recursive', False)
     if recursive:
-        items = path.rglob('*')
+        items = import_path.rglob('*')
     else:
-        items = path.glob('*')
+        items = import_path.glob('*')
 
     files = [str(file) for file in items]
 

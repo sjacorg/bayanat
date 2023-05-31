@@ -269,9 +269,13 @@
                                         </v-btn>
                                     </v-card-title>
                                     <v-card-text class="align-center">
-                                        <v-text-field v-model="selectedPath" value="/home/media/"
-                                                      label="Input path to files"></v-text-field>
-                                        <v-switch v-model="recursive" label="Search Subfolders"></v-switch>
+                                        <v-text-field v-model="selectedPath"
+                                                      label="Input a sub-path to scan, leave empty to scan the entire allowed path."></v-text-field>
+                                                      <v-card-text>
+                                                        <v-icon>mdi-information</v-icon>
+                                                        To scan a sub-path of the allowed path, enter the sub-path only without any parents (e.g. 'videos').
+                                                      </v-card-text>
+                                        <v-switch v-model="recursive" label="Search recursively"></v-switch>
                                     </v-card-text>
 
                                     <v-card-actions class="pb-3">
@@ -378,7 +382,7 @@
                 step: 1,
                 uploadDlg: null,
                 selectDlg: null,
-                selectedPath: '/home/bayanat/data/',
+                selectedPath: '',
                 recursive: false,
                 files: [],
                 options: {
@@ -507,13 +511,6 @@
                 },
 
                 processPath() {
-                    // get all files from the specified path via server side
-                    if (!this.selectedPath) {
-                        this.selectDlg = false;
-                        this.showSnack('No valid path selected');
-                        return;
-                    }
-                    // else
 
                     this.loading = true;
 
@@ -530,8 +527,6 @@
                         this.selectDlg = false;
                         this.loading = false;
                     })
-
-
                 },
 
                 onFileUploaded(error, file) {

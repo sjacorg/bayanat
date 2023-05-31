@@ -2,7 +2,7 @@ from pathlib import Path
 
 from flask import request, Response, Blueprint, json, send_from_directory
 from flask.templating import render_template
-from flask_security.decorators import login_required, current_user, roles_required
+from flask_security.decorators import auth_required, current_user, roles_required
 
 from enferno.admin.models import Activity
 from enferno.export.models import Export
@@ -17,7 +17,7 @@ PER_PAGE = 30
 
 
 @export.before_request
-@login_required
+@auth_required('session')
 def export_before_request():
     # check user's permissions
     if not (current_user.has_role("Admin") or current_user.can_export):
@@ -48,6 +48,36 @@ def export_bulletins():
         return f'Export request created successfully, id:  {export_request.id} ', 200
     return 'Error creating export request', 417
 
+@export.post('/api/actor/export')
+def export_actors():
+    """
+    just creates an export request
+    :return: success code / failure if something goes wrong
+    """
+    # create an export request
+    export_request = Export()
+    export_request.from_json('actor', request.json)
+    if export_request.save():
+        # Record activity
+        Activity.create(current_user, Activity.ACTION_CREATE, export_request.to_mini(), Export.__table__.name)
+        return f'Export request created successfully, id:  {export_request.id} ', 200
+    return 'Error creating export request', 417
+
+
+@export.post('/api/incident/export')
+def export_incidents():
+    """
+    just creates an export request
+    :return: success code / failure if something goes wrong
+    """
+    # create an export request
+    export_request = Export()
+    export_request.from_json('incident', request.json)
+    if export_request.save():
+        # Record activity
+        Activity.create(current_user, Activity.ACTION_CREATE, export_request.to_mini(), Export.__table__.name)
+        return f'Export request created successfully, id:  {export_request.id} ', 200
+    return 'Error creating export request', 417
 
 @export.get('/api/export/<int:id>')
 def api_export_get(id):
@@ -64,23 +94,26 @@ def api_export_get(id):
         return json.dumps(export.to_dict()), 200
 
 
-@export.get('/api/exports/', defaults={'page': 1})
-@export.get('/api/exports/<int:page>/')
-def api_exports(page):
+@export.post('/api/exports/')
+def api_exports():
     """
     API endpoint to feed export request items in josn format - supports paging
     and generated based on user role
     :param page: db query offset
     :return: successful json feed or error
     """
+    page = request.json.get('page', 1)
+    per_page = request.json.get('per_page', PER_PAGE)
+
     if current_user.has_role('Admin'):
         result = Export.query.order_by(-Export.id).paginate(
-            page=page, per_page=PER_PAGE, count=True)
+            page=page, per_page=per_page, count=True)
+
     else:
         # if a normal authenticated user, get own export requests only
         result = Export.query.filter(
             Export.requester_id == current_user.id
-        ).order_by(-Export.id).paginate(page=page, per_page=PER_PAGE, count=True)
+        ).order_by(-Export.id).paginate(page=page, per_page=per_page, count=True)
 
     response = {'items': [item.to_dict() for item in result.items], 'perPage': PER_PAGE, 'total': result.total}
 
@@ -175,6 +208,8 @@ def download_export_file():
             return HTTPResponse.NOT_FOUND
         # check expiry
         if not export.expired:
+            # Record activity
+            Activity.create(current_user, Activity.ACTION_DOWNLOAD, export.to_mini(), Export.__table__.name)
             return send_from_directory(f'{Path(*Export.export_dir.parts[1:])}', f'{export.file_id}.zip')
         else:
             return HTTPResponse.REQUEST_EXPIRED

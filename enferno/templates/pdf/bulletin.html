@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ bulletin.title }}</title>
+    <link rel="stylesheet" href="{{ config.BASE_URL }}static/css/pdf.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <img id="logo" src="{{ config.BASE_URL }}static/img/bayanat-h-v2.png" alt="">
+        <div>
+            <div class="id">
+            Bulletin {{ bulletin.id }}
+        </div>
+            <p class="meta">
+
+                Publish Date: {{ bulletin.publish_date.strftime('%Y-%m-%d %H:%M') if bulletin.publish_date else ''  }} <br>
+                Documentation Date: {{ bulletin.documentation_date if bulletin.documentation_date else '' }}
+            </p>
+        </div>
+    </header>
+
+
+    <section>
+
+        <dl class="hero">
+
+            <div>
+                <dt>Origin ID</dt>
+                <dd>{{ bulletin.originid }}</dd>
+            </div>
+            <div>
+                <dt>Source Link</dt>
+                <dd>{{ bulletin.source_link }}</dd>
+            </div>
+        </dl>
+
+    </section>
+    <section>
+        <dl>
+            <div>
+                <dt>Original Title</dt>
+                <dd>{{ bulletin.title }}</dd>
+            </div>
+
+            <div>
+                <dt>Original Title (ar)</dt>
+                <dd>{{ bulletin.title_ar }}</dd>
+            </div>
+
+            <div>
+                <dt>SJAC Title</dt>
+                <dd>{{ bulletin.sjac_title }}</dd>
+            </div>
+
+            <div>
+                <dt>SJAC Title (ar)</dt>
+                <dd>{{ bulletin.sjac_title_ar }}</dd>
+            </div>
+
+            <div>
+                <dt>Origin ID</dt>
+                <dd>{{ bulletin.originid }}</dd>
+            </div>
+        </dl>
+    </section>
+    <section>
+        <h4>Description</h4>
+        <div class="description">
+            {{ bulletin.description|safe }}
+        </div>
+    </section>
+
+    <section>
+        <h4>Labels</h4>
+        {% for label in bulletin.labels %}
+            <span class="tag">{{ label.title }}</span>
+        {% endfor %}
+    </section>
+
+    <section>
+        <h4>Verified Labels</h4>
+        {% for label in bulletin.ver_labels %}
+            <span class="tag">{{ label.title }}</span>
+        {% endfor %}
+    </section>
+
+    <section>
+        <h4>Sources</h4>
+        {% for source in bulletin.sources %}
+            <span class="tag">{{ source.title }}</span>
+        {% endfor %}
+    </section>
+
+
+    <section>
+        <h4>Locations</h4>
+        {% for location in bulletin.locations %}
+            <span class="tag">{{ location.title }}</span>
+        {% endfor %}
+    </section>
+
+    <section class="events">
+        <h4>Events</h4>
+        {% for event in bulletin.events %}
+            <table class="no-break">
+                <tr>
+                    <th>Event Title</th>
+                    <th colspan="2">Event Comments</th>
+                </tr>
+                <tr>
+                    <td>{{ event.title }}</td>
+                    <td colspan="2">{{ event.comment }}</td>
+                </tr>
+
+                <tr>
+                    <th colspan="2">Event Location</th>
+                    <th>Event Type</th>
+                </tr>
+                <tr>
+                    <td colspan="2">{{ event.location.title }}</td>
+                    <td>{{ event.eventtype.title }}</td>
+                </tr>
+
+                <tr>
+                    <th>From Date</th>
+                    <th>To Date</th>
+                    <th>Estimated?</th>
+                </tr>
+                <tr>
+                    <td>{{ event.from_date.strftime('%Y-%m-%d %H:%M') if event.from_date else ''  }}</td>
+                    <td>{{ event.to_date.strftime('%Y-%m-%d %H:%M') if  event.to_date else '' }}</td>
+                    <td>{{ event.estimated }}</td>
+                </tr>
+
+            </table>
+        {% endfor %}
+    </section>
+
+
+    <section class="related">
+        <h4>Related Bulletins</h4>
+        <article>
+            {% for rel in bulletin.bulletin_relations_dict %}
+                <table class="no-break">
+                    <tr>
+                        <th>ID</th>
+                        <th colspan="2">Title</th>
+
+                    </tr>
+                    <tr>
+                        <td>{{ rel.bulletin.id }}</td>
+                        <td colspan="2">{{ rel.bulletin.title }}</td>
+                    </tr>
+{#                <tr>#}
+{#                    <th>Related as</th>#}
+{#                    <th>Probability</th>#}
+{#                    <th>Comment</th>#}
+{#                </tr>#}
+{#                <tr>#}
+{#                    <td>{{ rel.related_as }}</td>#}
+{#                    <td>{{ rel.probability }}</td>#}
+{#                    <td>{{ rel.comment }}</td>#}
+{#                </tr>#}
+
+                </table>
+            {% endfor %}
+        </article>
+    </section>
+
+
+
+    <section class="related">
+        <h4>Related Actors</h4>
+        <article>
+            {% for rel in bulletin.actor_relations_dict %}
+                <table class="no-break">
+                    <tr>
+                        <th>ID</th>
+                        <th colspan="2">Title</th>
+
+                    </tr>
+                    <tr>
+                        <td>{{ rel.actor.id }}</td>
+                        <td colspan="2">{{ rel.actor.name }}</td>
+                    </tr>
+{#                <tr>#}
+{#                    <th>Related as</th>#}
+{#                    <th>Probability</th>#}
+{#                    <th>Comment</th>#}
+{#                </tr>#}
+{#                <tr>#}
+{#                    <td>{{ rel.related_as }}</td>#}
+{#                    <td>{{ rel.probability }}</td>#}
+{#                    <td>{{ rel.comment }}</td>#}
+{#                </tr>#}
+
+                </table>
+            {% endfor %}
+        </article>
+    </section>
+
+
+
+    <section class="related">
+        <h4>Related Incidents</h4>
+        <article>
+            {% for rel in bulletin.incident_relations_dict %}
+                <table class="no-break">
+                    <tr>
+                        <th>ID</th>
+                        <th colspan="2">Title</th>
+
+                    </tr>
+                    <tr>
+                        <td>{{ rel.incident.id }}</td>
+                        <td colspan="2">{{ rel.incident.title }}</td>
+                    </tr>
+{#                <tr>#}
+{#                    <th>Related as</th>#}
+{#                    <th>Probability</th>#}
+{#                    <th>Comment</th>#}
+{#                </tr>#}
+{#                <tr>#}
+{#                    <td>{{ rel.related_as }}</td>#}
+{#                    <td>{{ rel.probability }}</td>#}
+{#                    <td>{{ rel.comment }}</td>#}
+{#                </tr>#}
+
+                </table>
+            {% endfor %}
+        </article>
+    </section>
+
+
+    <section class="medias">
+        <h4>Medias</h4>
+        <article>
+
+                <table class="no-break">
+                    <tr>
+                        <th>ID</th>
+                        <th >Media File</th>
+                        <th>Type</th>
+
+                    </tr>
+                    {% for media in bulletin.medias %}
+                    <tr>
+                        <td>{{ media.id }}</td>
+                        <td >{{ media.media_file }}</td>
+                    <td>{{ media.media_file_type }}</td>
+                    </tr>
+                    {% endfor %}
+
+
+                </table>
+
+        </article>
+    </section>
+</div>
+
+
+</body>
+</html>

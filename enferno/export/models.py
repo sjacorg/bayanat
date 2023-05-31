@@ -23,7 +23,7 @@ else:
 
 class Export(db.Model, BaseMixin):
     export_dir = Path("enferno/exports")
-    export_file_name = "export.json"
+    export_file_name = "export"
     signer = URLSafeSerializer(cfg.SECRET_KEY)
     """
     SQL Alchemy model for export table

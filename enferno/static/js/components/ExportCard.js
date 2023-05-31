@@ -244,11 +244,23 @@ Vue.component("export-card", {
 
       <!-- Related Bulletins -->
       <v-card outlined color="grey lighten-5" class="ma-2" v-if="items">
-        <v-card-text>
-          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}
-          </div>
+        <v-card-text v-if="exp.table == 'bulletin'">
+          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}</div>
           <bulletin-result :i18n="translations" class="mt-1" v-for="item in items" :bulletin="item"></bulletin-result>
         </v-card-text>
+        
+         <v-card-text v-if="exp.table == 'actor'">
+          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedActors_ }}</div>
+          <actor-result :i18n="translations" class="mt-1" v-for="item in items" :actor="item"></actor-result>
+        </v-card-text>
+        
+        
+         <v-card-text v-if="exp.table == 'incident'">
+          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedIncidents_ }}</div>
+          <incident-result :i18n="translations" class="mt-1" v-for="item in items" :incident="item"></incident-result>
+        </v-card-text>
+        
+        
         <v-card-actions>
           <v-btn 
             class="ma-auto caption" 

@@ -1,0 +1,203 @@
+/* roboto-regular - latin */
+@font-face {
+    font-family: "Tajawal";
+    font-style: normal;
+    font-weight: 400;
+    src: url('/static/font/Tajawal-Regular.otf')
+}
+
+@font-face {
+    font-family: "Tajawal";
+    font-style: normal;
+    font-weight: 700;
+    src: url('/static/font/Tajawal-Bold.otf')
+}
+
+
+@page {
+
+  margin: 1.5cm;
+
+}
+
+
+
+body {
+    font-family: 'Tajawal','Helvetica', Sans-serif;
+    counter-reset: table;
+}
+header {
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.meta {
+    line-height: 1.7;
+
+}
+
+#logo {
+    width: 300px;
+    object-fit: cover;
+
+}
+.id {
+    font-size: 40px;
+    font-weight: bold;
+    color: rgba(67, 157, 146, 0.74);
+}
+.container {
+    width: min(900px, 100%);
+    margin: auto;
+}
+
+h1 {
+    font-size:12px;
+}
+
+dt, dd {
+  display: inline;
+margin: 0;
+
+
+}
+dt {
+  color: #8aa396;
+
+}
+dt::before {
+  content: '';
+  display: block;
+}
+dt::after {
+  content: ':';
+    margin-right: 1pt;
+}
+
+.hero {
+    padding: 7pt 10pt;
+    background:  #f0f0f0;
+    display: flex;
+
+}
+
+.hero > div {
+    padding: 5pt 0;
+    margin: 4pt;
+}
+
+dl > div {
+    margin: 6pt 0pt;
+    padding: 3pt;
+}
+
+h4 {
+    color: #8aa396;
+}
+
+.description{
+    padding: 7pt 9pt;
+    margin-top:-5pt;
+    border: 1pt dotted #e7e7e7;
+    line-height: 1.8;
+    background: #fafafa;
+}
+
+.tag {
+    background: #f0f0f0;
+    border-radius: 5pt;
+    color: #444;
+    margin: 3pt 5pt 3pt 0pt;
+    display: inline-block;
+    padding: 7pt;
+}
+
+.events article {
+    display: flex;
+
+}
+
+section {
+    margin-top: 20pt;
+}
+section h4 {
+    font-size: 18pt;
+    margin: 25pt 0 10pt 0;
+
+}
+
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+    margin: 0 auto 30pt auto;
+    border: 1px solid rgba(170, 170, 170, 0.36);
+}
+th {
+  background: #f0f0f0;
+
+    color: #8aa396;
+    font-size: 10pt;
+}
+td {
+    font-style: normal;
+    font-weight: normal;
+}
+th, td {
+padding: 8pt;
+}
+
+.related {
+      counter-reset: table-counter;
+
+}
+.related table {
+    position: relative;
+
+
+
+
+}
+.medias table::before {
+    content: '';
+}
+.events {
+    counter-reset: table 0;
+}
+
+.related{
+    counter-reset: table 0;
+}
+
+table::before {
+
+    position: absolute;
+    counter-increment: table;
+    content: counter(table);
+    left: -25pt;
+    font-size: 30pt;
+    color: rgba(170, 170, 170, 0.15);
+
+}
+
+
+.no-break {
+      page-break-inside: avoid;
+}
+
+.two-col {
+    display: flex;
+
+    align-items: center;
+}
+.two-col > div:first-child{
+    margin-right: 10pt;
+}
+article {
+    margin: 10pt 0;
+}
+.two-col > div {
+margin: 5pt 0;
+
+}

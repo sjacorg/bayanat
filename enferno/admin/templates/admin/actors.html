@@ -9,6 +9,8 @@
     'admin/partials/actor_drawer.html' %}
             {% include
       'admin/partials/bulk_actor_drawer.html' %}
+        {% include
+    'admin/partials/export_drawer.html' %}
             <v-main>
                 {% include 'admin/partials/actor_advsearch.html' %}
                 <v-container class="container--fluid">
@@ -96,6 +98,23 @@
                                                 <v-btn @click="bulkActorDrawer=true" small color="fifth" depressed>
                                                     <v-icon small left>mdi-circle-edit-outline</v-icon>
                                                     {{ _('Bulk update') }}</v-btn>
+
+
+                                                {% if config.EXPORT_TOOL %}
+                                            <v-btn
+                                                @click="exportDrawer=true"
+                                                small
+                                                color="primary"
+                                                class="mx-2"
+                                                depressed
+                                                v-if="exportAllowed()"
+                                            >
+                                                <v-icon small left
+                                                >mdi-file-export-outline
+                                                </v-icon>
+                                            {{ _('Export') }}
+                                            </v-btn>
+                                            {% endif %}
 
                                             </template>
 
@@ -297,6 +316,7 @@
 
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
         let app = new Vue({
             el: "#app",
             vuetify: vuetify,
@@ -400,6 +420,9 @@
 
                 actorDrawer: false,
                 bulkActorDrawer: false,
+
+            exportDrawer: false,
+                exportConfig: {},
 
                 sources: [],
                 locations: [],
@@ -681,6 +704,29 @@
             },
 
             methods: {
+
+                  exportRequest(){
+
+                    let ids = this.selected.map(x => x.id);
+                    this.loading = true;
+                    axios.post(`/export/api/actor/export`, {
+                        items: ids,
+                        config: this.exportConfig
+                    })
+                        .then(response => {
+                            this.showSnack(response.data);
+                        }).catch(error=>{
+                            console.error(error.response?.data);
+                            this.showSnack(error.response?.data)
+                    }).finally(()=>{
+                            this.loading = false;
+                            this.exportDrawer = false;
+                            this.selected = [];
+                            this.exportConfig = {};
+
+                    });
+                },
+
 
                   selectAllRestrict(props) {
 
@@ -987,6 +1033,19 @@
                     for (r of user.roles) {
                         if (r.name == role) {
                             return true
+                        }
+                    }
+                    return false;
+                },
+
+
+                 exportAllowed() {
+                    if(__EXPORT_TOOL__){
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (this.currentUser.can_export) {
+                            return true;
                         }
                     }
                     return false;

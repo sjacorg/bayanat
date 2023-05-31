@@ -4,7 +4,7 @@ import os
 import requests
 from flask import Blueprint, request, session, redirect, g, Response, current_app
 from flask.templating import render_template
-from flask_security import login_required, login_user, current_user
+from flask_security import auth_required, login_user, current_user
 from flask_security.forms import LoginForm
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
@@ -144,7 +144,7 @@ def auth_callback():
 
 
 @bp_user.route('/dashboard/')
-@login_required
+@auth_required('session')
 def account():
     """
     Main dashboard endpoint.
@@ -153,13 +153,13 @@ def account():
 
 
 @bp_user.route('/settings/')
-@login_required
+@auth_required('session')
 def settings():
     """Endpoint for user settings."""
     return render_template('settings.html')
 
 @bp_user.route('/settings/save',methods=['PUT'])
-@login_required
+@auth_required('session')
 def save_settings():
     """API Endpoint to save user settings."""
     json = request.json.get('settings')
@@ -176,7 +176,7 @@ def save_settings():
     return 'Settings Saved', 200
 
 @bp_user.route('/settings/load',methods=['GET'])
-@login_required
+@auth_required('session')
 def load_settings():
     """API Endpoint to load user settings, in json format. """
     user_id = current_user.id

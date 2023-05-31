@@ -1,23 +1,27 @@
 # -*- coding: utf-8 -*-
-import os, time, shutil
-from datetime import datetime
+import os
+import shutil
+import time
 from collections import namedtuple
-from sqlalchemy import and_
+from datetime import datetime
+
+import boto3
+import pandas as pd
 from celery import Celery, chain
+from sqlalchemy import and_
+
 from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Activity, ActorHistory, IncidentHistory
+from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
 from enferno.settings import ProdConfig, DevConfig
 from enferno.user.models import Role, User
+from enferno.utils.csv_utils import convert_list_attributes
 from enferno.utils.data_import import DataImport
-from enferno.utils.pdf_utils import BulletinPDFUtil
-from enferno.deduplication.models import DedupRelation
-import boto3
+from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.sheet_utils import SheetUtils
 
 cfg = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
-
-
 
 celery = Celery('tasks', broker=cfg.celery_broker_url)
 # remove deprecated warning
@@ -32,6 +36,7 @@ celery.conf.add_defaults(cfg)
 # Class to run tasks within application's context
 class ContextTask(celery.Task):
     abstract = True
+
     def __call__(self, *args, **kwargs):
         from enferno.app import create_app
         with create_app(cfg).app_context():
@@ -48,6 +53,7 @@ def chunk_list(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+
 
 @celery.task
 def bulk_update_bulletins(ids, bulk, cur_user_id):
@@ -86,7 +92,6 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
                 if not status:
                     bulletin.status = 'Peer Review Assigned'
 
-
             if status:
                 bulletin.status = status
 
@@ -96,24 +101,24 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
                 if bulk.get('refReplace'):
                     bulletin.ref = ref
                 else:
-                    #merge refs / remove dups
+                    # merge refs / remove dups
                     bulletin.ref = list(set(bulletin.ref + ref))
 
             # Comment (required)
-            bulletin.comments = bulk.get('comments','')
+            bulletin.comments = bulk.get('comments', '')
 
             # Access Roles
             roles = bulk.get('roles')
             replace_roles = bulk.get('rolesReplace')
             if replace_roles:
                 if roles:
-                    role_ids = list(map(lambda x:x.get('id'), roles))
-                    #get actual roles objects
+                    role_ids = list(map(lambda x: x.get('id'), roles))
+                    # get actual roles objects
                     roles = Role.query.filter(Role.id.in_(role_ids)).all()
                     # assign directly to the bulletin
                     bulletin.roles = roles
                 else:
-                    #clear bulletin roles
+                    # clear bulletin roles
                     bulletin.roles = []
             else:
                 if roles:
@@ -143,14 +148,12 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
         # commit session when a batch of items and revisions are added
         db.session.commit()
 
-
         # Record Activity
         updated = [b.to_mini() for b in bulletins]
         Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, 'bulletin')
         # perhaps allow a little time out
         time.sleep(.1)
         print('chunk processed')
-
 
     print("Bulletins Bulk Update Successful")
 
@@ -161,7 +164,7 @@ def bulk_update_actors(ids, bulk, cur_user_id):
     u = {'id': cur_user_id}
     cur_user = namedtuple('cur_user', u.keys())(*u.values())
     user = User.query.get(cur_user_id)
-    chunks = chunk_list(ids,BULK_CHUNK_SIZE)
+    chunks = chunk_list(ids, BULK_CHUNK_SIZE)
     for group in chunks:
 
         # Fetch bulletins
@@ -190,13 +193,11 @@ def bulk_update_actors(ids, bulk, cur_user_id):
                 if not status:
                     actor.status = 'Peer Review Assigned'
 
-
             if status:
                 actor.status = status
 
-
             # Comment (required)
-            actor.comments = bulk.get('comments','')
+            actor.comments = bulk.get('comments', '')
 
             # Access Roles
             roles = bulk.get('roles')
@@ -237,7 +238,6 @@ def bulk_update_actors(ids, bulk, cur_user_id):
 
         # commit session when a batch of items and revisions are added
         db.session.commit()
-
 
         # Record Activity
         updated = [b.to_mini() for b in actors]
@@ -381,6 +381,7 @@ def etl_process_file(batch_id, file, meta, user_id, log):
     di.process(file)
     return 'done'
 
+
 # this will publish a message to redis and will be captured by the front-end client
 def update_stats():
     # send any message to refresh the UI
@@ -390,13 +391,14 @@ def update_stats():
 
 @celery.task
 def process_dedup(id, user_id):
-    #print('processing {}'.format(id))
+    # print('processing {}'.format(id))
     d = DedupRelation.query.get(id)
     if d:
         d.process(user_id)
         # detect final task and send a refresh message
         if rds.scard('dedq') == 0:
             rds.publish('dedprocess', 2)
+
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -410,9 +412,10 @@ def setup_periodic_tasks(sender, **kwargs):
         sender.add_periodic_task(300, export_cleanup_cron.s(), name='Exports Cleanup Cron')
         print("Export cleanup periodic task is set up")
 
+
 @celery.task
 def dedup_cron():
-    #shut down processing when we hit 0 items in the queue or when we turn off the processing
+    # shut down processing when we hit 0 items in the queue or when we turn off the processing
     if rds.get('dedup') != b'1' or rds.scard('dedq') == 0:
         rds.delete('dedup')
         rds.publish('dedprocess', 0)
@@ -434,6 +437,7 @@ def process_sheet(filepath, map, target, batch_id, vmap, sheet, actorConfig, lan
     su = SheetUtils(filepath, actorConfig, lang)
     su.import_sheet(map, target, batch_id, vmap, sheet, roles)
 
+
 # ---- Export tasks ----
 
 def generate_export(export_id):
@@ -446,20 +450,26 @@ def generate_export(export_id):
         return chain(generate_json_file.s([export_id]),
                      generate_export_media.s(),
                      generate_export_zip.s())()
-    
+
     elif export_request.file_format == 'pdf':
-        return chain(generate_pdf_files.s([export_id]), 
-                     generate_export_media.s(), 
+        return chain(generate_pdf_files.s([export_id]),
+                     generate_export_media.s(),
                      generate_export_zip.s())()
-    
+    elif export_request.file_format == 'csv':
+        return chain(generate_csv_file.s([export_id]),
+                     generate_export_media.s(),
+                     generate_export_zip.s())()
+
     elif export_request.file_format == 'csv':
         raise NotImplementedError
-    
+
+
 def clear_failed_export(export_request):
     shutil.rmtree(f'{Export.export_dir}/{export_request.file_id}')
     export_request.status = "Failed"
     export_request.file_id = None
     export_request.save()
+
 
 @celery.task
 def generate_pdf_files(export_id):
@@ -474,9 +484,20 @@ def generate_pdf_files(export_id):
         for group in chunks:
             if export_request.table == 'bulletin':
                 for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)):
-                    pdf = BulletinPDFUtil(bulletin)
-                    pdf.write_to_pdf(f'{Export.export_dir}/{dir_id}/{pdf.filename}')
-                time.sleep(0.2)
+                    pdf = PDFUtil(bulletin)
+                    pdf.generate_pdf(f'{Export.export_dir}/{dir_id}/{pdf.filename}')
+
+            elif export_request.table == 'actor':
+                for actor in Actor.query.filter(Actor.id.in_(group)):
+                    pdf = PDFUtil(actor)
+                    pdf.generate_pdf(f'{Export.export_dir}/{dir_id}/{pdf.filename}')
+
+            elif export_request.table == 'incident':
+                for incident in Incident.query.filter(Incident.id.in_(group)):
+                    pdf = PDFUtil(incident)
+                    pdf.generate_pdf(f'{Export.export_dir}/{dir_id}/{pdf.filename}')
+
+            time.sleep(0.2)
 
         export_request.file_id = dir_id
         export_request.save()
@@ -486,23 +507,32 @@ def generate_pdf_files(export_id):
     except Exception as e:
         print(f'Error writing export file: {e}')
         clear_failed_export(export_request)
-        return False # to stop chain
+        return False  # to stop chain
+
 
 @celery.task
-def generate_json_file(export_id: int) :
+def generate_json_file(export_id: int):
     """
     JSON export generator task.
     """
     export_request = Export.query.get(export_id)
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     file_path, dir_id = Export.generate_export_file()
+    export_type = export_request.table
+    print('generating export file .....')
     try:
-        with file_path.open('a') as file:
+        with open(f'{file_path}.json', 'a') as file:
             file.write('{ \n')
-            file.write('"bulletins": [ \n')
+            file.write(f'"{export_type}s": [ \n')
             for group in chunks:
-                if export_request.table == 'bulletin':
-                    batch = ','.join (bulletin.to_json() for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)))
+                if export_type == 'bulletin':
+                    batch = ','.join(bulletin.to_json() for bulletin in Bulletin.query.filter(Bulletin.id.in_(group)))
+                    file.write(f'{batch}\n')
+                elif export_type == 'actor':
+                    batch = ','.join(actor.to_json() for actor in Actor.query.filter(Actor.id.in_(group)))
+                    file.write(f'{batch}\n')
+                elif export_type == 'incident':
+                    batch = ','.join(incident.to_json() for incident in Incident.query.filter(Incident.id.in_(group)))
                     file.write(f'{batch}\n')
                 # less db overhead
                 time.sleep(0.2)
@@ -515,7 +545,56 @@ def generate_json_file(export_id: int) :
     except Exception as e:
         print(f'Error writing export file: {e}')
         clear_failed_export(export_request)
-        return False # to stop chain
+        return False  # to stop chain
+
+
+@celery.task
+def generate_csv_file(export_id: int):
+    """
+    CSV export generator task.
+    """
+    export_request = Export.query.get(export_id)
+    file_path, dir_id = Export.generate_export_file()
+    export_type = export_request.table
+    print(file_path, dir_id)
+    print('generating export file .....')
+    try:
+        csv_df = pd.DataFrame()
+        for id in export_request.items:
+            if export_type == 'bulletin':
+                bulletin = Bulletin.query.get(id)
+                # adjust list attributes to normal dicts
+                adjusted = convert_list_attributes(bulletin.to_csv_dict())
+                # normalize
+                df = pd.json_normalize(adjusted)
+                if csv_df.empty:
+                    csv_df = df
+                else:
+                    csv_df = pd.merge(csv_df, df, how='outer')
+
+            elif export_type == 'actor':
+                actor = Actor.query.get(id)
+                # adjust list attributes to normal dicts
+                adjusted = convert_list_attributes(actor.to_csv_dict())
+                # normalize
+                df = pd.json_normalize(adjusted)
+                if csv_df.empty:
+                    csv_df = df
+                else:
+                    csv_df = pd.merge(csv_df, df, how='outer')
+
+        csv_df.to_csv(f'{file_path}.csv')
+
+        export_request.file_id = dir_id
+        export_request.save()
+        print(f'---- Export File generated successfully for Id: {export_request.id} ----')
+        # pass the ids to the next celery task
+        return export_id
+    except Exception as e:
+        print(f'Error writing export file: {e}')
+        clear_failed_export(export_request)
+        return False  # to stop chain
+
 
 @celery.task
 def generate_export_media(previous_result: int):
@@ -524,17 +603,28 @@ def generate_export_media(previous_result: int):
     """
     if previous_result == False:
         return False
-    
+
     export_request = Export.query.get(previous_result)
 
     # check if we need to export media files
     if not export_request.include_media:
         return export_request.id
 
-    # get list of previous bulletin ids and export their medias
-    for bulletin in Bulletin.query.filter(Bulletin.id.in_(export_request.items)):
-        if bulletin.medias:
-            media = bulletin.medias[0]
+    export_type = export_request.table
+    # get list of previous entity ids and export their medias
+    # dynamic query based on table
+    if export_type == 'bulletin':
+        items = Bulletin.query.filter(Bulletin.id.in_(export_request.items))
+    elif export_type == 'actor':
+        items = Actor.query.filter(Actor.id.in_(export_request.items))
+    elif export_type == 'incident':
+        # incidents has no media
+        # UI switch disabled, but just in case...
+        return
+
+    for item in items:
+        if item.medias:
+            media = item.medias[0]
             target_file = f'{Export.export_dir}/{export_request.file_id}/{media.media_file}'
 
             if cfg.FILESYSTEM_LOCAL:
@@ -549,31 +639,33 @@ def generate_export_media(previous_result: int):
                                   region_name=cfg.AWS_REGION
                                   )
                 try:
-                    s3.download_file(cfg.S3_BUCKET,media.media_file, target_file)
+                    s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
                 except Exception as e:
                     print(f"Error downloading file from s3: {e}")
-
 
         time.sleep(0.05)
     return export_request.id
 
+
 @celery.task
-def generate_export_zip(previous_result:int):
+def generate_export_zip(previous_result: int):
     """
     Final export task to compress export folder
     into a zip archive.
     """
     if previous_result == False:
         return False
-    
+
     print("Generating zip archive")
     export_request = Export.query.get(previous_result)
 
-    shutil.make_archive(f'{Export.export_dir}/{export_request.file_id}', 'zip', f'{Export.export_dir}/{export_request.file_id}')
+    shutil.make_archive(f'{Export.export_dir}/{export_request.file_id}', 'zip',
+                        f'{Export.export_dir}/{export_request.file_id}')
     print(f"Export Complete {export_request.file_id}.zip")
 
     # Remove export folder after completion
     shutil.rmtree(f'{Export.export_dir}/{export_request.file_id}')
+
 
 @celery.task
 def export_cleanup_cron():
@@ -583,7 +675,7 @@ def export_cleanup_cron():
     """
     expired_exports = Export.query.filter(and_(
         Export.expires_on < datetime.utcnow(),  # expiry time before now 
-        Export.status != 'Expired')).all()      # status is not expired
+        Export.status != 'Expired')).all()  # status is not expired
 
     if expired_exports:
         for export_request in expired_exports:
@@ -594,5 +686,5 @@ def export_cleanup_cron():
                     os.remove(f'{Export.export_dir}/{export_request.file_id}.zip')
                 except FileNotFoundError:
                     print(F"Export #{export_request.id}'s files not found to delete.")
-            else: 
+            else:
                 print(F"Error expiring Export #{export_request.id}")

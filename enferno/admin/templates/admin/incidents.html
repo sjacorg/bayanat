@@ -5,11 +5,9 @@
     <div id="app">
         <v-app id="incidents" v-cloak>
             {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-            {% include
-    'admin/partials/incident_drawer.html' %}
-
-            {% include
-      'admin/partials/bulk_incident_drawer.html' %}
+            {% include  'admin/partials/incident_drawer.html' %}
+            {% include     'admin/partials/bulk_incident_drawer.html' %}
+            {% include   'admin/partials/export_drawer.html' %}
             <v-main>
                 <v-container class="container--fluid">
 
@@ -106,6 +104,22 @@
                                                     <v-icon small left>mdi-circle-edit-outline</v-icon>
                                                     {{ _('Bulk update') }}</v-btn>
 
+                                                {% if config.EXPORT_TOOL %}
+                                            <v-btn
+                                                @click="exportDrawer=true"
+                                                small
+                                                color="primary"
+                                                class="mx-2"
+                                                depressed
+                                                v-if="exportAllowed()"
+                                            >
+                                                <v-icon small left
+                                                >mdi-file-export-outline
+                                                </v-icon>
+                                            {{ _('Export') }}
+                                            </v-btn>
+                                            {% endif %}
+
 
                                             </template>
 
@@ -148,15 +162,15 @@
 
                                 <template v-slot:item.roles="{item}">
                                     <v-chip
-                                    class="mx-2" 
-                                    small
-                                    style="scale:0.7"
-                                    v-tippy
-                                    :content="role.name"
-                                    v-for="role in item.roles"
-                                    :color="role.color"
+                                            class="mx-2"
+                                            small
+                                            style="scale:0.7"
+                                            v-tippy
+                                            :content="role.name"
+                                            v-for="role in item.roles"
+                                            :color="role.color"
                                     >
-                                    
+
                                     </v-chip>
                                 </template>
 
@@ -241,8 +255,8 @@
                                         <v-textarea v-model="assignIncident.comments" label="Comments"></v-textarea>
                                     </v-card-text>
                                     <v-card-actions>
-                                        <v-btn :disabled="!assignIncident.comments" class="ma-auto" 
-                                        @click="selfAssign"
+                                        <v-btn :disabled="!assignIncident.comments" class="ma-auto"
+                                               @click="selfAssign"
                                                color="primary">Assign to self
                                         </v-btn>
                                     </v-card-actions>
@@ -291,6 +305,7 @@
     <script>
 
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
         let app = new Vue({
             el: "#app",
@@ -377,6 +392,13 @@
                 sideNav: sideNav,
                 incidentDrawer: false,
                 bulkIncidentDrawer: false,
+
+                exportDrawer: false,
+                exportConfig: {
+                    hideCSV : true,
+                    hideMedia: true
+                },
+
 
                 sources: [],
                 locations: [],
@@ -637,6 +659,29 @@
 
             methods: {
 
+                exportRequest(){
+
+                    let ids = this.selected.map(x => x.id);
+                    this.loading = true;
+                    axios.post(`/export/api/incident/export`, {
+                        items: ids,
+                        config: this.exportConfig
+                    })
+                        .then(response => {
+                            this.showSnack(response.data);
+                        }).catch(error=>{
+                            console.error(error.response?.data);
+                            this.showSnack(error.response?.data)
+                    }).finally(()=>{
+                            this.loading = false;
+                            this.exportDrawer = false;
+                            this.selected = [];
+                            this.exportConfig = {};
+
+                    });
+                },
+
+
                 selectAllRestrict(props) {
                     if (props.value === false) {
                         // untoggle on next tick
@@ -862,7 +907,7 @@
                             this.showSnack(error.response.data)
                             this.snackbar = true;
                         }
-                    }).finally(()=>{
+                    }).finally(() => {
                         this.incidentLoader = false;
                     });
                 },
@@ -922,8 +967,20 @@
                     return false;
                 },
 
+                   exportAllowed() {
+                    if(__EXPORT_TOOL__){
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (this.currentUser.can_export) {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+
                 editAllowed(incident) {
-                    if(incident.restricted){
+                    if (incident.restricted) {
                         return false;
                     }
                     if (this.has_role(this.currentUser, 'Admin')) {
@@ -941,7 +998,7 @@
 
                 reviewAllowed(incident) {
 
-                    if(incident.restricted){
+                    if (incident.restricted) {
                         return false;
                     }
 
@@ -959,10 +1016,10 @@
 
                 selfAssignAllowed(incident) {
 
-                    if(incident.restricted){
+                    if (incident.restricted) {
                         return false;
                     }
-                    
+
 
                     if (this.currentUser.can_self_assign) {
                         if ((!incident.assigned_to) || (incident.assigned_to && !incident.assigned_to.active)) {

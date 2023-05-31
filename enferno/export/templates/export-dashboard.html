@@ -128,6 +128,8 @@
 {% block js %}
 <script src="/static/js/components/ExportCard.js" ></script>
 <script src="/static/js/components/BulletinResult.js"></script>
+<script src="/static/js/components/ActorResult.js"></script>
+<script src="/static/js/components/IncidentResult.js"></script>
 <script src="/static/js/components/UniField.js"></script>
 <script src="/static/js/mixins/global-mixin.js" ></script>
     <script>
@@ -160,7 +162,7 @@
                 selected: [],
                 options: {
                     page: 1,
-                    itemsPerPage: 100
+
                 },
                 footerProps: {
                     itemsPerPageOptions: itemsPerPageOptions,
@@ -330,8 +332,14 @@
                     // will replace with proper handling 
                     // similar to bulk operations
                     setTimeout(() => {
-                        axios.get('/export/api/exports/').then(res => {
+                        axios.post('/export/api/exports/', {
+                            page: this.options.page,
+                            per_page : this.options.itemsPerPage
+                        }).then(res => {
                             this.items = res.data.items;
+                            this.itemsLength = res.data.total;
+
+
                         }).catch(error => {
                             console.error(error.response?.data);
                         }).finally(() => {

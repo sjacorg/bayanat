@@ -5,6 +5,7 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+
 import pandas as pd
 from flask_babel import gettext
 from flask_login import current_user
@@ -18,6 +19,7 @@ from werkzeug.utils import secure_filename
 from enferno.extensions import db
 from enferno.settings import ProdConfig, DevConfig
 from enferno.utils.base import BaseMixin
+from enferno.utils.csv_utils import convert_simple_relation, convert_complex_relation
 from enferno.utils.date_helper import DateHelper
 
 # Load configurations based on environment settings
@@ -36,7 +38,9 @@ def check_roles(method):
             if not current_user.can_access(self):
                 return self.restricted_json()
         return method_output
+
     return _impl
+
 
 def check_relation_roles(method):
     @wraps(method)
@@ -63,6 +67,7 @@ def check_relation_roles(method):
                 'restricted': True
             }
         return method_output
+
     return _impl
 
 
@@ -449,13 +454,12 @@ class Event(db.Model, BaseMixin):
 
     # populates model from json dict
     def from_json(self, json):
-
         self.title = json["title"] if "title" in json else None
         self.title_ar = json["title_ar"] if "title_ar" in json else None
         self.comments = json["comments"] if "comments" in json else None
         self.comments_ar = json["comments_ar"] if "comments_ar" in json else None
 
-        self.location_id = json["location"]["id"] if "location" in json and json["location"] else None 
+        self.location_id = json["location"]["id"] if "location" in json and json["location"] else None
         self.eventtype_id = json["eventtype"]["id"] if "eventtype" in json and json["eventtype"] else None
 
         from_date = json.get('from_date', None)
@@ -551,10 +555,11 @@ class Media(db.Model, BaseMixin):
     @staticmethod
     def validate_media_extension(filename):
         return pathlib.Path(filename).suffix.lower() in cfg.MEDIA_ALLOWED_EXTENSIONS
-    
+
     @staticmethod
     def validate_sheet_extension(filename):
         return pathlib.Path(filename).suffix in cfg.SHEETS_ALLOWED_EXTENSIONS
+
 
 # Structure is copied over from previous system
 class Location(db.Model, BaseMixin):
@@ -617,7 +622,7 @@ class Location(db.Model, BaseMixin):
     def to_dict(self):
         if self.parent:
             if not self.parent.admin_level:
-                print (self.parent, ' <-')
+                print(self.parent, ' <-')
 
         return {
             "id": self.id,
@@ -646,7 +651,7 @@ class Location(db.Model, BaseMixin):
                 "title": self.parent.title,
                 "full_string": '{} | {}'.format(self.parent.full_location or '', self.parent.title_ar or ''),
                 "admin_level": self.parent.admin_level.to_dict() if self.admin_level else ''
-                }
+            }
 
     # custom compact serialization method
     def min_json(self):
@@ -790,7 +795,7 @@ class Location(db.Model, BaseMixin):
         # step.2 update locations - add parents
         db.session.bulk_update_mappings(Location, df.to_dict(orient="records"))
         db.session.commit()
-        print ('locations parents imported successfully')
+        print('locations parents imported successfully')
 
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from location").scalar()
@@ -1357,7 +1362,6 @@ class Bulletin(db.Model, BaseMixin):
     def incident_relations_dict(self):
         return [relation.to_dict() for relation in self.incident_relations]
 
-
     # helper property returns all actor relations
     @property
     def actor_relations(self):
@@ -1449,7 +1453,7 @@ class Bulletin(db.Model, BaseMixin):
         if "events" in json:
             new_events = []
             events = json["events"]
-            
+
             for event in events:
                 if "id" not in event:
                     # new event
@@ -1478,7 +1482,7 @@ class Bulletin(db.Model, BaseMixin):
             to_be_created = [m for m in json.get('medias') if not m.get('id')]
 
             new_medias = []
-            #create new medias
+            # create new medias
             for media in to_be_created:
                 m = Media()
                 m = m.from_json(media)
@@ -1618,6 +1622,36 @@ class Bulletin(db.Model, BaseMixin):
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
             "comments": self.comments or "",
         }
+
+    def to_csv_dict(self):
+
+        output = {
+            'id': self.id,
+            'title': self.serialize_column('title'),
+            'title_ar': self.serialize_column('title_ar'),
+            'origin_id': self.serialize_column('originid'),
+            'source_link': self.serialize_column('source_link'),
+            'sjac_title': self.serialize_column('sjac_title'),
+            'sjac_title_ar': self.serialize_column('sjac_title_ar'),
+            'description': self.serialize_column('description'),
+            'publish_date': self.serialize_column('publish_date'),
+            'documentation_date': self.serialize_column('documentation_date'),
+
+            'labels': convert_simple_relation(self.labels),
+            'verified_labels': convert_simple_relation(self.ver_labels),
+            'sources': convert_simple_relation(self.sources),
+            'locations': convert_simple_relation(self.locations),
+            'geo_locations': convert_simple_relation(self.geo_locations),
+            'media': convert_simple_relation(self.medias),
+            'events': convert_simple_relation(self.events),
+            'related_bulletins': convert_complex_relation(self.bulletin_relations_dict, Bulletin.__tablename__),
+            'related_actors': convert_complex_relation(self.actor_relations_dict, Actor.__tablename__),
+            'related_incidents': convert_complex_relation(self.incident_relations_dict, Incident.__tablename__),
+
+
+
+        }
+        return output
 
     # Helper method to handle logic of relating bulletins  (from bulletin)
     def relate_bulletin(self, bulletin, relation=None, create_revision=True):
@@ -1983,8 +2017,8 @@ class Actor(db.Model, BaseMixin):
     )
 
     events = db.relationship(
-        "Event", 
-        secondary=actor_events, 
+        "Event",
+        secondary=actor_events,
         backref=db.backref("actors", lazy="dynamic"),
         order_by="Event.from_date"
     )
@@ -2162,6 +2196,18 @@ class Actor(db.Model, BaseMixin):
     def incident_relations(self):
         return self.related_incidents
 
+    @property
+    def actor_relations_dict(self):
+        return [relation.to_dict(exclude=self) for relation in self.actor_relations]
+
+    @property
+    def bulletin_relations_dict(self):
+        return [relation.to_dict() for relation in self.bulletin_relations]
+
+    @property
+    def incident_relations_dict(self):
+        return [relation.to_dict() for relation in self.incident_relations]
+
     # populate actor object from json dict
     def from_json(self, json):
         # All text fields
@@ -2281,7 +2327,7 @@ class Actor(db.Model, BaseMixin):
             to_be_created = [m for m in json.get('medias') if not m.get('id')]
 
             new_medias = []
-            #create new medias
+            # create new medias
             for media in to_be_created:
                 m = Media()
                 m = m.from_json(media)
@@ -2545,6 +2591,48 @@ class Actor(db.Model, BaseMixin):
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
         }
+
+    def to_csv_dict(self):
+
+        output = {
+            'id': self.id,
+            'name': self.serialize_column('name'),
+            'name_ar': self.serialize_column('name_ar'),
+            'nickname': self.serialize_column('nickname'),
+            'nickname_ar': self.serialize_column('nickname_ar'),
+            'middle_name': self.serialize_column('middle_name'),
+            'middle_name_ar': self.serialize_column('middle_name_ar'),
+            'last_name': self.serialize_column('last_name'),
+            'last_name_ar': self.serialize_column('last_name_ar'),
+
+            'mother_name': self.serialize_column('mother_name'),
+            'mother_name_ar': self.serialize_column('mother_name_ar'),
+
+            'sex': self.serialize_column('sex'),
+            'age': self.serialize_column('age'),
+            'civilian': self.serialize_column('civilian'),
+            'actor_type': self.serialize_column('actor_type'),
+            'birth_date': self.serialize_column('birth_date'),
+            'birth_place': self.serialize_column('birth_place'),
+
+            'description': self.serialize_column('description'),
+
+            'publish_date': self.serialize_column('publish_date'),
+            'documentation_date': self.serialize_column('documentation_date'),
+
+            'labels': convert_simple_relation(self.labels),
+            'verified_labels': convert_simple_relation(self.ver_labels),
+            'sources': convert_simple_relation(self.sources),
+            'media': convert_simple_relation(self.medias),
+            'events': convert_simple_relation(self.events),
+            'related_bulletins': convert_complex_relation(self.bulletin_relations_dict, Bulletin.__tablename__),
+            'related_actors': convert_complex_relation(self.actor_relations_dict, Actor.__tablename__),
+            'related_incidents': convert_complex_relation(self.incident_relations_dict, Incident.__tablename__),
+
+
+
+        }
+        return output
 
     def get_modified_date(self):
         if self.history:
@@ -3283,6 +3371,18 @@ class Incident(db.Model, BaseMixin):
     def actor_relations(self):
         return self.related_actors
 
+    @property
+    def actor_relations_dict(self):
+        return [relation.to_dict() for relation in self.actor_relations]
+
+    @property
+    def bulletin_relations_dict(self):
+        return [relation.to_dict() for relation in self.bulletin_relations]
+
+    @property
+    def incident_relations_dict(self):
+        return [relation.to_dict(exclude=self) for relation in self.incident_relations]
+
     # populate model from json dict
     def from_json(self, json):
         # All text fields
@@ -3770,6 +3870,7 @@ class Activity(db.Model, BaseMixin):
     ACTION_BULK_UPDATE = "BULK-UPDATE"
     ACTION_APPROVE_EXPORT = "APPROVE-EXPORT"
     ACTION_REJECT_EXPORT = "REJECT-EXPORT"
+    ACTION_DOWNLOAD = "DOWNLOAD"
     ACTION_LOGIN = 'LOGIN'
     ACTION_LOGOUT = 'LOGOUT'
 
@@ -3921,4 +4022,3 @@ class Log(db.Model, BaseMixin):
 
     def __repr__(self):
         return '<{} - {}>'.format(self.id, self.name)
-

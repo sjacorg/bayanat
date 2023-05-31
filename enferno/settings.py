@@ -14,7 +14,7 @@ class Config(object):
 
         return bleach.clean(identity, strip=True)
 
-
+    BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:5000/')
 
     SECRET_KEY = os.environ.get('SECRET_KEY')
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
@@ -183,7 +183,6 @@ class ProdConfig(Config):
 
     # secure cookies (flask core)
     SESSION_COOKIE_SECURE = os.environ.get('SECURE_COOKIES', 'True') == 'True'
-    print(SESSION_COOKIE_SECURE)
     REMEMBER_COOKIE_SECURE = os.environ.get('SECURE_COOKIES', 'True') == 'True'
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_HTTPONLY = True

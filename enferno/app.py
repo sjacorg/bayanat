@@ -27,11 +27,15 @@ def get_locale():
     # override = request.args.get('lang')
     # if override:
     #     session['lang'] = override
+    default = 'en'
     try:
         default = current_app.config.get('BABEL_DEFAULT_LOCALE')
     except Exception as e:
         print(e)
-        default = 'en'
+
+    if not current_user:
+        # working outside of a session context
+        return default
     if not current_user.is_authenticated:
         # will return default language
         pass

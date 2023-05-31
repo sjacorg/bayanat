@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ incident.title }}</title>
+    <link rel="stylesheet" href="{{ config.BASE_URL }}static/css/pdf.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <img id="logo" src="{{ config.BASE_URL }}static/img/bayanat-h-v2.png" alt="">
+        <div>
+            <div class="id">
+                Incident {{ incident.id }}
+            </div>
+        </div>
+    </header>
+
+
+    <section>
+        <dl>
+            <div>
+                <dt>Title</dt>
+                <dd>{{ incident.title }}</dd>
+            </div>
+
+            <div>
+                <dt>Title (ar)</dt>
+                <dd>{{ incident.title_ar }}</dd>
+            </div>
+
+        </dl>
+    </section>
+    <section>
+        <h4>Description</h4>
+        <div class="description">
+            {{ incident.description|safe }}
+        </div>
+    </section>
+
+    <section>
+        <h4>Potential Violations</h4>
+        {% for violation in incident.potential_violations %}
+            <span class="tag">{{ violation.title }}</span>
+        {% endfor %}
+    </section>
+    <section>
+        <h4>Claimed Violations</h4>
+        {% for violation in incident.claimed_violations %}
+            <span class="tag">{{ violation.title }}</span>
+        {% endfor %}
+    </section>
+
+
+    <section>
+        <h4>Labels</h4>
+        {% for label in incident.labels %}
+            <span class="tag">{{ label.title }}</span>
+        {% endfor %}
+    </section>
+
+
+
+    <section>
+        <h4>Locations</h4>
+        {% for location in incident.locations %}
+            <span class="tag">{{ location.title }}</span>
+        {% endfor %}
+    </section>
+
+    <section class="events">
+        <h4>Events</h4>
+        {% for event in incident.events %}
+            <table class="no-break">
+                <tr>
+                    <th>Event Title</th>
+                    <th colspan="2">Event Comments</th>
+                </tr>
+                <tr>
+                    <td>{{ event.title }}</td>
+                    <td colspan="2">{{ event.comment }}</td>
+                </tr>
+
+                <tr>
+                    <th colspan="2">Event Location</th>
+                    <th>Event Type</th>
+                </tr>
+                <tr>
+                    <td colspan="2">{{ event.location.title }}</td>
+                    <td>{{ event.eventtype.title }}</td>
+                </tr>
+
+                <tr>
+                    <th>From Date</th>
+                    <th>To Date</th>
+                    <th>Estimated?</th>
+                </tr>
+                <tr>
+                    <td>{{ event.from_date.strftime('%Y-%m-%d %H:%M') if event.from_date else '' }}</td>
+                    <td>{{ event.to_date.strftime('%Y-%m-%d %H:%M') if  event.to_date else '' }}</td>
+                    <td>{{ event.estimated }}</td>
+                </tr>
+
+            </table>
+        {% endfor %}
+    </section>
+
+
+    <section class="related">
+        <h4>Related Bulletins</h4>
+        <article>
+            {% for rel in incident.bulletin_relations_dict %}
+                <table class="no-break">
+                    <tr>
+                        <th>ID</th>
+                        <th colspan="2">Title</th>
+
+                    </tr>
+                    <tr>
+                        <td>{{ rel.bulletin.id }}</td>
+                        <td colspan="2">{{ rel.bulletin.title }}</td>
+                    </tr>
+                    {#                <tr>#}
+                    {#                    <th>Related as</th>#}
+                    {#                    <th>Probability</th>#}
+                    {#                    <th>Comment</th>#}
+                    {#                </tr>#}
+                    {#                <tr>#}
+                    {#                    <td>{{ rel.related_as }}</td>#}
+                    {#                    <td>{{ rel.probability }}</td>#}
+                    {#                    <td>{{ rel.comment }}</td>#}
+                    {#                </tr>#}
+
+                </table>
+            {% endfor %}
+        </article>
+    </section>
+
+
+    <section class="related">
+        <h4>Related Actors</h4>
+        <article>
+            {% for rel in incident.actor_relations_dict %}
+                <table class="no-break">
+                    <tr>
+                        <th>ID</th>
+                        <th colspan="2">Title</th>
+
+                    </tr>
+                    <tr>
+                        <td>{{ rel.actor.id }}</td>
+                        <td colspan="2">{{ rel.actor.name }}</td>
+                    </tr>
+                    {#                <tr>#}
+                    {#                    <th>Related as</th>#}
+                    {#                    <th>Probability</th>#}
+                    {#                    <th>Comment</th>#}
+                    {#                </tr>#}
+                    {#                <tr>#}
+                    {#                    <td>{{ rel.related_as }}</td>#}
+                    {#                    <td>{{ rel.probability }}</td>#}
+                    {#                    <td>{{ rel.comment }}</td>#}
+                    {#                </tr>#}
+
+                </table>
+            {% endfor %}
+        </article>
+    </section>
+
+
+    <section class="related">
+        <h4>Related Incidents</h4>
+        <article>
+            {% for rel in incident.incident_relations_dict %}
+                <table class="no-break">
+                    <tr>
+                        <th>ID</th>
+                        <th colspan="2">Title</th>
+
+                    </tr>
+                    <tr>
+                        <td>{{ rel.incident.id }}</td>
+                        <td colspan="2">{{ rel.incident.title }}</td>
+                    </tr>
+                    {#                <tr>#}
+                    {#                    <th>Related as</th>#}
+                    {#                    <th>Probability</th>#}
+                    {#                    <th>Comment</th>#}
+                    {#                </tr>#}
+                    {#                <tr>#}
+                    {#                    <td>{{ rel.related_as }}</td>#}
+                    {#                    <td>{{ rel.probability }}</td>#}
+                    {#                    <td>{{ rel.comment }}</td>#}
+                    {#                </tr>#}
+
+                </table>
+            {% endfor %}
+        </article>
+    </section>
+
+
+    
+</div>
+
+
+</body>
+</html>

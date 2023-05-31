@@ -6,7 +6,7 @@ import click
 import pandas as pd
 from flask import Blueprint, render_template, Response, request
 from flask.cli import with_appcontext
-from flask_security import login_required
+from flask_security import auth_required
 from flask_security import roles_required, roles_accepted, current_user
 
 from enferno.deduplication.models import DedupRelation
@@ -17,7 +17,7 @@ deduplication = Blueprint('deduplication', __name__, static_folder='../static',
 
 
 @deduplication.before_request
-@login_required
+@auth_required('session')
 def dedup_before_request():
     pass
 
@@ -25,7 +25,7 @@ def dedup_before_request():
 @deduplication.app_context_processor
 def deduplication_app_context():
     """
-    pass a global flag to indicate that the deduplciation plugin(Blueprint) is enabled.
+    pass a global flag to indicate that the deduplication plugin(Blueprint) is enabled.
     used to display/hide deduplication menu item inside templates
     :return: True if this blueprint is registered
     """
