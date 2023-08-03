@@ -33,13 +33,10 @@ Vue.component('search-field',
 
             emitChange(v){
                 if(v){
-                    this.$emit('change', v)
+                    this.$emit('change', v);
+                    this.searchInput = ''
                 }
-                
-
-
             },
-
 
             updateValue(val) {
                 // remove free input value in cases of multiple value component and single value component

@@ -97,7 +97,7 @@ Vue.component('bulletin-search-box', {
                                 :label="i18n.notContains_"
                                 clearable
                         ></v-text-field>
-                        <div class="d-flex">
+                        <div class="d-flex align-center">
                           <v-combobox
                                 v-model="q.ref"
                                 :label="i18n.inRef_"
@@ -109,10 +109,12 @@ Vue.component('bulletin-search-box', {
                         
                         <v-checkbox :label="i18n.any_" dense v-model="q.opref" color="primary" small
                                         class="mx-3"></v-checkbox>
+                          <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
+                                        class="mx-3"></v-checkbox>
                         
                         </div>
                         
-                        <div class="d-flex">
+                        <div class="d-flex align-center">
                         
                         <v-combobox
                                 v-model="q.exref"
@@ -124,6 +126,8 @@ Vue.component('bulletin-search-box', {
                         ></v-combobox>
                         
                         <v-checkbox :label="i18n.all_" dense v-model="q.opexref" color="primary" small
+                                        class="mx-3"></v-checkbox>
+                          <v-checkbox label="Exact Match" dense v-model="q.exExact" color="primary" small
                                         class="mx-3"></v-checkbox>
                                         </div>
                         

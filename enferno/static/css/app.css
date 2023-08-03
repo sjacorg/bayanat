@@ -566,3 +566,10 @@ span.map-bid:empty {
     max-width: 770px;
     overflow: auto;
 }
+
+
+
+
+.Password__field--disabled {
+    opacity: 0.6
+}

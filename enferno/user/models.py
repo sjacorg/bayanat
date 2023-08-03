@@ -193,7 +193,12 @@ class User(UserMixin, db.Model, BaseMixin):
 
         self.email = item.get('email')
         self.username = item.get('username')
-        self.password = hash_password(item.get('password'))
+
+        # check password is not empty
+        password = item.get('password')
+        if password:
+            self.password = hash_password(password)
+
         self.name = item.get('name')
 
         # roles

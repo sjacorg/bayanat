@@ -89,6 +89,7 @@ class Export(db.Model, BaseMixin):
         """
         return {
             "id": self.id,
+
             "class": self.__tablename__,
             "table": self.table,
             "requester": self.requester.to_compact(),
@@ -105,13 +106,14 @@ class Export(db.Model, BaseMixin):
             "expired": self.expired,
             "uid": self.unique_id,
             "items": self.items,
+
             }
     
     def approve(self):
         """
         Method to approve Export requests.
         """
-        self.status = 'Approved'
+        self.status = 'Processing'
         # set download expiry
         self.expires_on = dt.utcnow() + timedelta(
             seconds=current_app.config.get('EXPORT_DEFAULT_EXPIRY'))

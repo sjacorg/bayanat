@@ -1,5 +1,5 @@
 <validation-observer v-slot="{invalid}">
-    <v-dialog persistent v-model="dialog" fullscreen>
+    <v-dialog :retain-focus="false" no-click-animation persistent v-model="dialog" fullscreen>
 
         <v-card v-if="dialog" class="overflow-hidden">
 
@@ -43,28 +43,31 @@
 
                         <v-row>
                             <v-col cols="12" md="6">
-
-                                <v-card class="d-flex" flat>
+                                  <v-card class="d-flex" flat>
                                     <div style="flex:auto" v-if="name__">
-                                        <validation-provider name="Name" rules="required" v-slot="{errors}">
+                                        <validation-provider name="Name" :rules="{oneisnull:editedItem.name_ar}" v-slot="{errors}">
                                             <v-text-field
-
                                                     v-model="editedItem.name"
                                                     label="{{ _('Name') }}"
                                             ></v-text-field>
-
                                             <span class="orange--text">${errors[0]}</span>
                                         </validation-provider>
 
                                     </div>
 
+                                    <div v-else  style="flex:auto">
 
+                                <validation-provider name="Name(ar)"  :rules="{oneisnull:editedItem.name}"  v-slot="{errors}">
                                     <v-text-field
-                                            v-else
+
                                             v-model="editedItem.name_ar"
                                             label="{{ _('Name (AR)') }}"
                                             background-color="lime lighten-5"
                                     ></v-text-field>
+
+                                    <span class="orange--text">${errors[0]}</span>
+                                </validation-provider>
+                                        </div>
 
                                     <v-btn
                                             color="grey lighten-2"

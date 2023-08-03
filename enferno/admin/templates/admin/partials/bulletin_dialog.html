@@ -1,5 +1,5 @@
 <validation-observer v-slot="{ invalid} ">
-    <v-dialog persistent v-model="dialog" fullscreen>
+    <v-dialog :retain-focus="false" no-click-animation persistent v-model="dialog" fullscreen>
 
 
         <v-card v-if="dialog" class="overflow-hidden card-edit">

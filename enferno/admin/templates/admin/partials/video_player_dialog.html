@@ -50,7 +50,7 @@
 
       <div id="screenshots">
 
-        <v-card v-for="(media, index) in screenshots" :key="index" class="sc-wrap" v-if="!media.deleted">
+        <v-card :color="media.error? 'red': ''" v-for="(media, index) in screenshots" :key="index" class="sc-wrap" v-if="!media.deleted">
           <canvas  :class="'screenshot canvas' +index  " :width="media.width" :height="media.height"  crossOrigin="anonymous"></canvas>
 
                 <div  class="d-flex" >

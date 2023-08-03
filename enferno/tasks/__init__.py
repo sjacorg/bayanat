@@ -98,7 +98,7 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
             # Ref
             ref = bulk.get('ref')
             if ref:
-                if bulk.get('refReplace'):
+                if bulk.get('refReplace') or not bulletin.ref:
                     bulletin.ref = ref
                 else:
                     # merge refs / remove dups
@@ -134,7 +134,7 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
 
         print('creating revisions ...')
         revmaps = []
-        bulletins = Bulletin.query.filter(Bulletin.id.in_(ids)).all()
+        bulletins = Bulletin.query.filter(Bulletin.id.in_(group)).all()
         for bulletin in bulletins:
             # this commits automatically
             tmp = {
@@ -153,7 +153,7 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
         Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, 'bulletin')
         # perhaps allow a little time out
         time.sleep(.1)
-        print('chunk processed')
+        print('Chunk Processed')
 
     print("Bulletins Bulk Update Successful")
 
@@ -225,7 +225,7 @@ def bulk_update_actors(ids, bulk, cur_user_id):
             db.session.add(actor)
 
         revmaps = []
-        actors = Actor.query.filter(Actor.id.in_(ids)).all()
+        actors = Actor.query.filter(Actor.id.in_(group)).all()
         for actor in actors:
             # this commits automatically
             tmp = {
@@ -330,7 +330,7 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
             db.session.add(incident)
 
         revmaps = []
-        incidents = Incident.query.filter(Incident.id.in_(ids)).all()
+        incidents = Incident.query.filter(Incident.id.in_(group)).all()
         for incident in incidents:
             # this commits automatically
             tmp = {
@@ -371,6 +371,7 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
 
         # perhaps allow a little time out
         time.sleep(.25)
+        print('Chunk Processed')
 
     print("Incidents Bulk Update Successful")
 
@@ -439,7 +440,6 @@ def process_sheet(filepath, map, target, batch_id, vmap, sheet, actorConfig, lan
 
 
 # ---- Export tasks ----
-
 def generate_export(export_id):
     """
     Main Export generator task.
@@ -665,6 +665,10 @@ def generate_export_zip(previous_result: int):
 
     # Remove export folder after completion
     shutil.rmtree(f'{Export.export_dir}/{export_request.file_id}')
+
+    # update request state
+    export_request.status = 'Ready'
+    export_request.save()
 
 
 @celery.task

@@ -49,6 +49,7 @@
                                                 name="password"
                                                 prepend-icon="mdi-lock-question"
                                                 type="password"
+                                                @keyup.enter="!invalid && submit()"
                                         ></v-text-field>
                 <span class="orange--text"> ${errors[0]}</span>
                 </validation-provider>

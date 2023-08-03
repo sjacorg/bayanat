@@ -91,25 +91,39 @@ class SearchUtils:
 
         # ref
         ref = q.get('ref')
+        exact = q.get('inExact')
 
         if ref:
-            search = ['%' + r + '%' for r in ref]
-            #get serach operator
+            # exact match search
+            if exact:
+                conditions = [func.array_to_string(Bulletin.ref, ' ').op('~*')(f'\y{r}\y') for r in ref]
+            else:
+                conditions = [func.array_to_string(Bulletin.ref, ' ').icontains(r) for r in ref]
+
+            # any operator
             op = q.get('opref', False)
             if op:
-                query.append(or_(func.array_to_string(Bulletin.ref, '').ilike(r) for r in search))
+                query.append(or_(*conditions))
             else:
-                query.append(and_(func.array_to_string(Bulletin.ref, '').ilike(r) for r in search))
+                query.append(and_(*conditions))
 
+        # exclude ref
         exref = q.get('exref')
+        exact = q.get('exExact')
         if exref:
-            # get operator
+            # exact match 
+            if exact:
+                conditions = [~func.array_to_string(Bulletin.ref, ' ').op('~*')(f'\y{r}\y') for r in exref]
+            else:
+                conditions = [~func.array_to_string(Bulletin.ref, ' ').icontains(r) for r in exref]
+            
+            # get all operator
             opexref = q.get('opexref')
             if opexref:
-                subq = Bulletin.query.filter(and_(Bulletin.ref.any(x) for x in exref)).with_entities('id')
-                query.append(~Bulletin.id.in_(subq))
+                # De Mogran's
+                query.append(or_(*conditions))
             else:
-                query.extend([~Bulletin.ref.any(ref) for ref in exref])
+                query.append(and_(*conditions))
 
         labels = q.get('labels', [])
         if len(labels):

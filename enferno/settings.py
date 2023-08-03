@@ -117,7 +117,7 @@ class Config(object):
 
     EXPORT_TOOL = (os.environ.get('EXPORT_TOOL', 'False') == 'True')
     # Export file expiry in seconds (2 hours)
-    EXPORT_DEFAULT_EXPIRY = 7200
+    EXPORT_DEFAULT_EXPIRY = int(os.environ.get('EXPORT_DEFAULT_EXPIRY', 7200))
     # Enable data deduplication tool
     DEDUP_TOOL = (os.environ.get('DEDUP_TOOL', 'False') == 'True')
 

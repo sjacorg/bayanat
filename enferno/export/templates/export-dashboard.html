@@ -48,26 +48,7 @@
 
                                         <template v-slot:item.download="{item}">
 
-                                            <!-- adding 2px to better align with icons -->
-                                            <v-btn @click.stop="" :disabled="item.expired" v-tippy content="Download" style="margin-left:2px"
-                                                   download :href="`/export/api/exports/download?exportId=${item.uid}`"
-                                                   v-if="item.status==='Approved'" icon color="success">
-                                                <v-icon>mdi-download-circle</v-icon>
-                                            </v-btn>
-
-                                            <v-icon v-tippy content="Pending" class="ml-2"
-                                                    v-if="item.status==='Pending'">mdi-clock-time-eleven-outline
-                                            </v-icon>
-                                            <v-icon v-tippy content="Not Approved" class="ml-2"
-                                                    v-if="item.status==='Rejected'" color="error">mdi-cancel
-                                            </v-icon>
-                                            <v-icon v-tippy content="Failed" class="ml-2"
-                                                    v-if="item.status==='Failed'" color="error">mdi-alert-circle
-                                            </v-icon>
-                                            <v-icon v-tippy content="Expired" class="ml-2"
-                                                    v-if="item.status==='Expired'"
-                                                    color="grey">mdi-close-circle
-                                            </v-icon>
+                                          <export-download :item="item" />
 
                                         </template>
 
@@ -130,6 +111,7 @@
 <script src="/static/js/components/BulletinResult.js"></script>
 <script src="/static/js/components/ActorResult.js"></script>
 <script src="/static/js/components/IncidentResult.js"></script>
+<script src="/static/js/components/ExportDownload.js"></script>
 <script src="/static/js/components/UniField.js"></script>
 <script src="/static/js/mixins/global-mixin.js" ></script>
     <script>
@@ -261,7 +243,7 @@
                     axios.put('/export/api/exports/status', data).then(res => {
                         // close drawer
                         this.exportDrawer = false;
-                        this.refresh(3000);
+                        this.refresh();
                         this.showSnack(res.data);
 
                     }).catch(error => {
@@ -323,19 +305,15 @@
                     return false;
                 },
 
-                refresh(timeout = 300) {
+                refresh() {
                     this.loading = true;
                     
-                    // using timeout here is a temp measure
-                    // this is to allow system a few seconds 
-                    // to generate the export or fail
-                    // will replace with proper handling 
-                    // similar to bulk operations
-                    setTimeout(() => {
                         axios.post('/export/api/exports/', {
                             page: this.options.page,
                             per_page : this.options.itemsPerPage
                         }).then(res => {
+
+
                             this.items = res.data.items;
                             this.itemsLength = res.data.total;
 
@@ -344,8 +322,8 @@
                             console.error(error.response?.data);
                         }).finally(() => {
                             this.loading = false;
-                        })
-                    }, timeout); 
+                        });
+
                 }
             }
         });

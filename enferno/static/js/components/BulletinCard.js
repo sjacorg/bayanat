@@ -3,46 +3,28 @@ Vue.component("bulletin-card", {
 
     watch: {
         bulletin: function (val, old) {
-
-
-
-            if (!this.$root.currentUser.view_simple_history) {
-                this.log = false;
-            }
-            if (this.$root.currentUser.view_full_history) {
-                this.diff = true;
-            }
-
             this.loadBulletinRelations();
             this.loadActorRelations();
             this.loadIncidentRelations();
 
             this.mapLocations = aggregateLocations(this.bulletin);
-
         },
     },
 
     mounted() {
 
-
         this.removeVideo();
-        //this.mapLocations = this.$root.aggregateLocations(this.bulletin)
 
     },
 
-
-
-
     methods: {
 
-
         translate_status(status){
-          return translate_status(status);
+            return translate_status(status);
         },
 
-           loadBulletinRelations(page=1) {
-
-             // b2a
+        loadBulletinRelations(page=1) {
+            // b2a
             axios.get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=bulletin&page=${page}`).then(res=>{
             this.bulletin.bulletin_relations.push.apply(this.bulletin. bulletin_relations,res.data.items);
             this.bulletinPage +=1;
@@ -56,7 +38,7 @@ Vue.component("bulletin-card", {
 
         loadActorRelations(page = 1){
 
-             // b2a
+            // b2a
             axios.get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=actor&page=${page}`).then(res=>{
             //console.log(this.bulletin.actor_relations, res.data.items);
             this.bulletin.actor_relations.push.apply(this.bulletin.actor_relations,res.data.items);
@@ -67,9 +49,8 @@ Vue.component("bulletin-card", {
                 console.log(err.toJSON());
             });
 
-
-
         },
+
         loadIncidentRelations(page =1){
 
              // b2i
@@ -83,43 +64,37 @@ Vue.component("bulletin-card", {
 
         },
 
-
-        loadRelations(){
-
-
-
-
-
-        },
         probability(item) {
-
             return translations.probs[item.probability].tr
         },
+
         actor_related_as(id) {
             return translations.btoaRelateAs[id].tr;
         },
-        bulletin_related_as(item) {
 
+        bulletin_related_as(item) {
             return translations.btobRelateAs[item.related_as].tr;
         },
+
         incident_related_as(item) {
-
-
             return translations.itobRelateAs[item.related_as].tr;
         },
 
-
         showReview(bulletin) {
-
             return (bulletin.status == 'Peer Reviewed' && bulletin.review);
-
         },
 
+        logAllowed() {
+            return this.$root.currentUser.view_simple_history && this.log;
+        },
+
+        diffAllowed() {
+            return this.$root.currentUser.view_full_history && this.diff;
+        },
 
         editAllowed() {
             return this.$root.editAllowed(this.bulletin) && this.showEdit;
         },
-
 
         loadRevisions() {
             this.hloading = true;
@@ -128,9 +103,9 @@ Vue.component("bulletin-card", {
                 .then((response) => {
                     this.revisions = response.data.items;
                 }).catch(error => {
-                  if(error.response){
-                    console.log(error.response.data)
-                  }
+                    if(error.response){
+                      console.log(error?.response?.data);
+                    }
             }).finally(() => {
                 this.hloading = false;
             });
@@ -141,13 +116,11 @@ Vue.component("bulletin-card", {
             if (video) {
                 video.remove();
             }
-
         },
+
         viewThumb(s3url) {
-            
             this.$emit('thumb-click', s3url);
         },
-
 
         viewVideo(s3url) {
             this.iplayer = true
@@ -169,10 +142,7 @@ Vue.component("bulletin-card", {
                     this.load();
                     this.play();
                 });
-
             })
-
-
         },
 
         showDiff(e, index) {
@@ -514,7 +484,7 @@ Vue.component("bulletin-card", {
       </v-card>
 
       <!-- Log -->
-      <v-card v-if="log" outline elevation="0" class="ma-2">
+      <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
         <v-card-text>
           <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
             <v-btn fab :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
@@ -531,7 +501,7 @@ Vue.component("bulletin-card", {
                 - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
-              <v-btn v-if="diff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
+              <v-btn v-if="diffAllowed()" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
                      class="mx-1"
                      color="grey" icon small>
                 <v-icon>mdi-compare</v-icon>

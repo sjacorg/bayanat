@@ -317,6 +317,17 @@
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
+
+        VeeValidate.extend('oneisnull', {
+            computesRequired: true,
+            validate: (value, param) => {
+                if (['', null, undefined].indexOf(value) !== -1 && ['', null, undefined].indexOf(param[0]) !== -1) {
+                    return 'Either Name or Name(ar) should not be empty'
+                }
+                return true
+            },
+        });
+
         let app = new Vue({
             el: "#app",
             vuetify: vuetify,
@@ -507,7 +518,6 @@
 
                 editedIndex: -1,
                 editedItem: {
-                    title: "",
                     events: [],
                     medias: [],
                     actor_relations: [],
@@ -516,7 +526,6 @@
 
                 },
                 defaultItem: {
-                    title: "",
                     description: "",
 
                     // related events

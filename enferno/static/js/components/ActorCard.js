@@ -1,34 +1,20 @@
 Vue.component("actor-card", {
     props: ["actor", "close", "thumb-click", "active", "log", "diff", "showEdit", "i18n"],
+
     watch: {
         actor: function (b, n) {
-
-
-            if (!this.$root.currentUser.view_simple_history) {
-                this.log = false;
-            }
-            if (this.$root.currentUser.view_full_history) {
-                this.diff = true;
-            }
-
-              this.loadBulletinRelations();
+            this.loadBulletinRelations();
             this.loadActorRelations();
             this.loadIncidentRelations();
-
-
         },
     },
 
-
-
-
-
-
     methods: {
-          translate_status(status){
-          return translate_status(status);
+        translate_status(status){
+            return translate_status(status);
         },
-          loadBulletinRelations(page=1) {
+        
+        loadBulletinRelations(page=1) {
 
              // b2a
             axios.get(`/admin/api/actor/relations/${this.actor.id}?class=bulletin&page=${page}`).then(res=>{
@@ -42,8 +28,6 @@ Vue.component("actor-card", {
         },
 
         loadActorRelations(page = 1){
-
-
             axios.get(`/admin/api/actor/relations/${this.actor.id}?class=actor&page=${page}`).then(res=>{
             //console.log(this.bulletin.actor_relations, res.data.items);
             this.actor.actor_relations.push.apply(this.actor.actor_relations,res.data.items);
@@ -53,12 +37,9 @@ Vue.component("actor-card", {
             }).catch(err=>{
                 console.log(err.toJSON());
             });
-
-
-
         },
-        loadIncidentRelations(page =1){
 
+        loadIncidentRelations(page =1){
              // b2i
             axios.get(`/admin/api/actor/relations/${this.actor.id}?class=incident&page=${page}`).then(res=>{
             this.actor.incident_relations.push.apply(this.actor.incident_relations, res.data.items);
@@ -67,13 +48,12 @@ Vue.component("actor-card", {
             }).catch(err=>{
                 console.log(err.toJSON());
             });
-
         },
-
 
         probability(item) {
             return translations.probs[item.probability].tr;
         },
+
         actor_related_as(item) {
             if (this.actor.id < item.actor.id) {
                 return translations.atoaRelateAs[item.related_as].tr.text;
@@ -81,27 +61,35 @@ Vue.component("actor-card", {
                 return translations.atoaRelateAs[item.related_as].tr.revtext;
             }
         },
+
         bulletin_related_as(rid) {
             return translations.btoaRelateAs[rid].tr;
-
         },
+
         incident_related_as(item) {
             return translations.itoaRelateAs[item.related_as].tr;
-
         },
 
+        logAllowed() {
+            return this.$root.currentUser.view_simple_history && this.log;
+        },
+
+        diffAllowed() {
+            return this.$root.currentUser.view_full_history && this.diff;
+        },
 
         editAllowed() {
             return this.$root.editAllowed(this.actor) && this.showEdit;
         },
+
         removeVideo() {
             let video = this.$el.querySelector("#iplayer video");
             if (video) {
                 video.remove();
             }
         },
-        viewThumb(s3url) {
 
+        viewThumb(s3url) {
             this.$emit("thumb-click", s3url);
         },
 
@@ -192,16 +180,16 @@ Vue.component("actor-card", {
         <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',actor)" small outlined><v-icon color="primary" left>mdi-pencil</v-icon> {{ i18n.edit_ }}</v-btn>
         <v-btn @click.stop="$root.$refs.viz.visualize(actor)" class="ml-2" outlined small elevation="0"><v-icon color="primary" left>mdi-graph-outline</v-icon> {{ i18n.visualize_ }}</v-btn>
       </v-card-text>
-      
+
       <v-chip color="blue-grey lighten-5" label small class="pa-2 mx-2 my-2" v-if="actor.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{actor.assigned_to['name']}}</v-chip>
         <v-chip color="blue-grey lighten-5" small label class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(actor.status)}}</v-chip>
       </v-card>
-        
+
         <v-card v-if="actor.roles?.length" color="blue darken-1" class="ma-2 pa-2 d-flex align-center flex-grow-1" elevation="0">
         <v-icon content="Access Roles" v-tippy color="white">mdi-lock</v-icon>
         <v-chip label color="gray darken-3" small v-for="role in actor.roles"  :color="role.color" class="caption mx-1">{{ role.name }}</v-chip>
-          
+
         </v-card>
 
       <v-card outlined class="ma-2" color="grey lighten-5">
@@ -211,7 +199,7 @@ Vue.component("actor-card", {
         <div class="actor-description" v-html="actor.description"></div>
       </v-card-text>
     </v-card>
-      
+
 
       <uni-field :caption="i18n.fullName_" :english="actor.name" :arabic="actor.name_ar"></uni-field>
       <uni-field :caption="i18n.nickName_" :english="actor.nickname" :arabic="actor.nickname_ar"></uni-field>
@@ -321,7 +309,7 @@ Vue.component("actor-card", {
           </v-layout>
         </v-card-text>
       </v-card>
-      
+
       <mp-card v-if="actor.MP" :i18n="i18n" :actorId="actor.id"></mp-card>
 
       <!-- Related Actors -->
@@ -367,7 +355,7 @@ Vue.component("actor-card", {
           <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}
           <v-tooltip top>
               <template v-slot:activator="{on,attrs}">
-                
+
                 <a :href="'/admin/bulletins/?reltoa='+actor.id" target="_self"><v-icon v-on="on" small color="grey" class="mb-1">
               mdi-image-filter-center-focus-strong
             </v-icon></a>
@@ -449,7 +437,7 @@ Vue.component("actor-card", {
       </v-card>
 
       <!-- Log -->
-      <v-card v-if="log" outline elevation="0" class="ma-2">
+      <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
         <v-card-text>
           <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
             <v-btn fab :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
@@ -464,7 +452,7 @@ Vue.component("actor-card", {
                 - By {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
-              <v-btn v-if="diff" v-show="index!==revisions.length-1" @click="showDiff($event,index)" class="mx-1"
+              <v-btn v-if="diffAllowed()" v-show="index!==revisions.length-1" @click="showDiff($event,index)" class="mx-1"
                      color="grey" icon small>
                 <v-icon>mdi-compare</v-icon>
               </v-btn>

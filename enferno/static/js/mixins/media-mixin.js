@@ -1,5 +1,3 @@
-// fix issue with vuetify combobox (remvoe ability to create new items that don't exist in the list)
-
 let mediaMixin = {
 
     data: {
@@ -123,6 +121,7 @@ let mediaMixin = {
                 this.$el.querySelector('.crop').prepend(img)
             }
             img.src = this.cropper.canvas.toDataURL('image/jpeg');
+            this.cropper.time = Math.round(video.currentTime * 10) / 10,
             this.cropper.tool = new Croppr(img);
             this.cropper.active = true;
 
@@ -137,13 +136,11 @@ let mediaMixin = {
 
             let id = this.screenshots.length;
             let video = this.$el.querySelector('#player video');
-            let wr = this.videoMeta.width / img.width;
-            let hr = this.videoMeta.height / img.height;
 
             let media = {
                 width: crop.width,
                 height: crop.height,
-                time: Math.round(video.currentTime * 10) / 10,
+                time: this.cropper.time,
                 fileType: 'image/jpeg',
                 filename: video.src.getFilename(),
                 ready: false,
@@ -240,7 +237,15 @@ let mediaMixin = {
                 media.overlay = false;
                 media.ready = true;
 
+
                 //this.refresh(this.options);
+            }).catch(err => {
+                console.error(err.response.data);
+                this.showSnack(err.response.data);
+
+                media.error = true;
+            }).finally(() => {
+                media.overlay = false;
             });
 
 
@@ -248,8 +253,10 @@ let mediaMixin = {
 
         attachSnapshots() {
 
-            // get screenshots excluding deleted onces
+            // get screenshots excluding deleted ones
             let final = this.screenshots.filter(x => !x.deleted);
+
+            let skipped = [];
 
             for (const scr of final) {
                 //check uploaded ones
@@ -262,10 +269,20 @@ let mediaMixin = {
                     item.filename = scr.filename;
                     item.etag = scr.etag;
                     item.time = scr.time;
-                    this.editedItem.medias.push(item);
+
+                    // prevent attaching duplicate snapshots
+                    if (this.editedItem.medias.some(m => m.etag === item.etag)) {
+                        skipped.push(item)
+                    } else {
+                        this.editedItem.medias.push(item);
+                    }
 
                 }
             }
+            if (skipped?.length) {
+                this.showSnack(`${skipped.length} duplicate items skipped.`)
+            }
+
 
             this.closeVideo();
         }
@@ -369,7 +386,7 @@ let mediaMixin = {
 
             } else {
                 //console.log(this.editedItem);
-                //push files from editedMedia to to edited item medias
+                //push files from editedMedia to edited item medias
                 for (const file of this.editedMedia.files) {
                     let item = {};
                     const response = JSON.parse(file.xhr.response);

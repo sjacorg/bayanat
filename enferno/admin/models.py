@@ -1957,11 +1957,12 @@ class Actor(db.Model, BaseMixin):
     """
     SQL Alchemy model for actors
     """
-    __table_args__ = {"extend_existing": True}
+
+    extend_existing = True
 
     id = db.Column(db.Integer, primary_key=True)
 
-    name = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255))
     name_ar = db.Column(db.String(255))
 
     description = db.Column(db.Text)
@@ -2165,6 +2166,7 @@ class Actor(db.Model, BaseMixin):
 
     __table_args__ = (
         db.Index('ix_actor_search', 'search', postgresql_using="gin", postgresql_ops={'search': 'gin_trgm_ops'}),
+        db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
     )
 
     # helper method to create a revision
@@ -2306,7 +2308,7 @@ class Actor(db.Model, BaseMixin):
                     e = e.from_json(event)
                     e.save()
                 else:
-                    # event already exists, get a db instnace and update it with new data
+                    # event already exists, get a db instance and update it with new data
                     e = Event.query.get(event["id"])
                     e.from_json(event)
                     e.save()
@@ -3432,7 +3434,7 @@ class Incident(db.Model, BaseMixin):
                     e.from_json(event)
                     e.save()
                 new_events.append(e)
-                self.events = new_events
+            self.events = new_events
 
         # Related Actors (actor_relations)
         if "actor_relations" in json and "check_ar" in json:
@@ -3672,6 +3674,7 @@ class Incident(db.Model, BaseMixin):
             "class": self.__tablename__,
             "id": self.id,
             "title": self.title or None,
+            "title_ar": self.title_ar or None,
             "description": self.description or None,
             # assigned to
             "assigned_to": self.assigned_to.to_compact()

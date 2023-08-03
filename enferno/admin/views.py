@@ -2,6 +2,7 @@
 import hashlib
 import os
 import shutil
+import bleach, unicodedata
 from pathlib import Path
 from uuid import uuid4
 
@@ -835,18 +836,19 @@ def api_bulletins():
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
 
+    # nested queries
     if len(queries) > 0:
         while queries:
             nextOp = ops.pop(0)
             nextQuery = queries.pop(0)
             if nextOp == 'union':
-                result = result.union_all(Bulletin.query.filter(*nextQuery)).distinct(Bulletin.id)
+                result = result.union(Bulletin.query.filter(*nextQuery))
             elif nextOp == 'intersect':
-                result = result.intersect_all(Bulletin.query.filter(*nextQuery)).distinct(Bulletin.id)
+                result = result.intersect(Bulletin.query.filter(*nextQuery))
+
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
-
-    result = result.order_by(-Bulletin.id).paginate(page=page, per_page=per_page, count=True)
+    result = result.order_by(Bulletin.id.desc()).paginate(page=page, per_page=per_page, count=True)
 
     # Select json encoding type
     mode = request.args.get('mode', '1')
@@ -1408,7 +1410,8 @@ def api_actors():
     su = SearchUtils(request.json, cls='Actor')
     queries, ops = su.get_query()
     result = Actor.query.filter(*queries.pop(0))
-    # print (queries, ops)
+    
+    # nested queries
     if len(queries) > 0:
         while queries:
             nextOp = ops.pop(0)
@@ -1421,6 +1424,7 @@ def api_actors():
     page = request.args.get('page', 1, int)
     per_page = request.args.get('per_page', PER_PAGE, int)
     result = result.order_by(Actor.id.desc()).paginate(page=page, per_page=per_page, count=True)
+
     # Select json encoding type
     mode = request.args.get('mode', '1')
     response = {'items': [item.to_dict(mode=mode) for item in result.items], 'perPage': per_page, 'total': result.total}
@@ -1762,6 +1766,17 @@ def api_user_check():
     data = request.json.get('item')
     if not data:
         return 'Please select a username', 417
+
+    # validate illegal charachters
+    uclean = bleach.clean(data.strip(), strip=True)
+    if uclean != data:
+        return 'Illegal characters detected', 417
+
+    # validate disallowed charachters
+    cats = [unicodedata.category(c)[0] for c in data]
+    if any([cat not in ["L", "N"] for cat in cats]):
+        return 'Disallowed characters detected', 417
+    
     u = User.query.filter(User.username == data).first()
     if u:
         return 'Username already exists', 417

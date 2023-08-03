@@ -3,7 +3,6 @@ from pathlib import Path
 from flask import request, Response, Blueprint, json, send_from_directory
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
-
 from enferno.admin.models import Activity
 from enferno.export.models import Export
 from enferno.tasks import generate_export
@@ -146,7 +145,11 @@ def change_export_status():
             # record activity
             Activity.create(current_user, Activity.ACTION_APPROVE_EXPORT, export_request.to_mini(), Export.__table__.name)
             # implement celery task chaining
-            generate_export(export_id)
+            res = generate_export(export_id)
+            # not sure if there is a scenario where the result has no uuid
+            # store export background task id, to be used for fetching progress
+            export_request.uuid = res.id
+            export_request.save()
 
             return 'Export request approval will be processed shortly.', 200
 

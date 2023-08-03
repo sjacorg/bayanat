@@ -1,30 +1,26 @@
-<v-dialog persistent v-model="reviewDialog" fullscreen>
+<v-dialog :retain-focus="false" no-click-animation persistent v-model="reviewDialog" fullscreen>
     <v-card v-if="reviewDialog" class="overflow-hidden">
 
         <v-app-bar
-                absolute
-                color="pv"
-                dark
-
-                class="card-header"
-
+            absolute
+            color="pv"
+            dark
+            class="card-header"
+            style="z-index: 1000000;"
         >
             <v-toolbar-title>Add Review</v-toolbar-title>
             <v-spacer></v-spacer>
-
-
             <v-btn :disabled="!reviewItem.review_action" @click="saveReview" dark color="primary darken-1" small class="mx-2" depressed>Save Review</v-btn>
             <v-btn @click="reviewDialog=false" icon>
                 <v-icon>mdi-close</v-icon>
             </v-btn>
-        </v-app-bar
-        >
+        </v-app-bar>
 
 
         <v-sheet
-                id="card-content"
-                max-height="100vh"
-                class="overflow-y-auto pt-11">
+            id="card-content"
+            max-height="100vh"
+            class="overflow-y-auto pt-16">
 
             <bulletin-card :i18n="translations" v-if="reviewItem.class=='bulletin'" @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
             <actor-card :i18n="translations" v-if="reviewItem.class=='actor'" @thumb-click="viewImage" :close="false" :actor="reviewItem"></actor-card>
@@ -35,27 +31,17 @@
 
                 <tinymce-editor :key="reviewKey"  :init="tinyConfig" v-model="reviewItem.review"> </tinymce-editor>
 
-            <v-card class="elevation-0 mt-6 mx-auto" max-width="500" v-if="reviewItem.class=='Bulletin'">
+            <v-card class="elevation-0 mt-6 mx-auto" max-width="500" v-if="reviewItem.class=='bulletin'">
                 <v-combobox
-
-
-                    chips
-                  multiple
-                  v-model="reviewItem.revrefs"
-                  label="Ref"
-                    hint="Appends the reference to the bulletin (does not remove existing refs)"
+                chips
+                multiple
+                v-model="reviewItem.revrefs"
+                label="Ref"
+                hint="Appends the reference to the bulletin (does not remove existing refs)"
                 ></v-combobox>
             </v-card>
 
-
             </v-card-text>
-
-
-
-
-
-
-
 
             <v-card outline elevation="0" color="ma-3">
                 <v-card-text>
