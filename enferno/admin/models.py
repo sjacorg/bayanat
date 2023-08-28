@@ -7,11 +7,12 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pandas as pd
+from dateutil.parser import parse
 from flask_babel import gettext
 from flask_login import current_user
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
-from sqlalchemy import JSON, ARRAY, text
+from sqlalchemy import JSON, ARRAY, text, and_, or_, func
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
@@ -432,6 +433,28 @@ class Event(db.Model, BaseMixin):
     from_date = db.Column(db.DateTime)
     to_date = db.Column(db.DateTime)
     estimated = db.Column(db.Boolean)
+
+    @staticmethod
+    def get_event_filters(dates=None, eventtype_id=None, event_location_id=None):
+        conditions = []
+
+        if dates:
+            start_date = parse(dates[0]).date()
+            end_date = parse(dates[1]).date()
+
+            date_condition = or_(
+                and_(func.date(Event.from_date) <= start_date, func.date(Event.to_date) >= end_date),
+                func.date(Event.from_date).between(start_date, end_date),
+                func.date(Event.to_date).between(start_date, end_date)
+            )
+            conditions.append(date_condition)
+
+        if event_location_id:
+            conditions.append(Event.location_id == event_location_id)
+        if eventtype_id:
+            conditions.append(Event.eventtype_id == eventtype_id)
+
+        return conditions
 
     # custom serialization method
     def to_dict(self):
@@ -959,7 +982,7 @@ class Btob(db.Model, BaseMixin):
     )
 
     # Relationship extra fields
-    related_as = db.Column(db.Integer)
+    related_as = db.Column(ARRAY(db.Integer))
     probability = db.Column(db.Integer)
     comment = db.Column(db.Text)
 
@@ -1648,8 +1671,6 @@ class Bulletin(db.Model, BaseMixin):
             'related_actors': convert_complex_relation(self.actor_relations_dict, Actor.__tablename__),
             'related_incidents': convert_complex_relation(self.incident_relations_dict, Incident.__tablename__),
 
-
-
         }
         return output
 
@@ -2158,10 +2179,13 @@ class Actor(db.Model, BaseMixin):
         reburial_location = db.Column(db.String)
 
     search = db.Column(db.Text, db.Computed("""
-         ((((((((((id)::text || ' '::text) || (COALESCE(name, ''::character varying))::text) || ' '::text) ||
-                  (COALESCE(name_ar, ''::character varying))::text) || ' '::text) ||
-                (COALESCE(originid, ''::character varying))::text) || ' '::text) || COALESCE(description, ''::text)) ||
-             ' '::text) || COALESCE(comments, ''::text)
+         (id)::text || ' ' ||
+         COALESCE(name, ''::character varying) || ' ' ||
+         COALESCE(name_ar, ''::character varying) || ' ' ||
+         COALESCE(originid, ''::character varying) || ' ' ||
+         COALESCE(source_link, ''::character varying) || ' ' ||
+         COALESCE(description, ''::text) || ' ' ||
+         COALESCE(comments, ''::text)
         """))
 
     __table_args__ = (
@@ -2631,8 +2655,6 @@ class Actor(db.Model, BaseMixin):
             'related_actors': convert_complex_relation(self.actor_relations_dict, Actor.__tablename__),
             'related_incidents': convert_complex_relation(self.incident_relations_dict, Incident.__tablename__),
 
-
-
         }
         return output
 
@@ -2963,7 +2985,7 @@ class Itoa(db.Model, BaseMixin):
     incident_id = db.Column(db.Integer, db.ForeignKey("incident.id"), primary_key=True)
 
     # Relationship extra fields
-    related_as = db.Column(db.Integer)
+    related_as = db.Column(ARRAY(db.Integer))
     probability = db.Column(db.Integer)
     comment = db.Column(db.Text)
 
@@ -3945,18 +3967,25 @@ class Query(db.Model, BaseMixin):
     """
     SQL Alchemy model for saved searches
     """
+
+    TYPES = [Bulletin.__tablename__, Actor.__tablename__, Incident.__tablename__]
+
+    __table_args__ = (db.UniqueConstraint("user_id", "name", name="unique_user_queryname"),)
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship("User", backref="queries", foreign_keys=[user_id])
     data = db.Column(JSON)
+    query_type = db.Column(db.String, nullable=False, default=Bulletin.__tablename__)
 
-    # serialize data 
+    # serialize data
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
             'data': self.data,
+            'query_type': self.query_type
         }
 
     def to_json(self):

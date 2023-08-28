@@ -105,20 +105,20 @@
                                                     {{ _('Bulk update') }}</v-btn>
 
                                                 {% if config.EXPORT_TOOL %}
-                                            <v-btn
-                                                @click="exportDrawer=true"
-                                                small
-                                                color="primary"
-                                                class="mx-2"
-                                                depressed
-                                                v-if="exportAllowed()"
-                                            >
-                                                <v-icon small left
-                                                >mdi-file-export-outline
-                                                </v-icon>
-                                            {{ _('Export') }}
-                                            </v-btn>
-                                            {% endif %}
+                                                    <v-btn
+                                                            @click="exportDrawer=true"
+                                                            small
+                                                            color="primary"
+                                                            class="mx-2"
+                                                            depressed
+                                                            v-if="exportAllowed()"
+                                                    >
+                                                        <v-icon small left
+                                                        >mdi-file-export-outline
+                                                        </v-icon>
+                                                        {{ _('Export') }}
+                                                    </v-btn>
+                                                {% endif %}
 
 
                                             </template>
@@ -307,6 +307,18 @@
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
+
+         VeeValidate.extend("uniqueQueryName", {
+            validate: async (str) => {
+                try {
+                    await axios.get(`/admin/api/query/${str}/exists`);
+                    return true;
+                } catch (error) {
+                    return error?.response?.data ?? 'An error occurred.';
+                }
+            },
+        });
+
         let app = new Vue({
             el: "#app",
             vuetify: vuetify,
@@ -343,8 +355,16 @@
                 advSearchExpand: false,
                 search: {},
 
-                roles: [],
+                queryName: null,
+                saveQueryDialog: false,
+                searchPanels: 0,
+
                 searchTime: null,
+                searches: [],
+                savedSearchSelection: null,
+
+                roles: [],
+
 
                 fsloading: true,
 
@@ -360,7 +380,7 @@
                 dialog: dialog,
                 eventDialog: false,
                 reviewDialog: false,
-                eventParams: '&typ=for_incident',
+                eventParams: '&typ=for_bulletin',
                 reviewKey: 0,
                 videoDialog: false,
                 playerOptions: {},
@@ -395,7 +415,7 @@
 
                 exportDrawer: false,
                 exportConfig: {
-                    hideCSV : true,
+                    hideCSV: true,
                     hideMedia: true
                 },
 
@@ -659,7 +679,7 @@
 
             methods: {
 
-                exportRequest(){
+                exportRequest() {
 
                     let ids = this.selected.map(x => x.id);
                     this.loading = true;
@@ -669,14 +689,14 @@
                     })
                         .then(response => {
                             this.showSnack(response.data);
-                        }).catch(error=>{
-                            console.error(error.response?.data);
-                            this.showSnack(error.response?.data)
-                    }).finally(()=>{
-                            this.loading = false;
-                            this.exportDrawer = false;
-                            this.selected = [];
-                            this.exportConfig = {};
+                        }).catch(error => {
+                        console.error(error.response?.data);
+                        this.showSnack(error.response?.data)
+                    }).finally(() => {
+                        this.loading = false;
+                        this.exportDrawer = false;
+                        this.selected = [];
+                        this.exportConfig = {};
 
                     });
                 },
@@ -819,6 +839,7 @@
                 },
 
                 resetSearch() {
+                    this.savedSearchSelection = null;
                     this.search = {};
                     this.doSearch();
                 },
@@ -839,6 +860,90 @@
 
                 },
 
+                openSaveQueryDialog() {
+                    // Separate method to include auto-focus on input
+
+                    this.saveQueryDialog = true;
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.$refs.saveQueryInput.focus();
+                        }, 0);
+                    })
+                },
+
+                loadSearch(item) {
+
+                    if (item) {
+                        this.savedSearchSelection = Object.assign([], item);
+                        this.search = item.data;
+                    }
+                    this.$refs.savedSearchDropdown.blur()
+                },
+
+
+                loadSearchesFromAPI(selectLast = false) {
+                    axios.get('/admin/api/queries/', {
+                        params: {
+                            type: 'incident'
+                        }
+                    }).then(
+                        res => {
+                            this.searches = res.data;
+                            if (selectLast === true) {
+
+                                this.savedSearchSelection = this.searches.at(-1);
+
+
+                            }
+                        }
+                    ).catch(error => {
+                        this.showSnack(handleRequestError(error))
+                    });
+
+                },
+
+                saveSearch() {
+                    const newSearch = {q: this.search, name: this.queryName, type: 'incident'};
+
+                    axios.post('/admin/api/query/', newSearch)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.saveQueryDialog = false;
+
+
+                            this.queryName = null;
+                            // just reload searches and select the last one
+                            this.loadSearchesFromAPI(true);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
+
+
+                updateSearch() {
+                    axios.put('/admin/api/query/' + this.savedSearchSelection.name, {q: this.search})
+                        .then(res => {
+                            this.showSnack(res.data);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
+
+
+                deleteSearch(searchName) {
+                    axios.delete('/admin/api/query/' + searchName)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.searches = this.searches.filter(item => item.name !== searchName);
+                            this.resetSearch();
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
+
                 // - ------------------ end incidents search methods  ---------------------------------
 
 
@@ -853,7 +958,7 @@
                     this.search = {};
                     this.options.page = 1;
                     this.search.assigned = [this.currentUser.id];
-                    this.search.status = "Assigned";
+                    this.search.statuses = ["Assigned"];
                     this.searchIncidents();
                 },
 
@@ -861,7 +966,7 @@
                     this.search = {};
                     this.options.page = 1;
                     this.search.reviewer = [this.currentUser.id];
-                    this.search.status = "Peer Review Assigned";
+                    this.search.statuses = ["Peer Review Assigned"];
                     this.searchIncidents();
                 },
 
@@ -967,8 +1072,8 @@
                     return false;
                 },
 
-                   exportAllowed() {
-                    if(__EXPORT_TOOL__){
+                exportAllowed() {
+                    if (__EXPORT_TOOL__) {
                         if (this.has_role(this.currentUser, 'Admin')) {
                             return true;
                         }

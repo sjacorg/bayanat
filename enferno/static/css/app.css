@@ -289,8 +289,11 @@ button.swh {
 }
 
 
+/* Remove default calendar icon from input type="date" */
+input[type="date"]::-webkit-inner-spin-button,
 input[type="date"]::-webkit-calendar-picker-indicator {
     display: none;
+    -webkit-appearance: none;
 }
 
 input[type="date"]::-webkit-input-placeholder {

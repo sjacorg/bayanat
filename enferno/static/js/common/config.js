@@ -227,6 +227,16 @@ axios.interceptors.response.use(function (response) {
     return Promise.reject(error);
 });
 
+function handleRequestError(error) {
+    if (error.response) {
+        return error.response.data || 'An error occurred.';
+    } else if (error.request) {
+        return 'No response from server. Contact an admin.';
+    } else {
+        return 'Request failed. Check your network connection.';
+    }
+};
+
 //  in-page router for bulleints/actors/incidents pages
 const router = new VueRouter({
     mode: 'history',
@@ -370,15 +380,12 @@ String.prototype.formatName = function () {
 
 var aggregateLocations = function (bulletin) {
     let locations = [];
-
     // aggregate locations, add a color identifier
-    if (bulletin.locations && bulletin.locations.length) {
-        let locs = bulletin.locations.filter(x => x.latlng);
+    if (bulletin.locations?.length) {
+        let locs = bulletin.locations.filter(x => x.lat && x.lng);
         locs.map(x => {
             x.color = '#00a1f1';
             x.bulletinId = bulletin.id;
-            x.lat = x.latlng.lat;
-            x.lng = x.latlng.lng;
             return x
         });
         locations = locations.concat(locs);
@@ -483,23 +490,6 @@ var aggregateIncidentLocations = function (incident) {
 
 // global image viewer
 var viewer = new ImageViewer.FullScreenViewer();
-
-
-// Advanced system search
-var dateWithin = [
-    {'text': i.oneDay_, value: '1d',},
-    {'text': i.twoDays_, value: '2d',},
-    {'text': i.threeDays_, value: '3d',},
-    {'text': i.fourDays_, value: '4d',},
-    {'text': i.fiveDays_, value: '5d',},
-    {'text': i.sixDays_, value: '6d',},
-    {'text': i.sevenDays_, value: '7d',},
-    {'text': i.oneMonth_, value: '30d',},
-    {'text': i.threeMonths_, value: '90d',},
-    {'text': i.sixMonths_, value: '180d',},
-    {'text': i.oneYear_, value: '365d',},
-];
-
 
 // Experimental (make dialogs draggable)
 

@@ -1,15 +1,30 @@
-from datetime import timedelta
-
 from dateutil.parser import parse
+
 from sqlalchemy import or_, not_, func, and_
 
-from enferno.admin.models import Bulletin, Actor, Incident, Label, Source, Location, Event
+from enferno.admin.models import (
+    Bulletin,
+    Actor,
+    Incident,
+    Label,
+    Source,
+    Location,
+    Event,
+    PotentialViolation,
+    ClaimedViolation
+)
 from enferno.user.models import Role
 
 
-class SearchUtils:
+# helper methods
 
-    ACCEPTED_DATE_RANGES = ['1d', '2d', '3d', '4d', '5d', '6d', '7d', '30d', '90d', '180d', '365d']
+def date_between_query(field, dates):
+    start_date = parse(dates[0]).date()
+    end_date = parse(dates[1]).date()
+    return func.date(field).between(start_date, end_date)
+
+
+class SearchUtils:
 
     def __init__(self, json=None, cls=None):
         self.search = json.get('q') if json else [{}]
@@ -98,7 +113,7 @@ class SearchUtils:
             if exact:
                 conditions = [func.array_to_string(Bulletin.ref, ' ').op('~*')(f'\y{r}\y') for r in ref]
             else:
-                conditions = [func.array_to_string(Bulletin.ref, ' ').icontains(r) for r in ref]
+                conditions = [func.array_to_string(Bulletin.ref, ' ').ilike(f'%{r}%') for r in ref]
 
             # any operator
             op = q.get('opref', False)
@@ -115,8 +130,8 @@ class SearchUtils:
             if exact:
                 conditions = [~func.array_to_string(Bulletin.ref, ' ').op('~*')(f'\y{r}\y') for r in exref]
             else:
-                conditions = [~func.array_to_string(Bulletin.ref, ' ').icontains(r) for r in exref]
-            
+                conditions = [~func.array_to_string(Bulletin.ref, ' ').ilike(f'%{r}%') for r in exref]
+
             # get all operator
             opexref = q.get('opexref')
             if opexref:
@@ -137,7 +152,7 @@ class SearchUtils:
                     result = Label.query.filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
                     all = direct + Label.get_children(direct)
-                    #remove dups
+                    # remove dups
                     all = list(set(all))
                     ids = [label.id for label in all]
 
@@ -253,88 +268,52 @@ class SearchUtils:
                 id_mix = [Location.get_children_by_id(id) for id in ids]
                 query.extend(Bulletin.locations.any(Location.id.in_(i)) for i in id_mix)
 
-
-                    
-        # Excluded sources
+        # Excluded locations
         exlocations = q.get('exlocations', [])
         if len(exlocations):
             ids = [item.get('id') for item in exlocations]
             query.append(~Bulletin.locations.any(Location.id.in_(ids)))
 
-        # event date
-        edate = q.get('edate', None)
-        edatewithin = q.get('edatewithin', None)
-        if edate:
-            if edatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(edatewithin[:-1]))
-                edate = parse(edate).date()
-                query.append(Bulletin.events.any((func.date(Event.from_date) >= edate - diff) & (func.date(Event.from_date) <= edate + diff)))
-            else:
-                query.append(Bulletin.events.any(func.date(Event.from_date) == edate))
-
-        elocation = q.get('elocation')
-        if elocation:
-            id = elocation.get('id', -1)
-            query.append(Bulletin.events.any(Event.location_id.in_([id])))
-
-        etype = q.get('etype', None)
-        if etype:
-            id = etype.get('id', -1)
-            query.append(Bulletin.events.any(Event.eventtype_id == id))
-
         # publish date
-        pubdate = q.get('pubdate', None)
-        pubdatewithin = q.get('pubdatewithin', None)
-        if pubdate:
-            if pubdatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(pubdatewithin[:-1]))
-                pubdate = parse(pubdate).date()
-                query.append((func.date(Bulletin.publish_date) >= pubdate - diff) & (func.date(Bulletin.publish_date) <= pubdate + diff))
-            else:
-                query.append(func.date(Bulletin.publish_date) == pubdate)
+        if (pubdate := q.get('pubdate', None)):
+            query.append(date_between_query(Bulletin.publish_date, pubdate))
 
         # documentation date
-        docdate = q.get('docdate', None)
-        docdatewithin = q.get('docdatewithin', None)
-        if docdate:
-            if docdatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(docdatewithin[:-1]))
-                docdate = parse(docdate).date()
-                query.append((func.date(Bulletin.documentation_date) >= docdate - diff) & (func.date(Bulletin.documentation_date) <= docdate + diff))
-            else:
-                query.append(func.date(Bulletin.documentation_date) == docdate)
+        if (docdate := q.get('docdate', None)):
+            query.append(date_between_query(Bulletin.documentation_date, docdate))
 
         # creation date
-        created = q.get('created', None)
-        created_within = q.get('createdwithin', None)
-        if created:
-            if created_within in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(created_within[:-1]))
-                created = parse(created).date()
-                query.append((func.date(Bulletin.created_at) >= created - diff) & (func.date(Bulletin.created_at) <= created + diff))
-            else:
-                query.append(func.date(Bulletin.created_at) == created)
+        if (created := q.get('created', None)):
+            query.append(date_between_query(Bulletin.created_at, created))
 
         # modified date
-        updated = q.get('updated', None)
-        updated_within = q.get('updatedwithin', None)
-        if updated:
-            if updated_within in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(updated_within[:-1]))
-                updated = parse(updated).date()
-                query.append((func.date(Bulletin.updated_at) >= updated - diff) & (func.date(Bulletin.updated_at) <= updated + diff))
+        if (updated := q.get('updated', None)):
+            query.append(date_between_query(Bulletin.updated_at, updated))
+
+        # event search
+        single_event = q.get('singleEvent', None)
+        event_dates = q.get('edate', None)
+        event_type = q.get('etype', None)
+        event_location = q.get('elocation', None)
+
+        if event_dates or event_type or event_location:
+            eventtype_id = event_type.get('id') if event_type else None
+            event_location_id = event_location.get('id') if event_location else None
+            conditions = Event.get_event_filters(dates=event_dates, eventtype_id=eventtype_id,
+                                                 event_location_id=event_location_id)
+
+            if single_event:
+                query.append(Bulletin.events.any(and_(*conditions)))
             else:
-                query.append(func.date(Bulletin.updated_at) == updated)
+                query.extend([Bulletin.events.any(condition) for condition in conditions])
 
         # Access Roles
         roles = q.get('roles')
-
 
         if roles:
             query.append(Bulletin.roles.any(Role.id.in_(roles)))
         if q.get('norole'):
             query.append(~Bulletin.roles.any())
-
 
         # assigned user(s)
         assigned = q.get('assigned', [])
@@ -351,10 +330,10 @@ class SearchUtils:
         if fpr:
             query.append(Bulletin.first_peer_reviewer_id.in_(fpr))
 
-        # workflow status
-        status = q.get('status', None)
-        if status:
-            query.append(Bulletin.status == status)
+        # workflow statuses
+        statuses = q.get('statuses', [])
+        if (statuses):
+            query.append(Bulletin.status.in_(statuses))
 
         # review status
         review_action = q.get('reviewAction', None)
@@ -362,7 +341,7 @@ class SearchUtils:
             query.append(Bulletin.review_action == review_action)
 
         # Related to bulletin search
-        rel_to_bulletin= q.get('rel_to_bulletin')
+        rel_to_bulletin = q.get('rel_to_bulletin')
         if rel_to_bulletin:
             bulletin = Bulletin.query.get(int(rel_to_bulletin))
             if bulletin:
@@ -387,8 +366,6 @@ class SearchUtils:
 
         return query
 
-
-
     def actor_query(self, q):
         query = []
 
@@ -405,6 +382,69 @@ class SearchUtils:
             for word in words:
                 query.append(not_(Actor.search.ilike('%{}%'.format(word))))
 
+        # nickname
+        if search := q.get("nickname"):
+            query.append(or_(
+                Actor.nickname.ilike(f"%{search}%"),
+                Actor.nickname_ar.ilike(f"%{search}%")
+            )
+            )
+
+        # first name
+        if search := q.get("first_name"):
+            query.append(or_(
+                Actor.first_name.ilike(f"%{search}%"),
+                Actor.first_name_ar.ilike(f"%{search}%")
+            )
+            )
+
+        # middle name
+        if search := q.get("middle_name"):
+            query.append(or_(
+                Actor.middle_name.ilike(f"%{search}%"),
+                Actor.middle_name_ar.ilike(f"%{search}%")
+            )
+            )
+
+        # last name
+        if search := q.get("last_name"):
+            query.append(or_(
+                Actor.last_name.ilike(f"%{search}%"),
+                Actor.last_name_ar.ilike(f"%{search}%")
+            )
+            )
+
+        # mother name
+        if search := q.get("mother_name"):
+            query.append(or_(
+                Actor.mother_name.ilike(f"%{search}%"),
+                Actor.mother_name_ar.ilike(f"%{search}%")
+            )
+            )
+
+        ethno = q.get('ethnography')
+        op = q.get('opEthno')
+        conditions = []
+        if ethno:
+            # exact match search
+            conditions = [func.array_to_string(Actor.ethnography, ' ').op('~*')(f'\y{e}\y') for e in ethno]
+
+        if op:
+            query.append(or_(*conditions))
+        else:
+            query.append(and_(*conditions))
+
+        nationality = q.get('nationality')
+        op = q.get('opNat')
+        conditions = []
+        if nationality:
+            # exact match search
+            conditions = [func.array_to_string(Actor.nationality, ' ').op('~*')(f'\y{n}\y') for n in nationality]
+
+        if op:
+            query.append(or_(*conditions))
+        else:
+            query.append(and_(*conditions))
 
         labels = q.get('labels', [])
         if len(labels):
@@ -449,17 +489,6 @@ class SearchUtils:
             ids = [item.get('id') for item in exsources]
             query.append(~Actor.sources.any(Source.id.in_(ids)))
 
-        # event date
-        edate = q.get('edate', None)
-        edatewithin = q.get('edatewithin', None)
-        if edate:
-            if edatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(edatewithin[:-1]))
-                edate = parse(edate).date()
-                query.append(Actor.events.any((func.date(Event.from_date) >= edate - diff) & (func.date(Event.from_date) <= edate + diff)))
-            else:
-                query.append(Actor.events.any(func.date(Event.from_date) == edate))
-
         res_locations = q.get('resLocations', [])
         if res_locations:
             ids = [item.get('id') for item in res_locations]
@@ -478,7 +507,6 @@ class SearchUtils:
             loc_ids = [loc.id for loc in locs]
             query.append(Actor.origin_place_id.in_(loc_ids))
 
-
         # Excluded residence locations
         ex_res_locations = q.get('exResLocations', [])
         if ex_res_locations:
@@ -491,37 +519,38 @@ class SearchUtils:
             ids = [item.get('id') for item in ex_origin_locations]
             query.append(~Actor.origin_place.has(Location.id.in_(ids)))
 
-        elocation = q.get('elocation')
-        if elocation:
-            id = elocation.get('id', -1)
-            query.append(Actor.events.any(Event.location_id.in_([id])))
-
-        etype = q.get('etype', None)
-        if etype:
-            id = etype.get('id', -1)
-            query.append(Actor.events.any(Event.eventtype_id == id))
-
         # publish date
-        pubdate = q.get('pubdate', None)
-        pubdatewithin = q.get('pubdatewithin', None)
-        if pubdate:
-            if pubdatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(pubdatewithin[:-1]))
-                pubdate = parse(pubdate)
-                query.append(Actor.publish_date.between(pubdate - diff, pubdate + diff))
-            else:
-                query.append(Actor.publish_date == pubdate)
+        if (pubdate := q.get('pubdate', None)):
+            query.append(date_between_query(Actor.publish_date, pubdate))
+
 
         # documentation date
-        docdate = q.get('docdate', None)
-        docdatewithin = q.get('docdatewithin', None)
-        if docdate:
-            if docdatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(docdatewithin[:-1]))
-                docdate = parse(docdate)
-                query.append(Actor.documentation_date.between(docdate - diff, docdate + diff))
+        if (docdate := q.get('docdate', None)):
+            query.append(date_between_query(Actor.documentation_date, docdate))
+
+        # creation date
+        if (created := q.get('created', None)):
+            query.append(date_between_query(Actor.created_at, created))
+
+        # modified date
+        if (updated := q.get('updated', None)):
+            query.append(date_between_query(Actor.updated_at, updated))
+
+        # event search
+        single_event = q.get('singleEvent', None)
+        event_dates = q.get('edate', None)
+        event_type = q.get('etype', None)
+        event_location = q.get('elocation', None)
+
+        if event_dates or event_type or event_location:
+            eventtype_id = event_type.get('id') if event_type else None
+            event_location_id = event_location.get('id') if event_location else None
+            conditions = Event.get_event_filters(dates=event_dates, eventtype_id=eventtype_id,
+                                                 event_location_id=event_location_id)
+            if single_event:
+                query.append(Actor.events.any(and_(*conditions)))
             else:
-                query.append(Actor.documentation_date == docdate)
+                query.extend([Actor.events.any(condition) for condition in conditions])
 
         # Access Roles
         roles = q.get('roles')
@@ -541,10 +570,10 @@ class SearchUtils:
         if fpr:
             query.append(Actor.first_peer_reviewer_id.in_(fpr))
 
-        # workflow status
-        status = q.get('status', None)
-        if status:
-            query.append(Actor.status == status)
+        # workflow status(s)
+        statuses = q.get('statuses', [])
+        if (statuses):
+            query.append(Actor.status.in_(statuses))
 
         # review status
         review_action = q.get('reviewAction', None)
@@ -597,15 +626,8 @@ class SearchUtils:
         if actor_type:
             query.append(Actor.actor_type == actor_type)
 
-        # Ethnography
-        ethnography = q.get('ethnography', None)
-        if ethnography:
-            query.append(Actor.ethnography.any(ethnography))
+     
 
-        # Nationality
-        nationality = q.get('nationality', None)
-        if nationality:
-            query.append(Actor.nationality.any(nationality))
 
         # Place of birth
         birth_place = q.get('birth_place', {})
@@ -624,7 +646,7 @@ class SearchUtils:
             query.append(Actor.national_id_card.ilike(search))
 
         # Related to bulletin search
-        rel_to_bulletin= q.get('rel_to_bulletin')
+        rel_to_bulletin = q.get('rel_to_bulletin')
         if rel_to_bulletin:
             bulletin = Bulletin.query.get(int(rel_to_bulletin))
             if bulletin:
@@ -647,7 +669,6 @@ class SearchUtils:
                 ids = [a.actor_id for a in incident.actor_relations]
                 query.append(Actor.id.in_(ids))
 
-
         return query
 
     def incident_query(self, q):
@@ -665,7 +686,6 @@ class SearchUtils:
             words = extsv.split(' ')
             for word in words:
                 query.append(not_(Incident.search.ilike('%{}%'.format(word))))
-
 
         labels = q.get('labels', [])
         if len(labels):
@@ -724,40 +744,35 @@ class SearchUtils:
                 id_mix = [Location.get_children_by_id(id) for id in ids]
                 query.extend(Incident.locations.any(Location.id.in_(i)) for i in id_mix)
 
-
         # Excluded sources
         exlocations = q.get('exlocations', [])
         if len(exlocations):
             ids = [item.get('id') for item in exlocations]
             query.append(~Incident.locations.any(Location.id.in_(ids)))
 
-        elocation = q.get('elocation')
-        if elocation:
-            id = elocation.get('id', -1)
-            query.append(Incident.events.any(Event.location_id.in_([id])))
+        # creation date
+        if (created := q.get('created', None)):
+            query.append(date_between_query(Incident.created_at, created))
 
-        etype = q.get('etype', None)
-        if etype:
-            id = etype.get('id', -1)
-            query.append(Incident.events.any(Event.eventtype_id == id))
+        # modified date
+        if (updated := q.get('updated', None)):
+            query.append(date_between_query(Incident.updated_at, updated))
 
-        # publish date
-        pubdate = q.get('pubdate', None)
-        pubdatewithin = q.get('pubdatewithin', '1d')
-        if pubdate:
-            if pubdatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(pubdatewithin[:-1]))
-                pubdate = parse(pubdate)
-                query.append(Incident.publish_date.between(pubdate - diff, pubdate + diff))
+        # event search
+        single_event = q.get('singleEvent', None)
+        event_dates = q.get('edate', None)
+        event_type = q.get('etype', None)
+        event_location = q.get('elocation', None)
 
-        # documentation date
-        docdate = q.get('docdate', None)
-        docdatewithin = q.get('docdatewithin', '1d')
-        if docdate:
-            if docdatewithin in self.ACCEPTED_DATE_RANGES:
-                diff = timedelta(days=int(docdatewithin[:-1]))
-                docdate = parse(docdate)
-                query.append(Incident.documentation_date.between(docdate - diff, docdate + diff))
+        if event_dates or event_type or event_location:
+            eventtype_id = event_type.get('id') if event_type else None
+            event_location_id = event_location.get('id') if event_location else None
+            conditions = Event.get_event_filters(dates=event_dates, eventtype_id=eventtype_id,
+                                                 event_location_id=event_location_id)
+            if single_event:
+                query.append(Incident.events.any(and_(*conditions)))
+            else:
+                query.extend([Incident.events.any(condition) for condition in conditions])
 
         # Access Roles
         roles = q.get('roles')
@@ -777,19 +792,34 @@ class SearchUtils:
         if fpr:
             query.append(Incident.first_peer_reviewer_id.in_(fpr))
 
-        # workflow status
-        status = q.get('status', None)
-        if status:
-            query.append(Incident.status == status)
+        # workflow status(s)
+        statuses = q.get('statuses', [])
+        if (statuses):
+            query.append(Incident.status.in_(statuses))
 
         # review status
         review_action = q.get('reviewAction', None)
         if review_action:
             query.append(Incident.review_action == review_action)
 
+        # potential violation categories
+        if potential_violation_ids := q.get('potentialVCats', None):
+            query.append(
+                Incident.potential_violations.any(
+                    PotentialViolation.id.in_(potential_violation_ids)
+                )
+            )
+
+        # claimed violation categories
+        if claimed_violation_ids := q.get('claimedVCats', None):
+            query.append(
+                Incident.claimed_violations.any(
+                    ClaimedViolation.id.in_(claimed_violation_ids)
+                )
+            )
 
         # Related to bulletin search
-        rel_to_bulletin= q.get('rel_to_bulletin')
+        rel_to_bulletin = q.get('rel_to_bulletin')
         if rel_to_bulletin:
             bulletin = Bulletin.query.get(int(rel_to_bulletin))
             if bulletin:

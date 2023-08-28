@@ -17,22 +17,8 @@ Vue.component('relate-incidents', {
 
     }
     ,
-    mounted() {
-
-    },
-
-
     watch: {
-
-        results: {
-            handler(val, old) {
-
-            },
-            deep: true
-        },
-
         value: function (val) {
-
             this.$emit('input', val);
         }
     },
@@ -113,6 +99,11 @@ Vue.component('relate-incidents', {
               <v-card outlined>
                 <incident-search-box v-model="q" @search="reSearch" :i18n="$root.translations"></incident-search-box>
               </v-card>
+              <v-card  tile class="text-center  search-toolbar" elevation="0" color="grey lighten-4">
+                <v-card-text>
+                  <v-btn color="primary" @click="reSearch">Search</v-btn>
+                </v-card-text>
+              </v-card>
             </v-col>
             <v-col cols="12" md="8">
 
@@ -136,7 +127,8 @@ Vue.component('relate-incidents', {
 
                 <v-card class="pa-2" tile color="grey lighten-4">
 
-                  <incident-result :i18n="i18n" v-for="(item, i) in results" :key="i" :incident="item" :show-hide="true">
+                  <incident-result :i18n="i18n" v-for="(item, i) in results" :key="i" :incident="item"
+                                   :show-hide="true">
                     <template v-slot:actions>
                       <v-btn @click="relateItem(item)" small depressed color="primary">{{ i18n.relate_ }}
                       </v-btn>
@@ -149,7 +141,7 @@ Vue.component('relate-incidents', {
                   <v-btn icon @click="loadMore" v-if="moreItems" color="third">
                     <v-icon>mdi-dots-horizontal</v-icon>
                   </v-btn>
-                  <v-sheet small v-else class="heading" color=" grey--text"> {{ i18n.noResults_ }} </v-sheet>
+                  <v-sheet small v-else class="heading" color=" grey--text"> {{ i18n.noResults_ }}</v-sheet>
                   <v-spacer></v-spacer>
                 </v-card-actions>
               </v-card>

@@ -11,7 +11,7 @@
     'admin/partials/bulletin_drawer.html' %} {% include
     'admin/partials/bulk_bulletin_drawer.html' %}
 
-        {% include
+            {% include
     'admin/partials/export_drawer.html' %}
             <v-main>
                 {% include 'admin/partials/bulletin_advsearch.html' %}
@@ -102,7 +102,7 @@
                                         <template v-if="bulkIcons">
 
                                             <v-btn @click="selected=[]" x-small fab
-                                                    class="mr-3" elevation="0" color="white">
+                                                   class="mr-3" elevation="0" color="white">
                                                 <v-icon>mdi-checkbox-blank-outline</v-icon>
                                             </v-btn>
 
@@ -120,30 +120,30 @@
                                                 {{ _('Bulk update') }}
                                             </v-btn>
                                             {% if config.EXPORT_TOOL %}
-                                            <v-btn
-                                                @click="exportDrawer=true"
-                                                small
-                                                color="primary"
-                                                class="mx-2"
-                                                depressed
-                                                v-if="exportAllowed()"
-                                            >
-                                                <v-icon small left
-                                                >mdi-file-export-outline
-                                                </v-icon>
-                                            {{ _('Export') }}
-                                            </v-btn>
+                                                <v-btn
+                                                        @click="exportDrawer=true"
+                                                        small
+                                                        color="primary"
+                                                        class="mx-2"
+                                                        depressed
+                                                        v-if="exportAllowed()"
+                                                >
+                                                    <v-icon small left
+                                                    >mdi-file-export-outline
+                                                    </v-icon>
+                                                    {{ _('Export') }}
+                                                </v-btn>
                                             {% endif %}
                                         </template>
                                         <template>
                                             <v-progress-circular v-for="job in jobs"
-                                                                    size="20" small
-                                                                    :indeterminate="job.status!='SUCCESS'"
+                                                                 size="20" small
+                                                                 :indeterminate="job.status!='SUCCESS'"
 
-                                                                    :color="job.status=='SUCCESS' ? 'success': 'amber'"
-                                                                    :value="job.status=='SUCCESS'?100:null"
-                                                                    class="mx-1"
-                                                                    stroke="1"
+                                                                 :color="job.status=='SUCCESS' ? 'success': 'amber'"
+                                                                 :value="job.status=='SUCCESS'?100:null"
+                                                                 class="mx-1"
+                                                                 stroke="1"
                                             ></v-progress-circular>
                                         </template>
                                         <v-spacer></v-spacer>
@@ -174,12 +174,12 @@
 
                                 <template v-slot:item.roles="{item}">
                                     <v-chip
-                                    small
-                                    v-for="role in item.roles"
-                                    :color="role.color"
-                                    style="scale:0.7"
-                                    v-tippy
-                                    :content="role.name"
+                                            small
+                                            v-for="role in item.roles"
+                                            :color="role.color"
+                                            style="scale:0.7"
+                                            v-tippy
+                                            :content="role.name"
                                     >
 
                                     </v-chip>
@@ -190,7 +190,7 @@
                                     <v-chip
                                             x-small
                                             v-if="item.review_action"
-                                           v-if="  color="grey lighten-4"
+                                            color="grey lighten-4"
                                             class="secondary--text"
                                     >${item.review_action}
                                     </v-chip
@@ -336,7 +336,7 @@
     <script src="/static/js/force-graph.min.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
-        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe}}
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
     {% endif %}
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
@@ -347,6 +347,17 @@
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
+
+        VeeValidate.extend("uniqueQueryName", {
+            validate: async (str) => {
+                try {
+                    await axios.get(`/admin/api/query/${str}/exists`);
+                    return true;
+                } catch (error) {
+                    return error?.response?.data ?? 'An error occurred.';
+                }
+            },
+        });
 
         let app = new Vue({
             el: "#app",
@@ -385,9 +396,6 @@
                 },
 
 
-
-
-
                 assignBulletin: {},
                 selfAssignDialog: false,
 
@@ -398,8 +406,9 @@
                 queryName: null,
                 saveQueryDialog: false,
                 searchPanels: 0,
-                searches: null,
+                searches: [],
                 searchTime: null,
+                savedSearchSelection: null,
 
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
@@ -683,7 +692,7 @@
                         this.roles = res.data.items;
                     }).catch(e => {
                         this.roles = [];
-                        console.log(e.message);
+                        console.error(e.message);
                     });
                 {% endif  %}
 
@@ -747,7 +756,7 @@
 
             methods: {
 
-                exportRequest(){
+                exportRequest() {
 
                     let ids = this.selected.map(x => x.id);
                     this.loading = true;
@@ -757,14 +766,14 @@
                     })
                         .then(response => {
                             this.showSnack(response.data);
-                        }).catch(error=>{
-                            console.error(error.response?.data);
-                            this.showSnack(error.response?.data)
-                    }).finally(()=>{
-                            this.loading = false;
-                            this.exportDrawer = false;
-                            this.selected = [];
-                            this.exportConfig = {};
+                        }).catch(error => {
+                        console.error(error.response?.data);
+                        this.showSnack(error.response?.data)
+                    }).finally(() => {
+                        this.loading = false;
+                        this.exportDrawer = false;
+                        this.selected = [];
+                        this.exportConfig = {};
 
                     });
                 },
@@ -795,7 +804,7 @@
 
                 },
 
-                selfAssign(){
+                selfAssign() {
 
 
                     axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
@@ -958,34 +967,92 @@
                 },
 
 
-                //saved searches
+                resetSearch() {
+                    this.savedSearchSelection = null;
+                    this.search = [{}];
+                    this.doSearch();
+                },
+
+                openSaveQueryDialog() {
+                    // Separate method to include auto-focus on input
+
+                    this.saveQueryDialog = true;
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.$refs.saveQueryInput.focus();
+                        }, 0);
+                    })
+                },
+
                 loadSearch(item) {
+
                     if (item) {
+                        this.savedSearchSelection = Object.assign([], item);
                         this.search = Object.assign([], item.data);
                     }
-
-                },
-                resetSearch() {
-                    this.search = [{}];
-                    this.doSearch()
+                    this.$refs.savedSearchDropdown.blur()
                 },
 
-                loadSearches() {
-                    axios.get('/admin/api/queries/').then(res => {
 
-
-                        this.searches = Array.from(res.data);
-                    })
-                    this.saveDialog = false;
+                loadSearchesFromAPI(selectLast = false) {
+                    axios.get('/admin/api/queries/', {
+                        params: {
+                            type: 'bulletin'
+                        }
+                    }).then(res => {
+                        this.searches = res.data;
+                        if (selectLast === true) {
+                            this.savedSearchSelection = this.searches.at(-1);
+                        }
+                    }).catch(error => {
+                        this.showSnack(handleRequestError(error))
+                    });
 
                 },
 
                 saveSearch() {
-                    axios.post('/admin/api/query/', {q: this.search, name: this.queryName}).then(res => {
-                        this.showSnack(res.data);
-                    })
-                    this.saveDialog = false;
+                    const newSearch = {q: this.search, name: this.queryName, type: 'bulletin'};
+
+                    axios.post('/admin/api/query/', newSearch)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.saveQueryDialog = false;
+
+
+                            this.queryName = null;
+                            // just reload searches and select the last one
+                            this.loadSearchesFromAPI(true);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
                 },
+
+
+                updateSearch() {
+                    axios.put('/admin/api/query/' + this.savedSearchSelection.name, {q: this.search})
+                        .then(res => {
+                            this.showSnack(res.data);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
+
+
+                deleteSearch(searchName) {
+                    axios.delete('/admin/api/query/' + searchName)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.searches = this.searches.filter(item => item.name !== searchName);
+                            this.resetSearch();
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                }
+
+                ,
                 // - ------------------ end bulletins search methods  ---------------------------------
 
 
@@ -1000,7 +1067,7 @@
                     q = {};
                     this.options.page = 1;
                     q.assigned = [this.currentUser.id];
-                    q.status = "Assigned";
+                    q.statuses = ["Assigned"];
                     this.search = [q];
                     this.searchBulletins();
                 },
@@ -1009,7 +1076,7 @@
                     q = {};
                     this.options.page = 1;
                     q.reviewer = [this.currentUser.id];
-                    q.status = "Peer Review Assigned";
+                    q.statuses = ["Peer Review Assigned"];
                     this.search = [q]
                     this.searchBulletins();
                 },
@@ -1058,7 +1125,7 @@
                             this.showSnack(error.response.data)
                             this.snackbar = true;
                         }
-                    }).finally(()=>{
+                    }).finally(() => {
                         this.bulletinLoader = false;
                     });
                 },
@@ -1130,7 +1197,7 @@
                 },
 
                 exportAllowed() {
-                    if(__EXPORT_TOOL__){
+                    if (__EXPORT_TOOL__) {
                         if (this.has_role(this.currentUser, 'Admin')) {
                             return true;
                         }
@@ -1143,10 +1210,10 @@
 
                 editAllowed(bulletin) {
 
-                    if(bulletin.restricted){
+                    if (bulletin.restricted) {
                         return false;
                     }
-                    
+
                     if (this.has_role(this.currentUser, 'Admin')) {
                         return true;
                     }
@@ -1162,7 +1229,7 @@
 
                 reviewAllowed(bulletin) {
 
-                    if(bulletin.restricted){
+                    if (bulletin.restricted) {
                         return false;
                     }
 
@@ -1178,8 +1245,8 @@
                 },
 
                 selfAssignAllowed(bulletin) {
-                    
-                    if(bulletin.restricted){
+
+                    if (bulletin.restricted) {
                         return false;
                     }
 
@@ -1364,7 +1431,7 @@
 
                     this.$nextTick(() => {
                         this.editedEvent = Object.assign({}, item);
-                        //console.log(this.editedEvent);
+
                         this.editedEventIndex = index;
 
                         //reset dual fields display to english
@@ -1477,7 +1544,7 @@
 
                 },
                 relateIncident(incident) {
-                    
+
                     // get list of existing attached actors
                     let ex = this.editedItem.incident_relations.map(x => x.incident.id);
 

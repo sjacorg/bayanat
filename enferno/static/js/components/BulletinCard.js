@@ -72,8 +72,8 @@ Vue.component("bulletin-card", {
             return translations.btoaRelateAs[id].tr;
         },
 
-        bulletin_related_as(item) {
-            return translations.btobRelateAs[item.related_as].tr;
+        bulletin_related_as(id) {
+            return translations.btobRelateAs[id].tr;
         },
 
         incident_related_as(item) {
@@ -368,7 +368,8 @@ Vue.component("bulletin-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!== null" color="grey lighten-4" small label>{{ bulletin_related_as(item) }}
+                <v-chip class="ma-1" v-for="r in item.related_as" color="grey lighten-4" small
+                        label>{{ bulletin_related_as(r) }}
                 </v-chip>
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 

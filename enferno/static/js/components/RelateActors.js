@@ -115,7 +115,7 @@ Vue.component('relate-actors', {
 
 
               </v-card>
-              <v-card tile class="text-center  search-toolbar" elevation="10" color="grey lighten-5">
+              <v-card tile class="text-center  search-toolbar" elevation="0" color="grey lighten-4">
                <v-card-text>
                   <v-btn color="primary" @click="reSearch">Search</v-btn>
                 </v-card-text>

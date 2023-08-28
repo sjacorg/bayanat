@@ -207,7 +207,7 @@ Vue.component('geo-locations', {
           <v-card-text >
             <div  class="d-flex px-5" style="column-gap: 20px">
             <v-text-field v-model="e.title" :label="translations.title_"></v-text-field>
-            <v-select :items="geoLocationTypes" v-model="e.type" :label="translations.type_"></v-select>
+            <v-select clearable :items="geoLocationTypes" v-model="e.type" :label="translations.type_"></v-select>
                 </div>
             <div  class="d-flex px-5" style="column-gap: 20px">
               <v-text-field v-model="e.comment" :label="translations.comment_"></v-text-field>

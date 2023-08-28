@@ -1,19 +1,19 @@
-
 import hashlib
 import os
 import shutil
-import bleach, unicodedata
 from pathlib import Path
 from uuid import uuid4
 
+import bleach
 import boto3
 import passlib
 import shortuuid
+import unicodedata
 from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
 from flask.templating import render_template
 from flask_bouncer import requires
 from flask_security.decorators import roles_required, auth_required, current_user, roles_accepted
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, and_
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import safe_join, secure_filename
 
@@ -25,9 +25,9 @@ from enferno.extensions import cache
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file, \
     process_sheet
 from enferno.user.models import User, Role
+from enferno.utils.http_response import HTTPResponse
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.sheet_utils import SheetUtils
-from enferno.utils.http_response import HTTPResponse
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
@@ -557,7 +557,7 @@ def api_source_update(id):
     :return: success/error based on the operation's result
     """
     source = Source.query.get(id)
-    if source is not None:
+    if source is None:
         return HTTPResponse.NOT_FOUND
 
     source = source.from_json(request.json['item'])
@@ -655,6 +655,7 @@ def api_location_create():
         location.create_revision()
         return F'Created Location #{location.id}', 200
 
+
 @admin.put('/api/location/<int:id>')
 @roles_accepted('Admin', 'Mod', 'DA')
 def api_location_update(id):
@@ -699,6 +700,7 @@ def api_location_import():
         return 'Success', 200
     else:
         return 'Error', 400
+
 
 # get one location
 @admin.get('/api/location/<int:id>')
@@ -1410,7 +1412,7 @@ def api_actors():
     su = SearchUtils(request.json, cls='Actor')
     queries, ops = su.get_query()
     result = Actor.query.filter(*queries.pop(0))
-    
+
     # nested queries
     if len(queries) > 0:
         while queries:
@@ -1711,10 +1713,10 @@ def api_users():
     result = User.query.filter(
         *query).order_by(User.username).paginate(page=page, per_page=per_page, count=True)
 
-    response = {'items':    [item.to_dict() if current_user.has_role('Admin')
-                            else item.to_compact()
-                            for item in result.items],
-                            'perPage': per_page, 'total': result.total}
+    response = {'items': [item.to_dict() if current_user.has_role('Admin')
+                          else item.to_compact()
+                          for item in result.items],
+                'perPage': per_page, 'total': result.total}
 
     return Response(json.dumps(response),
                     content_type='application/json'), 200
@@ -1776,7 +1778,7 @@ def api_user_check():
     cats = [unicodedata.category(c)[0] for c in data]
     if any([cat not in ["L", "N"] for cat in cats]):
         return 'Disallowed characters detected', 417
-    
+
     u = User.query.filter(User.username == data).first()
     if u:
         return 'Username already exists', 417
@@ -2246,29 +2248,98 @@ def api_queries():
     :return: successful json feed of saved searches or error
     """
     user_id = current_user.id
-    queries = Query.query.filter(Query.user_id == user_id)
+    query_type = request.args.get('type')
+    if query_type not in Query.TYPES:
+        return 'Invalid query type', 400
+    queries = Query.query.filter(Query.user_id == user_id, Query.query_type == query_type)
     return json.dumps([query.to_dict() for query in queries]), 200
 
 
+@admin.get('/api/query/<string:name>/exists')
+def api_query_check_name_exists(name: str):
+    """
+    API Endpoint check if a query with that provided name exists.
+    Queries are tied to the current (request) user.
+    :return: true if exists, else false
+    """
+    if Query.query.filter_by(
+            name=name,
+            user_id=current_user.id
+    ).first():
+        return "Query name already exists!", 409
+
+    return "Query name is available", 200
+
+
 @admin.post('/api/query/')
-@roles_accepted('Admin', 'DA')
 def api_query_create():
     """
     API Endpoint save a query search object (advanced search)
     :return: success if save is successful, error otherwise
     """
     q = request.json.get('q', None)
-
     name = request.json.get('name', None)
+    query_type = request.json.get('type')
+    # current saved searches types
+    if query_type not in Query.TYPES:
+        return 'Invalid Request', 400
     if q and name:
         query = Query()
         query.name = name
         query.data = q
+        query.query_type = query_type
         query.user_id = current_user.id
         query.save()
         return 'Query successfully saved!', 200
     else:
         return 'Error parsing query data', 417
+
+
+@admin.put('/api/query/<string:name>')
+def api_query_update(name: str):
+    """
+    API Endpoint update a query search object (advanced search).
+    Updated searches are tied to the current (request) user.
+    :return: success if update is successful, error otherwise
+    """
+    if not (q := request.json.get('q')):
+        return "q parameter not provided", 417
+
+    query = Query.query.filter(and_(
+        Query.user_id == current_user.id,
+        Query.name == name,
+    ))
+
+    if query_found := query.first():
+        query_found.data = q
+    else:
+        return f"Query {name} not found", 404
+
+    if query_found.save():
+        return f"Query {name} updated!", 200
+
+    return f"Query {name} save failed", 409
+
+
+@admin.delete('/api/query/<string:name>')
+def api_query_delete(name: str):
+    """
+    API Endpoint delete a query search object (advanced search).
+    Deleted searches are tied to the current (request) user.
+    :return: success if deletion is successful, error otherwise
+    """
+    query = Query.query.filter(and_(
+        Query.user_id == current_user.id,
+        Query.name == name,
+    ))
+
+    if not (query_found := query.first()):
+        return f"Query: {name} not found", 404
+
+    if query_found.delete():
+        return f"Query {name} deleted!", 200
+
+    return f"Query {name} delete failed", 409
 
 
 # Data Import Backend API
@@ -2306,7 +2377,7 @@ def path_process():
 
     if not allowed_path.is_dir():
         return "Allowed import path is not configured correctly", 417
-    
+
     sub_path = request.json.get('path')
     if sub_path == "":
         import_path = allowed_path
@@ -2577,5 +2648,3 @@ def api_logs():
 def system_admin():
     """Endpoint for system administration."""
     return render_template('admin/system-administration.html')
-
-

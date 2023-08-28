@@ -131,9 +131,10 @@ Vue.component("geo-map", {
 
 
         setMarker(evt) {
+            if (this.editMode){
             this.lat = evt.latlng.lat;
             this.lng = evt.latlng.lng;
-
+            }
         },
 
 

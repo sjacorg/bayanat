@@ -103,6 +103,7 @@
 
                         <v-col cols="12" md="3">
                             <v-autocomplete
+                                clearable
                                 :items="translations.countries"
                                 item-text="tr"
                                 item-value="en"
@@ -139,7 +140,8 @@
                     
                     <v-row>
                         <v-col cols="12" md="12">
-                            <geo-map 
+                            <geo-map
+                                edit-mode="true"
                                 class="flex-grow-1"
                                 v-model="editedItem.latlng"
                                 map-height="300">

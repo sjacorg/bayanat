@@ -94,7 +94,7 @@ Vue.component('search-field',
                     return-object
                     :search-input.sync="searchInput"
                     @change="emitChange"
-
+                    v-bind="$attrs"
                     :loading="loading"
 
             ></v-combobox>

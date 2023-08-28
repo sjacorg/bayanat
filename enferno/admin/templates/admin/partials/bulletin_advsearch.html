@@ -9,19 +9,31 @@
         </v-card-title>
 
         <v-card-text>
-            <v-select small
+            <v-select ref="savedSearchDropdown"
+                      small
                       :label="translations.loadExistingSearch_"
                       :items="searches"
                       item-text="name"
                       item-value="id"
                       return-object
-                      @change="loadSearch"
-                      @click="loadSearches"
+                      @click="loadSearchesFromAPI"
                       @click:clear="resetSearch"
                       outlined
                       clearable
-
+                      v-model="savedSearchSelection"
             >
+                <template v-slot:item="{ item, attrs }">
+                    <v-list-item v-bind="attrs" @click="loadSearch(item);">
+                    <v-list-item-title>
+                        ${item.name}
+                    </v-list-item-title>
+
+                        <v-list-item-action>
+                          <v-icon v-tippy content="{{ _('Delete Search') }}"
+                            @click.stop="deleteSearch(item.name)">mdi-delete </v-icon>
+                    </v-list-item-action>
+                    </v-list-item>
+                </template>
             </v-select>
             <v-expansion-panels accordion v-model="searchPanels">
                 <v-expansion-panel v-for="(q,i) in search"
@@ -38,7 +50,7 @@
                                 :show-op="!i==0"
                                 :extra-filters="true"
                                 @close="advSearchExpand=false"
-                                close-btn="true"
+
                                 v-model="search[i]"
                                 :users="users"
                                 :roles="roles"
@@ -60,21 +72,50 @@
                 ${translations.refineExtendSearch_}
             </v-btn>
             <v-spacer></v-spacer>
-            <v-btn @click="search=[{}]" text>{{ _('Clear Search') }}</v-btn>
-            <v-btn @click="saveQueryDialog=true" color="grey lighten-2" depressed>{{ _('Save Search') }}</v-btn>
+            <v-btn @click="resetSearch" text>{{ _('Clear Search') }}</v-btn>
+            <v-btn v-if="!savedSearchSelection" @click="openSaveQueryDialog" color="grey lighten-2" depressed>{{ _('Save Search') }}</v-btn>
+            <v-btn
+                v-if="savedSearchSelection"
+                @click="updateSearch"
+                color="warning"
+                depressed
+            >{{ _('Update Search') }}</v-btn>
+            <v-btn
+                v-if="savedSearchSelection"
+                @click="openSaveQueryDialog"
+                color="warning"
+                depressed
+            >{{ _('Save As New') }}</v-btn>
             <v-btn @click="doSearch" color="primary">{{ _('Search') }}</v-btn>
         </v-card-text>
     </v-card>
     <v-dialog width="300" v-model="saveQueryDialog">
         <v-card class="pa-3">
+            <validation-observer v-slot="{ invalid }">
             <v-card-text>
-                <v-text-field v-model="queryName" label="{{ _('Name this search') }}"></v-text-field>
+                <validation-provider
+                    name="query name"
+                    rules="required|min:4|max:32|uniqueQueryName"
+                    :debounce="200"
+                    v-slot="{ errors, validate }"
+                >
+                    <v-text-field
+                        ref="saveQueryInput"
+                        v-model="queryName"
+                        @keydown.enter="saveSearch"
+                        label="{{ _('Name this search') }}"
+
+                    ></v-text-field>
+                                        <span class="orange--text"> ${errors[0]}</span>
+
+                </validation-provider>
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn @click="saveQueryDialog=false" text>{{ _('Cancel') }}</v-btn>
-                <v-btn @click="saveSearch" color="primary">{{ _('Save') }}</v-btn>
+                <v-btn @click="saveSearch" color="primary" :disabled="invalid">{{ _('Save') }}</v-btn>
             </v-card-actions>
+            </validation-observer>
         </v-card>
     </v-dialog>
 

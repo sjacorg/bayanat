@@ -134,83 +134,107 @@ Vue.component('bulletin-search-box', {
                         
                     </v-col>
                 </v-row>
+
                 <v-row>
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
-                            <pop-date-field :label="i18n.publishDate_" v-model="q.pubdate"></pop-date-field>
-                            <v-select
-                                    dense
-                                    v-model="q.pubdatewithin"
-                                    :label="i18n.within_"
-                                    :items="dateWithin"
-                                    class="mx-2"
-                            ></v-select>
+                            <pop-date-range-field
+                                ref="publishDateComponent"
+                                :label="i18n.publishDate_"
+                                v-model="q.pubdate"
+                            />
                         </div>
                     </v-col>
             
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
-                            <pop-date-field :label="i18n.documentationDate_" v-model="q.docdate"></pop-date-field>
-                            <v-select
-                                    class="mx-2"
-                                    dense
-
-                                    v-model="q.docdatewithin"
-                                    :label="i18n.within_"
-                                    :items="dateWithin"
-
-                            ></v-select>
+                            <pop-date-range-field
+                                :label="i18n.documentationDate_"
+                                v-model="q.docdate"
+                            />
                         </div>
                     </v-col>
                 </v-row>
               
-              <v-row>
+                <v-row>
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
-                            <pop-date-field :label="i18n.createdDate_" v-model="q.created"></pop-date-field>
-                            <v-select
-                                    dense
-                                    v-model="q.createdwithin"
-                                    :label="i18n.within_"
-                                    :items="dateWithin"
-                                    class="mx-2"
-                            ></v-select>
+                            <pop-date-range-field
+                                :label="i18n.createdDate_"
+                                v-model="q.created"
+                            />
                         </div>
                     </v-col>
             
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
-                            <pop-date-field :label="i18n.updatedDate_" v-model="q.updated"></pop-date-field>
-                            <v-select
-                                    class="mx-2"
-                                    dense
-
-                                    v-model="q.updatedwithin"
-                                    :label="i18n.within_"
-                                    :items="dateWithin"
-
-                            ></v-select>
+                            <pop-date-range-field
+                                :label="i18n.updatedDate_"
+                                v-model="q.updated"
+                            />
                         </div>
                     </v-col>
                 </v-row>
-              
-              
-              
               
                 <v-row>
-                    <v-col>
-                        <div class="d-flex">
-                            <pop-date-field :label="i18n.eventDate_" v-model="q.edate"></pop-date-field>
-                            <v-select
-                                    dense
-                                    v-model="q.edatewithin"
-                                    :label="i18n.within_"
-                                    :items="dateWithin"
-                                    class="mx-2"
-                            ></v-select>
-                        </div>
-                    </v-col>
-                </v-row>
+                <v-col md="12">
+                  <v-alert text color="grey lighten-1" class="pa-5 my-3">
+                    <div class="d-flex align-baseline justify-lg-space-between" >
+                      
+                      <span class="black--text font-weight-bold text-h6">Events</span>
+                      <v-checkbox :label="i18n.singleEvent_" dense v-model="q.singleEvent" color="primary" small
+                                class="ma-3"></v-checkbox>
+                    </div>
+                    
+                    
+                    
+                    <div class="d-flex align-baseline"  > 
+                          <pop-date-range-field
+                              :label="i18n.eventDate_"
+                              v-model="q.edate"
+                              
+                              class="mt-2"
+                              
+                          />
+      
+                    
+      
+      
+                        <search-field
+                            class="ml-6 mb-3"
+                            persistent-hint 
+                            hint="select event type"
+                            v-model="q.etype"
+                            api="/admin/api/eventtypes/"
+                            query-params="&typ=for_bulletin"
+                            item-text="title"
+                            item-value="id"
+                            :multiple="false"
+                            :label="i18n.eventType_"
+                        ></search-field>
+      
+                    
+                      </div>
+      
+                    
+                    
+                      
+                        <search-field
+                            v-model="q.elocation"
+                            api="/admin/api/locations/"
+                            item-text="full_string"
+                            item-value="id"
+                            :multiple="false"
+                            :label="i18n.includeEventLocations_"
+                        ></search-field>
+      
+                      
+      
+      
+                  </v-alert>
+      
+                </v-col>
+              </v-row>
                 
                  <v-row v-if="isAdmin" > 
                     <v-col md="9">
@@ -276,8 +300,8 @@ Vue.component('bulletin-search-box', {
 
                         <v-chip-group
                                 column
-
-                                v-model="q.status"
+                                multiple
+                                v-model="q.statuses"
                         >
                             <v-chip :value="status.en" label small v-for="status in translations.statuses_"
                                     filter outlined :key="status.en">{{status.tr}}</v-chip>

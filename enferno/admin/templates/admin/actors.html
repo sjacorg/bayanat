@@ -9,7 +9,7 @@
     'admin/partials/actor_drawer.html' %}
             {% include
       'admin/partials/bulk_actor_drawer.html' %}
-        {% include
+            {% include
     'admin/partials/export_drawer.html' %}
             <v-main>
                 {% include 'admin/partials/actor_advsearch.html' %}
@@ -40,7 +40,7 @@
                                     @toggle-select-all="selectAllRestrict"
                             >
 
-                             <template v-slot:item.data-table-select="{ item, isSelected, select }">
+                                <template v-slot:item.data-table-select="{ item, isSelected, select }">
                                     <v-simple-checkbox
                                             :value="isSelected"
                                             :readonly="item.restricted"
@@ -101,20 +101,20 @@
 
 
                                                 {% if config.EXPORT_TOOL %}
-                                            <v-btn
-                                                @click="exportDrawer=true"
-                                                small
-                                                color="primary"
-                                                class="mx-2"
-                                                depressed
-                                                v-if="exportAllowed()"
-                                            >
-                                                <v-icon small left
-                                                >mdi-file-export-outline
-                                                </v-icon>
-                                            {{ _('Export') }}
-                                            </v-btn>
-                                            {% endif %}
+                                                    <v-btn
+                                                            @click="exportDrawer=true"
+                                                            small
+                                                            color="primary"
+                                                            class="mx-2"
+                                                            depressed
+                                                            v-if="exportAllowed()"
+                                                    >
+                                                        <v-icon small left
+                                                        >mdi-file-export-outline
+                                                        </v-icon>
+                                                        {{ _('Export') }}
+                                                    </v-btn>
+                                                {% endif %}
 
                                             </template>
 
@@ -156,13 +156,13 @@
 
                                 <template v-slot:item.roles="{item}">
                                     <v-chip
-                                    class="mx-2" 
-                                    small
-                                    style="scale:0.7"
-                                    v-tippy
-                                    :content="role.name"
-                                    v-for="role in item.roles"
-                                    :color="role.color"
+                                            class="mx-2"
+                                            small
+                                            style="scale:0.7"
+                                            v-tippy
+                                            :content="role.name"
+                                            v-for="role in item.roles"
+                                            :color="role.color"
                                     >
 
                                     </v-chip>
@@ -302,16 +302,16 @@
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
 
-{#Missing Persons Components#}
-<script src="/static/js/components/Address.js"></script>
-<script src="/static/js/components/MixI.js"></script>
-<script src="/static/js/components/MixII.js"></script>
-<script src="/static/js/components/MixIII.js"></script>
-<script src="/static/js/components/MPCard.js"></script>
-<script src="/static/js/components/MPField.js"></script>
+    {#Missing Persons Components#}
+    <script src="/static/js/components/Address.js"></script>
+    <script src="/static/js/components/MixI.js"></script>
+    <script src="/static/js/components/MixII.js"></script>
+    <script src="/static/js/components/MixIII.js"></script>
+    <script src="/static/js/components/MPCard.js"></script>
+    <script src="/static/js/components/MPField.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
-<script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/PdfViewer.js"></script>
 
 
     <script>
@@ -325,6 +325,17 @@
                     return 'Either Name or Name(ar) should not be empty'
                 }
                 return true
+            },
+        });
+
+         VeeValidate.extend("uniqueQueryName", {
+            validate: async (str) => {
+                try {
+                    await axios.get(`/admin/api/query/${str}/exists`);
+                    return true;
+                } catch (error) {
+                    return error?.response?.data ?? 'An error occurred.';
+                }
             },
         });
 
@@ -379,10 +390,13 @@
                 pitem: null,
 
                 search: [{}],
+                queryName: null,
                 saveQueryDialog: false,
                 searchPanels: 0,
 
                 searchTime: null,
+                searches: [],
+                savedSearchSelection: null,
 
                 roles: [],
 
@@ -433,7 +447,7 @@
                 actorDrawer: false,
                 bulkActorDrawer: false,
 
-            exportDrawer: false,
+                exportDrawer: false,
                 exportConfig: {},
 
                 sources: [],
@@ -648,7 +662,7 @@
             },
             mounted: function () {
 
-               // populate roles for advanced search for admins
+                // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
                     axios.get('/admin/api/roles/').then(res => {
                         this.roles = res.data.items;
@@ -715,7 +729,7 @@
 
             methods: {
 
-                  exportRequest(){
+                exportRequest() {
 
                     let ids = this.selected.map(x => x.id);
                     this.loading = true;
@@ -725,20 +739,20 @@
                     })
                         .then(response => {
                             this.showSnack(response.data);
-                        }).catch(error=>{
-                            console.error(error.response?.data);
-                            this.showSnack(error.response?.data)
-                    }).finally(()=>{
-                            this.loading = false;
-                            this.exportDrawer = false;
-                            this.selected = [];
-                            this.exportConfig = {};
+                        }).catch(error => {
+                        console.error(error.response?.data);
+                        this.showSnack(error.response?.data)
+                    }).finally(() => {
+                        this.loading = false;
+                        this.exportDrawer = false;
+                        this.selected = [];
+                        this.exportConfig = {};
 
                     });
                 },
 
 
-                  selectAllRestrict(props) {
+                selectAllRestrict(props) {
 
                     if (this.selected.length > 0) {
                         // untoggle on next tick
@@ -905,9 +919,95 @@
 
 
                 resetSearch() {
+                    this.savedSearchSelection = null;
                     this.search = [{}];
-                    this.doSearch()
+                    this.doSearch();
                 },
+
+                openSaveQueryDialog() {
+                    // Separate method to include auto-focus on input
+
+                    this.saveQueryDialog = true;
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.$refs.saveQueryInput.focus();
+                        }, 0);
+                    })
+                },
+
+                loadSearch(item) {
+
+                    if (item) {
+                        this.savedSearchSelection = Object.assign([], item);
+                        this.search = Object.assign([], item.data);
+                    }
+                    this.$refs.savedSearchDropdown.blur()
+                },
+
+
+                loadSearchesFromAPI(selectLast = false) {
+                    axios.get('/admin/api/queries/', {
+                        params: {
+                            type: 'actor'
+                        }
+                    }).then(
+                        res => {
+                            this.searches = res.data;
+                            if (selectLast === true) {
+
+                                this.savedSearchSelection = this.searches.at(-1);
+
+
+                            }
+                        }
+                    ).catch(error => {
+                        this.showSnack(handleRequestError(error))
+                    });
+
+                },
+
+                saveSearch() {
+                    const newSearch = {q: this.search, name: this.queryName, type: 'actor'};
+
+                    axios.post('/admin/api/query/', newSearch)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.saveQueryDialog = false;
+
+
+                            this.queryName = null;
+                            // just reload searches and select the last one
+                            this.loadSearchesFromAPI(true);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
+
+
+                updateSearch() {
+                    axios.put('/admin/api/query/' + this.savedSearchSelection.name, {q: this.search})
+                        .then(res => {
+                            this.showSnack(res.data);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
+
+
+                deleteSearch(searchName) {
+                    axios.delete('/admin/api/query/' + searchName)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.searches = this.searches.filter(item => item.name !== searchName);
+                            this.resetSearch();
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                }
+                ,
 
 
                 // ---------------- end advanced search -----------------------
@@ -924,7 +1024,7 @@
                     q = {};
                     this.options.page = 1;
                     q.assigned = [this.currentUser.id];
-                    q.status = "Assigned";
+                    q.statuses = ["Assigned"];
                     this.search = [q];
                     this.searchActors();
                 },
@@ -933,7 +1033,7 @@
                     q = {};
                     this.options.page = 1;
                     q.reviewer = [this.currentUser.id];
-                    q.status = "Peer Review Assigned";
+                    q.statuses = ["Peer Review Assigned"];
                     this.search = [q]
                     this.searchActors();
                 },
@@ -987,7 +1087,7 @@
                             this.showSnack(error.response.data)
                             this.snackbar = true;
                         }
-                    }).finally(()=>{
+                    }).finally(() => {
                         this.actorLoader = false;
                     });
                 },
@@ -1049,8 +1149,8 @@
                 },
 
 
-                 exportAllowed() {
-                    if(__EXPORT_TOOL__){
+                exportAllowed() {
+                    if (__EXPORT_TOOL__) {
                         if (this.has_role(this.currentUser, 'Admin')) {
                             return true;
                         }
@@ -1063,7 +1163,7 @@
 
                 editAllowed(actor) {
 
-                    if(actor.restricted){
+                    if (actor.restricted) {
                         return false;
                     }
 
@@ -1082,7 +1182,7 @@
 
                 reviewAllowed(actor) {
 
-                    if(actor.restricted){
+                    if (actor.restricted) {
                         return false;
                     }
 
@@ -1099,7 +1199,7 @@
 
                 selfAssignAllowed(actor) {
 
-                    if(actor.restricted){
+                    if (actor.restricted) {
                         return false;
                     }
 

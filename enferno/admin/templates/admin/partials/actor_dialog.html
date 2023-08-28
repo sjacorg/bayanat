@@ -299,6 +299,7 @@
                                         item-text="tr"
                                         item-value="en"
                                         v-model="editedItem.sex"
+                                        clearable
                                         label="{{ _('Sex') }}"
                                 ></v-select>
                             </v-col>
@@ -309,6 +310,7 @@
                                         item-text="tr"
                                         item-value="en"
                                         v-model="editedItem.age"
+                                        clearable
                                         label="{{ _('Minor/Adult') }}"
                                 ></v-select>
                             </v-col>
@@ -319,6 +321,7 @@
                                         v-model="editedItem.civilian"
                                         item-text="tr"
                                         item-value="en"
+                                        clearable
                                         label="{{ _('Civilian/Non Civilian') }}"
                                 ></v-select>
                             </v-col>
@@ -329,6 +332,7 @@
                                         v-model="editedItem.actor_type"
                                         item-text="tr"
                                         item-value="en"
+                                        clearable
                                         label="{{ _('Actor Type') }}"
                                 ></v-select>
                             </v-col>
@@ -526,6 +530,7 @@
 
                                         :items="translations.actorEthno"
                                         multiple
+                                        clearable
                                         item-text="tr"
                                         item-value="en"
                                         v-model="editedItem.ethnography"
@@ -536,6 +541,7 @@
                             <v-col cols="12" md="4">
                                 <v-autocomplete
                                         multiple
+                                        clearable
                                         :items="translations.countries"
                                         item-text="tr"
                                         item-value="en"
@@ -824,17 +830,32 @@
 
                                                             <v-card-text>
 
-                                                                <div class="caption">{{ _('Probability') }}</div>
-                                                                <v-chip-group
-                                                                        v-model="editedItem.incident_relations[index].probability"
-                                                                        column
-                                                                        active-class="primary dark"
-                                                                >
-                                                                     <v-chip v-for="r in translations.itoaRelateAs"
-                                                                                    small> ${r.tr}
+                                                                <div>
+                                                                    <div class="caption">{{ _('Probability') }}</div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.incident_relations[index].probability"
+                                                                            column
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                      <v-chip v-for="r in translations.probs"
+                                                                                    small> ${ r.tr }
                                                                             </v-chip>
-                                                                </v-chip-group>
+                                                                    </v-chip-group>
 
+                                                                    <div class="caption">{{ _('Related As') }}</div>
+                                                                    <v-chip-group
+                                                                            v-model="editedItem.incident_relations[index].related_as"
+                                                                            column
+                                                                            multiple
+                                                                            active-class="primary dark"
+                                                                    >
+                                                                        <v-chip v-for="r in translations.itoaRelateAs"
+                                                                                small> ${ r.tr }
+                                                                        </v-chip>
+                                                                    </v-chip-group>
+
+
+                                                                </div>
 
                                                                 <v-text-field class="mt-2"
                                                                               v-model="editedItem.incident_relations[index].comment"
@@ -905,10 +926,11 @@
                                             <v-row>
                                                 <v-col md="4">
                                                     <v-select label="{{_('Pregnant at Disappearance')}}"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.pregnant"
-                                                              v-model="editedItem.pregnant_at_disappearance">
+                                                            clearable
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.pregnant"
+                                                            v-model="editedItem.pregnant_at_disappearance">
 
                                                     </v-select>
                                                 </v-col>
@@ -1016,19 +1038,21 @@
                                                 </v-col>
                                                 <v-col md="4">
                                                     <v-select label="{{_('Physique')}}"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              v-model="editedItem.physique"
-                                                              :items="translations.physique"
+                                                            clearable
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            v-model="editedItem.physique"
+                                                            :items="translations.physique"
                                                     ></v-select>
 
                                                 </v-col>
                                                 <v-col md="4">
                                                     <v-select label="{{_('Hair loss')}}"
-                                                              v-model="editedItem.hair_loss"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.hairLoss"
+                                                            clearable
+                                                            v-model="editedItem.hair_loss"
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.hairLoss"
                                                     ></v-select>
 
                                                 </v-col>
@@ -1037,34 +1061,38 @@
                                             <v-row>
                                                 <v-col md="3">
                                                     <v-select label="{{_('Hair type')}}"
-                                                              v-model="editedItem.hair_type"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.hairType"
+                                                            clearable
+                                                            v-model="editedItem.hair_type"
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.hairType"
                                                     ></v-select>
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{_('Hair length')}}"
-                                                              v-model="editedItem.hair_length"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.hairLength"
+                                                            clearable
+                                                            v-model="editedItem.hair_length"
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.hairLength"
                                                     ></v-select>
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{_('Hair color')}}"
-                                                              v-model="editedItem.hair_color"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.hairColor"
+                                                            clearable
+                                                            v-model="editedItem.hair_color"
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.hairColor"
                                                     ></v-select>
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{_('Facial hair')}}"
-                                                              v-model="editedItem.facial_hair"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.facialHair"
+                                                            clearable
+                                                            v-model="editedItem.facial_hair"
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.facialHair"
                                                     ></v-select>
                                                 </v-col>
 
@@ -1077,20 +1105,23 @@
                                                                 label="{{_('Notes on posture and walking style')}}"
                                                     ></v-textarea>
                                                     <v-select label="{{_('Handness')}}"
-                                                              :items="translations.handness"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              v-model="editedItem.handedness"></v-select>
+                                                            clearable
+                                                            :items="translations.handness"
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            v-model="editedItem.handedness"></v-select>
                                                     <v-select label="{{_('Glasses')}}"
-                                                               item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.glasses"
-                                                              v-model="editedItem.glasses"></v-select>
+                                                            clearable
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.glasses"
+                                                            v-model="editedItem.glasses"></v-select>
                                                     <v-select label="{{_('Eye color')}}"
-                                                              :items="translations.eyeColor"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              v-model="editedItem.eye_color"></v-select>
+                                                            clearable
+                                                            :items="translations.eyeColor"
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            v-model="editedItem.eye_color"></v-select>
                                                 </v-col>
                                                 <v-col md="6">
                                                     <mix-ii title="{{_('Skin Markings')}}"
@@ -1181,10 +1212,12 @@
                                             <v-row>
                                                 <v-col cols="3">
                                                     <v-select
-                                                             item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.smoker"
-                                                            label="{{ _('Smoker') }}" v-model="editedItem.smoker">
+                                                            clearable
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.smoker"
+                                                            label="{{ _('Smoker') }}" 
+                                                            v-model="editedItem.smoker">
 
                                                     </v-select>
                                                 </v-col>
@@ -1222,9 +1255,10 @@
                                                 </v-col>
                                                 <v-col md="3">
                                                     <v-select label="{{ _('Case status')}}" v-model="editedItem.case_status"
-                                                              item-text="tr"
-                                                              item-value="en"
-                                                              :items="translations.caseStatus"
+                                                            clearable
+                                                            item-text="tr"
+                                                            item-value="en"
+                                                            :items="translations.caseStatus"
                                                     ></v-select>
                                                 </v-col>
                                             </v-row>

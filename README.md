@@ -12,7 +12,7 @@ Installation guidelines and user manual are available at [docs.bayanat.org](http
 
 Localization
 ------------
-Bayanat currently has translations for the following lanaguages:
+Bayanat currently has translations for the following languages:
 - Arabic
 - Ukrainian
 
@@ -35,6 +35,10 @@ It's critical to understand that, in all cases, **backups must be taken before p
 Support
 -------
 You can use [Issues](https://github.com/sjacorg/bayanat/issues) in this repository to report bugs in Bayanat.
+
+Contributing
+-------------
+Check our [Contributing Guidelines](./CONTRIBUTING.md) and Bayanat's [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 Donate
 -------

@@ -66,8 +66,8 @@ Vue.component("actor-card", {
             return translations.btoaRelateAs[rid].tr;
         },
 
-        incident_related_as(item) {
-            return translations.itoaRelateAs[item.related_as].tr;
+        incident_related_as(rid) {
+            return translations.itoaRelateAs[rid].tr;
         },
 
         logAllowed() {
@@ -366,7 +366,9 @@ Vue.component("actor-card", {
           <bulletin-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
+
               <v-sheet color="yellow lighten-5" class="pa-2">
+
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" class="ma-1" color="blue-grey lighten-5" small label>{{ probability(item) }}</v-chip>
                 <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-5" small label>{{ bulletin_related_as(r) }}</v-chip>
@@ -404,9 +406,9 @@ Vue.component("actor-card", {
               <v-sheet color="yellow lighten-5" class="pa-2">
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability!=null" color="blue-grey lighten-5" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!=null" color="blue-grey lighten-5" small label>{{ incident_related_as(item) }}</v-chip>
-                <v-chip v-if="item.comment" color="blue-grey lighten-5" small label>{{ item.comment }}</v-chip>
+                <v-chip v-if="item.probability!=null" class="ma-1" color="blue-grey lighten-5" small label>{{ probability(item) }}</v-chip>
+                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-5" small label>{{ incident_related_as(r) }}</v-chip>
+                <v-chip v-if="item.comment" class="ma-1" color="blue-grey lighten-5" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
 

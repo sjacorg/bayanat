@@ -211,7 +211,7 @@
 
                                                             <v-card-text>
                                                                 <div>
-                                                                    <div class="caption">Probability</div>
+                                                                    <div class="caption">{{ _('Probability') }}</div>
                                                                     <v-chip-group
                                                                             v-model="editedItem.actor_relations[index].probability"
                                                                             column
@@ -222,10 +222,11 @@
                                                                         </v-chip>
                                                                     </v-chip-group>
 
-                                                                    <div class="caption">Related As</div>
+                                                                    <div class="caption">{{ _('Related As') }}</div>
                                                                     <v-chip-group
                                                                             v-model="editedItem.actor_relations[index].related_as"
                                                                             column
+                                                                            multiple
                                                                             active-class="primary dark"
                                                                     >
                                                                         <v-chip v-for="r in translations.itoaRelateAs"

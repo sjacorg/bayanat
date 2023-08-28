@@ -81,8 +81,8 @@ Vue.component("incident-card", {
             return translations.probs[item.probability].tr;
         },
 
-        actor_related_as(item) {
-            return translations.itoaRelateAs[item.related_as].tr;
+        actor_related_as(rid) {
+            return translations.itoaRelateAs[rid].tr;
         },
 
         bulletin_related_as(item) {
@@ -356,7 +356,7 @@ Vue.component("incident-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!=null" color="grey lighten-4" small label>{{ actor_related_as(item) }}</v-chip>
+                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-5" small label>{{ actor_related_as(r) }}</v-chip>
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
