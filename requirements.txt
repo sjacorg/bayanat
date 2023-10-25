@@ -85,7 +85,7 @@ uWSGI==2.0.22
 vine==5.0.0
 wcwidth==0.2.6
 webencodings==0.5.1
-Werkzeug==2.3.4
+Werkzeug==3.0.1
 WTForms==3.0.1
 zipp==3.15.0
 qrcode==7.4.2
