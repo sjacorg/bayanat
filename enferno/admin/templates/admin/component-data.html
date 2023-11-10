@@ -1,0 +1,327 @@
+{% extends 'layout.html' %} {% block content %}
+
+<div id="app">
+    <v-app id="component-data" v-cloak>
+        {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+        <v-main>
+            <v-container class="container--fluid">
+                <v-row>
+                    <v-col cols="12">
+                        <v-card class="pa-6">
+                            <v-card-title>
+                                <div class="flex-grow-1">{{ _('Component Data Management') }}</div>
+                            </v-card-title>
+
+                            <v-container class="container--fluid">
+
+
+                                <v-tabs vertical hide-slider>
+
+                                    <v-card outlined class="mr-5">
+                                        <v-tab class="justify-start">
+                                            {{ _('Location Administrative Levels') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Location Types') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Countries') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Ethnographic Information') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Actor to Actor Relations') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Actor to Bulletin Relations') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Bulletin to Bulletin Relations') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Incident to Bulletin Relations') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Incident to Actor Relations') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Incident to Incident Relations') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Media Categories') }}
+                                        </v-tab>
+                                        <v-tab class="justify-start">
+                                            {{ _('Geo Location Types') }}
+                                        </v-tab>
+                                    </v-card>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Location Administrative Levels') }}"
+                                                                :item-headers="alHeaders"
+                                                                :allow-add="false"
+                                                                save-endpoint="/admin/api/location-admin-level"
+                                                                load-endpoint="/admin/api/location-admin-levels/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Location Types') }}" :item-headers="ltHeaders"
+                                                                no-action-ids="[1,2]"
+                                                                delete-endpoint="/admin/api/location-type"
+                                                                save-endpoint="/admin/api/location-type"
+                                                                load-endpoint="/admin/api/location-types/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Countries') }}" :item-headers="countryHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/country"
+                                                                save-endpoint="/admin/api/country"
+                                                                load-endpoint="/admin/api/countries/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item>
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Ethnographic Information') }}"
+                                                                :item-headers="ethnoHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/ethnography"
+                                                                save-endpoint="/admin/api/ethnography"
+                                                                load-endpoint="/admin/api/ethnographies/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Actor to Actor Relations') }}"
+                                                                :item-headers="revRelationHeaders"
+                                                                :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
+                                                                delete-endpoint="/admin/api/atoainfo"
+                                                                save-endpoint="/admin/api/atoainfo"
+                                                                load-endpoint="/admin/api/atoainfos/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Actor to Bulletin Relations') }}"
+                                                                :item-headers="relationHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/atobinfo"
+                                                                save-endpoint="/admin/api/atobinfo"
+                                                                load-endpoint="/admin/api/atobinfos/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Bulletin to Bulletin Relations') }}"
+                                                                :item-headers="relationHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/btobinfo"
+                                                                save-endpoint="/admin/api/btobinfo"
+                                                                load-endpoint="/admin/api/btobinfos/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Incident to Bulletin Relations') }}"
+                                                                :item-headers="relationHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/itobinfo"
+                                                                save-endpoint="/admin/api/itobinfo"
+                                                                load-endpoint="/admin/api/itobinfos/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Incident to Actor Relations') }}"
+                                                                :item-headers="relationHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/itoainfo"
+                                                                save-endpoint="/admin/api/itoainfo"
+                                                                load-endpoint="/admin/api/itoainfos/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Incident to Incident Relations') }}"
+                                                                :item-headers="relationHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/itoiinfo"
+                                                                save-endpoint="/admin/api/itoiinfo"
+                                                                load-endpoint="/admin/api/itoiinfos/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/mediacategory"
+                                                                save-endpoint="/admin/api/mediacategory"
+                                                                load-endpoint="/admin/api/mediacategories/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <v-tab-item class="pa-1">
+                                        <v-card class="pa-3">
+                                            <v-card-text>
+                                                <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
+                                                                :editable-columns="['title','title_tr']"
+                                                                delete-endpoint="/admin/api/geolocationtype"
+                                                                save-endpoint="/admin/api/geolocationtype"
+                                                                load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
+                                                </editable-table>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-tab-item>
+                                
+                                </v-tabs>
+                            </v-container>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
+            </v-container>
+
+        </v-main>
+        {% include 'footer.html' %}
+    </v-app>
+</div>
+
+{% endblock %} {% block js %}
+
+
+{% if config.GOOGLE_MAPS_API_KEY %}
+{{ '
+<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async
+        defer></script>'|safe }}
+
+{% endif %}
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
+<script src="/static/js/components/EditableTable.js"></script>
+
+<script>
+    window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+
+    let app = new Vue({
+        el: "#app",
+        vuetify: vuetify,
+        delimiters: delimiters,
+        data: () => ({
+
+
+            drawer: drawer,
+
+            alHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Code')}}", value: "code"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Actions')}}", value: "actions"},
+
+            ],
+
+            ltHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Actions')}}", value: "actions"},
+            ],
+
+            countryHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Title (tr)')}}", value: "title_tr"},
+                {text: "{{_('Actions')}}", value: "actions"},
+            ],
+
+            ethnoHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Title (tr)')}}", value: "title_tr"},
+                {text: "{{_('Actions')}}", value: "actions"},
+            ],
+
+            relationHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Title (tr)')}}", value: "title_tr"},
+                {text: "{{_('Actions')}}", value: "actions"},
+            ],
+            revRelationHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Title (tr)')}}", value: "title_tr"},
+                {text: "{{_('Reverse Title')}}", value: "reverse_title"},
+                {text: "{{_('Reverse Title (tr)')}}", value: "reverse_title_tr"},
+                {text: "{{_('Actions')}}", value: "actions"},
+            ],
+
+            mediaHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Title (tr)')}}", value: "title_tr"},
+                {text: "{{_('Actions')}}", value: "actions"},
+            ],
+            geoHeaders: [
+                {text: "{{_('ID')}}", value: "id"},
+                {text: "{{_('Title')}}", value: "title"},
+                {text: "{{_('Title (tr)')}}", value: "title_tr"},
+                {text: "{{_('Actions')}}", value: "actions"},
+            ],
+
+        }),
+
+
+        mounted() {
+
+
+        },
+
+        methods: {}
+    });
+
+</script>
+{% endblock %}

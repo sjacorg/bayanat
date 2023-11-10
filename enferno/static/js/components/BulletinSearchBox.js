@@ -31,42 +31,46 @@ Vue.component('bulletin-search-box', {
 
     data: () => {
         return {
+            translations: translations,
             searches: [],
             saveDialog: false,
             repr: '',
             q: {},
             qName: '',
-
-
         }
     },
+
     created() {
         this.q = this.value;
-    
+    },
 
-
+    mounted () {
+      this.q.locTypes = this.translations.bulletinLocTypes_.map(x=>x.code);
     },
 
     watch: {
-
-
         q: {
             handler(newVal) {
-
                 this.$emit('input', newVal)
             }
             ,
             deep: true
         },
         value: function (newVal, oldVal) {
-
-
-            if (newVal != oldVal) {
+            if (newVal !== oldVal) {
                 this.q = newVal;
             }
-        }
+        },
+    },
+
+    computed : {
+      showGeomap(){
+          return this.q.locTypes?.length > 0;
+      }
 
     },
+
+
     methods: {},
 
     template: `
@@ -206,7 +210,7 @@ Vue.component('bulletin-search-box', {
                             hint="select event type"
                             v-model="q.etype"
                             api="/admin/api/eventtypes/"
-                            query-params="&typ=for_bulletin"
+                            :query-params="{ typ: 'for_bulletin' }"
                             item-text="title"
                             item-value="id"
                             :multiple="false"
@@ -219,14 +223,14 @@ Vue.component('bulletin-search-box', {
                     
                     
                       
-                        <search-field
+                        <location-search-field
                             v-model="q.elocation"
                             api="/admin/api/locations/"
                             item-text="full_string"
                             item-value="id"
                             :multiple="false"
                             :label="i18n.includeEventLocations_"
-                        ></search-field>
+                        ></location-search-field>
       
                       
       
@@ -303,7 +307,7 @@ Vue.component('bulletin-search-box', {
                                 multiple
                                 v-model="q.statuses"
                         >
-                            <v-chip :value="status.en" label small v-for="status in translations.statuses_"
+                            <v-chip :value="status.en" label small v-for="status in translations.statuses"
                                     filter outlined :key="status.en">{{status.tr}}</v-chip>
                         </v-chip-group>
 
@@ -362,7 +366,7 @@ Vue.component('bulletin-search-box', {
                             <search-field
                                     v-model="q.labels"
                                     api="/admin/api/labels/"
-                                    query-params="&typ=for_bulletin&mode=2"
+                                    :query-params="{ typ: 'for_bulletin' }"
                                     item-text="title"
                                     item-value="id"
                                     :multiple="true"
@@ -375,7 +379,7 @@ Vue.component('bulletin-search-box', {
                         <search-field
                                 v-model="q.exlabels"
                                 api="/admin/api/labels/"
-                                query-params="&typ=for_bulletin"
+                                :query-params="{ typ: 'for_bulletin' }"
                                 item-text="title"
                                 item-value="id"
                                 :multiple="true"
@@ -393,7 +397,7 @@ Vue.component('bulletin-search-box', {
                             <search-field
                                     v-model="q.vlabels"
                                     api="/admin/api/labels/"
-                                    query-params="&fltr=verified&typ=for_bulletin"
+                                    :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
                                     item-text="title"
                                     item-value="id"
                                     :multiple="true"
@@ -406,7 +410,7 @@ Vue.component('bulletin-search-box', {
                         <search-field
                                 v-model="q.exvlabels"
                                 api="/admin/api/labels/"
-                                query-params="&fltr=verified&typ=for_bulletin"
+                                :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
                                 item-text="title"
                                 item-value="id"
                                 :multiple="true"
@@ -420,66 +424,71 @@ Vue.component('bulletin-search-box', {
                 <v-row>
                     <v-col>
                         <div class="d-flex">
-                            <search-field
+                            <location-search-field
                                     v-model="q.locations"
                                     api="/admin/api/locations/"
                                     item-text="full_string"
                                     item-value="id"
                                     :multiple="true"
                                     :label="i18n.includeLocations_"
-                            ></search-field>
+                                    
+                            ></location-search-field>
                             <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
                                         class="mx-3"></v-checkbox>
                         </div>
-                        <search-field
+                        <location-search-field
                                 v-model="q.exlocations"
                                 api="/admin/api/locations/"
                                 item-text="full_string"
                                 item-value="id"
                                 :multiple="true"
                                 :label="i18n.excludeLocations_"
-                        ></search-field>
+                                :post-request="true"
+                        ></location-search-field>
 
 
                     </v-col>
                 </v-row>
 
-                <v-row>
-
-                    <v-col>
-                        <search-field
-                                v-model="q.elocation"
-                                api="/admin/api/locations/"
-                                item-text="full_string"
-                                item-value="id"
-                                :multiple="false"
-                                :label="i18n.includeEventLocations_"
-                        ></search-field>
-
-                    </v-col>
-
-                </v-row>
+                <v-text-field
+                    v-model="q.tsv"
+                    label="Title"
+                    clearable
+                    @keydown.enter="$emit('search',q)"
+                ></v-text-field>
+            
+                <v-sheet class="ma-4">
+                    <span class="caption pt-2">{{ i18n.geospatial_ }}</span>
 
 
-                <v-row>
-                    <v-col cols="12" md="12">
-                        <search-field
-                                v-model="q.etype"
-                                api="/admin/api/eventtypes/"
-                                query-params="&typ=for_bulletin"
-                                item-text="title"
-                                item-value="id"
-                                :multiple="false"
-                                :label="i18n.eventType_"
-                        ></search-field>
+                    <v-chip-group
+                        multiple
+                        column
+                        mandatory
+                        v-model="q.locTypes"
+                    >
+                        <v-chip
+                            v-for="type in translations.bulletinLocTypes_"
+                            :value="type.code"
+                            label
+                            small
+                            filter
+                            outlined
+                            :key="type.code"
+                            >
+                                {{type.tr}}
+                            </v-chip>
+                    </v-chip-group>
 
-                    </v-col>
-
-                </v-row>
-
+                    <geo-map v-if="showGeomap"
+                        class="flex-grow-1"
+                        v-model="q.latlng"
+                        map-height="200"
+                        radius-controls="true" />
+                </v-sheet>
 
             </v-container>
-</v-card-text>
+            </v-card-text>
           
         </v-card>
         

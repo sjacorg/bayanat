@@ -32,6 +32,7 @@ Vue.component('actor-search-box', {
 
     data: () => {
         return {
+            translations: translations,
             searches: [],
             repr: '',
             q: {},
@@ -45,16 +46,12 @@ Vue.component('actor-search-box', {
 
         q: {
             handler(newVal) {
-
                 this.$emit('input', newVal)
-            }
-            ,
+            },
             deep: true
         },
         value: function (newVal, oldVal) {
-
-
-            if (newVal != oldVal) {
+            if (newVal !== oldVal) {
                 this.q = newVal;
             }
         }
@@ -64,190 +61,194 @@ Vue.component('actor-search-box', {
         this.q = this.value;
 
     },
+
+    mounted () {
+      this.q.locTypes = this.translations.actorLocTypes_.map(x=>x.code);
+    },
+
+    computed: {
+        showGeoMap() {
+            return this.q.locTypes?.length > 0;
+        }
+    },
+
+
     methods: {},
 
     template: `
       <v-card outlined class="pa-6">
 
-      <v-container class="container--fluid">
-        <v-row v-if="showOp">
-          <v-col>
-            <v-btn-toggle mandatory v-model="q.op">
-              <v-btn small value="and">And</v-btn>
-              <v-btn small value="or">Or</v-btn>
-            </v-btn-toggle>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col>
+        <v-container class="container--fluid">
+          <v-row v-if="showOp">
+            <v-col>
+              <v-btn-toggle mandatory v-model="q.op">
+                <v-btn small value="and">And</v-btn>
+                <v-btn small value="or">Or</v-btn>
+              </v-btn-toggle>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
 
-            <v-text-field
+              <v-text-field
 
-                v-model="q.tsv"
-                :label="i18n.contains_"
-                clearable
-                @keydown.enter="$emit('search',q)"
-            ></v-text-field>
+                  v-model="q.tsv"
+                  :label="i18n.contains_"
+                  clearable
+                  @keydown.enter="$emit('search',q)"
+              ></v-text-field>
 
-            <v-text-field
+              <v-text-field
 
-                v-model="q.extsv"
-                :label="i18n.notContains_"
-                clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col md="6">
-            <div class="d-flex flex-wrap">
-              <pop-date-range-field
-                  :label="i18n.publishDate_"
-                  v-model="q.pubdate"
-              />
-            </div>
-          </v-col>
-
-          <v-col md="6">
-            <div class="d-flex flex-wrap">
-              <pop-date-range-field
-                  :label="i18n.documentationDate_"
-                  v-model="q.docdate"
-              />
-            </div>
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col md="6">
-            <div class="d-flex flex-wrap">
-              <pop-date-range-field
-                  :label="i18n.createdDate_"
-                  v-model="q.created"
-              />
-            </div>
-          </v-col>
-
-          <v-col md="6">
-            <div class="d-flex flex-wrap">
-              <pop-date-range-field
-                  :label="i18n.updatedDate_"
-                  v-model="q.updated"
-              />
-            </div>
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col md="12">
-            <v-alert text color="grey lighten-1" class="pa-5 my-3">
-              <div class="d-flex align-baseline justify-lg-space-between" >
-                
-                
-                <span class="black--text font-weight-bold text-h6">Events</span>
-                <v-checkbox :label="i18n.singleEvent_" dense v-model="q.singleEvent" color="primary" small
-                          class="ma-3"></v-checkbox>
+                  v-model="q.extsv"
+                  :label="i18n.notContains_"
+                  clearable
+              ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col md="6">
+              <div class="d-flex flex-wrap">
+                <pop-date-range-field
+                    :label="i18n.publishDate_"
+                    v-model="q.pubdate"
+                />
               </div>
-              
-              
-              
-              <div class="d-flex align-baseline"  > 
-                    <pop-date-range-field
-                        :label="i18n.eventDate_"
-                        v-model="q.edate"
-                        
-                        class="mt-2"
-                        
-                    />
+            </v-col>
 
-              
+            <v-col md="6">
+              <div class="d-flex flex-wrap">
+                <pop-date-range-field
+                    :label="i18n.documentationDate_"
+                    v-model="q.docdate"
+                />
+              </div>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col md="6">
+              <div class="d-flex flex-wrap">
+                <pop-date-range-field
+                    :label="i18n.createdDate_"
+                    v-model="q.created"
+                />
+              </div>
+            </v-col>
+
+            <v-col md="6">
+              <div class="d-flex flex-wrap">
+                <pop-date-range-field
+                    :label="i18n.updatedDate_"
+                    v-model="q.updated"
+                />
+              </div>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col md="12">
+              <v-alert text color="grey lighten-1" class="pa-5 my-3">
+                <div class="d-flex align-baseline justify-lg-space-between">
+
+
+                  <span class="black--text font-weight-bold text-h6">Events</span>
+                  <v-checkbox :label="i18n.singleEvent_" dense v-model="q.singleEvent" color="primary" small
+                              class="ma-3"></v-checkbox>
+                </div>
+
+
+                <div class="d-flex align-baseline">
+                  <pop-date-range-field
+                      :label="i18n.eventDate_"
+                      v-model="q.edate"
+
+                      class="mt-2"
+
+                  />
 
 
                   <search-field
                       class="ml-6 mb-3"
-                      persistent-hint 
+                      persistent-hint
                       hint="select event type"
                       v-model="q.etype"
                       api="/admin/api/eventtypes/"
-                      query-params="&typ=for_actor"
+                      :query-params="{ typ: 'for_actor' }"
                       item-text="title"
                       item-value="id"
                       :multiple="false"
                       :label="i18n.eventType_"
                   ></search-field>
 
-              
+
                 </div>
 
-              
-              
-                
-                  <search-field
-                      v-model="q.elocation"
-                      api="/admin/api/locations/"
-                      item-text="full_string"
-                      item-value="id"
-                      :multiple="false"
-                      :label="i18n.includeEventLocations_"
-                  ></search-field>
 
-                
+                <location-search-field
+                    v-model="q.elocation"
+                    api="/admin/api/locations/"
+                    item-text="full_string"
+                    item-value="id"
+                    :multiple="false"
+                    :label="i18n.includeEventLocations_"
+                ></location-search-field>
 
 
-            </v-alert>
+              </v-alert>
 
-          </v-col>
-        </v-row>
+            </v-col>
+          </v-row>
 
-        <v-row>
-          <v-col md="12">
-            <v-text-field
-                v-model="q.first_name"
-                label="First Name"
-                clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
-        
-        <v-row>
-          <v-col md="12">
-            <v-text-field
-                v-model="q.middle_name"
-                label="Middle/Father Name"
-                clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
-        
-        <v-row>
-          <v-col md="12">
-            <v-text-field
-                v-model="q.last_name"
-                label="Last Name"
-                clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
-        
-        <v-row>
-          <v-col md="12">
-            <v-text-field
-                v-model="q.nickname"
-                label="Nickname"
-                clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
-        
-        <v-row>
-          <v-col md="12">
-            <v-text-field
-                v-model="q.mother_name"
-                label="Mother Name"
-                clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
+          <v-row>
+            <v-col md="12">
+              <v-text-field
+                  v-model="q.first_name"
+                  label="First Name"
+                  clearable
+              ></v-text-field>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col md="12">
+              <v-text-field
+                  v-model="q.middle_name"
+                  label="Middle/Father Name"
+                  clearable
+              ></v-text-field>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col md="12">
+              <v-text-field
+                  v-model="q.last_name"
+                  label="Last Name"
+                  clearable
+              ></v-text-field>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col md="12">
+              <v-text-field
+                  v-model="q.nickname"
+                  label="Nickname"
+                  clearable
+              ></v-text-field>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col md="12">
+              <v-text-field
+                  v-model="q.mother_name"
+                  label="Mother Name"
+                  clearable
+              ></v-text-field>
+            </v-col>
+          </v-row>
 
           <v-row v-if="isAdmin">
             <v-col md="9">
@@ -313,7 +314,7 @@ Vue.component('actor-search-box', {
                   multiple
                   v-model="q.statuses"
               >
-                <v-chip :value="status.en" label small v-for="status in translations.statuses_" :key="status.en"
+                <v-chip :value="status.en" label small v-for="status in translations.statuses" :key="status.en"
                         filter
                         outlined>{{ status.tr }}
                 </v-chip>
@@ -371,7 +372,7 @@ Vue.component('actor-search-box', {
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
-                    query-params="&typ=for_actor&mode=2"
+                    :query-params="{ typ: 'for_actor' }"
                     item-text="title"
                     item-value="id"
                     :multiple="true"
@@ -384,7 +385,7 @@ Vue.component('actor-search-box', {
               <search-field
                   v-model="q.exlabels"
                   api="/admin/api/labels/"
-                  query-params="&typ=for_actor"
+                  :query-params="{ typ: 'for_actor' }"
                   item-text="title"
                   item-value="id"
                   :multiple="true"
@@ -400,7 +401,7 @@ Vue.component('actor-search-box', {
                 <search-field
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
-                    query-params="&fltr=verified&typ=for_actor"
+                    :query-params="{ fltr: 'verified', typ: 'for_actor' }"
                     item-text="title"
                     item-value="id"
                     :multiple="true"
@@ -413,7 +414,7 @@ Vue.component('actor-search-box', {
               <search-field
                   v-model="q.exvlabels"
                   api="/admin/api/labels/"
-                  query-params="&fltr=verified&typ=for_actor"
+                  :query-params="{ fltr: 'verified', typ: 'for_actor' }"
                   item-text="title"
                   item-value="id"
                   :multiple="true"
@@ -425,24 +426,24 @@ Vue.component('actor-search-box', {
           <v-row>
             <v-col>
 
-              <search-field
+              <location-search-field
                   v-model="q.resLocations"
                   api="/admin/api/locations/"
                   item-text="full_string"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.includeResLocations_"
-              ></search-field>
+              ></location-search-field>
 
 
-              <search-field
+              <location-search-field
                   v-model="q.exResLocations"
                   api="/admin/api/locations/"
                   item-text="full_string"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.excludeResLocations_"
-              ></search-field>
+              ></location-search-field>
 
 
             </v-col>
@@ -451,59 +452,58 @@ Vue.component('actor-search-box', {
           <v-row>
             <v-col>
 
-              <search-field
+              <location-search-field
                   v-model="q.originLocations"
                   api="/admin/api/locations/"
                   item-text="full_string"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.includeOriginLocations_"
-              ></search-field>
+              ></location-search-field>
 
-              <search-field
+              <location-search-field
                   v-model="q.exOriginLocations"
                   api="/admin/api/locations/"
                   item-text="full_string"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.excludeOriginLocations_"
-              ></search-field>
+              ></location-search-field>
 
 
             </v-col>
           </v-row>
 
+          <v-sheet class="ma-4">
+            <span class="caption pt-2">{{ i18n.geospatial_ }}</span>
 
-          <v-row>
-            <v-col>
-              <search-field
-                  v-model="q.elocation"
-                  api="/admin/api/locations/"
-                  item-text="full_string"
-                  item-value="id"
-                  :multiple="false"
-                  :label="i18n.includeEventLocations_"
-              ></search-field>
 
-            </v-col>
+            <v-chip-group
+                multiple
+                column
+                mandatory
+                v-model="q.locTypes"
+            >
+              <v-chip
+                  v-for="type in translations.actorLocTypes_"
+                  :value="type.code"
+                  label
+                  small
+                  filter
+                  outlined
+                  :key="type.code"
+              >
+                {{ type.tr }}
+              </v-chip>
+            </v-chip-group>
 
-          </v-row>
+            <geo-map v-if="showGeoMap"
+                     class="flex-grow-1"
+                     v-model="q.latlng"
+                     map-height="200"
+                     radius-controls="true"/>
+          </v-sheet>
 
-          <v-row>
-            <v-col cols="12" md="12">
-              <search-field
-                  v-model="q.etype"
-                  api="/admin/api/eventtypes/"
-                  query-params="&typ=for_actor"
-                  item-text="title"
-                  item-value="id"
-                  :multiple="false"
-                  :label="i18n.eventType_"
-              ></search-field>
-
-            </v-col>
-
-          </v-row>
           <v-row>
             <v-col cols="12" md="3">
               <v-text-field
@@ -583,57 +583,58 @@ Vue.component('actor-search-box', {
           </v-row>
 
           <v-row>
-          <v-col md="12">
+            <v-col md="12">
 
-            <div class="d-flex align-center">
-              <v-autocomplete
-                  :items="translations.actorEthno"
-                  multiple
-                  clearable
-                  item-text="tr"
-                  item-value="en"
-                  small-chips
-                  v-model="q.ethnography"
-                  label="Ethnography"
-              ></v-autocomplete>
-              <v-checkbox :label="i18n.any_" dense v-model="q.opEthno" color="primary" small
-                          class="mx-3"></v-checkbox>
-            </div>
+              <div class="d-flex align-center">
+                <search-field
+                    api="/admin/api/ethnographies/"
+                    :multiple="true"
+                    clearable
+                    :return-object="false"
+                    item-text="title"
+                    item-value="title"
+                    v-model="q.ethnography"
+                    label="Ethnography"
+                ></search-field>
+             
+                <v-checkbox :label="i18n.any_" dense v-model="q.opEthno" color="primary" small
+                            class="mx-3"></v-checkbox>
+              </div>
 
-          </v-col>
-        </v-row>
+            </v-col>
+          </v-row>
 
           <v-row>
             <v-col md="12">
 
               <div class="d-flex align-center">
-                <v-autocomplete
-                    :items="translations.countries"
-                    multiple
-                    clearable
-                    item-text="tr"
-                    item-value="en"
-                    small-chips
-                    v-model="q.nationality"
-                    label="Nationality"
-                ></v-autocomplete>
+                <search-field
+                                        v-model="q.nationality"
+                                        api="/admin/api/countries/"
+                                        item-text="title"
+                                        item-value="title"
+                                        :multiple="true"
+                                        :return-object="false"
+                                        clearable
+                                        label="Nationality"
+                                ></search-field>
                 <v-checkbox :label="i18n.any_" dense v-model="q.opNat" color="primary" small
                             class="mx-3"></v-checkbox>
               </div>
 
             </v-col>
           </v-row>
-          
+
           <v-row>
             <v-col md="12">
-              <search-field
+              <location-search-field
                   v-model="q.birth_place"
                   api="/admin/api/locations/"
                   item-text="full_string"
                   item-value="id"
                   :multiple="false"
                   :label="i18n.birthPlace_"
-              ></search-field>
+              ></location-search-field>
 
 
             </v-col>
@@ -648,10 +649,7 @@ Vue.component('actor-search-box', {
             </v-col>
           </v-row>
 
-
-      </v-container>
-
-
+        </v-container>
       </v-card>
 
     `

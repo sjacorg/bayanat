@@ -1,5 +1,4 @@
 import json
-import os
 import pathlib
 from datetime import datetime
 from functools import wraps
@@ -10,7 +9,7 @@ import pandas as pd
 from dateutil.parser import parse
 from flask_babel import gettext
 from flask_login import current_user
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geometry, Geography
 from geoalchemy2.shape import to_shape
 from sqlalchemy import JSON, ARRAY, text, and_, or_, func
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
@@ -18,16 +17,13 @@ from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
 
 from enferno.extensions import db
-from enferno.settings import ProdConfig, DevConfig
+from enferno.settings import Config as cfg
 from enferno.utils.base import BaseMixin
 from enferno.utils.csv_utils import convert_simple_relation, convert_complex_relation
 from enferno.utils.date_helper import DateHelper
 
+
 # Load configurations based on environment settings
-if os.getenv("FLASK_DEBUG") == '0':
-    cfg = ProdConfig
-else:
-    cfg = DevConfig
 
 
 ######  Role based Access Control Decorator for Bulletins / Actors  / Incidents  ######
@@ -508,7 +504,7 @@ class Media(db.Model, BaseMixin):
     id = db.Column(db.Integer, primary_key=True)
     media_file = db.Column(db.String, nullable=False)
     media_file_type = db.Column(db.String, nullable=False)
-    category = db.Column(db.String)
+    category = db.Column(db.Integer)
     etag = db.Column(db.String, unique=True)
     duration = db.Column(db.String)
 
@@ -565,6 +561,9 @@ class Media(db.Model, BaseMixin):
         self.media_file = json["filename"] if "filename" in json else None
         self.etag = json.get('etag', None)
         self.time = json.get('time', None)
+        category = json.get('category', None)
+        if category:
+            self.category = category.get('id')
         return self
 
     # generate custom file name for upload purposes
@@ -598,13 +597,16 @@ class Location(db.Model, BaseMixin):
     title_ar = db.Column(db.String)
     location_type_id = db.Column(db.Integer, db.ForeignKey('location_type.id'))
     location_type = db.relationship("LocationType", foreign_keys=[location_type_id])
+    latlng = db.Column(Geometry('POINT', srid=4326))
     admin_level_id = db.Column(db.Integer, db.ForeignKey('location_admin_level.id'))
     admin_level = db.relationship("LocationAdminLevel", foreign_keys=[admin_level_id])
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
     description = db.Column(db.Text)
     postal_code = db.Column(db.String)
-    country_code = db.Column(db.String)
+
+    # migrate to a froeign key
+    country_id = db.Column(db.Integer, db.ForeignKey('countries.id'))
+    country = db.relationship('Country', backref='locations')
+
     tags = db.Column(ARRAY(db.String))
     full_location = db.Column(db.String)
     id_tree = db.Column(db.String)
@@ -647,6 +649,7 @@ class Location(db.Model, BaseMixin):
             if not self.parent.admin_level:
                 print(self.parent, ' <-')
 
+
         return {
             "id": self.id,
             "title": self.title,
@@ -654,12 +657,13 @@ class Location(db.Model, BaseMixin):
             "description": self.description,
             "location_type": self.location_type.to_dict() if self.location_type else '',
             "admin_level": self.admin_level.to_dict() if self.admin_level else '',
-            "latlng": {"lat": self.latitude, "lng": self.longitude},
+            "latlng": {"lng": to_shape(self.latlng).x, "lat": to_shape(self.latlng).y} if self.latlng else None,
             "postal_code": self.postal_code,
-            "country": self.country_code,
+            "country": self.country.to_dict() if self.country else None ,
             "parent": self.to_parent_dict(),
             "tags": self.tags or [],
-
+            "lat": to_shape(self.latlng).y if self.latlng else None,
+            "lng": to_shape(self.latlng).x if self.latlng else None,
             "full_location": self.full_location,
             "full_string": '{} | {}'.format(self.full_location or '', self.title_ar or ''),
             "updated_at": DateHelper.serialize_datetime(self.updated_at)
@@ -673,15 +677,24 @@ class Location(db.Model, BaseMixin):
                 "id": self.parent_id,
                 "title": self.parent.title,
                 "full_string": '{} | {}'.format(self.parent.full_location or '', self.parent.title_ar or ''),
-                "admin_level": self.parent.admin_level.to_dict() if self.admin_level else ''
+                "admin_level": self.parent.admin_level.to_dict() if self.parent.admin_level else ''
             }
 
     # custom compact serialization method
     def min_json(self):
         return {
             'id': self.id,
-            'location_type': self.location_type,
+            'location_type': self.location_type.to_dict() if self.location_type else '',
             'full_string': '{} | {}'.format(self.full_location, self.title_ar)
+        }
+
+    def to_compact(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "full_string": self.get_full_string(),
+            "lat": to_shape(self.latlng).y if self.latlng else None,
+            "lng": to_shape(self.latlng).x if self.latlng else None
         }
 
     def to_json(self):
@@ -693,11 +706,11 @@ class Location(db.Model, BaseMixin):
         self.title_ar = jsn.get('title_ar')
         self.description = jsn.get('description')
         if jsn.get('latlng'):
-            self.longitude = jsn.get('latlng').get('lng')
-            self.latitude = jsn.get('latlng').get('lat')
+            lng = jsn.get('latlng').get('lng')
+            lat = jsn.get('latlng').get('lat')
+            self.latlng = f"SRID=4326;POINT({lng} {lat})"
         else:
-            self.longitude = None
-            self.latitude = None
+            self.latlng = None
 
         # little validation doesn't hurt
         allowed_location_types = [l.title for l in LocationType.query.all()]
@@ -716,7 +729,11 @@ class Location(db.Model, BaseMixin):
 
         self.full_location = jsn.get('full_location')
         self.postal_code = jsn.get('postal_code')
-        self.country_code = jsn.get('country')
+        country = jsn.get('country')
+        if country and (id := country.get('id')):
+            self.country_id = id
+        else:
+            self.country_id = None
         self.tags = jsn.get('tags', [])
         parent = jsn.get('parent')
         if parent and parent.get('id'):
@@ -783,6 +800,16 @@ class Location(db.Model, BaseMixin):
         """
         result = db.engine.execute(text(query), id=self.id)
         return ' '.join(['[{}]'.format(loc[0]) for loc in result])
+
+    @staticmethod
+    def geo_query_location(target_point, radius_in_meters):
+        """Geosearch via locations"""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+
+        return func.ST_DWithin(
+            func.cast(Location.latlng, Geography),
+            func.cast(point, Geography),
+            radius_in_meters)
 
     @staticmethod
     def rebuild_id_trees():
@@ -878,17 +905,20 @@ class GeoLocation(db.Model, BaseMixin):
     __table_args__ = {"extend_existing": True}
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
-    type = db.Column(db.String)
+    type_id = db.Column(db.Integer, db.ForeignKey('geo_location_types.id'))
+    type = db.relationship("GeoLocationType", backref="geolocations")  # Added a relationship
     main = db.Column(db.Boolean)
-    latlng = db.Column(Geometry('POINT'))
+    latlng = db.Column(Geometry('POINT', srid=4326))
     comment = db.Column(db.Text)
     bulletin_id = db.Column(db.Integer, db.ForeignKey('bulletin.id'))
 
     def from_json(self, jsn):
         self.title = jsn.get('title')
-        self.type = jsn.get('type')
+        type = jsn.get('type')
+        if type and (id := type.get('id')):
+            self.type_id = id
         self.main = jsn.get('main')
-        self.latlng = 'POINT({} {})'.format(jsn.get('lat'), jsn.get('lng'))
+        self.latlng = f'POINT({jsn.get("lng")} {jsn.get("lat")})'
         self.comment = jsn.get('comment')
         return self
 
@@ -896,10 +926,10 @@ class GeoLocation(db.Model, BaseMixin):
         return {
             'id': self.id,
             'title': self.title,
-            'type': self.type,
+            'type': self.type.to_dict() if self.type else None,
             'main': self.main,
-            'lat': to_shape(self.latlng).x,
-            'lng': to_shape(self.latlng).y,
+            'lat': to_shape(self.latlng).y,
+            'lng': to_shape(self.latlng).x,
             'comment': self.comment,
             'updated_at': DateHelper.serialize_datetime(self.updated_at)
         }
@@ -990,6 +1020,12 @@ class Btob(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_btobs", foreign_keys=[user_id])
 
+    @property
+    def relation_info(self):
+        related_infos = BtobInfo.query.filter(BtobInfo.id.in_(self.related_as)).all() if self.related_as else []
+        # Return the to_dict representation of each of them
+        return [info.to_dict() for info in related_infos]
+
     # Check if two bulletins are related , if so return the relation, otherwise false
     @staticmethod
     def are_related(a_id, b_id):
@@ -1065,6 +1101,34 @@ class Btob(db.Model, BaseMixin):
         return self
 
 
+class BtobInfo(db.Model, BaseMixin):
+    """
+    Btob Relation Information Model
+    """
+    extend_existing = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    reverse_title = db.Column(db.String, nullable=True)
+    title_tr = db.Column(db.String)
+    reverse_title_tr = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "reverse_title": self.reverse_title,
+            "title_tr": self.title_tr,
+            "reverse_title_tr": self.reverse_title_tr
+        }
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.reverse_title = jsn.get('reverse_title', self.reverse_title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+        self.reverse_title_tr = jsn.get('reverse_title_tr', self.reverse_title_tr)
+
+
 # Actor to bulletin uni-direction relation
 class Atob(db.Model, BaseMixin):
     """
@@ -1089,6 +1153,12 @@ class Atob(db.Model, BaseMixin):
     user = db.relationship("User", backref="user_atobs", foreign_keys=[user_id])
 
     # Exclude the primary bulletin from output to get only the related/relating bulletin
+    @property
+    def relation_info(self):
+        # Query the AtobInfo table based on the related_as list
+        related_infos = AtobInfo.query.filter(AtobInfo.id.in_(self.related_as)).all() if self.related_as else []
+        # Return the to_dict representation of each of them
+        return [info.to_dict() for info in related_infos]
 
     # custom serialization method
     def to_dict(self):
@@ -1096,7 +1166,7 @@ class Atob(db.Model, BaseMixin):
         return {
             "bulletin": self.bulletin.to_compact(),
             "actor": self.actor.to_compact(),
-            "related_as": self.related_as if self.related_as else [],
+            "related_as": self.related_as or [],
             "probability": self.probability,
             "comment": self.comment,
             "user_id": self.user_id,
@@ -1116,6 +1186,34 @@ class Atob(db.Model, BaseMixin):
         else:
             print("Relation was not updated.")
         return self
+
+
+class AtobInfo(db.Model, BaseMixin):
+    """
+    Atob Relation Information Model
+    """
+    extend_existing = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    reverse_title = db.Column(db.String, nullable=True)
+    title_tr = db.Column(db.String)
+    reverse_title_tr = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "reverse_title": self.reverse_title,
+            "title_tr": self.title_tr,
+            "reverse_title_tr": self.reverse_title_tr
+        }
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.reverse_title = jsn.get('reverse_title', self.reverse_title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+        self.reverse_title_tr = jsn.get('reverse_title_tr', self.reverse_title_tr)
 
 
 class Atoa(db.Model, BaseMixin):
@@ -1140,6 +1238,12 @@ class Atoa(db.Model, BaseMixin):
     # user tracking
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_atoas", foreign_keys=[user_id])
+
+    @property
+    def relation_info(self):
+        related_info = AtoaInfo.query.filter(AtoaInfo.id == self.related_as).first() if self.related_as else None
+        # Return the to_dict representation of the related_info if it exists, or an empty dictionary if not
+        return related_info.to_dict() if related_info else {}
 
     # helper method to check if two actors are related and returns the relationship
     @staticmethod
@@ -1213,6 +1317,34 @@ class Atoa(db.Model, BaseMixin):
 
     def from_etl(self, json):
         pass
+
+
+class AtoaInfo(db.Model, BaseMixin):
+    """
+    Atoa Relation Information Model
+    """
+    extend_existing = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    reverse_title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
+    reverse_title_tr = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "reverse_title": self.reverse_title,
+            "title_tr": self.title_tr,
+            "reverse_title_tr": self.reverse_title_tr
+        }
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.reverse_title = jsn.get('reverse_title', self.reverse_title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+        self.reverse_title_tr = jsn.get('reverse_title_tr', self.reverse_title_tr)
 
 
 class Bulletin(db.Model, BaseMixin):
@@ -1437,19 +1569,12 @@ class Bulletin(db.Model, BaseMixin):
                 if id not in geo:
                     # new geolocation
                     g = GeoLocation()
-                    g.title = geo.get('title')
-                    g.type = geo.get('type')
-                    g.main = geo.get('main')
-                    g.latlng = 'POINT({} {})'.format(geo.get('lat'), geo.get('lng'))
-                    g.comment = geo.get('comment')
+                    g.from_json(geo)
                     g.save()
                 else:
                     # geolocation exists // update
                     g = GeoLocation.query.get(geo['id'])
-                    g.title = geo.get('title')
-                    g.type = geo.get('type')
-                    g.main = geo.get('main')
-                    g.latlng = 'POINT({} {})'.format(geo.get('lat'), geo.get('lng'))
+                    g.from_json(geo)
                     g.save()
                 final_locations.append(g)
             self.geo_locations = final_locations
@@ -1613,15 +1738,7 @@ class Bulletin(db.Model, BaseMixin):
         locations_json = []
         if self.locations and len(self.locations):
             for location in self.locations:
-                locations_json.append(
-                    {
-                        "id": location.id,
-                        "title": location.title,
-                        "full_string": location.get_full_string(),
-                        "lat": location.latitude,
-                        "lng": location.longitude
-                    }
-                )
+                locations_json.append(location.to_compact())
 
         # sources json
         sources_json = []
@@ -1769,15 +1886,7 @@ class Bulletin(db.Model, BaseMixin):
         locations_json = []
         if self.locations and len(self.locations):
             for location in self.locations:
-                locations_json.append(
-                    {
-                        "id": location.id,
-                        "title": location.title,
-                        "full_string": location.get_full_string(),
-                        "lat": location.latitude,
-                        "lng": location.longitude
-                    }
-                )
+                locations_json.append(location.to_compact())
 
         # locations json
         geo_locations_json = []
@@ -1883,13 +1992,7 @@ class Bulletin(db.Model, BaseMixin):
         locations_json = []
         if self.locations and len(self.locations):
             for location in self.locations:
-                locations_json.append(
-                    {
-                        "id": location.id,
-                        "title": location.title,
-                        "full_string": location.get_full_string(),
-                    }
-                )
+                locations_json.append(location.to_compact())
 
         # sources json
         sources_json = []
@@ -1925,6 +2028,46 @@ class Bulletin(db.Model, BaseMixin):
         for column in Bulletin.__table__.columns:
             columns.append(column.name)
         return columns
+
+    @staticmethod
+    def geo_query_location(target_point, radius_in_meters):
+        """Geosearch via locations"""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+        return Bulletin.id.in_(
+            db.session.query(bulletin_locations.c.bulletin_id)
+            .join(Location, bulletin_locations.c.location_id == Location.id)
+            .filter(func.ST_DWithin(
+                func.cast(Location.latlng, Geography),
+                func.cast(point, Geography),
+                radius_in_meters))
+        )
+
+    @staticmethod
+    def geo_query_geo_location(target_point, radius_in_meters):
+        """Geosearch via geolocations"""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+        return Bulletin.id.in_(
+            db.session.query(GeoLocation.bulletin_id)
+            .filter(func.ST_DWithin(
+                func.cast(GeoLocation.latlng, Geography),
+                func.cast(point, Geography),
+                radius_in_meters))
+        )
+
+    @staticmethod
+    def geo_query_event_location(target_point, radius_in_meters):
+        """Condition for association between bulletin and location via events."""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+
+        return Bulletin.id.in_(
+            db.session.query(bulletin_events.c.bulletin_id)
+            .join(Event, bulletin_events.c.event_id == Event.id)
+            .join(Location, Event.location_id == Location.id)
+            .filter(func.ST_DWithin(
+                func.cast(Location.latlng, Geography),
+                func.cast(point, Geography),
+                radius_in_meters))
+        )
 
     def get_modified_date(self):
 
@@ -1972,6 +2115,17 @@ actor_roles = db.Table(
         "actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True
     ),
 )
+
+actor_countries = db.Table('actor_countries',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), primary_key=True),
+    db.Column('country_id', db.Integer, db.ForeignKey('countries.id'), primary_key=True)
+)
+
+actor_ethnographies = db.Table('actor_ethnographies',
+    db.Column('actor_id', db.Integer, db.ForeignKey('actor.id'), primary_key=True),
+    db.Column('ethnography_id', db.Integer, db.ForeignKey('ethnographies.id'), primary_key=True)
+)
+
 
 
 class Actor(db.Model, BaseMixin):
@@ -2097,8 +2251,13 @@ class Actor(db.Model, BaseMixin):
     family_status = db.Column(db.String(255))
     family_status_ar = db.Column(db.String(255))
 
-    ethnography = db.Column(ARRAY(db.String))
-    nationality = db.Column(ARRAY(db.String))
+    ethnographies = db.relationship('Ethnography', secondary='actor_ethnographies',
+                                    backref=db.backref('actors', lazy='dynamic'))
+
+    nationalities = db.relationship('Country',
+                                    secondary=actor_countries,
+                                    backref=db.backref('actors', lazy='dynamic'))
+
     national_id_card = db.Column(db.String(255))
 
     publish_date = db.Column(db.DateTime, index=True)
@@ -2273,14 +2432,27 @@ class Actor(db.Model, BaseMixin):
         self.family_status_ar = (
             json["family_status_ar"] if "family_status_ar" in json else None
         )
-        self.ethnography = json["ethnography"] if "ethnography" in json else []
-        self.nationality = json["nationality"] if "nationality" in json else None
+
+
         self.national_id_card = (
             json["national_id_card"] if "national_id_card" in json else None
         )
 
         self.source_link = json["source_link"] if "source_link" in json else None
         self.source_link_type = json.get('source_link_type')
+
+        # Ethnographies
+        if "ethnography" in json:
+            ids = [ethnography.get('id') for ethnography in json["ethnography"]]
+            ethnographies = Ethnography.query.filter(Ethnography.id.in_(ids)).all()
+            self.ethnographies = ethnographies
+
+        # Nationalitites
+        if "nationality" in json:
+            ids = [country.get('id') for country in json["nationality"]]
+            countries = Country.query.filter(Country.id.in_(ids)).all()
+            self.nationalities = countries
+
 
         # Sources
         if "sources" in json:
@@ -2305,21 +2477,25 @@ class Actor(db.Model, BaseMixin):
         self.civilian = json["civilian"] if "civilian" in json else None
         self.actor_type = json["actor_type"] if "actor_type" in json else None
 
-        if "birth_date" in json:
-            if json["birth_date"]:
-                self.birth_date = json["birth_date"]
+        if "birth_date" in json and json["birth_date"]:
+            self.birth_date = json["birth_date"]
+        else:
+            self.birth_date = None
 
-        if "birth_place" in json:
-            if json["birth_place"] and "id" in json["birth_place"]:
-                self.birth_place_id = json["birth_place"]["id"]
+        if "birth_place" in json and json["birth_place"] and "id" in json["birth_place"]:
+            self.birth_place_id = json["birth_place"]["id"]
+        else:
+            self.birth_place_id = None
 
-        if "residence_place" in json:
-            if json["residence_place"] and "id" in json["residence_place"]:
-                self.residence_place_id = json["residence_place"]["id"]
+        if "residence_place" in json and json["residence_place"] and "id" in json["residence_place"]:
+            self.residence_place_id = json["residence_place"]["id"]
+        else:
+            self.residence_place_id = None
 
-        if "origin_place" in json:
-            if json["origin_place"] and "id" in json["origin_place"]:
-                self.origin_place_id = json["origin_place"]["id"]
+        if "origin_place" in json and json["origin_place"] and "id" in json["origin_place"]:
+            self.origin_place_id = json["origin_place"]["id"]
+        else:
+            self.origin_place_id = None
 
         # Events
         if "events" in json:
@@ -2833,9 +3009,9 @@ class Actor(db.Model, BaseMixin):
             "dialects_ar": self.dialects_ar or None,
             "family_status": self.family_status or None,
             "family_status_ar": self.family_status_ar or None,
-            "ethnography": self.ethnography or None,
 
-            "nationality": self.nationality or None,
+            "ethnography": [ethnography.to_dict() for ethnography in getattr(self, 'ethnographies', [])],
+            "nationality": [country.to_dict() for country in getattr(self, 'nationalities', [])],
             "national_id_card": self.national_id_card or None,
             # assigned to
             "assigned_to": self.assigned_to.to_compact()
@@ -2862,9 +3038,7 @@ class Actor(db.Model, BaseMixin):
             else None,
             "origin_place": self.origin_place.to_dict() if self.origin_place else None,
 
-            "birth_date": self.birth_date.strftime("%Y-%m-%d")
-            if self.birth_date
-            else None,
+            "birth_date": DateHelper.serialize_datetime(self.birth_date) if self.birth_date else None,
             "publish_date": DateHelper.serialize_datetime(self.publish_date),
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
             "status": self.status,
@@ -2873,11 +3047,7 @@ class Actor(db.Model, BaseMixin):
             "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
             "roles": [role.to_dict() for role in self.roles] if self.roles else []
         }
-        # custom translation handler for ethnography and nationality
-        if self.ethnography:
-            actor['_ethnography'] = [gettext(item) for item in self.ethnography]
-        if self.nationality:
-            actor['_nationality'] = [gettext(item) for item in self.nationality]
+
         # handle missing actors mode
         if cfg.MISSING_PERSONS:
             mp = self.mp_json()
@@ -2909,6 +3079,59 @@ class Actor(db.Model, BaseMixin):
 
     def to_json(self):
         return json.dumps(self.to_dict())
+
+    @staticmethod
+    def geo_query_origin_place(target_point, radius_in_meters):
+        """Condition for direct association between actor and origin_place."""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+        return Actor.id.in_(
+            db.session.query(Actor.id)
+            .join(Location, Actor.origin_place_id == Location.id)
+            .filter(func.ST_DWithin(
+                func.cast(Location.latlng, Geography),
+                func.cast(point, Geography),
+                radius_in_meters))
+        )
+
+    @staticmethod
+    def geo_query_birth_place(target_point, radius_in_meters):
+        """Condition for direct association between actor and birth_place."""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+        return Actor.id.in_(
+            db.session.query(Actor.id)
+            .join(Location, Actor.birth_place_id == Location.id)
+            .filter(func.ST_DWithin(
+                func.cast(Location.latlng, Geography),
+                func.cast(point, Geography),
+                radius_in_meters))
+        )
+
+    @staticmethod
+    def geo_query_residence_place(target_point, radius_in_meters):
+        """Condition for direct association between actor and residence_place."""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+        return Actor.id.in_(
+            db.session.query(Actor.id)
+            .join(Location, Actor.residence_place_id == Location.id)
+            .filter(func.ST_DWithin(
+                func.cast(Location.latlng, Geography),
+                func.cast(point, Geography),
+                radius_in_meters))
+        )
+
+    @staticmethod
+    def geo_query_event_location(target_point, radius_in_meters):
+        """Condition for association between actor and location via events."""
+        point = func.ST_SetSRID(func.ST_MakePoint(target_point.get('lng'), target_point.get('lat')), 4326)
+        return Actor.id.in_(
+            db.session.query(actor_events.c.actor_id)
+            .join(Event, actor_events.c.event_id == Event.id)
+            .join(Location, Event.location_id == Location.id)
+            .filter(func.ST_DWithin(
+                func.cast(Location.latlng, Geography),
+                func.cast(point, Geography),
+                radius_in_meters))
+        )
 
     def validate(self):
         """
@@ -2942,7 +3165,12 @@ class Itob(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_itobs", foreign_keys=[user_id])
 
-    # Exclude the primary bulletin from output to get only the related/relating bulletin
+    @property
+    def relation_info(self):
+        related_info = ItobInfo.query.filter(ItobInfo.id == self.related_as).first() if self.related_as else None
+        # Return the to_dict representation of the related_info if it exists, or an empty dictionary if not
+        return related_info.to_dict() if related_info else {}
+
     # custom serialization method
     def to_dict(self):
 
@@ -2971,6 +3199,34 @@ class Itob(db.Model, BaseMixin):
         return self
 
 
+class ItobInfo(db.Model, BaseMixin):
+    """
+    Itob Relation Information Model
+    """
+    extend_existing = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    reverse_title = db.Column(db.String, nullable=True)
+    title_tr = db.Column(db.String)
+    reverse_title_tr = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "reverse_title": self.reverse_title,
+            "title_tr": self.title_tr,
+            "reverse_title_tr": self.reverse_title_tr
+        }
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.reverse_title = jsn.get('reverse_title', self.reverse_title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+        self.reverse_title_tr = jsn.get('reverse_title_tr', self.reverse_title_tr)
+
+
 # Incident to actor uni-direction relation
 class Itoa(db.Model, BaseMixin):
     """
@@ -2992,6 +3248,13 @@ class Itoa(db.Model, BaseMixin):
     # user tracking
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_itoas", foreign_keys=[user_id])
+
+    @property
+    def relation_info(self):
+        # Query the AtobInfo table based on the related_as list
+        related_infos = ItoaInfo.query.filter(ItoaInfo.id.in_(self.related_as)).all() if self.related_as else []
+        # Return the to_dict representation of each of them
+        return [info.to_dict() for info in related_infos]
 
     # custom serialization method
     def to_dict(self):
@@ -3019,6 +3282,34 @@ class Itoa(db.Model, BaseMixin):
         else:
             print("Relation was not updated.")
         return self
+
+
+class ItoaInfo(db.Model, BaseMixin):
+    """
+    Itoa Relation Information Model
+    """
+    extend_existing = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    reverse_title = db.Column(db.String, nullable=True)
+    title_tr = db.Column(db.String)
+    reverse_title_tr = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "reverse_title": self.reverse_title,
+            "title_tr": self.title_tr,
+            "reverse_title_tr": self.reverse_title_tr
+        }
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.reverse_title = jsn.get('reverse_title', self.reverse_title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+        self.reverse_title_tr = jsn.get('reverse_title_tr', self.reverse_title_tr)
 
 
 # incident to incident relationship
@@ -3049,6 +3340,12 @@ class Itoi(db.Model, BaseMixin):
     # user tracking
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_itois", foreign_keys=[user_id])
+
+    @property
+    def relation_info(self):
+        related_info = ItoiInfo.query.filter(ItoiInfo.id == self.related_as).first() if self.related_as else None
+        # Return the to_dict representation of the related_info if it exists, or an empty dictionary if not
+        return related_info.to_dict() if related_info else {}
 
     # Check if two incidents are related , if so return the relation, otherwise false
     @staticmethod
@@ -3121,6 +3418,34 @@ class Itoi(db.Model, BaseMixin):
         else:
             print("Relation was not updated.")
         return self
+
+
+class ItoiInfo(db.Model, BaseMixin):
+    """
+    Itoi Information Model
+    """
+    extend_existing = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    reverse_title = db.Column(db.String, nullable=True)
+    title_tr = db.Column(db.String)
+    reverse_title_tr = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "reverse_title": self.reverse_title,
+            "title_tr": self.title_tr,
+            "reverse_title_tr": self.reverse_title_tr
+        }
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.reverse_title = jsn.get('reverse_title', self.reverse_title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+        self.reverse_title_tr = jsn.get('reverse_title_tr', self.reverse_title_tr)
 
 
 class PotentialViolation(db.Model, BaseMixin):
@@ -3651,13 +3976,7 @@ class Incident(db.Model, BaseMixin):
         locations_json = []
         if self.locations and len(self.locations):
             for location in self.locations:
-                locations_json.append({
-                    "id": location.id,
-                    "title": location.title,
-                    "full_string": location.get_full_string(),
-                    "lat": location.latitude,
-                    "lng": location.longitude
-                })
+                locations_json.append(location.to_compact())
 
         # potential violations json
         pv_json = []
@@ -3735,11 +4054,7 @@ class Incident(db.Model, BaseMixin):
         locations_json = []
         if self.locations and len(self.locations):
             for location in self.locations:
-                locations_json.append({
-                    "id": location.id,
-                    "title": location.title,
-                    "full_string": location.get_full_string(),
-                })
+                locations_json.append(location.min_json())
 
         return {
             "class": "Incident",
@@ -3933,7 +4248,7 @@ class Activity(db.Model, BaseMixin):
 
 
 class Settings(db.Model, BaseMixin):
-    """Global Application Settings. (SQL Alchemy model)"""
+    """ User Specific Settings. (SQL Alchemy model)"""
     id = db.Column(db.Integer, primary_key=True)
     darkmode = db.Column(db.Boolean, default=False)
     api_key = db.Column(db.String)
@@ -4054,3 +4369,148 @@ class Log(db.Model, BaseMixin):
 
     def __repr__(self):
         return '<{} - {}>'.format(self.id, self.name)
+
+
+class Country(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for countries
+    """
+    __tablename__ = 'countries'
+    __table_args__ = {"extend_existing": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'title_tr': self.title_tr,
+            'created_at': DateHelper.serialize_datetime(self.created_at),
+            'updated_at': DateHelper.serialize_datetime(self.updated_at)
+        }
+
+
+class Ethnography(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for ethnographies
+    """
+    __tablename__ = 'ethnographies'
+    __table_args__ = {"extend_existing": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'title_tr': self.title_tr,
+            'created_at': DateHelper.serialize_datetime(self.created_at),
+            'updated_at': DateHelper.serialize_datetime(self.updated_at)
+        }
+
+
+class AppConfig(db.Model, BaseMixin):
+    """Global Application Settings. (SQL Alchemy model)"""
+    id = db.Column(db.Integer, primary_key=True)
+    config = db.Column(JSON, nullable=False)
+
+    # add user reference
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", backref="user_configs", foreign_keys=[user_id])
+
+    def to_dict(self):
+        print(self.user)
+        return {
+            'id': self.id,
+            'config': self.config,
+            'created_at': DateHelper.serialize_datetime(self.created_at),
+            'user': self.user.to_dict() if self.user else {}
+
+        }
+
+
+class MediaCategory(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for media categories
+    """
+    __tablename__ = 'media_categories'
+    __table_args__ = {"extend_existing": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'title_tr': self.title_tr,
+            'created_at': DateHelper.serialize_datetime(self.created_at),
+            'updated_at': DateHelper.serialize_datetime(self.updated_at)
+        }
+
+
+class GeoLocationType(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for geo location types
+    """
+    __tablename__ = 'geo_location_types'
+    __table_args__ = {"extend_existing": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'title_tr': self.title_tr,
+            'created_at': DateHelper.serialize_datetime(self.created_at),
+            'updated_at': DateHelper.serialize_datetime(self.updated_at)
+        }
+
+
+class WorkflowStatus(db.Model, BaseMixin):
+    """
+    SQL Alchemy model for workflow statuses
+    """
+    __tablename__ = 'workflow_statuses'
+    __table_args__ = {"extend_existing": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
+
+    def from_json(self, jsn):
+        self.title = jsn.get('title', self.title)
+        self.title_tr = jsn.get('title_tr', self.title_tr)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'title_tr': self.title_tr,
+            'created_at': DateHelper.serialize_datetime(self.created_at),
+            'updated_at': DateHelper.serialize_datetime(self.updated_at)
+        }

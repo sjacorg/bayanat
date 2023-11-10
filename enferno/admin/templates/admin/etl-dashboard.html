@@ -172,7 +172,7 @@
                                                     <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/labels/"
-                                                                query-params="&typ=for_bulletin"
+                                                                :query-params="{ typ: 'for_bulletin' }"
                                                                 item-text="title"
                                                                 item-value="id"
                                                                 :multiple="true"
@@ -183,7 +183,7 @@
                                                     <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/labels/"
-                                                                query-params="&fltr=verified&typ=for_bulletin"
+                                                                :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
                                                                 item-text="title"
                                                                 item-value="id"
                                                                 :multiple="true"
@@ -194,14 +194,15 @@
                                                 </v-row>
                                                 <v-row>
                                                     <v-col cols="12" md="4">
-                                                        <search-field
+                                                        <location-search-field
                                                                 api="/admin/api/locations/"
                                                                 item-text="full_string"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 label="{{ _('Locations') }}"
                                                                 v-model="locations"
-                                                        ></search-field>
+
+                                                        ></location-search-field>
                                                     </v-col>
                                                     <v-col cols="12" md="4">
                                                         <search-field
@@ -440,8 +441,7 @@
 
 
                 options: {
-                    handler: "refresh",
-                    immdiate: true
+                    handler: "refresh"
                 }
             },
 

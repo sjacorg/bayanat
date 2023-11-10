@@ -119,14 +119,14 @@
 
         <v-row>
           <v-col cols="12" md="8">
-                    <search-field
+                    <location-search-field
                     v-model="editedEvent.location"
                     api="/admin/api/locations/"
                     item-text="full_string"
                     item-value="id"
                     :multiple="false"
                     label="{{_('Location')}}"
-                    ></search-field>
+                    ></location-search-field>
 
 
           </v-col>

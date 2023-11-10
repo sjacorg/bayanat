@@ -12,7 +12,7 @@ Vue.component("location-card", {
           }
           if (this.location.latlng){
             let loc = {
-              bulletinId: null,
+              parentId: null,
               color: "#00a1f1",
               full_string: this.location.full_string,
               id: this.location.id,
@@ -126,7 +126,7 @@ Vue.component("location-card", {
           {{ i18n.admin_level_ }} {{ location.admin_level.title }}
         </v-chip>
         <v-chip pill small label color="gv darken-3" class="white--text" v-if="location.country">
-          {{ i18n.country_ }} {{ location.country }}
+          {{ i18n.country_ }} {{ location.country.title }}
         </v-chip>
       </v-card>
 

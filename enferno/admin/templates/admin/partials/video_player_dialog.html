@@ -81,13 +81,18 @@
           
 
                   <!-- cagtegory -->
-                  <v-select
-                    v-model="screenshots[index].category"
-                    item-text="tr"
-                    item-value="en"
-                    :items="translations.mediaCats"
-                    label="Media Category"
-                  ></v-select>
+
+              <search-field
+                            api="/admin/api/mediacategories"
+                            v-model="screenshots[index].category"
+                            label="Medai Cateogry"
+                            item-text="title"
+                            item-value="id"
+                            :return-object="false"
+                            >
+
+                            </search-field>
+
 
                   <v-btn v-if="!screenshots[index].ready"  @click="removeSnapshot($event,index)" fab small dark icon color="error"><v-icon>mdi-close</v-icon></v-btn>
                   <v-btn v-if="!screenshots[index].ready" @click="uploadSnapshot($event,index)" fab small dark icon color="primary"><v-icon>mdi-upload</v-icon></v-btn>

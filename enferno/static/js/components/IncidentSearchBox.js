@@ -131,7 +131,7 @@ Vue.component('incident-search-box', {
                       hint="select event type"
                       v-model="q.etype"
                       api="/admin/api/eventtypes/"
-                      query-params="&typ=for_bulletin"
+                      :query-params="{ typ: 'for_bulletin' }"
                       item-text="title"
                       item-value="id"
                       :multiple="false"
@@ -144,14 +144,14 @@ Vue.component('incident-search-box', {
               
               
                 
-                  <search-field
+                  <location-search-field
                       v-model="q.elocation"
                       api="/admin/api/locations/"
                       item-text="full_string"
                       item-value="id"
                       :multiple="false"
                       :label="i18n.includeEventLocations_"
-                  ></search-field>
+                  ></location-search-field>
 
                 
 
@@ -221,7 +221,7 @@ Vue.component('incident-search-box', {
                   multiple
                   v-model="q.statuses"
               >
-                <v-chip :value="status.en" label small v-for="status in translations.statuses_" :key="status.en"
+                <v-chip :value="status.en" label small v-for="status in translations.statuses" :key="status.en"
                         filter outlined>{{ status.tr }}
                 </v-chip>
               </v-chip-group>
@@ -289,7 +289,7 @@ Vue.component('incident-search-box', {
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
-                    query-params="&typ=for_indident&mode=2"
+                    :query-params="{}"
                     item-text="title"
                     item-value="id"
                     :multiple="true"
@@ -302,7 +302,7 @@ Vue.component('incident-search-box', {
               <search-field
                   v-model="q.exlabels"
                   api="/admin/api/labels/"
-                  query-params="&typ=for_indident"
+                  :query-params="{}"
                   item-text="title"
                   item-value="id"
                   :multiple="true"
@@ -314,33 +314,34 @@ Vue.component('incident-search-box', {
           </v-row>
 
 
-          <v-row>
-            <v-col>
-              <div class="d-flex">
-                <search-field
-                    v-model="q.locations"
-                    api="/admin/api/locations/"
-                    item-text="full_string"
-                    item-value="id"
-                    :multiple="true"
-                    :label="i18n.includeLocations_"
-                ></search-field>
-                <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
-                            class="mx-3"></v-checkbox>
-              </div>
-              <search-field
-                  v-model="q.exlocations"
-                  api="/admin/api/locations/"
-                  item-text="full_string"
-                  item-value="id"
-                  :multiple="true"
-                  :label="i18n.excludeLocations_"
-              ></search-field>
+                <v-row>
+                    <v-col>
+                        <div class="d-flex">
+                            <location-search-field
+                                    v-model="q.locations"
+                                    api="/admin/api/locations/"
+                                    item-text="full_string"
+                                    item-value="id"
+                                    :multiple="true"
+                                    :label="i18n.includeLocations_"
+                                    :post-request="true"
+                            ></location-search-field>
+                            <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
+                                        class="mx-3"></v-checkbox>
+                        </div>
+                        <location-search-field
+                                v-model="q.exlocations"
+                                api="/admin/api/locations/"
+                                item-text="full_string"
+                                item-value="id"
+                                :multiple="true"
+                                :label="i18n.excludeLocations_"
+                                :post-request="true"
+                        ></location-search-field>
 
 
-            </v-col>
-          </v-row>
-
+                    </v-col>
+                </v-row>
 
         </v-container>
 

@@ -313,6 +313,15 @@
         </v-app>
     </div>
 
+<div class="d-none" data-itob='{{itobInfo|tojson}}'></div>
+<div class="d-none" data-itoa='{{itoaInfo|tojson}}'></div>
+<div class="d-none" data-atob='{{atobInfo|tojson}}'></div>
+<div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
+<div class="d-none" data-btob='{{btobInfo|tojson}}'></div>
+<div class="d-none" data-itoi='{{itoiInfo|tojson}}'></div>
+<div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
+<div class="d-none" data-allowed-media-types='{{ ", ".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
+
 {% endblock %} {% block js %}
     <script
             src="/static/js/tinymce/js/tinymce/tinymce.min.js"
@@ -381,9 +390,18 @@
 
                 translations: translations,
 
+                itobInfo : JSON.parse(document.querySelector('[data-itob]').dataset.itob),
+                itoaInfo : JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
+                itoiInfo : JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
+                atobInfo : JSON.parse(document.querySelector('[data-atob]').dataset.atob),
+                btobInfo : JSON.parse(document.querySelector('[data-btob]').dataset.btob),
+                atoaInfo : JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
+
+
+
                 dzOpts: {
                     url: '/admin/api/media/chunk',
-                    acceptedFiles: 'image/*, video/*, application/*',
+                    acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
                     addRemoveLinks: true,
                     chunking: true,
                     forceChunking: true,
@@ -391,7 +409,8 @@
                     thumbnailWidth: 80, // px
                     thumbnailHeight: 80,
                     parallelUploads: 1,
-                    maxFilesize: 2048
+                    maxFilesize: mediaUploadMaxFileSize,
+
 
                 },
 
@@ -427,7 +446,7 @@
 
                 dialog: dialog,
                 eventDialog: false,
-                eventParams: '&typ=for_bulletin',
+                eventParams: { typ: 'for_bulletin' },
                 reviewDialog: false,
                 reviewKey: 0,
                 descKey: 0,
@@ -468,8 +487,11 @@
                 eventtypes: [],
 
 
-                statuses: statuses,
-                statusItems: statuses,
+                statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                  .map(s => ({en: s.title, tr: s.title_tr})),
+
+              statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                  .map(s => ({en: s.title, tr: s.title_tr})),
                 statusDisabled: false,
 
 
@@ -591,7 +613,7 @@
 
             computed: {
                 compLocations() {
-                    return aggregateLocations(this.editedItem);
+                    return aggregateBulletinLocations(this.editedItem);
                 },
 
 
@@ -680,11 +702,14 @@
                 },
 
                 options: {
-                    handler: "refresh",
-                    immdiate: true
+                    handler: "refresh"
                 }
             },
             mounted: function () {
+
+
+
+
 
                 // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
@@ -756,7 +781,7 @@
 
             methods: {
 
-                exportRequest() {
+             exportRequest() {
 
                     let ids = this.selected.map(x => x.id);
                     this.loading = true;
@@ -912,9 +937,7 @@
                 toggleAdvSearch() {
                     this.advSearchExpand = !this.advSearchExpand
                     this.advSearchMenu = !this.advSearchMenu;
-                    this.$nextTick(() => {
-                        // trick to just invoke the binding
-                    })
+
 
                 },
                 doSearch() {
@@ -931,10 +954,6 @@
                 }
                 ,
                 searchBulletins(cached) {
-
-
-                    // const page = this.options.page > 1? this.options.page : '';
-                    // const url =
 
                     this.loading = true;
                     const startTime = new Date()

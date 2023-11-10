@@ -42,9 +42,11 @@
       </v-list-item-content>
     </v-list-item>
 
-    {% if current_user.has_role('Admin') or current_user.has_role('Mod') or current_user.has_role('DA') %}
 
-    <v-list-item href="/admin/locations/" key="locations">
+  {% if current_user.has_role('Admin') or current_user.has_role('Mod') or current_user.has_role('DA') %}
+
+          <!-- Primary Data (Locations) -->
+    <v-list-item  href="/admin/locations/" key="locations">
       <v-list-item-action>
         <v-icon>mdi-folder-marker</v-icon>
       </v-list-item-action>
@@ -55,7 +57,7 @@
       </v-list-item-content>
     </v-list-item>
 
-    {% endif %}
+{% endif %}
 
     {% if current_user.has_role('Admin') or current_user.has_role('Mod')%}
 
@@ -96,7 +98,19 @@
 
     {% if current_user.has_role("Admin") %}
 
-    <v-list-item href="/admin/activity/" key="users">
+    <!-- Secondary Data (Location Configurations) -->
+    <v-list-item  href="/admin/component-data/" key="comp-data">
+      <v-list-item-action>
+        <v-icon>mdi-map-marker-path</v-icon>
+      </v-list-item-action>
+      <v-list-item-content>
+        <v-list-item-title>
+            {{_('Component Data')}}
+        </v-list-item-title>
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item href="/admin/activity/" key="activity">
       <v-list-item-action>
         <v-icon>mdi-pulse</v-icon>
       </v-list-item-action>
@@ -107,27 +121,40 @@
       </v-list-item-content>
     </v-list-item>
 
-    <v-list-item href="/admin/users/" key="users">
+  <v-list-group no-action prepend-icon="mdi-account-group">
+    <template v-slot:activator>
+      <v-list-item-content>
+        <v-list-item-title>
+          {{_('Users & Groups')}}
+        </v-list-item-title>
+      </v-list-item-content>
+    </template>
+
+    <!-- Users Management -->
+    <v-list-item class="grey lighten-3" href="/admin/users/" key="users">
       <v-list-item-action>
         <v-icon>mdi-account-multiple</v-icon>
       </v-list-item-action>
       <v-list-item-content>
         <v-list-item-title>
-          {{_('Users Management')}}
+          {{_('Users')}}
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>
 
-    <v-list-item href="/admin/roles/" key="roles">
+    <!-- Groups Management -->
+    <v-list-item class="grey lighten-3" href="/admin/roles/" key="roles">
       <v-list-item-action>
         <v-icon>mdi-shield-lock</v-icon>
       </v-list-item-action>
       <v-list-item-content>
         <v-list-item-title>
-          {{_('Groups Management')}}
+          {{_('Groups')}}
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>
+</v-list-group>
+
 
     {% if config.ETL_TOOL %}
 
@@ -141,7 +168,7 @@
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>
-    
+
     {% endif %}
 
     {%  if config.SHEET_IMPORT %}
@@ -191,7 +218,7 @@
       </v-list-item-content>
     </v-list-item>
 
-    {% endif %}
+    {% endif  %}
     {% endif %}
 
 
@@ -199,28 +226,18 @@
 
     <v-list-item href="/admin/system-administration/" key="sysadmin">
       <v-list-item-action>
-        <v-icon>mdi-puzzle</v-icon>
+        <v-icon>mdi-cog</v-icon>
       </v-list-item-action>
       <v-list-item-content>
         <v-list-item-title>
-          {{_('System Administration')}}
+          {{_('System Settings')}}
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>
 
     {% endif %}
 
-    <v-list-item href="/settings/" key="settings">
-      <v-list-item-action>
-        <v-icon>mdi-cog</v-icon>
-      </v-list-item-action>
-      <v-list-item-content>
-        <v-list-item-title>
-          {{_('Settings')}}
-        </v-list-item-title>
-      </v-list-item-content>
-    </v-list-item>
 
-  </v-list>
-  
+
+
 </v-navigation-drawer>

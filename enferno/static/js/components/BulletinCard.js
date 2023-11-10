@@ -7,7 +7,8 @@ Vue.component("bulletin-card", {
             this.loadActorRelations();
             this.loadIncidentRelations();
 
-            this.mapLocations = aggregateLocations(this.bulletin);
+            this.mapLocations = aggregateBulletinLocations(this.bulletin);
+
         },
     },
 
@@ -18,6 +19,7 @@ Vue.component("bulletin-card", {
     },
 
     methods: {
+
 
         translate_status(status){
             return translate_status(status);
@@ -68,17 +70,6 @@ Vue.component("bulletin-card", {
             return translations.probs[item.probability].tr
         },
 
-        actor_related_as(id) {
-            return translations.btoaRelateAs[id].tr;
-        },
-
-        bulletin_related_as(id) {
-            return translations.btobRelateAs[id].tr;
-        },
-
-        incident_related_as(item) {
-            return translations.itobRelateAs[item.related_as].tr;
-        },
 
         showReview(bulletin) {
             return (bulletin.status == 'Peer Reviewed' && bulletin.review);
@@ -187,7 +178,8 @@ Vue.component("bulletin-card", {
             // load more buttons
             bulletinLM: false,
             actorLM: false,
-            incidentLM:false
+            incidentLM:false,
+
         };
     },
 
@@ -220,7 +212,7 @@ Vue.component("bulletin-card", {
       </v-chip>
       <v-chip color="white lighten-3" small label class="mx-2 my-2" v-if="bulletin.status">
         <v-icon left>mdi-delta</v-icon>
-        {{ translate_status(bulletin.status) }}
+        {{ bulletin.status }}
       </v-chip>
         </v-card>
 
@@ -368,8 +360,8 @@ Vue.component("bulletin-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip class="ma-1" v-for="r in item.related_as" color="grey lighten-4" small
-                        label>{{ bulletin_related_as(r) }}
+                <v-chip  class="ma-1" v-for="r in extractValuesById($root.btobInfo, item.related_as, 'title') " color="grey lighten-4" small
+                        label>{{ r }}
                 </v-chip>
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
@@ -410,8 +402,8 @@ Vue.component("bulletin-card", {
                 <v-chip v-if="item.probability!== null" class="ma-1" color="grey lighten-4" small label>
                   {{ probability(item) }}
                 </v-chip>
-                <v-chip class="ma-1" v-for="r in item.related_as" color="grey lighten-4" small
-                        label>{{ actor_related_as(r) }}
+                <v-chip class="ma-1" v-for="r in extractValuesById($root.atobInfo, item.related_as, 'title')" color="grey lighten-4" small
+                        label>{{ r }}
                 </v-chip>
                 <v-chip v-if="item.comment" class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
@@ -450,7 +442,7 @@ Vue.component("bulletin-card", {
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
                 
-                <v-chip v-if="item.related_as!==null" color="grey lighten-4" small label>{{ incident_related_as(item) }}
+                <v-chip v-for="r in extractValuesById($root.itobInfo, [item.related_as],'title')" v-if="item.related_as" color="grey lighten-4" small label>{{ r }}
                 </v-chip>
 
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>

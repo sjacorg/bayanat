@@ -9,16 +9,11 @@ from flask_security.forms import LoginForm
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
-from enferno.settings import ProdConfig, DevConfig
+from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User
 
 bp_user = Blueprint('users', __name__, static_folder='../static')
-
-if os.environ.get("FLASK_DEBUG") == '0':
-    cfg = ProdConfig
-else:
-    cfg = DevConfig
 
 client = WebApplicationClient(cfg.GOOGLE_CLIENT_ID)
 

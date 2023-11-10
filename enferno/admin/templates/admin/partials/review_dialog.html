@@ -50,13 +50,13 @@
                     <div class="d-flex align-center">
                         <div class="pa-4">
 
-                            <search-field
+                            <location-search-field
                                     api="/admin/api/locations/"
                                     item-text="full_string"
                                     item-value="id"
                                     :multiple="true"
                                     label="Locations"
-                            ></search-field>
+                            ></location-search-field>
 
                         </div>
                         <div class="pa-4">
@@ -75,7 +75,7 @@
 
                             <search-field
                                     api="/admin/api/labels/"
-                                    query-params="&fltr=verified"
+                                    :query-params="{ fltr: 'verified' }"
                                     item-text="title"
                                     item-value="id"
                                     :multiple="true"

@@ -19,3 +19,4 @@ enferno/media/*
 *.xls
 *.xlsx
 .aws
+config.json

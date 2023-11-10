@@ -16,17 +16,17 @@
                                 <v-card-text>
 
                                     <v-data-table
-                                        height="calc(100vh - 335px)"
-                                        id="locations-dt"
-                                        fixed-header
-                                        :headers="headers"
-                                        @click:row="rowClick"
-                                        :items="items"
-                                        :options.sync="options"
-                                        :footer-props.sync="footerProps"
-                                        :loading="loading"
-                                        :server-items-length="itemsLength"
-                                        class="elevation-1"
+                                            height="calc(100vh - 335px)"
+                                            id="locations-dt"
+                                            fixed-header
+                                            :headers="headers"
+                                            @click:row="rowClick"
+                                            :items="items"
+                                            :options.sync="options"
+                                            :footer-props.sync="footerProps"
+                                            :loading="loading"
+                                            :server-items-length="itemsLength"
+                                            class="elevation-1"
                                     >
                                         <template v-slot:top>
                                             <v-toolbar flat color="white">
@@ -38,35 +38,40 @@
                                                         outlined
                                                         dense
                                                         class="mt-6"
-                                                        v-model="q"
+                                                        v-model="q.title"
                                                         @keydown.enter="refresh()"
+                                                        append-outer-icon="mdi-ballot"
+                                                        @click:append-outer="toggleAdvSearch"
+                                                        @click:append="resetSearch"
+                                                        append-icon="mdi-close"
 
                                                         label="{{ _('Search') }}">
+
 
                                                 </v-text-field>
                                                 <v-spacer></v-spacer>
                                                 <v-btn @click="newItem"
-                                                    color="primary"
-                                                    dark
-                                                    class="ma-2"
-                                                    :disabled="!editAllowed()">
+                                                       color="primary"
+                                                       dark
+                                                       class="ma-2"
+                                                       :disabled="!editAllowed()">
                                                     {{ _('New Location') }}
                                                 </v-btn>
 
                                                 {% include 'admin/partials/location_dialog.html' %}
 
                                                 <v-dialog
-                                                    v-model="imDialog"
-                                                    width="500">
+                                                        v-model="imDialog"
+                                                        width="500">
                                                     <template v-slot:activator="{ on }">
                                                         {% if current_user.roles_in(['Admin']) %}
-                                                        <v-btn
-                                                            color="secondary"
-                                                            dark
-                                                            class="ma-2"
-                                                            v-on="on">
-                                                            {{ _('Import CSV') }}
-                                                        </v-btn>
+                                                            <v-btn
+                                                                    color="secondary"
+                                                                    dark
+                                                                    class="ma-2"
+                                                                    v-on="on">
+                                                                {{ _('Import CSV') }}
+                                                            </v-btn>
                                                         {% endif %}
                                                     </template>
 
@@ -80,9 +85,9 @@
                                                                 <v-row>
                                                                     <v-col cols="12" md="12">
                                                                         <v-file-input
-                                                                            v-model="csvFile" show-size
-                                                                            accept=".csv"
-                                                                            label="{{ _('Select CSV File') }}">
+                                                                                v-model="csvFile" show-size
+                                                                                accept=".csv"
+                                                                                label="{{ _('Select CSV File') }}">
                                                                         </v-file-input>
                                                                     </v-col>
                                                                 </v-row>
@@ -92,16 +97,16 @@
                                                         <v-card-actions>
                                                             <v-spacer></v-spacer>
                                                             <v-btn
-                                                                color="blue darken-1"
-                                                                text
-                                                                @click="imDialog=false">
-                                                                {{_('Cancel')}}
+                                                                    color="blue darken-1"
+                                                                    text
+                                                                    @click="imDialog=false">
+                                                                {{ _('Cancel') }}
                                                             </v-btn>
                                                             <v-btn
-                                                                color="blue darken-1"
-                                                                text
-                                                                @click="importCSV">
-                                                                {{_('Save')}}
+                                                                    color="blue darken-1"
+                                                                    text
+                                                                    @click="importCSV">
+                                                                {{ _('Save') }}
                                                             </v-btn>
                                                         </v-card-actions>
                                                     </v-card>
@@ -120,7 +125,8 @@
 
                                         </template>
                                         <template v-slot:item.action="{ item }">
-                                            <v-icon small class="mr-2" @click.stop="editItem(item)" v-if="editAllowed()">
+                                            <v-icon small class="mr-2" @click.stop="editItem(item)"
+                                                    v-if="editAllowed()">
                                                 mdi-pencil
                                             </v-icon>
                                             <v-icon small @click="deleteItem(item)">
@@ -129,6 +135,8 @@
                                         </template>
                                         <template v-slot:no-data></template>
                                     </v-data-table>
+
+                                    {% include 'admin/partials/location_advsearch.html' %}
 
                                     <v-snackbar v-model="snackbar" class="d-flex">
                                         ${snackMessage}
@@ -149,22 +157,23 @@
 
 {% endblock %} {% block js %}
     <script
-        src="/static/js/tinymce/js/tinymce/tinymce.min.js"
-        referrerpolicy="origin">
+            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            referrerpolicy="origin">
     </script>
     <script src="/static/js/tinymce-vue.min.js"></script>
     <script src="/static/js/components/LocationCard.js"></script>
     <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/LocationSearchBox.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
-        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe}}
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
 
     {% endif %}
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
-        
+
 
         let app = new Vue({
             el: "#app",
@@ -175,6 +184,10 @@
                 "tinymce-editor": Editor, // <- Important part,
             },
             data: () => ({
+                search: '',
+                users: [],
+                roles: [],
+                advSearchOpen: false,
                 translations: translations,
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 dialog: dialog,
@@ -189,7 +202,7 @@
                 snackMessage: '',
                 loading: true,
                 csvFile: null,
-                q: '',
+                q: {},
                 options: {},
                 footerProps: {
                     itemsPerPageOptions: itemsPerPageOptions,
@@ -214,7 +227,7 @@
                 itemsLength: 10,
                 editedIndex: -1,
 
-                locTypeParams: '',
+                locQueryParams: {},
                 editedItem: {
                     title: "",
                     parent: {
@@ -246,8 +259,8 @@
                     return !this.editedItem.id ? "{{_('New Location')}}" : "{{_('Edit Location')}}";
                 },
 
-                latlngValid(){
-                    if(this.editedItem.latlng){
+                latlngValid() {
+                    if (this.editedItem.latlng) {
                         if (this.editedItem.latlng.lat && this.editedItem.latlng.lng) {
                             return true;
                         }
@@ -275,12 +288,11 @@
                 },
 
                 options: {
-                    handler: "refresh",
-                    immdiate: true
+                    handler: "refresh"
                 }
             },
 
-            mounted: function() {
+            mounted: function () {
                 if (this.$route.params.id) {
                     this.showLocation(this.$route.params.id);
                 }
@@ -299,6 +311,40 @@
             },
 
             methods: {
+
+                resetSearch() {
+                    this.q = {};
+                    this.doSearch()
+                },
+                doSearch() {
+                    this.loading = true;
+                    this.options.page = 1;
+
+                    const url = `/admin/api/locations/`;
+
+                    axios.post(url, {
+                        q: this.q,
+                        options: this.options
+                    }).then(response => {
+                        //const endTime = new Date()
+                        //this.searchTime = (endTime - startTime) / 1000;
+                        this.itemsLength = response.data.total;
+                        this.items = response.data.items;
+                    }).catch(err => {
+                        console.log(err);
+                        this.showSnack(err.response?.data);
+                    }).finally(() => {
+                        this.loading = false;
+                        this.advSearchOpen = false;
+                    });
+
+
+                },
+
+                toggleAdvSearch() {
+                    this.advSearchOpen = true;
+
+                },
 
                 rowClick(item) {
                     path = `/admin/locations/${item.id}`;
@@ -326,20 +372,16 @@
                             // clear parent location
                             this.editedItem.parent = null;
                         }
-                        this.locTypeParams = `&lvl=${restrict}`;
+                        this.locQueryParams = {lvl: restrict};
                     } else {
-                        this.locTypeParams = '';
+                        this.locQueryParams = {};
                     }
                 },
 
                 has_role(user, role) {
-                    for (r of user.roles) {
-                        if (r.name === role) {
-                            return true
-                        }
-                    }
-                    return false;
+                    return user.roles.some(r => r.name === role);
                 },
+
 
                 editAllowed() {
                     if (this.has_role(this.currentUser, 'Admin')) {
@@ -370,7 +412,10 @@
                 refresh() {
                     //console.log(options);
                     this.loading = true;
-                    axios.get(`/admin/api/locations/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&q=${this.q}`).then(response => {
+                    axios.post(`/admin/api/locations/`, {
+                        q: this.q,
+                        options: this.options
+                    }).then(response => {
 
 
                         this.itemsLength = response.data.total;
@@ -404,7 +449,7 @@
 
                     this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
                     this.dialog = true;
-                    this.$nextTick(()=>{
+                    this.$nextTick(() => {
                         this.locationKey += 1;
                     })
 
@@ -456,7 +501,7 @@
                 },
 
                 save() {
-                    if(!this.editedItem.latlng?.lat){
+                    if (!this.editedItem.latlng?.lat) {
                         this.editedItem.latlng = null;
                     }
                     if (this.editedItem.id) {

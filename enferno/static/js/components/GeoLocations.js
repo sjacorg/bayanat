@@ -27,7 +27,7 @@ Vue.component('geo-locations', {
 
 
     mounted() {
-
+        // this.geoTypes = translations.geoLocationTypes_.map(t=>t.tr)
 
     },
     computed : {
@@ -66,7 +66,7 @@ Vue.component('geo-locations', {
         saveLocation(){
 
 
-            if (this.e.mode == 'edit') {
+            if (this.e.mode === 'edit') {
                 this.modifyLocation();
             }
             else {
@@ -144,7 +144,7 @@ Vue.component('geo-locations', {
                 <v-card elevation="0">
                   <v-card-text>
                   <v-chip small class="primary">{{i+1}}</v-chip>
-                    <v-chip small v-if="loc.type" class="grey lighten-3">{{ loc.type }}</v-chip>
+                    <v-chip small v-if="loc.type" class="grey lighten-3">{{ loc.type.title }}</v-chip>
                     <v-chip small v-if="loc.main" class="grey lighten-3">{{translations.mainIncident_}}</v-chip>
                     <h4 class="pa-3 mb-2caption black--text">{{ loc.title }}</h4>
                     <div class="heading black--text"> <v-icon small left >mdi-map-marker</v-icon>
@@ -207,7 +207,17 @@ Vue.component('geo-locations', {
           <v-card-text >
             <div  class="d-flex px-5" style="column-gap: 20px">
             <v-text-field v-model="e.title" :label="translations.title_"></v-text-field>
-            <v-select clearable :items="geoLocationTypes" v-model="e.type" :label="translations.type_"></v-select>
+            
+              <search-field
+              :label="translations.type_"
+              api="/admin/api/geolocationtypes"
+              v-model="e.type"
+              item-text="title"
+              item-value="id"
+              :return-object="false"
+              >
+                
+              </search-field>
                 </div>
             <div  class="d-flex px-5" style="column-gap: 20px">
               <v-text-field v-model="e.comment" :label="translations.comment_"></v-text-field>
@@ -216,7 +226,7 @@ Vue.component('geo-locations', {
 
           </v-card-text>
           <v-card-text>
-            <geo-map :others="others" v-model="e.latlng" map-height="300"></geo-map>
+            <geo-map :radius-controls="false" :others="others" v-model="e.latlng" map-height="300"></geo-map>
           </v-card-text>
           <v-card-actions class="pb-3">
             <v-spacer></v-spacer>

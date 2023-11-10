@@ -9,17 +9,11 @@ from flask import current_app
 from flask_security.decorators import current_user
 
 from enferno.extensions import db
-from enferno.settings import ProdConfig, DevConfig
+from enferno.settings import Config as cfg
 
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
 from itsdangerous import URLSafeSerializer
-
-# Load configurations based on environment settings
-if os.getenv("FLASK_DEBUG") == '0':
-    cfg = ProdConfig
-else:
-    cfg = DevConfig
 
 class Export(db.Model, BaseMixin):
     export_dir = Path("enferno/exports")

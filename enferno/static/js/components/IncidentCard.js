@@ -181,7 +181,7 @@ Vue.component("incident-card", {
       
       <v-chip color="white lighten-3" small label class="pa-2 mx-2 my-2" v-if="incident.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{incident.assigned_to['name']}}</v-chip>
-        <v-chip color="white lighten-3" small label class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(incident.status) }}</v-chip>
+        <v-chip color="white lighten-3" small label class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{ incident.status }}</v-chip>
         
       </v-sheet>
       
@@ -282,7 +282,7 @@ Vue.component("incident-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!=null" color="grey lighten-4" small label>{{ incident_related_as(item) }}</v-chip>
+                <v-chip v-if="item.related_as!=null" v-for="rel in extractValuesById($root.itoiInfo, [item.related_as], 'title')" color="grey lighten-4" small label>{{ rel }}</v-chip>
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
@@ -318,7 +318,7 @@ Vue.component("incident-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!=null" color="grey lighten-4" small label>{{ bulletin_related_as(item) }}</v-chip>
+                <v-chip v-if="item.related_as!=null" v-for="rel in extractValuesById($root.itobInfo, [item.related_as], 'title')" color="grey lighten-4" small label>{{ rel }}</v-chip>
 
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
@@ -356,7 +356,8 @@ Vue.component("incident-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-5" small label>{{ actor_related_as(r) }}</v-chip>
+                
+                <v-chip class="ma-1" v-for="rel in extractValuesById($root.itoaInfo, item.related_as, 'title') " color="blue-grey lighten-5" small label>{{ rel }}</v-chip>
                 <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>

@@ -21,8 +21,10 @@ Vue.component('global-map', {
             mapHeight: 300,
             zoom: 10,
             mapKey: 0,
-            //marker cluster
-            mcg : null,
+            // Marker cluster
+            markerGroup: null,
+            // Event routes
+            eventLinks: null,
             mapsApiEndpoint: mapsApiEndpoint,
             subdomains: null,
             lat: geoMapDefaultCenter.lat,
@@ -31,6 +33,7 @@ Vue.component('global-map', {
             osmAttribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
             satellite: null,
             defaultTile: true,
+            measureControls: null,
 
 
         }
@@ -42,27 +45,13 @@ Vue.component('global-map', {
 
         let map = this.$refs.map.mapObject;
 
-        // let markers = L.markerClusterGroup();
-        // if(this.locations.length){
-        //    for (const loc of this.locations) {
-        //        markers.addLayer(L.marker([loc.lat,loc.lng]));
-        //
-        //    };
-        //    map.addLayer(markers);
-        //
-        // }
-        //
-
-
-        // map.addLayer(markers);
-
-
         map.addControl(new L.Control.Fullscreen({
             title: {
                 'false': 'View Fullscreen',
                 'true': 'Exit Fullscreen'
             }
         }));
+
         this.satellite = L.gridLayer
             .googleMutant({
                 type: "satellite", // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
@@ -124,24 +113,28 @@ Vue.component('global-map', {
 
 
         fitMarkers() {
-
             // construct a list of markers to build a feature group
-            let map = this.$refs.map.mapObject;
 
+            const map = this.$refs.map.mapObject;
 
-            let markers = [];
-
-            if(this.mcg){
-                map.removeLayer(this.mcg);
+            if (this.markerGroup) {
+                map.removeLayer(this.markerGroup);
             }
-            this.mcg = L.markerClusterGroup();
+
+            this.markerGroup = L.markerClusterGroup({
+                maxClusterRadius: 20,
+            });
+
             if (this.locations.length) {
+                let eventLocations = [];
+
                 for (loc of this.locations) {
                     mainStr = false
-                    if (loc.main){
+                    if (loc.main) {
                         mainStr = this.i18n.mainIncident_;
                         loc.color = '#000000';
                     }
+
                     let marker = L.circleMarker([loc.lat, loc.lng], {
                         color: 'white',
                         fillColor: loc.color,
@@ -151,31 +144,62 @@ Vue.component('global-map', {
                         stroke: 'white'
                     });
 
+                    if (loc.type === 'Event') {
+
+                        // Add the events latlng to the latlngs array
+                        eventLocations.push(loc);
+                    }
+
                     marker.bindPopup(`
 
-                    <span title="No." class="map-bid">${loc.number || ''}</span>
-                    <span title="Bulletin ID" class="map-bid">${loc.bulletinId || ''}</span>
-                    <strong>${loc.title || ''}</strong> </span><br>
+                    <span title="No." class=" ma-1 map-bid">${loc.number || ''}</span>
+                    <span title="Bulletin ID" class="ma-1 map-bid">${loc.parentId || ''}</span>
+                    <strong class="body-2">${loc.title || ''}</strong> </span><br>
                     
-                    <div class="mt-2">
+                    <div class="mx-1 my-4 subtitle-2 font-weight-bold">
                     ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
                     </div>
 
-                    <div class="mt-2 subtitle">${loc.full_string || ''}</div>
-                    <span title="Geo Marker Type" class="map-bid">${loc.type || ''}</span>
-                    <span title="Main Incident" class="map-bid">${mainStr || ''}</span>
+                    <span class="mt-1 subtitle">${loc.full_string || ''}</span>
+                    <span title="Geo Marker Type" class="ma-1 map-bid">${loc.type || ''}</span>
+                    <span title="Geo Marker Event Type" class=" ma-1 map-bid">${loc.eventtype || ''}</span>
+                    <span title="Main Incident" class=" ma-1 map-bid">${mainStr || ''}</span>
                     `);
-                    this.mcg.addLayer(marker);
+                    this.markerGroup.addLayer(marker);
                 }
-                ;
+
+                // Add event linestring links if any available
+                if (eventLocations.length > 1) {
+                    this.addEventRouteLinks(eventLocations);
+                }
+
+                if (!this.measureControls) {
+
+                    this.measureControls = L.control.polylineMeasure({
+                        position: 'topleft',
+                        unit: 'kilometres',
+                        fixedLine: {                    // Styling for the solid line
+                            color: 'rgba(67,157,146,0.77)',              // Solid line color
+                            weight: 2                   // Solid line weight
+                        },
+
+                        arrow: {                        // Styling of the midway arrow
+                            color: 'rgba(67,157,146,0.77)',              // Color of the arrow
+                        },
+                        showBearings: false,
+                        clearMeasurementsOnStop: false,
+                        showClearControl: true,
+                        showUnitControl: true
+                    });
 
 
-                // build a feature group
-
-                let bounds = this.mcg.getBounds();
-                this.mcg.addTo(map);
+                    this.measureControls.addTo(map);
+                }
 
 
+                // Fit map of bounds of clusterLayer
+                let bounds = this.markerGroup.getBounds();
+                this.markerGroup.addTo(map);
                 map.fitBounds(bounds, {padding: [20, 20]});
 
                 if (map.getZoom() > 14) {
@@ -183,15 +207,94 @@ Vue.component('global-map', {
 
                     map.flyTo(map.getCenter(), 10, {duration: 1});
                 }
-
-
             }
+
 
             map.invalidateSize();
 
         },
 
+        addEventRouteLinks(eventLocations) {
+            const map = this.$refs.map.mapObject;
 
+            // Remove existing eventRoute linestrings
+            if (this.eventLinks) {
+                map.removeLayer(this.eventLinks);
+            }
+            this.eventLinks = L.layerGroup({}).addTo(map);
+
+            for (let i = 0; i < eventLocations.length - 1; i++) {
+                const startCoord = [eventLocations[i].lat, eventLocations[i].lng];
+                const endCoord = [eventLocations[i + 1].lat, eventLocations[i + 1].lng];
+
+                // If the next eventLocation has the zombie attribute, do not draw the curve
+                if (eventLocations[i + 1].zombie) {
+                    // Add a circle marker for the zombie event location
+                    L.circleMarker(endCoord, {
+                        radius: 5,
+                        fillColor: "#ff7800",
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(this.eventLinks);
+                    continue; // Skip to the next iteration
+                }
+
+                const midpointCoord = this.getCurveMidpointFromCoords(startCoord, endCoord);
+
+                // Create bezier curve path between events
+                const curve = L.curve(
+                    [
+                        'M', startCoord,
+                        'Q', midpointCoord,
+                        endCoord
+                    ], {
+                        color: '#00f166',
+                        weight: 4,
+                        opacity: 0.4,
+                        dashArray: '5', animate: {duration: 15000, iterations: Infinity}
+                    }
+                ).addTo(this.eventLinks);
+
+                const curveMidPoints = curve.trace([0.8]);
+                const arrowIcon = L.icon({
+                    iconUrl: '/static/img/direction-arrow.svg',
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6],
+                });
+
+                curveMidPoints.forEach(point => {
+                    const rotationAngle = this.getVectorDegrees(startCoord, endCoord);
+                    L.marker(point, {icon: arrowIcon, rotationAngle: rotationAngle}).addTo(this.eventLinks);
+                });
+            }
+        },
+
+
+        getCurveMidpointFromCoords(startCoord, endCoord) {
+            const offsetX = endCoord[1] - startCoord[1],
+                offsetY = endCoord[0] - startCoord[0];
+
+            const r = Math.sqrt(Math.pow(offsetX, 2) + Math.pow(offsetY, 2)),
+                theta = Math.atan2(offsetY, offsetX);
+
+            const thetaOffset = (3.14 / 10);
+
+            const r2 = (r / 2) / (Math.cos(thetaOffset)),
+                theta2 = theta + thetaOffset;
+
+            const midpointLng = (r2 * Math.cos(theta2)) + startCoord[1],
+                midpointLat = (r2 * Math.sin(theta2)) + startCoord[0];
+
+            return [midpointLat, midpointLng];
+        },
+
+        getVectorDegrees(start, end) {
+            const dx = end[0] - start[0];
+            const dy = end[1] - start[1];
+            return Math.atan2(dy, dx) * (180 / Math.PI);
+        },
     },
 
     template: `
@@ -209,7 +312,7 @@ Vue.component('global-map', {
               {{ i18n.geoMarkers_ }}
             </div>
             <div class="caption">
-              <v-icon small color="#f65314"> mdi-checkbox-blank-circle</v-icon>
+              <v-icon small color="#00f166"> mdi-checkbox-blank-circle</v-icon>
               {{ i18n.events_ }}
             </div>
 

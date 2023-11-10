@@ -1,5 +1,8 @@
+import pandas as pd
+
+from enferno.admin.models import ClaimedViolation, Eventtype, LocationAdminLevel, LocationType, PotentialViolation, \
+    AtobInfo, BtobInfo, AtoaInfo, ItobInfo, ItoaInfo, ItoiInfo, Country, Ethnography, MediaCategory, GeoLocationType
 from enferno.extensions import db
-from enferno.admin.models import ClaimedViolation, Eventtype, LocationAdminLevel, LocationType, PotentialViolation
 from enferno.user.models import Role
 
 
@@ -32,32 +35,32 @@ def generate_user_roles():
         role.save()
 
 
-def import_data():
+def import_default_data():
     '''
     Imports SJAC data from data dir.
     '''
-    data_path = 'enferno/data/'
-    from werkzeug.datastructures import FileStorage
+    items = [(Eventtype, 'enferno/data/eventtypes.csv'),
+             (PotentialViolation, 'enferno/data/potential_violation.csv'),
+             (ClaimedViolation, 'enferno/data/claimed_violation.csv'),
+             (AtobInfo, 'enferno/data/atob_info.csv'),
+             (BtobInfo, 'enferno/data/atob_info.csv'),
+             (AtoaInfo, 'enferno/data/atoa_info.csv'),
+             (ItobInfo, 'enferno/data/itob_info.csv'),
+             (ItoaInfo, 'enferno/data/itoa_info.csv'),
+             (ItoiInfo, 'enferno/data/itoi_info.csv'),
+             (Country, 'enferno/data/countries.csv'),
+             (Ethnography, 'enferno/data/ethnographies.csv'),
+             (MediaCategory, 'enferno/data/media_categories.csv'),
+             (GeoLocationType, 'enferno/data/geo_location_types.csv')]
+             
+    for model, path in items:
+        import_csv_to_table(model, path)
 
-    # Eventtypes
-    if not Eventtype.query.count():
-        f = data_path + 'eventtypes.csv'
-        fs = FileStorage(open(f, 'rb'))
-        Eventtype.import_csv(fs)
-
-    # potential violations
-    if not PotentialViolation.query.count():
-        f = data_path + 'potential_violation.csv'
-        fs = FileStorage(open(f, 'rb'))
-        PotentialViolation.import_csv(fs)
-
-    # claimed violations
-    if not ClaimedViolation.query.count():
-        f = data_path + 'claimed_violation.csv'
-        fs = FileStorage(open(f, 'rb'))
-        ClaimedViolation.import_csv(fs)
 
 def create_default_location_data():
+    '''
+    Generates default required location data.
+    '''
     if not LocationAdminLevel.query.all():
         db.session.add(LocationAdminLevel(code=1, title='Governorate'))
         db.session.add(LocationAdminLevel(code=2, title='District'))
@@ -70,3 +73,26 @@ def create_default_location_data():
         db.session.add(LocationType(title='Administrative Location'))
         db.session.add(LocationType(title='Point of Interest'))
         db.session.commit()
+
+
+def import_csv_to_table(model, csv_file_path):
+    """
+    Imports CSV data into a database model.
+    """
+    df = pd.read_csv(csv_file_path, parse_dates=True, na_filter=False)
+
+    # Remove the 'deleted' column from DataFrame if it exists
+    df.drop(columns=['deleted'], errors='ignore', inplace=True)
+
+    # Skip if model table already contains data
+    if db.session.query(model).first():
+        print(f"{model.__name__} table already populated.")
+        return
+
+    # Add each row as a record in the model table
+    for _, row in df.iterrows():
+        data = {col: row[col] for col in row.index if hasattr(model, col)}
+        db.session.add(model(**data))
+
+    db.session.commit()
+    print(f"Data imported into {model.__name__}.")

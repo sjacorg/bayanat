@@ -263,7 +263,7 @@
                                 <search-field
                                         v-model="editedItem.labels"
                                         api="/admin/api/labels/"
-                                        query-params="&typ=for_actor"
+                                        :query-params="{ typ: 'for_actor' }"
                                         item-text="title"
                                         item-value="id"
                                         :multiple="true"
@@ -278,7 +278,7 @@
                                 <search-field
                                         v-model="editedItem.verLabels"
                                         api="/admin/api/labels/"
-                                        query-params="&fltr=verified&typ=for_actor"
+                                        :query-params="{ fltr: 'verified', typ: 'for_actor' }"
                                         item-text="title"
                                         item-value="id"
                                         :multiple="true"
@@ -347,47 +347,50 @@
 
 
                         <v-row>
-
-
                             <v-col cols="12" md="4">
 
-                                <search-field
+                                <location-search-field
                                         v-model="editedItem.birth_place"
                                         api="/admin/api/locations/"
                                         item-text="full_string"
                                         item-value="id"
                                         :multiple="false"
                                         label="{{ _('Place of Birth') }}"
-                                ></search-field>
+                                ></location-search-field>
 
 
                             </v-col>
 
                             <v-col cols="12" md="4">
-                                <search-field
+                                <location-search-field
                                         v-model="editedItem.residence_place"
                                         api="/admin/api/locations/"
                                         item-text="full_string"
                                         item-value="id"
                                         :multiple="false"
                                         label="{{ _('Place of Residence') }}"
-                                ></search-field>
+                                ></location-search-field>
                             </v-col>
 
                             <v-col cols="12" md="4">
-                                <search-field
+                                <location-search-field
                                         v-model="editedItem.origin_place"
                                         api="/admin/api/locations/"
                                         item-text="full_string"
                                         item-value="id"
                                         :multiple="false"
                                         label="{{ _('Place of Origin') }}"
-                                ></search-field>
+                                ></location-search-field>
                             </v-col>
-
-
                         </v-row>
 
+                        <!-- Map -->
+                        <v-row>
+                            <v-col cols="12">
+                                <global-map :i18n="translations" ref="globalmap" :value="compLocations"></global-map>
+
+                            </v-col>
+                        </v-row>
 
                         <!-- events  -->
 
@@ -526,28 +529,31 @@
 
                         <v-row>
                             <v-col cols="12" md="4">
-                                <v-autocomplete
+                                <search-field
 
-                                        :items="translations.actorEthno"
-                                        multiple
+                                        api="/admin/api/ethnographies/"
+                                        :multiple="true"
                                         clearable
-                                        item-text="tr"
-                                        item-value="en"
+                                        :return-object="false"
+                                        item-text="title"
+                                        item-value="title"
                                         v-model="editedItem.ethnography"
                                         label="{{ _('Ethnographic Information') }}"
-                                ></v-autocomplete>
+                                ></search-field>
                             </v-col>
 
                             <v-col cols="12" md="4">
-                                <v-autocomplete
-                                        multiple
-                                        clearable
-                                        :items="translations.countries"
-                                        item-text="tr"
-                                        item-value="en"
+
+                                 <search-field
                                         v-model="editedItem.nationality"
-                                        label="{{ _('Nationality') }}"
-                                ></v-autocomplete>
+                                        api="/admin/api/countries/"
+                                        item-text="title"
+                                        item-value="title"
+                                        :multiple="true"
+                                        :return-object="false"
+                                        clearable
+                                        label="{{ _('Nationalities') }}"
+                                ></search-field>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <v-text-field
@@ -635,11 +641,12 @@
                                                                             column
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip v-for="r in translations.atoaRelateAs"
-                                                                                small> ${
+                                                                        <v-chip v-for="rel in atoaInfo" :value="rel.id" :key="rel.id"
+                                                                                small>
+                                                                            ${
                                                                             detectDirection(editedItem,
                                                                             editedItem.actor_relations[index].actor)
-                                                                            ? r.tr.text: r.tr.revtext }
+                                                                            ? rel.title: rel.reverse_title }
                                                                         </v-chip>
 
                                                                     </v-chip-group>
@@ -744,8 +751,8 @@
                                                                             multiple
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip v-for="r in translations.btoaRelateAs"
-                                                                                small> ${r.tr}
+                                                                        <v-chip v-for="rel in atobInfo" :value="rel.id" :key="rel.id"
+                                                                                small> ${rel.title}
                                                                         </v-chip>
                                                                     </v-chip-group>
 
@@ -849,8 +856,8 @@
                                                                             multiple
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip v-for="r in translations.itoaRelateAs"
-                                                                                small> ${ r.tr }
+                                                                        <v-chip v-for="rel in itoaInfo" :value="rel.id" :key="rel.id"
+                                                                                small> ${ rel.title }
                                                                         </v-chip>
                                                                     </v-chip-group>
 
@@ -1216,7 +1223,7 @@
                                                             item-text="tr"
                                                             item-value="en"
                                                             :items="translations.smoker"
-                                                            label="{{ _('Smoker') }}" 
+                                                            label="{{ _('Smoker') }}"
                                                             v-model="editedItem.smoker">
 
                                                     </v-select>

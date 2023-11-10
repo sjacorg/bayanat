@@ -46,6 +46,8 @@
                         {{ i }}
 
                         <bulletin-search-box
+
+                                v-if="advSearchExpand"
                                 :i18n="translations"
                                 :show-op="!i==0"
                                 :extra-filters="true"

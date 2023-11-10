@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bayanat v1.11.1\n"
 "Report-Msgid-Bugs-To: tech@syriaaccountability.org \n"
-"POT-Creation-Date: 2023-02-02 03:48+0000\n"
+"POT-Creation-Date: 2023-09-12 20:17+0000\n"
 "PO-Revision-Date: 2022-03-08 19:33+0000\n"
 "Last-Translator: SJAC <tech@syriaaccountability.org >\n"
 "Language: uk\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.11.0\n"
+"Generated-By: Babel 2.12.1\n"
 
 #: enferno/admin/templates/nav-bar.html:39
 msgid "Account Settings"
@@ -28,182 +28,193 @@ msgid "Logout"
 msgstr "Вихід"
 
 #: enferno/admin/templates/admin/activity.html:94
-#: enferno/admin/templates/admin/actors.html:465
-#: enferno/admin/templates/admin/bulletins.html:493
-#: enferno/admin/templates/admin/csv-dashboard.html:947
-#: enferno/admin/templates/admin/etl-dashboard.html:385
+#: enferno/admin/templates/admin/actors.html:516
+#: enferno/admin/templates/admin/bulletins.html:515
+#: enferno/admin/templates/admin/csv-dashboard.html:948
+#: enferno/admin/templates/admin/etl-dashboard.html:395
 #: enferno/admin/templates/admin/etl-status.html:85
 #: enferno/admin/templates/admin/eventtypes.html:211
-#: enferno/admin/templates/admin/incidents.html:435
+#: enferno/admin/templates/admin/incidents.html:479
 #: enferno/admin/templates/admin/labels.html:286
-#: enferno/admin/templates/admin/locations.html:196
-#: enferno/admin/templates/admin/roles.html:230
+#: enferno/admin/templates/admin/locations.html:209
+#: enferno/admin/templates/admin/roles.html:231
 #: enferno/admin/templates/admin/sources.html:233
 #: enferno/admin/templates/admin/system-administration.html:148
-#: enferno/admin/templates/admin/users.html:211
+#: enferno/admin/templates/admin/users.html:268
 #: enferno/deduplication/templates/deduplication.html:148
+#: enferno/export/templates/export-dashboard.html:151
 msgid "Rows per page"
 msgstr "Рядків на сторінці"
 
-#: enferno/admin/templates/admin/actors.html:52
+#: enferno/admin/templates/admin/actors.html:54
 msgid "All Actors"
 msgstr "Усі виконавці"
 
-#: enferno/admin/templates/admin/actors.html:55
-#: enferno/admin/templates/admin/bulletins.html:59
-#: enferno/admin/templates/admin/incidents.html:54
+#: enferno/admin/templates/admin/actors.html:57
+#: enferno/admin/templates/admin/bulletins.html:62
+#: enferno/admin/templates/admin/incidents.html:52
 msgid "Assigned to me"
 msgstr "Призначено мені"
 
-#: enferno/admin/templates/admin/actors.html:58
-#: enferno/admin/templates/admin/bulletins.html:63
-#: enferno/admin/templates/admin/incidents.html:57
+#: enferno/admin/templates/admin/actors.html:60
+#: enferno/admin/templates/admin/bulletins.html:66
+#: enferno/admin/templates/admin/incidents.html:55
 msgid "My Review List"
 msgstr "Мій перелік відгуків"
 
-#: enferno/admin/templates/admin/actors.html:74
-#: enferno/admin/templates/admin/bulletins.html:79
-#: enferno/admin/templates/admin/i18n.jinja2:48
-#: enferno/admin/templates/admin/incidents.html:74
+#: enferno/admin/templates/admin/actors.html:76
+#: enferno/admin/templates/admin/bulletins.html:82
+#: enferno/admin/templates/admin/i18n.jinja2:50
+#: enferno/admin/templates/admin/incidents.html:72
 #: enferno/admin/templates/admin/labels.html:42
-#: enferno/admin/templates/admin/locations.html:44
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:49
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:65
+#: enferno/admin/templates/admin/locations.html:48
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:93
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:89
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:76
 msgid "Search"
 msgstr "Пошук"
 
-#: enferno/admin/templates/admin/actors.html:81
+#: enferno/admin/templates/admin/actors.html:83
 #: enferno/admin/templates/admin/i18n.jinja2:4
 msgid "New Actor"
 msgstr "Новий виконавець"
 
-#: enferno/admin/templates/admin/actors.html:98
-#: enferno/admin/templates/admin/bulletins.html:122
-#: enferno/admin/templates/admin/incidents.html:107
+#: enferno/admin/templates/admin/actors.html:100
+#: enferno/admin/templates/admin/bulletins.html:120
+#: enferno/admin/templates/admin/incidents.html:105
 msgid "Bulk update"
 msgstr "Сукупне оновлення"
 
-#: enferno/admin/templates/admin/actors.html:121
-#: enferno/admin/templates/admin/bulletins.html:146
-#: enferno/admin/templates/admin/incidents.html:131
+#: enferno/admin/templates/admin/actors.html:115
+#: enferno/admin/templates/admin/bulletins.html:134
+#: enferno/admin/templates/admin/incidents.html:119
+#, fuzzy
+msgid "Export"
+msgstr "Звітовики"
+
+#: enferno/admin/templates/admin/actors.html:140
+#: enferno/admin/templates/admin/bulletins.html:158
+#: enferno/admin/templates/admin/incidents.html:145
 msgid "About"
 msgstr "Про нас"
 
-#: enferno/admin/templates/admin/actors.html:121
-#: enferno/admin/templates/admin/bulletins.html:146
-#: enferno/admin/templates/admin/incidents.html:131
+#: enferno/admin/templates/admin/actors.html:140
+#: enferno/admin/templates/admin/bulletins.html:158
+#: enferno/admin/templates/admin/incidents.html:145
 msgid "results"
 msgstr "результати"
 
-#: enferno/admin/templates/admin/actors.html:122
-#: enferno/admin/templates/admin/bulletins.html:147
-#: enferno/admin/templates/admin/incidents.html:132
+#: enferno/admin/templates/admin/actors.html:141
+#: enferno/admin/templates/admin/bulletins.html:159
+#: enferno/admin/templates/admin/incidents.html:146
 msgid "seconds"
 msgstr "секунди"
 
-#: enferno/admin/templates/admin/actors.html:131
-#: enferno/admin/templates/admin/bulletins.html:157
-#: enferno/admin/templates/admin/incidents.html:140
+#: enferno/admin/templates/admin/actors.html:150
+#: enferno/admin/templates/admin/bulletins.html:169
+#: enferno/admin/templates/admin/incidents.html:154
 msgid "Selected items"
 msgstr "Обрані елементи"
 
-#: enferno/admin/templates/admin/actors.html:469
-#: enferno/admin/templates/admin/bulletins.html:497
+#: enferno/admin/templates/admin/actors.html:520
+#: enferno/admin/templates/admin/bulletins.html:519
 #: enferno/admin/templates/admin/eventtypes.html:215
-#: enferno/admin/templates/admin/i18n.jinja2:83
-#: enferno/admin/templates/admin/incidents.html:439
+#: enferno/admin/templates/admin/i18n.jinja2:89
+#: enferno/admin/templates/admin/incidents.html:483
 #: enferno/admin/templates/admin/labels.html:290
-#: enferno/admin/templates/admin/locations.html:200
-#: enferno/admin/templates/admin/roles.html:234
+#: enferno/admin/templates/admin/locations.html:213
+#: enferno/admin/templates/admin/roles.html:235
 #: enferno/admin/templates/admin/system-administration.html:153
 #: enferno/admin/templates/admin/system-administration.html:163
-#: enferno/admin/templates/admin/users.html:215
+#: enferno/admin/templates/admin/users.html:272
 #: enferno/deduplication/templates/deduplication.html:126
+#: enferno/export/templates/export-dashboard.html:154
 msgid "ID"
 msgstr "ID"
 
-#: enferno/admin/templates/admin/actors.html:470
+#: enferno/admin/templates/admin/actors.html:521
 #: enferno/admin/templates/admin/csv-dashboard.html:247
-#: enferno/admin/templates/admin/csv-dashboard.html:951
-#: enferno/admin/templates/admin/etl-dashboard.html:389
-#: enferno/admin/templates/admin/i18n.jinja2:70
-#: enferno/admin/templates/admin/i18n.jinja2:147
-#: enferno/admin/templates/admin/partials/actor_dialog.html:53
-#: enferno/admin/templates/admin/partials/actor_dialog.html:938
-#: enferno/admin/templates/admin/roles.html:235
-#: enferno/admin/templates/admin/users.html:218
+#: enferno/admin/templates/admin/csv-dashboard.html:952
+#: enferno/admin/templates/admin/etl-dashboard.html:399
+#: enferno/admin/templates/admin/i18n.jinja2:75
+#: enferno/admin/templates/admin/i18n.jinja2:153
+#: enferno/admin/templates/admin/partials/actor_dialog.html:51
+#: enferno/admin/templates/admin/partials/actor_dialog.html:966
+#: enferno/admin/templates/admin/roles.html:236
+#: enferno/admin/templates/admin/users.html:275
 msgid "Name"
 msgstr "Ім'я"
 
-#: enferno/admin/templates/admin/actors.html:472
-#: enferno/admin/templates/admin/bulletins.html:501
-#: enferno/admin/templates/admin/incidents.html:442
+#: enferno/admin/templates/admin/actors.html:523
+#: enferno/admin/templates/admin/bulletins.html:523
+#: enferno/admin/templates/admin/incidents.html:486
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:30
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:37
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:30
 msgid "Assigned To"
 msgstr "Призначено для"
 
-#: enferno/admin/templates/admin/actors.html:473
-#: enferno/admin/templates/admin/bulletins.html:502
-#: enferno/admin/templates/admin/incidents.html:443
-#: enferno/admin/templates/admin/users.html:123
-#: enferno/admin/templates/admin/users.html:220
+#: enferno/admin/templates/admin/actors.html:524
+#: enferno/admin/templates/admin/bulletins.html:524
+#: enferno/admin/templates/admin/incidents.html:487
+#: enferno/admin/templates/admin/users.html:176
+#: enferno/admin/templates/admin/users.html:277
 msgid "Roles"
 msgstr "Ролі"
 
-#: enferno/admin/templates/admin/actors.html:475
-#: enferno/admin/templates/admin/bulletins.html:504
+#: enferno/admin/templates/admin/actors.html:526
+#: enferno/admin/templates/admin/bulletins.html:526
 #: enferno/admin/templates/admin/csv-dashboard.html:28
-#: enferno/admin/templates/admin/incidents.html:445
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1331
+#: enferno/admin/templates/admin/incidents.html:489
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1371
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:63
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:61
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:63
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:624
-#: enferno/admin/templates/admin/partials/incident_dialog.html:506
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:617
+#: enferno/admin/templates/admin/partials/incident_dialog.html:513
 #: enferno/deduplication/templates/deduplication.html:132
+#: enferno/export/templates/export-dashboard.html:162
 msgid "Status"
 msgstr "Статус"
 
-#: enferno/admin/templates/admin/actors.html:476
-#: enferno/admin/templates/admin/bulletins.html:507
+#: enferno/admin/templates/admin/actors.html:527
+#: enferno/admin/templates/admin/bulletins.html:529
 #: enferno/admin/templates/admin/eventtypes.html:222
-#: enferno/admin/templates/admin/incidents.html:448
+#: enferno/admin/templates/admin/incidents.html:492
 #: enferno/admin/templates/admin/labels.html:300
-#: enferno/admin/templates/admin/locations.html:208
-#: enferno/admin/templates/admin/roles.html:240
+#: enferno/admin/templates/admin/locations.html:221
+#: enferno/admin/templates/admin/roles.html:241
 #: enferno/admin/templates/admin/sources.html:245
 #: enferno/admin/templates/admin/system-administration.html:156
 #: enferno/admin/templates/admin/system-administration.html:165
-#: enferno/admin/templates/admin/users.html:223
+#: enferno/admin/templates/admin/users.html:280
 msgid "Actions"
 msgstr "Дії"
 
-#: enferno/admin/templates/admin/bulletins.html:55
+#: enferno/admin/templates/admin/bulletins.html:58
 msgid "All Bulletins"
 msgstr "Всі бюлетені"
 
-#: enferno/admin/templates/admin/bulletins.html:91
+#: enferno/admin/templates/admin/bulletins.html:94
 #: enferno/admin/templates/admin/i18n.jinja2:2
 msgid "New Bulletin"
 msgstr "Новий бюлетень"
 
-#: enferno/admin/templates/admin/bulletins.html:271
+#: enferno/admin/templates/admin/bulletins.html:282
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:72
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:110
 msgid "Ref"
 msgstr "Посилання"
 
-#: enferno/admin/templates/admin/bulletins.html:498
+#: enferno/admin/templates/admin/bulletins.html:520
 #: enferno/admin/templates/admin/csv-dashboard.html:376
 #: enferno/admin/templates/admin/eventtypes.html:58
 #: enferno/admin/templates/admin/eventtypes.html:216
-#: enferno/admin/templates/admin/i18n.jinja2:88
-#: enferno/admin/templates/admin/incidents.html:440
+#: enferno/admin/templates/admin/i18n.jinja2:94
+#: enferno/admin/templates/admin/incidents.html:484
 #: enferno/admin/templates/admin/labels.html:70
 #: enferno/admin/templates/admin/labels.html:291
-#: enferno/admin/templates/admin/locations.html:201
+#: enferno/admin/templates/admin/locations.html:214
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:81
 #: enferno/admin/templates/admin/partials/event_dialog.html:70
 #: enferno/admin/templates/admin/partials/incident_dialog.html:48
@@ -250,12 +261,12 @@ msgid "Continue"
 msgstr "Продовжити"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:122
-#: enferno/admin/templates/admin/etl-dashboard.html:140
+#: enferno/admin/templates/admin/etl-dashboard.html:141
 msgid "Back"
 msgstr "Назад"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:149
-#: enferno/admin/templates/admin/etl-dashboard.html:111
+#: enferno/admin/templates/admin/etl-dashboard.html:112
 msgid "Next"
 msgstr "Далі"
 
@@ -296,154 +307,155 @@ msgid "Origin ID"
 msgstr "Джерело ID"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:260
-#: enferno/admin/templates/admin/partials/actor_dialog.html:65
-#: enferno/admin/templates/admin/partials/incident_dialog.html:55
+#: enferno/admin/templates/admin/partials/actor_dialog.html:64
 msgid "Name (AR)"
 msgstr "Ім'я (ДР) "
 
 #: enferno/admin/templates/admin/csv-dashboard.html:263
-#: enferno/admin/templates/admin/partials/actor_dialog.html:88
+#: enferno/admin/templates/admin/partials/actor_dialog.html:91
 msgid "Nickname"
 msgstr "Прізвисько"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:266
-#: enferno/admin/templates/admin/partials/actor_dialog.html:94
+#: enferno/admin/templates/admin/partials/actor_dialog.html:97
 msgid "Nickname (AR)"
 msgstr "Нікнейм (ДР) "
 
 #: enferno/admin/templates/admin/csv-dashboard.html:282
-#: enferno/admin/templates/admin/i18n.jinja2:109
-#: enferno/admin/templates/admin/partials/actor_dialog.html:119
+#: enferno/admin/templates/admin/i18n.jinja2:115
+#: enferno/admin/templates/admin/partials/actor_dialog.html:122
 msgid "First Name"
 msgstr "Ім'я"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:285
-#: enferno/admin/templates/admin/partials/actor_dialog.html:125
+#: enferno/admin/templates/admin/partials/actor_dialog.html:128
 msgid "First Name (AR)"
 msgstr "Ім'я (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:289
-#: enferno/admin/templates/admin/partials/actor_dialog.html:149
+#: enferno/admin/templates/admin/partials/actor_dialog.html:152
 msgid "Middle/Father's Name"
 msgstr "По батькові"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:292
-#: enferno/admin/templates/admin/partials/actor_dialog.html:155
+#: enferno/admin/templates/admin/partials/actor_dialog.html:158
 msgid "Middle/Father's Name (AR)"
 msgstr "По батькові (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:296
-#: enferno/admin/templates/admin/i18n.jinja2:111
-#: enferno/admin/templates/admin/partials/actor_dialog.html:179
+#: enferno/admin/templates/admin/i18n.jinja2:117
+#: enferno/admin/templates/admin/partials/actor_dialog.html:182
 msgid "Last Name"
 msgstr "Прізвище"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:299
-#: enferno/admin/templates/admin/partials/actor_dialog.html:185
+#: enferno/admin/templates/admin/partials/actor_dialog.html:188
 msgid "Last Name (AR)"
 msgstr "Прізвище (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:302
-#: enferno/admin/templates/admin/i18n.jinja2:112
-#: enferno/admin/templates/admin/partials/actor_dialog.html:208
+#: enferno/admin/templates/admin/i18n.jinja2:118
+#: enferno/admin/templates/admin/partials/actor_dialog.html:211
 msgid "Mother's Name"
 msgstr "Дівоче прізвище"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:305
-#: enferno/admin/templates/admin/partials/actor_dialog.html:214
+#: enferno/admin/templates/admin/partials/actor_dialog.html:217
 msgid "Mother's Name (AR)"
 msgstr "Дівоче прізвище (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:315
-#: enferno/admin/templates/admin/i18n.jinja2:87
-#: enferno/admin/templates/admin/partials/actor_dialog.html:236
+#: enferno/admin/templates/admin/i18n.jinja2:93
+#: enferno/admin/templates/admin/partials/actor_dialog.html:239
 #: enferno/admin/templates/admin/roles.html:89
-#: enferno/admin/templates/admin/roles.html:237
+#: enferno/admin/templates/admin/roles.html:238
 msgid "Description"
 msgstr "Опис"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:333
-#: enferno/admin/templates/admin/etl-dashboard.html:211
-#: enferno/admin/templates/admin/i18n.jinja2:90
-#: enferno/admin/templates/admin/partials/actor_dialog.html:253
+#: enferno/admin/templates/admin/etl-dashboard.html:213
+#: enferno/admin/templates/admin/i18n.jinja2:96
+#: enferno/admin/templates/admin/partials/actor_dialog.html:256
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:126
 #: enferno/admin/templates/admin/sources.html:29
-#: enferno/templates/nav-drawer.html:72
+#: enferno/templates/nav-drawer.html:68
 msgid "Sources"
 msgstr "Джерела"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:335
-#: enferno/admin/templates/admin/etl-dashboard.html:178
-#: enferno/admin/templates/admin/i18n.jinja2:91
+#: enferno/admin/templates/admin/etl-dashboard.html:179
+#: enferno/admin/templates/admin/i18n.jinja2:97
 #: enferno/admin/templates/admin/labels.html:32
-#: enferno/admin/templates/admin/partials/actor_dialog.html:267
+#: enferno/admin/templates/admin/partials/actor_dialog.html:270
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:152
 #: enferno/admin/templates/admin/partials/incident_dialog.html:130
-#: enferno/templates/nav-drawer.html:86
+#: enferno/templates/nav-drawer.html:79
 msgid "Labels"
 msgstr "Ярлики"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:337
-#: enferno/admin/templates/admin/etl-dashboard.html:189
-#: enferno/admin/templates/admin/i18n.jinja2:92
-#: enferno/admin/templates/admin/partials/actor_dialog.html:282
+#: enferno/admin/templates/admin/etl-dashboard.html:190
+#: enferno/admin/templates/admin/i18n.jinja2:98
+#: enferno/admin/templates/admin/partials/actor_dialog.html:285
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:167
 msgid "Verified Labels"
 msgstr "Перевірені ярлики"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:344
-#: enferno/admin/templates/admin/i18n.jinja2:57
-#: enferno/admin/templates/admin/i18n.jinja2:113
-#: enferno/admin/templates/admin/partials/actor_dialog.html:299
+#: enferno/admin/templates/admin/i18n.jinja2:62
+#: enferno/admin/templates/admin/i18n.jinja2:119
+#: enferno/admin/templates/admin/partials/actor_dialog.html:303
 msgid "Sex"
 msgstr "Стать"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:346
-#: enferno/admin/templates/admin/i18n.jinja2:58
-#: enferno/admin/templates/admin/partials/actor_dialog.html:309
+#: enferno/admin/templates/admin/i18n.jinja2:63
+#: enferno/admin/templates/admin/partials/actor_dialog.html:314
 msgid "Minor/Adult"
 msgstr "Неповнолітній/Дорослий"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:348
-#: enferno/admin/templates/admin/i18n.jinja2:59
-#: enferno/admin/templates/admin/partials/actor_dialog.html:319
+#: enferno/admin/templates/admin/i18n.jinja2:64
+#: enferno/admin/templates/admin/partials/actor_dialog.html:325
 msgid "Civilian/Non Civilian"
 msgstr "Цивільна особа/Комбатант"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:352
-#: enferno/admin/templates/admin/i18n.jinja2:60
-#: enferno/admin/templates/admin/i18n.jinja2:116
-#: enferno/admin/templates/admin/partials/actor_dialog.html:329
+#: enferno/admin/templates/admin/i18n.jinja2:65
+#: enferno/admin/templates/admin/i18n.jinja2:122
+#: enferno/admin/templates/admin/partials/actor_dialog.html:336
 msgid "Actor Type"
 msgstr "Тип виконавця"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:354
-#: enferno/admin/templates/admin/i18n.jinja2:118
-#: enferno/admin/templates/admin/partials/actor_dialog.html:335
+#: enferno/admin/templates/admin/i18n.jinja2:124
+#: enferno/admin/templates/admin/partials/actor_dialog.html:342
 msgid "Date of Birth"
 msgstr "Дата народження"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:360
-#: enferno/admin/templates/admin/i18n.jinja2:119
-#: enferno/admin/templates/admin/partials/actor_dialog.html:353
+#: enferno/admin/templates/admin/i18n.jinja2:125
+#: enferno/admin/templates/admin/partials/actor_dialog.html:358
 msgid "Place of Birth"
 msgstr "Місце народження"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:362
-#: enferno/admin/templates/admin/i18n.jinja2:121
-#: enferno/admin/templates/admin/partials/actor_dialog.html:366
+#: enferno/admin/templates/admin/i18n.jinja2:127
+#: enferno/admin/templates/admin/partials/actor_dialog.html:371
 msgid "Place of Residence"
 msgstr "Місце проживання"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:364
-#: enferno/admin/templates/admin/i18n.jinja2:120
-#: enferno/admin/templates/admin/partials/actor_dialog.html:377
+#: enferno/admin/templates/admin/i18n.jinja2:126
+#: enferno/admin/templates/admin/partials/actor_dialog.html:382
 msgid "Place of Origin"
 msgstr "Місце походження"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:370
-#: enferno/admin/templates/admin/i18n.jinja2:93
-#: enferno/admin/templates/admin/i18n.jinja2:544
+#: enferno/admin/templates/admin/i18n.jinja2:99
+#: enferno/admin/templates/admin/i18n.jinja2:262
+#: enferno/admin/templates/admin/i18n.jinja2:271
+#: enferno/admin/templates/admin/i18n.jinja2:568
 #: enferno/admin/templates/admin/partials/event_dialog.html:6
 msgid "Events"
 msgstr "Події"
@@ -457,25 +469,26 @@ msgstr "Тип події"
 #: enferno/admin/templates/admin/csv-dashboard.html:397
 #: enferno/admin/templates/admin/eventtypes.html:83
 #: enferno/admin/templates/admin/eventtypes.html:220
-#: enferno/admin/templates/admin/i18n.jinja2:103
+#: enferno/admin/templates/admin/i18n.jinja2:109
 #: enferno/admin/templates/admin/labels.html:84
 #: enferno/admin/templates/admin/labels.html:292
-#: enferno/admin/templates/admin/partials/actor_dialog.html:644
-#: enferno/admin/templates/admin/partials/actor_dialog.html:749
-#: enferno/admin/templates/admin/partials/actor_dialog.html:839
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1319
+#: enferno/admin/templates/admin/partials/actor_dialog.html:656
+#: enferno/admin/templates/admin/partials/actor_dialog.html:761
+#: enferno/admin/templates/admin/partials/actor_dialog.html:866
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1359
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:94
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:105
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:93
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:298
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:406
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:509
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:608
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:291
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:399
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:502
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:601
 #: enferno/admin/templates/admin/partials/event_dialog.html:97
-#: enferno/admin/templates/admin/partials/incident_dialog.html:238
-#: enferno/admin/templates/admin/partials/incident_dialog.html:342
-#: enferno/admin/templates/admin/partials/incident_dialog.html:445
-#: enferno/admin/templates/admin/partials/incident_dialog.html:491
+#: enferno/admin/templates/admin/partials/export_drawer.html:56
+#: enferno/admin/templates/admin/partials/incident_dialog.html:241
+#: enferno/admin/templates/admin/partials/incident_dialog.html:348
+#: enferno/admin/templates/admin/partials/incident_dialog.html:452
+#: enferno/admin/templates/admin/partials/incident_dialog.html:498
 #: enferno/admin/templates/admin/sources.html:96
 #: enferno/admin/templates/admin/sources.html:241
 msgid "Comments"
@@ -502,95 +515,95 @@ msgid "Estimated Time"
 msgstr "Передбачуваний час"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:426
-#: enferno/admin/templates/admin/i18n.jinja2:52
-#: enferno/admin/templates/admin/i18n.jinja2:53
-#: enferno/admin/templates/admin/i18n.jinja2:123
-#: enferno/admin/templates/admin/partials/actor_dialog.html:405
+#: enferno/admin/templates/admin/i18n.jinja2:57
+#: enferno/admin/templates/admin/i18n.jinja2:58
+#: enferno/admin/templates/admin/i18n.jinja2:129
+#: enferno/admin/templates/admin/partials/actor_dialog.html:415
 msgid "Occupation"
 msgstr "Рід занять"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:429
-#: enferno/admin/templates/admin/partials/actor_dialog.html:411
+#: enferno/admin/templates/admin/partials/actor_dialog.html:421
 msgid "Occupation (AR)"
 msgstr "Рід занять (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:433
-#: enferno/admin/templates/admin/i18n.jinja2:54
-#: enferno/admin/templates/admin/i18n.jinja2:124
-#: enferno/admin/templates/admin/partials/actor_dialog.html:435
+#: enferno/admin/templates/admin/i18n.jinja2:59
+#: enferno/admin/templates/admin/i18n.jinja2:130
+#: enferno/admin/templates/admin/partials/actor_dialog.html:445
 msgid "Position"
 msgstr "Посада"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:435
-#: enferno/admin/templates/admin/partials/actor_dialog.html:441
+#: enferno/admin/templates/admin/partials/actor_dialog.html:451
 msgid "Position (AR)"
 msgstr "Посада (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:439
-#: enferno/admin/templates/admin/i18n.jinja2:125
-#: enferno/admin/templates/admin/partials/actor_dialog.html:465
+#: enferno/admin/templates/admin/i18n.jinja2:131
+#: enferno/admin/templates/admin/partials/actor_dialog.html:475
 msgid "Spoken Dialects"
 msgstr "Розмовні діалекти"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:441
-#: enferno/admin/templates/admin/partials/actor_dialog.html:471
+#: enferno/admin/templates/admin/partials/actor_dialog.html:481
 msgid "Spoken Dialects (AR)"
 msgstr "Розмовні діалекти (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:445
-#: enferno/admin/templates/admin/i18n.jinja2:56
-#: enferno/admin/templates/admin/i18n.jinja2:126
-#: enferno/admin/templates/admin/partials/actor_dialog.html:494
+#: enferno/admin/templates/admin/i18n.jinja2:61
+#: enferno/admin/templates/admin/i18n.jinja2:132
+#: enferno/admin/templates/admin/partials/actor_dialog.html:504
 msgid "Family Status"
 msgstr "Сімейний стан"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:447
-#: enferno/admin/templates/admin/partials/actor_dialog.html:500
+#: enferno/admin/templates/admin/partials/actor_dialog.html:510
 msgid "Family Status (AR)"
 msgstr "Сімейний стан (ДР)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:452
-#: enferno/admin/templates/admin/partials/actor_dialog.html:529
+#: enferno/admin/templates/admin/partials/actor_dialog.html:540
 msgid "Ethnographic Information"
 msgstr "Етнографічні відомості"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:454
-#: enferno/admin/templates/admin/i18n.jinja2:62
-#: enferno/admin/templates/admin/partials/actor_dialog.html:540
+#: enferno/admin/templates/admin/i18n.jinja2:67
+#: enferno/admin/templates/admin/partials/actor_dialog.html:552
 msgid "Nationality"
 msgstr "Національність"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:456
-#: enferno/admin/templates/admin/i18n.jinja2:65
-#: enferno/admin/templates/admin/i18n.jinja2:130
-#: enferno/admin/templates/admin/partials/actor_dialog.html:546
+#: enferno/admin/templates/admin/i18n.jinja2:70
+#: enferno/admin/templates/admin/i18n.jinja2:136
+#: enferno/admin/templates/admin/partials/actor_dialog.html:558
 msgid "National ID Card"
 msgstr "Національне посвідчення особи (ID)"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:462
-#: enferno/admin/templates/admin/i18n.jinja2:102
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1279
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:560
+#: enferno/admin/templates/admin/i18n.jinja2:108
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1319
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:553
 msgid "Source Link"
 msgstr "Посилання на джерело"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:475
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1286
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:569
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1326
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:562
 msgid "Private"
 msgstr "Особистий"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:477
-#: enferno/admin/templates/admin/i18n.jinja2:100
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1296
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:580
+#: enferno/admin/templates/admin/i18n.jinja2:106
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1336
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:573
 msgid "Publish Date"
 msgstr "Дата публікації"
 
 #: enferno/admin/templates/admin/csv-dashboard.html:479
-#: enferno/admin/templates/admin/i18n.jinja2:101
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1303
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:588
+#: enferno/admin/templates/admin/i18n.jinja2:107
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1343
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:581
 msgid "Documentation Date"
 msgstr "Дата оформлення документації"
 
@@ -611,19 +624,19 @@ msgstr "Карта:"
 msgid "Optional: Upload more sheets to process"
 msgstr "Додатково: завантажте більше листів для обробки"
 
-#: enferno/admin/templates/admin/csv-dashboard.html:744
-#: enferno/admin/templates/admin/etl-dashboard.html:165
+#: enferno/admin/templates/admin/csv-dashboard.html:745
+#: enferno/admin/templates/admin/etl-dashboard.html:166
 #: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:79
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:89
 #: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:76
 msgid "Access Roles"
 msgstr ""
 
-#: enferno/admin/templates/admin/csv-dashboard.html:756
+#: enferno/admin/templates/admin/csv-dashboard.html:757
 msgid "Process File(s)"
 msgstr "Обробка файла(-ів)"
 
-#: enferno/admin/templates/admin/csv-dashboard.html:772
+#: enferno/admin/templates/admin/csv-dashboard.html:773
 msgid "Batch ID:"
 msgstr "ID партії:"
 
@@ -647,69 +660,73 @@ msgstr "Завантажити файли"
 msgid "Manual web upload"
 msgstr "Ручне веб-завантаження"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:95
+#: enferno/admin/templates/admin/etl-dashboard.html:96
 msgid "Process path"
 msgstr "Обробка шляху"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:99
+#: enferno/admin/templates/admin/etl-dashboard.html:100
 msgid "Process existing files at path, server side(Faster)"
 msgstr "Обробка існуючих файлів та шляхів, сторона сервера (швидше)"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:148
+#: enferno/admin/templates/admin/etl-dashboard.html:149
 msgid "Process"
 msgstr "Обробка"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:154
+#: enferno/admin/templates/admin/etl-dashboard.html:155
 msgid "Attach data to files"
 msgstr "Прикріпити дані до файлів"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:201
-#: enferno/admin/templates/admin/i18n.jinja2:95
+#: enferno/admin/templates/admin/etl-dashboard.html:202
+#: enferno/admin/templates/admin/i18n.jinja2:101
+#: enferno/admin/templates/admin/i18n.jinja2:260
 #: enferno/admin/templates/admin/locations.html:33
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:182
 #: enferno/admin/templates/admin/partials/incident_dialog.html:141
-#: enferno/templates/nav-drawer.html:57
+#: enferno/templates/nav-drawer.html:53
 msgid "Locations"
 msgstr "Місцезнаходження"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:219
+#: enferno/admin/templates/admin/etl-dashboard.html:221
 #: enferno/admin/templates/admin/i18n.jinja2:14
+#: enferno/admin/templates/admin/partials/export_drawer.html:46
 msgid "Refs"
 msgstr "Посилання"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:229
+#: enferno/admin/templates/admin/etl-dashboard.html:232
 #, fuzzy
 msgid "Optimize videos"
 msgstr "Оптимізувати відео"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:232
+#: enferno/admin/templates/admin/etl-dashboard.html:236
 msgid "Parse PDF & MS Word files"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:237
+#: enferno/admin/templates/admin/etl-dashboard.html:241
 msgid "Scan images for text"
 msgstr ""
 
-#: enferno/admin/templates/admin/etl-dashboard.html:276
+#: enferno/admin/templates/admin/etl-dashboard.html:284
 #: enferno/admin/templates/admin/eventtypes.html:98
 #: enferno/admin/templates/admin/eventtypes.html:149
 #: enferno/admin/templates/admin/labels.html:167
-#: enferno/admin/templates/admin/locations.html:98
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:75
+#: enferno/admin/templates/admin/locations.html:103
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:120
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:115
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:103
 #: enferno/admin/templates/admin/roles.html:155
 msgid "Cancel"
 msgstr "Відмінити"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:277
+#: enferno/admin/templates/admin/etl-dashboard.html:285
 msgid "Scan"
 msgstr "Сканувати"
 
-#: enferno/admin/templates/admin/etl-dashboard.html:582
+#: enferno/admin/templates/admin/etl-dashboard.html:591
 msgid "Files added to queue and will be imported in turn."
 msgstr "Файли додані до черги та будуть імпортовані по черзі"
 
 #: enferno/admin/templates/admin/eventtypes.html:30
-#: enferno/templates/nav-drawer.html:98
+#: enferno/templates/nav-drawer.html:90
 msgid "Event Types"
 msgstr "Типи подій"
 
@@ -719,7 +736,7 @@ msgstr "Типи подій"
 #: enferno/admin/templates/admin/labels.html:320
 #: enferno/admin/templates/admin/sources.html:51
 #: enferno/admin/templates/admin/sources.html:267
-#: enferno/admin/templates/admin/users.html:241
+#: enferno/admin/templates/admin/users.html:300
 msgid "New Item"
 msgstr "Новий елемент"
 
@@ -727,6 +744,7 @@ msgstr "Новий елемент"
 #: enferno/admin/templates/admin/labels.html:76
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:87
 #: enferno/admin/templates/admin/partials/event_dialog.html:76
+#: enferno/admin/templates/admin/partials/incident_dialog.html:55
 msgid "Title (AR)"
 msgstr "Назва (ДР)"
 
@@ -741,13 +759,15 @@ msgid "For Bulletins"
 msgstr "Для бюлетенів"
 
 #: enferno/admin/templates/admin/eventtypes.html:104
-#: enferno/admin/templates/admin/i18n.jinja2:74
+#: enferno/admin/templates/admin/i18n.jinja2:79
 #: enferno/admin/templates/admin/labels.html:173
-#: enferno/admin/templates/admin/locations.html:104
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:76
+#: enferno/admin/templates/admin/locations.html:109
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:121
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:116
 #: enferno/admin/templates/admin/partials/event_dialog.html:168
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:104
 #: enferno/admin/templates/admin/roles.html:161
-#: enferno/admin/templates/admin/users.html:163
+#: enferno/admin/templates/admin/users.html:219
 msgid "Save"
 msgstr "Зберегти"
 
@@ -755,8 +775,8 @@ msgstr "Зберегти"
 #: enferno/admin/templates/admin/eventtypes.html:129
 #: enferno/admin/templates/admin/labels.html:190
 #: enferno/admin/templates/admin/labels.html:197
-#: enferno/admin/templates/admin/locations.html:68
-#: enferno/admin/templates/admin/locations.html:75
+#: enferno/admin/templates/admin/locations.html:73
+#: enferno/admin/templates/admin/locations.html:80
 #: enferno/admin/templates/admin/roles.html:127
 #: enferno/admin/templates/admin/sources.html:135
 #: enferno/admin/templates/admin/sources.html:142
@@ -765,7 +785,7 @@ msgstr "Імпортувати CSV"
 
 #: enferno/admin/templates/admin/eventtypes.html:136
 #: enferno/admin/templates/admin/labels.html:204
-#: enferno/admin/templates/admin/locations.html:85
+#: enferno/admin/templates/admin/locations.html:90
 #: enferno/admin/templates/admin/roles.html:142
 #: enferno/admin/templates/admin/sources.html:151
 msgid "Select CSV File"
@@ -778,7 +798,7 @@ msgstr "Назва (ДР)"
 #: enferno/admin/templates/admin/eventtypes.html:239
 #: enferno/admin/templates/admin/labels.html:320
 #: enferno/admin/templates/admin/sources.html:267
-#: enferno/admin/templates/admin/users.html:241
+#: enferno/admin/templates/admin/users.html:300
 msgid "Edit Item"
 msgstr "Редагувати елемент"
 
@@ -812,7 +832,8 @@ msgid "Relate"
 msgstr "Пов'язати"
 
 #: enferno/admin/templates/admin/i18n.jinja2:12
-msgid "contains"
+#, fuzzy
+msgid "Contains"
 msgstr "містить"
 
 #: enferno/admin/templates/admin/i18n.jinja2:13
@@ -848,8 +869,8 @@ msgid "Event date"
 msgstr "Дата події"
 
 #: enferno/admin/templates/admin/i18n.jinja2:22
-msgid "Within"
-msgstr "Протягом"
+msgid "Search in a signle event"
+msgstr ""
 
 #: enferno/admin/templates/admin/i18n.jinja2:23
 msgid "Assigned user"
@@ -920,1729 +941,1791 @@ msgid "Include locations"
 msgstr "Включити місцезнаходження"
 
 #: enferno/admin/templates/admin/i18n.jinja2:40
+msgid "Radius"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:41
 msgid "Exclude locations (All)"
 msgstr "Виключити місцезнаходення (Усі)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:41
+#: enferno/admin/templates/admin/i18n.jinja2:42
 msgid "Include residence locations (Any)"
 msgstr "Включити місця проживання (Будь-які)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:42
+#: enferno/admin/templates/admin/i18n.jinja2:43
 msgid "Exclude residence locations (All)"
 msgstr "Виключити місця проживання (Усі)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:43
+#: enferno/admin/templates/admin/i18n.jinja2:44
 msgid "Include origin locations (Any)"
 msgstr "Включити місця походження (Будь-які)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:44
+#: enferno/admin/templates/admin/i18n.jinja2:45
 msgid "Exclude origin locations (All)"
 msgstr "Виключити місця походження (Усі)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:45
+#: enferno/admin/templates/admin/i18n.jinja2:46
 msgid "Include event locations"
 msgstr "Включити місця подій"
 
-#: enferno/admin/templates/admin/i18n.jinja2:46
+#: enferno/admin/templates/admin/i18n.jinja2:47
 msgid "Event type"
 msgstr "Тип події"
 
-#: enferno/admin/templates/admin/i18n.jinja2:47
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:47
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:63
+#: enferno/admin/templates/admin/i18n.jinja2:48
+msgid "Geospatial"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:49
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:79
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:75
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:62
 msgid "Clear Search"
 msgstr "Очистити пошук"
 
-#: enferno/admin/templates/admin/i18n.jinja2:49
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:48
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:64
+#: enferno/admin/templates/admin/i18n.jinja2:51
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:80
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:76
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:63
 msgid "Save Search"
 msgstr "Зберегти пошук"
 
-#: enferno/admin/templates/admin/i18n.jinja2:50
+#: enferno/admin/templates/admin/i18n.jinja2:52
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:92
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:88
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:75
+#, fuzzy
+msgid "Save As New"
+msgstr "Зберегти пошук"
+
+#: enferno/admin/templates/admin/i18n.jinja2:53
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:31
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:32
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:32
+#, fuzzy
+msgid "Delete Search"
+msgstr "Очистити пошук"
+
+#: enferno/admin/templates/admin/i18n.jinja2:54
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:86
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:82
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:69
+#, fuzzy
+msgid "Update Search"
+msgstr "Зберегти пошук"
+
+#: enferno/admin/templates/admin/i18n.jinja2:55
 msgid "Refine/Extend Search"
 msgstr "Уточнити/Розширити пошук"
 
-#: enferno/admin/templates/admin/i18n.jinja2:51
+#: enferno/admin/templates/admin/i18n.jinja2:56
 msgid "Load existing search"
 msgstr "Завантажити існуючий пошук"
 
-#: enferno/admin/templates/admin/i18n.jinja2:55
+#: enferno/admin/templates/admin/i18n.jinja2:60
 msgid "Spoken dialects"
 msgstr "Розмовні діалекти"
 
-#: enferno/admin/templates/admin/i18n.jinja2:61
+#: enferno/admin/templates/admin/i18n.jinja2:66
 msgid "Ethnography"
 msgstr "Походження"
 
-#: enferno/admin/templates/admin/i18n.jinja2:63
+#: enferno/admin/templates/admin/i18n.jinja2:68
 msgid "Place of birth"
 msgstr "Місце народження"
 
-#: enferno/admin/templates/admin/i18n.jinja2:64
+#: enferno/admin/templates/admin/i18n.jinja2:69
 msgid "Date of birth"
 msgstr "Дата народження"
 
-#: enferno/admin/templates/admin/i18n.jinja2:66
-#: enferno/admin/templates/admin/i18n.jinja2:568
-#: enferno/admin/templates/admin/i18n.jinja2:630
+#: enferno/admin/templates/admin/i18n.jinja2:71
+#: enferno/admin/templates/admin/i18n.jinja2:592
+#: enferno/admin/templates/admin/i18n.jinja2:654
 msgid "Yes"
 msgstr "Так"
 
-#: enferno/admin/templates/admin/i18n.jinja2:67
-#: enferno/admin/templates/admin/i18n.jinja2:569
-#: enferno/admin/templates/admin/i18n.jinja2:631
+#: enferno/admin/templates/admin/i18n.jinja2:72
+#: enferno/admin/templates/admin/i18n.jinja2:593
+#: enferno/admin/templates/admin/i18n.jinja2:655
 msgid "No"
 msgstr "Ні"
 
-#: enferno/admin/templates/admin/i18n.jinja2:68
-#: enferno/admin/templates/admin/i18n.jinja2:435
-#: enferno/admin/templates/admin/i18n.jinja2:439
-#: enferno/admin/templates/admin/i18n.jinja2:460
-#: enferno/admin/templates/admin/i18n.jinja2:562
-#: enferno/admin/templates/admin/i18n.jinja2:570
-#: enferno/admin/templates/admin/i18n.jinja2:626
-#: enferno/admin/templates/admin/i18n.jinja2:632
+#: enferno/admin/templates/admin/i18n.jinja2:73
+#: enferno/admin/templates/admin/i18n.jinja2:458
+#: enferno/admin/templates/admin/i18n.jinja2:462
+#: enferno/admin/templates/admin/i18n.jinja2:483
+#: enferno/admin/templates/admin/i18n.jinja2:586
+#: enferno/admin/templates/admin/i18n.jinja2:594
+#: enferno/admin/templates/admin/i18n.jinja2:650
+#: enferno/admin/templates/admin/i18n.jinja2:656
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: enferno/admin/templates/admin/i18n.jinja2:69
+#: enferno/admin/templates/admin/i18n.jinja2:74
 msgid "details"
 msgstr "деталі"
 
-#: enferno/admin/templates/admin/i18n.jinja2:71
+#: enferno/admin/templates/admin/i18n.jinja2:76
 msgid "Reporting Persons"
 msgstr "Звітні особи"
 
-#: enferno/admin/templates/admin/i18n.jinja2:72
+#: enferno/admin/templates/admin/i18n.jinja2:77
 msgid "Contact info ( phone, email, address)"
 msgstr "Контактна інформація (телефон, електронна адреса, адреса проживання)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:73
+#: enferno/admin/templates/admin/i18n.jinja2:78
 msgid "Relationship"
 msgstr "Сімейний стан"
 
-#: enferno/admin/templates/admin/i18n.jinja2:75
+#: enferno/admin/templates/admin/i18n.jinja2:80
 msgid "Type"
 msgstr "Тип"
 
-#: enferno/admin/templates/admin/i18n.jinja2:76
+#: enferno/admin/templates/admin/i18n.jinja2:81
 msgid "Latitude"
 msgstr "Широта"
 
-#: enferno/admin/templates/admin/i18n.jinja2:77
+#: enferno/admin/templates/admin/i18n.jinja2:82
 msgid "Longitude"
 msgstr "Довгота"
 
-#: enferno/admin/templates/admin/i18n.jinja2:78
-#: enferno/admin/templates/admin/i18n.jinja2:500
-#: enferno/admin/templates/admin/i18n.jinja2:501
+#: enferno/admin/templates/admin/i18n.jinja2:83
+#: enferno/admin/templates/admin/i18n.jinja2:523
+#: enferno/admin/templates/admin/i18n.jinja2:524
 #: enferno/admin/templates/admin/labels.html:101
 #: enferno/admin/templates/admin/labels.html:293
-#: enferno/admin/templates/admin/locations.html:203
+#: enferno/admin/templates/admin/locations.html:216
 #: enferno/admin/templates/admin/sources.html:78
 #: enferno/admin/templates/admin/sources.html:242
 msgid "Parent"
 msgstr "Батько/Матір"
 
-#: enferno/admin/templates/admin/i18n.jinja2:79
-#: enferno/admin/templates/admin/partials/location_dialog.html:134
+#: enferno/admin/templates/admin/i18n.jinja2:84
+#: enferno/admin/templates/admin/partials/location_dialog.html:135
 #, fuzzy
 msgid "Postal Code"
 msgstr "Вуса"
 
-#: enferno/admin/templates/admin/i18n.jinja2:84
+#: enferno/admin/templates/admin/i18n.jinja2:85
+#, fuzzy
+msgid "Main Incident"
+msgstr "Новий випадок"
+
+#: enferno/admin/templates/admin/i18n.jinja2:90
 #: enferno/admin/templates/admin/users.html:50
 msgid "Edit"
 msgstr "Редагувати"
 
-#: enferno/admin/templates/admin/i18n.jinja2:85
+#: enferno/admin/templates/admin/i18n.jinja2:91
 #, fuzzy
 msgid "Visualize"
 msgstr "Завершено"
 
-#: enferno/admin/templates/admin/i18n.jinja2:86
+#: enferno/admin/templates/admin/i18n.jinja2:92
 msgid "Assigned User:"
 msgstr "Призначений користувач:"
 
-#: enferno/admin/templates/admin/i18n.jinja2:89
+#: enferno/admin/templates/admin/i18n.jinja2:95
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:49
 msgid "Original Title"
 msgstr "Оригінальна назва"
 
-#: enferno/admin/templates/admin/i18n.jinja2:94
+#: enferno/admin/templates/admin/i18n.jinja2:100
 #: enferno/admin/templates/admin/partials/media_dialog.html:6
 msgid "Media"
 msgstr "Медіа"
 
-#: enferno/admin/templates/admin/i18n.jinja2:96
-#: enferno/admin/templates/admin/partials/actor_dialog.html:682
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:231
-#: enferno/admin/templates/admin/partials/incident_dialog.html:275
+#: enferno/admin/templates/admin/i18n.jinja2:102
+#: enferno/admin/templates/admin/partials/actor_dialog.html:694
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:223
+#: enferno/admin/templates/admin/partials/incident_dialog.html:280
 msgid "Related Bulletins"
 msgstr "Пов'язані бюлетені"
 
-#: enferno/admin/templates/admin/i18n.jinja2:97
-#: enferno/admin/templates/admin/partials/actor_dialog.html:571
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:337
-#: enferno/admin/templates/admin/partials/incident_dialog.html:173
+#: enferno/admin/templates/admin/i18n.jinja2:103
+#: enferno/admin/templates/admin/partials/actor_dialog.html:583
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:330
+#: enferno/admin/templates/admin/partials/incident_dialog.html:175
 msgid "Related Actors"
 msgstr "Пов'язані виконавці"
 
-#: enferno/admin/templates/admin/i18n.jinja2:98
-#: enferno/admin/templates/admin/partials/actor_dialog.html:786
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:444
-#: enferno/admin/templates/admin/partials/incident_dialog.html:379
+#: enferno/admin/templates/admin/i18n.jinja2:104
+#: enferno/admin/templates/admin/partials/actor_dialog.html:798
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:437
+#: enferno/admin/templates/admin/partials/incident_dialog.html:387
 msgid "Related Incidents"
 msgstr "Пов'язані випадки"
 
-#: enferno/admin/templates/admin/i18n.jinja2:99
+#: enferno/admin/templates/admin/i18n.jinja2:105
 #, fuzzy
 msgid "Relationship Info"
 msgstr "Інформація про сімейний стан"
 
-#: enferno/admin/templates/admin/i18n.jinja2:104
+#: enferno/admin/templates/admin/i18n.jinja2:110
 msgid "Log History"
 msgstr "Журнал"
 
-#: enferno/admin/templates/admin/i18n.jinja2:107
-#: enferno/admin/templates/admin/users.html:79
+#: enferno/admin/templates/admin/i18n.jinja2:113
+#: enferno/admin/templates/admin/users.html:81
 msgid "Full Name"
 msgstr "Повне ім'я"
 
-#: enferno/admin/templates/admin/i18n.jinja2:108
+#: enferno/admin/templates/admin/i18n.jinja2:114
 msgid "Nick Name"
 msgstr "Прізвисько"
 
-#: enferno/admin/templates/admin/i18n.jinja2:110
+#: enferno/admin/templates/admin/i18n.jinja2:116
 msgid "Middle Name"
 msgstr "По батькові"
 
-#: enferno/admin/templates/admin/i18n.jinja2:114
+#: enferno/admin/templates/admin/i18n.jinja2:120
 msgid "Age"
 msgstr "Вік"
 
-#: enferno/admin/templates/admin/i18n.jinja2:115
-#: enferno/admin/templates/admin/i18n.jinja2:440
+#: enferno/admin/templates/admin/i18n.jinja2:121
+#: enferno/admin/templates/admin/i18n.jinja2:463
 msgid "Civilian"
 msgstr "Цивільна особа"
 
-#: enferno/admin/templates/admin/i18n.jinja2:128
+#: enferno/admin/templates/admin/i18n.jinja2:134
 msgid "Ethnographic Info"
 msgstr "Етнографічні відомості"
 
-#: enferno/admin/templates/admin/i18n.jinja2:129
+#: enferno/admin/templates/admin/i18n.jinja2:135
 msgid "Nationalities"
 msgstr "Національності"
 
-#: enferno/admin/templates/admin/i18n.jinja2:132
+#: enferno/admin/templates/admin/i18n.jinja2:138
 msgid "Overview"
 msgstr "Огляд"
 
-#: enferno/admin/templates/admin/i18n.jinja2:135
+#: enferno/admin/templates/admin/i18n.jinja2:141
 #: enferno/admin/templates/admin/partials/incident_dialog.html:111
 msgid "Claimed Violations Categories"
 msgstr "Категорії заявлених порушень"
 
-#: enferno/admin/templates/admin/i18n.jinja2:136
+#: enferno/admin/templates/admin/i18n.jinja2:142
 #: enferno/admin/templates/admin/partials/incident_dialog.html:97
 msgid "Potential violation categories"
 msgstr "Категорії потенційних порушень"
 
-#: enferno/admin/templates/admin/i18n.jinja2:139
+#: enferno/admin/templates/admin/i18n.jinja2:145
 msgid "Missing Person"
 msgstr "Зник(-ла) безвісти"
 
-#: enferno/admin/templates/admin/i18n.jinja2:141
-#: enferno/admin/templates/admin/partials/actor_dialog.html:887
+#: enferno/admin/templates/admin/i18n.jinja2:147
+#: enferno/admin/templates/admin/partials/actor_dialog.html:914
 msgid "Last Address"
 msgstr "Остання адреса"
 
-#: enferno/admin/templates/admin/i18n.jinja2:142
-#: enferno/admin/templates/admin/partials/actor_dialog.html:891
+#: enferno/admin/templates/admin/i18n.jinja2:148
+#: enferno/admin/templates/admin/partials/actor_dialog.html:918
 msgid "Marriage History"
 msgstr "Шлюбна історія"
 
-#: enferno/admin/templates/admin/i18n.jinja2:143
-#: enferno/admin/templates/admin/partials/actor_dialog.html:896
+#: enferno/admin/templates/admin/i18n.jinja2:149
+#: enferno/admin/templates/admin/partials/actor_dialog.html:923
 msgid "Bio Children"
 msgstr "Рідні діти"
 
-#: enferno/admin/templates/admin/i18n.jinja2:144
-#: enferno/admin/templates/admin/partials/actor_dialog.html:904
+#: enferno/admin/templates/admin/i18n.jinja2:150
+#: enferno/admin/templates/admin/partials/actor_dialog.html:931
 msgid "Pregnant at Disappearance"
 msgstr "Вагітність на момент зникнення"
 
-#: enferno/admin/templates/admin/i18n.jinja2:145
+#: enferno/admin/templates/admin/i18n.jinja2:151
 msgid "Months Pregnant at Disappearance"
 msgstr "Місяць вагітності на момент зникнення"
 
-#: enferno/admin/templates/admin/i18n.jinja2:146
-#: enferno/admin/templates/admin/partials/actor_dialog.html:923
+#: enferno/admin/templates/admin/i18n.jinja2:152
+#: enferno/admin/templates/admin/partials/actor_dialog.html:951
 msgid "Missing Relatives"
 msgstr "Зниклі родичі"
 
-#: enferno/admin/templates/admin/i18n.jinja2:148
-#: enferno/admin/templates/admin/partials/actor_dialog.html:940
+#: enferno/admin/templates/admin/i18n.jinja2:154
+#: enferno/admin/templates/admin/partials/actor_dialog.html:968
 msgid "Address"
 msgstr "Адреса"
 
-#: enferno/admin/templates/admin/i18n.jinja2:149
-#: enferno/admin/templates/admin/partials/actor_dialog.html:942
+#: enferno/admin/templates/admin/i18n.jinja2:155
+#: enferno/admin/templates/admin/partials/actor_dialog.html:970
 msgid "Phone"
 msgstr "Телефон"
 
-#: enferno/admin/templates/admin/i18n.jinja2:150
-#: enferno/admin/templates/admin/partials/actor_dialog.html:948
-#: enferno/admin/templates/admin/users.html:90
-#: enferno/admin/templates/admin/users.html:217
+#: enferno/admin/templates/admin/i18n.jinja2:156
+#: enferno/admin/templates/admin/partials/actor_dialog.html:976
+#: enferno/admin/templates/admin/users.html:96
+#: enferno/admin/templates/admin/users.html:274
 msgid "Email"
 msgstr "Електронна пошта"
 
-#: enferno/admin/templates/admin/i18n.jinja2:151
-#: enferno/admin/templates/admin/partials/actor_dialog.html:957
+#: enferno/admin/templates/admin/i18n.jinja2:157
+#: enferno/admin/templates/admin/partials/actor_dialog.html:985
 msgid "Seen in a detention center?"
 msgstr "Бачили у слідчому ізоляторі?"
 
-#: enferno/admin/templates/admin/i18n.jinja2:152
-#: enferno/admin/templates/admin/partials/actor_dialog.html:964
+#: enferno/admin/templates/admin/i18n.jinja2:158
+#: enferno/admin/templates/admin/partials/actor_dialog.html:992
 msgid "Injured around time of disappearance?"
 msgstr "Травмований перед зникненням?"
 
-#: enferno/admin/templates/admin/i18n.jinja2:153
-#: enferno/admin/templates/admin/partials/actor_dialog.html:972
+#: enferno/admin/templates/admin/i18n.jinja2:159
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1000
 msgid "Known to be dead?"
 msgstr "Визнаний мертвим?"
 
-#: enferno/admin/templates/admin/i18n.jinja2:154
-#: enferno/admin/templates/admin/partials/actor_dialog.html:978
+#: enferno/admin/templates/admin/i18n.jinja2:160
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1006
 msgid "Details about circumstances of death"
 msgstr "Подробиці обставин смерті"
 
-#: enferno/admin/templates/admin/i18n.jinja2:155
-#: enferno/admin/templates/admin/partials/actor_dialog.html:984
+#: enferno/admin/templates/admin/i18n.jinja2:161
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1012
 msgid "Personal Items (watch,ring,chains etc)"
 msgstr "Особисті речі (годинник, обручка, ланцюжок тощо)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:156
-#: enferno/admin/templates/admin/partials/actor_dialog.html:994
+#: enferno/admin/templates/admin/i18n.jinja2:162
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1022
 msgid "Height"
 msgstr "Зріст"
 
-#: enferno/admin/templates/admin/i18n.jinja2:157
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1006
+#: enferno/admin/templates/admin/i18n.jinja2:163
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1034
 msgid "Weight"
 msgstr "Вага"
 
-#: enferno/admin/templates/admin/i18n.jinja2:158
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1015
+#: enferno/admin/templates/admin/i18n.jinja2:164
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1043
 msgid "Physique"
 msgstr "Статура"
 
-#: enferno/admin/templates/admin/i18n.jinja2:159
+#: enferno/admin/templates/admin/i18n.jinja2:165
 msgid "Hair Loss"
 msgstr "Втрата волосся"
 
-#: enferno/admin/templates/admin/i18n.jinja2:160
+#: enferno/admin/templates/admin/i18n.jinja2:166
 msgid "Hair Type"
 msgstr "Тип волосся"
 
-#: enferno/admin/templates/admin/i18n.jinja2:161
+#: enferno/admin/templates/admin/i18n.jinja2:167
 msgid "Hair Length"
 msgstr "Довжина волосся"
 
-#: enferno/admin/templates/admin/i18n.jinja2:162
+#: enferno/admin/templates/admin/i18n.jinja2:168
 msgid "Hair Color"
 msgstr "Колір волосся"
 
-#: enferno/admin/templates/admin/i18n.jinja2:163
+#: enferno/admin/templates/admin/i18n.jinja2:169
 msgid "Facial Hair"
 msgstr "Волосся на обличчі"
 
-#: enferno/admin/templates/admin/i18n.jinja2:164
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1074
+#: enferno/admin/templates/admin/i18n.jinja2:170
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1108
 msgid "Notes on posture and walking style"
 msgstr "Нотатки про поставу та стиль ходьби"
 
-#: enferno/admin/templates/admin/i18n.jinja2:165
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1093
+#: enferno/admin/templates/admin/i18n.jinja2:171
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1130
 msgid "Skin Markings"
 msgstr "Відмітки на шкірі"
 
-#: enferno/admin/templates/admin/i18n.jinja2:166
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1076
+#: enferno/admin/templates/admin/i18n.jinja2:172
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1110
 msgid "Handness"
 msgstr "Правша/Лівша"
 
-#: enferno/admin/templates/admin/i18n.jinja2:167
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1081
+#: enferno/admin/templates/admin/i18n.jinja2:173
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1116
 msgid "Glasses"
 msgstr "Окуляри"
 
-#: enferno/admin/templates/admin/i18n.jinja2:168
+#: enferno/admin/templates/admin/i18n.jinja2:174
 msgid "Eye Color"
 msgstr "Колір очей"
 
-#: enferno/admin/templates/admin/i18n.jinja2:169
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1108
+#: enferno/admin/templates/admin/i18n.jinja2:175
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1145
 msgid "Distinctive characteristics (congenital)"
 msgstr "Відмінні ознаки (вроджені)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:170
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1113
+#: enferno/admin/templates/admin/i18n.jinja2:176
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1150
 msgid "Distinctive characteristics (acquired)"
 msgstr "Відмінні знаки (набуті)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:171
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1119
+#: enferno/admin/templates/admin/i18n.jinja2:177
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1156
 msgid "Physical habits"
 msgstr "Фізичні звички"
 
-#: enferno/admin/templates/admin/i18n.jinja2:172
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1123
+#: enferno/admin/templates/admin/i18n.jinja2:178
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1160
 msgid "Other comments"
 msgstr "Інші коментарі"
 
-#: enferno/admin/templates/admin/i18n.jinja2:173
+#: enferno/admin/templates/admin/i18n.jinja2:179
 msgid "Physician\\u2019s name and contact"
 msgstr "Ім’я лікаря та контактні дані"
 
-#: enferno/admin/templates/admin/i18n.jinja2:174
+#: enferno/admin/templates/admin/i18n.jinja2:180
 msgid "Fractures / Injuries"
 msgstr "Переломи / Травми"
 
-#: enferno/admin/templates/admin/i18n.jinja2:175
+#: enferno/admin/templates/admin/i18n.jinja2:181
 msgid "Implants "
 msgstr "Імплантанти"
 
-#: enferno/admin/templates/admin/i18n.jinja2:176
+#: enferno/admin/templates/admin/i18n.jinja2:182
 msgid "Congenital malformations"
 msgstr "Вроджені вади розвитку"
 
-#: enferno/admin/templates/admin/i18n.jinja2:177
+#: enferno/admin/templates/admin/i18n.jinja2:183
 msgid "Pain and / or ailments"
 msgstr "Біль та/або нездужання"
 
-#: enferno/admin/templates/admin/i18n.jinja2:178
+#: enferno/admin/templates/admin/i18n.jinja2:184
 msgid "Other medical conditions"
 msgstr "Інші медичні стани"
 
-#: enferno/admin/templates/admin/i18n.jinja2:179
+#: enferno/admin/templates/admin/i18n.jinja2:185
 msgid "Accidents"
 msgstr "Нещасні випадки"
 
-#: enferno/admin/templates/admin/i18n.jinja2:180
+#: enferno/admin/templates/admin/i18n.jinja2:186
 msgid "Prescription drugs taken"
 msgstr "Прийом ліків за рецептом"
 
-#: enferno/admin/templates/admin/i18n.jinja2:181
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1184
+#: enferno/admin/templates/admin/i18n.jinja2:187
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1222
 msgid "Smoker"
 msgstr "Курець"
 
-#: enferno/admin/templates/admin/i18n.jinja2:182
+#: enferno/admin/templates/admin/i18n.jinja2:188
 msgid "Is there a Dental Record"
 msgstr "Чи є стоматологічна картка"
 
-#: enferno/admin/templates/admin/i18n.jinja2:183
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1193
+#: enferno/admin/templates/admin/i18n.jinja2:189
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1232
 msgid "Dentist’s name and contact"
 msgstr "Ім’я та контакти стоматолога"
 
-#: enferno/admin/templates/admin/i18n.jinja2:184
+#: enferno/admin/templates/admin/i18n.jinja2:190
 msgid "Teeth features"
 msgstr "Особливості зубів"
 
-#: enferno/admin/templates/admin/i18n.jinja2:185
+#: enferno/admin/templates/admin/i18n.jinja2:191
 msgid "Dental problems"
 msgstr "Проблеми з зубами"
 
-#: enferno/admin/templates/admin/i18n.jinja2:186
+#: enferno/admin/templates/admin/i18n.jinja2:192
 msgid "Dental treatments"
 msgstr "Лікування зубів"
 
-#: enferno/admin/templates/admin/i18n.jinja2:187
+#: enferno/admin/templates/admin/i18n.jinja2:193
 msgid "Dental habits"
 msgstr "Зубні звички"
 
-#: enferno/admin/templates/admin/i18n.jinja2:188
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1221
+#: enferno/admin/templates/admin/i18n.jinja2:194
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1260
 msgid "Case status"
 msgstr "Статус справи"
 
-#: enferno/admin/templates/admin/i18n.jinja2:189
+#: enferno/admin/templates/admin/i18n.jinja2:195
 msgid "Reporters"
 msgstr "Звітовики"
 
-#: enferno/admin/templates/admin/i18n.jinja2:190
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1240
+#: enferno/admin/templates/admin/i18n.jinja2:196
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1280
 msgid "Identified by (responsible institution)"
 msgstr "Ідентифіковано (відповідальна установа)"
 
-#: enferno/admin/templates/admin/i18n.jinja2:191
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1245
+#: enferno/admin/templates/admin/i18n.jinja2:197
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1285
 msgid "Was the family notified?"
 msgstr "Чи була повідомлена родина?"
 
-#: enferno/admin/templates/admin/i18n.jinja2:192
+#: enferno/admin/templates/admin/i18n.jinja2:198
 msgid "Location of reburial"
 msgstr "Місце перепоховання"
 
-#: enferno/admin/templates/admin/i18n.jinja2:193
-#: enferno/admin/templates/admin/partials/actor_dialog.html:935
+#: enferno/admin/templates/admin/i18n.jinja2:199
+#: enferno/admin/templates/admin/partials/actor_dialog.html:963
 msgid "Details of the person who saw them last"
 msgstr "Деталі від особи, що бачила їх востаннє"
 
-#: enferno/admin/templates/admin/i18n.jinja2:195
+#: enferno/admin/templates/admin/i18n.jinja2:201
 msgid "Contact"
 msgstr "Контакт"
 
-#: enferno/admin/templates/admin/i18n.jinja2:200
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1296
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1303
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:580
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:588
+#: enferno/admin/templates/admin/i18n.jinja2:206
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1336
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1343
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:573
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:581
 #: enferno/admin/templates/admin/partials/event_dialog.html:151
 #: enferno/admin/templates/admin/partials/event_dialog.html:154
 msgid "Time"
 msgstr "Час"
 
-#: enferno/admin/templates/admin/i18n.jinja2:203
-#: enferno/templates/nav-drawer.html:31
+#: enferno/admin/templates/admin/i18n.jinja2:209
+#: enferno/templates/nav-drawer.html:29
 msgid "Actors"
 msgstr "Виконваці"
 
-#: enferno/admin/templates/admin/i18n.jinja2:204
-#: enferno/templates/nav-drawer.html:19
+#: enferno/admin/templates/admin/i18n.jinja2:210
+#: enferno/templates/nav-drawer.html:18
 msgid "Bulletins"
 msgstr "Бюлетені"
 
-#: enferno/admin/templates/admin/i18n.jinja2:205
-#: enferno/templates/nav-drawer.html:43
+#: enferno/admin/templates/admin/i18n.jinja2:211
+#: enferno/templates/nav-drawer.html:40
 msgid "Incidents"
 msgstr "Випадки"
 
-#: enferno/admin/templates/admin/i18n.jinja2:206
+#: enferno/admin/templates/admin/i18n.jinja2:212
 msgid "Double click on a node to expand graph, click and hold CTRL to view"
 msgstr ""
 
-#: enferno/admin/templates/admin/i18n.jinja2:210
-#: enferno/admin/templates/admin/i18n.jinja2:516
+#: enferno/admin/templates/admin/i18n.jinja2:216
+#: enferno/admin/templates/admin/i18n.jinja2:540
 msgid "Generic"
 msgstr "Загальний"
 
-#: enferno/admin/templates/admin/i18n.jinja2:211
-#: enferno/admin/templates/admin/i18n.jinja2:517
+#: enferno/admin/templates/admin/i18n.jinja2:217
+#: enferno/admin/templates/admin/i18n.jinja2:541
 msgid "Humans"
 msgstr "Люди"
 
-#: enferno/admin/templates/admin/i18n.jinja2:212
-#: enferno/admin/templates/admin/i18n.jinja2:518
+#: enferno/admin/templates/admin/i18n.jinja2:218
+#: enferno/admin/templates/admin/i18n.jinja2:542
 msgid "Signs/Text"
 msgstr "Знаки/Текст"
 
-#: enferno/admin/templates/admin/i18n.jinja2:214
-#: enferno/admin/templates/admin/i18n.jinja2:523
+#: enferno/admin/templates/admin/i18n.jinja2:220
+#: enferno/admin/templates/admin/i18n.jinja2:547
 msgid "Maybe"
 msgstr "Можливо"
 
-#: enferno/admin/templates/admin/i18n.jinja2:215
-#: enferno/admin/templates/admin/i18n.jinja2:524
+#: enferno/admin/templates/admin/i18n.jinja2:221
+#: enferno/admin/templates/admin/i18n.jinja2:548
 msgid "Likely"
 msgstr "Ймовірно"
 
-#: enferno/admin/templates/admin/i18n.jinja2:216
-#: enferno/admin/templates/admin/i18n.jinja2:525
+#: enferno/admin/templates/admin/i18n.jinja2:222
+#: enferno/admin/templates/admin/i18n.jinja2:549
 msgid "Certain"
 msgstr "Точно"
 
-#: enferno/admin/templates/admin/i18n.jinja2:219
-#: enferno/admin/templates/admin/i18n.jinja2:499
-#: enferno/admin/templates/admin/i18n.jinja2:530
+#: enferno/admin/templates/admin/i18n.jinja2:225
+#: enferno/admin/templates/admin/i18n.jinja2:522
+#: enferno/admin/templates/admin/i18n.jinja2:554
 msgid "Duplicate"
 msgstr "Запасний"
 
-#: enferno/admin/templates/admin/i18n.jinja2:220
-#: enferno/admin/templates/admin/i18n.jinja2:419
-#: enferno/admin/templates/admin/i18n.jinja2:484
-#: enferno/admin/templates/admin/i18n.jinja2:494
-#: enferno/admin/templates/admin/i18n.jinja2:511
-#: enferno/admin/templates/admin/i18n.jinja2:531
-#: enferno/admin/templates/admin/i18n.jinja2:602
+#: enferno/admin/templates/admin/i18n.jinja2:226
+#: enferno/admin/templates/admin/i18n.jinja2:442
+#: enferno/admin/templates/admin/i18n.jinja2:507
+#: enferno/admin/templates/admin/i18n.jinja2:517
+#: enferno/admin/templates/admin/i18n.jinja2:534
+#: enferno/admin/templates/admin/i18n.jinja2:555
+#: enferno/admin/templates/admin/i18n.jinja2:626
 msgid "Other"
 msgstr "Інше"
 
-#: enferno/admin/templates/admin/i18n.jinja2:221
-#: enferno/admin/templates/admin/i18n.jinja2:532
+#: enferno/admin/templates/admin/i18n.jinja2:227
+#: enferno/admin/templates/admin/i18n.jinja2:556
 msgid "Part of a Series"
 msgstr "Частина серії"
 
-#: enferno/admin/templates/admin/i18n.jinja2:222
-#: enferno/admin/templates/admin/i18n.jinja2:533
+#: enferno/admin/templates/admin/i18n.jinja2:228
+#: enferno/admin/templates/admin/i18n.jinja2:557
 msgid "Same Object"
 msgstr "Той самий об'єкт"
 
-#: enferno/admin/templates/admin/i18n.jinja2:223
-#: enferno/admin/templates/admin/i18n.jinja2:498
-#: enferno/admin/templates/admin/i18n.jinja2:534
+#: enferno/admin/templates/admin/i18n.jinja2:229
+#: enferno/admin/templates/admin/i18n.jinja2:521
+#: enferno/admin/templates/admin/i18n.jinja2:558
 msgid "Same Person"
 msgstr "Та сама людина"
 
-#: enferno/admin/templates/admin/i18n.jinja2:224
-#: enferno/admin/templates/admin/i18n.jinja2:535
+#: enferno/admin/templates/admin/i18n.jinja2:230
+#: enferno/admin/templates/admin/i18n.jinja2:559
 msgid "Potentially Duplicate"
 msgstr "Потенційний дублікат"
 
-#: enferno/admin/templates/admin/i18n.jinja2:225
-#: enferno/admin/templates/admin/i18n.jinja2:536
+#: enferno/admin/templates/admin/i18n.jinja2:231
+#: enferno/admin/templates/admin/i18n.jinja2:560
 msgid "Potentially Related"
 msgstr "Потенційно пов'язаний"
 
-#: enferno/admin/templates/admin/i18n.jinja2:226
-#: enferno/admin/templates/admin/i18n.jinja2:538
-#: enferno/admin/templates/admin/i18n.jinja2:539
+#: enferno/admin/templates/admin/i18n.jinja2:232
+#: enferno/admin/templates/admin/i18n.jinja2:562
+#: enferno/admin/templates/admin/i18n.jinja2:563
 msgid "Default"
 msgstr "За замовчуванням"
 
-#: enferno/admin/templates/admin/i18n.jinja2:230
+#: enferno/admin/templates/admin/i18n.jinja2:236
 msgid "Machine Created"
 msgstr "Створено комп’ютером"
 
-#: enferno/admin/templates/admin/i18n.jinja2:231
+#: enferno/admin/templates/admin/i18n.jinja2:237
 msgid "Human Created"
 msgstr "Створено людиною"
 
-#: enferno/admin/templates/admin/i18n.jinja2:232
+#: enferno/admin/templates/admin/i18n.jinja2:238
 msgid "Updated"
 msgstr "Оновлено"
 
-#: enferno/admin/templates/admin/i18n.jinja2:233
+#: enferno/admin/templates/admin/i18n.jinja2:239
 msgid "Peer Reviewed"
 msgstr "Експертна оцінка"
 
-#: enferno/admin/templates/admin/i18n.jinja2:234
+#: enferno/admin/templates/admin/i18n.jinja2:240
 msgid "Finalized"
 msgstr "Завершено"
 
-#: enferno/admin/templates/admin/i18n.jinja2:235
+#: enferno/admin/templates/admin/i18n.jinja2:241
 msgid "Senior Reviewed"
 msgstr "Перевірено провідним рецензентом"
 
-#: enferno/admin/templates/admin/i18n.jinja2:236
+#: enferno/admin/templates/admin/i18n.jinja2:242
 msgid "Machine Updated"
 msgstr "Оновлено автоматично"
 
-#: enferno/admin/templates/admin/i18n.jinja2:237
+#: enferno/admin/templates/admin/i18n.jinja2:243
 msgid "Assigned"
 msgstr "Призначено"
 
-#: enferno/admin/templates/admin/i18n.jinja2:238
+#: enferno/admin/templates/admin/i18n.jinja2:244
 msgid "Second Peer Review"
 msgstr "Друга експертна оцінка"
 
-#: enferno/admin/templates/admin/i18n.jinja2:239
+#: enferno/admin/templates/admin/i18n.jinja2:245
 msgid "Revisited"
 msgstr "Переглянуто"
 
-#: enferno/admin/templates/admin/i18n.jinja2:240
+#: enferno/admin/templates/admin/i18n.jinja2:246
 msgid "Senior Updated"
 msgstr "Оновлено провідним рецензентом"
 
-#: enferno/admin/templates/admin/i18n.jinja2:241
+#: enferno/admin/templates/admin/i18n.jinja2:247
 msgid "Peer Review Assigned"
 msgstr "Призначена експертна оцінка"
 
-#: enferno/admin/templates/admin/i18n.jinja2:245
+#: enferno/admin/templates/admin/i18n.jinja2:251
 msgid "Educational Structure"
 msgstr "Освітня структура"
 
-#: enferno/admin/templates/admin/i18n.jinja2:246
+#: enferno/admin/templates/admin/i18n.jinja2:252
 msgid "Religious Structure"
 msgstr "Релігійна структура"
 
-#: enferno/admin/templates/admin/i18n.jinja2:247
+#: enferno/admin/templates/admin/i18n.jinja2:253
 msgid "Military Structure"
 msgstr "Військова структура"
 
-#: enferno/admin/templates/admin/i18n.jinja2:248
+#: enferno/admin/templates/admin/i18n.jinja2:254
 msgid "Infrastructure"
 msgstr "Інфраструктура"
 
-#: enferno/admin/templates/admin/i18n.jinja2:249
+#: enferno/admin/templates/admin/i18n.jinja2:255
 msgid "Medical Structure"
 msgstr "Медична структура"
 
-#: enferno/admin/templates/admin/i18n.jinja2:254
-msgid "Afghanistan"
-msgstr "Афганістан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:255
-msgid "Albania"
-msgstr "Албанія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:256
-msgid "Algeria"
-msgstr "Алжир"
-
-#: enferno/admin/templates/admin/i18n.jinja2:257
-msgid "Andorra"
-msgstr "Андорра"
-
-#: enferno/admin/templates/admin/i18n.jinja2:258
-msgid "Angola"
-msgstr "Ангола"
-
-#: enferno/admin/templates/admin/i18n.jinja2:259
-msgid "Argentina"
-msgstr "Аргентина"
-
-#: enferno/admin/templates/admin/i18n.jinja2:260
-msgid "Armenia"
-msgstr "Вірменія"
-
 #: enferno/admin/templates/admin/i18n.jinja2:261
-msgid "Aruba"
-msgstr "Аруба"
-
-#: enferno/admin/templates/admin/i18n.jinja2:262
-msgid "Australia"
-msgstr "Австралія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:263
-msgid "Austria"
-msgstr "Австрія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:264
-msgid "Azerbaijan"
-msgstr "Азербайджан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:265
-msgid "Bahrain"
-msgstr "Бахрейн"
-
-#: enferno/admin/templates/admin/i18n.jinja2:266
-msgid "Bangladesh"
-msgstr "Бангладеш"
-
-#: enferno/admin/templates/admin/i18n.jinja2:267
-msgid "Barbados"
-msgstr "Барбадос"
-
-#: enferno/admin/templates/admin/i18n.jinja2:268
-msgid "Belarus"
-msgstr "Білорусь"
-
-#: enferno/admin/templates/admin/i18n.jinja2:269
-msgid "Belgium"
-msgstr "Бельгія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:270
-msgid "Belize"
-msgstr "Беліз"
-
-#: enferno/admin/templates/admin/i18n.jinja2:271
-msgid "Benin"
-msgstr "Бенін"
-
-#: enferno/admin/templates/admin/i18n.jinja2:272
-msgid "Bhutan"
-msgstr "Бутан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:273
-msgid "Bosnia and Herzegovina"
-msgstr "Боснія і Герцоговина"
-
-#: enferno/admin/templates/admin/i18n.jinja2:274
-msgid "Botswana"
-msgstr "Ботсвана"
-
-#: enferno/admin/templates/admin/i18n.jinja2:275
-msgid "Brazil"
-msgstr "Бразилія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:276
-msgid "Brunei"
-msgstr "Бруней"
-
-#: enferno/admin/templates/admin/i18n.jinja2:277
-msgid "Bulgaria"
-msgstr "Болгарія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:278
-msgid "Burkina Faso"
-msgstr "Буркіна-Фасо"
-
-#: enferno/admin/templates/admin/i18n.jinja2:279
-msgid "Burma"
-msgstr "Бурма"
-
-#: enferno/admin/templates/admin/i18n.jinja2:280
-msgid "Burundi"
-msgstr "Бурунді"
-
-#: enferno/admin/templates/admin/i18n.jinja2:281
-msgid "Cambodia"
-msgstr "Камбоджа"
-
-#: enferno/admin/templates/admin/i18n.jinja2:282
-msgid "Cameroon"
-msgstr "Камерун"
-
-#: enferno/admin/templates/admin/i18n.jinja2:283
-msgid "Canada"
-msgstr "Канада"
-
-#: enferno/admin/templates/admin/i18n.jinja2:284
-msgid "Central African Republic"
-msgstr "Центральна Африканська Республіка"
-
-#: enferno/admin/templates/admin/i18n.jinja2:285
-msgid "Chad"
-msgstr "Чад"
-
-#: enferno/admin/templates/admin/i18n.jinja2:286
-msgid "Chile"
-msgstr "Чилі"
-
-#: enferno/admin/templates/admin/i18n.jinja2:287
-msgid "China"
-msgstr "Китай"
-
-#: enferno/admin/templates/admin/i18n.jinja2:288
-msgid "Colombia"
-msgstr "Колумбія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:289
-msgid "Comoros"
-msgstr "Коморські Острови"
-
-#: enferno/admin/templates/admin/i18n.jinja2:290
-msgid "Democratic Republic of the Congo"
-msgstr "Демократична Республіка Конго"
-
-#: enferno/admin/templates/admin/i18n.jinja2:291
-msgid "Republic of the Congo"
-msgstr "Республіка Конго"
-
-#: enferno/admin/templates/admin/i18n.jinja2:292
-msgid "Cote d'Ivoire"
-msgstr "Кот-д'Івуар"
-
-#: enferno/admin/templates/admin/i18n.jinja2:293
-msgid "Croatia"
-msgstr "Хорватія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:294
-msgid "Cuba"
-msgstr "Куба"
-
-#: enferno/admin/templates/admin/i18n.jinja2:295
-msgid "Cyprus"
-msgstr "Кіпр"
-
-#: enferno/admin/templates/admin/i18n.jinja2:296
-msgid "Czechia"
-msgstr "Чехія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:297
-msgid "Denmark"
-msgstr "Данія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:298
-msgid "Djibouti"
-msgstr "Джибуті"
-
-#: enferno/admin/templates/admin/i18n.jinja2:299
-msgid "Dominica"
-msgstr "Домініка"
-
-#: enferno/admin/templates/admin/i18n.jinja2:300
-msgid "Dominican Republic"
-msgstr "Домініканська Республіка"
-
-#: enferno/admin/templates/admin/i18n.jinja2:301
-msgid "Egypt"
-msgstr "Єгипет"
-
-#: enferno/admin/templates/admin/i18n.jinja2:302
-msgid "Eritrea"
-msgstr "Еритрея"
-
-#: enferno/admin/templates/admin/i18n.jinja2:303
-msgid "Estonia"
-msgstr "Естонія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:304
-msgid "Ethiopia"
-msgstr "Ефіопія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:305
-msgid "Finland"
-msgstr "Фінляндія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:306
-msgid "France"
-msgstr "Франція"
-
-#: enferno/admin/templates/admin/i18n.jinja2:307
-msgid "Gabon"
-msgstr "Габон"
-
-#: enferno/admin/templates/admin/i18n.jinja2:308
-msgid "Gambia"
-msgstr "Гамбія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:309
-msgid "Georgia"
-msgstr "Грузія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:310
-msgid "Germany"
-msgstr "Німеччина"
-
-#: enferno/admin/templates/admin/i18n.jinja2:311
-msgid "Ghana"
-msgstr "Гана"
-
-#: enferno/admin/templates/admin/i18n.jinja2:312
-msgid "Greece"
-msgstr "Греція"
-
-#: enferno/admin/templates/admin/i18n.jinja2:313
-msgid "Guinea"
-msgstr "Гвінея"
-
-#: enferno/admin/templates/admin/i18n.jinja2:314
-msgid "Guinea-Bissau"
-msgstr "Гвінея-Бісау"
-
-#: enferno/admin/templates/admin/i18n.jinja2:315
-msgid "Guyana"
-msgstr "Гаяна"
-
-#: enferno/admin/templates/admin/i18n.jinja2:316
-msgid "Haiti"
-msgstr "Гаїті"
-
-#: enferno/admin/templates/admin/i18n.jinja2:317
-msgid "Honduras"
-msgstr "Гондурас"
-
-#: enferno/admin/templates/admin/i18n.jinja2:318
-msgid "Hungary"
-msgstr "Угорщина"
-
-#: enferno/admin/templates/admin/i18n.jinja2:319
-msgid "Iceland"
-msgstr "Ісландія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:320
-msgid "India"
-msgstr "Індія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:321
-msgid "Indonesia"
-msgstr "Індонезія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:322
-msgid "Iran"
-msgstr "Іран"
-
-#: enferno/admin/templates/admin/i18n.jinja2:323
-msgid "Iraq"
-msgstr "Ірак"
-
-#: enferno/admin/templates/admin/i18n.jinja2:324
-msgid "Ireland"
-msgstr "Ірландія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:325
-msgid "Israel"
-msgstr "Ізраїль"
-
-#: enferno/admin/templates/admin/i18n.jinja2:326
-msgid "Italy"
-msgstr "Італія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:327
-msgid "Jamaica"
-msgstr "Ямайка"
-
-#: enferno/admin/templates/admin/i18n.jinja2:328
-msgid "Japan"
-msgstr "Японія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:329
-msgid "Jordan"
-msgstr "Іорданія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:330
-msgid "Kazakhstan"
-msgstr "Казахстан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:331
-msgid "Kenya"
-msgstr "Кенія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:332
-msgid "Kosovo"
-msgstr "Косово"
-
-#: enferno/admin/templates/admin/i18n.jinja2:333
-msgid "Kuwait"
-msgstr "Кувейт"
-
-#: enferno/admin/templates/admin/i18n.jinja2:334
-msgid "Kyrgyzstan"
-msgstr "Киргизстан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:335
-msgid "Laos"
-msgstr "Лаос"
-
-#: enferno/admin/templates/admin/i18n.jinja2:336
-msgid "Latvia"
-msgstr "Латвія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:337
-msgid "Lebanon"
-msgstr "Ліван"
-
-#: enferno/admin/templates/admin/i18n.jinja2:338
-msgid "Liberia"
-msgstr "Ліберія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:339
-msgid "Libya"
-msgstr "Лівія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:340
-msgid "Liechtenstein"
-msgstr "Ліхтенштейн"
-
-#: enferno/admin/templates/admin/i18n.jinja2:341
-msgid "Lithuania"
-msgstr "Литва"
-
-#: enferno/admin/templates/admin/i18n.jinja2:342
-msgid "Luxembourg"
-msgstr "Люксембург"
-
-#: enferno/admin/templates/admin/i18n.jinja2:343
-msgid "Macedonia"
-msgstr "Македонія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:344
-msgid "Madagascar"
-msgstr "Мадагаскар"
-
-#: enferno/admin/templates/admin/i18n.jinja2:345
-msgid "Malawi"
-msgstr "Малаві"
-
-#: enferno/admin/templates/admin/i18n.jinja2:346
-msgid "Malaysia"
-msgstr "Малайзія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:347
-msgid "Mali"
-msgstr "Малі"
-
-#: enferno/admin/templates/admin/i18n.jinja2:348
-msgid "Malta"
-msgstr "Мальта"
-
-#: enferno/admin/templates/admin/i18n.jinja2:349
-msgid "Mauritania"
-msgstr "Мавританія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:350
-msgid "Mauritius"
-msgstr "Маврикій"
-
-#: enferno/admin/templates/admin/i18n.jinja2:351
-msgid "Micronesia"
-msgstr "Мікронезія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:352
-msgid "Moldova"
-msgstr "Молдова"
-
-#: enferno/admin/templates/admin/i18n.jinja2:353
-msgid "Monaco"
-msgstr "Монако"
-
-#: enferno/admin/templates/admin/i18n.jinja2:354
-msgid "Mongolia"
-msgstr "Монголія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:355
-msgid "Montenegro"
-msgstr "Чорногорія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:356
-msgid "Morocco"
-msgstr "Марокко"
-
-#: enferno/admin/templates/admin/i18n.jinja2:357
-msgid "Mozambique"
-msgstr "Мозамбік"
-
-#: enferno/admin/templates/admin/i18n.jinja2:358
-msgid "Namibia"
-msgstr "Намібія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:359
-msgid "Nauru"
-msgstr "Науру"
-
-#: enferno/admin/templates/admin/i18n.jinja2:360
-msgid "Nepal"
-msgstr "Непал"
-
-#: enferno/admin/templates/admin/i18n.jinja2:361
-msgid "Netherlands"
-msgstr "Нідерланди"
-
-#: enferno/admin/templates/admin/i18n.jinja2:362
-msgid "New Zealand"
-msgstr "Нова Зеландія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:363
-msgid "Nicaragua"
-msgstr "Нікарагуа"
-
-#: enferno/admin/templates/admin/i18n.jinja2:364
-msgid "Niger"
-msgstr "Нігер"
-
-#: enferno/admin/templates/admin/i18n.jinja2:365
-msgid "Nigeria"
-msgstr "Нігерія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:366
-msgid "North Korea"
-msgstr "Північна Корея"
-
-#: enferno/admin/templates/admin/i18n.jinja2:367
-msgid "Norway"
-msgstr "Норвегія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:368
-msgid "Oman"
-msgstr "Оман"
-
-#: enferno/admin/templates/admin/i18n.jinja2:369
-msgid "Pakistan"
-msgstr "Пакистан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:370
-msgid "Palestine"
-msgstr "Палестина"
-
-#: enferno/admin/templates/admin/i18n.jinja2:371
-msgid "Panama"
-msgstr "Панама"
-
-#: enferno/admin/templates/admin/i18n.jinja2:372
-msgid "Philippines"
-msgstr "Філіппіни"
-
-#: enferno/admin/templates/admin/i18n.jinja2:373
-msgid "Poland"
-msgstr "Польща"
-
-#: enferno/admin/templates/admin/i18n.jinja2:374
-msgid "Portugal"
-msgstr "Португалія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:375
-msgid "Qatar"
-msgstr "Катар"
-
-#: enferno/admin/templates/admin/i18n.jinja2:376
-msgid "Romania"
-msgstr "Румунія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:377
-msgid "Russia"
-msgstr "Росія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:378
-msgid "Rwanda"
-msgstr "Руанда"
-
-#: enferno/admin/templates/admin/i18n.jinja2:379
-msgid "Saudi Arabia"
-msgstr "Саудівська Аравія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:380
-msgid "Senegal"
-msgstr "Сенегал"
-
-#: enferno/admin/templates/admin/i18n.jinja2:381
-msgid "Serbia"
-msgstr "Сербія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:382
-msgid "Seychelles"
-msgstr "Сейшельські Острови"
-
-#: enferno/admin/templates/admin/i18n.jinja2:383
-msgid "Sierra Leone"
-msgstr "Сьєрра-Леоне"
-
-#: enferno/admin/templates/admin/i18n.jinja2:384
-msgid "Slovakia"
-msgstr "Словакія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:385
-msgid "Slovenia"
-msgstr "Словенія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:386
-msgid "Somalia"
-msgstr "Сомалі"
-
-#: enferno/admin/templates/admin/i18n.jinja2:387
-msgid "South Africa"
-msgstr "Південна Африка"
-
-#: enferno/admin/templates/admin/i18n.jinja2:388
-msgid "South Sudan"
-msgstr "Південний Судан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:389
-msgid "Spain"
-msgstr "Іспанія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:390
-msgid "Sri Lanka"
-msgstr "Шрі-Ланка"
-
-#: enferno/admin/templates/admin/i18n.jinja2:391
-msgid "Sudan"
-msgstr "Судан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:392
-msgid "Swaziland"
-msgstr "Есватіні"
-
-#: enferno/admin/templates/admin/i18n.jinja2:393
-msgid "Sweden"
-msgstr "Швеція"
-
-#: enferno/admin/templates/admin/i18n.jinja2:394
-msgid "Switzerland"
-msgstr "Швейцарія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:395
-msgid "Syria"
-msgstr "Сирія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:396
-msgid "Taiwan"
-msgstr "Тайвань"
-
-#: enferno/admin/templates/admin/i18n.jinja2:397
-msgid "Tajikistan"
-msgstr "Таджикістан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:398
-msgid "Tanzania"
-msgstr "Танзанія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:399
-msgid "Thailand"
-msgstr "Таїланд"
-
-#: enferno/admin/templates/admin/i18n.jinja2:400
-msgid "Togo"
-msgstr "Того"
-
-#: enferno/admin/templates/admin/i18n.jinja2:401
-msgid "Tonga"
-msgstr "Тонга"
-
-#: enferno/admin/templates/admin/i18n.jinja2:402
-msgid "Trinidad and Tobago"
-msgstr "Тринідад і Тобаго"
-
-#: enferno/admin/templates/admin/i18n.jinja2:403
-msgid "Tunisia"
-msgstr "Туніс"
-
-#: enferno/admin/templates/admin/i18n.jinja2:404
-msgid "Turkey"
-msgstr "Туреччина"
-
-#: enferno/admin/templates/admin/i18n.jinja2:405
-msgid "Turkmenistan"
-msgstr "Туркменістан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:406
-msgid "Tuvalu"
-msgstr "Тувалу"
-
-#: enferno/admin/templates/admin/i18n.jinja2:407
-msgid "Uganda"
-msgstr "Уганда"
-
-#: enferno/admin/templates/admin/i18n.jinja2:408
-msgid "Ukraine"
-msgstr "Україна"
-
-#: enferno/admin/templates/admin/i18n.jinja2:409
-msgid "United Arab Emirates"
-msgstr "Сполучені Арабські Емірати"
-
-#: enferno/admin/templates/admin/i18n.jinja2:410
-msgid "United Kingdom"
-msgstr "Сполучене Королівство Великої Британії"
-
-#: enferno/admin/templates/admin/i18n.jinja2:411
-msgid "United States"
-msgstr "Сполучені Штати Америки"
-
-#: enferno/admin/templates/admin/i18n.jinja2:412
-msgid "Uruguay"
-msgstr "Уругвай"
-
-#: enferno/admin/templates/admin/i18n.jinja2:413
-msgid "Uzbekistan"
-msgstr "Узбекістан"
-
-#: enferno/admin/templates/admin/i18n.jinja2:414
-msgid "Venezuela"
-msgstr "Венесуела"
-
-#: enferno/admin/templates/admin/i18n.jinja2:415
-msgid "Vietnam"
-msgstr "В'єтнам"
-
-#: enferno/admin/templates/admin/i18n.jinja2:416
-msgid "Yemen"
-msgstr "Ємен"
-
-#: enferno/admin/templates/admin/i18n.jinja2:417
-msgid "Zambia"
-msgstr "Замбія"
-
-#: enferno/admin/templates/admin/i18n.jinja2:418
-msgid "Zimbabwe"
-msgstr "Зімбабве"
-
-#: enferno/admin/templates/admin/i18n.jinja2:423
-msgid "Person"
-msgstr "Особа"
-
-#: enferno/admin/templates/admin/i18n.jinja2:424
-msgid "Entity"
-msgstr "Підрозділ"
-
-#: enferno/admin/templates/admin/i18n.jinja2:428
-msgid "Male"
-msgstr "Чоловіча"
-
-#: enferno/admin/templates/admin/i18n.jinja2:429
-msgid "Female"
-msgstr "Жіноча"
-
-#: enferno/admin/templates/admin/i18n.jinja2:433
-msgid "Minor"
-msgstr "Неповнолітній"
-
-#: enferno/admin/templates/admin/i18n.jinja2:434
-msgid "Adult"
-msgstr "Дорослий"
-
-#: enferno/admin/templates/admin/i18n.jinja2:441
-msgid "Non-Civilian"
-msgstr "Комбатант"
-
-#: enferno/admin/templates/admin/i18n.jinja2:442
-msgid "Police"
-msgstr "Поліція"
-
-#: enferno/admin/templates/admin/i18n.jinja2:443
-msgid "Other Security Forces"
-msgstr "Інші служби безпеки"
-
-#: enferno/admin/templates/admin/i18n.jinja2:448
-msgid "Alawite"
-msgstr "Алавіт"
-
-#: enferno/admin/templates/admin/i18n.jinja2:449
-msgid "Arab"
-msgstr "Араб"
-
-#: enferno/admin/templates/admin/i18n.jinja2:450
-msgid "Armenian"
-msgstr "Вірмен"
-
-#: enferno/admin/templates/admin/i18n.jinja2:451
-msgid "Christian"
-msgstr "Християнин"
-
-#: enferno/admin/templates/admin/i18n.jinja2:452
-msgid "Circassian"
-msgstr "Черкес"
-
-#: enferno/admin/templates/admin/i18n.jinja2:453
-msgid "Druze"
-msgstr "Друз"
-
-#: enferno/admin/templates/admin/i18n.jinja2:454
-msgid "Ismaili"
-msgstr "Ісмаїл"
-
-#: enferno/admin/templates/admin/i18n.jinja2:455
-msgid "Kurd"
-msgstr "Курд"
-
-#: enferno/admin/templates/admin/i18n.jinja2:456
-msgid "Shiaa"
-msgstr "Шиїт"
-
-#: enferno/admin/templates/admin/i18n.jinja2:457
-msgid "Sunni"
-msgstr "Суніт"
-
-#: enferno/admin/templates/admin/i18n.jinja2:458
-msgid "Syriac"
-msgstr "Сирієць"
-
-#: enferno/admin/templates/admin/i18n.jinja2:459
-msgid "Turkmen"
-msgstr "Туркмен"
-
-#: enferno/admin/templates/admin/i18n.jinja2:464
-msgid "1 Day"
-msgstr "1 день"
-
-#: enferno/admin/templates/admin/i18n.jinja2:465
-msgid "2 Days"
-msgstr "2 дні"
-
-#: enferno/admin/templates/admin/i18n.jinja2:466
-msgid "3 Days"
-msgstr "3 дні"
-
-#: enferno/admin/templates/admin/i18n.jinja2:467
-msgid "4 Days"
-msgstr "4 дні"
-
-#: enferno/admin/templates/admin/i18n.jinja2:468
-msgid "5 Days"
-msgstr "5 днів"
-
-#: enferno/admin/templates/admin/i18n.jinja2:469
-msgid "6 Days"
-msgstr "6 днів"
-
-#: enferno/admin/templates/admin/i18n.jinja2:470
-msgid "7 Days"
-msgstr "7 днів"
-
-#: enferno/admin/templates/admin/i18n.jinja2:471
-msgid "1 Month"
-msgstr "1 місяць"
-
-#: enferno/admin/templates/admin/i18n.jinja2:472
-msgid "3 Months"
-msgstr "3 місяці"
-
-#: enferno/admin/templates/admin/i18n.jinja2:473
-msgid "6 Months"
-msgstr "6 місяців"
-
-#: enferno/admin/templates/admin/i18n.jinja2:474
-msgid "1 Year"
-msgstr "1 рік"
-
-#: enferno/admin/templates/admin/i18n.jinja2:479
-#: enferno/admin/templates/admin/i18n.jinja2:489
-msgid "Victim"
-msgstr "Потерпілий"
-
-#: enferno/admin/templates/admin/i18n.jinja2:480
-#: enferno/admin/templates/admin/i18n.jinja2:490
-msgid "Witness"
-msgstr "Свідок"
-
-#: enferno/admin/templates/admin/i18n.jinja2:481
-#: enferno/admin/templates/admin/i18n.jinja2:491
-msgid "Perpetrator"
-msgstr "Злочинець"
-
-#: enferno/admin/templates/admin/i18n.jinja2:482
-#: enferno/admin/templates/admin/i18n.jinja2:492
-msgid "Appeared"
-msgstr "З'явився"
-
-#: enferno/admin/templates/admin/i18n.jinja2:483
-#: enferno/admin/templates/admin/i18n.jinja2:493
-msgid "Participant"
-msgstr "Учасник"
-
-#: enferno/admin/templates/admin/i18n.jinja2:500
-#: enferno/admin/templates/admin/i18n.jinja2:501
-msgid "Child"
-msgstr "Дитина"
-
-#: enferno/admin/templates/admin/i18n.jinja2:502
-msgid "Sibling"
-msgstr "Брат/Сестра"
-
-#: enferno/admin/templates/admin/i18n.jinja2:503
-msgid "Spouse"
-msgstr "Жінка/Чоловік"
-
-#: enferno/admin/templates/admin/i18n.jinja2:504
-#: enferno/admin/templates/admin/i18n.jinja2:505
-msgid "Superior officer"
-msgstr "Старший офіцер"
-
-#: enferno/admin/templates/admin/i18n.jinja2:504
-#: enferno/admin/templates/admin/i18n.jinja2:505
-msgid "Subordinate officer"
-msgstr "Підлеглий офіцер"
-
-#: enferno/admin/templates/admin/i18n.jinja2:506
-msgid "Subunit"
-msgstr "Підрозділ"
-
-#: enferno/admin/templates/admin/i18n.jinja2:507
-msgid "Alleged Perpetrator"
-msgstr "Передбачуваний злочинець"
-
-#: enferno/admin/templates/admin/i18n.jinja2:508
-msgid "Member"
-msgstr "Учасник"
-
-#: enferno/admin/templates/admin/i18n.jinja2:509
-msgid "Group"
-msgstr "Група"
-
-#: enferno/admin/templates/admin/i18n.jinja2:510
-msgid "Unit"
-msgstr "Розділ"
-
-#: enferno/admin/templates/admin/i18n.jinja2:542
+#: enferno/admin/templates/admin/i18n.jinja2:566
 msgid "Geo Markers"
 msgstr "Гео маркери"
 
-#: enferno/admin/templates/admin/i18n.jinja2:543
+#: enferno/admin/templates/admin/i18n.jinja2:268
+#, fuzzy
+msgid "Birth Place"
+msgstr "Пов'язати"
+
+#: enferno/admin/templates/admin/i18n.jinja2:269
+#, fuzzy
+msgid "Residence Place"
+msgstr "Пов'язати"
+
+#: enferno/admin/templates/admin/i18n.jinja2:270
+#, fuzzy
+msgid "Origin Place"
+msgstr "Джерело ID"
+
+#: enferno/admin/templates/admin/i18n.jinja2:277
+msgid "Afghanistan"
+msgstr "Афганістан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:278
+msgid "Albania"
+msgstr "Албанія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:279
+msgid "Algeria"
+msgstr "Алжир"
+
+#: enferno/admin/templates/admin/i18n.jinja2:280
+msgid "Andorra"
+msgstr "Андорра"
+
+#: enferno/admin/templates/admin/i18n.jinja2:281
+msgid "Angola"
+msgstr "Ангола"
+
+#: enferno/admin/templates/admin/i18n.jinja2:282
+msgid "Argentina"
+msgstr "Аргентина"
+
+#: enferno/admin/templates/admin/i18n.jinja2:283
+msgid "Armenia"
+msgstr "Вірменія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:284
+msgid "Aruba"
+msgstr "Аруба"
+
+#: enferno/admin/templates/admin/i18n.jinja2:285
+msgid "Australia"
+msgstr "Австралія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:286
+msgid "Austria"
+msgstr "Австрія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:287
+msgid "Azerbaijan"
+msgstr "Азербайджан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:288
+msgid "Bahrain"
+msgstr "Бахрейн"
+
+#: enferno/admin/templates/admin/i18n.jinja2:289
+msgid "Bangladesh"
+msgstr "Бангладеш"
+
+#: enferno/admin/templates/admin/i18n.jinja2:290
+msgid "Barbados"
+msgstr "Барбадос"
+
+#: enferno/admin/templates/admin/i18n.jinja2:291
+msgid "Belarus"
+msgstr "Білорусь"
+
+#: enferno/admin/templates/admin/i18n.jinja2:292
+msgid "Belgium"
+msgstr "Бельгія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:293
+msgid "Belize"
+msgstr "Беліз"
+
+#: enferno/admin/templates/admin/i18n.jinja2:294
+msgid "Benin"
+msgstr "Бенін"
+
+#: enferno/admin/templates/admin/i18n.jinja2:295
+msgid "Bhutan"
+msgstr "Бутан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:296
+msgid "Bosnia and Herzegovina"
+msgstr "Боснія і Герцоговина"
+
+#: enferno/admin/templates/admin/i18n.jinja2:297
+msgid "Botswana"
+msgstr "Ботсвана"
+
+#: enferno/admin/templates/admin/i18n.jinja2:298
+msgid "Brazil"
+msgstr "Бразилія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:299
+msgid "Brunei"
+msgstr "Бруней"
+
+#: enferno/admin/templates/admin/i18n.jinja2:300
+msgid "Bulgaria"
+msgstr "Болгарія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:301
+msgid "Burkina Faso"
+msgstr "Буркіна-Фасо"
+
+#: enferno/admin/templates/admin/i18n.jinja2:302
+msgid "Burma"
+msgstr "Бурма"
+
+#: enferno/admin/templates/admin/i18n.jinja2:303
+msgid "Burundi"
+msgstr "Бурунді"
+
+#: enferno/admin/templates/admin/i18n.jinja2:304
+msgid "Cambodia"
+msgstr "Камбоджа"
+
+#: enferno/admin/templates/admin/i18n.jinja2:305
+msgid "Cameroon"
+msgstr "Камерун"
+
+#: enferno/admin/templates/admin/i18n.jinja2:306
+msgid "Canada"
+msgstr "Канада"
+
+#: enferno/admin/templates/admin/i18n.jinja2:307
+msgid "Central African Republic"
+msgstr "Центральна Африканська Республіка"
+
+#: enferno/admin/templates/admin/i18n.jinja2:308
+msgid "Chad"
+msgstr "Чад"
+
+#: enferno/admin/templates/admin/i18n.jinja2:309
+msgid "Chile"
+msgstr "Чилі"
+
+#: enferno/admin/templates/admin/i18n.jinja2:310
+msgid "China"
+msgstr "Китай"
+
+#: enferno/admin/templates/admin/i18n.jinja2:311
+msgid "Colombia"
+msgstr "Колумбія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:312
+msgid "Comoros"
+msgstr "Коморські Острови"
+
+#: enferno/admin/templates/admin/i18n.jinja2:313
+msgid "Democratic Republic of the Congo"
+msgstr "Демократична Республіка Конго"
+
+#: enferno/admin/templates/admin/i18n.jinja2:314
+msgid "Republic of the Congo"
+msgstr "Республіка Конго"
+
+#: enferno/admin/templates/admin/i18n.jinja2:315
+msgid "Cote d'Ivoire"
+msgstr "Кот-д'Івуар"
+
+#: enferno/admin/templates/admin/i18n.jinja2:316
+msgid "Croatia"
+msgstr "Хорватія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:317
+msgid "Cuba"
+msgstr "Куба"
+
+#: enferno/admin/templates/admin/i18n.jinja2:318
+msgid "Cyprus"
+msgstr "Кіпр"
+
+#: enferno/admin/templates/admin/i18n.jinja2:319
+msgid "Czechia"
+msgstr "Чехія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:320
+msgid "Denmark"
+msgstr "Данія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:321
+msgid "Djibouti"
+msgstr "Джибуті"
+
+#: enferno/admin/templates/admin/i18n.jinja2:322
+msgid "Dominica"
+msgstr "Домініка"
+
+#: enferno/admin/templates/admin/i18n.jinja2:323
+msgid "Dominican Republic"
+msgstr "Домініканська Республіка"
+
+#: enferno/admin/templates/admin/i18n.jinja2:324
+msgid "Egypt"
+msgstr "Єгипет"
+
+#: enferno/admin/templates/admin/i18n.jinja2:325
+msgid "Eritrea"
+msgstr "Еритрея"
+
+#: enferno/admin/templates/admin/i18n.jinja2:326
+msgid "Estonia"
+msgstr "Естонія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:327
+msgid "Ethiopia"
+msgstr "Ефіопія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:328
+msgid "Finland"
+msgstr "Фінляндія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:329
+msgid "France"
+msgstr "Франція"
+
+#: enferno/admin/templates/admin/i18n.jinja2:330
+msgid "Gabon"
+msgstr "Габон"
+
+#: enferno/admin/templates/admin/i18n.jinja2:331
+msgid "Gambia"
+msgstr "Гамбія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:332
+msgid "Georgia"
+msgstr "Грузія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:333
+msgid "Germany"
+msgstr "Німеччина"
+
+#: enferno/admin/templates/admin/i18n.jinja2:334
+msgid "Ghana"
+msgstr "Гана"
+
+#: enferno/admin/templates/admin/i18n.jinja2:335
+msgid "Greece"
+msgstr "Греція"
+
+#: enferno/admin/templates/admin/i18n.jinja2:336
+msgid "Guinea"
+msgstr "Гвінея"
+
+#: enferno/admin/templates/admin/i18n.jinja2:337
+msgid "Guinea-Bissau"
+msgstr "Гвінея-Бісау"
+
+#: enferno/admin/templates/admin/i18n.jinja2:338
+msgid "Guyana"
+msgstr "Гаяна"
+
+#: enferno/admin/templates/admin/i18n.jinja2:339
+msgid "Haiti"
+msgstr "Гаїті"
+
+#: enferno/admin/templates/admin/i18n.jinja2:340
+msgid "Honduras"
+msgstr "Гондурас"
+
+#: enferno/admin/templates/admin/i18n.jinja2:341
+msgid "Hungary"
+msgstr "Угорщина"
+
+#: enferno/admin/templates/admin/i18n.jinja2:342
+msgid "Iceland"
+msgstr "Ісландія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:343
+msgid "India"
+msgstr "Індія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:344
+msgid "Indonesia"
+msgstr "Індонезія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:345
+msgid "Iran"
+msgstr "Іран"
+
+#: enferno/admin/templates/admin/i18n.jinja2:346
+msgid "Iraq"
+msgstr "Ірак"
+
+#: enferno/admin/templates/admin/i18n.jinja2:347
+msgid "Ireland"
+msgstr "Ірландія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:348
+msgid "Israel"
+msgstr "Ізраїль"
+
+#: enferno/admin/templates/admin/i18n.jinja2:349
+msgid "Italy"
+msgstr "Італія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:350
+msgid "Jamaica"
+msgstr "Ямайка"
+
+#: enferno/admin/templates/admin/i18n.jinja2:351
+msgid "Japan"
+msgstr "Японія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:352
+msgid "Jordan"
+msgstr "Іорданія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:353
+msgid "Kazakhstan"
+msgstr "Казахстан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:354
+msgid "Kenya"
+msgstr "Кенія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:355
+msgid "Kosovo"
+msgstr "Косово"
+
+#: enferno/admin/templates/admin/i18n.jinja2:356
+msgid "Kuwait"
+msgstr "Кувейт"
+
+#: enferno/admin/templates/admin/i18n.jinja2:357
+msgid "Kyrgyzstan"
+msgstr "Киргизстан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:358
+msgid "Laos"
+msgstr "Лаос"
+
+#: enferno/admin/templates/admin/i18n.jinja2:359
+msgid "Latvia"
+msgstr "Латвія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:360
+msgid "Lebanon"
+msgstr "Ліван"
+
+#: enferno/admin/templates/admin/i18n.jinja2:361
+msgid "Liberia"
+msgstr "Ліберія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:362
+msgid "Libya"
+msgstr "Лівія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:363
+msgid "Liechtenstein"
+msgstr "Ліхтенштейн"
+
+#: enferno/admin/templates/admin/i18n.jinja2:364
+msgid "Lithuania"
+msgstr "Литва"
+
+#: enferno/admin/templates/admin/i18n.jinja2:365
+msgid "Luxembourg"
+msgstr "Люксембург"
+
+#: enferno/admin/templates/admin/i18n.jinja2:366
+msgid "Macedonia"
+msgstr "Македонія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:367
+msgid "Madagascar"
+msgstr "Мадагаскар"
+
+#: enferno/admin/templates/admin/i18n.jinja2:368
+msgid "Malawi"
+msgstr "Малаві"
+
+#: enferno/admin/templates/admin/i18n.jinja2:369
+msgid "Malaysia"
+msgstr "Малайзія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:370
+msgid "Mali"
+msgstr "Малі"
+
+#: enferno/admin/templates/admin/i18n.jinja2:371
+msgid "Malta"
+msgstr "Мальта"
+
+#: enferno/admin/templates/admin/i18n.jinja2:372
+msgid "Mauritania"
+msgstr "Мавританія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:373
+msgid "Mauritius"
+msgstr "Маврикій"
+
+#: enferno/admin/templates/admin/i18n.jinja2:374
+msgid "Micronesia"
+msgstr "Мікронезія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:375
+msgid "Moldova"
+msgstr "Молдова"
+
+#: enferno/admin/templates/admin/i18n.jinja2:376
+msgid "Monaco"
+msgstr "Монако"
+
+#: enferno/admin/templates/admin/i18n.jinja2:377
+msgid "Mongolia"
+msgstr "Монголія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:378
+msgid "Montenegro"
+msgstr "Чорногорія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:379
+msgid "Morocco"
+msgstr "Марокко"
+
+#: enferno/admin/templates/admin/i18n.jinja2:380
+msgid "Mozambique"
+msgstr "Мозамбік"
+
+#: enferno/admin/templates/admin/i18n.jinja2:381
+msgid "Namibia"
+msgstr "Намібія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:382
+msgid "Nauru"
+msgstr "Науру"
+
+#: enferno/admin/templates/admin/i18n.jinja2:383
+msgid "Nepal"
+msgstr "Непал"
+
+#: enferno/admin/templates/admin/i18n.jinja2:384
+msgid "Netherlands"
+msgstr "Нідерланди"
+
+#: enferno/admin/templates/admin/i18n.jinja2:385
+msgid "New Zealand"
+msgstr "Нова Зеландія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:386
+msgid "Nicaragua"
+msgstr "Нікарагуа"
+
+#: enferno/admin/templates/admin/i18n.jinja2:387
+msgid "Niger"
+msgstr "Нігер"
+
+#: enferno/admin/templates/admin/i18n.jinja2:388
+msgid "Nigeria"
+msgstr "Нігерія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:389
+msgid "North Korea"
+msgstr "Північна Корея"
+
+#: enferno/admin/templates/admin/i18n.jinja2:390
+msgid "Norway"
+msgstr "Норвегія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:391
+msgid "Oman"
+msgstr "Оман"
+
+#: enferno/admin/templates/admin/i18n.jinja2:392
+msgid "Pakistan"
+msgstr "Пакистан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:393
+msgid "Palestine"
+msgstr "Палестина"
+
+#: enferno/admin/templates/admin/i18n.jinja2:394
+msgid "Panama"
+msgstr "Панама"
+
+#: enferno/admin/templates/admin/i18n.jinja2:395
+msgid "Philippines"
+msgstr "Філіппіни"
+
+#: enferno/admin/templates/admin/i18n.jinja2:396
+msgid "Poland"
+msgstr "Польща"
+
+#: enferno/admin/templates/admin/i18n.jinja2:397
+msgid "Portugal"
+msgstr "Португалія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:398
+msgid "Qatar"
+msgstr "Катар"
+
+#: enferno/admin/templates/admin/i18n.jinja2:399
+msgid "Romania"
+msgstr "Румунія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:400
+msgid "Russia"
+msgstr "Росія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:401
+msgid "Rwanda"
+msgstr "Руанда"
+
+#: enferno/admin/templates/admin/i18n.jinja2:402
+msgid "Saudi Arabia"
+msgstr "Саудівська Аравія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:403
+msgid "Senegal"
+msgstr "Сенегал"
+
+#: enferno/admin/templates/admin/i18n.jinja2:404
+msgid "Serbia"
+msgstr "Сербія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:405
+msgid "Seychelles"
+msgstr "Сейшельські Острови"
+
+#: enferno/admin/templates/admin/i18n.jinja2:406
+msgid "Sierra Leone"
+msgstr "Сьєрра-Леоне"
+
+#: enferno/admin/templates/admin/i18n.jinja2:407
+msgid "Slovakia"
+msgstr "Словакія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:408
+msgid "Slovenia"
+msgstr "Словенія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:409
+msgid "Somalia"
+msgstr "Сомалі"
+
+#: enferno/admin/templates/admin/i18n.jinja2:410
+msgid "South Africa"
+msgstr "Південна Африка"
+
+#: enferno/admin/templates/admin/i18n.jinja2:411
+msgid "South Sudan"
+msgstr "Південний Судан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:412
+msgid "Spain"
+msgstr "Іспанія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:413
+msgid "Sri Lanka"
+msgstr "Шрі-Ланка"
+
+#: enferno/admin/templates/admin/i18n.jinja2:414
+msgid "Sudan"
+msgstr "Судан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:415
+msgid "Swaziland"
+msgstr "Есватіні"
+
+#: enferno/admin/templates/admin/i18n.jinja2:416
+msgid "Sweden"
+msgstr "Швеція"
+
+#: enferno/admin/templates/admin/i18n.jinja2:417
+msgid "Switzerland"
+msgstr "Швейцарія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:418
+msgid "Syria"
+msgstr "Сирія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:419
+msgid "Taiwan"
+msgstr "Тайвань"
+
+#: enferno/admin/templates/admin/i18n.jinja2:420
+msgid "Tajikistan"
+msgstr "Таджикістан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:421
+msgid "Tanzania"
+msgstr "Танзанія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:422
+msgid "Thailand"
+msgstr "Таїланд"
+
+#: enferno/admin/templates/admin/i18n.jinja2:423
+msgid "Togo"
+msgstr "Того"
+
+#: enferno/admin/templates/admin/i18n.jinja2:424
+msgid "Tonga"
+msgstr "Тонга"
+
+#: enferno/admin/templates/admin/i18n.jinja2:425
+msgid "Trinidad and Tobago"
+msgstr "Тринідад і Тобаго"
+
+#: enferno/admin/templates/admin/i18n.jinja2:426
+msgid "Tunisia"
+msgstr "Туніс"
+
+#: enferno/admin/templates/admin/i18n.jinja2:427
+msgid "Turkey"
+msgstr "Туреччина"
+
+#: enferno/admin/templates/admin/i18n.jinja2:428
+msgid "Turkmenistan"
+msgstr "Туркменістан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:429
+msgid "Tuvalu"
+msgstr "Тувалу"
+
+#: enferno/admin/templates/admin/i18n.jinja2:430
+msgid "Uganda"
+msgstr "Уганда"
+
+#: enferno/admin/templates/admin/i18n.jinja2:431
+msgid "Ukraine"
+msgstr "Україна"
+
+#: enferno/admin/templates/admin/i18n.jinja2:432
+msgid "United Arab Emirates"
+msgstr "Сполучені Арабські Емірати"
+
+#: enferno/admin/templates/admin/i18n.jinja2:433
+msgid "United Kingdom"
+msgstr "Сполучене Королівство Великої Британії"
+
+#: enferno/admin/templates/admin/i18n.jinja2:434
+msgid "United States"
+msgstr "Сполучені Штати Америки"
+
+#: enferno/admin/templates/admin/i18n.jinja2:435
+msgid "Uruguay"
+msgstr "Уругвай"
+
+#: enferno/admin/templates/admin/i18n.jinja2:436
+msgid "Uzbekistan"
+msgstr "Узбекістан"
+
+#: enferno/admin/templates/admin/i18n.jinja2:437
+msgid "Venezuela"
+msgstr "Венесуела"
+
+#: enferno/admin/templates/admin/i18n.jinja2:438
+msgid "Vietnam"
+msgstr "В'єтнам"
+
+#: enferno/admin/templates/admin/i18n.jinja2:439
+msgid "Yemen"
+msgstr "Ємен"
+
+#: enferno/admin/templates/admin/i18n.jinja2:440
+msgid "Zambia"
+msgstr "Замбія"
+
+#: enferno/admin/templates/admin/i18n.jinja2:441
+msgid "Zimbabwe"
+msgstr "Зімбабве"
+
+#: enferno/admin/templates/admin/i18n.jinja2:446
+msgid "Person"
+msgstr "Особа"
+
+#: enferno/admin/templates/admin/i18n.jinja2:447
+msgid "Entity"
+msgstr "Підрозділ"
+
+#: enferno/admin/templates/admin/i18n.jinja2:451
+msgid "Male"
+msgstr "Чоловіча"
+
+#: enferno/admin/templates/admin/i18n.jinja2:452
+msgid "Female"
+msgstr "Жіноча"
+
+#: enferno/admin/templates/admin/i18n.jinja2:456
+msgid "Minor"
+msgstr "Неповнолітній"
+
+#: enferno/admin/templates/admin/i18n.jinja2:457
+msgid "Adult"
+msgstr "Дорослий"
+
+#: enferno/admin/templates/admin/i18n.jinja2:464
+msgid "Non-Civilian"
+msgstr "Комбатант"
+
+#: enferno/admin/templates/admin/i18n.jinja2:465
+msgid "Police"
+msgstr "Поліція"
+
+#: enferno/admin/templates/admin/i18n.jinja2:466
+msgid "Other Security Forces"
+msgstr "Інші служби безпеки"
+
+#: enferno/admin/templates/admin/i18n.jinja2:471
+msgid "Alawite"
+msgstr "Алавіт"
+
+#: enferno/admin/templates/admin/i18n.jinja2:472
+msgid "Arab"
+msgstr "Араб"
+
+#: enferno/admin/templates/admin/i18n.jinja2:473
+msgid "Armenian"
+msgstr "Вірмен"
+
+#: enferno/admin/templates/admin/i18n.jinja2:474
+msgid "Christian"
+msgstr "Християнин"
+
+#: enferno/admin/templates/admin/i18n.jinja2:475
+msgid "Circassian"
+msgstr "Черкес"
+
+#: enferno/admin/templates/admin/i18n.jinja2:476
+msgid "Druze"
+msgstr "Друз"
+
+#: enferno/admin/templates/admin/i18n.jinja2:477
+msgid "Ismaili"
+msgstr "Ісмаїл"
+
+#: enferno/admin/templates/admin/i18n.jinja2:478
+msgid "Kurd"
+msgstr "Курд"
+
+#: enferno/admin/templates/admin/i18n.jinja2:479
+msgid "Shiaa"
+msgstr "Шиїт"
+
+#: enferno/admin/templates/admin/i18n.jinja2:480
+msgid "Sunni"
+msgstr "Суніт"
+
+#: enferno/admin/templates/admin/i18n.jinja2:481
+msgid "Syriac"
+msgstr "Сирієць"
+
+#: enferno/admin/templates/admin/i18n.jinja2:482
+msgid "Turkmen"
+msgstr "Туркмен"
+
+#: enferno/admin/templates/admin/i18n.jinja2:487
+msgid "1 Day"
+msgstr "1 день"
+
+#: enferno/admin/templates/admin/i18n.jinja2:488
+msgid "2 Days"
+msgstr "2 дні"
+
+#: enferno/admin/templates/admin/i18n.jinja2:489
+msgid "3 Days"
+msgstr "3 дні"
+
+#: enferno/admin/templates/admin/i18n.jinja2:490
+msgid "4 Days"
+msgstr "4 дні"
+
+#: enferno/admin/templates/admin/i18n.jinja2:491
+msgid "5 Days"
+msgstr "5 днів"
+
+#: enferno/admin/templates/admin/i18n.jinja2:492
+msgid "6 Days"
+msgstr "6 днів"
+
+#: enferno/admin/templates/admin/i18n.jinja2:493
+msgid "7 Days"
+msgstr "7 днів"
+
+#: enferno/admin/templates/admin/i18n.jinja2:494
+msgid "1 Month"
+msgstr "1 місяць"
+
+#: enferno/admin/templates/admin/i18n.jinja2:495
+msgid "3 Months"
+msgstr "3 місяці"
+
+#: enferno/admin/templates/admin/i18n.jinja2:496
+msgid "6 Months"
+msgstr "6 місяців"
+
+#: enferno/admin/templates/admin/i18n.jinja2:497
+msgid "1 Year"
+msgstr "1 рік"
+
+#: enferno/admin/templates/admin/i18n.jinja2:502
+#: enferno/admin/templates/admin/i18n.jinja2:512
+#: enferno/admin/templates/admin/i18n.jinja2:530
+#: enferno/admin/templates/admin/i18n.jinja2:535
+msgid "Injured Party"
+msgstr ""
+
+#: enferno/admin/templates/admin/i18n.jinja2:503
+#: enferno/admin/templates/admin/i18n.jinja2:513
+msgid "Witness"
+msgstr "Свідок"
+
+#: enferno/admin/templates/admin/i18n.jinja2:504
+#: enferno/admin/templates/admin/i18n.jinja2:514
+msgid "Perpetrator"
+msgstr "Злочинець"
+
+#: enferno/admin/templates/admin/i18n.jinja2:505
+#: enferno/admin/templates/admin/i18n.jinja2:515
+msgid "Appeared"
+msgstr "З'явився"
+
+#: enferno/admin/templates/admin/i18n.jinja2:506
+#: enferno/admin/templates/admin/i18n.jinja2:516
+msgid "Participant"
+msgstr "Учасник"
+
+#: enferno/admin/templates/admin/i18n.jinja2:523
+#: enferno/admin/templates/admin/i18n.jinja2:524
+msgid "Child"
+msgstr "Дитина"
+
+#: enferno/admin/templates/admin/i18n.jinja2:525
+msgid "Sibling"
+msgstr "Брат/Сестра"
+
+#: enferno/admin/templates/admin/i18n.jinja2:526
+msgid "Spouse"
+msgstr "Жінка/Чоловік"
+
+#: enferno/admin/templates/admin/i18n.jinja2:527
+#: enferno/admin/templates/admin/i18n.jinja2:528
+msgid "Superior officer"
+msgstr "Старший офіцер"
+
+#: enferno/admin/templates/admin/i18n.jinja2:527
+#: enferno/admin/templates/admin/i18n.jinja2:528
+msgid "Subordinate officer"
+msgstr "Підлеглий офіцер"
+
+#: enferno/admin/templates/admin/i18n.jinja2:529
+#: enferno/admin/templates/admin/i18n.jinja2:533
+msgid "Subunit"
+msgstr "Підрозділ"
+
+#: enferno/admin/templates/admin/i18n.jinja2:529
+#: enferno/admin/templates/admin/i18n.jinja2:533
+msgid "Unit"
+msgstr "Розділ"
+
+#: enferno/admin/templates/admin/i18n.jinja2:530
+#: enferno/admin/templates/admin/i18n.jinja2:535
+msgid "Alleged Perpetrator"
+msgstr "Передбачуваний злочинець"
+
+#: enferno/admin/templates/admin/i18n.jinja2:531
+#: enferno/admin/templates/admin/i18n.jinja2:532
+msgid "Member"
+msgstr "Учасник"
+
+#: enferno/admin/templates/admin/i18n.jinja2:531
+#: enferno/admin/templates/admin/i18n.jinja2:532
+msgid "Group"
+msgstr "Група"
+
+#: enferno/admin/templates/admin/i18n.jinja2:567
 msgid "Add Geo Marker"
 msgstr "Додати гео маркер"
 
-#: enferno/admin/templates/admin/i18n.jinja2:551
+#: enferno/admin/templates/admin/i18n.jinja2:575
 msgid "Very thin"
 msgstr "Дуже худий"
 
-#: enferno/admin/templates/admin/i18n.jinja2:552
+#: enferno/admin/templates/admin/i18n.jinja2:576
 msgid "Thin"
 msgstr "Худий"
 
-#: enferno/admin/templates/admin/i18n.jinja2:553
+#: enferno/admin/templates/admin/i18n.jinja2:577
 msgid "Average"
 msgstr "Середній"
 
-#: enferno/admin/templates/admin/i18n.jinja2:554
+#: enferno/admin/templates/admin/i18n.jinja2:578
 msgid "Muscular"
 msgstr "Мускулистий"
 
-#: enferno/admin/templates/admin/i18n.jinja2:555
+#: enferno/admin/templates/admin/i18n.jinja2:579
 msgid "Overweight"
 msgstr "Із зайвою вагою"
 
-#: enferno/admin/templates/admin/i18n.jinja2:556
+#: enferno/admin/templates/admin/i18n.jinja2:580
 msgid "Obese"
 msgstr "З ожирінням"
 
-#: enferno/admin/templates/admin/i18n.jinja2:560
+#: enferno/admin/templates/admin/i18n.jinja2:584
 #, fuzzy
 msgid "Pregnant"
 msgstr "Вірмен"
 
-#: enferno/admin/templates/admin/i18n.jinja2:561
+#: enferno/admin/templates/admin/i18n.jinja2:585
 msgid "Not Pregnant"
 msgstr ""
 
-#: enferno/admin/templates/admin/i18n.jinja2:563
+#: enferno/admin/templates/admin/i18n.jinja2:587
 #, fuzzy
 msgid "Not Applicable"
 msgstr "Недоступний"
 
-#: enferno/admin/templates/admin/i18n.jinja2:564
+#: enferno/admin/templates/admin/i18n.jinja2:588
 msgid "The Question Was Not Asked"
 msgstr ""
 
-#: enferno/admin/templates/admin/i18n.jinja2:574
+#: enferno/admin/templates/admin/i18n.jinja2:598
 msgid "Full"
 msgstr "Густе волосся"
 
-#: enferno/admin/templates/admin/i18n.jinja2:575
+#: enferno/admin/templates/admin/i18n.jinja2:599
 msgid "Bald"
 msgstr "Лисий"
 
-#: enferno/admin/templates/admin/i18n.jinja2:576
+#: enferno/admin/templates/admin/i18n.jinja2:600
 msgid "Partial hair loss"
 msgstr "Часткове облисіння"
 
-#: enferno/admin/templates/admin/i18n.jinja2:580
+#: enferno/admin/templates/admin/i18n.jinja2:604
 msgid "Straight"
 msgstr "Пряме"
 
-#: enferno/admin/templates/admin/i18n.jinja2:581
+#: enferno/admin/templates/admin/i18n.jinja2:605
 msgid "Wavy"
 msgstr "Хвилясте"
 
-#: enferno/admin/templates/admin/i18n.jinja2:582
+#: enferno/admin/templates/admin/i18n.jinja2:606
 msgid "Curly"
 msgstr "Кучеряве"
 
-#: enferno/admin/templates/admin/i18n.jinja2:583
+#: enferno/admin/templates/admin/i18n.jinja2:607
 msgid "Very curly"
 msgstr "Дуже кучеряве"
 
-#: enferno/admin/templates/admin/i18n.jinja2:588
+#: enferno/admin/templates/admin/i18n.jinja2:612
 msgid "Very short"
 msgstr "Дуже коротке"
 
-#: enferno/admin/templates/admin/i18n.jinja2:589
+#: enferno/admin/templates/admin/i18n.jinja2:613
 msgid "Short"
 msgstr "Коротке"
 
-#: enferno/admin/templates/admin/i18n.jinja2:590
+#: enferno/admin/templates/admin/i18n.jinja2:614
 msgid "Medium"
 msgstr "Середнє"
 
-#: enferno/admin/templates/admin/i18n.jinja2:591
+#: enferno/admin/templates/admin/i18n.jinja2:615
 msgid "Long"
 msgstr "Довге"
 
-#: enferno/admin/templates/admin/i18n.jinja2:592
+#: enferno/admin/templates/admin/i18n.jinja2:616
 msgid "Very long"
 msgstr "Дуже довге"
 
-#: enferno/admin/templates/admin/i18n.jinja2:596
-#: enferno/admin/templates/admin/i18n.jinja2:637
+#: enferno/admin/templates/admin/i18n.jinja2:620
+#: enferno/admin/templates/admin/i18n.jinja2:661
 msgid "Black"
 msgstr "Чорне"
 
-#: enferno/admin/templates/admin/i18n.jinja2:597
-#: enferno/admin/templates/admin/i18n.jinja2:638
+#: enferno/admin/templates/admin/i18n.jinja2:621
+#: enferno/admin/templates/admin/i18n.jinja2:662
 msgid "Brown"
 msgstr "Коричневе"
 
-#: enferno/admin/templates/admin/i18n.jinja2:598
+#: enferno/admin/templates/admin/i18n.jinja2:622
 msgid "Blonde"
 msgstr "Біляве"
 
-#: enferno/admin/templates/admin/i18n.jinja2:599
-#: enferno/admin/templates/admin/i18n.jinja2:641
+#: enferno/admin/templates/admin/i18n.jinja2:623
+#: enferno/admin/templates/admin/i18n.jinja2:665
 msgid "Grey"
 msgstr "Сиве"
 
-#: enferno/admin/templates/admin/i18n.jinja2:600
+#: enferno/admin/templates/admin/i18n.jinja2:624
 msgid "Turning grey"
 msgstr "Сивіє"
 
-#: enferno/admin/templates/admin/i18n.jinja2:601
+#: enferno/admin/templates/admin/i18n.jinja2:625
 msgid "Red"
 msgstr "Руде"
 
-#: enferno/admin/templates/admin/i18n.jinja2:605
+#: enferno/admin/templates/admin/i18n.jinja2:629
 msgid "none"
 msgstr "немає"
 
-#: enferno/admin/templates/admin/i18n.jinja2:606
+#: enferno/admin/templates/admin/i18n.jinja2:630
 msgid "Beard"
 msgstr "Борода"
 
-#: enferno/admin/templates/admin/i18n.jinja2:607
+#: enferno/admin/templates/admin/i18n.jinja2:631
 msgid "Moustache"
 msgstr "Вуса"
 
-#: enferno/admin/templates/admin/i18n.jinja2:608
+#: enferno/admin/templates/admin/i18n.jinja2:632
 msgid "Beard and moustache"
 msgstr "Борода та вуса"
 
-#: enferno/admin/templates/admin/i18n.jinja2:609
+#: enferno/admin/templates/admin/i18n.jinja2:633
 msgid "Goatee"
 msgstr "Козяча борідка"
 
-#: enferno/admin/templates/admin/i18n.jinja2:610
+#: enferno/admin/templates/admin/i18n.jinja2:634
 msgid "Whiskers"
 msgstr "Бакенбарди"
 
-#: enferno/admin/templates/admin/i18n.jinja2:614
+#: enferno/admin/templates/admin/i18n.jinja2:638
 msgid "Scar"
 msgstr "Шрам"
 
-#: enferno/admin/templates/admin/i18n.jinja2:615
+#: enferno/admin/templates/admin/i18n.jinja2:639
 msgid "Tattoo"
 msgstr "Татуювання"
 
-#: enferno/admin/templates/admin/i18n.jinja2:616
+#: enferno/admin/templates/admin/i18n.jinja2:640
 msgid "piercing"
 msgstr "пірсинг"
 
-#: enferno/admin/templates/admin/i18n.jinja2:617
+#: enferno/admin/templates/admin/i18n.jinja2:641
 msgid "Mole"
 msgstr "Родимка"
 
-#: enferno/admin/templates/admin/i18n.jinja2:618
+#: enferno/admin/templates/admin/i18n.jinja2:642
 msgid "Birthmarks"
 msgstr "Родима пляма"
 
-#: enferno/admin/templates/admin/i18n.jinja2:619
+#: enferno/admin/templates/admin/i18n.jinja2:643
 msgid "Cuts"
 msgstr "Порізи"
 
-#: enferno/admin/templates/admin/i18n.jinja2:623
+#: enferno/admin/templates/admin/i18n.jinja2:647
 msgid "Right"
 msgstr "Справа"
 
-#: enferno/admin/templates/admin/i18n.jinja2:624
+#: enferno/admin/templates/admin/i18n.jinja2:648
 msgid "Left"
 msgstr "Зліва"
 
-#: enferno/admin/templates/admin/i18n.jinja2:625
+#: enferno/admin/templates/admin/i18n.jinja2:649
 msgid "Both Hands"
 msgstr ""
 
-#: enferno/admin/templates/admin/i18n.jinja2:633
+#: enferno/admin/templates/admin/i18n.jinja2:657
 msgid "Question Not Asked"
 msgstr ""
 
-#: enferno/admin/templates/admin/i18n.jinja2:639
+#: enferno/admin/templates/admin/i18n.jinja2:663
 msgid "Green"
 msgstr "Зелене"
 
-#: enferno/admin/templates/admin/i18n.jinja2:640
+#: enferno/admin/templates/admin/i18n.jinja2:664
 msgid "Blue"
 msgstr "Блакитне"
 
-#: enferno/admin/templates/admin/i18n.jinja2:645
+#: enferno/admin/templates/admin/i18n.jinja2:669
 msgid "Missing"
 msgstr "Відсутнє"
 
-#: enferno/admin/templates/admin/i18n.jinja2:646
+#: enferno/admin/templates/admin/i18n.jinja2:670
 msgid "Identified"
 msgstr "Ідентифіковано"
 
-#: enferno/admin/templates/admin/incidents.html:51
+#: enferno/admin/templates/admin/incidents.html:49
 msgid "All Incidents"
 msgstr "Усі випадки"
 
-#: enferno/admin/templates/admin/incidents.html:81
-#: enferno/admin/templates/admin/incidents.html:531
+#: enferno/admin/templates/admin/incidents.html:79
+#: enferno/admin/templates/admin/incidents.html:579
 msgid "New Incident"
 msgstr "Новий випадок"
 
-#: enferno/admin/templates/admin/incidents.html:531
+#: enferno/admin/templates/admin/incidents.html:579
 msgid "Edit Incident"
 msgstr "Редагувати випадок"
 
@@ -2676,28 +2759,28 @@ msgstr "Випадок"
 msgid "Offline"
 msgstr "Офлайн"
 
-#: enferno/admin/templates/admin/locations.html:53
-#: enferno/admin/templates/admin/locations.html:246
+#: enferno/admin/templates/admin/locations.html:58
+#: enferno/admin/templates/admin/locations.html:259
 #, fuzzy
 msgid "New Location"
 msgstr "Включити місцезнаходження"
 
-#: enferno/admin/templates/admin/locations.html:202
+#: enferno/admin/templates/admin/locations.html:215
 #: enferno/admin/templates/admin/partials/location_dialog.html:55
 msgid "Full Location"
 msgstr "Повне місцезнаходження"
 
-#: enferno/admin/templates/admin/locations.html:204
+#: enferno/admin/templates/admin/locations.html:217
 #: enferno/admin/templates/admin/partials/location_dialog.html:73
 msgid "Location Type"
 msgstr "Тип місценаходження"
 
-#: enferno/admin/templates/admin/locations.html:205
+#: enferno/admin/templates/admin/locations.html:218
 #: enferno/admin/templates/admin/partials/location_dialog.html:97
 msgid "Admin Level"
 msgstr ""
 
-#: enferno/admin/templates/admin/locations.html:246
+#: enferno/admin/templates/admin/locations.html:259
 #, fuzzy
 msgid "Edit Location"
 msgstr "Включити місцезнаходження"
@@ -2707,7 +2790,7 @@ msgid "Role Groups"
 msgstr "Групи ролей"
 
 #: enferno/admin/templates/admin/roles.html:40
-#: enferno/admin/templates/admin/roles.html:272
+#: enferno/admin/templates/admin/roles.html:273
 msgid "New Group"
 msgstr "Нова група"
 
@@ -2715,12 +2798,12 @@ msgstr "Нова група"
 msgid "Group Name"
 msgstr "Назва групи"
 
-#: enferno/admin/templates/admin/roles.html:236
+#: enferno/admin/templates/admin/roles.html:237
 #, fuzzy
 msgid "Color"
 msgstr "Колір очей"
 
-#: enferno/admin/templates/admin/roles.html:272
+#: enferno/admin/templates/admin/roles.html:273
 msgid "Edit Group"
 msgstr "Редагувати групу"
 
@@ -2742,135 +2825,148 @@ msgstr "Системні користувачі"
 msgid "New User"
 msgstr "Новий користувач"
 
-#: enferno/admin/templates/admin/users.html:100
+#: enferno/admin/templates/admin/users.html:121
 msgid "Password"
 msgstr "Пароль"
 
-#: enferno/admin/templates/admin/users.html:130
+#: enferno/admin/templates/admin/users.html:183
 msgid "Active"
 msgstr "Активний"
 
-#: enferno/admin/templates/admin/users.html:136
+#: enferno/admin/templates/admin/users.html:189
 msgid "Can view usernames"
 msgstr "Можна переглядати імена користувачів"
 
-#: enferno/admin/templates/admin/users.html:140
+#: enferno/admin/templates/admin/users.html:193
 msgid "Can view simple history"
 msgstr "Можна переглядати просту історію"
 
-#: enferno/admin/templates/admin/users.html:144
+#: enferno/admin/templates/admin/users.html:197
 msgid "Can view Full History"
 msgstr "Можна переглядати повну історію"
 
-#: enferno/admin/templates/admin/users.html:148
+#: enferno/admin/templates/admin/users.html:201
 msgid "Can self assign"
 msgstr ""
 
-#: enferno/admin/templates/admin/users.html:153
+#: enferno/admin/templates/admin/users.html:205
 #, fuzzy
 msgid "Can edit Locations"
 msgstr "Включити місцезнаходження"
 
+#: enferno/admin/templates/admin/users.html:209
+msgid "Can Request Exports"
+msgstr ""
+
 #: enferno/admin/templates/admin/partials/event_dialog.html:167
-#: enferno/admin/templates/admin/users.html:162
+#: enferno/admin/templates/admin/users.html:217
 msgid "Close"
 msgstr "Закрити"
 
-#: enferno/admin/templates/admin/users.html:216
+#: enferno/admin/templates/admin/users.html:273
 msgid "Username"
 msgstr "Ім'я користувача"
 
-#: enferno/admin/templates/admin/users.html:219
+#: enferno/admin/templates/admin/users.html:276
 msgid "Google ID"
 msgstr "Google ID"
+
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:111
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:106
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:94
+msgid "Name this search"
+msgstr "Дати назву пошуку"
 
 #: enferno/admin/templates/admin/partials/actor_dialog.html:25
 msgid "Save Actor"
 msgstr "Зберегти виконавця"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:577
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:343
-#: enferno/admin/templates/admin/partials/incident_dialog.html:181
+#: enferno/admin/templates/admin/partials/actor_dialog.html:589
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:336
+#: enferno/admin/templates/admin/partials/incident_dialog.html:183
 msgid "Search & Relate Actors"
 msgstr "Знайти та пов'язати виконавців"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:603
-#: enferno/admin/templates/admin/partials/actor_dialog.html:714
-#: enferno/admin/templates/admin/partials/actor_dialog.html:818
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:264
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:369
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:476
-#: enferno/admin/templates/admin/partials/incident_dialog.html:206
-#: enferno/admin/templates/admin/partials/incident_dialog.html:308
-#: enferno/admin/templates/admin/partials/incident_dialog.html:411
+#: enferno/admin/templates/admin/partials/actor_dialog.html:615
+#: enferno/admin/templates/admin/partials/actor_dialog.html:726
+#: enferno/admin/templates/admin/partials/actor_dialog.html:830
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:256
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:362
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:469
+#: enferno/admin/templates/admin/partials/incident_dialog.html:208
+#: enferno/admin/templates/admin/partials/incident_dialog.html:314
+#: enferno/admin/templates/admin/partials/incident_dialog.html:419
 msgid "Relationship Information"
 msgstr "Інформація про сімейний стан"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:610
-#: enferno/admin/templates/admin/partials/actor_dialog.html:720
-#: enferno/admin/templates/admin/partials/actor_dialog.html:824
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:270
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:375
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:482
+#: enferno/admin/templates/admin/partials/actor_dialog.html:622
+#: enferno/admin/templates/admin/partials/actor_dialog.html:732
+#: enferno/admin/templates/admin/partials/actor_dialog.html:837
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:262
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:368
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:475
+#: enferno/admin/templates/admin/partials/incident_dialog.html:214
 msgid "Probability"
 msgstr "Ймовірність"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:623
-#: enferno/admin/templates/admin/partials/actor_dialog.html:731
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:281
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:387
+#: enferno/admin/templates/admin/partials/actor_dialog.html:635
+#: enferno/admin/templates/admin/partials/actor_dialog.html:743
+#: enferno/admin/templates/admin/partials/actor_dialog.html:848
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:273
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:380
+#: enferno/admin/templates/admin/partials/incident_dialog.html:225
 msgid "Related As"
 msgstr "Пов'язані як"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:688
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:237
-#: enferno/admin/templates/admin/partials/incident_dialog.html:282
+#: enferno/admin/templates/admin/partials/actor_dialog.html:700
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:229
+#: enferno/admin/templates/admin/partials/incident_dialog.html:287
 msgid "Search & Relate Bulletins"
 msgstr "Знайти та пов'язати бюлетені"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:792
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:450
-#: enferno/admin/templates/admin/partials/incident_dialog.html:386
+#: enferno/admin/templates/admin/partials/actor_dialog.html:804
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:443
+#: enferno/admin/templates/admin/partials/incident_dialog.html:394
 msgid "Search & Relate Incidents"
 msgstr "Знайти та Пов'язати Випадки"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:877
+#: enferno/admin/templates/admin/partials/actor_dialog.html:904
 msgid "Missing Person Profile"
 msgstr "Профіль зниклої людини"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:916
+#: enferno/admin/templates/admin/partials/actor_dialog.html:944
 msgid "Months Pregnant at time of disappearance"
 msgstr "Місяць вагітносі на момент зникнення"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1024
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1053
 msgid "Hair loss"
 msgstr "Втрата волосся"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1036
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1066
 msgid "Hair type"
 msgstr "Тип волосся"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1044
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1075
 msgid "Hair length"
 msgstr "Довжина волосся"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1052
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1084
 msgid "Hair color"
 msgstr "Колір волосся"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1060
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1093
 msgid "Facial hair"
 msgstr "Волосся на обличчі"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1086
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1122
 msgid "Eye color"
 msgstr "Колір очей"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1130
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1167
 msgid "Physician’s name and contact"
 msgstr "Ім’я лікаря та контактні дані"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1135
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1172
 msgid ""
 "Fractures / Injuries (indicate place, side, circumstances, age at the "
 "time of injury, treatment)"
@@ -2878,7 +2974,7 @@ msgstr ""
 "Переломи/травми (вказати місце, бік, обставини, вік на момент травми, "
 "лікування)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1143
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1180
 msgid ""
 "Implants (pacemakers, orthopedic prostheses, screws or metal plates, "
 "etc...) with date or age"
@@ -2886,7 +2982,7 @@ msgstr ""
 "Імплантати (кардіостимулятори, ортопедичні протези, гвинти або металеві "
 "пластини, тощо) з датою або віком"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1148
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1185
 msgid ""
 "Congenital malformations (indicate type and whether there is more than "
 "one relative with the same pathology)"
@@ -2894,50 +2990,50 @@ msgstr ""
 "Вроджені вади розвитку (вказати тип і чи є більше ніж  один родич з такою"
 " ж патологією)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1155
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1192
 msgid "Pain and/or ailments"
 msgstr "Біль та/або нездужання"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1160
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1197
 msgid "Other medical conditions (specify type and age of occurrence)"
 msgstr "Інші медичні стани (вказати тип і вік виникнення)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1168
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1205
 msgid "Accidents (indicate age of occurrence)"
 msgstr "Нещасні випадки (вказати вік випадку) "
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1173
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1210
 msgid "Prescription drugs taken (indicate at what age and reason)"
 msgstr "Прийом ліків за рецептом (вказати з якого віку та причину)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1189
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1228
 msgid "Is there a Dental Record?"
 msgstr "Чи є стоматологічна картка?"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1198
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1237
 msgid "Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)"
 msgstr ""
 "Особливості зубів (відстань, зайві зуби, відсутність зубів, надмірний "
 "прикус тощо)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1207
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1246
 msgid "Dental problems (absences, infections, bleeding, etc...)"
 msgstr "Проблеми з зубами (відсутність зубів, інфекції, кровотечі тощо)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1212
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1251
 msgid "Dental treatments (extractions, fillings, etc...) with dates"
 msgstr "Лікування зубів (видалення, пломбування тощо) з датами"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1217
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1256
 msgid "Dental habits (toothpicks, smoking, etc...)"
 msgstr "Стоматологічні звички (зубочистки, куріння тощо)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1251
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1291
 msgid "Location of reburial (full address)"
 msgstr "Місце перепоховання (повна адреса)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1284
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:565
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1324
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:558
 msgid "Not Available"
 msgstr "Недоступний"
 
@@ -2983,10 +3079,6 @@ msgstr "Обрані елементи"
 msgid "Bulk Update Incidents"
 msgstr "Сукупне оновлення випадків"
 
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:71
-msgid "Name this search"
-msgstr "Дати назву пошуку"
-
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:23
 msgid "Save Bulletin"
 msgstr "Зберегти бюлетень"
@@ -2998,6 +3090,10 @@ msgstr "Оригінальна назва (ДР)"
 #: enferno/admin/templates/admin/partials/event_dialog.html:60
 msgid "Event"
 msgstr "Подія"
+
+#: enferno/admin/templates/admin/partials/export_drawer.html:12
+msgid "Export Data"
+msgstr ""
 
 #: enferno/admin/templates/admin/partials/incident_dialog.html:20
 msgid "Save Incident"
@@ -3012,7 +3108,7 @@ msgstr "Включити місця подій"
 msgid "Title (Ar)"
 msgstr "Назва (ДР)"
 
-#: enferno/admin/templates/admin/partials/location_dialog.html:110
+#: enferno/admin/templates/admin/partials/location_dialog.html:111
 msgid "Country"
 msgstr ""
 
@@ -3021,16 +3117,16 @@ msgstr ""
 msgid "Parent Location"
 msgstr "Включити місця подій"
 
-#: enferno/admin/templates/admin/partials/location_dialog.html:166
+#: enferno/admin/templates/admin/partials/location_dialog.html:168
 #, fuzzy
 msgid "Tags"
 msgstr "Статус"
 
-#: enferno/admin/templates/admin/partials/review_dialog.html:129
+#: enferno/admin/templates/admin/partials/review_dialog.html:115
 msgid "Needs Review"
 msgstr "Потрібно перевірити"
 
-#: enferno/admin/templates/admin/partials/review_dialog.html:130
+#: enferno/admin/templates/admin/partials/review_dialog.html:116
 msgid "No Review Needed"
 msgstr "Не потрібно перевіряти"
 
@@ -3054,6 +3150,49 @@ msgstr "Дистанція"
 msgid "Data"
 msgstr "Дані"
 
+#: enferno/export/templates/export-dashboard.html:35
+#: enferno/templates/nav-drawer.html:189
+#, fuzzy
+msgid "Exports"
+msgstr "Звітовики"
+
+#: enferno/export/templates/export-dashboard.html:155
+msgid "Requester"
+msgstr ""
+
+#: enferno/export/templates/export-dashboard.html:156
+#, fuzzy
+msgid "Table"
+msgstr "Чоловіча"
+
+#: enferno/export/templates/export-dashboard.html:157
+msgid "# of items"
+msgstr ""
+
+#: enferno/export/templates/export-dashboard.html:158
+#, fuzzy
+msgid "Format"
+msgstr "Для виконавців"
+
+#: enferno/export/templates/export-dashboard.html:159
+#, fuzzy
+msgid "Include Media"
+msgstr "Включити посилання"
+
+#: enferno/export/templates/export-dashboard.html:160
+#, fuzzy
+msgid "Requested time"
+msgstr "Передбачуваний час"
+
+#: enferno/export/templates/export-dashboard.html:161
+#, fuzzy
+msgid "Expiry time"
+msgstr "Дуже худий"
+
+#: enferno/export/templates/export-dashboard.html:163
+msgid "Download"
+msgstr ""
+
 #: enferno/templates/change-password.html:13
 msgid "Old Password"
 msgstr "Старий пароль"
@@ -3067,12 +3206,10 @@ msgid "Confirm Password"
 msgstr "Підтвердити пароль"
 
 #: enferno/templates/dashboard.html:21
-#: enferno/templates/security/email/two_factor_instructions.html:1
-#: enferno/templates/security/email/us_instructions.html:1
 msgid "Welcome"
 msgstr "Ласкаво просимо"
 
-#: enferno/templates/dashboard.html:28
+#: enferno/templates/dashboard.html:25
 msgid "Last login"
 msgstr "Останній вхід"
 
@@ -3080,35 +3217,35 @@ msgstr "Останній вхід"
 msgid "All rights reserved."
 msgstr "Всі права захищені."
 
-#: enferno/templates/nav-drawer.html:115
+#: enferno/templates/nav-drawer.html:105
 msgid "Activity"
 msgstr "Діяльність"
 
-#: enferno/templates/nav-drawer.html:129
+#: enferno/templates/nav-drawer.html:116
 msgid "Users Management"
 msgstr "Управління користувачами"
 
-#: enferno/templates/nav-drawer.html:142
+#: enferno/templates/nav-drawer.html:127
 msgid "Groups Management"
 msgstr "Управління групами"
 
-#: enferno/templates/nav-drawer.html:154
+#: enferno/templates/nav-drawer.html:140
 msgid "Media Import"
 msgstr "Імпорт медіа"
 
-#: enferno/templates/nav-drawer.html:167
+#: enferno/templates/nav-drawer.html:155
 msgid "Sheets Import"
 msgstr "Імпорт листів"
 
-#: enferno/templates/nav-drawer.html:183
+#: enferno/templates/nav-drawer.html:172
 msgid "Deduplication Dashbaord"
 msgstr "Панель керування дедуплікацією"
 
-#: enferno/templates/nav-drawer.html:198
+#: enferno/templates/nav-drawer.html:206
 msgid "System Administration"
 msgstr ""
 
-#: enferno/templates/nav-drawer.html:210 enferno/templates/settings.html:16
+#: enferno/templates/nav-drawer.html:219 enferno/templates/settings.html:16
 msgid "Settings"
 msgstr "Налаштування"
 
@@ -3140,13 +3277,17 @@ msgstr "Безпека"
 msgid "Setup Two-Factor Auth"
 msgstr "Налаштувати двофакторну аутентифікацію"
 
-#: enferno/templates/security/two_factor_setup.html:25
+#: enferno/templates/settings.html:51
+msgid "Recovery Codes"
+msgstr ""
+
+#: enferno/templates/security/two_factor_setup.html:38
 msgid "Two-factor authentication adds an extra layer of security to your account"
 msgstr ""
 "Двофакторна аутентифікація додає додатковий рівень безпеки до Вашого "
 "облікового запису"
 
-#: enferno/templates/security/two_factor_setup.html:28
+#: enferno/templates/security/two_factor_setup.html:41
 #, fuzzy
 msgid ""
 "In addition to your username and password, you'll need to use a code that"
@@ -3155,11 +3296,11 @@ msgstr ""
 "Окрім Вашого імені користувача та пароля, Вам потрібно буде використати "
 "код, який ми Вам надішлемо"
 
-#: enferno/templates/security/two_factor_setup.html:45
+#: enferno/templates/security/two_factor_setup.html:58
 msgid "To complete logging in, please enter the code sent to your mail"
 msgstr ""
 
-#: enferno/templates/security/two_factor_setup.html:51
+#: enferno/templates/security/two_factor_setup.html:64
 #, fuzzy
 msgid ""
 "Open an authenticator app on your device and scan the following QRcode, "
@@ -3168,28 +3309,28 @@ msgstr ""
 "Відкрийте додаток аутентифікації на своєму пристрої та відскануйте "
 "наступний QR-код щоб почати отримувати коди"
 
-#: enferno/templates/security/two_factor_setup.html:54
+#: enferno/templates/security/two_factor_setup.html:67
 #, fuzzy
 msgid "Two factor authentication code"
 msgstr "Двофакторна аутентифікація"
 
-#: enferno/templates/security/two_factor_setup.html:63
+#: enferno/templates/security/two_factor_setup.html:76
 msgid "To Which Phone Number Should We Send Code To?"
 msgstr ""
 
-#: enferno/templates/security/two_factor_verify_code.html:6
+#: enferno/templates/security/two_factor_verify_code.html:8
 msgid "Two-factor Authentication"
 msgstr "Двофакторна аутентифікація"
 
-#: enferno/templates/security/two_factor_verify_code.html:7
+#: enferno/templates/security/two_factor_verify_code.html:9
 msgid "Please enter your authentication code"
 msgstr "Будь ласка, введіть Ваш код аутентифікації"
 
-#: enferno/templates/security/two_factor_verify_code.html:20
+#: enferno/templates/security/two_factor_verify_code.html:34
 msgid "The code for authentication was sent to your email address"
 msgstr "Код для аутентифікації було відправлено на Вашу електронну пошту"
 
-#: enferno/templates/security/two_factor_verify_code.html:23
+#: enferno/templates/security/two_factor_verify_code.html:37
 msgid "A mail was sent to us in order to reset your application account"
 msgstr "Лист було відправлено нам з метою відновлення Вашого облікового запису "
 
@@ -3224,7 +3365,6 @@ msgstr "Код було відправлено"
 msgid "No methods have been enabled - nothing to setup"
 msgstr "Жодних методів не ввімкнено - нічого налаштовувати"
 
-#: enferno/templates/security/email/us_instructions.html:8
 #: enferno/templates/security/us_signin.html:6
 msgid "Sign In"
 msgstr "Зареєструватися"
@@ -3237,75 +3377,6 @@ msgstr "Запит на надсилання одноразового коду"
 #: enferno/templates/security/us_verify.html:7
 msgid "Please re-authenticate"
 msgstr "Будь ласка, повторіть аутентифікацію"
-
-#: enferno/templates/security/email/change_notice.html:1
-msgid "Your password has been changed."
-msgstr "Ваш пароль було змінено"
-
-#: enferno/templates/security/email/change_notice.html:3
-msgid "If you did not change your password,"
-msgstr "Якщо Ви не змінювали Ваш пароль,"
-
-#: enferno/templates/security/email/change_notice.html:3
-msgid "click here to reset it"
-msgstr "натисніть тут щоб відновити"
-
-#: enferno/templates/security/email/confirmation_instructions.html:1
-msgid "Please confirm your email through the link below:"
-msgstr ""
-"Будь ласка, підтвердіть Вашу електронну пошту за допомогою посилання "
-"нижче:"
-
-#: enferno/templates/security/email/confirmation_instructions.html:3
-#: enferno/templates/security/email/welcome.html:6
-msgid "Confirm my account"
-msgstr "Підтвердити мій обліковий запис"
-
-#: enferno/templates/security/email/login_instructions.html:1
-#: enferno/templates/security/email/welcome.html:1
-#, python-format
-msgid "Welcome %(email)s!"
-msgstr "Ласкаво просимо %(email)s!"
-
-#: enferno/templates/security/email/login_instructions.html:3
-msgid "You can log into your account through the link below:"
-msgstr "Ви можете увійти у свій обліковий запис за допомогою наступного посилання:"
-
-#: enferno/templates/security/email/login_instructions.html:5
-msgid "Login now"
-msgstr "Увійти зараз"
-
-#: enferno/templates/security/email/reset_instructions.html:1
-msgid "Click here to reset your password"
-msgstr "Натисніть тут, щоб відновити Ваш пароль"
-
-#: enferno/templates/security/email/reset_notice.html:1
-msgid "Your password has been reset"
-msgstr "Ваш пароль відновлено"
-
-#: enferno/templates/security/email/two_factor_instructions.html:3
-msgid "You can log into your account using the following code:"
-msgstr "Ви можете увійти у свій обліковий запис за допомогою наступного коду:"
-
-#: enferno/templates/security/email/two_factor_rescue.html:1
-msgid "can not access mail account"
-msgstr "неможливо отримати доступ до облікового запису пошти"
-
-#: enferno/templates/security/email/us_instructions.html:3
-msgid "You can sign into your account using the following code:"
-msgstr "Ви можете створити свій обліковий запис за допомогою наступного коду:"
-
-#: enferno/templates/security/email/us_instructions.html:6
-msgid "Or use the the link below:"
-msgstr "Або скористайтеся посиланням нижче: "
-
-#: enferno/templates/security/email/welcome.html:4
-msgid "You can confirm your email through the link below:"
-msgstr "Ви можете підтвердити свою єлектронну пошту за осиланням нижче:"
-
-#: enferno/user/views.py:209
-msgid "Password changed successfully."
-msgstr "Успішна зміна паролю."
 
 #~ msgid "Original title"
 #~ msgstr "Оригінальна назва"
@@ -3366,4 +3437,62 @@ msgstr "Успішна зміна паролю."
 
 #~ msgid "Search & Relate Media"
 #~ msgstr "Шукати та підключити медіа"
+
+#~ msgid "Within"
+#~ msgstr "Протягом"
+
+#~ msgid "Victim"
+#~ msgstr "Потерпілий"
+
+#~ msgid "Your password has been changed."
+#~ msgstr "Ваш пароль було змінено"
+
+#~ msgid "If you did not change your password,"
+#~ msgstr "Якщо Ви не змінювали Ваш пароль,"
+
+#~ msgid "click here to reset it"
+#~ msgstr "натисніть тут щоб відновити"
+
+#~ msgid "Please confirm your email through the link below:"
+#~ msgstr ""
+#~ "Будь ласка, підтвердіть Вашу електронну "
+#~ "пошту за допомогою посилання нижче:"
+
+#~ msgid "Confirm my account"
+#~ msgstr "Підтвердити мій обліковий запис"
+
+#~ msgid "Welcome %(email)s!"
+#~ msgstr "Ласкаво просимо %(email)s!"
+
+#~ msgid "You can log into your account through the link below:"
+#~ msgstr ""
+#~ "Ви можете увійти у свій обліковий "
+#~ "запис за допомогою наступного посилання:"
+
+#~ msgid "Login now"
+#~ msgstr "Увійти зараз"
+
+#~ msgid "Click here to reset your password"
+#~ msgstr "Натисніть тут, щоб відновити Ваш пароль"
+
+#~ msgid "Your password has been reset"
+#~ msgstr "Ваш пароль відновлено"
+
+#~ msgid "You can log into your account using the following code:"
+#~ msgstr "Ви можете увійти у свій обліковий запис за допомогою наступного коду:"
+
+#~ msgid "can not access mail account"
+#~ msgstr "неможливо отримати доступ до облікового запису пошти"
+
+#~ msgid "You can sign into your account using the following code:"
+#~ msgstr "Ви можете створити свій обліковий запис за допомогою наступного коду:"
+
+#~ msgid "Or use the the link below:"
+#~ msgstr "Або скористайтеся посиланням нижче: "
+
+#~ msgid "You can confirm your email through the link below:"
+#~ msgstr "Ви можете підтвердити свою єлектронну пошту за осиланням нижче:"
+
+#~ msgid "Password changed successfully."
+#~ msgstr "Успішна зміна паролю."
 

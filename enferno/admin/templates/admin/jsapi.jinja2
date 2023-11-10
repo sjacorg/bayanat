@@ -1,0 +1,403 @@
+var geoMapDefaultCenter = {lat: {{ config.get('GEO_MAP_DEFAULT_CENTER_LAT') }}, lng: {{ config.GEO_MAP_DEFAULT_CENTER_LNG }} }
+
+var itemsPerPageOptions =  JSON.parse(`{{ config.ITEMS_PER_PAGE_OPTIONS }}`);
+
+var VIDEO_RATES = JSON.parse(`{{ config.VIDEO_RATES }}`);
+
+var mediaUploadMaxFileSize = JSON.parse(`{{ config.MEDIA_UPLOAD_MAX_FILE_SIZE }}`);
+var translations = {
+newBulletin_: "{{ _('New Bulletin') }}",
+editBulletin_: "{{ _('Edit Bulletin') }}",
+newActor_: "{{ _('New Actor') }}",
+editActor_: "{{ _('Edit Actor') }}",
+
+query_ : "{{ _('Query') }}",
+advSearch_ : "{{ _('Advanced Search') }}",
+noResults_: "{{ _('No (more) items found.') }}",
+hide_: "{{ _('Hide') }}",
+relate_: "{{ _('Relate') }}",
+contains_: "{{ _('Contains') }}",
+notContains_: "{{ _('Does not contain') }}",
+ref_: "{{ _('Refs') }}",
+inRef_: "{{ _('Include Refs') }}",
+exRef_: "{{ _('Exclude Refs') }}",
+publishDate_: "{{ _('Publish date') }}",
+documentationDate_: "{{ _('Documentation date') }}",
+createdDate_: "{{ _('Creation date') }}",
+updatedDate_: "{{ _('Last modified date') }}",
+eventDate_: "{{ _('Event date') }}",
+singleEvent_: "{{ _('Search in a signle event') }}",
+assignedUser_: "{{ _('Assigned user') }}",
+unassigned_: "{{ _('Unassigned') }}",
+reviewer_: "{{ _('Reviewer') }}",
+workflowStatus_: "{{ _('Workflow Status') }}",
+reviewAction_: "{{ _('Review Action') }}",
+includeSources_: "{{ _('Include sources') }}",
+excludeSources_: "{{ _('Exclude sources (All)') }}",
+includeChildSources_: "{{ _('Also include child sources') }}",
+any_: "{{ _('Any') }}",
+all_: "{{ _('All') }}",
+includeLabels_: "{{ _('Include labels') }}",
+excludeLabels_: "{{ _('Exclude labels (All)') }}",
+includeChildLabels_: "{{ _('Also include child labels') }}",
+includeVerLabels_: "{{ _('Include verified labels') }}",
+excludeVerLabels_: "{{ _('Exclude verified labels (All)') }}",
+includeChildVerLabels_: "{{ _('Also include verified child labels') }}",
+includeLocations_: "{{ _('Include locations') }}",
+radius_: "{{ _('Radius') }}",
+meters_: "{{ _('Meters') }}",
+excludeLocations_: "{{ _('Exclude locations (All)') }}",
+includeResLocations_: "{{ _('Include residence locations (Any)') }}",
+excludeResLocations_: "{{ _('Exclude residence locations (All)') }}",
+includeOriginLocations_: "{{ _('Include origin locations (Any)') }}",
+excludeOriginLocations_: "{{ _('Exclude origin locations (All)') }}",
+includeEventLocations_: "{{ _('Include event locations') }}",
+eventType_ : "{{ _('Event type') }}",
+geospatial_ : "{{ _('Geospatial') }}",
+clearSearch_: "{{ _('Clear Search') }}",
+search_: "{{ _('Search') }}",
+saveSearch_ : "{{ _('Save Search') }}",
+saveSearchAsNew_ : "{{ _('Save As New') }}",
+deleteSearch_ : "{{ _('Delete Search') }}",
+updateSearch_ : "{{ _('Update Search') }}",
+refineExtendSearch_ : "{{ _('Refine/Extend Search') }}",
+loadExistingSearch_ : "{{ _('Load existing search') }}",
+occupation_ : "{{ _('Occupation') }}",
+occupation_ : "{{ _('Occupation') }}",
+position_ : "{{ _('Position') }}",
+spokenDialects_ : "{{ _('Spoken dialects') }}",
+familyStatus_ : "{{ _('Family Status') }}",
+sex_ : "{{ _('Sex') }}",
+minorAdult_ : "{{ _('Minor/Adult') }}",
+civilian_ : "{{ _('Civilian/Non Civilian') }}",
+actorType_ : "{{ _('Actor Type') }}",
+ethnography_ : "{{ _('Ethnography') }}",
+nationality_ : "{{ _('Nationality') }}",
+birthPlace_ : "{{ _('Place of birth') }}",
+birthDate_ : "{{ _('Date of birth') }}",
+nationalIdCard_ : "{{ _('National ID Card') }}",
+yes_: "{{ _('Yes') }}",
+no_: "{{ _('No') }}",
+unknown_: "{{ _('Unknown') }}",
+details_: "{{ _('details') }}",
+name_: "{{ _('Name') }}",
+reportingPersons_: "{{ _('Reporting Persons') }}",
+contactInfo_: "{{ _('Contact info ( phone, email, address)') }}",
+relationship_: "{{ _('Relationship') }}",
+save_ : "{{ _('Save') }}",
+type_ : "{{ _('Type') }}",
+latitude_ : "{{ _('Latitude') }}",
+longitude_ : "{{ _('Longitude') }}",
+parent_ : "{{ _('Parent') }}",
+postalCode_ : "{{ _('Postal Code') }}",
+mainIncident_ : "{{ _('Main Incident') }}",
+
+
+//bulletin/actor/incident cards
+id_: "{{ _('ID') }}",
+edit_: "{{ _('Edit') }}",
+visualize_: "{{ _('Visualize') }}",
+assignedUser_: "{{ _('Assigned User:') }}",
+description_ : "{{ _('Description') }}",
+title_: "{{ _('Title') }}",
+originalTitle_: "{{ _('Original Title') }}",
+sources_: "{{ _('Sources') }}",
+labels_: "{{ _('Labels') }}",
+verifiedLabels_: "{{ _('Verified Labels') }}",
+events_: "{{ _('Events') }}",
+media_: "{{ _('Media') }}",
+locations_: "{{ _('Locations') }}",
+relatedBulletins_: "{{ _('Related Bulletins') }}",
+relatedActors_: "{{ _('Related Actors') }}",
+relatedIncidents_: "{{ _('Related Incidents') }}",
+relationshipInfo_: "{{ _('Relationship Info') }}",
+publishDate_: "{{ _('Publish Date') }}",
+documentationDate_: "{{ _('Documentation Date') }}",
+sourceLink_: "{{ _('Source Link') }}",
+comment_ : "{{ _('Comments') }}",
+logHistory_: "{{ _('Log History') }}",
+
+// actors
+fullName_: "{{ _('Full Name') }}",
+nickName_: "{{ _('Nick Name') }}",
+firstName_: "{{ _('First Name') }}",
+middleName_: "{{ _('Middle Name') }}",
+lastName_ : "{{ _('Last Name') }}",
+mothersName_ : "{{ _('Mother\'s Name') }}",
+sex_ : "{{ _('Sex') }}",
+age_ : "{{ _('Age') }}",
+civilian_ : "{{ _('Civilian') }}",
+actorType_ : "{{ _('Actor Type') }}",
+
+birthDate_ : "{{ _('Date of Birth') }}",
+birthPlace_ : "{{ _('Place of Birth') }}",
+originPlace_ : "{{ _('Place of Origin') }}",
+residencePlace_ : "{{ _('Place of Residence') }}",
+
+occupation_ : "{{ _('Occupation') }}",
+position_ : "{{ _('Position') }}",
+spokenDialects_ : "{{ _('Spoken Dialects') }}",
+familyStatus_ : "{{ _('Family Status') }}",
+
+ethnographicInfo_ : "{{ _('Ethnographic Info') }}",
+nationalities_ : "{{ _('Nationalities') }}",
+nationalIDCard_ : "{{ _('National ID Card') }}",
+
+overview_ : "{{ _('Overview') }}",
+
+// incidents
+claimedViolationsCategories_  : "{{ _('Claimed Violations Categories') }}",
+potentialViolationsCategories_  : "{{ _('Potential violation categories') }}",
+
+// Geo markers
+geoMarkers_: "{{ _('Geo Markers') }}",
+addGeoMarker_: "{{ _('Add Geo Marker') }}",
+
+// missing persons
+missingPerson_ : "{{ _('Missing Person') }}",
+
+lastAddress_ : "{{ _('Last Address') }}",
+marriageHistory_ : "{{ _('Marriage History') }}",
+bioChildren_ : "{{ _('Bio Children') }}",
+pregnantAtDisappearance_ : "{{ _('Pregnant at Disappearance') }}",
+mpAtDisappearance_ : "{{ _('Months Pregnant at Disappearance') }}",
+missingRelatives_ : "{{ _('Missing Relatives') }}",
+name_ : "{{ _('Name') }}",
+address_ : "{{ _('Address') }}",
+phone_ : "{{ _('Phone') }}",
+email_ : "{{ _('Email') }}",
+seenInDetentionCenter_ : "{{ _('Seen in a detention center?') }}",
+injuredDisappearance_ : "{{ _('Injured around time of disappearance?') }}",
+knownDead_ : "{{ _('Known to be dead?') }}",
+deathDetails_ : "{{ _('Details about circumstances of death') }}",
+personalItemsEg_ : "{{ _('Personal Items (watch,ring,chains etc)') }}",
+height_ : "{{ _('Height') }}",
+weight_ : "{{ _('Weight') }}",
+physique_ : "{{ _('Physique') }}",
+hairloss_ : "{{ _('Hair Loss') }}",
+hairtype_ : "{{ _('Hair Type') }}",
+hairlength_ : "{{ _('Hair Length') }}",
+haircolor_ : "{{ _('Hair Color') }}",
+facialhair_ : "{{ _('Facial Hair') }}",
+postureNotes_ : "{{ _('Notes on posture and walking style') }}",
+skinMarkings_ : "{{ _('Skin Markings') }}",
+handness_ : "{{ _('Handness') }}",
+glasses_ : "{{ _('Glasses') }}",
+eyecolor_ : "{{ _('Eye Color') }}",
+characteristicsCongenital_ : "{{ _('Distinctive characteristics (congenital)') }}",
+characteristicsAcquired_ : "{{ _('Distinctive characteristics (acquired)') }}",
+physicalHabits_ : "{{ _('Physical habits') }}",
+otherComments_ : "{{ _('Other comments') }}",
+physiciansContact_ : "{{ _('Physician\’s name and contact') }}",
+fracturesInjuries_ : "{{ _('Fractures / Injuries') }}",
+implants_  : "{{ _('Implants ') }}",
+congenitalMalformations_ : "{{ _('Congenital malformations') }}",
+painAilments_ : "{{ _('Pain and / or ailments') }}",
+otherMedicalConditions_ : "{{ _('Other medical conditions') }}",
+accidents_ : "{{ _('Accidents') }}",
+prescriptionDrugsTaken_ : "{{ _('Prescription drugs taken') }}",
+smoker_ : "{{ _('Smoker') }}",
+isDentalRecord_ : "{{ _('Is there a Dental Record') }}",
+DentistContact_ : "{{ _('Dentist’s name and contact') }}",
+teethFeatures_ : "{{ _('Teeth features') }}",
+dentalProblems_ : "{{ _('Dental problems') }}",
+dentalTreatmetns_ : "{{ _('Dental treatments') }}",
+dentalHabits_ : "{{ _('Dental habits') }}",
+caseStatus_ : "{{ _('Case status') }}",
+reporters_ : "{{ _('Reporters') }}",
+identifiedBy : "{{ _('Identified by (responsible institution)') }}",
+familyNotified_ : "{{ _('Was the family notified?') }}",
+reburialLocation_ : "{{ _('Location of reburial') }}",
+detailsPersonSawLast_ : "{{ _('Details of the person who saw them last') }}",
+//mpfield
+contact_ : "{{ _('Contact') }}",
+
+
+// extras
+
+time_ : "{{ _('Time') }}",
+
+// visualization
+actors_ : "{{ _('Actors') }}",
+bulletins_ : "{{ _('Bulletins') }}",
+incidents_ : "{{ _('Incidents') }}",
+visInfo_ : "{{ _('Double click on a node to expand graph, click and hold CTRL to view') }}",
+
+
+maybe_ : "{{ _('Maybe') }}",
+likely_ : "{{ _('Likely') }}",
+certain_ : "{{ _('Certain') }}",
+
+// bulletin location types
+bulletinLocTypes_:
+[
+{"en": "Locations", "tr": "{{ _('Locations') }}", "code": "locations"},
+{"en": "Geo Markers", "tr": "{{ _('Geo Markers') }}", "code": "geomarkers"},
+{"en": "Events", "tr": "{{ _('Events') }}", "code": "events"}
+],
+
+// actor location types
+actorLocTypes_:
+[
+{"en": "Birth Place", "tr": "{{ _('Birth Place') }}", "code": "birthplace"},
+{"en": "Residence Place", "tr": "{{ _('Residence Place') }}", "code": "residenceplace"},
+{"en": "Origin Place", "tr": "{{ _('Origin Place') }}", "code": "originplace"},
+{"en": "Events", "tr": "{{ _('Events') }}", "code": "events"}
+],
+
+//countries
+countries : {{ config.COUNTRIES|to_config|tojson }},
+
+
+actorTypes: [
+{"en": "Person", "tr": "{{ _('Person') }}"},
+{"en": "Entity", "tr": "{{ _('Entity') }}"}
+],
+
+actorSex: [
+{"en": "Male", "tr": "{{ _('Male') }}"},
+{"en": "Female", "tr": "{{ _('Female') }}"},
+],
+
+actorAge: [
+{"en": "Minor","tr": "{{ _('Minor') }}"},
+{"en": "Adult","tr": "{{ _('Adult') }}"},
+{"en": "Unknown","tr": "{{ _('Unknown') }}"}
+],
+
+actorCivilian: [
+{"en": "Unknown", "tr": "{{ _('Unknown') }}"},
+{"en": "Civilian", "tr": "{{ _('Civilian') }}"},
+{"en": "Non-Civilian", "tr": "{{ _('Non-Civilian') }}"},
+{"en": "Police", "tr": "{{ _('Police') }}"},
+{"en": "Other Security Forces", "tr": "{{ _('Other Security Forces') }}"}
+]
+,
+//Bulletin to Actor relations
+btoaRelateAs : {{ 'atob'|get_data }},
+
+// Incident to Actor
+itoaRelateAs : {{ 'itoa'|get_data }},
+
+atoaRelateAs : {{ 'atoa'|get_data }},
+
+btobRelateAs : {{ 'btob'|get_data }},
+itobRelateAs : {{ 'itob'|get_data }},
+itoiRelateAs : {{ 'itoi'|get_data }},
+
+statuses : {{ 'workflow_status'|get_data }},
+
+probs : [
+{"en": "Maybe", "tr": "{{ _('Maybe') }}"},
+{"en": "Likely", "tr": "{{ _('Likely') }}"},
+{"en": "Certain", "tr": "{{ _('Certain') }}"}
+],
+}
+
+{% if config.MISSING_PERSONS %}
+    // add localized configurations for lists with static values
+
+    translations['physique'] = [
+    {"en": "Very thin", "tr": "{{ _('Very thin') }}"},
+    {"en": "Thin", "tr": "{{ _('Thin') }}"},
+    {"en": "Average", "tr": "{{ _('Average') }}"},
+    {"en": "Muscular", "tr": "{{ _('Muscular') }}"},
+    {"en": "Overweight", "tr": "{{ _('Overweight') }}"},
+    {"en": "Obese", "tr": "{{ _('Obese') }}"}
+    ];
+
+    translations['pregnant'] = [
+    {"en": "Pregnant", "tr": "{{ _('Pregnant') }}"},
+    {"en": "Not Pregnant", "tr": "{{ _('Not Pregnant') }}"},
+    {"en": "Unknown", "tr": "{{ _('Unknown') }}"},
+    {"en": "Not Applicable", "tr": "{{ _('Not Applicable') }}"},
+    {"en": "The Question Was Not Asked", "tr": "{{ _('The Question Was Not Asked') }}"},
+    ];
+
+    translations['glasses'] = [
+    {"en": "Yes", "tr": "{{ _('Yes') }}"},
+    {"en": "No", "tr": "{{ _('No') }}"},
+    {"en": "Unknown", "tr": "{{ _('Unknown') }}"},
+    ];
+
+    translations['hairLoss'] = [
+    {"en": "Full", "tr": "{{ _('Full') }}"},
+    {"en": "Bald", "tr": "{{ _('Bald') }}"},
+    {"en": "Partial hair loss", "tr": "{{ _('Partial hair loss') }}"}
+    ];
+
+    translations['hairType'] = [
+    {"en": "Straight", "tr": "{{ _('Straight') }}"},
+    {"en": "Wavy", "tr": "{{ _('Wavy') }}"},
+    {"en": "Curly", "tr": "{{ _('Curly') }}"},
+    {"en": "Very curly", "tr": "{{ _('Very curly') }}"}
+    ];
+
+
+    translations['hairLength'] = [
+    {"en": "Very short", "tr": "{{ _('Very short') }}"},
+    {"en": "Short", "tr": "{{ _('Short') }}"},
+    {"en": "Medium", "tr": "{{ _('Medium') }}"},
+    {"en": "Long", "tr": "{{ _('Long') }}"},
+    {"en": "Very long", "tr": "{{ _('Very long') }}"}
+    ];
+
+    translations['hairColor'] = [
+    {"en": "Black", "tr": "{{ _('Black') }}"},
+    {"en": "Brown", "tr": "{{ _('Brown') }}"},
+    {"en": "Blonde", "tr": "{{ _('Blonde') }}"},
+    {"en": "Grey", "tr": "{{ _('Grey') }}"},
+    {"en": "Turning grey", "tr": "{{ _('Turning grey') }}"},
+    {"en": "Red", "tr": "{{ _('Red') }}"},
+    {"en": "Other", "tr": "{{ _('Other') }}"}
+    ];
+    translations['facialHair']= [
+    {"en": "none", "tr": "{{ _('none') }}"},
+    {"en": "Beard", "tr": "{{ _('Beard') }}"},
+    {"en": "Moustache", "tr": "{{ _('Moustache') }}"},
+    {"en": "Beard and moustache", "tr": "{{ _('Beard and moustache') }}"},
+    {"en": "Goatee", "tr": "{{ _('Goatee') }}"},
+    {"en": "Whiskers", "tr": "{{ _('Whiskers') }}"}
+    ];
+
+    translations['skinMarkings'] = [
+    {"en": "Scar", "tr": "{{ _('Scar') }}"},
+    {"en": "Tattoo", "tr": "{{ _('Tattoo') }}"},
+    {"en": "piercing", "tr": "{{ _('piercing') }}"},
+    {"en": "Mole", "tr": "{{ _('Mole') }}"},
+    {"en": "Birthmarks", "tr": "{{ _('Birthmarks') }}"},
+    {"en": "Cuts", "tr": "{{ _('Cuts') }}"}
+    ];
+
+    translations['handness'] = [
+    {"en": "Right", "tr": "{{ _('Right') }}"},
+    {"en": "Left", "tr": "{{ _('Left') }}"},
+    {"en": "Both Hands", "tr": "{{ _('Both Hands') }}"},
+    {"en": "Unknown", "tr": "{{ _('Unknown') }}"}
+    ];
+
+    translations['smoker'] = [
+    {"en": "Yes", "tr": "{{ _('Yes') }}"},
+    {"en": "No", "tr": "{{ _('No') }}"},
+    {"en": "Unknown", "tr": "{{ _('Unknown') }}"},
+    {"en": "Question Not Asked", "tr": "{{ _('Question Not Asked') }}"}
+    ];
+
+    translations['eyeColor'] = [
+    {"en": "Black", "tr": "{{ _('Black') }}"},
+    {"en": "Brown", "tr": "{{ _('Brown') }}"},
+    {"en": "Green", "tr": "{{ _('Green') }}"},
+    {"en": "Blue", "tr": "{{ _('Blue') }}"},
+    {"en": "Grey", "tr": "{{ _('Grey') }}"}
+    ];
+
+    translations['caseStatus'] = [
+    {"en": "Missing", "tr": "{{ _('Missing') }}"},
+    {"en": "Identified", "tr": "{{ _('Identified') }}"}
+    ];
+
+{% endif %}
+
+
+
+

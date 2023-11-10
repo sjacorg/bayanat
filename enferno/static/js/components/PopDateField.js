@@ -17,14 +17,26 @@ Vue.component('pop-date-field', {
     },
 
     methods: {
+        formatDate(s) {
+            // Check if the string matches the 'YYYY-MM-DDTHH:MM' format
+            const pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+            if (pattern.test(s)) {
+                return s.split('T')[0];
+            } else {
+                return s;
+            }
+
+        },
+
         isValidDate() {
             if (!this.pickerDate) return true;
 
-            const regex = /^(19[5-9]\d|20[0-3]\d|2040)-\d{2}-\d{2}$/;
+            const regex = /^(19\d\d|20[0-3]\d|2040)-\d{2}-\d{2}$/;
             const dateString = this.pickerDate.trim();
 
             if (!regex.test(dateString)) {
-                this.errorMsg = 'Must be >1950 and <2040';
+                this.errorMsg = 'Must be >1900 and <2040';
                 return false;
             }
 
@@ -53,9 +65,16 @@ Vue.component('pop-date-field', {
             this.$emit('input', val);
         },
 
+        textDate(val) {
+            this.$emit('input', val);
+        },
+
+
         value(val, old) {
+
             if (val !== old) {
-                this.textDate = val;
+
+                this.textDate = this.formatDate(val);
                 this.pickerDate = val;
             }
         },
@@ -77,7 +96,7 @@ Vue.component('pop-date-field', {
             dense
             v-model="textDate"
             type="date"
-            min="1950-01-01"
+            min="1900-01-01"
             max="2040-01-01"
             placeholder="YYYY-MM-DD"
             onClick="event.preventDefault()"
@@ -87,7 +106,7 @@ Vue.component('pop-date-field', {
             prepend-icon="mdi-calendar"
             clearable
             @blur="dateInputFieldEdited"
-            
+
             :error-messages="errorMsg"
         />
       </template>
@@ -95,7 +114,7 @@ Vue.component('pop-date-field', {
       <v-date-picker
           scrollable
           no-title
-          min="1950-01-01"
+          min="1900-01-01"
           max="2040-01-01"
           v-model="pickerDate"
           @input="menu = false">

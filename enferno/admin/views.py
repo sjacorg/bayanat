@@ -1,6 +1,7 @@
 import hashlib
 import os
 import shutil
+import unicodedata
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,23 +9,29 @@ import bleach
 import boto3
 import passlib
 import shortuuid
-import unicodedata
 from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
 from flask.templating import render_template
+from flask_babel import gettext
 from flask_bouncer import requires
 from flask_security.decorators import roles_required, auth_required, current_user, roles_accepted
-from sqlalchemy import desc, or_, and_
+from sqlalchemy import and_, or_
+from sqlalchemy import desc
 from sqlalchemy.orm.attributes import flag_modified
-from werkzeug.utils import safe_join, secure_filename
+from werkzeug.utils import safe_join
+from werkzeug.utils import secure_filename
 
-from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident, IncidentHistory,
-                                  BulletinHistory, ActorHistory, LocationHistory, PotentialViolation, ClaimedViolation,
-                                  Activity, Query, Mapping, Log, APIKey, LocationAdminLevel, LocationType)
+from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
+                                  IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation,
+                                  ClaimedViolation,
+                                  Activity, Query, Mapping, Log, APIKey, LocationAdminLevel, LocationType, AppConfig,
+                                  AtobInfo, AtoaInfo, BtobInfo, ItoiInfo, ItoaInfo, ItobInfo, Country, Ethnography,
+                                  MediaCategory, GeoLocationType, WorkflowStatus)
 from enferno.extensions import bouncer, rds
 from enferno.extensions import cache
 from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file, \
     process_sheet
 from enferno.user.models import User, Role
+from enferno.utils.config_utils import ConfigManager
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.sheet_utils import SheetUtils
@@ -41,7 +48,7 @@ REL_PER_PAGE = 5
 
 
 @admin.before_request
-@auth_required('session')
+@auth_required()
 def before_request():
     """
     Attaches the user object to all requests
@@ -604,36 +611,20 @@ def locations(id):
     return render_template('admin/locations.html')
 
 
-@admin.get('/api/locations/')
+@admin.route('/api/locations/', methods=['POST', 'GET'])
 def api_locations():
     """Returns locations in JSON format, allows search and paging."""
     query = []
-    q = request.args.get('q', None)
-    page = request.args.get('page', 1, int)
-    per_page = request.args.get('per_page', PER_PAGE, int)
+    su = SearchUtils(request.json, cls='Location')
+    query = su.get_query()
 
-    if q:
-        search = '%' + q.replace(' ', '%') + '%'
-        query.append(
-            or_(
-                Location.full_location.ilike(search),
-                Location.title_ar.ilike(search),
-            )
-
-        )
-
-    lvl = request.args.get('lvl', None)
-    if lvl:
-        lvls = [al.code for al in LocationAdminLevel.query.all()]
-        if int(lvl) in lvls:
-            # finds all children of specific location type
-            lal = LocationAdminLevel.query.filter(LocationAdminLevel.code == int(lvl)).first()
-            query.append(Location.admin_level == lal)
+    options = request.json.get('options')
+    page = options.get('page', 1)
+    per_page = options.get('itemsPerPage', PER_PAGE)
 
     result = Location.query.filter(*query).order_by(Location.id).paginate(page=page, per_page=per_page, count=True)
-    items = [item.to_dict() for item in result.items]
-    response = {'items': items, 'perPage': per_page,
-                'total': result.total}
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+
     return Response(json.dumps(response),
                     content_type='application/json'), 200
 
@@ -718,6 +709,13 @@ def api_location_get(id):
         return json.dumps(location.to_dict()), 200
 
 
+@admin.route('/component-data/', defaults={'id': None})
+@roles_required('Admin')
+def locations_config(id):
+    """Endpoint for locations configurations."""
+    return render_template('admin/component-data.html')
+
+
 # location admin level endpoints
 @admin.route('/api/location-admin-levels/', methods=['GET', 'POST'])
 def api_location_admin_levels():
@@ -744,7 +742,7 @@ def api_location_admin_level_create():
         return 'Creation failed.', 417
 
 
-@admin.put('/api/location-admin-levels/<int:id>')
+@admin.put('/api/location-admin-level/<int:id>')
 @roles_required('Admin')
 def api_location_admin_level_update(id):
     admin_level = LocationAdminLevel.query.get(id)
@@ -816,12 +814,579 @@ def api_location_type_delete(id):
         return 'Error deleting location type', 417
 
 
+@admin.route('/api/countries/', methods=['GET', 'POST'])
+def api_countries():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    q = request.args.get('q')
+    if q:
+        result = Country.query.filter(or_(
+                    Country.title.ilike(f'%{q}%'), 
+                    Country.title_tr.ilike(f'%{q}%'))).order_by(-Country.id).paginate(page=page, per_page=per_page, count=True)
+    else:
+        result = Country.query.order_by(-Country.id).paginate(page=page, per_page=per_page, count=True)
+
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/country')
+@roles_required('Admin')
+def api_country_create():
+    country = Country()
+    country.from_json(request.json['item'])
+
+    if country.save():
+        return F'Item created successfully ID ${country.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/country/<int:id>')
+@roles_required('Admin')
+def api_country_update(id):
+    country = Country.query.get(id)
+
+    if country:
+        country.from_json(request.json.get('item'))
+        if country.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/country/<int:id>')
+@roles_required('Admin')
+def api_country_delete(id):
+    """
+    Endpoint to delete a country
+    :param id: id of the country to be deleted
+    :return: success/error
+    """
+    country = Country.query.get(id)
+    if country.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, country.to_mini(), 'country')
+        return F'Country Deleted #{country.id}', 200
+    else:
+        return 'Error deleting country', 417
+
+
+@admin.route('/api/ethnographies/', methods=['GET', 'POST'])
+def api_ethnographies():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    q = request.args.get('q')
+    if q:
+        result = Ethnography.query.filter(or_(
+                    Ethnography.title.ilike(f'%{q}%'), 
+                    Ethnography.title_tr.ilike(f'%{q}%'))).order_by(-Ethnography.id).paginate(page=page, per_page=per_page, count=True)
+    else:
+        result = Ethnography.query.order_by(-Ethnography.id).paginate(page=page, per_page=per_page, count=True)
+        
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/ethnography')
+@roles_required('Admin')
+def api_ethnography_create():
+    ethnography = Ethnography()
+    ethnography.from_json(request.json['item'])
+
+    if ethnography.save():
+        return F'Item created successfully ID ${ethnography.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/ethnography/<int:id>')
+@roles_required('Admin')
+def api_ethnography_update(id):
+    ethnography = Ethnography.query.get(id)
+
+    if ethnography:
+        ethnography.from_json(request.json.get('item'))
+        if ethnography.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/ethnography/<int:id>')
+@roles_required('Admin')
+def api_ethnography_delete(id):
+    """
+    Endpoint to delete an ethnography
+    :param id: id of the ethnography to be deleted
+    :return: success/error
+    """
+    ethnography = Ethnography.query.get(id)
+    if ethnography.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, ethnography.to_mini(), 'ethnography')
+        return F'Ethnography Deleted #{ethnography.id}', 200
+    else:
+        return 'Error deleting ethnography', 417
+
+
+@admin.route('/api/atoainfos/', methods=['GET', 'POST'])
+def api_atoainfos():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = AtoaInfo.query.filter(
+        *query).order_by(-AtoaInfo.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/atoainfo')
+@roles_required('Admin')
+def api_atoainfo_create():
+    atoainfo = AtoaInfo()
+    atoainfo.from_json(request.json['item'])
+
+    if not (atoainfo.title and atoainfo.reverse_title):
+        return 'Title and Reverse Title are required.', 417
+
+    if atoainfo.save():
+        return F'Item created successfully ID ${atoainfo.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/atoainfo/<int:id>')
+@roles_required('Admin')
+def api_atoainfo_update(id):
+    atoainfo = AtoaInfo.query.get(id)
+
+    if atoainfo:
+        atoainfo.from_json(request.json.get('item'))
+        if atoainfo.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/atoainfo/<int:id>')
+@roles_required('Admin')
+def api_atoainfo_delete(id):
+    """
+    Endpoint to delete an AtoaInfo
+    :param id: id of the AtoaInfo to be deleted
+    :return: success/error
+    """
+    atoainfo = AtoaInfo.query.get(id)
+    if atoainfo.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, atoainfo.to_mini(), 'atoainfo')
+        return F'AtoaInfo Deleted #{atoainfo.id}', 200
+    else:
+        return 'Error deleting AtoaInfo', 417
+
+
+@admin.route('/api/atobinfos/', methods=['GET', 'POST'])
+def api_atobinfos():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = AtobInfo.query.filter(
+        *query).order_by(-AtobInfo.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/atobinfo')
+@roles_required('Admin')
+def api_atobinfo_create():
+    atobinfo = AtobInfo()
+    atobinfo.from_json(request.json['item'])
+
+    if atobinfo.save():
+        return F'Item created successfully ID ${atobinfo.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/atobinfo/<int:id>')
+@roles_required('Admin')
+def api_atobinfo_update(id):
+    atobinfo = AtobInfo.query.get(id)
+
+    if atobinfo:
+        atobinfo.from_json(request.json.get('item'))
+        if atobinfo.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/atobinfo/<int:id>')
+@roles_required('Admin')
+def api_atobinfo_delete(id):
+    """
+    Endpoint to delete an AtobInfo
+    :param id: id of the AtobInfo to be deleted
+    :return: success/error
+    """
+    atobinfo = AtobInfo.query.get(id)
+    if atobinfo.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, atobinfo.to_mini(), 'atobinfo')
+        return F'AtobInfo Deleted #{atobinfo.id}', 200
+    else:
+        return 'Error deleting AtobInfo', 417
+
+
+@admin.route('/api/btobinfos/', methods=['GET', 'POST'])
+def api_btobinfos():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = BtobInfo.query.filter(
+        *query).order_by(-BtobInfo.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/btobinfo')
+@roles_required('Admin')
+def api_btobinfo_create():
+    btobinfo = BtobInfo()
+    btobinfo.from_json(request.json['item'])
+
+    if btobinfo.save():
+        return F'Item created successfully ID ${btobinfo.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/btobinfo/<int:id>')
+@roles_required('Admin')
+def api_btobinfo_update(id):
+    btobinfo = BtobInfo.query.get(id)
+
+    if btobinfo:
+        btobinfo.from_json(request.json.get('item'))
+        if btobinfo.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/btobinfo/<int:id>')
+@roles_required('Admin')
+def api_btobinfo_delete(id):
+    """
+    Endpoint to delete a BtobInfo
+    :param id: id of the BtobInfo to be deleted
+    :return: success/error
+    """
+    btobinfo = BtobInfo.query.get(id)
+    if btobinfo.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, btobinfo.to_mini(), 'btobinfo')
+        return F'BtobInfo Deleted #{btobinfo.id}', 200
+    else:
+        return 'Error deleting BtobInfo', 417
+
+
+@admin.route('/api/itoainfos/', methods=['GET', 'POST'])
+def api_itoainfos():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = ItoaInfo.query.filter(
+        *query).order_by(-ItoaInfo.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/itoainfo')
+@roles_required('Admin')
+def api_itoainfo_create():
+    itoainfo = ItoaInfo()
+    itoainfo.from_json(request.json['item'])
+
+    if itoainfo.save():
+        return F'Item created successfully ID ${itoainfo.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/itoainfo/<int:id>')
+@roles_required('Admin')
+def api_itoainfo_update(id):
+    itoainfo = ItoaInfo.query.get(id)
+
+    if itoainfo:
+        itoainfo.from_json(request.json.get('item'))
+        if itoainfo.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/itoainfo/<int:id>')
+@roles_required('Admin')
+def api_itoainfo_delete(id):
+    """
+    Endpoint to delete an ItoaInfo
+    :param id: id of the ItoaInfo to be deleted
+    :return: success/error
+    """
+    itoainfo = ItoaInfo.query.get(id)
+    if itoainfo.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, itoainfo.to_mini(), 'itoainfo')
+        return F'ItoaInfo Deleted #{itoainfo.id}', 200
+    else:
+        return 'Error deleting ItoaInfo', 417
+
+@admin.route('/api/itobinfos/', methods=['GET', 'POST'])
+def api_itobinfos():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = ItobInfo.query.filter(
+        *query).order_by(-ItobInfo.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/itobinfo')
+@roles_required('Admin')
+def api_itobinfo_create():
+    itobinfo = ItobInfo()
+    itobinfo.from_json(request.json['item'])
+
+    if itobinfo.save():
+        return F'Item created successfully ID ${itobinfo.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/itobinfo/<int:id>')
+@roles_required('Admin')
+def api_itobinfo_update(id):
+    itobinfo = ItobInfo.query.get(id)
+
+    if itobinfo:
+        itobinfo.from_json(request.json.get('item'))
+        if itobinfo.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/itobinfo/<int:id>')
+@roles_required('Admin')
+def api_itobinfo_delete(id):
+    """
+    Endpoint to delete an ItobInfo
+    :param id: id of the ItobInfo to be deleted
+    :return: success/error
+    """
+    itobinfo = ItobInfo.query.get(id)
+    if itobinfo.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, itobinfo.to_mini(), 'itobinfo')
+        return F'ItobInfo Deleted #{itobinfo.id}', 200
+    else:
+        return 'Error deleting ItobInfo', 417
+
+
+@admin.route('/api/itoiinfos/', methods=['GET', 'POST'])
+def api_itoiinfos():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = ItoiInfo.query.filter(
+        *query).order_by(-ItoiInfo.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/itoiinfo')
+@roles_required('Admin')
+def api_itoiinfo_create():
+    itoiinfo = ItoiInfo()
+    itoiinfo.from_json(request.json['item'])
+
+    if itoiinfo.save():
+        return F'Item created successfully ID ${itoiinfo.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/itoiinfo/<int:id>')
+@roles_required('Admin')
+def api_itoiinfo_update(id):
+    itoiinfo = ItoiInfo.query.get(id)
+
+    if itoiinfo:
+        itoiinfo.from_json(request.json.get('item'))
+        if itoiinfo.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/itoiinfo/<int:id>')
+@roles_required('Admin')
+def api_itoiinfo_delete(id):
+    """
+    Endpoint to delete an ItoiInfo
+    :param id: id of the ItoiInfo to be deleted
+    :return: success/error
+    """
+    itoiinfo = ItoiInfo.query.get(id)
+    if itoiinfo.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, itoiinfo.to_mini(), 'itoiinfo')
+        return F'ItoiInfo Deleted #{itoiinfo.id}', 200
+    else:
+        return 'Error deleting ItoiInfo', 417
+
+
+@admin.route('/api/mediacategories/', methods=['GET', 'POST'])
+def api_mediacategories():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = MediaCategory.query.filter(
+        *query).order_by(-MediaCategory.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/mediacategory')
+@roles_required('Admin')
+def api_mediacategory_create():
+    mediacategory = MediaCategory()
+    mediacategory.from_json(request.json['item'])
+
+    if mediacategory.save():
+        return f'Item created successfully ID {mediacategory.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/mediacategory/<int:id>')
+@roles_required('Admin')
+def api_mediacategory_update(id):
+    mediacategory = MediaCategory.query.get(id)
+
+    if mediacategory:
+        mediacategory.from_json(request.json.get('item'))
+        if mediacategory.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/mediacategory/<int:id>')
+@roles_required('Admin')
+def api_mediacategory_delete(id):
+    """
+    Endpoint to delete a MediaCategory
+    :param id: id of the MediaCategory to be deleted
+    :return: success/error
+    """
+    mediacategory = MediaCategory.query.get(id)
+    if mediacategory.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, mediacategory.to_mini(), 'mediacategory')
+        return f'MediaCategory Deleted #{mediacategory.id}', 200
+    else:
+        return 'Error deleting MediaCategory', 417
+
+@admin.route('/api/geolocationtypes/', methods=['GET', 'POST'])
+def api_geolocationtypes():
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+
+    query = []
+    result = GeoLocationType.query.filter(
+        *query).order_by(-GeoLocationType.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response),
+                    content_type='application/json'), 200
+
+@admin.post('/api/geolocationtype')
+@roles_required('Admin')
+def api_geolocationtype_create():
+    geolocationtype = GeoLocationType()
+    geolocationtype.from_json(request.json['item'])
+
+    if geolocationtype.save():
+        return f'Item created successfully ID {geolocationtype.id} !', 200
+    else:
+        return 'Creation failed.', 417
+
+@admin.put('/api/geolocationtype/<int:id>')
+@roles_required('Admin')
+def api_geolocationtype_update(id):
+    geolocationtype = GeoLocationType.query.get(id)
+
+    if geolocationtype:
+        geolocationtype.from_json(request.json.get('item'))
+        if geolocationtype.save():
+            return 'Updated !', 200
+        else:
+            return 'Error saving item', 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+@admin.delete('/api/geolocationtype/<int:id>')
+@roles_required('Admin')
+def api_geolocationtype_delete(id):
+    """
+    Endpoint to delete a GeoLocationType
+    :param id: id of the GeoLocationType to be deleted
+    :return: success/error
+    """
+    geolocationtype = GeoLocationType.query.get(id)
+    if geolocationtype.delete():
+        # Record Activity
+        Activity.create(current_user, Activity.ACTION_DELETE, geolocationtype.to_mini(), 'geolocationtype')
+        return f'GeoLocationType Deleted #{geolocationtype.id}', 200
+    else:
+        return 'Error deleting GeoLocationType', 417
+
+
+
 # Bulletin routes
 @admin.route('/bulletins/', defaults={'id': None})
 @admin.route('/bulletins/<int:id>')
 def bulletins(id):
     """Endpoint for bulletins management."""
-    return render_template('admin/bulletins.html')
+    # Pass relationship information
+    atobInfo = [item.to_dict() for item in AtobInfo.query.all()]
+    btobInfo = [item.to_dict() for item in BtobInfo.query.all()]
+    atoaInfo = [item.to_dict() for item in AtoaInfo.query.all()]
+    itobInfo = [item.to_dict() for item in ItobInfo.query.all()]
+    itoaInfo = [item.to_dict() for item in ItoaInfo.query.all()]
+    itoiInfo = [item.to_dict() for item in ItoiInfo.query.all()]
+    statuses = [item.to_dict() for item in WorkflowStatus.query.all()]
+    return render_template('admin/bulletins.html',
+                           atoaInfo=atoaInfo,
+                           itoaInfo=itoaInfo,
+                           itoiInfo=itoiInfo,
+                           atobInfo=atobInfo,
+                           btobInfo=btobInfo,
+                           itobInfo=itobInfo,
+                           statuses=statuses)
 
 
 def make_cache_key(*args, **kwargs):
@@ -1403,7 +1968,22 @@ def api_media_update(id):
 @admin.route('/actors/<int:id>')
 def actors(id):
     """Endpoint to render actors page."""
-    return render_template('admin/actors.html')
+    # Pass relationship information
+    atobInfo = [item.to_dict() for item in AtobInfo.query.all()]
+    btobInfo = [item.to_dict() for item in BtobInfo.query.all()]
+    atoaInfo = [item.to_dict() for item in AtoaInfo.query.all()]
+    itobInfo = [item.to_dict() for item in ItobInfo.query.all()]
+    itoaInfo = [item.to_dict() for item in ItoaInfo.query.all()]
+    itoiInfo = [item.to_dict() for item in ItoiInfo.query.all()]
+
+    statuses = [item.to_dict() for item in WorkflowStatus.query.all()]
+    return render_template('admin/actors.html',
+                           btobInfo=btobInfo,
+                           itobInfo=itobInfo,
+                           itoiInfo=itoiInfo,
+                           atobInfo=atobInfo,
+                           atoaInfo=atoaInfo,
+                           itoaInfo=itoaInfo, statuses=statuses)
 
 
 @admin.route('/api/actors/', methods=['POST', 'GET'])
@@ -1945,8 +2525,22 @@ def incidents(id):
     Endpoint to render incidents backend page
     :return: html page of the incidents backend management
     """
-    # Pass all users to the template
-    return render_template('admin/incidents.html')
+    # Pass relationship information
+    atobInfo = [item.to_dict() for item in AtobInfo.query.all()]
+    btobInfo = [item.to_dict() for item in BtobInfo.query.all()]
+    atoaInfo = [item.to_dict() for item in AtoaInfo.query.all()]
+    itobInfo = [item.to_dict() for item in ItobInfo.query.all()]
+    itoaInfo = [item.to_dict() for item in ItoaInfo.query.all()]
+    itoiInfo = [item.to_dict() for item in ItoiInfo.query.all()]
+    statuses = [item.to_dict() for item in WorkflowStatus.query.all()]
+    return render_template('admin/incidents.html',
+                           atobInfo=atobInfo,
+                           btobInfo=btobInfo,
+                           atoaInfo=atoaInfo,
+                           itobInfo=itobInfo,
+                           itoaInfo=itoaInfo,
+                           itoiInfo=itoiInfo,
+                           statuses=statuses)
 
 
 @admin.route('/api/incidents/', methods=['POST', 'GET'])
@@ -2630,6 +3224,28 @@ def api_process_sheet():
     return F'Import process queued successfully! batch id: {batch_id}', 200
 
 
+@admin.get('/api/relation/info')
+def relation_info():
+    table = request.args.get('type')
+
+    # Define a dictionary to map 'type' to query classes
+    table_map = {
+        'atob': AtobInfo,
+        'atoa': AtoaInfo,
+        'btob': BtobInfo,
+        'itoi': ItoiInfo,
+        'itob': ItobInfo,
+        'itoa': ItoaInfo
+    }
+
+    # Check if 'table' is a valid key in the table_map dictionary
+    if table in table_map:
+        query_class = table_map[table]
+        return json.dumps([item.to_dict() for item in query_class.query.all()])
+    else:
+        return json.dumps({'error': 'Invalid table type'})
+
+
 @admin.get('/api/logs')
 @roles_accepted('Admin')
 def api_logs():
@@ -2644,7 +3260,107 @@ def api_logs():
 
 
 @admin.get('/system-administration/')
+@auth_required(within=15, grace=0)
 @roles_accepted('Admin')
 def system_admin():
     """Endpoint for system administration."""
     return render_template('admin/system-administration.html')
+
+
+@admin.get('/api/appconfig/')
+@roles_accepted('Admin')
+def api_app_config():
+    """
+    Endpoint to get paged results of application configurations
+    :return: list of app_config objects in json
+    """
+    page = request.args.get('page', 1, int)
+    per_page = request.args.get('per_page', PER_PAGE, int)
+    result = AppConfig.query.order_by(-AppConfig.id).paginate(page=page, per_page=per_page, count=True)
+    response = {'items': [item.to_dict() for item in result.items], 'perPage': per_page, 'total': result.total}
+    return Response(json.dumps(response), content_type='application/json'), 200
+
+
+@admin.get('/api/configuration/')
+def api_config():
+    """
+    :return: serialized app configuration
+    """
+    response = {
+        'config': ConfigManager.serialize(),
+        'labels': dict(ConfigManager.CONFIG_LABELS)
+    }
+    return json.dumps(response)
+
+
+@admin.put('api/configuration/')
+def api_config_write():
+    """
+    writes back app configurations & reloads the app
+    :return: success or error if saving/writing fails
+    """
+    conf = request.json.get('conf')
+
+    if ConfigManager.write_config(conf):
+        return 'Configuration Saved Successfully', 200
+    else:
+        return 'Unable to Save Configuration', 417
+
+
+@admin.app_template_filter('to_config')
+def to_config(items):
+    output = [
+        {"en": item, "tr": gettext(item)} for item in items
+    ]
+    return output
+
+@admin.app_template_filter('get_data')
+def get_data(table):
+    if table == 'atob':
+        items = AtobInfo.query.all()
+        return [{"en": item.title, "tr": item.title_tr or ''} for item in items]
+
+    if table == 'atoa':
+        items = AtoaInfo.query.all()
+        items_list = [
+            {
+                "en": {"text": item.title or '', "revtext": item.reverse_title or ''},
+                "tr": {"text": item.title_tr or '', "revtext": item.reverse_title_tr or ''}
+            } for item in items
+        ]
+        return items_list
+
+    if table == 'itoa':
+        items = ItoaInfo.query.all()
+        return [
+            {"en": item.title, "tr": item.title_tr or ''}
+            for item in items
+        ]
+
+    if table == 'btob':
+        items = BtobInfo.query.all()
+        return [
+            {"en": item.title, "tr": item.title_tr or ''}
+            for item in items
+        ]
+
+    if table == 'itob':
+        items = ItobInfo.query.all()
+        return [
+            {"en": item.title, "tr": item.title_tr or ''}
+            for item in items
+        ]
+
+    if table == 'itoi':
+        items = ItoiInfo.query.all()
+        return [
+            {"en": item.title, "tr": item.title_tr or ''}
+            for item in items
+        ]
+
+    if table == 'workflow_status':
+        items = WorkflowStatus.query.all()
+        return [
+            {"en": item.title, "tr": item.title_tr or ''}
+            for item in items
+        ]

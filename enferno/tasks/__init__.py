@@ -14,14 +14,14 @@ from enferno.admin.models import Bulletin, Actor, Incident, BulletinHistory, Act
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
-from enferno.settings import ProdConfig, DevConfig
+from enferno.settings import Config as cfg
 from enferno.user.models import Role, User
 from enferno.utils.csv_utils import convert_list_attributes
 from enferno.utils.data_import import DataImport
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.sheet_utils import SheetUtils
 
-cfg = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
+
 
 celery = Celery('tasks', broker=cfg.celery_broker_url)
 # remove deprecated warning
@@ -36,7 +36,6 @@ celery.conf.add_defaults(cfg)
 # Class to run tasks within application's context
 class ContextTask(celery.Task):
     abstract = True
-
     def __call__(self, *args, **kwargs):
         from enferno.app import create_app
         with create_app(cfg).app_context():
@@ -53,7 +52,6 @@ def chunk_list(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
-
 
 @celery.task
 def bulk_update_bulletins(ids, bulk, cur_user_id):
@@ -382,7 +380,6 @@ def etl_process_file(batch_id, file, meta, user_id, log):
     di.process(file)
     return 'done'
 
-
 # this will publish a message to redis and will be captured by the front-end client
 def update_stats():
     # send any message to refresh the UI
@@ -399,7 +396,6 @@ def process_dedup(id, user_id):
         # detect final task and send a refresh message
         if rds.scard('dedq') == 0:
             rds.publish('dedprocess', 2)
-
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -438,6 +434,14 @@ def process_sheet(filepath, map, target, batch_id, vmap, sheet, actorConfig, lan
     su = SheetUtils(filepath, actorConfig, lang)
     su.import_sheet(map, target, batch_id, vmap, sheet, roles)
 
+@celery.task
+def reload_app():
+    try:
+        os.system('touch reload.ini')
+        # this workaround will also restart local flask server if it is being used to run bayanat
+        os.system('touch run.py')
+    except Exception as e:
+        print(e)
 
 # ---- Export tasks ----
 def generate_export(export_id):
@@ -674,11 +678,11 @@ def generate_export_zip(previous_result: int):
 @celery.task
 def export_cleanup_cron():
     """
-    Periodic task to change status of 
+    Periodic task to change status of
     expired Exports to 'Expired'.
     """
     expired_exports = Export.query.filter(and_(
-        Export.expires_on < datetime.utcnow(),  # expiry time before now 
+        Export.expires_on < datetime.utcnow(),  # expiry time before now
         Export.status != 'Expired')).all()  # status is not expired
 
     if expired_exports:

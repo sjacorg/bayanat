@@ -6,8 +6,8 @@ from enferno.admin.models import Bulletin, Btob, Activity
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 import os
-from enferno.settings import DevConfig, ProdConfig
-CONFIG = ProdConfig if os.environ.get('FLASK_DEBUG') == '0' else DevConfig
+from enferno.settings import Config as CONFIG
+
 
 # Deduplication relation
 from enferno.user.models import User

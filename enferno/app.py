@@ -10,9 +10,9 @@ import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
     Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation, Log
 from enferno.admin.views import admin
-from enferno.extensions import cache, db, debug_toolbar, session, bouncer, babel, rds
+from enferno.extensions import cache, db, session, bouncer, babel, rds
 from enferno.public.views import bp_public
-from enferno.settings import ProdConfig
+from enferno.settings import Config
 from enferno.user.forms import ExtendedRegisterForm
 from enferno.user.models import User, Role
 from enferno.user.views import bp_user
@@ -45,8 +45,7 @@ def get_locale():
                 session['lang'] = current_user.settings.get('language')
     return session.get('lang', default)
 
-
-def create_app(config_object=ProdConfig):
+def create_app(config_object=Config):
     app = Flask(__name__)
     app.config.from_object(config_object)
     register_blueprints(app)
@@ -65,7 +64,6 @@ def register_extensions(app):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security = Security(app, user_datastore,
                         register_form=ExtendedRegisterForm)
-    debug_toolbar.init_app(app)
     session.init_app(app)
     bouncer.init_app(app)
     babel.init_app(app, locale_selector=get_locale, default_domain='messages', default_locale='en')
@@ -162,6 +160,7 @@ def register_commands(app):
 
     app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create_db)
+    app.cli.add_command(commands.import_data)
     app.cli.add_command(commands.install)
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)

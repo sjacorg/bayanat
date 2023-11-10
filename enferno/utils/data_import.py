@@ -9,29 +9,21 @@ from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activ
 from enferno.user.models import User, Role
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
-from enferno.settings import ProdConfig, DevConfig
+from enferno.settings import Config as cfg
 import subprocess
-
 
 def now():
     return str(arrow.utcnow())
 
 
-if os.environ.get("FLASK_DEBUG") == '0':
-    cfg = ProdConfig
-else:
-    cfg = DevConfig
-
 if cfg.OCR_ENABLED:
     from pytesseract import image_to_string, pytesseract
-
     try:
         pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
         tesseract_langs = '+'.join(pytesseract.get_languages(config=''))
     except Exception as e:
         print(e)
         print("Tesseract system package is missing or Bayanat's OCR settings are not set properly.")
-
 
 class DataImport():
 

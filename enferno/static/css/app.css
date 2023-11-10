@@ -346,13 +346,16 @@ input[type="date"]::-webkit-input-placeholder {
     height: auto;
 }
 
+.leaflet-container {
+    min-height: 300px; /* Adjust as needed */
+}
+
 
 /* quick initial dark mode support for leaflet map */
 
 .theme--dark .vue2leaflet-map, .theme--dark .map-legend .caption i {
     filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
 }
-
 
 
 /* csv import */
@@ -437,7 +440,6 @@ input[type="date"]::-webkit-input-placeholder {
     overflow: hidden;
 
 
-
 }
 
 
@@ -453,15 +455,22 @@ input[type="date"]::-webkit-input-placeholder {
 .theme--dark .header-sticky {
     background: rgba(51, 51, 51, 1);
 }
+
 .v-sheet.header-fixed {
     position: sticky;
-    top:0;
+    top: 0;
     z-index: 100000;
     border-bottom: 3px solid #dddddd75;
 
     background: rgba(255, 255, 255, 1);
 
 }
+
+.system-admin nav.v-navigation-drawer.v-navigation-drawer--clipped {
+    z-index: 1000000;
+
+}
+
 .v-card a {
     text-decoration: none;
 }
@@ -493,6 +502,7 @@ input[type="date"]::-webkit-input-placeholder {
     place-content: center;
 
 }
+
 .graph-wrap .graph-legend {
     padding: 12px;
     height: 40px;
@@ -571,8 +581,122 @@ span.map-bid:empty {
 }
 
 
-
-
 .Password__field--disabled {
     opacity: 0.6
+}
+
+
+/* system dashboard */
+.fixed-card {
+    height: calc(100vh - 140px);
+    overflow: scroll;
+    z-index: 100;
+}
+
+/* config diff */
+
+.system-admin div.jsondiffpatch-child-node-type-object:before, .system-admin div.jsondiffpatch-child-node-type-object:after {
+    content: '';
+
+}
+
+.system-admin div.jsondiffpatch-child-node-type-array:before, div.jsondiffpatch-child-node-type-array:after {
+    content: '';
+}
+
+.system-admin .jsondiffpatch-delta {
+    font-family: "Roboto", Sans-serif;
+}
+
+.system-admin .jsondiffpatch-delta ul {
+    padding: 0;
+    font-size: 16px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.system-admin .jsondiffpatch-delta ul ul {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.system-admin .jsondiffpatch-property-name {
+    color: #000;
+    font-weight: bold;
+}
+
+.system-admin .jsondiffpatch-left-value pre {
+    padding: 4px;
+    opacity: 0.3;
+    text-decoration: none;
+}
+
+.system-admin .jsondiffpatch-deleted {
+    opacity: 0.3
+}
+
+.system-admin .jsondiffpatch-deleted pre {
+    text-decoration: none;
+}
+
+.system-admin .jsondiffpatch-right-value pre {
+    color: #000;
+    /*background: rgba(238, 238, 238, 0.45);*/
+    padding: 4px;
+    font-weight: bold;
+}
+
+.system-admin .jsondiffpatch-node li {
+    display: flex;
+    align-items: center;
+    /*padding: 8px;*/
+    /*box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;*/
+    margin: 8px 5px;
+}
+
+.system-admin .jsondiffpatch-node li:hover {
+    /*box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.55) 0px 0px 0px 1px;*/
+}
+
+.system-admin .jsondiffpatch-node-type-array .jsondiffpatch-property-name {
+    display: none;
+}
+
+.system-admin .jsondiffpatch-node-type-array pre:after {
+    display: none;
+}
+
+.system-admin .jsondiffpatch-textdiff-deleted pre {
+    text-decoration: none;
+    font-style: italic;
+}
+
+.system-admin .jsondiffpatch-delta pre {
+    padding: 4px;
+    border-radius: 3px;
+}
+
+.system-admin .jsondiffpatch-value pre:after {
+    display: none;
+}
+
+.system-admin .change-item {
+    transition: all 0.22s ease-in-out;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+}
+
+.system-admin .change-item:hover {
+    scale: 1.01;
+}
+
+.sticky-tabs {
+    position: sticky;
+    top: 64px;
+    z-index: 5;
+    background-color: white;
+    box-shadow: rgba(33, 35, 38, 0.1) 0px 10px 10px -10px;
+}
+
+.system-admin #geomap {
+    z-index: 0;
 }

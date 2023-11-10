@@ -103,7 +103,7 @@
                                     item-value="id"
                                     :multiple="false"
                                     label="Labels"
-                                    query-params="&fltr=all"
+                                    :query-params="{ fltr: 'all' }"
                             ></search-field>
 
 
@@ -327,8 +327,7 @@
       },
 
       options: {
-        handler: "refresh",
-        immdiate: true
+        handler: "refresh"
       }
     },
 

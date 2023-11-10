@@ -6,10 +6,17 @@ Vue.component("actor-card", {
             this.loadBulletinRelations();
             this.loadActorRelations();
             this.loadIncidentRelations();
+
+            this.mapLocations = aggregateActorLocations(this.actor);
         },
     },
 
     methods: {
+        getRelatedValues(item, actor) {
+            const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
+            return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
+        },
+
         translate_status(status){
             return translate_status(status);
         },
@@ -54,21 +61,6 @@ Vue.component("actor-card", {
             return translations.probs[item.probability].tr;
         },
 
-        actor_related_as(item) {
-            if (this.actor.id < item.actor.id) {
-                return translations.atoaRelateAs[item.related_as].tr.text;
-            } else {
-                return translations.atoaRelateAs[item.related_as].tr.revtext;
-            }
-        },
-
-        bulletin_related_as(rid) {
-            return translations.btoaRelateAs[rid].tr;
-        },
-
-        incident_related_as(rid) {
-            return translations.itoaRelateAs[rid].tr;
-        },
 
         logAllowed() {
             return this.$root.currentUser.view_simple_history && this.log;
@@ -147,8 +139,7 @@ Vue.component("actor-card", {
             revisions: null,
             show: false,
             hloading: false,
-
-            related_as: ['Same Person', 'Duplicate', 'Parent', 'Child', 'Sibling', 'Spouse', 'Family member', 'Superior officer', 'Subordinate officer', 'Subunit', 'Alleged Perpetrator', 'Member', 'Group', 'Unit', 'Other'],
+            mapLocations: [],
 
             // pagers for related entities
             bulletinPage: 1,
@@ -183,7 +174,7 @@ Vue.component("actor-card", {
 
       <v-chip color="blue-grey lighten-5" label small class="pa-2 mx-2 my-2" v-if="actor.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
           {{ i18n.assignedUser_ }} {{actor.assigned_to['name']}}</v-chip>
-        <v-chip color="blue-grey lighten-5" small label class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{translate_status(actor.status)}}</v-chip>
+        <v-chip color="blue-grey lighten-5" small label class="mx-2 my-2" v-if="actor.status" > <v-icon left>mdi-delta</v-icon> {{ actor.status }}</v-chip>
       </v-card>
 
         <v-card v-if="actor.roles?.length" color="blue darken-1" class="ma-2 pa-2 d-flex align-center flex-grow-1" elevation="0">
@@ -226,6 +217,10 @@ Vue.component("actor-card", {
       <uni-field :caption="i18n.originPlace_" v-if="actor.origin_place"
                  :english="actor.origin_place.full_string"></uni-field>
 
+      <!-- Map -->
+      <v-card outlined class="ma-2 pa-2" color="grey lighten-5">
+        <global-map :i18n="i18n" :value="mapLocations"></global-map>
+      </v-card>
 
       <div class="d-flex">
         <uni-field :caption="i18n.occupation_" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
@@ -238,16 +233,16 @@ Vue.component("actor-card", {
       </div>
 
 
-      <v-card v-if="actor.ethnography && actor.ethnography.length" outlined
+      <v-card v-if="actor.ethnography?.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
         <div class="caption grey--text mr-2">{{ i18n.ethnographicInfo_ }}</div>
-        <v-chip x-small v-for="e in actor._ethnography" color="blue-grey lighten-5" class="caption black--text mx-1">{{ e }}</v-chip>
+        <v-chip x-small v-for="e in actor.ethnography" color="blue-grey lighten-5" class="caption black--text mx-1">{{ e.title }}</v-chip>
 
       </v-card>
-      <v-card v-if="actor.nationality && actor.nationality.length" outlined
+      <v-card v-if="actor.nationality?.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
         <div class="caption grey--text mr-2">{{ i18n.nationalities_ }}</div>
-        <v-chip x-small v-for="n in actor._nationality" color="blue-grey lighten-5" class="caption black--text mx-1">{{ n }}</v-chip>
+        <v-chip x-small v-for="n in actor.nationality" color="blue-grey lighten-5" class="caption black--text mx-1">{{ n.title }}</v-chip>
 
       </v-card>
 
@@ -335,8 +330,8 @@ Vue.component("actor-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" color="blue-grey lighten-5" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!=null" color="blue-grey lighten-5" small
-                        label>{{ actor_related_as(item) }}</v-chip>
+                <v-chip v-if="item.related_as!=null" v-for="rel in getRelatedValues(item, actor)"  color="blue-grey lighten-5" small
+                        label>{{ rel }}</v-chip>
                 <v-chip v-if="item.comment" color="blue-grey lighten-5" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
@@ -371,7 +366,7 @@ Vue.component("actor-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" class="ma-1" color="blue-grey lighten-5" small label>{{ probability(item) }}</v-chip>
-                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-5" small label>{{ bulletin_related_as(r) }}</v-chip>
+                <v-chip class="ma-1" v-for="rel in extractValuesById($root.atobInfo,item.related_as,'title')" color="blue-grey lighten-5" small label>{{ rel }}</v-chip>
                 <v-chip v-if="item.comment" class="ma-1" color="blue-grey lighten-5" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>
@@ -407,7 +402,7 @@ Vue.component("actor-card", {
 
                 <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
                 <v-chip v-if="item.probability!=null" class="ma-1" color="blue-grey lighten-5" small label>{{ probability(item) }}</v-chip>
-                <v-chip class="ma-1" v-for="r in item.related_as" color="blue-grey lighten-5" small label>{{ incident_related_as(r) }}</v-chip>
+                <v-chip class="ma-1" v-for="rel in extractValuesById($root.itoaInfo, item.related_as, 'title')" color="blue-grey lighten-5" small label>{{ rel }}</v-chip>
                 <v-chip v-if="item.comment" class="ma-1" color="blue-grey lighten-5" small label>{{ item.comment }}</v-chip>
 
               </v-sheet>

@@ -9,7 +9,7 @@ from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User, Role
-from enferno.utils.data_helpers import import_data, generate_user_roles, create_default_location_data
+from enferno.utils.data_helpers import import_default_data, generate_user_roles, create_default_location_data
 
 @click.command()
 @click.option('--create-exts', is_flag=True)
@@ -31,12 +31,18 @@ def create_db(create_exts):
     click.echo('Generated user roles successfully.')
     create_default_location_data()
     click.echo('Generated location metadata successfully.')
+
+@click.command()
+@with_appcontext
+def import_data():
+    """
+    Imports default Bayanat data for lists and relationship types.
+    """
     try:
-        import_data()
+        import_default_data()
         click.echo('Imported data successfully.')
     except:
         click.echo('Error importing data.')
-    # possible optimization: SET enable_seqscan = off;
 
 @click.command()
 @with_appcontext

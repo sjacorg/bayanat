@@ -68,7 +68,7 @@
                                     item-text="title"
                                     item-value="id"
                                     @input="checkLevel"
-                                    :return-object="false"
+
                                     :multiple="false"
                                     label="{{ _('Location Type') }}">
                                 </search-field>
@@ -102,31 +102,33 @@
                         </v-col>
 
                         <v-col cols="12" md="3">
-                            <v-autocomplete
+                            <search-field
                                 clearable
+                                api="/admin/api/countries/"
                                 :items="translations.countries"
-                                item-text="tr"
-                                item-value="en"
+                                item-text="title"
+                                item-value="title"
+                                :return-object="false"
                                 v-model="editedItem.country"
                                 label="{{ _('Country') }}">
-                            </v-autocomplete>
+                            </search-field>
                         </v-col>
                     </v-row>
 
                     <v-row>
                         <v-col cols="12" md="8">
-                            <search-field
+                            <location-search-field
                                 :disabled="editedItem.admin_level?.code == 1"
                                 v-model="editedItem.parent"
                                 api="/admin/api/locations/"
-
-                                :query-params="locTypeParams"
+                                :query-params="locQueryParams"
                                 item-text="full_string"
                                 item-value="id"
                                 :return-object="true"
                                 :multiple="false"
-                                label="{{ _('Parent Location') }}">
-                            </search-field>
+                                label="{{ _('Parent Location') }}"
+                                >
+                            </location-search-field>
                         </v-col>
 
                         <v-col cols="12" md="4">
@@ -141,7 +143,7 @@
                     <v-row>
                         <v-col cols="12" md="12">
                             <geo-map
-                                edit-mode="true"
+                                    edit-mode="true"
                                 class="flex-grow-1"
                                 v-model="editedItem.latlng"
                                 map-height="300">

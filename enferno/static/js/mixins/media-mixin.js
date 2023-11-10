@@ -17,7 +17,7 @@ let mediaMixin = {
         defaultMedia: {
             title: "",
             files: [],
-            category: "Generic"
+            category: ""
         },
 
         mediaTitle__: true,
@@ -269,6 +269,7 @@ let mediaMixin = {
                     item.filename = scr.filename;
                     item.etag = scr.etag;
                     item.time = scr.time;
+                    item.category = scr.category;
 
                     // prevent attaching duplicate snapshots
                     if (this.editedItem.medias.some(m => m.etag === item.etag)) {
@@ -380,6 +381,7 @@ let mediaMixin = {
                     item.fileType = file.type;
                     item.filename = file.filename;
                     item.etag = file.etag;
+                    item.category = this.editedMedia.category;
                     this.editedItem.medias.push(item);
                 }
 

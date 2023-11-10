@@ -1,6 +1,6 @@
-Vue.component('search-field',
+const SearchField =
     {
-        props: ['value', 'label', 'multiple', 'itemText', 'itemValue', 'api', 'queryParams','disabled'],
+        props: ['value', 'label', 'multiple', 'itemText', 'itemValue', 'api', 'queryParams', 'disabled'],
         data: () => {
             return {
                 loading: false,
@@ -31,8 +31,8 @@ Vue.component('search-field',
 
         methods: {
 
-            emitChange(v){
-                if(v){
+            emitChange(v) {
+                if (v) {
                     this.$emit('change', v);
                     this.searchInput = ''
                 }
@@ -57,15 +57,26 @@ Vue.component('search-field',
 
 
             },
-            search:
-                debounce(function (evt) {
-                    const qp = this.queryParams || '';
-                    axios
-                        .get(`${this.api}?q=${evt.target.value}${qp}&per_page=100`)
-                        .then(response => {
-                            this.items = response.data.items;
-                        });
-                }, 350)
+            search: debounce(function () {
+                this.loading = true;
+                axios.get(this.api, {
+                    params: {
+                        q: this.searchInput,
+                        ...this.queryParams,
+                        per_page: 100
+                    }
+                })
+                    .then(response => {
+                        this.items = response.data.items;
+                    })
+                    .catch(error => {
+                        console.error("Error fetching data:", error);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+            }, 350)
+
             ,
 
         },
@@ -92,6 +103,7 @@ Vue.component('search-field',
                     @input.native="search"
                     @focus="search"
                     return-object
+                    @click:clear="search"
                     :search-input.sync="searchInput"
                     @change="emitChange"
                     v-bind="$attrs"
@@ -99,4 +111,25 @@ Vue.component('search-field',
 
             ></v-combobox>
         `
-    })
+    };
+
+Vue.component('search-field', SearchField);
+
+const LocationSearchField = Vue.extend({
+    extends: SearchField,
+    methods: {
+        search: debounce(function (evt) {
+            axios.post(this.api, {
+                q: {
+                    ...this.queryParams,
+                    'title': evt.target.value
+                },
+                options: {},
+            }).then(response => {
+                this.items = response.data.items;
+            });
+        }, 350)
+    }
+});
+
+Vue.component('location-search-field', LocationSearchField);

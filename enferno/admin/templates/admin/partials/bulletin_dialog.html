@@ -145,7 +145,7 @@
                                 <search-field
                                         v-model="editedItem.labels"
                                         api="/admin/api/labels/"
-                                        query-params="&typ=for_bulletin"
+                                        :query-params="{ typ: 'for_bulletin' }"
                                         item-text="title"
                                         item-value="id"
                                         :multiple="true"
@@ -160,7 +160,7 @@
                                 <search-field
                                         v-model="editedItem.verLabels"
                                         api="/admin/api/labels/"
-                                        query-params="&fltr=verified&typ=for_bulletin"
+                                        :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
                                         item-text="title"
                                         item-value="id"
                                         :multiple="true"
@@ -173,22 +173,14 @@
                         <v-row>
                             <v-col cols="12" md="12">
 
-                                <search-field
+                                <location-search-field
                                         v-model="editedItem.locations"
                                         api="/admin/api/locations/"
                                         item-text="full_string"
                                         item-value="id"
                                         :multiple="true"
                                         label="{{ _('Locations') }}"
-                                ></search-field>
-
-                            </v-col>
-                        </v-row>
-
-
-                        <v-row>
-                            <v-col col="12">
-
+                                ></location-search-field>
 
                             </v-col>
                         </v-row>
@@ -285,8 +277,8 @@
                                                                                 multiple
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip v-for="rel in translations.btobRelateAs" small>
-                                                                                ${rel.tr}
+                                                                            <v-chip  v-for="rel in btobInfo" :value="rel.id" :key="rel.id" small >
+                                                                                ${rel.title}
                                                                             </v-chip>
 
                                                                         </v-chip-group>
@@ -392,8 +384,7 @@
                                                                                 multiple
                                                                                 active-class="primary dark"
                                                                         >
-                                                                            <v-chip v-for="r in translations.btoaRelateAs"
-                                                                                    small> ${r.tr}
+                                                                            <v-chip v-for="rel in atobInfo" :value="rel.id" :key="rel.id"   small> ${rel.title}
                                                                             </v-chip>
 
                                                                         </v-chip-group>
@@ -498,8 +489,8 @@
                                                                             column
                                                                             active-class="primary dark"
                                                                     >
-                                                                        <v-chip v-for="r in translations.itobRelateAs"
-                                                                                small> ${ r.tr }
+                                                                        <v-chip v-for="rel in itobInfo" :value="rel.id" :key="rel.id"
+                                                                                small> ${ rel.title}
                                                                         </v-chip>
                                                                     </v-chip-group>
 

@@ -134,12 +134,12 @@ const sideNav = [
     }
 ];
 
-var geoMapDefaultCenter = {lat: 33.510414, lng: 36.278336};
+
 
 // items per page for data tables
 // adjust items per page dynamically based on screen hight
 
-let itemsPerPageOptions = [10, 50, 100, 250, 500];
+
 if (window.innerHeight > 1000) {
     itemsPerPageOptions = [50, 100, 250, 500]
 }
@@ -237,7 +237,7 @@ function handleRequestError(error) {
     }
 };
 
-//  in-page router for bulleints/actors/incidents pages
+//  in-page router for bulletins/actors/incidents pages
 const router = new VueRouter({
     mode: 'history',
     routes: [
@@ -298,19 +298,19 @@ let i = translations;
 // var btobRelateAs = [i.duplicate_, i.other_, i.partOfSeries_, i.sameObject_, i.samePerson_, i.potentiallyDuplicate_, i.potentiallyRelated_];
 // var itobRelateAs = [i.default_];
 // var itoiRelateAs = [i.default_];
-var statuses = i.statuses_;
+// var statuses = i.statuses_;
 
-var geoLocationTypes = [
-    i.default_,
-    i.school_,
-    i.religious_,
-    i.militaryStructure_,
-    i.infrastructure_,
-    i.medical_,
+// var geoLocationTypes = [
+//     i.default_,
+//     i.school_,
+//     i.religious_,
+//     i.militaryStructure_,
+//     i.infrastructure_,
+//     i.medical_,
 
-]
+// ]
 
-var countries = i.countries_;
+// var countries = i.countries_
 
 // helper prototype functions
 
@@ -343,12 +343,13 @@ String.prototype.trunc = function (n) {
 
 //helper method to translate front-end strings using an array of translation objects (constructed in i18n.jinja2)
 function translate_status(str) {
-    const needle = i.statuses_.filter(x => x.en == str).pop();
-    if (needle.tr) {
-        return needle.tr;
-    } else {
-        return needle.en;
-    }
+    // const needle = i.statuses_.filter(x => x.en == str).pop();
+    // if (needle.tr) {
+    //     return needle.tr;
+    // } else {
+    //     return needle.en;
+    // }
+    return str
 }
 
 String.prototype.toHHMMSS = function () {
@@ -376,16 +377,31 @@ String.prototype.formatName = function () {
 
 }
 
+// relationship information helper
+
+function extractValuesById(dataList, idList, valueKey) {
+
+    // handle null related_as case
+    if (idList === null) {
+        return [];
+    }
+
+    return dataList
+        .filter(item => idList.includes(item.id))
+        .map(item => item[valueKey]);
+}
+
+
 // global helper methods for geolocations
 
-var aggregateLocations = function (bulletin) {
+var aggregateBulletinLocations = function (bulletin) {
     let locations = [];
     // aggregate locations, add a color identifier
     if (bulletin.locations?.length) {
         let locs = bulletin.locations.filter(x => x.lat && x.lng);
         locs.map(x => {
             x.color = '#00a1f1';
-            x.bulletinId = bulletin.id;
+            x.parentId = bulletin.id;
             return x
         });
         locations = locations.concat(locs);
@@ -394,39 +410,85 @@ var aggregateLocations = function (bulletin) {
     }
 
     // geolocations
-    if (bulletin.geoLocations && bulletin.geoLocations.length) {
+    if (bulletin.geoLocations?.length) {
         bulletin.geoLocations.map((x, i) => {
             x.number = i + 1;
             x.color = '#ffbb00';
-            x.bulletinId = bulletin.id;
+            x.parentId = bulletin.id;
+            x.full_string = x.title;
             return x
         });
         locations = locations.concat(bulletin.geoLocations);
     }
     // event locations
     if (bulletin.events && bulletin.events.length) {
-        
-        let eventLocations = bulletin.events.filter(x => x.location && x.location.latlng).map((x, i) => {
-            // exclude locations with null coordinates
-
-            //attach serial number to events for map reference
-            x.location.number = i + 1;
-            x.location.title = x.title;
-            x.bulletinId = bulletin.id;
-            x.location.color = '#f65314';
-            x.location.lat = x.location.latlng.lat;
-            x.location.lng = x.location.latlng.lng;
-            return x.location
-
-
-        });
-
-
+        const eventLocations = prepareEventLocations(bulletin.id, bulletin.events);
         locations = locations.concat(eventLocations);
     }
-    return locations;
 
+    return locations;
 }
+
+var aggregateActorLocations = function (actor) {
+    let locations = [];
+
+    const addLocation = (place, type) => {
+        if (place && place.latlng) {
+            place.type = type;
+            place.color = '#00a1f1';
+            place.parentId = actor.id;
+            place.lat = place.latlng.lat;
+            place.lng = place.latlng.lng;
+            locations.push(place);
+        }
+    };
+
+    addLocation(actor.birth_place, 'Birth Place');
+    addLocation(actor.residence_place, 'Residence Place');
+    addLocation(actor.origin_place, 'Origin Place');
+
+    // event locations
+    if (actor.events && actor.events.length) {
+        const eventLocations = prepareEventLocations(actor.id, actor.events);
+        locations = locations.concat(eventLocations);
+    }
+
+    return locations;
+}
+
+
+function prepareEventLocations(parentId, events) {
+    let output = events.filter(x => x.location && x.location.latlng);
+    // sort events by from/to date and leave null date events at the end
+    output.sort((a, b) => {
+        const aDate = a.from_date || a.to_date;
+        const bDate = b.from_date || b.to_date;
+
+        if (aDate && bDate) {
+            return new Date(aDate) - new Date(bDate);
+        }
+        if (!aDate) {
+            return 1;
+        }
+        if (!bDate) {
+            return -1;
+        }
+    });
+    return output.map((x, i) => {
+        //attach serial number to events for map reference
+        x.location.number = i + 1;
+        x.location.title = x.title;
+        x.location.type = 'Event';
+        x.location.parentId = parentId;
+        x.location.color = '#00f166';
+        x.location.lat = x.location.latlng.lat;
+        x.location.lng = x.location.latlng.lng;
+        x.location.zombie = x.from_date === null && x.to_date === null;
+        x.location.eventtype = x.eventtype?.title;
+        return x.location
+    });
+}
+
 
 function parseResponse(dzFile) {
     // helper method to convert xml response to friendly json format
@@ -447,7 +509,7 @@ function getBulletinLocations(ids) {
     promises = []
     ids.forEach(x => {
         promises.push(axios.get(`/admin/api/bulletin/${x}?mode=3`).then(response => {
-            return aggregateLocations(response.data);
+            return aggregateBulletinLocations(response.data);
         }));
     });
     return Promise.all(promises);
@@ -475,7 +537,7 @@ var aggregateIncidentLocations = function (incident) {
             //attach serial number to events for map reference
             x.location.number = i + 1;
             x.location.title = x.title;
-            x.location.color = '#f65314';
+            x.location.color = '#00f166';
             return x.location
 
 
@@ -553,8 +615,8 @@ var viewer = new ImageViewer.FullScreenViewer();
 
 // videojs config settings  - prevent plugin from sending data
 window.HELP_IMPROVE_VIDEOJS = false;
-// Video player playback rates
-const VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]
+
+
 
 
 // media screenshots helper method
@@ -579,5 +641,5 @@ dataUriToBlob = function (dataURI) {
 }
 
 const VID_EXT = [".webm", ".mkv", ".flv", ".vob", ".ogv", ".ogg", ".rrc", ".gifv", ".mng", ".mov", ".avi", ".qt", ".wmv", ".yuv", ".rm", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".mts", ".lvr", ".m2ts"]
-const OCR_EXT = [".png", ".jpeg", ".tiff", ".jpg", ".gif", ".webp", ".bmp" ,".pnm"]
+const OCR_EXT = [".png", ".jpeg", ".tiff", ".jpg", ".gif", ".webp", ".bmp", ".pnm"]
 const ETL_EXTENSIONS = [".gif", ".doc", ".docx", ".pdf", ".txt", ".ttf"].concat(VID_EXT).concat(OCR_EXT)

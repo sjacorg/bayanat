@@ -41,57 +41,116 @@ Vue.component('visualization', {
         },
 
 
+        find_relation_type(item, relation, target) {
+
+
+                if (item.class === 'bulletin' && target.toLowerCase() === 'bulletin') {
+
+                     const relatedTitles = [];
+
+                    // Iterate over the related_as array and find the title in atobInfo
+                    for (const id of relation.related_as) {
+                        const infoItem = this.$root.btobInfo.find(item => item.id === id);
+                        if (infoItem) {
+                            relatedTitles.push(infoItem.title);
+                        }
+                    }
+
+                    // Join the titles with a space and trim the resulting string
+                    return relatedTitles.join(' ').trim();
+
+
+                }
+
+                if ((item.class === 'bulletin' && target.toLowerCase() === 'actor') || (item.class === 'actor' && target.toLowerCase() === 'bulletin')) {
+                    // Use an array to collect the titles
+                    const relatedTitles = [];
+
+                    // Iterate over the related_as array and find the title in atobInfo
+                    for (const id of relation.related_as) {
+                        const infoItem = this.$root.atobInfo.find(item => item.id === id);
+                        if (infoItem) {
+                            relatedTitles.push(infoItem.title);
+                        }
+                    }
+
+                    // Join the titles with a space and trim the resulting string
+                    return relatedTitles.join(' ').trim();
+                }
+
+
+
+                if (item.class === 'actor' && target.toLowerCase() === 'actor') {
+                    if (relation.related_as) {
+                        // Directly find the atoaInfo object with the matching id
+                        const atoaInfo = this.$root.atoaInfo.find(info => info.id === relation.related_as);
+
+                        // Return the title, checking which one to return based on the id comparison
+                        if (atoaInfo) {
+                            if (relation.actor.id > item.id) {
+                                return atoaInfo.title;
+                            } else {
+                                return atoaInfo.reverse_title;
+                            }
+                        }
+                    }
+                }
+
+                 if (item.class === 'incident' && target.toLowerCase() === 'incident') {
+                    if (relation.related_as) {
+                        const itoiInfo = this.$root.itoiInfo.find(info => info.id === relation.related_as);
+                        if (itoiInfo) {
+                            return itoiInfo.title;
+                        }
+                    }
+                }
+
+                  if ((item.class === 'incident' && target.toLowerCase() === 'bulletin') || (item.class === 'bulletin' && target.toLowerCase() === 'incident')) {
+                    if (relation.related_as) {
+                        const itobInfo = this.$root.itobInfo.find(info => info.id === relation.related_as);
+                        if (itobInfo) {
+                            return itobInfo.title;
+                        }
+                    }
+                }
+
+                  if ((item.class === 'incident' && target.toLowerCase() === 'actor') || (item.class === 'actor' && target.toLowerCase() === 'incident')) {
+                    // Use an array to collect the titles
+                    const relatedTitles = [];
+
+                    // Iterate over the related_as array and find the title in atobInfo
+                    for (const id of relation.related_as) {
+                        const infoItem = this.$root.itoaInfo.find(item => item.id === id);
+                        if (infoItem) {
+                            relatedTitles.push(infoItem.title);
+                        }
+                    }
+
+                    // Join the titles with a space and trim the resulting string
+                    return relatedTitles.join(' ').trim();
+                }
+
+
+
+
+
+                return '';
+
+
+            },
+
         generateGraph(item) {
             //console.log(this.bulletin);
 
 
-            function find_relation_type(item, relation, target) {
 
-
-                if (item.class === 'bulletin' && target === 'bulletin') {
-                    if (relation.related_as) {
-                        return translations.btobRelateAs[relation.related_as].en;
-                    }
-
-
-                }
-                ;
-                if ((item.class === 'bulletin' && target === 'actor') || (item.class === 'actor' && target === 'bulletin')) {
-                    // relation is an array here
-
-                    return relation.related_as.reduce((p, a) => p + translations.btoaRelateAs[a].en + ' ', '');
-                }
-                ;
-
-                if (item.class === 'actor' && target === 'actor') {
-
-                    if (relation.related_as) {
-                        if (relation.actor.id > item.id) {
-                            return translations.atoaRelateAs[relation.related_as].en.text;
-                        } else {
-                            return translations.atoaRelateAs[relation.related_as].en.revtext;
-                        }
-
-                    }
-
-                }
-
-
-                if (target === 'incident') {
-                    return 'default'
-                }
-                ;
-                return '';
-
-
-            }
 
             // generate ids based on relations
             // prepend a/b/i based on entity type (actor/bulletin/incident) to avoid clashes during graph construction
             const bulletins = item.bulletin_relations.map(x => {
                 return {
                     id: 'b' + x.bulletin.id,
-                    related_as: find_relation_type(item, x, 'Bulletin'),
+                    related_as: this.find_relation_type(item, x, 'Bulletin'),
                     title: x.bulletin.title,
                     color: this.BULLETINCOLOR,
 
@@ -103,7 +162,7 @@ Vue.component('visualization', {
             const actors = item.actor_relations.map(x => {
                 return {
                     id: 'a' + x.actor.id,
-                    related_as: find_relation_type(item, x, 'Actor'),
+                    related_as: this.find_relation_type(item, x, 'Actor'),
                     title: x.actor.name,
                     color: this.ACTORCOLOR,
                     type: 'Actor',
@@ -114,7 +173,7 @@ Vue.component('visualization', {
             const incidents = item.incident_relations.map(x => {
                 return {
                     id: 'i' + x.incident.id,
-                    related_as: find_relation_type(item, x, 'Incident'),
+                    related_as: this.find_relation_type(item, x, 'Incident'),
                     title: x.incident.title,
                     color: this.INCIDENTCOLOR,
                     type: 'Incident',

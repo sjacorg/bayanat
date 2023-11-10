@@ -285,6 +285,13 @@
         </v-app>
     </div>
 
+<div class="d-none" data-itob='{{itobInfo|tojson}}'></div>
+<div class="d-none" data-itoa='{{itoaInfo|tojson}}'></div>
+<div class="d-none" data-atob='{{atobInfo|tojson}}'></div>
+<div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
+<div class="d-none" data-btob='{{btobInfo|tojson}}'></div>
+<div class="d-none" data-itoi='{{itoiInfo|tojson}}'></div>
+<div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
 {% endblock %} {% block js %}
     <script
             src="/static/js/tinymce/js/tinymce/tinymce.min.js"
@@ -338,6 +345,14 @@
                 // i18n
                 translations: translations,
 
+                itobInfo : JSON.parse(document.querySelector('[data-itob]').dataset.itob),
+                itoaInfo : JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
+                itoiInfo : JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
+                atobInfo : JSON.parse(document.querySelector('[data-atob]').dataset.atob),
+                btobInfo : JSON.parse(document.querySelector('[data-btob]').dataset.btob),
+                atoaInfo : JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
+
+
 
                 assignIncident: {},
                 selfAssignDialog: false,
@@ -380,7 +395,7 @@
                 dialog: dialog,
                 eventDialog: false,
                 reviewDialog: false,
-                eventParams: '&typ=for_bulletin',
+                eventParams: {  typ: 'for_bulletin' },
                 reviewKey: 0,
                 videoDialog: false,
                 playerOptions: {},
@@ -428,8 +443,11 @@
                 potentialViolations: [],
                 claimedViolations: [],
 
-                statuses: statuses,
-                statusItems: statuses,
+                  statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                  .map(s => ({en: s.title, tr: s.title_tr})),
+
+              statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                  .map(s => ({en: s.title, tr: s.title_tr})),
                 statusDisabled: false,
 
 
@@ -606,8 +624,7 @@
 
 
                 options: {
-                    handler: "refresh",
-                    immdiate: true
+                    handler: "refresh"
                 }
             },
             mounted: function () {

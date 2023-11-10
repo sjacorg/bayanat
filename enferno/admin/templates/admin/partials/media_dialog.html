@@ -108,14 +108,19 @@
 
                     <v-col cols="12" md="6">
                         <v-card class="d-flex" flat>
-                            <!-- cagtegory -->
-                            <v-select
-                                    v-model="editedMedia.category"
-                                    item-text="tr"
-                                    item-value="en"
-                                    :items="translations.mediaCats"
+                            <!-- category -->
+
+                            <search-field
                                     label="Media Category"
-                            ></v-select>
+                            api="/admin/api/mediacategories"
+                            v-model="editedMedia.category"
+                            item-text="title"
+                            item-value="id"
+                            :return-object="false"
+                            >
+
+                            </search-field>
+                           
                         </v-card>
                     </v-col>
                 </v-row>

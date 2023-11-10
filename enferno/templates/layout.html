@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="/static/css/leaflet.css">
     <link rel="stylesheet" href="/static/css/MarkerCluster.css">
     <link rel="stylesheet" href="/static/css/MarkerCluster.Default.css">
-
+    <link rel="stylesheet" href="/static/css/Leaflet.PolylineMeasure.css">
     <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css">
 
 
@@ -76,7 +76,7 @@
     <script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
     <script src="/static/js/vue-tippy.min.js"></script>
 <script>
-    {%  include 'admin/i18n.jinja2' %}
+    {%  include 'admin/jsapi.jinja2' %}
 
 </script>
 
@@ -107,11 +107,11 @@
     <script src="/static/js/components/IncidentSearchBox.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/leaflet.geometryutil.js"></script>
     <script src="/static/js/leaflet.markercluster.js"></script>
-
-
-
-
+    <script src="/static/js/leaflet.curve.min.js"></script>
+    <script src="/static/js/leaflet.rotatedmarker.min.js"></script>
+    <script src="/static/js/Leaflet.PolylineMeasure.js"></script>
 
 {% endif %}
 

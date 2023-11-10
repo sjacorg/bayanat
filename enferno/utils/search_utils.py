@@ -1,6 +1,6 @@
 from dateutil.parser import parse
 
-from sqlalchemy import or_, not_, func, and_
+from sqlalchemy import or_, not_, and_, func, cast
 
 from enferno.admin.models import (
     Bulletin,
@@ -10,8 +10,11 @@ from enferno.admin.models import (
     Source,
     Location,
     Event,
+    LocationAdminLevel,
     PotentialViolation,
-    ClaimedViolation
+    ClaimedViolation,
+    Ethnography,
+    Country
 )
 from enferno.user.models import Role
 
@@ -32,12 +35,13 @@ class SearchUtils:
 
     def get_query(self):
         if self.cls == 'Bulletin':
-
             return self.build_bulletin_query()
         elif self.cls == 'Actor':
             return self.build_actor_query()
         elif self.cls == 'Incident':
             return self.build_incident_query()
+        elif self.cls == 'Location':
+            return self.build_location_query()
         return []
 
     def to_dict(self):
@@ -82,6 +86,9 @@ class SearchUtils:
 
     def build_incident_query(self):
         return self.incident_query(self.search)
+
+    def build_location_query(self):
+        return self.location_query(self.search)
 
     def bulletin_query(self, q):
         query = []
@@ -364,6 +371,21 @@ class SearchUtils:
                 ids = [b.bulletin_id for b in incident.bulletin_relations]
                 query.append(Bulletin.id.in_(ids))
 
+        # Geospatial search
+        loc_types = q.get('locTypes')
+        latlng = q.get('latlng')
+
+        if loc_types and latlng and (radius := latlng.get('radius')):
+            conditions = []
+            if 'locations' in loc_types:
+                conditions.append(Bulletin.geo_query_location(latlng, radius))
+            if 'geomarkers' in loc_types:
+                conditions.append(Bulletin.geo_query_geo_location(latlng, radius))
+            if 'events' in loc_types:
+                conditions.append(Bulletin.geo_query_event_location(latlng, radius))
+
+            query.append(or_(*conditions))
+
         return query
 
     def actor_query(self, q):
@@ -424,27 +446,22 @@ class SearchUtils:
 
         ethno = q.get('ethnography')
         op = q.get('opEthno')
-        conditions = []
         if ethno:
-            # exact match search
-            conditions = [func.array_to_string(Actor.ethnography, ' ').op('~*')(f'\y{e}\y') for e in ethno]
-
-        if op:
-            query.append(or_(*conditions))
-        else:
-            query.append(and_(*conditions))
+            ids = [item.get('id') for item in ethno]
+            if op:
+                query.append(Actor.ethnographies.any(Ethnography.id.in_(ids)))
+            else:
+                query.extend([Actor.ethnographies.any(Ethnography.id == id) for id in ids])
 
         nationality = q.get('nationality')
         op = q.get('opNat')
-        conditions = []
         if nationality:
-            # exact match search
-            conditions = [func.array_to_string(Actor.nationality, ' ').op('~*')(f'\y{n}\y') for n in nationality]
+            ids = [item.get('id') for item in nationality]
+            if op:
+                query.append(Actor.nationalities.any(Country.id.in_(ids)))
+            else:
+                query.extend([Actor.nationalities.any(Country.id == id) for id in ids])
 
-        if op:
-            query.append(or_(*conditions))
-        else:
-            query.append(and_(*conditions))
 
         labels = q.get('labels', [])
         if len(labels):
@@ -580,6 +597,23 @@ class SearchUtils:
         if review_action:
             query.append(Actor.review_action == review_action)
 
+        # Geospatial search
+        loc_types = q.get('locTypes')
+        latlng = q.get('latlng')
+
+        if loc_types and latlng and (radius := latlng.get("radius")):
+            conditions = []
+            if 'birthplace' in loc_types:
+                conditions.append(Actor.geo_query_birth_place(latlng, radius))
+            if 'originplace' in loc_types:
+                conditions.append(Actor.geo_query_origin_place(latlng, radius))
+            if 'residenceplace' in loc_types:
+                conditions.append(Actor.geo_query_residence_place(latlng, radius))
+            if 'events' in loc_types:
+                conditions.append(Actor.geo_query_event_location(latlng, radius))
+
+            query.append(or_(*conditions))
+
         # ---------- Extra fields -------------
 
         # Occupation
@@ -626,7 +660,7 @@ class SearchUtils:
         if actor_type:
             query.append(Actor.actor_type == actor_type)
 
-     
+
 
 
         # Place of birth
@@ -841,5 +875,61 @@ class SearchUtils:
             if incident:
                 ids = [i.get_other_id(incident.id) for i in incident.incident_relations]
                 query.append(Incident.id.in_(ids))
+
+        return query
+
+    def location_query(self, q):
+        query = []
+        
+        if (title := q.get('title')):
+            words = title.split(' ')
+            # search for bilingual title columns
+            qsearch = [or_(
+                Location.title.ilike('%{}%'.format(word)), 
+                Location.title_ar.ilike('%{}%'.format(word))) 
+                for word in words]
+
+            query.extend(qsearch)
+
+        if (tsv := q.get('tsv')):
+            words = tsv.split(' ')
+            # search for bilingual title columns
+            qsearch = [Location.description.ilike('%{}%'.format(word)) for word in words]
+
+            query.extend(qsearch)
+
+        # point and radius search
+        latlng = q.get('latlng')
+        if latlng and (radius := latlng.get("radius")):
+                query.append(Location.geo_query_location(latlng, radius))
+
+        # handle location type search
+        location_type = q.get('location_type')
+        if location_type and (location_type_id := location_type.get('id')):
+            query.append(Location.location_type_id == location_type_id)
+
+        # admin levels
+        admin_level = q.get('admin_level', None)
+        if admin_level and (admin_level_id := admin_level.get("code")):
+            query.append(Location.admin_level_id == admin_level_id)
+
+        # country
+
+        country = q.get('country',[])
+
+        if country and (id := country.get('id')):
+            query.append(Location.country_id == id)
+
+
+        # tags
+        tags = q.get('tags')
+        if tags:
+            search = ['%' + r + '%' for r in tags]
+            # get search operator
+            op = q.get('optags', False)
+            if op:
+                query.append(or_(func.array_to_string(Location.tags, '').ilike(r) for r in search))
+            else:
+                query.append(and_(func.array_to_string(Location.tags, '').ilike(r) for r in search))
 
         return query
