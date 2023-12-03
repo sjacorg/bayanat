@@ -1,0 +1,212 @@
+{#
+  This template receives the following pieces of context in addition to the form:
+#}
+
+{% extends "login-layout.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
+
+{% block css %}
+    <style>
+        .fs-div {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+    </style>
+{% endblock %}
+{% block head_js %}
+    {{ super() }}
+    <script src="{{ url_for('.static', filename='js/webauthn.js') }}" integrity="sha256-H/xFeFCIRT23BxJzi96Bvepy4miV2/tQmj1kw1DWq/M=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('.static', filename='js/base64.js') }}" integrity="sha256-QRosC0/HfAja/USffcwGTqczjJtktjeA2NaUcG+bqA0=" crossorigin="anonymous"></script>
+
+{% endblock %}
+
+{% block content %}
+    <v-card style="width:min(600px, 100%)" class="ma-auto mt-5">
+        <v-card-title color="primary">{{ _fsdomain("Setup New WebAuthn Security Keys") }}</v-card-title>
+        {% include "security/_messages.html" %}
+
+        {% if not credential_options %}
+            {# Initial form to get CreateOptions #}
+            <v-card-text>
+                <div>{{ _fsdomain("Start by providing a unique name for your new security key:") }}</div>
+                <form action="{{ url_for_security('wan_register') }}" method="post" name="wan_register_form"
+                      id="wan-register-form">
+                    {{ wan_register_form.hidden_tag() }}
+                    <v-text-field name="name" label="Device Name"></v-text-field>
+                    {# Default is just second factor #}
+                    {% if security.wan_allow_as_first_factor %}
+                        <div>
+                            {% for subfield in wan_register_form.usage %}
+                                {{ render_field_with_errors(subfield) }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <v-btn class="my-3 primary" type="submit" depressed small>Add Device</v-btn>
+
+                </form>
+            </v-card-text>
+
+            {% if wan_register_form.errors %}
+                <v-card-text>
+                    <div class="error-messages">
+                        {% for field, errors in wan_register_form.errors.items() %}
+                            {% for error in errors %}
+                                <v-alert dismissible dense color="error" dark>{{ error }}</v-alert>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </v-card-text>
+            {% endif %}
+
+        {% else %}
+            <v-card-text>
+                <form action="{{ url_for_security('wan_register_response', token=wan_state) }}" method="post"
+                      name="wan_register_response_form" id="wan-register-response-form">
+                    {{ wan_register_response_form.hidden_tag() }}
+                    <div id="wan-errors"></div>
+                </form>
+            </v-card-text>
+            <script type="text/javascript">
+                handleRegister('{{ credential_options|safe }}')
+                    .then((result) => {
+                        if (result.error_msg) {
+
+                            const error_element = document.getElementById("wan-errors");
+                            error_element.innerHTML = `<em>${result.error_msg}</em>`;
+                        } else {
+                            document.getElementById("credential").value = result.credential;
+                            {# We auto-submit this form - there is a Submit button on the
+                                form we could use - but there really isn't any reason to force the
+                                user to click yet another button
+                            #}
+                            document.forms["wan-register-response-form"].submit();
+                        }
+                    });
+            </script>
+        {% endif %}
+        {% if registered_credentials %}
+            <v-card-title>{{ _fsdomain("Currently registered security keys:") }}</v-card-title>
+            {% set listing = _fsdomain('Nickname: "%s" Usage: "%s" Transports: "%s" Discoverable: "%s" Device Type: "%s" Backed up? "%s" Last used on: %s') %}
+            <v-card-text>
+
+                {% for cred in registered_credentials %}
+                    <v-card elevation="12" color="primary" class="hardware-device ma-2" dark>
+                        <div class="d-flex flex-nowrap justify-space-between">
+                            <div>
+                                <v-card-title class="font-weight-bold">{{ cred.name }}</v-card-title>
+
+
+                                <v-card-text>
+                                    <span class="font-weight-bold">Usage:</span> {{ cred.usage }} <br>
+                                    <span
+                                            class="font-weight-bold">Transports:</span> {{ cred.transports|join(", ") }}
+                                    <br>
+
+
+                                    <span class="font-weight-bold">Backed Up:</span> {{ cred.backup_state }} <br>
+
+                                    <span class="font-weight-bold">Device Type:</span> {{ cred.device_type }} <br>
+
+                                    <span class="font-weight-bold">Discoverable:</span> {{ cred.discoverable }} <br>
+
+                                    <span class="font-weight-bold">Last Used:</span> {{ cred.lastuse }}
+                                </v-card-text>
+
+
+                            </div>
+                            <v-avatar
+                                    class="ma-3 mt-4"
+                                    size="90"
+                                    tile
+
+                            >
+                                <v-icon size="64">mdi-usb-flash-drive</v-icon>
+                            </v-avatar>
+
+                        </div>
+
+                        <v-card-actions class="justify-end">
+                            <v-btn v-tippy content="Delete Key" @click="deleteDevice('{{ cred.name }}')" color="gv"
+                                   icon>
+                                <v-icon>mdi-delete</v-icon>
+                            </v-btn>
+                        </v-card-actions>
+
+                    </v-card>
+                    {#                    {{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.device_type, cred.backup_state, cred.lastuse) }}#}
+                {% endfor %}
+
+            </v-card-text>
+        {% endif %}
+        {% if False %}
+            <v-divider class="my-4"></v-divider>
+            <v-card-title>{{ _fsdomain("Delete Existing WebAuthn Security Key") }}</v-card-title>
+            <v-card-text>
+                <form action="{{ url_for_security('wan_delete') }}" method="post" name="wan_delete_form">
+                    {{ wan_delete_form.hidden_tag() }}
+                    <v-text-field name="name" label="Nickname"></v-text-field>
+                    <v-btn type="submit" class="error" dark depressed small>Delete</v-btn>
+
+                </form>
+            </v-card-text>
+        {% endif %}
+        {% if security.support_mfa and security.multi_factor_recovery_codes %}
+            <v-divider class="my-4"></v-divider>
+            <v-card-title>{{ _fsdomain("Recovery Codes") }}</v-card-title>
+
+            <v-card-text>
+                {{ _fsdomain("This application supports setting up recovery codes.") }}
+                <a href="{{ url_for_security('mf_recovery_codes') }}">{{ _fsdomain("You can set them up here.") }}</a>
+            </v-card-text>
+        {% endif %}
+    </v-card>
+
+    <v-snackbar v-model="snackbar">
+        <div class="d-flex justify-space-between align-center">
+            <span class="text-subtitle-1">${snackMessage}</span>
+            <v-btn color="white" fab small color="secondary" text @click="snackbar = false">
+                <v-icon small>mdi-close</v-icon>
+            </v-btn>
+        </div>
+
+    </v-snackbar>
+{% endblock content %}
+
+{% block js %}
+    <script>
+        const app = new Vue({
+            vuetify: vuetify,
+            el: '#app',
+            data: {
+                activeTab: null,
+                snackbar: false,
+                snackMessage: ''
+            },
+            methods: {
+                deleteDevice(cred) {
+                    const csrf_token = this.$el.querySelector('#csrf_token').value;
+
+                    if (confirm('Are you sure you want to delete this device?')) {
+                        // Axios request to delete the device
+                        axios.post('{{ url_for_security('wan_delete') }}',
+                            {
+                                name: cred,
+                                csrf_token: csrf_token
+                            })
+                            .then(function (response) {
+                                this.snackMessage = 'Device Removed Successfully';
+                                this.snackbar = true;
+                                location.reload();
+                            })
+                            .catch(function (error) {
+                                console.error(`Error deleting device ${error}`);
+                            });
+                    }
+
+                }
+            }
+        })
+    </script>
+{% endblock %}

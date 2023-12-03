@@ -24,7 +24,6 @@
                                     <v-tab key="import">{{ _('Import Tools') }}</v-tab>
                                     <v-tab key="export">{{ _('Export Tool') }}</v-tab>
                                     <v-tab key="maps">{{ _('Maps') }}</v-tab>
-                                    <v-tab key="api">{{ _('API') }}</v-tab>
                                 </v-tabs>
 
 
@@ -64,7 +63,9 @@
                                                         ${lang}
                                                     </v-btn>
                                                 </v-btn-toggle>
-                                                <p class="caption">{{ _('Changes default interface language for all users. Users can still choose their own interface language.') }}</p>
+                                                <p class="caption">{{
+                                                        _('Changes default interface language for all users. Users can still choose their own interface language.')
+                                                    }}</p>
 
                                                 <v-switch class="mb-9"
                                                           persistent-hint
@@ -118,7 +119,8 @@
                                                                              :rules="eitem.DEDUP_TOOL? 'required':''"
                                                                              v-slot="{ errors }">
                                                             <v-text-field class="mb-9" type="number"
-                                                                          persistent-hint hint="{{ _('Interval of batches sent for processing. Affects speed of processing and performance of the server.') }}"
+                                                                          persistent-hint
+                                                                          hint="{{ _('Interval of batches sent for processing. Affects speed of processing and performance of the server.') }}"
                                                                           label="{{ _('Deduplication Interval') }}"
                                                                           v-model.number="eitem.DEDUP_INTERVAL"></v-text-field>
                                                             <span class="orange--text"> ${errors[0]}</span>
@@ -135,7 +137,9 @@
                                         <v-card :disabled="loading" :loading="loading">
                                             <v-card-text>
                                                 <h4 class="mt-3 subtitle-2 mb-2">{{ _('Media Storage') }}</h4>
-                                                <p class="caption">{{ _('Storage options for media files uploaded to Bayanat. It\'s possible to store these files locally on the host or in S3 bucket.') }}</p>
+                                                <p class="caption">{{
+                                                        _('Storage options for media files uploaded to Bayanat. It\'s possible to store these files locally on the host or in S3 bucket.')
+                                                    }}</p>
                                                 <v-btn-toggle v-model="eitem.FILESYSTEM_LOCAL"
                                                               mandatory class="my-3 mb-9">
                                                     <v-btn :value="1">{{ _('Local Filesystem') }}</v-btn>
@@ -275,6 +279,63 @@
 
                                                     </v-sheet>
                                                 </v-slide-y-transition>
+
+
+                                                <v-switch class="mb-9" label="Force 2FA Enrollment"
+                                                          persistent-hint
+                                                          hint="Force users to enroll in two factor authentication"
+                                                          v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
+                                                >
+
+                                                </v-switch>
+
+                                                 <v-switch class="mb-9" label="Hardware-Enhanced 2FA via WebAuthn & FIDO"
+                                                          persistent-hint
+                                                          hint="Secure your account with FIDO hardware for robust WebAuthn-based 2FA"
+                                                          v-model="eitem.SECURITY_WEBAUTHN"
+                                                >
+
+                                                </v-switch>
+
+                                             
+
+
+                                            </v-card-text>
+
+                                            <v-card-title>Password Policies</v-card-title>
+                                            <v-card-text>
+
+                                                <v-text-field class="mb-9" type="number"
+                                                              label="Password Minimum Length"
+                                                              persistent-hint
+                                                              hint="Minimum required length for passwords"
+                                                              suffix="charachters"
+                                                              v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
+
+                                            </v-card-text>
+
+                                            <v-card-title>Password Strength</v-card-title>
+                                            <v-card-text>
+                                                <v-sheet width="400">
+                                                    <v-slider
+                                                            color="grey"
+                                                            v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
+                                                            min="0"
+                                                            max="4"
+                                                            hint="(0 is weekest, 4 is strongest)"
+                                                            persistent-hint
+                                                            :tick-labels="[0,1,2,3,4]"
+                                                            tick-size="4"
+                                                            step="1"
+                                                    ></v-slider>
+                                                </v-sheet>
+                                            </v-card-text>
+
+
+                                            <v-card-text>
+                                                <v-btn @click.once="forceGlobalReset" color="yv" dark>Force Global
+                                                    Password Reset
+                                                </v-btn>
                                             </v-card-text>
 
                                         </v-card>
@@ -293,6 +354,7 @@
                                                 <v-slide-y-transition>
                                                     <v-sheet v-show="eitem.ETL_TOOL" class=" pa-4 grey lighten-4">
                                                         <v-switch 
+                                                                class="mb-9"
                                                                 label="{{ _('Media Import Path Scanning') }}"
                                                                 persistent-hint
                                                                 hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilise this feature. It should be turned on only when it\'s needed.') }}"
@@ -335,14 +397,15 @@
                                                                 <validation-provider name="Path to Tesseract Library"
                                                                                     :rules="eitem.OCR_ENABLED? 'required':''"
                                                                                     v-slot="{ errors }">
-                                                                    <v-text-field label="{{ _('Path to Tesseract executable.') }}"
+                                                                    <v-text-field
+                                                                            label="{{ _('Path to Tesseract executable.') }}"
                                                                                 v-model="eitem.TESSERACT_CMD"></v-text-field>
                                                                     <span class="orange--text"> ${errors[0]}</span>
                                                                 </validation-provider>
                                                             </v-sheet>
-                                                        </v-sheet>
-                                                    </v-slide-y-transition>
+
                                                 </v-slide-y-transition>
+
 
                                                 <v-switch class="mb-9" label="{{ _('Sheet Import') }}"
                                                           persistent-hint
@@ -366,8 +429,10 @@
 
                                                     </v-sheet>
                                                 </v-slide-y-transition>
-
+                                                    </v-sheet>
+                                                </v-slide-y-transition>
                                             </v-card-text>
+
                                         </v-card>
                                     </v-tab-item>
 
@@ -399,31 +464,16 @@
                                                               v-model="eitem.GOOGLE_MAPS_API_KEY"></v-text-field>
                                                 
                                                 <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Map Position') }}</h4>
-                                                <span class="caption">{{ _('Changes default position for all maps in all components.') }}</span>
+                                                <span class="caption">{{
+                                                        _('Changes default position for all maps in all components.')
+                                                    }}</span>
 
-                                                <geo-map v-model="eitem.GEO_MAP_DEFAULT_CENTER"
+                                                <geo-map style="z-index:200" v-model="eitem.GEO_MAP_DEFAULT_CENTER"
                                                          map-height="300"></geo-map>
 
                                             </v-card-text>
                                         </v-card>
                                     </v-tab-item>
-
-                                    <v-tab-item key="api">
-                                        <v-card>
-                                            <v-card-title>{{ _('Global API Key') }}</v-card-title>
-                                            <v-divider></v-divider>
-                                            <v-card-text>
-                                                <v-btn @click="genAPIKey" depressed class="primary">
-                                                    {{ _('Generate Global API Key') }}
-                                                </v-btn>
-                                                <v-text-field class="my-3 mb-9"
-                                                              persistent-hint
-                                                              hint="{{ _('can be used to sync bayanat with another instance') }}"
-                                                              outlined v-model="apiKey"></v-text-field>
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-tab-item>
-
 
                                 </v-tabs-items>
 
@@ -537,7 +587,10 @@
                 </v-card-text>
                 <v-divider></v-divider>
                 <v-card-actions class="pa-4 justify-center">
-                    <v-btn @click.stop="confirmDialog=false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}</v-btn>
+                    <v-btn @click.stop="confirmDialog=false" class="grey lighten-4" elevation="0">{{
+                            _('Cancel')
+                        }}
+                    </v-btn>
                     <v-btn :disabled="!configDiff" @click.stop="saveConfiguration" color="primary" class="ml-4">
                         {{ _('Confirm') }}
                     </v-btn>
@@ -585,7 +638,6 @@
             tab: null,
             drawer: drawer,
             sideNav: sideNav,
-            apiKey: '',
             eitem: {},
 
             // nav drawer
@@ -670,9 +722,6 @@
             // load location types
             this.loadLocationTypeItems();
 
-            // load API key
-            this.loadAPIKey();
-
             //load configuration
             this.loadConfiguration();
 
@@ -681,6 +730,27 @@
         },
 
         methods: {
+
+            forceGlobalReset() {
+                if (confirm('Are you sure you want to force a password reset for all users? ')) {
+                    this.loading = true;
+                    axios.post('/admin/api/user/force-reset-all').then(
+                        res => {
+
+                            this.showSnack(res.data);
+                        }
+                    ).catch(
+                        err => {
+                            console.error(err?.response?.data);
+                        }
+                    ).finally(
+                        () => {
+                            this.loading = false;
+                        }
+                    )
+
+                }
+            },
 
             revertVersion(config) {
                 this.eitem = structuredClone(config.config);
@@ -971,19 +1041,6 @@
                     console.log(e.response.data);
                 })
 
-            },
-
-            genAPIKey() {
-                axios.post('/admin/api/key').then(res => {
-                    this.apiKey = res.data;
-                })
-            },
-
-            loadAPIKey() {
-                axios.get('/admin/api/key').then(res => {
-
-                    this.apiKey = res.data;
-                })
             },
 
             showSnack(message) {

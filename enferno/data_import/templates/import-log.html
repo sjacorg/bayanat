@@ -1,0 +1,326 @@
+{% extends 'layout.html' %}
+{% block css %}
+{% endblock %}
+{% block content %}
+    <div id="app">
+        <v-app id="inspire" v-cloak>
+            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+
+            {% include 'log_dialog.html' %}
+
+            <v-main>
+                <v-container class="container--fluid">
+                    <v-row>
+                        <v-col cols="12">
+                            <v-card>
+                                <v-card-text>
+
+                                    <v-data-table
+                                            fixed-header
+                                            height="calc(100vh - 291px)"
+                                            id="log-dt"
+                                            v-model="selected"
+                                            :headers="headers"
+                                            @click:row="rowClick"
+                                            :items="items"
+                                            :options.sync="options"
+                                            :footer-props.sync="footerProps"
+                                            :loading="loading"
+                                            :server-items-length="itemsLength"
+                                            class="elevation-1"
+                                    >
+
+                                        <template v-slot:top>
+                                            <v-toolbar flat color="white">
+                                                <v-toolbar-title>{{ _('Import Log') }}</v-toolbar-title>
+                                                <v-spacer></v-spacer>
+                                            </v-toolbar>
+                                        </template>
+
+                                        <template v-slot:item.expires_on="{item}">
+                                            ${item.expires_on|localDate}
+                                        </template>
+
+                                        <template v-slot:item.created_at="{item}">
+                                            ${item.created_at|localDate}
+                                        </template>
+
+                                        <template v-slot:item.status="{item}">
+                                          <log-status :item="item"></log-status>
+                                        </template>
+
+                                        <template v-slot:item.preview="{item}">
+                                            <v-btn 
+                                                @click.stop=""
+                                                v-if="item.table=='bulletin' && item.item_id > 0"
+                                                @click="previewItem('/admin/api/bulletin/'+item.item_id)"
+                                                color="grey lighten-2" 
+                                                elevation="0" 
+                                                class="mx-2" 
+                                            >
+                                                <v-icon color="grey darken-2" left>
+                                                    mdi-file-document-multiple
+                                                </v-icon>
+                                                ${item.item_id}
+                                            </v-btn>
+
+                                            <v-btn
+                                                @click.stop=""
+                                                v-if="item.table=='actor' && item.item_id > 0"
+                                                @click="previewItem('/admin/api/actor/'+item.item_id)"
+                                                color="grey lighten-2" 
+                                                elevation="0"
+                                                class="mx-2"
+                                            >
+                                                <v-icon color="grey darken-2" left x-small>
+                                                    mdi-account-multiple
+                                                </v-icon>
+                                                ${item.item_id}
+                                            </v-btn>
+                                        </template>
+
+                                    </v-data-table>
+
+                                </v-card-text>
+                            </v-card>
+
+                            <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+
+                            <v-snackbar v-model="snackbar" class="">
+                                <div class="d-flex justify-space-between align-center">
+                                    ${snackMessage}
+
+                                    <v-btn icon fab small color="white" text @click="snackbar = false">
+                                        <v-icon>mdi-close</v-icon>
+                                    </v-btn>
+                                </div>
+                            </v-snackbar>
+
+
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-main>
+
+            {% include 'footer.html' %}
+
+            <v-overlay v-model="loading">
+            </v-overlay>
+        </v-app>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+
+
+<script src="/static/js/components/MediaCard.js"></script>
+<script src="/static/js/components/BulletinResult.js"></script>
+<script src="/static/js/components/ActorResult.js"></script>
+<script src="/static/js/components/IncidentResult.js"></script>
+<script src="/static/js/components/UniField.js"></script>
+<script src="/static/js/mixins/media-mixin.js"></script>
+<script src="/static/js/components/PdfViewer.js"></script>
+<script src="/static/js/components/GlobalMap.js"></script>
+<script src="/static/js/components/Visualization.js"></script>
+<script src="/static/js/element-resize-detector.min.js"></script>
+<script src="/static/js/force-graph.min.js"></script>
+<script src="/static/js/components/LogStatus.js"></script>
+<script src="/static/js/components/LogCard.js"></script>
+
+{% if config.GOOGLE_MAPS_API_KEY %}
+    {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+{% endif %}
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
+
+    <script>
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+
+        const app = new Vue({
+            el: "#app",
+            vuetify: vuetify,
+            delimiters: delimiters,
+            router,
+            mixins: [mediaMixin],
+            data: () => ({
+
+                translations: translations,
+
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+                drawer: drawer,
+                q: {},
+                logDialog: false,
+                logLoader: true,
+                preview: false,
+                pitem: null,
+                eitem: {},
+                mode: null,
+                sideNav: sideNav,
+                snackbar: false,
+                snackMessage: '',
+                loading: false,
+                status: '',
+                items: [],
+                itemsLength: 10,
+                selected: [],
+                options: {
+                    page: 1,
+
+                },
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
+                headers: [
+                    {text: "{{_('ID')}}", value: 'id', sortable: false},
+                    {text: "{{_('User')}}", value: 'user.name', sortable: false},
+                    {text: "{{_('Table')}}", value: 'table', sortable: false},
+                    {text: "{{_('Item')}}", value: 'preview', sortable: false},
+                    {text: "{{_('Status')}}", value: 'status', sortable: false},
+                    {text: "{{_('File')}}", value: 'file', sortable: false},
+                    {text: "{{_('Format')}}", value: 'file_format', sortable: false},
+                    {text: "{{_('Batch ID')}}", value: 'batch_id', sortable: false},
+                    {text: "{{_('Requested time')}}", value: 'created_at', sortable: false},
+                    {text: "{{_('Import time')}}", value: 'imported_at', sortable: false},
+                ],
+
+            }),
+
+        watch: {
+                logDialog: function (val) {
+                if (val === false) {
+
+                    if (this.$route.path !== '/import/log/')
+                        this.$router.push('/import/log/')
+                }
+            },
+
+            options: {
+                handler: "refresh",
+            }
+        },
+
+        filters : {
+
+            localDate: function (dt) {
+                if (dt === null || dt === '') {
+                    return '';
+                }
+                // Z tells it's a UTC time
+                const utcDate = new Date(`${dt}Z`);
+                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                return utcDate.toLocaleString('en-US', {timeZone: userTimezone});
+            }
+        },
+
+        mounted () {
+            if (this.$route.params.id) {
+                this.showLog(this.$route.params.id);
+            }
+
+            if (this.$route.query.batch_id) {
+                this.filterBatch(this.$route.query.batch_id);
+            }
+
+            this.$router.afterEach((to, from, next) => {
+
+                if (this.$route.query.batch_id) {
+                    this.filterBatch(this.$route.query.batch_id);
+                }
+
+                if (this.$route.params.id) {
+                    this.showLog(this.$route.params.id);
+                } else {
+                    this.logDialog = false;
+                }
+            })
+        },
+
+        methods: {
+
+            showSnack(message) {
+                this.snackbar = true;
+                this.snackMessage = message
+            },
+
+            searchLogs() {
+                this.loading = true;
+                let url = `/import/api/imports/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
+
+                axios.post(url, {
+                    q: this.q,
+                    options: this.options
+                }).then(response => {
+                    this.loading = false;
+                    this.itemsLength = response.data.total;
+                    this.items = response.data.items;
+                }).catch(error => {
+                    console.error(error.response?.data);
+                }).finally(() => {
+                    this.loading = false;
+                });
+            },
+
+            filterBatch(batch_id) {
+                this.q = {batch_id: batch_id};
+                this.searchLogs()
+            },
+
+            rowClick(item) {
+                path = `/import/log/${item.id}`;
+                if (this.$route.path !== path)
+                    this.$router.push(path);
+
+                this.logLoader = true;
+                this.logDialog = true;
+                axios.get(`/import/api/imports/${item.id}`).then(response => {
+                    this.eitem = response.data;
+                }).catch(error => {
+                    this.logDialog = false;
+                    this.showSnack('Oops! We couldn\'t find this item.')
+                }).finally(()=>{
+                    this.logLoader = false;
+                });
+
+            },
+
+            showLog(id) {
+                this.logLoader = true;
+                this.logDialog = true;
+                axios.get(`/import/api/imports/${id}`).then(response => {
+                    this.eitem = response.data;
+                }).catch(error => {
+                    this.logDialog = false;
+                    this.showSnack('Oops! We couldn\'t find this item.')
+                }).finally(()=>{
+                    this.logLoader = false;
+                });
+            },
+
+            editAllowed() {
+                    return false;
+            },
+
+            previewItem(endpoint) {
+                axios.get(endpoint).then(res => {
+                    this.pitem = res.data;
+                    this.preview = true;
+                })
+            },
+
+            close() {
+
+                this.logDialog = false;
+                setTimeout(() => {
+                    this.eitem = {};
+                }, 300);
+
+            },
+
+            refresh() {
+                this.searchLogs();
+            }
+        }
+    });
+    </script>
+{% endblock %}

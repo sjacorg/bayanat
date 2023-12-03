@@ -144,7 +144,7 @@ Vue.component('geo-locations', {
                 <v-card elevation="0">
                   <v-card-text>
                   <v-chip small class="primary">{{i+1}}</v-chip>
-                    <v-chip small v-if="loc.type" class="grey lighten-3">{{ loc.type.title }}</v-chip>
+                    <v-chip small v-if="loc.geoType" class="grey lighten-3">{{ loc.geoType.title }}</v-chip>
                     <v-chip small v-if="loc.main" class="grey lighten-3">{{translations.mainIncident_}}</v-chip>
                     <h4 class="pa-3 mb-2caption black--text">{{ loc.title }}</h4>
                     <div class="heading black--text"> <v-icon small left >mdi-map-marker</v-icon>
@@ -211,10 +211,9 @@ Vue.component('geo-locations', {
               <search-field
               :label="translations.type_"
               api="/admin/api/geolocationtypes"
-              v-model="e.type"
+              v-model="e.geoType"
               item-text="title"
               item-value="id"
-              :return-object="false"
               >
                 
               </search-field>

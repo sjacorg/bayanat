@@ -14,6 +14,7 @@
                                 </v-card-title>
 
                                 <v-card-text>
+
                                     <v-data-table
                                             height="calc(100vh - 335px)"
                                             fixed-header
@@ -66,13 +67,12 @@
                                                                                         :close-on-content-click="false">
                                                                                     <template v-slot:activator="{ on }">
                                                                                         <div :style="swatchStyle"
-                                                                                             v-on="on"/>
+                                                                                             v-on="on"></div>
                                                                                     </template>
                                                                                     <v-card>
                                                                                         <v-card-text class="pa-0">
                                                                                             <v-color-picker
-                                                                                                    v-model="editedItem.color"
-                                                                                                    />
+                                                                                                    v-model="editedItem.color"></v-color-picker>
                                                                                         </v-card-text>
                                                                                     </v-card>
                                                                                 </v-menu>
@@ -172,7 +172,7 @@
                                             <v-chip v-if="item.color" dark small :color="item.color"></v-chip>
                                         </template>
                                         <template v-slot:item.action="{ item }">
-                                            <v-template v-if="!['Admin','Mod','DA'].includes(item.name)">
+                                            <template v-if="!['Admin','Mod','DA'].includes(item.name)">
                                             <v-icon small class="mr-2" @click="editItem(item)">
                                                 mdi-pencil
                                             </v-icon>

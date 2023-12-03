@@ -4,6 +4,10 @@ from enferno.extensions import db
 from enferno.utils.date_helper import DateHelper
 
 
+class DatabaseException(Exception):
+    pass
+
+
 class BaseMixin(object):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
@@ -76,22 +80,28 @@ class BaseMixin(object):
             'restricted': True
         }
 
-    def save(self):
+    def save(self, raise_exception=False):
         try:
             db.session.add(self)
             db.session.commit()
             return self
         except Exception as e:
-            print(str(e))
             db.session.rollback()
-            return False
+            # Backwards compatibility
+            if raise_exception:
+                raise DatabaseException(f"Error saving {self.__class__.__name__}: {e}")
+            else:
+                return False
 
-    def delete(self):
+    def delete(self, raise_exception=False):
         try:
             db.session.delete(self)
             db.session.commit()
             return True
         except Exception as e:
-            print(str(e))
             db.session.rollback()
-            return False
+            # Backwards compatibility
+            if raise_exception:
+                raise DatabaseException(f"Error deleting {self.__class__.__name__}: {e}")
+            else:
+                return False

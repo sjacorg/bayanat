@@ -1,10 +1,27 @@
 import pandas as pd
 
 from enferno.admin.models import ClaimedViolation, Eventtype, LocationAdminLevel, LocationType, PotentialViolation, \
-    AtobInfo, BtobInfo, AtoaInfo, ItobInfo, ItoaInfo, ItoiInfo, Country, Ethnography, MediaCategory, GeoLocationType
+    AtobInfo, BtobInfo, AtoaInfo, ItobInfo, ItoaInfo, ItoiInfo, Country, Ethnography, MediaCategory, GeoLocationType, WorkflowStatus
 from enferno.extensions import db
+from enferno.admin.models import Media, ClaimedViolation, Eventtype, LocationAdminLevel, LocationType, PotentialViolation
+from enferno.data_import.models import DataImport
 from enferno.user.models import Role
 
+from sqlalchemy import and_, or_
+
+def media_check_duplicates(etag, data_import_id=None):
+    exists = False
+    # checking for existing media or pending or processing imports
+    exists = Media.query.filter(Media.etag == etag).first() or \
+        DataImport.query.filter(and_(
+            DataImport.id != data_import_id,
+            DataImport.file_hash == etag, 
+            or_(
+                DataImport.status == 'Pending',
+                DataImport.status == 'Processing'
+                )
+            )).first()
+    return exists
 
 def generate_user_roles():
     '''
@@ -34,6 +51,19 @@ def generate_user_roles():
         role.description = 'System Role'
         role.save()
 
+def generate_workflow_statues():
+    '''
+    Generates system workflow statues.
+    '''
+    if not WorkflowStatus.query.all():
+        statuses = ["Machine Created", "Human Created", "Updated", "Peer Reviewed", "Finalized", 
+                    "Senior Reviewed", "Machine Updated", "Assigned", "Second Peer Review", 
+                    "Revisited", "Senior Updated", "Peer Review Assigned"]
+        
+        for status in statuses:
+            db.session.add(WorkflowStatus(title=status, title_tr=status))
+        db.session.commit()
+
 
 def import_default_data():
     '''
@@ -43,7 +73,7 @@ def import_default_data():
              (PotentialViolation, 'enferno/data/potential_violation.csv'),
              (ClaimedViolation, 'enferno/data/claimed_violation.csv'),
              (AtobInfo, 'enferno/data/atob_info.csv'),
-             (BtobInfo, 'enferno/data/atob_info.csv'),
+             (BtobInfo, 'enferno/data/btob_info.csv'),
              (AtoaInfo, 'enferno/data/atoa_info.csv'),
              (ItobInfo, 'enferno/data/itob_info.csv'),
              (ItoaInfo, 'enferno/data/itoa_info.csv'),
@@ -96,3 +126,12 @@ def import_csv_to_table(model, csv_file_path):
 
     db.session.commit()
     print(f"Data imported into {model.__name__}.")
+
+    # reset id sequence counter
+    table = model.__table__
+    query = db.select([db.func.max(table.c.id) + 1])
+    max_id = db.session.execute(query).scalar() 
+    db.session.execute(
+        "alter sequence source_id_seq restart with :m", {'m': max_id})
+    db.session.commit()
+    print(f"{model.__name__} ID counter updated.")

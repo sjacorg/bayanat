@@ -880,7 +880,26 @@ class SearchUtils:
 
     def location_query(self, q):
         query = []
+
+        # restrict parent search by admin level
+        lvl = q.get('lvl')
+        if lvl is not None:
+            # this can throw exception
+            try:
+                lvl = int(lvl)
+            except ValueError:
+                # Handle the error or return, as 'lvl' should be an integer
+                return None
+
+            # Directly check if 'lvl' exists in the database and get the object (one query)
+            admin_level = LocationAdminLevel.query.filter(LocationAdminLevel.code == lvl).first()
+
+            if admin_level:
+                # If the specific location type exists, add it to the query
+                query.append(Location.admin_level == admin_level)
+
         
+
         if (title := q.get('title')):
             words = title.split(' ')
             # search for bilingual title columns

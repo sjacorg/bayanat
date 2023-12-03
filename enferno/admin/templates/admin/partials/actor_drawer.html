@@ -19,4 +19,5 @@
       <actor-card :i18n="translations" v-if="actorDrawer" :show-edit="true" @edit="editItem" :active="actorDrawer" v-if="actor" :log="true" :diff="true" @thumb-click="viewImage" @close="actorDrawer=false" :actor="actor"></actor-card>
       <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
     <pdf-viewer ref="pdfViewer"></pdf-viewer>
+    <visualization ref="viz" :i18n="translations"></visualization>
     </v-navigation-drawer>  

@@ -12,6 +12,59 @@ Vue.component("actor-card", {
     },
 
     methods: {
+        updateMediaState() {
+            this.mediasReady += 1;
+            if (
+                this.mediasReady == this.actor.medias.length &&
+                this.mediasReady > 0
+            ) {
+                console.log("ready")
+                this.prepareImagesForPhotoswipe().then(res=>{
+                    this.initLightbox();
+                })
+            }
+        },
+
+        prepareImagesForPhotoswipe() {
+
+            // Get the <a> tags from the image gallery
+            const imagesList = document.querySelectorAll("#lightbox a");
+            const promisesList = [];
+
+            imagesList.forEach((element) => {
+                const promise = new Promise(function (resolve) {
+                    let image = new Image();
+                    image.src = element.getAttribute('href');
+                    image.onload = () => {
+                        element.dataset.pswpWidth = image.width;
+                        element.dataset.pswpHeight = image.height;
+                        resolve(); // Resolve the promise only if the image has been loaded
+                    }
+                    image.onerror = () => {
+                        resolve();
+                    };
+                });
+                promisesList.push(promise);
+            });
+
+            // Use .then() to handle the promise resolution
+            return Promise.all(promisesList);
+        },
+
+
+        initLightbox() {
+            this.lightbox = new PhotoSwipeLightbox({
+                gallery: "#lightbox",
+                children: "a",
+                pswpModule: PhotoSwipe,
+                wheelToZoom: true,
+                arrowKeys: true,
+            });
+
+
+            this.lightbox.init();
+        },
+
         getRelatedValues(item, actor) {
             const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
             return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
@@ -140,6 +193,9 @@ Vue.component("actor-card", {
             show: false,
             hloading: false,
             mapLocations: [],
+
+            lightbox: null,
+            mediasReady: 0,
 
             // pagers for related entities
             bulletinPage: 1,
@@ -297,11 +353,11 @@ Vue.component("actor-card", {
         </v-card>
         <v-card-text>
           <div class="px-1 mb-3 title black--text">{{ i18n.media }}</div>
-          <v-layout wrap>
-            <v-flex class="ma-2" md6 v-for="media in actor.medias">
-              <media-card v-if="active" @thumb-click="viewThumb" @video-click="viewVideo" :media="media"></media-card>
-            </v-flex>
-          </v-layout>
+          <div class="d-flex flex-wrap" id="lightbox">
+            <div class="pa-1 " style="width: 50%" v-for="media in actor.medias" :key="media.id">
+              <media-card @ready="updateMediaState" v-if="active" @thumb-click="viewThumb" @video-click="viewVideo" :media="media"></media-card>
+            </div>
+          </div>
         </v-card-text>
       </v-card>
 

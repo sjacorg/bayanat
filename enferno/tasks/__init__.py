@@ -17,9 +17,11 @@ from enferno.extensions import db, rds
 from enferno.settings import Config as cfg
 from enferno.user.models import Role, User
 from enferno.utils.csv_utils import convert_list_attributes
-from enferno.utils.data_import import DataImport
+from enferno.data_import.models import DataImport
+from enferno.data_import.utils.media_import import MediaImport
+from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.utils.pdf_utils import PDFUtil
-from enferno.utils.sheet_utils import SheetUtils
+
 
 
 
@@ -375,10 +377,14 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
 
 
 @celery.task(rate_limit=10)
-def etl_process_file(batch_id, file, meta, user_id, log):
-    di = DataImport(batch_id, meta, user_id=user_id, log=log)
-    di.process(file)
-    return 'done'
+def etl_process_file(batch_id, file, meta, user_id, data_import_id):
+    try:
+        di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
+        di.process(file)
+        return 'done'
+    except Exception as e:
+        log = DataImport.query.get(data_import_id)
+        log.fail(e)
 
 # this will publish a message to redis and will be captured by the front-end client
 def update_stats():
@@ -428,11 +434,10 @@ def dedup_cron():
 
     update_stats()
 
-
 @celery.task
-def process_sheet(filepath, map, target, batch_id, vmap, sheet, actorConfig, lang, roles=[]):
-    su = SheetUtils(filepath, actorConfig, lang)
-    su.import_sheet(map, target, batch_id, vmap, sheet, roles)
+def process_row(filepath, sheet, row_id, data_import_id, map, batch_id, vmap, actor_config, lang, roles=[]):
+    si = SheetImport(filepath, sheet, row_id, data_import_id, map, batch_id, vmap, roles, config=actor_config, lang=lang)
+    si.import_row()
 
 @celery.task
 def reload_app():

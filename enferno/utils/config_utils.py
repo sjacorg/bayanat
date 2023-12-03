@@ -12,6 +12,12 @@ class ConfigManager:
         # timedelta type
         'SECURITY_FRESHNESS': 30,
         'SECURITY_FRESHNESS_GRACE_PERIOD': 30,
+        'SECURITY_TWO_FACTOR_REQUIRED': False,
+        'SECURITY_PASSWORD_LENGTH_MIN': 10,
+
+        'SECURITY_ZXCVBN_MINIMUM_SCORE': 3,
+
+        'SECURITY_WEBAUTHN': False,
 
         'RECAPTCHA_ENABLED': False,
         'RECAPTCHA_PUBLIC_KEY': '',
@@ -76,7 +82,10 @@ class ConfigManager:
         # timedelta type
         'SECURITY_FRESHNESS': 'Security Freshness',
         'SECURITY_FRESHNESS_GRACE_PERIOD': 'Security Freshness Grace Period',
-
+        'SECURITY_TWO_FACTOR_REQUIRED': 'Enforce 2FA User Enrollment',
+        'SECURITY_PASSWORD_LENGTH_MIN': 'Minimum Password Length',
+        'SECURITY_ZXCVBN_MINIMUM_SCORE': 'Password Strength Score',
+        'SECURITY_WEBAUTHN': '2FA with Hardware/FIDO Device',
         'RECAPTCHA_ENABLED': 'Recaptcha Enabled',
         'RECAPTCHA_PUBLIC_KEY': 'Recaptcha Public Key',
         'RECAPTCHA_PRIVATE_KEY': 'Recaptcha Private Key',
@@ -157,6 +166,10 @@ class ConfigManager:
             # timedelta type
             'SECURITY_FRESHNESS': int(cfg.SECURITY_FRESHNESS.total_seconds())/60,
             'SECURITY_FRESHNESS_GRACE_PERIOD': int(cfg.SECURITY_FRESHNESS_GRACE_PERIOD.total_seconds())/60,
+            'SECURITY_TWO_FACTOR_REQUIRED': cfg.SECURITY_TWO_FACTOR_REQUIRED,
+            'SECURITY_PASSWORD_LENGTH_MIN': cfg.SECURITY_PASSWORD_LENGTH_MIN,
+            'SECURITY_ZXCVBN_MINIMUM_SCORE': cfg.SECURITY_ZXCVBN_MINIMUM_SCORE,
+            'SECURITY_WEBAUTHN': cfg.SECURITY_WEBAUTHN,
 
             'RECAPTCHA_ENABLED': cfg.RECAPTCHA_ENABLED,
             'RECAPTCHA_PUBLIC_KEY': cfg.RECAPTCHA_PUBLIC_KEY,

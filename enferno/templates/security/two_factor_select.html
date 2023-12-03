@@ -1,0 +1,66 @@
+{% extends 'login-layout.html' %}
+{% block navbar %}{% endblock %}
+{% from "security/_macros.html" import prop_next, render_field_with_errors, render_field %}
+{% block css %}
+
+    <style>
+        .tfa-select ul {
+            list-style: none;
+            padding: 0;
+            line-height: 2;
+            margin: 10px 0;
+        }
+
+        .tfa-select li {
+            display: flex;
+            gap: 10px;
+        }
+
+    </style>
+{% endblock %}
+{% block content %}
+    {% include "security/_messages.html" %}
+    <form action="{{ url_for_security('tf_select') }}{{ prop_next() }}" method="post" name="tf_select">
+        <v-card style="width:min(550px, 100%)" class="tfa-select ma-auto mt-12">
+            <v-toolbar color="primary" dark text>
+                <v-toolbar-title>{{ _fsdomain('Select Two Factor Method') }}</v-toolbar-title>
+                <v-spacer></v-spacer>
+            </v-toolbar>
+
+            <v-card-title> {{ _('Available Second Factor Methods:') }}</v-card-title>
+
+            <v-card-text>
+
+                {{ two_factor_select_form.hidden_tag() }}
+
+
+                <v-radio-group v-model="selectedOption" name="which">
+                    <v-radio label="Authenticator" value="authenticator"></v-radio>
+                    <v-radio label="Security/Biometric Device" value="webauthn"></v-radio>
+                </v-radio-group>
+
+            </v-card-text>
+            <v-card-actions class="pa-4 justify-end">
+                <v-btn type="submit" name="submit" color="primary">Submit</v-btn>
+            </v-card-actions>
+        </v-card>
+    </form>
+
+
+
+{% endblock content %}
+
+
+{% block js %}
+    <script>
+        const app = new Vue({
+            vuetify: vuetify,
+            el: '#app',
+            data: {
+                activeTab: null,
+                selectedOption : ''
+            }
+        })
+    </script>
+{% endblock %}
+

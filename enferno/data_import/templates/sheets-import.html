@@ -762,60 +762,19 @@
                                     </v-stepper-content>
 
                                     <v-stepper-content step="4">
-                                        <v-card class="pa-4">
-
-                                            <template v-if="statusTimer">
-                                                <v-progress-circular class="mx-auto my-4" indeterminate
-                                                                     color="primary"></v-progress-circular>
-                                            </template>
-
-                                            <v-card-title v-if="batchId">
-                                                {{ _('Batch ID:') }} ${batchId}
-                                            </v-card-title>
-
-                                            <v-virtual-scroll
-                                                    :items="log"
-                                                    height="450"
-                                                    item-height="54"
-                                            >
-
-                                                <template v-slot:default="{ item }">
-                                                    <v-list-item>
-
-                                                        <v-list-item-content>
-                                                            <v-list-item-title>
-
-                                                                <v-chip color="white lighten-4 mx-1">${item.name}
-                                                                </v-chip>
-                                                                <v-chip color="white lighten-4 mx-1">${item.status}
-                                                                </v-chip>
-                                                                <v-chip v-if="item.meta"
-                                                                        :href="'/admin/actors/'+item.meta.id"
-                                                                        target="_blank" color="white lighten-4 mx-3">
-                                                                    Actor ${item.meta.id}
-                                                                    <v-icon
-                                                                            color="orange darken-4"
-                                                                            right
-                                                                            small
-                                                                    >
-                                                                        mdi-open-in-new
-                                                                    </v-icon>
-                                                                </v-chip>
-
-                                                            </v-list-item-title>
-                                                        </v-list-item-content>
-
-
-                                                    </v-list-item>
-                                                    <v-divider></v-divider>
-                                                </template>
-
-
-                                            </v-virtual-scroll>
-
-
+                                        <v-card class="pa-5">
+                                            <v-card-text>
+                                                ${ status }
+                                            </v-card-text>
+                                            <v-btn 
+                                                v-if="batch_id" 
+                                                color="primary" 
+                                                dark 
+                                                class="ma-2"
+                                                :href="'/import/log/?batch_id='+batch_id">
+                                                    {{ _('Check Import Progress') }}
+                                            </v-btn>
                                         </v-card>
-
                                     </v-stepper-content>
                                 </v-stepper-items>
                             </v-stepper>
@@ -868,10 +827,11 @@
                 snackMessage: '',
                 loading: false,
                 status: '',
+                batch_id: '',
                 firstAction: 0,
 
                 dzOpts: {
-                    url: '/admin/api/csv/upload',
+                    url: '/import/api/csv/upload',
                     // accept any file
                     acceptedFiles: '.csv,.xls,.xlsx',
                     addRemoveLinks: true,
@@ -881,7 +841,7 @@
 
                 },
                 dzMoreOpts : {
-                    url: '/admin/api/csv/upload',
+                    url: '/import/api/csv/upload',
                     // accept any file
                     acceptedFiles: '.csv,.xls,.xlsx',
                     addRemoveLinks: true,
@@ -921,16 +881,12 @@
 
                 backup: [],
 
-                batchId: null,
-
                 mapName: 'New Map',
                 mapid: null,
                 selectedMap: null,
 
 
                 step: 1,
-
-                statusTimer: null,
 
                 sheets: [],
                 selectedSheet: null,
@@ -1041,7 +997,7 @@
 
                         if (ext === 'csv') {
 
-                            axios.post('/admin/api/csv/analyze', {file: file}).then(res => {
+                            axios.post('/import/api/csv/analyze', {file: file}).then(res => {
                                 this.structure = res.data;
                                 this.fields = this.structure.columns;
                                 this.backup = this.fields.slice();
@@ -1058,7 +1014,7 @@
                                 }
                             );
                         } else if (ext === 'xls' || ext === 'xlsx') {
-                            axios.post('/admin/api/xls/sheets', {file: file}).then(res => {
+                            axios.post('/import/api/xls/sheets', {file: file}).then(res => {
                                 this.sheets = res.data;
                             }).catch(
                                 err => {
@@ -1092,7 +1048,7 @@
 
 
                 sheetSelected() {
-                    axios.post('/admin/api/xls/analyze', {
+                    axios.post('/import/api/xls/analyze', {
                         file: this.files[0],
                         sheet: this.selectedSheet
                     }).then(res => {
@@ -1159,17 +1115,13 @@
 
 
                 process() {
-
-                    this.batchId = Date.now()
-
-
                     const files = this.allFiles.map(x => x.filename);
 
                     // add countries to actor config
                     let config = translations;
 
 
-                    axios.post('/admin/api/process-sheet', {
+                    axios.post('/import/api/process-sheet', {
                         map: this.map,
                         vmap: this.vmap,
                         sheet: this.selectedSheet,
@@ -1177,14 +1129,15 @@
                         target: 'actor',
                         lang: this.lang,
                         files: files,
-                        batch: this.batchId,
                         actorConfig: config
                     }).then(
                         res => {
-                            this.showSnack(res.data);
+                            this.status = "{{ _('Rows from file were added to queue successfully and will be imported in turn.') }}"
+                            this.batch_id = res.data
                         }
                     ).catch(err => {
                         console.log(err.response.data);
+                        this.status = "{{ _('Error importing rows. Check logs for more information.') }}"
                     }).finally(
                         () => {
 
@@ -1207,7 +1160,7 @@
 
                 loadMaps() {
 
-                    axios.get('/admin/api/mappings/').then(
+                    axios.get('/import/api/mappings/').then(
                         res => {
                             this.maps = res.data;
                         }
@@ -1236,31 +1189,9 @@
 
                 },
 
-                checkStatus() {
-                    axios.get(`/admin/api/logs?batch=${this.batchId}`).then(res => {
-
-
-                        if (this.log.length === res.data.length) {
-                            clearInterval(this.statusTimer);
-                            this.statusTimer = null;
-                            this.showSnack('Import complete !')
-                            return;
-                        }
-                        this.log = res.data;
-
-                    }).catch(err => {
-                        console.log(err.response.data);
-                    }).finally(() => {
-
-                    })
-
-                },
-
                 toStepFour() {
                     this.step = 4;
                     this.process();
-                    this.statusTimer = setInterval(this.checkStatus, 3000);
-
                 },
 
                 selectMap(m) {
@@ -1279,7 +1210,7 @@
 
                     if (this.mapid) {
                         // update existing map
-                        axios.put(`/admin/api/mapping/${this.mapid}`, {
+                        axios.put(`/import/api/mapping/${this.mapid}`, {
                             name: this.mapName,
                             data:
                                 {
@@ -1306,7 +1237,7 @@
 
                 createMap() {
                     //create new
-                    axios.post('/admin/api/mapping/', {
+                    axios.post('/import/api/mapping/', {
                         name: this.mapName,
                         data: {
                             map: this.map,
@@ -1347,7 +1278,7 @@
                         const ext = this.files[0].fileExtension;
                         if (ext == 'csv') {
 
-                            axios.post('/admin/api/csv/analyze', {file: JSON.parse(this.files[0].serverId)}).then(res => {
+                            axios.post('/import/api/csv/analyze', {file: JSON.parse(this.files[0].serverId)}).then(res => {
                                 this.structure = res.data;
                                 this.fields = this.structure.columns;
                                 this.backup = this.fields.slice();
@@ -1364,7 +1295,7 @@
                                 }
                             );
                         } else if (ext == 'xls' || ext == 'xlsx') {
-                            axios.post('/admin/api/xls/sheets', {file: JSON.parse(this.files[0].serverId)}).then(res => {
+                            axios.post('/import/api/xls/sheets', {file: JSON.parse(this.files[0].serverId)}).then(res => {
                                 this.sheets = res.data;
                             }).catch(
                                 err => {

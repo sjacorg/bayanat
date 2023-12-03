@@ -300,18 +300,22 @@ class Label(db.Model, BaseMixin):
         self.for_actor = json.get("for_actor", False)
         self.for_incident = json.get("for_incident", False)
         self.for_offline = json.get("for_offline", False)
-        parent = json.get('parent')
 
-        # reject associating label with itself or circular relations
-        if parent and parent.get('id'):
-            p_label = Label.query.get(parent.get('id'))
-
-            if p_label.id != self.id and p_label.parent_label_id != self.id:
-                self.parent_label_id = p_label.id
+        parent_info = json.get('parent')
+        if parent_info and 'id' in parent_info:
+            parent_id = parent_info['id']
+            if parent_id != self.id:
+                p_label = Label.query.get(parent_id)
+                # Check for circular relations
+                if p_label and p_label.id != self.id and (not p_label.parent or p_label.parent.id != self.id):
+                    self.parent_label_id = p_label.id
+                else:
+                    self.parent_label_id = None
             else:
                 self.parent_label_id = None
         else:
             self.parent_label_id = None
+
         return self
 
     # import csv data into db
@@ -580,7 +584,8 @@ class Media(db.Model, BaseMixin):
 
     @staticmethod
     def validate_sheet_extension(filename):
-        return pathlib.Path(filename).suffix in cfg.SHEETS_ALLOWED_EXTENSIONS
+        extension = pathlib.Path(filename).suffix.lstrip('.')
+        return extension in cfg.SHEETS_ALLOWED_EXTENSIONS
 
 
 # Structure is copied over from previous system
@@ -914,7 +919,7 @@ class GeoLocation(db.Model, BaseMixin):
 
     def from_json(self, jsn):
         self.title = jsn.get('title')
-        type = jsn.get('type')
+        type = jsn.get('geoType')
         if type and (id := type.get('id')):
             self.type_id = id
         self.main = jsn.get('main')
@@ -4251,31 +4256,6 @@ class Settings(db.Model, BaseMixin):
     """ User Specific Settings. (SQL Alchemy model)"""
     id = db.Column(db.Integer, primary_key=True)
     darkmode = db.Column(db.Boolean, default=False)
-    api_key = db.Column(db.String)
-
-    # can be used to generate custom api keys for different integratinos
-    @staticmethod
-    def get_api_key():
-        s = Settings.query.first()
-        if s and s.api_key:
-            return s.api_key
-        else:
-            return ''
-
-
-class APIKey(db.Model, BaseMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String, nullable=False)
-    access_type = db.Column(db.String, default='READ')
-    last_used_at = db.Column(db.DateTime)
-
-    @staticmethod
-    def get_global_key():
-        global_key = APIKey.query.first()
-        if global_key:
-            return global_key.key
-        else:
-            return ''
 
 
 class Query(db.Model, BaseMixin):
@@ -4307,70 +4287,6 @@ class Query(db.Model, BaseMixin):
         return json.dumps(self.to_dict())
 
 
-class Mapping(db.Model, BaseMixin):
-    """
-    SQL Alchemy model for sheet import mappings
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship("User", backref="mappings", foreign_keys=[user_id])
-    data = db.Column(JSON)
-
-    # serialize data
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'data': self.data,
-        }
-
-    def to_json(self):
-        return json.dumps(self.to_dict())
-
-
-class Log(db.Model, BaseMixin):
-    """
-    SQL Alchemy model for log table
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    batch_id = db.Column(db.String, index=True)
-    name = db.Column(db.String)
-    subject = db.Column(db.String)
-    type = db.Column(db.String)
-    tag = db.Column(db.String, index=True)
-    status = db.Column(db.String, index=True)
-    meta = db.Column(JSON)
-
-    # helper static method to create log entries
-    @staticmethod
-    def create(name, subject, type, tag, status, meta=None):
-        try:
-            log = Log()
-            log.name = name
-            log.subject = subject
-            log.type = type
-            log.tag = tag
-            log.status = status
-            log.meta = meta
-            log.save()
-
-        except Exception as e:
-            print('Error creating log entry:  {}'.format(e))
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'tag': self.tag,
-            'status': self.status,
-            'meta': self.meta
-        }
-
-    def __repr__(self):
-        return '<{} - {}>'.format(self.id, self.name)
-
-
 class Country(db.Model, BaseMixin):
     """
     SQL Alchemy model for countries
@@ -4394,6 +4310,15 @@ class Country(db.Model, BaseMixin):
             'created_at': DateHelper.serialize_datetime(self.created_at),
             'updated_at': DateHelper.serialize_datetime(self.updated_at)
         }
+
+    @staticmethod
+    def find_by_title(title):
+        country = Country.query.filter(Country.title_tr.ilike(title)).first()
+        if country:
+            return country
+        else:
+            return Country.query.filter(Country.title.ilike(title)).first()
+
 
 
 class Ethnography(db.Model, BaseMixin):
@@ -4419,6 +4344,14 @@ class Ethnography(db.Model, BaseMixin):
             'created_at': DateHelper.serialize_datetime(self.created_at),
             'updated_at': DateHelper.serialize_datetime(self.updated_at)
         }
+
+    @staticmethod
+    def find_by_title(title):
+        ethnography = Ethnography.query.filter(Ethnography.title_tr.ilike(title)).first()
+        if ethnography:
+            return ethnography
+        else:
+            return Ethnography.query.filter(Ethnography.title.ilike(title)).first()
 
 
 class AppConfig(db.Model, BaseMixin):

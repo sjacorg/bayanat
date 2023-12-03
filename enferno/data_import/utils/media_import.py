@@ -6,15 +6,18 @@ from PIL import Image
 from pdf2image import convert_from_path
 
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
+from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
 from enferno.settings import Config as cfg
 import subprocess
 
+from enferno.utils.base import DatabaseException
+
+
 def now():
     return str(arrow.utcnow())
-
 
 if cfg.OCR_ENABLED:
     from pytesseract import image_to_string, pytesseract
@@ -22,19 +25,17 @@ if cfg.OCR_ENABLED:
         pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
         tesseract_langs = '+'.join(pytesseract.get_languages(config=''))
     except Exception as e:
-        print(e)
-        print("Tesseract system package is missing or Bayanat's OCR settings are not set properly.")
+        print(f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}")
 
-class DataImport():
+class MediaImport():
 
     # file: Filestorage class
-    def __init__(self, batch_id, meta, user_id, log):
+    def __init__(self, batch_id, meta, user_id, data_import_id):
 
         self.meta = meta
         self.batch_id = batch_id
         self.user_id = user_id
-        self.summary = ''
-        self.log = open('logs/' + log, 'a')
+        self.data_import = DataImport.query.get(data_import_id)
 
     def upload(self, filepath, target):
         """
@@ -46,7 +47,15 @@ class DataImport():
         """
 
         if cfg.FILESYSTEM_LOCAL:
-            shutil.copy(filepath, target)
+            try:
+                shutil.copy(filepath, target)
+                self.data_import.add_to_log(f"File saved as {target}.")
+                return True
+            except Exception as e:
+                self.data_import.add_to_log('Failed to save file in local filesystem.')
+                self.data_import.add_to_log(str(e))
+                return False
+
         elif cfg.S3_BUCKET:
             target = os.path.basename(target)
             s3 = boto3.resource('s3', aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
@@ -54,10 +63,15 @@ class DataImport():
                                 region_name=cfg.AWS_REGION)
             try:
                 s3.Bucket(cfg.S3_BUCKET).put_object(Key=target, Body=open(filepath, 'rb'))
+                self.data_import.add_to_log(f"File uploaded to S3 bucket.")
+                return True
             except Exception as e:
-                print(e)
+                self.data_import.add_to_log('Failed to upload to S3 bucket.')
+                self.data_import.add_to_log(str(e))
+                return False
         else:
-            raise RuntimeError('Filesystem is not configured properly!')
+            self.data_import.add_to_log('Filesystem is not configured properly')
+            return False
 
     def get_duration(self, filepath):
         """
@@ -77,8 +91,8 @@ class DataImport():
             duration = subprocess.check_output(cmd, shell=False).strip().decode('utf-8')
             return duration
         except Exception as e:
-            print('Failed to get video duration')
-            print(e)
+            self.data_import.add_to_log('Failed to get video duration')
+            self.data_import.add_to_log(str(e))
             return None
 
     def get_etag(self, filepath):
@@ -115,7 +129,8 @@ class DataImport():
 
             return '<p>\n</p>'.join(text_content)
         except Exception as e:
-            print(e)
+            self.data_import.add_to_log('Failed to parse DOCx file.')
+            self.data_import.add_to_log(str(e))
             return None
 
     def parse_pdf(self, filepath, attempt_ocr=False):
@@ -149,7 +164,8 @@ class DataImport():
             return '<p>\n</p>'.join(text_content)
 
         except Exception as e:
-            print(e)
+            self.data_import.add_to_log('Failed to parse PDF file.')
+            self.data_import.add_to_log(str(e))
             return None
 
     def parse_pic(self, filepath):
@@ -167,7 +183,8 @@ class DataImport():
             text_content = image_to_string(filepath, lang=tesseract_langs)
             return text_content
         except Exception as e:
-            print(e)
+            self.data_import.add_to_log('Failed to parse image file using Tesseract.')
+            self.data_import.add_to_log(str(e))
             return None
 
     def optimize(self, old_filename, old_path):
@@ -196,8 +213,8 @@ class DataImport():
             check = subprocess.check_output(cmd, shell=False).strip().decode('utf-8')
 
         except Exception as e:
-            print('Failed to get original video codec, optimizing anyway')
-            print(e)
+            self.data_import.add_to_log('Failed to get original video codec, optimizing anyway.')
+            self.data_import.add_to_log(str(e))
 
         accepted_codecs = 'h264' in check or 'theora' in check or 'vp8' in check
         accepted_formats = 'mp4' in ext or 'ogg' in ext or 'webm' in ext
@@ -214,41 +231,30 @@ class DataImport():
                 subprocess.call(command, shell=False)
 
                 new_etag = self.get_etag(new_filepath)
+                self.data_import.add_to_log(f'Optimized version saved at {new_filepath}.')
                 return True, new_filename, new_filepath, new_etag
 
             except Exception as e:
-                print(f'An exception occurred while transcoding file {e}')
+                self.data_import.add_to_log('An exception occurred while transcoding file.')
+                self.data_import.add_to_log(str(e))
                 return False, None, None, None
         else:
             return False, None, None, None
 
     def process(self, file):
         # handle file uploads based on mode of ETL
-        print(file)
         duration = None
         optimized = False
         text_content = None
-        print(self.meta.get('mode'))
+        self.data_import.processing()
 
         # Server-side mode
         if self.meta.get('mode') == 2:
 
-            self.summary += '------------------------------------------------------------------------ \n'
-            self.summary += now() + 'file: {}'.format(file.get('filename')) + '\n'
+            self.data_import.add_to_log(f"Processing {file.get('filename')}...")
 
             # check here for duplicate to skip unnecessary code execution
             old_path = file.get('path')
-            # get md5 hash directly from the source file (before copying it)
-            etag = self.get_etag(old_path)
-
-            # check if original file exists in db
-            exists = Media.query.filter(Media.etag == etag).first()
-            if exists:
-                self.summary += now() + ' File already exists:  {} \n'.format(old_path)
-                print('File already exists: {} \n'.format(old_path))
-                self.summary += '------------------------------------------------------------------------\n\n'
-                self.log.write(self.summary)
-                return
 
             # server side mode, need to copy files and generate etags
             old_filename = file.get('filename')
@@ -258,12 +264,16 @@ class DataImport():
             filepath = (Media.media_dir / filename).as_posix()
 
             # copy file to media dir or s3 bucket
-            self.upload(old_path, filepath)
-            self.summary += now() + f'File saved as {filename}'
+            if not self.upload(old_path, filepath):
+                self.data_import.add_to_log("Unable to proceed without media file. Terminating.")
+                self.data_import.fail()
+                return
+
             info = exiflib.get_json(old_path)[0]
 
             # check file extension
             file_ext = ext[1:].lower()
+            self.data_import.add_format(file_ext)
 
             # get duration and optimize if video
             if file_ext in cfg.ETL_VID_EXT:
@@ -271,8 +281,6 @@ class DataImport():
 
                 if self.meta.get('optimize'):
                     optimized, new_filename, new_filepath, new_etag = self.optimize(filename, filepath)
-                    if optimized:
-                        self.summary += now() + f'Optimized version saved as {new_filename}\n'
 
             # ocr pictures
             elif cfg.OCR_ENABLED and self.meta.get('ocr') and file_ext in cfg.OCR_EXT:
@@ -295,7 +303,8 @@ class DataImport():
                     text_content = parsed_text
 
         elif self.meta.get('mode') == 1:
-            self.summary += now() + '------ Processing file: {} ------'.format(file.get('filename')) + '\n'
+
+            self.data_import.add_to_log(f"Processing {file.get('filename')}...")
 
             # we already have the file and the etag
             filename = file.get('filename')
@@ -307,26 +316,8 @@ class DataImport():
             if not cfg.FILESYSTEM_LOCAL:
                 self.upload(filepath, os.path.basename(filepath))
 
-            etag = file.get('etag')
-
-            # check here for duplicate to skip unnecessary code execution
-            # this is necessary even though upload function checks for duplicates
-            # as two identical files can be uploaded at the same import attempt 
-            exists = Media.query.filter(Media.etag == etag).first()
-            if exists:
-                self.summary += now() + 'File already exists: {} \n'.format(filepath)
-                try:
-                    os.remove(filepath)
-                    print('Duplicate file cleaned.')
-                except OSError:
-                    pass
-
-                print('File already exists: {} \n'.format(filepath))
-                self.summary += '------------------------------------------------------------------------\n\n'
-                self.log.write(self.summary)
-                return
-
             file_ext = ext[1:].lower()
+            self.data_import.add_format(file_ext)
 
             # get duration and optimize if video
             if ext[1:].lower() in cfg.ETL_VID_EXT:
@@ -334,8 +325,6 @@ class DataImport():
 
                 if self.meta.get('optimize'):
                     optimized, new_filename, new_filepath, new_etag = self.optimize(filename, filepath)
-                    if optimized:
-                        self.summary += now() + f'Optimized version saved as {new_filename}\n'
 
             # ocr pictures
             elif cfg.OCR_ENABLED and self.meta.get('ocr') and file_ext in cfg.OCR_EXT:
@@ -343,7 +332,7 @@ class DataImport():
                 if parsed_text:
                     text_content = parsed_text
 
-            # parse content of word
+            # parse content of word docs
             elif self.meta.get('parse') and file_ext == "docx":
                 parsed_text = self.parse_docx(filepath)
                 if parsed_text:
@@ -357,6 +346,11 @@ class DataImport():
                 if parsed_text:
                     text_content = parsed_text
 
+        else:
+            self.data_import.add_to_log(f"Invalid import mode {self.meta.get('mode')}. Terminating.")
+            self.data_import.fail()
+            return
+        
         # bundle title with json info
         info['bulletinTitle'] = title
         info['filename'] = filename
@@ -372,15 +366,14 @@ class DataImport():
         if text_content:
             info['text_content'] = text_content
 
-        info['etag'] = etag
+        info['etag'] = file.get('etag')
         if self.meta.get('mode') == 2:
             info['old_path'] = old_path
         # pass duration
         if duration:
             info['vduration'] = duration
-        print('=====================')
 
-        print('Meta data parse success')
+        self.data_import.add_to_log("Metadata parsed successfully.")
         result = self.create_bulletin(info)
         return result
 
@@ -393,7 +386,7 @@ class DataImport():
         # mapping
         bulletin.title = info.get('bulletinTitle')
         bulletin.status = 'Machine Created'
-        bulletin.comments = 'Created by ETL - {} '.format(self.batch_id)
+        bulletin.comments = f'Created using Media Import Tool. Batch ID: {self.batch_id}.'
 
         if info.get('text_content'):
             bulletin.description = info.get('text_content')
@@ -422,15 +415,15 @@ class DataImport():
             org_media.duration = duration
 
         if not mime_type:
-            self.summary += now() + 'Problem retrieving file mime type !' + '\n'
-            print('Problem retrieving file mime type!')
+            self.data_import.add_to_log("Unable to retrieve file mime type.")
             try:
                 os.remove(info.get('filepath'))
-                print('Unknown file type cleaned.')
-            except OSError:
-                pass
+                self.data_import.add_to_log("Unknown file type removed.")
+            except OSError as e:
+                self.data_import.add_to_log("Unable to remove unknown file type.")
+                self.data_import.add_to_log(str(e))
 
-            self.summary += '------------------------------------------------------------------------\n\n'
+            self.data_import.fail()
             return
 
         org_media.media_file_type = mime_type
@@ -478,7 +471,7 @@ class DataImport():
         # access roles restrictions
         roles = self.meta.get('roles')
         if roles:
-            # Fetch foles
+            # Fetch Roles
             bulletin_roles = Role.query.filter(Role.id.in_([r.get('id') for r in roles])).all()
             bulletin.roles = []
             bulletin.roles.extend(bulletin_roles)
@@ -488,12 +481,16 @@ class DataImport():
         bulletin.source_link = info.get('old_path')
         bulletin.meta = info
 
-        bulletin.save()
-        bulletin.create_revision(user_id=user.id)
+        try:
+            bulletin.save(raise_exception=True)
+            bulletin.create_revision(user_id=user.id)
+            # Record bulletin creation activity
+            Activity.create(user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
 
-        self.summary += 'Bulletin ID: {} \n'.format(bulletin.id)
-        print("bulletin ID : ", bulletin.id)
-        # Record bulletin creation activity
-        Activity.create(user, Activity.ACTION_CREATE, bulletin.to_mini(), 'bulletin')
-        self.summary += '------------------------------------------------------------------------\n\n'
-        self.log.write(self.summary)
+            self.data_import.add_to_log(f"Created Bulletin {bulletin.id} successfully.")
+            self.data_import.add_item(bulletin.id)
+            self.data_import.sucess()
+        except DatabaseException as e:
+            self.data_import.add_to_log(f"Failed to create Bulletin.")
+            self.data_import.fail(e)
+

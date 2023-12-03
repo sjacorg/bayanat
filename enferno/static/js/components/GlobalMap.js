@@ -151,19 +151,22 @@ Vue.component('global-map', {
                     }
 
                     marker.bindPopup(`
-
-                    <span title="No." class=" ma-1 map-bid">${loc.number || ''}</span>
-                    <span title="Bulletin ID" class="ma-1 map-bid">${loc.parentId || ''}</span>
-                    <strong class="body-2">${loc.title || ''}</strong> </span><br>
+                    <div>
+                    <span title="No." class="map-bid">${loc.number || ''}</span>
+                    <span title="Bulletin ID" class="map-bid">${loc.parentId || ''}</span>
                     
-                    <div class="mx-1 my-4 subtitle-2 font-weight-bold">
+                    <div class="body-2 font-weight-bold">${loc.title || ''}</div>
+
+                    <div class="subtitle">
                     ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
                     </div>
 
                     <span class="mt-1 subtitle">${loc.full_string || ''}</span>
-                    <span title="Geo Marker Type" class="ma-1 map-bid">${loc.type || ''}</span>
-                    <span title="Geo Marker Event Type" class=" ma-1 map-bid">${loc.eventtype || ''}</span>
-                    <span title="Main Incident" class=" ma-1 map-bid">${mainStr || ''}</span>
+                    <div>
+                    <span title="Main Incident" class="map-bid">${mainStr || ''}</span>
+                    <span title="Marker Type" class="map-bid">${loc.type || ''}</span>
+                    <span title="Event Type" class="map-bid">${loc.eventtype || ''}</span>
+                    </div>
                     `);
                     this.markerGroup.addLayer(marker);
                 }

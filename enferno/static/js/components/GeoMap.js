@@ -2,10 +2,7 @@ Vue.component("geo-map", {
     props: {
         title: String,
         value: {},
-        radius: {
-            type: Number,
-            default: 1000
-        },
+
         mapHeight: {
             default: 300
         },
@@ -55,6 +52,8 @@ Vue.component("geo-map", {
             mapKey: 0,
             lat: (this.value && this.value.lat),
             lng: (this.value && this.value.lng),
+            radius: this.value && this.value.radius ? this.value.radius : 1000, // Default to 1000
+
 
             subdomains: null,
             mapsApiEndpoint: mapsApiEndpoint,
@@ -77,14 +76,15 @@ Vue.component("geo-map", {
             if (!val) {
                 this.lat = undefined;
                 this.lng = undefined;
-                //this.radius = undefined;
+                this.radius = 100; // reset
                 return;
             }
-
             // Prevent string or negative radius on backend
-            if (!(typeof val.radius === 'string' || val.radius < 0)) {
+        if (typeof val.radius !== 'string' && val.radius >= 0) {
+
                 this.radius = val.radius;
                 this.clearAddRadiusCircle();
+
             }
 
             // Only send coordinate pairs to backend
@@ -189,6 +189,7 @@ Vue.component("geo-map", {
 
         clearAddRadiusCircle() {
 
+
             if (!this.radiusControls) {
                 return;
             }
@@ -208,7 +209,6 @@ Vue.component("geo-map", {
             if (!this.lat || !this.lng) {
                 return;
             }
-
             this.radiusCircle = L.circle([this.lat, this.lng], {
                 radius: this.radius
             });
@@ -257,7 +257,7 @@ Vue.component("geo-map", {
                     v-if="editMode && radiusControls"
                     class="mt-1 align-center"
                     :min="100"
-                    :max="10000"
+                    :max="100000"
                     :step="100"
                     thumb-label
                     track-color="gray lighten-2"
@@ -267,7 +267,7 @@ Vue.component("geo-map", {
                     <template v-slot:append>  
                         <v-text-field 
                             readonly
-                            style="max-width:166px" 
+                            style="max-width:200px" 
                             v-model.number="radius"
                             :suffix="translations.meters_" 
                             outlined 

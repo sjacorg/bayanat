@@ -153,14 +153,34 @@
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>
-</v-list-group>
+  </v-list-group>
+
+  <v-list-group no-action prepend-icon="mdi-database-import">
+    <template v-slot:activator>
+      <v-list-item-content>
+        <v-list-item-title>
+          {{_('Data Import')}}
+        </v-list-item-title>
+      </v-list-item-content>
+    </template>
+
+    <v-list-item class="grey lighten-3" href="/import/log/" key="import">
+      <v-list-item-action>
+        <v-icon>mdi-format-list-bulleted</v-icon>
+      </v-list-item-action>
+      <v-list-item-content>
+        <v-list-item-title>
+          {{_('Import Log')}}
+        </v-list-item-title>
+      </v-list-item-content>
+    </v-list-item>
 
 
     {% if config.ETL_TOOL %}
 
-    <v-list-item href="/admin/etl/" key="data-import">
+    <v-list-item class="grey lighten-3" href="/import/media/" key="media-import">
       <v-list-item-action>
-        <v-icon>mdi-database-import</v-icon>
+        <v-icon>mdi-multimedia</v-icon>
       </v-list-item-action>
       <v-list-item-content>
         <v-list-item-title>
@@ -173,7 +193,7 @@
 
     {%  if config.SHEET_IMPORT %}
 
-    <v-list-item href="/admin/csv/dashboard/" key="dashboard">
+    <v-list-item class="grey lighten-3" href="/import/sheets/" key="sheet-import">
       <v-list-item-action>
         <v-icon>mdi-google-spreadsheet</v-icon>
       </v-list-item-action>
@@ -183,8 +203,8 @@
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>
-
-    {% endif %}
+      {% endif %}
+</v-list-group>
     {% endif %}
 
     {%  if deduplication %}

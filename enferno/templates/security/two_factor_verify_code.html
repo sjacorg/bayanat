@@ -1,50 +1,66 @@
 {% extends "login-layout.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field %}
-
+{% block navbar %} {% endblock %}
 {% block content %}
 
     {% include "security/_messages.html" %}
-    <v-card elevation="4"  style="width:min(90%,500px)" class="ma-auto pa-3">
-    <v-card-title>{{ _("Two-factor Authentication") }}</v-card-title>
-    <v-card-subtitle>{{ _("Please enter your authentication code") }}</v-card-subtitle>
+    <v-card style="width:min(90%,500px)" class="ma-auto mt-12">
+        <v-toolbar color="primary" dark text>
+            <v-toolbar-title>{{ _("Two-factor Authentication") }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+        </v-toolbar>
+        <v-card-title>{{ _("Please enter your authentication code") }}</v-card-title>
         <form action="{{ url_for_security('two_factor_token_validation') }}" method="POST"
-          name="two_factor_verify_code_form">
+              name="two_factor_verify_code_form">
             {{ two_factor_verify_code_form.hidden_tag() }}
-    <v-card-text>
+            <v-card-text>
 
 
-        <v-text-field name="code" placeholder="Enter code"></v-text-field>
+                <v-text-field name="code" placeholder="Enter code"></v-text-field>
 
-        <a href="/mf-recovery">Trouble Accessing Your Account?/Lost Mobile/TFA Device?</a>
+                <a href="/mf-recovery">Trouble Accessing Your Account?/Lost Mobile/TFA Device?</a>
 
-    </v-card-text>
-    <v-card-actions class="justify-end">
-        <v-btn color="primary" type="submit"> Submit</v-btn>
-    </v-card-actions>
-    </form>
-    </v-card>
-
-
-    <v-card  class="elevation-0 my-5 d-none" color="grey lighten-4">
-        <v-card-text>
-    <form action="{{ url_for_security('two_factor_rescue') }}" method="POST" name="two_factor_rescue_form" >
-        {{ two_factor_rescue_form.hidden_tag() }}
-        {{ render_field_with_errors(two_factor_rescue_form.help_setup) }}
-        {% if problem=="lost_device" %}
-            <p>{{ _("The code for authentication was sent to your email address") }}</p>
-        {% endif %}
-        {% if problem=="no_mail_access" %}
-            <p>{{ _("A mail was sent to us in order to reset your application account") }}</p>
-        {% endif %}
-        <v-btn color="primary" type="submit"> Submit</v-btn>
-    </form>
             </v-card-text>
+
+            {% if two_factor_verify_code_form.errors %}
+                <v-card-text>
+                    <div class="error-messages">
+                        {% for field, errors in two_factor_verify_code_form.errors.items() %}
+                            {% for error in errors %}
+                                <v-alert dismissible dense color="error" dark>{{ error }}</v-alert>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </v-card-text>
+                {% endif %}
+
+            <v-card-actions class="justify-end pa-4">
+                <v-btn color="primary" type="submit"> Submit</v-btn>
+            </v-card-actions>
+        </form>
     </v-card>
 
-<style>
+
+    <v-card class="elevation-0 my-5 d-none" color="grey lighten-4">
+        <v-card-text>
+            <form action="{{ url_for_security('two_factor_rescue') }}" method="POST" name="two_factor_rescue_form">
+                {{ two_factor_rescue_form.hidden_tag() }}
+                {{ render_field_with_errors(two_factor_rescue_form.help_setup) }}
+                {% if problem=="lost_device" %}
+                    <p>{{ _("The code for authentication was sent to your email address") }}</p>
+                {% endif %}
+                {% if problem=="no_mail_access" %}
+                    <p>{{ _("A mail was sent to us in order to reset your application account") }}</p>
+                {% endif %}
+                <v-btn color="primary" type="submit"> Submit</v-btn>
+            </form>
+        </v-card-text>
+    </v-card>
+
+    <style>
 
 
-</style>
+    </style>
 {% endblock %}
 
 

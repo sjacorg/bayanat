@@ -87,12 +87,27 @@ class Config(object):
     security_freshness_grace_period = manager.get_config('SECURITY_FRESHNESS_GRACE_PERIOD')
     SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=security_freshness_grace_period)
 
+    SECURITY_TWO_FACTOR_REQUIRED = manager.get_config('SECURITY_TWO_FACTOR_REQUIRED')
+
+    SECURITY_PASSWORD_LENGTH_MIN = manager.get_config('SECURITY_PASSWORD_LENGTH_MIN')
+
+    SECURITY_PASSWORD_COMPLEXITY_CHECKER = 'zxcvbn'
+
+    SECURITY_ZXCVBN_MINIMUM_SCORE = manager.get_config('SECURITY_ZXCVBN_MINIMUM_SCORE')
+
+
     # Strong session protection
     SESSION_PROTECTION = 'strong'
 
     # 2fa
     SECURITY_TOTP_SECRETS = {"1": os.environ.get('SECURITY_TOTP_SECRETS')}
     SECURITY_TOTP_ISSUER = 'Bayanat'
+
+    SECURITY_WEBAUTHN = manager.get_config('SECURITY_WEBAUTHN')
+    SECURITY_WAN_ALLOW_AS_FIRST_FACTOR = False
+    SECURITY_WAN_ALLOW_AS_MULTI_FACTOR = True
+    SECURITY_WAN_ALLOW_AS_VERIFY = ["first", "secondary"]
+    SECURITY_WAN_ALLOW_USER_HINTS = True
 
     # Recaptcha
     RECAPTCHA_ENABLED = manager.get_config('RECAPTCHA_ENABLED')
@@ -129,9 +144,6 @@ class Config(object):
     EXPORT_DEFAULT_EXPIRY = int(os.environ.get('EXPORT_DEFAULT_EXPIRY', 7200))
     # Enable data deduplication tool
     DEDUP_TOOL = manager.get_config('DEDUP_TOOL')
-
-    # Enable Sync
-    SYNC_ACTIVATED = manager.get_config('SYNC_ACTIVATED')
 
     # Valid video extension list (will be processed during ETL)
     ETL_VID_EXT = manager.get_config('ETL_VID_EXT')

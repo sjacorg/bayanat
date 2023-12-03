@@ -44,105 +44,93 @@ Vue.component('visualization', {
         find_relation_type(item, relation, target) {
 
 
-                if (item.class === 'bulletin' && target.toLowerCase() === 'bulletin') {
+            if (item.class === 'bulletin' && target.toLowerCase() === 'bulletin') {
 
-                     const relatedTitles = [];
+                const relatedTitles = [];
 
-                    // Iterate over the related_as array and find the title in atobInfo
-                    for (const id of relation.related_as) {
-                        const infoItem = this.$root.btobInfo.find(item => item.id === id);
-                        if (infoItem) {
-                            relatedTitles.push(infoItem.title);
-                        }
-                    }
-
-                    // Join the titles with a space and trim the resulting string
-                    return relatedTitles.join(' ').trim();
-
-
-                }
-
-                if ((item.class === 'bulletin' && target.toLowerCase() === 'actor') || (item.class === 'actor' && target.toLowerCase() === 'bulletin')) {
-                    // Use an array to collect the titles
-                    const relatedTitles = [];
-
-                    // Iterate over the related_as array and find the title in atobInfo
-                    for (const id of relation.related_as) {
-                        const infoItem = this.$root.atobInfo.find(item => item.id === id);
-                        if (infoItem) {
-                            relatedTitles.push(infoItem.title);
-                        }
-                    }
-
-                    // Join the titles with a space and trim the resulting string
-                    return relatedTitles.join(' ').trim();
-                }
-
-
-
-                if (item.class === 'actor' && target.toLowerCase() === 'actor') {
-                    if (relation.related_as) {
-                        // Directly find the atoaInfo object with the matching id
-                        const atoaInfo = this.$root.atoaInfo.find(info => info.id === relation.related_as);
-
-                        // Return the title, checking which one to return based on the id comparison
-                        if (atoaInfo) {
-                            if (relation.actor.id > item.id) {
-                                return atoaInfo.title;
-                            } else {
-                                return atoaInfo.reverse_title;
-                            }
-                        }
+                // Iterate over the related_as array and find the title in atobInfo
+                for (const id of relation.related_as) {
+                    const infoItem = this.$root.btobInfo.find(item => item.id === id);
+                    if (infoItem) {
+                        relatedTitles.push(infoItem.title);
                     }
                 }
 
-                 if (item.class === 'incident' && target.toLowerCase() === 'incident') {
-                    if (relation.related_as) {
-                        const itoiInfo = this.$root.itoiInfo.find(info => info.id === relation.related_as);
-                        if (itoiInfo) {
-                            return itoiInfo.title;
-                        }
+                // Join the titles with a space and trim the resulting string
+                return relatedTitles.join(' ').trim();
+
+
+            }
+
+            if ((item.class === 'bulletin' && target.toLowerCase() === 'actor') || (item.class === 'actor' && target.toLowerCase() === 'bulletin')) {
+                // Use an array to collect the titles
+                const relatedTitles = [];
+
+                // Iterate over the related_as array and find the title in atobInfo
+                for (const id of relation.related_as) {
+                    const infoItem = this.$root.atobInfo.find(item => item.id === id);
+                    if (infoItem) {
+                        relatedTitles.push(infoItem.title);
                     }
                 }
 
-                  if ((item.class === 'incident' && target.toLowerCase() === 'bulletin') || (item.class === 'bulletin' && target.toLowerCase() === 'incident')) {
-                    if (relation.related_as) {
-                        const itobInfo = this.$root.itobInfo.find(info => info.id === relation.related_as);
-                        if (itobInfo) {
-                            return itobInfo.title;
+                // Join the titles with a space and trim the resulting string
+                return relatedTitles.join(' ').trim();
+            }
+
+
+            if (item.class === 'actor' && target.toLowerCase() === 'actor') {
+                if (relation.related_as) {
+                    // Directly find the atoaInfo object with the matching id
+                    const atoaInfo = this.$root.atoaInfo.find(info => info.id === relation.related_as);
+
+                    // Return the title, checking which one to return based on the id comparison
+                    if (atoaInfo) {
+                        if (relation.actor.id > item.id) {
+                            return atoaInfo.title;
+                        } else {
+                            return atoaInfo.reverse_title;
                         }
                     }
                 }
+            }
 
-                  if ((item.class === 'incident' && target.toLowerCase() === 'actor') || (item.class === 'actor' && target.toLowerCase() === 'incident')) {
-                    // Use an array to collect the titles
-                    const relatedTitles = [];
-
-                    // Iterate over the related_as array and find the title in atobInfo
-                    for (const id of relation.related_as) {
-                        const infoItem = this.$root.itoaInfo.find(item => item.id === id);
-                        if (infoItem) {
-                            relatedTitles.push(infoItem.title);
-                        }
+            if (item.class === 'incident' && target.toLowerCase() === 'incident') {
+                if (relation.related_as) {
+                    const itoiInfo = this.$root.itoiInfo.find(info => info.id === relation.related_as);
+                    if (itoiInfo) {
+                        return itoiInfo.title;
                     }
-
-                    // Join the titles with a space and trim the resulting string
-                    return relatedTitles.join(' ').trim();
                 }
+            }
+
+            if ((item.class === 'incident' && target.toLowerCase() === 'bulletin') || (item.class === 'bulletin' && target.toLowerCase() === 'incident')) {
+                if (relation.related_as) {
+                    const itobInfo = this.$root.itobInfo.find(info => info.id === relation.related_as);
+                    if (itobInfo) {
+                        return itobInfo.title;
+                    }
+                }
+            }
+
+            if ((item.class === 'incident' && target.toLowerCase() === 'actor') || (item.class === 'actor' && target.toLowerCase() === 'incident')) {
+                // Use map and filter to find and collect titles, handling null with optional chaining and nullish coalescing
+                const relatedTitles = (relation?.related_as ?? [])
+                    .map(id => this.$root.itoaInfo.find(item => item.id === id)?.title)
+                    .filter(title => title);
+
+                // Join the titles with a space and trim the resulting string
+                return relatedTitles.join(' ').trim();
+            }
 
 
+            return '';
 
 
-
-                return '';
-
-
-            },
+        },
 
         generateGraph(item) {
             //console.log(this.bulletin);
-
-
 
 
             // generate ids based on relations
@@ -417,8 +405,8 @@ Vue.component('visualization', {
                     ctx.restore();
                 }).cooldownTime(800)
 
-                .linkColor(()=>{
-                    return __settings__.dark ? 'rgba(100,100,100,0.9)': '#ddd'
+                .linkColor(() => {
+                    return __settings__.dark ? 'rgba(100,100,100,0.9)' : '#ddd'
                 })
 
                 // .linkDirectionalParticles(1)
@@ -445,10 +433,6 @@ Vue.component('visualization', {
                     //    Graph.graphData([]);
 
                 }).nodeCanvasObjectMode(node => 'replace').onZoomEnd(this.zoomHandler);
-
-
-
-
 
 
             // responsive
@@ -511,10 +495,10 @@ Vue.component('visualization', {
             })
 
         },
-        zoomHandler(){
-            if(this.graph.zoom() > 5){
+        zoomHandler() {
+            if (this.graph.zoom() > 5) {
                 this.textMode();
-            }else {
+            } else {
                 this.circleMode();
             }
         }
@@ -527,48 +511,48 @@ Vue.component('visualization', {
       <v-dialog fullscreen v-model="dlg">
 
 
-      <v-card>
-        <v-btn icon loading v-show="loading" style="z-index: 900">
-          <v-icon></v-icon>
-        </v-btn>
-        <v-btn style="z-index: 10000" @click="hide" icon absolute right top>
-          <v-icon>mdi-close</v-icon>
+        <v-card>
+          <v-btn icon loading v-show="loading" style="z-index: 900">
+            <v-icon></v-icon>
+          </v-btn>
+          <v-btn style="z-index: 10000" @click="hide" icon absolute right top>
+            <v-icon>mdi-close</v-icon>
 
-        </v-btn>
-        <div class="graph-wrap">
-          <div class="graph-legend">
+          </v-btn>
+          <div class="graph-wrap">
+            <div class="graph-legend">
 
-            <div class="caption mr-3">
-              <v-icon small :color="this.BULLETINCOLOR" left> mdi-checkbox-blank-circle</v-icon>
-              {{ i18n.bulletins_ }}
+              <div class="caption mr-3">
+                <v-icon small :color="this.BULLETINCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                {{ i18n.bulletins_ }}
+              </div>
+
+              <div class="caption mr-3">
+                <v-icon small :color="this.ACTORCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                {{ i18n.actors_ }}
+              </div>
+
+              <div class="caption mr-3">
+                <v-icon small :color="this.INCIDENTCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                {{ i18n.incidents_ }}
+              </div>
+
+              <div class="caption mr-3">
+                <v-icon small :color="this.LOCATIONCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                {{ i18n.locations_ }}
+              </div>
+              <div>
+              </div>
             </div>
 
-            <div class="caption mr-3">
-              <v-icon small :color="this.ACTORCOLOR" left> mdi-checkbox-blank-circle</v-icon>
-              {{ i18n.actors_ }}
-            </div>
+            <div id="graph"></div>
 
-            <div class="caption mr-3">
-              <v-icon small :color="this.INCIDENTCOLOR" left> mdi-checkbox-blank-circle</v-icon>
-              {{ i18n.incidents_ }}
-            </div>
-
-            <div class="caption mr-3">
-              <v-icon small :color="this.LOCATIONCOLOR" left> mdi-checkbox-blank-circle</v-icon>
-              {{ i18n.locations_ }}
-            </div>
-            <div>
+            <div class="graph-tip">
+              <v-icon left>mdi-information-outline</v-icon>
+              {{ i18n.visInfo_ }}
             </div>
           </div>
-
-          <div id="graph"></div>
-          
-          <div class="graph-tip">
-            <v-icon left>mdi-information-outline</v-icon>
-            {{ i18n.visInfo_ }}
-          </div>
-        </div>
-      </v-card>
+        </v-card>
 
       </v-dialog>
     `

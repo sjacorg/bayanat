@@ -51,6 +51,12 @@
                                         <v-btn  outlined   class="fifth" href="/mf-recovery-codes">{{ _('Recovery Codes') }}</v-btn>
                                     </v-card-text>
 
+                                    {% if config.SECURITY_WEBAUTHN %}
+                                    <v-card-text >
+                                        <v-btn  outlined   class="fifth" href="/wan-register">{{ _('Setup a Security Key') }}</v-btn>
+                                    </v-card-text>
+                                    {% endif %}
+
                                 </v-card>
 
 

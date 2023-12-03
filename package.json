@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@mdi/font": "^7.*",
-    "axios": "^0.*",
+    "axios": "^1.6.1",
     "cropperjs": "^1.5.11",
     "date-fns": "^2.19.0",
     "element-resize-detector": "^1.2.4",
@@ -17,11 +17,12 @@
     "leaflet.markercluster": "^1.5.3",
     "leaflet.polylinemeasure": "^3.0.0",
     "npm": "^9.*",
+    "photoswipe": "^5.4.2",
+    "photoswipe-deep-zoom-plugin": "^1.1.2",
     "sortablejs": "^1.14.0",
     "vee-validate": "^3.4.5",
     "video.js": "^7.*",
     "vue": "^2.6.*",
-    "vue-password-strength-meter": "^1.7.2",
     "vue-router": "^3.*",
     "vue-the-mask": "^0.11.1",
     "vue-tippy": "^4.16.0",

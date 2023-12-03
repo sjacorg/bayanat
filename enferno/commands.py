@@ -9,7 +9,7 @@ from flask_security.utils import hash_password
 
 from enferno.extensions import db
 from enferno.user.models import User, Role
-from enferno.utils.data_helpers import import_default_data, generate_user_roles, create_default_location_data
+from enferno.utils.data_helpers import import_default_data, generate_user_roles, generate_workflow_statues, create_default_location_data
 
 @click.command()
 @click.option('--create-exts', is_flag=True)
@@ -29,6 +29,8 @@ def create_db(create_exts):
     click.echo('Database structure created successfully')
     generate_user_roles()
     click.echo('Generated user roles successfully.')
+    generate_workflow_statues()
+    click.echo('Generated system workflow statues successfully.')
     create_default_location_data()
     click.echo('Generated location metadata successfully.')
 

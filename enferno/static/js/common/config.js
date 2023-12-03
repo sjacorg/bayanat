@@ -164,15 +164,19 @@ Vue.component("validation-provider", VeeValidate.ValidationProvider);
 Vue.component("validation-observer", VeeValidate.ValidationObserver);
 
 //register leaflet map components
-Vue.component('l-map', window.Vue2Leaflet.LMap);
-Vue.component('l-tile-layer', window.Vue2Leaflet.LTileLayer);
-Vue.component('l-marker', window.Vue2Leaflet.LMarker);
-Vue.component('l-circle-marker', window.Vue2Leaflet.LCircleMarker);
-Vue.component('l-popup', window.Vue2Leaflet.LPopup);
-Vue.component('l-icon', window.Vue2Leaflet.LIcon);
-Vue.component('l-control', window.Vue2Leaflet.LControl);
-
+if (window.Vue2Leaflet) {
+    Vue.component('l-map', window.Vue2Leaflet.LMap);
+    Vue.component('l-tile-layer', window.Vue2Leaflet.LTileLayer);
+    Vue.component('l-marker', window.Vue2Leaflet.LMarker);
+    Vue.component('l-circle-marker', window.Vue2Leaflet.LCircleMarker);
+    Vue.component('l-popup', window.Vue2Leaflet.LPopup);
+    Vue.component('l-icon', window.Vue2Leaflet.LIcon);
+    Vue.component('l-control', window.Vue2Leaflet.LControl);
+}
+if (window.VueTippy){
 Vue.use(VueTippy);
+}
+
 
 const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 
@@ -218,8 +222,6 @@ axios.interceptors.response.use(function (response) {
 }, function (error) {
     // Do something with response error
     if (error.response) {
-        //console.log(error.response.status)
-
         if (error.response.status == 403) {
             //location.href="/logout";
         }
@@ -246,7 +248,8 @@ const router = new VueRouter({
         {path: '/admin/actors/:id'},
         {path: '/admin/incidents/:id'},
         {path: '/admin/locations/:id'},
-        {path: '/export/dashboard/:id'}
+        {path: '/export/dashboard/:id'},
+        {path: '/import/log/:id'}
     ]
 });
 
@@ -293,24 +296,6 @@ if (__settings__.dark) {
 // define static data contants for different fields
 
 let i = translations;
-// var mediaCats = [i.generic_, i.humans_, i.signsText_];
-// var probs = [i.maybe_, i.likely_, i.certain_];
-// var btobRelateAs = [i.duplicate_, i.other_, i.partOfSeries_, i.sameObject_, i.samePerson_, i.potentiallyDuplicate_, i.potentiallyRelated_];
-// var itobRelateAs = [i.default_];
-// var itoiRelateAs = [i.default_];
-// var statuses = i.statuses_;
-
-// var geoLocationTypes = [
-//     i.default_,
-//     i.school_,
-//     i.religious_,
-//     i.militaryStructure_,
-//     i.infrastructure_,
-//     i.medical_,
-
-// ]
-
-// var countries = i.countries_
 
 // helper prototype functions
 
@@ -343,12 +328,7 @@ String.prototype.trunc = function (n) {
 
 //helper method to translate front-end strings using an array of translation objects (constructed in i18n.jinja2)
 function translate_status(str) {
-    // const needle = i.statuses_.filter(x => x.en == str).pop();
-    // if (needle.tr) {
-    //     return needle.tr;
-    // } else {
-    //     return needle.en;
-    // }
+    // placeholder, will handle translations in a future release
     return str
 }
 
@@ -415,7 +395,7 @@ var aggregateBulletinLocations = function (bulletin) {
             x.number = i + 1;
             x.color = '#ffbb00';
             x.parentId = bulletin.id;
-            x.full_string = x.title;
+            x.type = x.geoType?.title
             return x
         });
         locations = locations.concat(bulletin.geoLocations);
@@ -549,68 +529,6 @@ var aggregateIncidentLocations = function (incident) {
     return locations;
 
 }
-
-// global image viewer
-var viewer = new ImageViewer.FullScreenViewer();
-
-// Experimental (make dialogs draggable)
-
-(function () {
-    // make vuetify dialogs movable
-    const d = {};
-    document.addEventListener("mousedown", e => {
-        const closestDialog = e.target.closest(".v-dialog.v-dialog--active");
-        if (
-            e.button === 0 &&
-            closestDialog != null &&
-            e.target.classList.contains("v-card__title")
-        ) {
-            // element which can be used to move element
-            d.el = closestDialog; // element which should be moved
-            d.mouseStartX = e.clientX;
-            d.mouseStartY = e.clientY;
-            d.elStartX = d.el.getBoundingClientRect().left;
-            d.elStartY = d.el.getBoundingClientRect().top;
-            d.el.style.position = "fixed";
-            d.el.style.margin = 0;
-            d.oldTransition = d.el.style.transition;
-            d.el.style.transition = "none";
-        }
-    });
-    document.addEventListener("mousemove", e => {
-        if (d.el === undefined) return;
-        d.el.style.left =
-            Math.min(
-                Math.max(d.elStartX + e.clientX - d.mouseStartX, 0),
-                window.innerWidth - d.el.getBoundingClientRect().width
-            ) + "px";
-        d.el.style.top =
-            Math.min(
-                Math.max(d.elStartY + e.clientY - d.mouseStartY, 0),
-                window.innerHeight - d.el.getBoundingClientRect().height
-            ) + "px";
-    });
-    document.addEventListener("mouseup", () => {
-        if (d.el === undefined) return;
-        d.el.style.transition = d.oldTransition;
-        d.el = undefined;
-    });
-    setInterval(() => {
-        // prevent out of bounds
-        const dialog = document.querySelector(".v-dialog.v-dialog--active");
-        if (dialog === null) return;
-        dialog.style.left =
-            Math.min(
-                parseInt(dialog.style.left),
-                window.innerWidth - dialog.getBoundingClientRect().width
-            ) + "px";
-        dialog.style.top =
-            Math.min(
-                parseInt(dialog.style.top),
-                window.innerHeight - dialog.getBoundingClientRect().height
-            ) + "px";
-    }, 100);
-})();
 
 
 // videojs config settings  - prevent plugin from sending data

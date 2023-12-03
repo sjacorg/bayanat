@@ -83,9 +83,11 @@ button.swh {
     font-size: 14px;
 }
 
-#bulletins-dt tr, #export-dt tr {
+#bulletins-dt tr, #export-dt tr, #log-dt tr {
     cursor: pointer;
 }
+
+
 
 .event-card {
     display: flex;
@@ -201,9 +203,9 @@ button.swh {
 }
 
 #iplayer video {
-    /*width: 100%;*/
+    max-width: 100%;
     /*height: 360px;*/
-    /*object-fit: contain;*/
+    object-fit: contain;
 }
 
 /* query builder reset styles */
@@ -551,7 +553,7 @@ input[type="date"]::-webkit-input-placeholder {
 /* map bulletin ids */
 span.map-bid {
     background: #f0f0f0;
-    border: 1px dotted rgba(109, 109, 109, 0.84);
+    border: 1px rgba(109, 109, 109, 0.84);
     padding: 3px;
     border-radius: 5px;
 }
@@ -689,6 +691,15 @@ span.map-bid:empty {
     scale: 1.01;
 }
 
+
+.hardware-device {
+    transition: all 0.25s ease-in-out;
+}
+.hardware-device:hover {
+    scale: 1.01;
+    cursor: pointer;
+}
+
 .sticky-tabs {
     position: sticky;
     top: 64px;
@@ -699,4 +710,10 @@ span.map-bid:empty {
 
 .system-admin #geomap {
     z-index: 0;
+}
+
+
+.pswp img {
+    max-width: none;
+    object-fit: contain;
 }

@@ -256,6 +256,15 @@
                                             <v-card-text>
                                                 ${ status }
                                             </v-card-text>
+                                            
+                                            <v-btn 
+                                                v-if="batch_id" 
+                                                color="primary" 
+                                                dark 
+                                                class="ma-2"
+                                                :href="'/import/log/?batch_id='+batch_id">
+                                                    {{ _('Check Import Progress') }}
+                                            </v-btn>
                                         </v-card>
                                     </v-stepper-content>
                                 </v-stepper-items>
@@ -361,6 +370,7 @@
                 snackMessage: '',
                 loading: false,
                 status: '',
+                batch_id: '',
 
                 dzOpts: {
                     url: '/admin/api/media/chunk',
@@ -447,7 +457,6 @@
 
             methods: {
 
-
                 showError(err, message) {
                     this.showSnack(message);
                 },
@@ -514,7 +523,7 @@
 
                     this.loading = true;
 
-                    axios.post('/admin/etl/path/', {path: this.selectedPath, recursive: this.recursive}).then(res => {
+                    axios.post('/import/media/path/', {path: this.selectedPath, recursive: this.recursive}).then(res => {
                         this.items = this.preprocess(res.data);
                         this.mode = 2;
 
@@ -585,13 +594,12 @@
                         ocr: this.ocr
                     }
 
-                    axios.post('/admin/etl/process', data).then(res => {
-                        this.showSnack(res.data);
-                        this.status = "{{ _('Files added to queue and will be imported in turn.') }}"
-
+                    axios.post('/import/media/process', data).then(res => {
+                        this.status = "{{ _('Files were added to queue successfully and will be imported in turn.') }}";
+                        this.batch_id = res.data;
                     }).catch(error => {
-
-
+                        console.log(err.response.data);
+                        this.status = "{{ _('Error importing rows. Check logs for more information.') }}";
                     }).finally(() => {
 
                     });
@@ -603,15 +611,12 @@
                     if (window.__ETL_PATH_IMPORT__) {
                         this.selectDlg = true;
                     }
-                }
-                ,
+                },
                 uploadFiles() {
 
                     this.uploadDlg = true;
 
                 }
-
-
             }
         });
     </script>

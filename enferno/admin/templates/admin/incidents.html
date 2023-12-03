@@ -89,8 +89,7 @@
                                         {% include 'admin/partials/incident_advsearch.html' %}
                                     </v-expand-transition>
 
-                                    {% if current_user.roles_in(['Admin','Mod']) %}
-                                        <v-toolbar dense color="grey lighten-4" flat>
+                                        <v-toolbar v-if="bulkAllowed() || exportAllowed()" dense color="white" flat>
 
                                             <template v-if="bulkIcons">
 
@@ -100,11 +99,15 @@
                                                 </v-btn>
 
 
-                                                <v-btn @click="bulkIncidentDrawer=true" small color="fifth" depressed>
+                                                <v-btn 
+                                                        @click="bulkIncidentDrawer=true" 
+                                                        small 
+                                                        color="fifth" 
+                                                        depressed
+                                                        v-if="bulkAllowed()">
                                                     <v-icon small left>mdi-circle-edit-outline</v-icon>
                                                     {{ _('Bulk update') }}</v-btn>
 
-                                                {% if config.EXPORT_TOOL %}
                                                     <v-btn
                                                             @click="exportDrawer=true"
                                                             small
@@ -118,8 +121,6 @@
                                                         </v-icon>
                                                         {{ _('Export') }}
                                                     </v-btn>
-                                                {% endif %}
-
 
                                             </template>
 
@@ -154,9 +155,6 @@
                                                 ${selected.length} {{ _('Selected items') }}</v-chip>
 
                                         </v-toolbar>
-
-                                    {% endif %}
-
 
                                 </template>
 
@@ -264,7 +262,7 @@
 
                             </v-dialog>
 
-                            <visualization ref="viz" :i18n="translations"></visualization>
+
 
                             <v-snackbar v-model="snackbar">
                                 <div class="d-flex justify-space-between align-center">
@@ -1085,6 +1083,16 @@
                         if (r.name == role) {
                             return true
                         }
+                    }
+                    return false;
+                },
+
+                bulkAllowed() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return true;
+                    }
+                    if (this.has_role(this.currentUser, 'Mod')) {
+                        return true;
                     }
                     return false;
                 },

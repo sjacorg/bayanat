@@ -86,8 +86,7 @@
                     {% include 'admin/partials/review_dialog.html' %}
                   </v-toolbar>
 
-                  {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
-                    <v-toolbar dense color="grey lighten-4" flat>
+                  <v-toolbar v-if="bulkAllowed() || exportAllowed()" dense color="white" flat>
                       <template v-if="bulkIcons">
 
                         <v-btn @click="selected=[]" x-small fab
@@ -95,12 +94,16 @@
                           <v-icon>mdi-checkbox-blank-outline</v-icon>
                         </v-btn>
 
-                        <v-btn @click="bulkActorDrawer=true" small color="fifth" depressed>
+                        <v-btn 
+                                @click="bulkActorDrawer=true" 
+                                small 
+                                color="primary" 
+                                depressed
+                                v-if="bulkAllowed()"
+                        >
                           <v-icon small left>mdi-circle-edit-outline</v-icon>
                           {{ _('Bulk update') }}</v-btn>
 
-
-                        {% if config.EXPORT_TOOL %}
                           <v-btn
                               @click="exportDrawer=true"
                               small
@@ -114,7 +117,6 @@
                             </v-icon>
                             {{ _('Export') }}
                           </v-btn>
-                        {% endif %}
 
                       </template>
 
@@ -149,8 +151,6 @@
                       <v-chip small color="accent" v-if="selected.length">
                         ${selected.length} {{ _('Selected items') }}</v-chip>
                     </v-toolbar>
-                  {% endif %}
-
 
                 </template>
 
@@ -244,7 +244,7 @@
 
               {% include 'admin/partials/video_player_dialog.html' %}
 
-              <visualization ref="viz" :i18n="translations"></visualization>
+
 
 
               <v-dialog width="600" v-model="selfAssignDialog">
@@ -1167,6 +1167,9 @@
                   return false;
               },
 
+              bulkAllowed() {
+                  return this.has_role(this.currentUser, 'Admin') || this.has_role(this.currentUser, 'Mod');
+              },
 
               exportAllowed() {
                   if (__EXPORT_TOOL__) {

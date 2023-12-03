@@ -18,4 +18,5 @@
       
       <incident-card :i18n="translations" v-if="incidentDrawer" :show-edit="true" @edit="editItem" v-if="incident" :log="true" :diff="true" @close="incidentDrawer=false" :incident="incident"></incident-card>
       <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+    <visualization ref="viz" :i18n="translations"></visualization>
     </v-navigation-drawer>  

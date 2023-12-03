@@ -12,7 +12,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User
-
+from flask_security.signals import password_changed
 bp_user = Blueprint('users', __name__, static_folder='../static')
 
 client = WebApplicationClient(cfg.GOOGLE_CLIENT_ID)
@@ -25,10 +25,11 @@ def before_request():
     """
     g.user = current_user
 
-    if session.get('failed',0) > 1 and cfg.RECAPTCHA_ENABLED:
+    if session.get('failed', 0) > 1 and cfg.RECAPTCHA_ENABLED:
         current_app.extensions['security'].login_form = ExtendedLoginForm
     else:
         current_app.extensions['security'].login_form = LoginForm
+
 
 @bp_user.after_app_request
 def after_app_request(response):
@@ -36,10 +37,9 @@ def after_app_request(response):
     Record failed login attempts into the session
     """
     if request.path == '/login' and request.method == 'POST':
-        #failed login
+        # failed login
         if not g.identity.id:
             session['failed'] = session.get('failed', 0) + 1
-
 
     return response
 
@@ -115,7 +115,7 @@ def auth_callback():
     if userinfo_response.json().get("email_verified"):
         unique_id = userinfo_response.json()["sub"]
         users_email = userinfo_response.json()["email"]
-        #picture = userinfo_response.json()["picture"]
+        # picture = userinfo_response.json()["picture"]
         users_name = userinfo_response.json()["name"]
     else:
         return "User email not available or not verified by Google.", 400
@@ -184,4 +184,17 @@ def load_settings():
     settings = user.settings or {}
 
     return Response(json.dumps(settings), content_type='Application/json'), 200
+@password_changed.connect
+def after_password_change(sender, user):
+    user.unset_security_reset_key()
 
+
+@bp_user.before_app_request
+def before_app_request():
+    """
+    Global check for forced password reset flag
+    :return: None
+    """
+    if current_user.is_authenticated and current_user.security_reset_key:
+        if not any(request.path.startswith(p) for p in ('/change', '/static', '/logout')):
+            return redirect('/change')

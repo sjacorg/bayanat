@@ -1,0 +1,80 @@
+{#
+  This template receives the following pieces of context in addition to the form:
+#}
+
+{% extends "login-layout.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, prop_next %}
+{% block navbar %}
+{% endblock %}
+{% block head_js %}
+    {{ super() }}
+    <script src="{{ url_for('.static', filename='js/webauthn.js') }}" xmlns="http://www.w3.org/1999/html"></script>
+    <script src="{{ url_for('.static', filename='js/base64.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+    {% include "security/_messages.html" %}
+
+    <v-card style="width:min(500px, 100%)" class=" ma-auto mt-5">
+        {% if is_secondary %}
+            <v-toolbar color="primary" dark text>
+            <v-toolbar-title>{{ _("Sign In Using your Security Key") }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+        </v-toolbar>
+        {% endif %}
+        <v-card-text class="text-center">
+
+            {% if not credential_options %}
+                <form action="{{ url_for_security('wan_signin') }}{{ prop_next() }}" method="post"
+                      name="wan_signin_form" id="wan-signin-form">
+                    {{ wan_signin_form.hidden_tag() }}
+                    {% if not is_secondary %}
+                        {{ render_field_with_errors(wan_signin_form.identity) }}
+                        {{ render_field_with_errors(wan_signin_form.remember) }}
+                    {% endif %}
+                    {{ render_field_errors(wan_signin_form.credential) }}
+
+                        <v-btn class="primary mt-12" type="submit" width="200"> <v-icon left>mdi-usb-flash-drive</v-icon> Authenticate</v-btn>
+
+
+                </form>
+            {% else %}
+                <form action="{{ url_for_security('wan_signin_response', token=wan_state) }}{{ prop_next() }}"
+                      method="post" name="wan_signin_response_form" id="wan-signin-response-form">
+                    {{ wan_signin_response_form.hidden_tag() }}
+                    {{ render_field_errors(wan_signin_form.remember) }}
+                    {#  the following is important even though it is hidden - some browsers
+          require an input focus field (such as Safari)
+      #}
+                    {{ render_field(wan_signin_response_form.credential) }}
+                    <div id="wan-errors"></div>
+                </form>
+
+
+
+                <script type="text/javascript">
+                    handleSignin('{{ credential_options|safe }}')
+                        .then((result) => {
+                            if (result.error_msg) {
+                                const error_element = document.getElementById("wan-errors");
+                                error_element.innerHTML = `<em>${result.error_msg}</em>`;
+                            } else {
+                                document.getElementById("credential").value = result.credential;
+                                {# We auto-submit this form - there is a Submit button on the
+                                    form we could use - but there really isn't any reason to force the
+                                    user to click yet another button
+                                  #}
+                                document.forms["wan-signin-response-form"].submit();
+                            }
+                        });
+                </script>
+            {% endif %}
+        </v-card-text>
+    <v-card-actions class="justify-center mt-4">
+<p>
+
+ <a href="/mf-recovery">  Recovery Codes</a> |  <a href="/logout">Logout</a>
+    </p>
+    </v-card-actions>
+    </v-card>
+{% endblock content %}

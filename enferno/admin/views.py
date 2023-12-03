@@ -1,40 +1,37 @@
 import hashlib
 import os
 import shutil
+from datetime import datetime, timedelta
 import unicodedata
-from pathlib import Path
 from uuid import uuid4
-
+from zxcvbn import zxcvbn
 import bleach
 import boto3
 import passlib
 import shortuuid
-from flask import request, abort, Response, Blueprint, current_app, json, g, session, send_from_directory
+from flask import request, abort, Response, Blueprint, current_app, json, g, send_from_directory
 from flask.templating import render_template
 from flask_babel import gettext
 from flask_bouncer import requires
-from flask_security.decorators import roles_required, auth_required, current_user, roles_accepted
-from sqlalchemy import and_, or_
-from sqlalchemy import desc
-from sqlalchemy.orm.attributes import flag_modified
+from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
+from sqlalchemy import and_, desc, or_
 from werkzeug.utils import safe_join
 from werkzeug.utils import secure_filename
 
 from enferno.admin.models import (Bulletin, Label, Source, Location, Eventtype, Media, Actor, Incident,
                                   IncidentHistory, BulletinHistory, ActorHistory, LocationHistory, PotentialViolation,
                                   ClaimedViolation,
-                                  Activity, Query, Mapping, Log, APIKey, LocationAdminLevel, LocationType, AppConfig,
+                                  Activity, Query, LocationAdminLevel, LocationType, AppConfig,
                                   AtobInfo, AtoaInfo, BtobInfo, ItoiInfo, ItoaInfo, ItobInfo, Country, Ethnography,
                                   MediaCategory, GeoLocationType, WorkflowStatus)
 from enferno.extensions import bouncer, rds
 from enferno.extensions import cache
-from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents, etl_process_file, \
-    process_sheet
+from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.search_utils import SearchUtils
-from enferno.utils.sheet_utils import SheetUtils
+
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint('admin', __name__,
@@ -48,7 +45,7 @@ REL_PER_PAGE = 5
 
 
 @admin.before_request
-@auth_required()
+@auth_required('session')
 def before_request():
     """
     Attaches the user object to all requests
@@ -1847,11 +1844,14 @@ def api_medias_upload():
     return 'Invalid request params', 417
 
 
+
+GRACE_PERIOD = timedelta(hours=2)  # 2 hours
+S3_URL_EXPIRY = 3600 # 2 hours
 # return signed url from s3 valid for some time
 @admin.route('/api/media/<filename>')
 def serve_media(filename):
     """
-    Endpoint to generate  file urls to be served (based on file system type)
+    Endpoint to generate file urls to be served (based on file system type)
     :param filename: name of the file
     :return: temporarily accessible url of the file
     """
@@ -1865,18 +1865,43 @@ def serve_media(filename):
     else:
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
-        if not current_user.can_access(media):
-            return 'Restricted Access', 403
+
         s3 = boto3.client('s3',
                           aws_access_key_id=current_app.config['AWS_ACCESS_KEY_ID'],
                           aws_secret_access_key=current_app.config['AWS_SECRET_ACCESS_KEY'],
                           region_name=current_app.config['AWS_REGION']
                           )
-        params = {'Bucket': current_app.config['S3_BUCKET'], 'Key': filename}
-        if filename.lower().endswith('pdf'):
-            params['ResponseContentType'] = 'application/pdf'
-        url = s3.generate_presigned_url('get_object', Params=params, ExpiresIn=36000)
-        return url, 200
+
+        # allow generation of s3 urls for a short period while the media is not created
+        if media is None:
+            # this means the file is not in the database
+            # we allow serving it briefly while the user is still creating the media
+            try:
+                # Get the last modified time of the file
+                resp = s3.head_object(Bucket=current_app.config['S3_BUCKET'], Key=filename)
+                last_modified = resp['LastModified']
+
+                # Check if file is uploaded within the grace period
+                if datetime.utcnow() - last_modified.replace(tzinfo=None) <= GRACE_PERIOD:
+                    params = {'Bucket': current_app.config['S3_BUCKET'], 'Key': filename}
+                    url = s3.generate_presigned_url('get_object', Params=params, ExpiresIn=36000)
+                    return url, 200
+                else:
+                    return HTTPResponse.FORBIDDEN
+            except s3.exceptions.NoSuchKey:
+                return HTTPResponse.NOT_FOUND
+            except Exception as e:
+                return HTTPResponse.INTERNAL_SERVER_ERROR
+        else:
+            # media exists in the database, check access control restrictions
+            if not current_user.can_access(media):
+                return 'Restricted Access', 403
+
+            params = {'Bucket': current_app.config['S3_BUCKET'], 'Key': filename}
+            if filename.lower().endswith('pdf'):
+                params['ResponseContentType'] = 'application/pdf'
+
+            return s3.generate_presigned_url('get_object', Params=params, ExpiresIn=S3_URL_EXPIRY)
 
 
 def api_local_medias_upload(request):
@@ -2385,6 +2410,62 @@ def api_user_update(uid):
         return HTTPResponse.NOT_FOUND
 
 
+@admin.post('/api/password/')
+def api_check_password():
+    """
+    API Endpoint to validate a password and check its strength
+
+    :return: successful response if valid, else error response
+    """
+    # Retrieve the password from the request's JSON body
+    password = request.json.get('password')
+
+    # Check if the password is provided
+    if not password:
+        return 'No password provided', 400
+
+    result = zxcvbn(password)
+    score = result.get('score')
+    if score >= current_app.config.get('SECURITY_ZXCVBN_MINIMUM_SCORE'):
+        return 'Password is ok', 200
+    else:
+        return 'Weak Password Score', 409
+
+
+
+
+
+@admin.post('/api/user/force-reset')
+@roles_required('Admin')
+def api_user_force_reset():
+    item = request.json.get("item")
+    if not item:
+        abort(400)
+    user = User.query.get(item.get('id'))
+    if not user:
+        abort(400)
+    if reset_key := user.security_reset_key:
+        message = f'Forced password reset already requested: {reset_key}'
+        return Response(message, mimetype='text/plain')
+    user.set_security_reset_key()
+    message = f'Forced password reset has been set for user {user.username}'
+    return Response(message, mimetype='text/plain')
+
+@admin.post('/api/user/force-reset-all')
+@roles_required('Admin')
+def api_user_force_reset_all():
+    """
+    sets a redis flag to force password reset for all users
+    :return: success response after setting all redis flags (if not already set)
+    """
+    for user in User.query.all():
+        # check if user already has a password reset flag
+        if not user.security_reset_key:
+            user.set_security_reset_key()
+    return 'Forced password reset has been set for all users', 200
+
+
+
 @admin.delete('/api/user/<int:id>')
 @roles_required('Admin')
 def api_user_delete(id):
@@ -2817,23 +2898,6 @@ def bulk_status():
     return json.dumps(tasks)
 
 
-@admin.post('/api/key')
-@roles_required('Admin')
-def gen_api_key():
-    global_key = APIKey.query.first()
-    if not global_key:
-        global_key = APIKey()
-    global_key.key = passlib.totp.generate_secret()
-    global_key.save()
-    return global_key.key, 200
-
-
-@roles_required(['Admin'])
-@admin.route('/api/key')
-def get_api_key():
-    return APIKey.get_global_key(), 200
-
-
 # Saved Searches
 @admin.route('/api/queries/')
 def api_queries():
@@ -2936,294 +3000,6 @@ def api_query_delete(name: str):
     return f"Query {name} delete failed", 409
 
 
-# Data Import Backend API
-@admin.route('/etl/')
-@roles_required('Admin')
-def etl_dashboard():
-    """
-    Endpoint to render the etl backend
-    :return: html page of the users backend.
-    """
-    if not current_app.config['ETL_TOOL']:
-        return HTTPResponse.NOT_FOUND
-    return render_template('admin/etl-dashboard.html')
-
-
-@admin.route('/etl/status')
-@roles_required('Admin')
-def etl_status():
-    """
-    Endpoint to render etl tasks monitoring
-    :return: html page of the users backend.
-    """
-    return render_template('admin/etl-status.html')
-
-
-@admin.post('/etl/path/')
-@roles_required('Admin')
-def path_process():
-    # Check if path import is enabled and allowed path is set
-    if not current_app.config.get('ETL_PATH_IMPORT') \
-            or current_app.config.get('ETL_ALLOWED_PATH') is None:
-        return HTTPResponse.FORBIDDEN
-
-    allowed_path = Path(current_app.config.get('ETL_ALLOWED_PATH'))
-
-    if not allowed_path.is_dir():
-        return "Allowed import path is not configured correctly", 417
-
-    sub_path = request.json.get('path')
-    if sub_path == "":
-        import_path = allowed_path
-    else:
-        safe_path = safe_join(allowed_path, sub_path)
-        if safe_path:
-            import_path = Path(safe_path)
-        else:
-            return HTTPResponse.FORBIDDEN
-
-    if not import_path.is_dir():
-        return "Invalid path specified", 417
-
-    recursive = request.json.get('recursive', False)
-    if recursive:
-        items = import_path.rglob('*')
-    else:
-        items = import_path.glob('*')
-
-    files = [str(file) for file in items]
-
-    output = [{'filename': os.path.basename(file), 'path': file} for file in files]
-
-    return json.dumps(output), 200
-
-
-@admin.post('/etl/process')
-@roles_required('Admin')
-def etl_process():
-    """
-    process a single file
-    :return: response contains the processing result
-    """
-
-    files = request.json.pop('files')
-    meta = request.json
-    results = []
-    batch_id = 'ETL' + shortuuid.uuid()[:9]
-    batch_log = batch_id + '.log'
-    open('logs/' + batch_log, 'a')
-
-    for file in files:
-        results.append(etl_process_file.delay(batch_id, file, meta, user_id=current_user.id, log=batch_log))
-
-    ids = [r.id for r in results]
-    session['etl-tasks'] = ids
-    return 'ETL operation queued successfully.', 200
-
-
-@admin.route('/api/etl/status/')
-@roles_required('Admin')
-def etl_task_status():
-    """
-    API endpoing for ETL task status
-    :return: response contains every task with status
-    """
-    ids = session['etl-tasks']
-    results = [etl_process_file.AsyncResult(i) for i in ids]
-    output = [r.state for r in results]
-    return json.dumps(output), 200
-
-
-# CSV Tool
-
-
-@admin.route('/csv/dashboard/')
-@roles_required('Admin')
-def csv_dashboard():
-    """
-    Endpoint to render the csv backend
-    :return: html page of the csv backend.
-    """
-    if not current_app.config.get('SHEET_IMPORT'):
-        return HTTPResponse.NOT_FOUND
-    return render_template('admin/csv-dashboard.html')
-
-
-@admin.post('/api/csv/upload')
-@roles_required('Admin')
-def api_local_csv_upload():
-    import_dir = Path(current_app.config.get('IMPORT_DIR'))
-    # file pond sends multiple requests for multiple files (handle each request as a separate file )
-    try:
-        f = request.files.get('file')
-        # validate immediately
-        if not Media.validate_sheet_extension(f.filename):
-            return 'This file type is not allowed', 415
-        # final file
-        filename = Media.generate_file_name(f.filename)
-        filepath = (import_dir / filename).as_posix()
-        f.save(filepath)
-        # get md5 hash
-        f = open(filepath, 'rb').read()
-        etag = hashlib.md5(f).hexdigest()
-
-        response = {'etag': etag, 'filename': filename}
-        return Response(json.dumps(response), content_type='application/json'), 200
-    except Exception as e:
-        print(e)
-        return F'Request Failed', 417
-
-
-@admin.delete('/api/csv/upload/')
-@roles_required('Admin')
-def api_local_csv_delete():
-    """
-    API endpoint for removing files ::
-    :return:  success if file is removed
-    keeping uploaded sheets for now, used as a handler for http calls from filepond for now.
-    """
-    return ''
-
-
-@admin.post('/api/csv/analyze')
-@roles_required('Admin')
-def api_csv_analyze():
-    # locate file
-    filename = request.json.get('file').get('filename')
-    import_dir = Path(current_app.config.get('IMPORT_DIR'))
-
-    filepath = (import_dir / filename).as_posix()
-    su = SheetUtils(filepath)
-    result = su.parse_sheet()
-    # print(Bulletin.get_columns())
-    # result['fields'] = Bulletin.get_columns()
-    if result:
-        return json.dumps(result)
-    else:
-        return 'Problem parsing sheet file', 417
-
-
-# Excel sheet selector
-@admin.post('/api/xls/sheets')
-@roles_required('Admin')
-def api_xls_sheet():
-    filename = request.json.get('file').get('filename')
-    import_dir = Path(current_app.config.get('IMPORT_DIR'))
-
-    filepath = (import_dir / filename).as_posix()
-    su = SheetUtils(filepath)
-    sheets = su.get_sheets()
-    # print(Bulletin.get_columns())
-    # result['fields'] = Bulletin.get_columns()
-    return json.dumps(sheets)
-
-
-@admin.post('/api/xls/analyze')
-@roles_required('Admin')
-def api_xls_analyze():
-    # locate file
-    filename = request.json.get('file').get('filename')
-    import_dir = Path(current_app.config.get('IMPORT_DIR'))
-
-    filepath = (import_dir / filename).as_posix()
-    su = SheetUtils(filepath)
-    sheet = request.json.get('sheet')
-    result = su.parse_xsheet(sheet)
-
-    # print(result['head'])
-    # print(Bulletin.get_columns())
-    # result['fields'] = Bulletin.get_columns()
-    if result:
-        return Response(json.dumps(result, sort_keys=False), content_type='application/json'), 200
-    else:
-        return 'Problem parsing sheet file', 417
-
-
-# Saved Searches
-@admin.route('/api/mappings/')
-def api_mappings():
-    """
-    Endpoint to get sheet mappings
-    :return: successful json feed of mappings or error
-    """
-    mappings = Mapping.query.all()
-    return json.dumps([map.to_dict() for map in mappings]), 200
-
-
-@admin.post('/api/mapping/')
-@roles_accepted('Admin')
-def api_mapping_create():
-    """
-    API Endpoint save a mapping object
-    :return: success if save is successful, error otherwise
-    """
-    d = request.json.get('data', None)
-
-    name = request.json.get('name', None)
-    if d and name:
-        map = Mapping()
-        map.name = name
-        map.data = d
-        map.user_id = current_user.id
-        # Important : flag json field to enable correct update
-        flag_modified(map, 'data')
-
-        map.save()
-        return {'message': F'Mapping saved successfully - Mapping ID : {map.id}', 'id': map.id}, 200
-    else:
-        return 'Error saving mapping data', 417
-
-
-@admin.put('/api/mapping/<int:id>')
-@roles_accepted('Admin')
-def api_mapping_update(id):
-    """
-    API Endpoint update a mapping object
-    :return: success if save is successful, error otherwise
-    """
-    map = Mapping.query.get(id)
-    if map:
-        data = request.json.get('data')
-        m = data.get('map', None)
-        name = request.json.get('name', None)
-        if m and name:
-            map.name = name
-            map.data = data
-            map.user_id = current_user.id
-            map.save()
-            return {'message': F'Mapping saved successfully - Mapping ID : {map.id}', 'id': map.id}, 200
-        else:
-            return "Update request missing parameters data", 417
-
-    else:
-        return HTTPResponse.NOT_FOUND
-
-
-@admin.post('/api/process-sheet')
-@roles_accepted('Admin')
-def api_process_sheet():
-    """
-    API Endpoint invoke sheet import into target model via a CSV mapping
-    :return: success if save is successful, error otherwise
-    """
-    files = request.json.get('files')
-    import_dir = Path(current_app.config.get('IMPORT_DIR'))
-    map = request.json.get('map')
-    vmap = request.json.get('vmap')
-    batch_id = request.json.get('batch')
-    sheet = request.json.get('sheet')
-    lang = request.json.get('lang', 'en')
-    actor_config = request.json.get('actorConfig')
-    roles = request.json.get('roles')
-
-    for filename in files:
-        filepath = (import_dir / filename).as_posix()
-        target = request.json.get('target')
-        process_sheet.delay(filepath, map, 'actor', batch_id, vmap, sheet, actor_config, lang, roles)
-
-    return F'Import process queued successfully! batch id: {batch_id}', 200
-
-
 @admin.get('/api/relation/info')
 def relation_info():
     table = request.args.get('type')
@@ -3244,19 +3020,6 @@ def relation_info():
         return json.dumps([item.to_dict() for item in query_class.query.all()])
     else:
         return json.dumps({'error': 'Invalid table type'})
-
-
-@admin.get('/api/logs')
-@roles_accepted('Admin')
-def api_logs():
-    """
-    API Endpoint to provide status updates for a given sheet import batch id
-    """
-    batch_id = request.args.get('batch')
-    logs = Log.query.filter(Log.tag == batch_id).all()
-    logs = [log.to_dict() for log in logs]
-
-    return Response(json.dumps(logs), content_type='application/json'), 200
 
 
 @admin.get('/system-administration/')

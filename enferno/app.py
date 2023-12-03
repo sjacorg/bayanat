@@ -8,8 +8,10 @@ from flask_security import Security, SQLAlchemyUserDatastore
 
 import enferno.commands as commands
 from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
-    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation, Log
+    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation
+from enferno.user.models import WebAuthn
 from enferno.admin.views import admin
+from enferno.data_import.views import imports
 from enferno.extensions import cache, db, session, bouncer, babel, rds
 from enferno.public.views import bp_public
 from enferno.settings import Config
@@ -61,7 +63,7 @@ def create_app(config_object=Config):
 def register_extensions(app):
     cache.init_app(app)
     db.init_app(app)
-    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role,webauthn_model=WebAuthn)
     security = Security(app, user_datastore,
                         register_form=ExtendedRegisterForm)
     session.init_app(app)
@@ -92,6 +94,7 @@ def register_blueprints(app):
     app.register_blueprint(bp_public)
     app.register_blueprint(bp_user)
     app.register_blueprint(admin)
+    app.register_blueprint(imports)
 
     if app.config.get('EXPORT_TOOL'):
         try:
@@ -147,9 +150,9 @@ def register_shellcontext(app):
             'Itoi': Itoi,
             'Itob': Itob,
             'Itoa': Itoa,
-            'Log': Log,
             'Activity': Activity,
-            'Settings': Settings
+            'Settings': Settings,
+            'rds': rds
         }
 
     app.shell_context_processor(shell_context)
@@ -166,4 +169,3 @@ def register_commands(app):
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
-

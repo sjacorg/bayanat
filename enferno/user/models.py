@@ -5,12 +5,19 @@ from flask_security import UserMixin, RoleMixin
 from flask_security import current_user
 from flask_security.utils import hash_password
 from sqlalchemy import JSON, ARRAY
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.mutable import Mutable
 
+from datetime import  datetime
 from enferno.utils.base import BaseMixin
-from ..extensions import db
+from enferno.extensions import db, rds
+
+
 
 from sqlalchemy.ext.mutable import Mutable
 
+# Redis key namespace to set flag for forcing password reset
+SECURITY_KEY_NAMESPACE = "security:user"
 class MutableList(Mutable, list):
     def append(self, value):
         list.append(self, value)
@@ -29,7 +36,6 @@ class MutableList(Mutable, list):
             return Mutable.coerce(key, value)
         else:
             return value
-
 
 
 roles_users = db.Table('roles_users',
@@ -81,6 +87,34 @@ class Role(db.Model, RoleMixin, BaseMixin):
         return '{} - {}'.format(self.id, self.name)
 
 
+class WebAuthn(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    credential_id = db.Column(db.LargeBinary(1024), index=True, nullable=False, unique=True)
+    public_key = db.Column(db.LargeBinary(1024), nullable=False)
+    sign_count = db.Column(db.Integer, default=0, nullable=False)
+    transports = db.Column(MutableList.as_mutable(ARRAY(db.String)), nullable=True)
+    extensions = db.Column(db.String(255))
+    lastuse_datetime = db.Column(db.DateTime, nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    usage = db.Column(db.String(64), nullable=False)
+    backup_state = db.Column(db.Boolean, nullable=False)
+    device_type = db.Column(db.String(64), nullable=False)
+
+    @declared_attr
+    def user_id(cls):
+        return db.Column(
+            db.Integer,
+            db.ForeignKey("user.id", ondelete="CASCADE"),
+            nullable=False,
+        )
+
+    def get_user_mapping(self) :
+        """
+        Return the mapping from webauthn back to User
+        """
+        return dict(id=self.user_id)
+
+
 class User(UserMixin, db.Model, BaseMixin):
     __table_args__ = {"extend_existing": True}
 
@@ -104,11 +138,15 @@ class User(UserMixin, db.Model, BaseMixin):
     current_login_ip = db.Column(db.String(255))
     login_count = db.Column(db.Integer())
 
+    # web authn
+    fs_webauthn_user_handle = db.Column(db.String(64), unique=True)
+
+
     tf_phone_number = db.Column(db.String(64))
     tf_primary_method = db.Column(db.String(140))
     tf_totp_secret = db.Column(db.String(255))
 
-    mf_recovery_codes = db.Column(MutableList.as_mutable(ARRAY(db.String) ), nullable=True)
+    mf_recovery_codes = db.Column(MutableList.as_mutable(ARRAY(db.String)), nullable=True)
 
     # individual abilities
     view_usernames = db.Column(db.Boolean, default=True)
@@ -118,11 +156,30 @@ class User(UserMixin, db.Model, BaseMixin):
     can_edit_locations = db.Column(db.Boolean, default=False)
     can_export = db.Column(db.Boolean, default=False)
 
-
     # oauth
     google_id = db.Column(db.String(255))
 
     settings = db.Column(JSON)
+
+    @declared_attr
+    def webauthn(cls):
+        return db.relationship("WebAuthn", backref="users", cascade="all, delete")
+
+    @property
+    def security_reset_key(self):
+        """Get the timestamp value from Redis"""
+        value = rds.get(f"{SECURITY_KEY_NAMESPACE}:{self.id}")
+        return value.decode() if value else None
+
+    def set_security_reset_key(self):
+        """Set the security reset key with a timestamp value"""
+        key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
+        timestamp = int(datetime.utcnow().timestamp())
+        rds.set(key, timestamp)
+    def unset_security_reset_key(self):
+        """unSet the security reset key """
+        key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
+        rds.delete(key)
 
     def roles_in(self, roles):
         chk = [self.has_role(r) for r in roles]
@@ -173,7 +230,7 @@ class User(UserMixin, db.Model, BaseMixin):
             return True
 
         # handle primary entities (bulletins, actors, incidents)
-        if obj.__tablename__ in ['bulletin','actor','incident']:
+        if obj.__tablename__ in ['bulletin', 'actor', 'incident']:
             # intersect roles
             if not obj.roles or set(self.roles) & set(obj.roles):
                 return True
@@ -208,6 +265,8 @@ class User(UserMixin, db.Model, BaseMixin):
             ids = [r.get('id', -1) for r in roles]
             new_roles = Role.query.filter(Role.id.in_(ids)).all()
             self.roles = new_roles
+        else:
+            self.roles = []
 
         # permissions
         self.view_usernames = item.get('view_usernames', False)
@@ -250,7 +309,8 @@ class User(UserMixin, db.Model, BaseMixin):
                 'view_full_history': self.view_full_history,
                 'can_self_assign': self.can_self_assign,
                 'can_edit_locations': self.can_edit_locations,
-                'can_export': self.can_export
+                'can_export': self.can_export,
+                'force_reset': self.security_reset_key
             }
 
     def to_json(self):

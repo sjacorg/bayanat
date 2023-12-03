@@ -34,14 +34,16 @@
     <meta name="msapplication-TileImage" content="/static/img/favicon/ms-icon-144x144.png">
 
     {% block css %}{% endblock %}
+    {% block head_js %} {% endblock %}
 </head>
 
 <body>
 
 
 <v-app id="app" v-cloak>
+{% block navbar %}
     {% include 'nav-bar.html' %}
-
+{% endblock %}
     <v-main>
         <v-container
                 class="fill-height"
@@ -74,7 +76,11 @@
 <script src="/static/js/vuetify.min.js"></script>
 <script src="/static/js/vue-router.min.js"></script>
 <script src="/static/js/axios.min.js"></script>
+<script src="/static/js/vue-tippy.min.js"></script>
 <script src="/static/js/vee-validate.full.min.js"></script>
+<script>
+    {%  include 'admin/jsapi.jinja2' %}
+</script>
 <script src="/static/js/common/config.js"></script>
 
 
