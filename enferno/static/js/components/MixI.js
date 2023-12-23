@@ -1,44 +1,35 @@
-Vue.component("mix-i", {
-    props: {
-        title: String,
-        value: {},
-        i18n: {}
+Vue.component('mix-i', {
+  props: {
+    title: String,
+    value: {},
+    i18n: {},
+  },
+  data: function () {
+    return {
+      mix: {},
+    };
+  },
+
+  watch: {
+    value: function (val) {
+      if (val) {
+        this.mix = val;
+      }
     },
-    data: function () {
-        return {
-            mix: {}
-        };
+    mix: {
+      handler: 'refresh',
+      deep: true,
     },
+  },
 
-    watch: {
-        value: function (val) {
-            if (val) {
-            this.mix = val;
-            }
+  mounted: function () {},
 
-        },
-        mix: {
-            handler: 'refresh',
-            deep: true
-        }
-
+  methods: {
+    refresh() {
+      this.$emit('input', this.mix);
     },
-
-    mounted: function () {
-
-
-
-
-    },
-
-    methods: {
-        refresh() {
-            this.$emit('input', this.mix);
-
-        }
-    },
-    template:
-        `
+  },
+  template: `
 <v-card class="pa-3 elevation-1" color="yellow lighten-4">
     <v-card-title class="subtitle-2">{{title}}</v-card-title> 
 

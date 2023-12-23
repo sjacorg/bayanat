@@ -1,7 +1,7 @@
-Vue.component("actor-result", {
-    props: ['actor', 'hidden', 'showHide', 'i18n'],
+Vue.component('actor-result', {
+  props: ['actor', 'hidden', 'showHide', 'i18n'],
 
-    template: `
+  template: `
       <template v-if="!hidden">
         <v-card outlined class="ma-2" v-if="!actor.restricted">
           <v-card-title class="d-flex">
@@ -47,5 +47,5 @@ Vue.component("actor-result", {
 
 
       </template>
-    `
+    `,
 });

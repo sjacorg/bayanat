@@ -1,22 +1,21 @@
 Vue.component('pdf-viewer', {
-    data: () => {
-        return {
-            viewer: false,
-            url: null
-
-        }
+  data: () => {
+    return {
+      viewer: false,
+      url: null,
+    };
+  },
+  methods: {
+    openPDF(url) {
+      this.viewer = true;
+      this.url = url;
     },
-    methods: {
-        openPDF(url) {
-            this.viewer = true;
-            this.url = url;
-        },
-        closePDF() {
-            this.viewer = false;
-            this.url = null;
-        }
+    closePDF() {
+      this.viewer = false;
+      this.url = null;
     },
-    template: `
+  },
+  template: `
     <v-dialog overlay="false"  min-width="1000" v-model="viewer">
     <v-card height="100%" class="pa-5" v-if="viewer">
    
@@ -33,5 +32,5 @@ Vue.component('pdf-viewer', {
     </v-card>
     </v-dialog>
     
-    `
-})
+    `,
+});

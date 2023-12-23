@@ -1,40 +1,40 @@
-Vue.component("EditableTable", {
-    props: {
-        loadEndpoint: {
-            type: String,
-            required: true
-        },
-        saveEndpoint: {
-            type: String,
-            required: true
-        },
-        deleteEndpoint: {
-            type: String,
-            required: false,
-            default: null
-        },
-        itemHeaders: {
-            type: Array,
-            required: true
-        },
-        title: {
-            type: String,
-            default: 'Editable Table'
-        },
-        allowAdd: {
-            type: Boolean,
-            default: true
-        },
-        noActionIds: {
-            type: Array,
-            default: () => []  // Default to an empty array
-        },
-        editableColumns: {
-            type: Array,
-            default: () => ['title'],
-        }
+Vue.component('EditableTable', {
+  props: {
+    loadEndpoint: {
+      type: String,
+      required: true,
     },
-    template: `
+    saveEndpoint: {
+      type: String,
+      required: true,
+    },
+    deleteEndpoint: {
+      type: String,
+      required: false,
+      default: null,
+    },
+    itemHeaders: {
+      type: Array,
+      required: true,
+    },
+    title: {
+      type: String,
+      default: 'Editable Table',
+    },
+    allowAdd: {
+      type: Boolean,
+      default: true,
+    },
+    noActionIds: {
+      type: Array,
+      default: () => [], // Default to an empty array
+    },
+    editableColumns: {
+      type: Array,
+      default: () => ['title'],
+    },
+  },
+  template: `
       <div>
         <v-card-title>
           {{ title }}
@@ -103,68 +103,76 @@ Vue.component("EditableTable", {
         </v-snackbar>
       </div>
     `,
-    data: function () {
-        return {
-            itemList: [],
-            editableItem: {},
-            snackMessage: '',
-            snackbar: false
-        };
+  data: function () {
+    return {
+      itemList: [],
+      editableItem: {},
+      snackMessage: '',
+      snackbar: false,
+    };
+  },
+  mounted() {
+    this.loadItems();
+  },
+  methods: {
+    loadItems() {
+      axios
+        .get(this.loadEndpoint)
+        .then((res) => {
+          this.itemList = res.data.items;
+        })
+        .catch((e) => {
+          console.log(e.response.data);
+        });
     },
-    mounted() {
-        this.loadItems();
+
+    itemEdit(item) {
+      this.editableItem = JSON.parse(JSON.stringify(item));
     },
-    methods: {
-        loadItems() {
-            axios.get(this.loadEndpoint).then(res => {
-                this.itemList = res.data.items;
-            }).catch(e => {
-                console.log(e.response.data);
-            });
-        },
 
-        itemEdit(item) {
-            this.editableItem = JSON.parse(JSON.stringify(item));
-        },
+    itemSave(item) {
+      const endpoint = item.id ? `${this.saveEndpoint}/${item.id}` : this.saveEndpoint;
+      const method = item.id ? 'put' : 'post';
 
-        itemSave(item) {
+      axios[method](endpoint, { item: this.editableItem })
+        .then((res) => {
+          this.loadItems();
+          this.showSnack(res.data);
+        })
+        .catch((err) => {
+          this.showSnack(err.response.data);
+        })
+        .finally(() => {
+          this.editableItem = {};
+        });
+    },
 
-            const endpoint = item.id ? `${this.saveEndpoint}/${item.id}` : this.saveEndpoint;
-            const method = item.id ? 'put' : 'post';
+    itemCancel() {
+      this.editableItem = {};
+    },
 
-            axios[method](endpoint, {item: this.editableItem}).then(res => {
-                this.loadItems();
-                this.showSnack(res.data);
-            }).catch(err => {
-                this.showSnack(err.response.data);
-            }).finally(() => {
-                this.editableItem = {};
-            });
-        },
+    itemAdd() {
+      this.itemList.unshift({});
+    },
 
-        itemCancel() {
-            this.editableItem = {};
-        },
+    itemDelete(item) {
+      if (confirm(`Are you sure you want to delete: "${item.title}"`)) {
+        axios
+          .delete(`${this.deleteEndpoint}/${item.id}`)
+          .then((res) => {
+            this.loadItems();
+            this.showSnack(res.data);
+          })
+          .catch((err) => {
+            console.log(err.response.data);
+            this.showSnack(err.response.data);
+          });
+      }
+    },
 
-        itemAdd() {
-            this.itemList.unshift({});
-        },
-
-        itemDelete(item) {
-            if (confirm(`Are you sure you want to delete: "${item.title}"`)) {
-                axios.delete(`${this.deleteEndpoint}/${item.id}`).then(res => {
-                    this.loadItems();
-                    this.showSnack(res.data);
-                }).catch(err => {
-                    console.log(err.response.data);
-                    this.showSnack(err.response.data);
-                });
-            }
-        },
-
-        showSnack(message) {
-            this.snackMessage = message;
-            this.snackbar = true;
-        }
-    }
+    showSnack(message) {
+      this.snackMessage = message;
+      this.snackbar = true;
+    },
+  },
 });

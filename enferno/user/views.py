@@ -13,7 +13,8 @@ from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User
 from flask_security.signals import password_changed
-bp_user = Blueprint('users', __name__, static_folder='../static')
+
+bp_user = Blueprint("users", __name__, static_folder="../static")
 
 client = WebApplicationClient(cfg.GOOGLE_CLIENT_ID)
 
@@ -25,10 +26,10 @@ def before_request():
     """
     g.user = current_user
 
-    if session.get('failed', 0) > 1 and cfg.RECAPTCHA_ENABLED:
-        current_app.extensions['security'].login_form = ExtendedLoginForm
+    if session.get("failed", 0) > 1 and cfg.RECAPTCHA_ENABLED:
+        current_app.extensions["security"].login_form = ExtendedLoginForm
     else:
-        current_app.extensions['security'].login_form = LoginForm
+        current_app.extensions["security"].login_form = LoginForm
 
 
 @bp_user.after_app_request
@@ -36,10 +37,10 @@ def after_app_request(response):
     """
     Record failed login attempts into the session
     """
-    if request.path == '/login' and request.method == 'POST':
+    if request.path == "/login" and request.method == "POST":
         # failed login
         if not g.identity.id:
-            session['failed'] = session.get('failed', 0) + 1
+            session["failed"] = session.get("failed", 0) + 1
 
     return response
 
@@ -52,7 +53,7 @@ def get_google_provider_cfg():
     return requests.get(cfg.GOOGLE_DISCOVERY_URL).json()
 
 
-@bp_user.route('/auth')
+@bp_user.route("/auth")
 def auth():
     """
     Endpoint to authorize with Google OpenID
@@ -71,7 +72,7 @@ def auth():
     return redirect(request_uri)
 
 
-@bp_user.route('/auth/callback')
+@bp_user.route("/auth/callback")
 def auth_callback():
     """
     Open ID callback endpoint.
@@ -119,7 +120,7 @@ def auth_callback():
         users_name = userinfo_response.json()["name"]
     else:
         return "User email not available or not verified by Google.", 400
-    if not users_email.endswith(current_app.config.get('GOOGLE_CLIENT_ALLOWED_DOMAIN')):
+    if not users_email.endswith(current_app.config.get("GOOGLE_CLIENT_ALLOWED_DOMAIN")):
         return "User email rejected!  ", 403
 
     # Create a user in our db with the information provided
@@ -138,52 +139,56 @@ def auth_callback():
     return redirect(cfg.SECURITY_POST_LOGIN_VIEW)
 
 
-@bp_user.route('/dashboard/')
-@auth_required('session')
+@bp_user.route("/dashboard/")
+@auth_required("session")
 def account():
     """
     Main dashboard endpoint.
     """
-    return render_template('dashboard.html')
+    return render_template("dashboard.html")
 
 
-@bp_user.route('/settings/')
-@auth_required('session')
+@bp_user.route("/settings/")
+@auth_required("session")
 def settings():
     """Endpoint for user settings."""
-    return render_template('settings.html')
+    return render_template("settings.html")
 
-@bp_user.route('/settings/save',methods=['PUT'])
-@auth_required('session')
+
+@bp_user.route("/settings/save", methods=["PUT"])
+@auth_required("session")
 def save_settings():
     """API Endpoint to save user settings."""
-    json = request.json.get('settings')
-    dark = json.get('dark')
+    json = request.json.get("settings")
+    dark = json.get("dark")
     user_id = current_user.id
     user = User.query.get(user_id)
     if not user:
-        return 'Problem loading user', 417
-    user.settings = {'dark': dark}
-    lang = json.get('language')
-    user.settings['language'] = lang
-    flag_modified(user, 'settings')
+        return "Problem loading user", 417
+    user.settings = {"dark": dark}
+    lang = json.get("language")
+    user.settings["language"] = lang
+    flag_modified(user, "settings")
     user.save()
-    return 'Settings Saved', 200
+    return "Settings Saved", 200
 
-@bp_user.route('/settings/load',methods=['GET'])
-@auth_required('session')
+
+@bp_user.route("/settings/load", methods=["GET"])
+@auth_required("session")
 def load_settings():
-    """API Endpoint to load user settings, in json format. """
+    """API Endpoint to load user settings, in json format."""
     user_id = current_user.id
 
     user = User.query.get(user_id)
 
     if not user:
-        return 'Problem loading user ', 417
+        return "Problem loading user ", 417
 
     settings = user.settings or {}
 
-    return Response(json.dumps(settings), content_type='Application/json'), 200
+    return Response(json.dumps(settings), content_type="Application/json"), 200
+
+
 @password_changed.connect
 def after_password_change(sender, user):
     user.unset_security_reset_key()
@@ -196,5 +201,5 @@ def before_app_request():
     :return: None
     """
     if current_user.is_authenticated and current_user.security_reset_key:
-        if not any(request.path.startswith(p) for p in ('/change', '/static', '/logout')):
-            return redirect('/change')
+        if not any(request.path.startswith(p) for p in ("/change", "/static", "/logout")):
+            return redirect("/change")

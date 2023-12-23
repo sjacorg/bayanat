@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  - repo: https://github.com/prettier/prettier
+    rev: '2.5.1'  # Use the latest version of Prettier
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: prettier --write
+        types: [css, javascript]
+        files: \.(css|js)$

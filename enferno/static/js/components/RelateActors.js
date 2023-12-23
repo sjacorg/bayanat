@@ -1,108 +1,95 @@
 Vue.component('relate-actors', {
-    props: ['value', 'show', 'exids','i18n'],
-    data: () => {
-        return {
-            q: {},
-            loading: true,
-            results: [],
-            visible: false,
-            page: 1,
-            perPage: 10,
-            total: 0,
-            moreItems: false,
-            actor: null,
-            showActor: false
+  props: ['value', 'show', 'exids', 'i18n'],
+  data: () => {
+    return {
+      q: {},
+      loading: true,
+      results: [],
+      visible: false,
+      page: 1,
+      perPage: 10,
+      total: 0,
+      moreItems: false,
+      actor: null,
+      showActor: false,
+    };
+  },
+  mounted() {},
 
-        }
-
-    }
-    ,
-    mounted() {
-
+  watch: {
+    results: {
+      handler(val, old) {},
+      deep: true,
     },
 
+    value: function (val) {
+      this.$emit('input', val);
+    },
+  },
 
-    watch: {
-
-        results: {
-            handler(val, old) {
-
-            },
-            deep: true
-        },
-
-        value: function (val) {
-            this.$emit('input', val);
-        }
+  methods: {
+    viewActor(a) {
+      axios
+        .get(`/admin/api/actor/${a.id}`)
+        .then((response) => {
+          this.actor = response.data;
+          this.showActor = true;
+        })
+        .catch((error) => {
+          this.showActor = false;
+          this.showSnack("Oops! We couldn't find this item.");
+        });
     },
 
-    methods: {
-
-        viewActor(a) {
-            axios.get(`/admin/api/actor/${a.id}`).then(response => {
-
-                this.actor = response.data;
-                this.showActor = true;
-
-
-            }).catch(error => {
-                this.showActor = false;
-                this.showSnack('Oops! We couldn\'t find this item.')
-
-            });
-
-        },
-
-
-        open() {
-            this.visible = true;
-
-        },
-        close() {
-            this.visible = false
-        },
-        reSearch() {
-            this.page = 1;
-            this.results = [];
-            this.search();
-
-        },
-
-        search(q = {}) {
-            this.loading = true;
-            axios.post(`/admin/api/actors/?page=${this.page}&per_page=${this.perPage}&mode=2`, {q: [this.q]}).then(response => {
-                this.exids = this.exids || [];
-                this.loading = false;
-                this.total = response.data.total;
-
-                this.results = this.results.concat(response.data.items.filter(x => !this.exids.includes(x.id)));
-
-                if (this.page * this.perPage >= this.total) {
-                    this.moreItems = false;
-                } else {
-                    this.moreItems = true;
-                }
-            }).catch(err => {
-                console.log(err.response.data);
-                this.loading = false;
-            });
-
-
-        },
-        loadMore() {
-            this.page += 1;
-            this.search()
-        },
-        relateItem(item) {
-            this.results.removeById(item.id);
-            this.$emit('relate', item);
-
-        }
-
+    open() {
+      this.visible = true;
+    },
+    close() {
+      this.visible = false;
+    },
+    reSearch() {
+      this.page = 1;
+      this.results = [];
+      this.search();
     },
 
+    search(q = {}) {
+      this.loading = true;
+      axios
+        .post(`/admin/api/actors/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
+          q: [this.q],
+        })
+        .then((response) => {
+          this.exids = this.exids || [];
+          this.loading = false;
+          this.total = response.data.total;
 
-    template: `
+          this.results = this.results.concat(
+            response.data.items.filter((x) => !this.exids.includes(x.id)),
+          );
+
+          if (this.page * this.perPage >= this.total) {
+            this.moreItems = false;
+          } else {
+            this.moreItems = true;
+          }
+        })
+        .catch((err) => {
+          console.log(err.response.data);
+          this.loading = false;
+        });
+    },
+    loadMore() {
+      this.page += 1;
+      this.search();
+    },
+    relateItem(item) {
+      this.results.removeById(item.id);
+      this.$emit('relate', item);
+    },
+  },
+
+  template: `
       <v-dialog v-model="visible" max-width="1220">
       <v-sheet>
 
@@ -182,5 +169,5 @@ Vue.component('relate-actors', {
 
       </v-dialog>
 
-    `
-})
+    `,
+});

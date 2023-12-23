@@ -32,7 +32,6 @@ Vue.component('pop-date-range-field', {
 
   watch: {
     value(val) {
-
       // Emit empty value if dates cleared
       if (!val) {
         this.$emit('input', val);
@@ -41,8 +40,7 @@ Vue.component('pop-date-range-field', {
 
       // allow backward selection
       if (new Date(val[1]) < new Date(val[0])) {
-        [val[0], val[1]] = [val[1], val[0]]
-
+        [val[0], val[1]] = [val[1], val[0]];
       }
 
       // Valid date range
@@ -84,23 +82,15 @@ Vue.component('pop-date-range-field', {
           onClick="event.preventDefault()"
           v-bind="attrs"
           :label="label"
-          
           prepend-icon="mdi-calendar"
           clearable
           @click:clear="value = null"
-            hint="Select a single date or a range"
-            persistent-hint
+          hint="Select a single date or a range"
+          persistent-hint
         ></v-text-field>
       </template>
 
-      <v-date-picker
-        range
-        scrollable
-        no-title
-        min="1950-01-01"
-        max="2040-01-01"
-        v-model="value"
-      >
+      <v-date-picker range scrollable no-title min="1950-01-01" max="2040-01-01" v-model="value">
         <v-spacer></v-spacer>
         <v-btn text color="primary" @click="value = null">Clear</v-btn>
       </v-date-picker>

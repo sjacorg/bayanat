@@ -1,7 +1,7 @@
-Vue.component('event-card',{
-    props : ['event', 'number'],
+Vue.component('event-card', {
+  props: ['event', 'number'],
 
-    template : `
+  template: `
 
     <v-card height="100%" class="event-card mb-2 mt-1"  elevation="0" outlined>
         <v-card-text class="py-2 ">
@@ -66,10 +66,5 @@ Vue.component('event-card',{
   </v-card>
 
 
-    `
-
-
-
-
-
-})
+    `,
+});

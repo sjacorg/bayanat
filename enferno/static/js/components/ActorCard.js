@@ -1,216 +1,213 @@
-Vue.component("actor-card", {
-    props: ["actor", "close", "thumb-click", "active", "log", "diff", "showEdit", "i18n"],
+Vue.component('actor-card', {
+  props: ['actor', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit', 'i18n'],
 
-    watch: {
-        actor: function (b, n) {
-            this.loadBulletinRelations();
-            this.loadActorRelations();
-            this.loadIncidentRelations();
+  watch: {
+    actor: function (b, n) {
+      this.loadBulletinRelations();
+      this.loadActorRelations();
+      this.loadIncidentRelations();
 
-            this.mapLocations = aggregateActorLocations(this.actor);
-        },
+      this.mapLocations = aggregateActorLocations(this.actor);
+    },
+  },
+
+  methods: {
+    updateMediaState() {
+      this.mediasReady += 1;
+      if (this.mediasReady == this.actor.medias.length && this.mediasReady > 0) {
+        console.log('ready');
+        this.prepareImagesForPhotoswipe().then((res) => {
+          this.initLightbox();
+        });
+      }
     },
 
-    methods: {
-        updateMediaState() {
-            this.mediasReady += 1;
-            if (
-                this.mediasReady == this.actor.medias.length &&
-                this.mediasReady > 0
-            ) {
-                console.log("ready")
-                this.prepareImagesForPhotoswipe().then(res=>{
-                    this.initLightbox();
-                })
-            }
-        },
+    prepareImagesForPhotoswipe() {
+      // Get the <a> tags from the image gallery
+      const imagesList = document.querySelectorAll('#lightbox a');
+      const promisesList = [];
 
-        prepareImagesForPhotoswipe() {
+      imagesList.forEach((element) => {
+        const promise = new Promise(function (resolve) {
+          let image = new Image();
+          image.src = element.getAttribute('href');
+          image.onload = () => {
+            element.dataset.pswpWidth = image.width;
+            element.dataset.pswpHeight = image.height;
+            resolve(); // Resolve the promise only if the image has been loaded
+          };
+          image.onerror = () => {
+            resolve();
+          };
+        });
+        promisesList.push(promise);
+      });
 
-            // Get the <a> tags from the image gallery
-            const imagesList = document.querySelectorAll("#lightbox a");
-            const promisesList = [];
-
-            imagesList.forEach((element) => {
-                const promise = new Promise(function (resolve) {
-                    let image = new Image();
-                    image.src = element.getAttribute('href');
-                    image.onload = () => {
-                        element.dataset.pswpWidth = image.width;
-                        element.dataset.pswpHeight = image.height;
-                        resolve(); // Resolve the promise only if the image has been loaded
-                    }
-                    image.onerror = () => {
-                        resolve();
-                    };
-                });
-                promisesList.push(promise);
-            });
-
-            // Use .then() to handle the promise resolution
-            return Promise.all(promisesList);
-        },
-
-
-        initLightbox() {
-            this.lightbox = new PhotoSwipeLightbox({
-                gallery: "#lightbox",
-                children: "a",
-                pswpModule: PhotoSwipe,
-                wheelToZoom: true,
-                arrowKeys: true,
-            });
-
-
-            this.lightbox.init();
-        },
-
-        getRelatedValues(item, actor) {
-            const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
-            return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
-        },
-
-        translate_status(status){
-            return translate_status(status);
-        },
-        
-        loadBulletinRelations(page=1) {
-
-             // b2a
-            axios.get(`/admin/api/actor/relations/${this.actor.id}?class=bulletin&page=${page}`).then(res=>{
-            this.actor.bulletin_relations.push.apply(this.actor.bulletin_relations,res.data.items);
-            this.bulletinPage += 1;
-            this.bulletinLM = res.data.more;
-            }).catch(err=>{
-                console.log(err.toJSON());
-            });
-
-        },
-
-        loadActorRelations(page = 1){
-            axios.get(`/admin/api/actor/relations/${this.actor.id}?class=actor&page=${page}`).then(res=>{
-            //console.log(this.bulletin.actor_relations, res.data.items);
-            this.actor.actor_relations.push.apply(this.actor.actor_relations,res.data.items);
-            this.actorPage +=1;
-            this.actorLM = res.data.more;
-
-            }).catch(err=>{
-                console.log(err.toJSON());
-            });
-        },
-
-        loadIncidentRelations(page =1){
-             // b2i
-            axios.get(`/admin/api/actor/relations/${this.actor.id}?class=incident&page=${page}`).then(res=>{
-            this.actor.incident_relations.push.apply(this.actor.incident_relations, res.data.items);
-            this.incidentPage +=1;
-            this.incidentLM = res.data.more;
-            }).catch(err=>{
-                console.log(err.toJSON());
-            });
-        },
-
-        probability(item) {
-            return translations.probs[item.probability].tr;
-        },
-
-
-        logAllowed() {
-            return this.$root.currentUser.view_simple_history && this.log;
-        },
-
-        diffAllowed() {
-            return this.$root.currentUser.view_full_history && this.diff;
-        },
-
-        editAllowed() {
-            return this.$root.editAllowed(this.actor) && this.showEdit;
-        },
-
-        removeVideo() {
-            let video = this.$el.querySelector("#iplayer video");
-            if (video) {
-                video.remove();
-            }
-        },
-
-        viewThumb(s3url) {
-            this.$emit("thumb-click", s3url);
-        },
-
-        viewVideo(s3url) {
-            this.removeVideo();
-
-            let video = document.createElement("video");
-            video.src = s3url;
-            video.controls = true;
-            video.autoplay = true;
-            this.$el.querySelector("#iplayer").append(video);
-        },
-
-        loadRevisions() {
-            this.hloading = true;
-            axios.get(`/admin/api/actorhistory/${this.actor.id}`).then((response) => {
-                this.revisions = response.data.items;
-
-            }).catch(error => {
-                console.log(error.body.data)
-            }).finally(() => {
-                this.hloading = false;
-            });
-
-        },
-
-        showDiff(e, index) {
-            this.diffDialog = true;
-            //calculate diff
-            const dp = jsondiffpatch.create({
-                arrays: {
-                    detectMove: true,
-                },
-                objectHash: function (obj, index) {
-                    return obj.name || obj.id || obj._id || "$$index:" + index;
-                },
-            });
-
-            const delta = dp.diff(
-                this.revisions[index + 1].data,
-                this.revisions[index].data
-            );
-            if (!delta) {
-                this.diffResult = "Both items are Identical :)";
-            } else {
-                this.diffResult = jsondiffpatch.formatters.html.format(delta);
-            }
-        },
+      // Use .then() to handle the promise resolution
+      return Promise.all(promisesList);
     },
 
-    data: function () {
-        return {
-            diffResult: "",
-            diffDialog: false,
-            revisions: null,
-            show: false,
-            hloading: false,
-            mapLocations: [],
+    initLightbox() {
+      this.lightbox = new PhotoSwipeLightbox({
+        gallery: '#lightbox',
+        children: 'a',
+        pswpModule: PhotoSwipe,
+        wheelToZoom: true,
+        arrowKeys: true,
+      });
 
-            lightbox: null,
-            mediasReady: 0,
-
-            // pagers for related entities
-            bulletinPage: 1,
-            actorPage: 1,
-            incidentPage: 1,
-
-
-             // load more buttons
-            bulletinLM: false,
-            actorLM: false,
-            incidentLM:false
-        };
+      this.lightbox.init();
     },
 
-    template: `
+    getRelatedValues(item, actor) {
+      const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
+      return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
+    },
+
+    translate_status(status) {
+      return translate_status(status);
+    },
+
+    loadBulletinRelations(page = 1) {
+      // b2a
+      axios
+        .get(`/admin/api/actor/relations/${this.actor.id}?class=bulletin&page=${page}`)
+        .then((res) => {
+          this.actor.bulletin_relations.push.apply(this.actor.bulletin_relations, res.data.items);
+          this.bulletinPage += 1;
+          this.bulletinLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
+
+    loadActorRelations(page = 1) {
+      axios
+        .get(`/admin/api/actor/relations/${this.actor.id}?class=actor&page=${page}`)
+        .then((res) => {
+          //console.log(this.bulletin.actor_relations, res.data.items);
+          this.actor.actor_relations.push.apply(this.actor.actor_relations, res.data.items);
+          this.actorPage += 1;
+          this.actorLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
+
+    loadIncidentRelations(page = 1) {
+      // b2i
+      axios
+        .get(`/admin/api/actor/relations/${this.actor.id}?class=incident&page=${page}`)
+        .then((res) => {
+          this.actor.incident_relations.push.apply(this.actor.incident_relations, res.data.items);
+          this.incidentPage += 1;
+          this.incidentLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
+
+    probability(item) {
+      return translations.probs[item.probability].tr;
+    },
+
+    logAllowed() {
+      return this.$root.currentUser.view_simple_history && this.log;
+    },
+
+    diffAllowed() {
+      return this.$root.currentUser.view_full_history && this.diff;
+    },
+
+    editAllowed() {
+      return this.$root.editAllowed(this.actor) && this.showEdit;
+    },
+
+    removeVideo() {
+      let video = this.$el.querySelector('#iplayer video');
+      if (video) {
+        video.remove();
+      }
+    },
+
+    viewThumb(s3url) {
+      this.$emit('thumb-click', s3url);
+    },
+
+    viewVideo(s3url) {
+      this.removeVideo();
+
+      let video = document.createElement('video');
+      video.src = s3url;
+      video.controls = true;
+      video.autoplay = true;
+      this.$el.querySelector('#iplayer').append(video);
+    },
+
+    loadRevisions() {
+      this.hloading = true;
+      axios
+        .get(`/admin/api/actorhistory/${this.actor.id}`)
+        .then((response) => {
+          this.revisions = response.data.items;
+        })
+        .catch((error) => {
+          console.log(error.body.data);
+        })
+        .finally(() => {
+          this.hloading = false;
+        });
+    },
+
+    showDiff(e, index) {
+      this.diffDialog = true;
+      //calculate diff
+      const dp = jsondiffpatch.create({
+        arrays: {
+          detectMove: true,
+        },
+        objectHash: function (obj, index) {
+          return obj.name || obj.id || obj._id || '$$index:' + index;
+        },
+      });
+
+      const delta = dp.diff(this.revisions[index + 1].data, this.revisions[index].data);
+      if (!delta) {
+        this.diffResult = 'Both items are Identical :)';
+      } else {
+        this.diffResult = jsondiffpatch.formatters.html.format(delta);
+      }
+    },
+  },
+
+  data: function () {
+    return {
+      diffResult: '',
+      diffDialog: false,
+      revisions: null,
+      show: false,
+      hloading: false,
+      mapLocations: [],
+
+      lightbox: null,
+      mediasReady: 0,
+
+      // pagers for related entities
+      bulletinPage: 1,
+      actorPage: 1,
+      incidentPage: 1,
+
+      // load more buttons
+      bulletinLM: false,
+      actorLM: false,
+      incidentLM: false,
+    };
+  },
+
+  template: `
 
   <v-card color="grey lighten-3" class="mx-auto pa-3">
         <v-card color="grey lighten-5" outlined class="header-fixed mx-2">

@@ -1,92 +1,83 @@
-Vue.component("export-card", {
-    props: ["exp", "close", "i18n", "adminMode", ""],
+Vue.component('export-card', {
+  props: ['exp', 'close', 'i18n', 'adminMode', ''],
 
-    watch: {
-        exp: function (val, old) {
-
-        },
+  watch: {
+    exp: function (val, old) {},
+  },
+  filters: {
+    capitalize(value) {
+      if (!value) return '';
+      value = value.toString();
+      return value.charAt(0).toUpperCase() + value.slice(1);
     },
-    filters: {
-        capitalize(value) {
-            if (!value) return '';
-            value = value.toString();
-            return value.charAt(0).toUpperCase() + value.slice(1);
-        }
-    },
+  },
 
-    mounted() {
+  mounted() {
+    //convert expiry to localized date
+    this.exp.expires_on = this.localDate(this.exp.expires_on, (format = false));
 
-        //convert expiry to localized date
-        this.exp.expires_on = this.localDate(this.exp.expires_on, format = false);
+    this.loadExportItems();
+  },
 
-        this.loadExportItems();
+  methods: {
+    loadExportItems() {
+      const q = [{ ids: this.exp.items }];
 
-    },
-
-    methods: {
-
-        loadExportItems() {
-            const q = [
-                {ids: this.exp.items}
-            ];
-
-            axios.post(`/admin/api/bulletins/?page=${this.page}&per_page=${this.per_page}`, {q: q}).then(res => {
-                this.items = [...this.items, ...res.data.items];
-                this.showLoadMore = this.per_page * this.page < res.data.total;
-                this.page += 1;
-
-            })
-
-        },
-
-        showApprove(item) {
-            return (item.status === 'Pending' || item.status === 'Failed' );
-        },
-
-        showReject(item) {
-            return !(item.status === 'Rejected' || item.status === 'Expired');
-        },
-
-        showChangeExpiry(item) {
-            return (item.status === 'Approved');
-        },
-
-        changeExpiry() {
-            this.expiryFieldDisabled = false;
-        },
-
-        localDate: function (dt, format = true) {
-            if (dt === null || dt === '') {
-                return '';
-            }
-            // Z tells it's a UTC time
-            const utcDate = new Date(`${dt}Z`);
-            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-            const localDate = utcDate.toLocaleString('en-US', {timeZone: userTimezone});
-
-            if (!format) {
-
-                //console.log((dateFns.format(localDate, 'YYYY-MM-DDTHH:m')));
-                return dateFns.format(localDate, 'YYYY-MM-DDTHH:mm');
-            } else {
-                return localDate
-
-            }
-        }
+      axios
+        .post(`/admin/api/bulletins/?page=${this.page}&per_page=${this.per_page}`, { q: q })
+        .then((res) => {
+          this.items = [...this.items, ...res.data.items];
+          this.showLoadMore = this.per_page * this.page < res.data.total;
+          this.page += 1;
+        });
     },
 
-    data: function () {
-        return {
-            expiryFieldDisabled: true,
-            showLoadMore: false,
-            per_page: 5,
-            page: 1,
-            items: []
-        };
+    showApprove(item) {
+      return item.status === 'Pending' || item.status === 'Failed';
     },
 
-    template: `
+    showReject(item) {
+      return !(item.status === 'Rejected' || item.status === 'Expired');
+    },
+
+    showChangeExpiry(item) {
+      return item.status === 'Approved';
+    },
+
+    changeExpiry() {
+      this.expiryFieldDisabled = false;
+    },
+
+    localDate: function (dt, format = true) {
+      if (dt === null || dt === '') {
+        return '';
+      }
+      // Z tells it's a UTC time
+      const utcDate = new Date(`${dt}Z`);
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const localDate = utcDate.toLocaleString('en-US', { timeZone: userTimezone });
+
+      if (!format) {
+        //console.log((dateFns.format(localDate, 'YYYY-MM-DDTHH:m')));
+        return dateFns.format(localDate, 'YYYY-MM-DDTHH:mm');
+      } else {
+        return localDate;
+      }
+    },
+  },
+
+  data: function () {
+    return {
+      expiryFieldDisabled: true,
+      showLoadMore: false,
+      per_page: 5,
+      page: 1,
+      items: [],
+    };
+  },
+
+  template: `
 
       <v-card color="grey lighten-3" class="mx-auto pa-3">
       <v-card color="grey lighten-5" outlined class="header-fixed mx-2">

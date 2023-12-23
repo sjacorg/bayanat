@@ -1,97 +1,85 @@
 Vue.component('relate-bulletins', {
-    props: ['value', 'show', 'exids', 'i18n'],
-    data: () => {
-        return {
-            q: {},
-            loading: true,
-            results: [],
-            visible: false,
-            page: 1,
-            perPage: 10,
-            total: 0,
-            moreItems: false,
-            bulletin: null,
-            showBulletin: false,
+  props: ['value', 'show', 'exids', 'i18n'],
+  data: () => {
+    return {
+      q: {},
+      loading: true,
+      results: [],
+      visible: false,
+      page: 1,
+      perPage: 10,
+      total: 0,
+      moreItems: false,
+      bulletin: null,
+      showBulletin: false,
+    };
+  },
+  mounted() {},
 
-
-        }
-
-    }
-    ,
-    mounted() {
-
-
+  watch: {
+    results: {
+      handler(val, old) {},
+      deep: true,
     },
 
+    value: function (val) {
+      this.$emit('input', val);
+    },
+  },
 
-    watch: {
-
-        results: {
-            handler(val, old) {
-
-            },
-            deep: true
-        },
-
-        value: function (val) {
-            this.$emit('input', val);
-        }
+  methods: {
+    open() {
+      this.visible = true;
+    },
+    close() {
+      this.visible = false;
+    },
+    reSearch() {
+      this.page = 1;
+      this.results = [];
+      this.search();
     },
 
-    methods: {
+    search(q = {}) {
+      this.loading = true;
 
-        open() {
-            this.visible = true;
+      axios
+        .post(`/admin/api/bulletins/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
+          q: [this.q],
+        })
+        .then((response) => {
+          this.loading = false;
+          this.exids = this.exids || [];
 
-        },
-        close() {
-            this.visible = false
-        },
-        reSearch() {
-            this.page = 1;
-            this.results = [];
-            this.search();
+          this.loading = false;
+          this.total = response.data.total;
+          this.results = this.results.concat(
+            response.data.items.filter((x) => !this.exids.includes(x.id)),
+          );
 
-        },
-
-        search(q = {}) {
-            this.loading = true;
-
-            axios.post(`/admin/api/bulletins/?page=${this.page}&per_page=${this.perPage}&mode=2`, {q: [this.q]}).then(response => {
-                this.loading = false
-                this.exids = this.exids || [];
-
-                this.loading = false;
-                this.total = response.data.total;
-                this.results = this.results.concat(response.data.items.filter(x => !this.exids.includes(x.id)));
-
-                if (this.page * this.perPage >= this.total) {
-                    this.moreItems = false;
-                    //console.log("Set more items");
-                } else {
-                    this.moreItems = true;
-                }
-            }).catch(err => {
-                console.log(err.response.data);
-                this.loading = false;
-            });
-
-
-        },
-        loadMore() {
-            this.page += 1;
-            this.search()
-        },
-        relateItem(item) {
-            this.results.removeById(item.id);
-            this.$emit('relate', item);
-
-        }
-
+          if (this.page * this.perPage >= this.total) {
+            this.moreItems = false;
+            //console.log("Set more items");
+          } else {
+            this.moreItems = true;
+          }
+        })
+        .catch((err) => {
+          console.log(err.response.data);
+          this.loading = false;
+        });
     },
+    loadMore() {
+      this.page += 1;
+      this.search();
+    },
+    relateItem(item) {
+      this.results.removeById(item.id);
+      this.$emit('relate', item);
+    },
+  },
 
-
-    template: `
+  template: `
       <v-dialog v-model="visible" max-width="1220">
       <v-sheet>
 
@@ -171,5 +159,5 @@ Vue.component('relate-bulletins', {
 
       </v-dialog>
 
-    `
-})
+    `,
+});

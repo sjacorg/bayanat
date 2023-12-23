@@ -1,6 +1,6 @@
-Vue.component("incident-result", {
-    props: ['incident', 'hidden', 'showHide', 'i18n'],
-    template: `
+Vue.component('incident-result', {
+  props: ['incident', 'hidden', 'showHide', 'i18n'],
+  template: `
       <template v-if="!hidden">
         <v-card outlined class="ma-2" v-if="!incident.restricted">
 
@@ -34,5 +34,5 @@ Vue.component("incident-result", {
 
         </v-card>
       </template>
-    `
+    `,
 });

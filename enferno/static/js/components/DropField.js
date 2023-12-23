@@ -1,56 +1,50 @@
-Vue.component("drop-field", {
-    props: {
-        caption: String,
-        samples: [],
-        value: []
+Vue.component('drop-field', {
+  props: {
+    caption: String,
+    samples: [],
+    value: [],
+  },
+  data: function () {
+    return {
+      colmap: this.value || [],
+      disabled: false,
+    };
+  },
+
+  watch: {
+    value(val) {
+      this.colmap = val || [];
     },
-    data: function () {
-        return {
-            colmap: this.value || [],
-            disabled: false,
-        };
+    colmap: {
+      handler: 'refresh',
+      deep: true,
+    },
+  },
+
+  mounted: function () {
+    //this.broadcast();
+  },
+
+  methods: {
+    refresh() {
+      // restrict to one item
+      if (this.colmap.length > 0) {
+        this.disabled = true;
+      } else {
+        this.disabled = false;
+      }
+      this.broadcast();
     },
 
-    watch: {
-
-        value (val){
-           this.colmap = val || [];
-
-        },
-        colmap : {
-            handler: 'refresh',
-            deep: true
-        }
-
+    broadcast() {
+      this.$emit('input', this.colmap);
     },
-
-    mounted: function () {
-         //this.broadcast();
+    removeMe(i) {
+      let item = this.colmap.splice(i, 1);
+      this.$root.returnToStack(item);
     },
-
-    methods: {
-         refresh() {
-
-            // restrict to one item
-            if (this.colmap.length > 0){
-                this.disabled = true
-            }
-            else {
-                this.disabled = false;
-            }
-            this.broadcast();
-        },
-
-
-        broadcast() {
-            this.$emit('input', this.colmap);
-        },
-        removeMe(i){
-        let item = this.colmap.splice(i,1);
-        this.$root.returnToStack(item)
-        },
-    },
-    template: `
+  },
+  template: `
 
       <v-sheet class="d-flex stripe-1 align-center  ma-2 pa-2" elevation="0">
       <h5 class="d-caption">{{ caption }}</h5>

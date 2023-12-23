@@ -1,61 +1,57 @@
-Vue.component("log-card", {
-    props: ["log", "i18n"],
+Vue.component('log-card', {
+  props: ['log', 'i18n'],
 
-    watch: {
-        log: function (val, old) {
+  watch: {
+    log: function (val, old) {},
+  },
 
-        },
+  mounted() {
+    //convert expiry to localized date
+    this.log.imported_at = this.localDate(this.log.imported_at, (format = false));
+
+    if (this.item?.id) {
+      this.loadImportedItem();
+    }
+  },
+
+  methods: {
+    loadImportedItem() {
+      axios
+        .get(`/admin/api/bulletin/${this.log.item_id}`)
+        .then((res) => {
+          this.item = res.data;
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {});
     },
 
+    localDate: function (dt, format = true) {
+      if (dt === null || dt === '') {
+        return '';
+      }
+      // Z tells it's a UTC time
+      const utcDate = new Date(`${dt}Z`);
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    mounted() {
-        //convert expiry to localized date
-        this.log.imported_at = this.localDate(this.log.imported_at, format = false);
+      const localDate = utcDate.toLocaleString('en-US', { timeZone: userTimezone });
 
-        if(this.item?.id){
-          this.loadImportedItem();
-        }
-    },
-
-    methods: {
-
-      loadImportedItem() {
-
-            axios.get(`/admin/api/bulletin/${this.log.item_id}`).then(res => {
-              this.item = res.data;
-            }).catch(error => {
-              console.log(error);
-            }).finally(() => {
-
-            });
-        },
-
-
-      localDate: function (dt, format = true) {
-          if (dt === null || dt === '') {
-              return '';
-          }
-          // Z tells it's a UTC time
-          const utcDate = new Date(`${dt}Z`);
-          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-          const localDate = utcDate.toLocaleString('en-US', {timeZone: userTimezone});
-
-          if (!format) {
-              return dateFns.format(localDate, 'YYYY-MM-DDTHH:mm');
-          } else {
-              return localDate
-          }
+      if (!format) {
+        return dateFns.format(localDate, 'YYYY-MM-DDTHH:mm');
+      } else {
+        return localDate;
       }
     },
+  },
 
-    data: function () {
-        return {
-            item: {}
-        };
-    },
+  data: function () {
+    return {
+      item: {},
+    };
+  },
 
-    template: `
+  template: `
 
       <v-card color="grey lighten-3" class="mx-auto pa-3">
       <v-card color="grey lighten-5" outlined class="header-fixed mx-2">

@@ -1,79 +1,75 @@
 Vue.component('bulletin-search-box', {
-    props: {
-        value: {
-            type: Object,
-            required: true
-        },
-        users: {
-            type: Array
-        },
-        roles: {
-            type: Array
-        },
-
-        extraFilters: {
-            type: Boolean
-        },
-        showOp: {
-            type: Boolean,
-            default: true
-        },
-        i18n: {
-            type: Object,
-        },
-
-        isAdmin : {
-        type: Boolean,
-        default: false
-        }
-
+  props: {
+    value: {
+      type: Object,
+      required: true,
+    },
+    users: {
+      type: Array,
+    },
+    roles: {
+      type: Array,
     },
 
-    data: () => {
-        return {
-            translations: translations,
-            searches: [],
-            saveDialog: false,
-            repr: '',
-            q: {},
-            qName: '',
-        }
+    extraFilters: {
+      type: Boolean,
+    },
+    showOp: {
+      type: Boolean,
+      default: true,
+    },
+    i18n: {
+      type: Object,
     },
 
-    created() {
-        this.q = this.value;
+    isAdmin: {
+      type: Boolean,
+      default: false,
     },
+  },
 
-    mounted () {
-      this.q.locTypes = this.translations.bulletinLocTypes_.map(x=>x.code);
+  data: () => {
+    return {
+      translations: translations,
+      searches: [],
+      saveDialog: false,
+      repr: '',
+      q: {},
+      qName: '',
+    };
+  },
+
+  created() {
+    this.q = this.value;
+  },
+
+  mounted() {
+    this.q.locTypes = this.translations.bulletinLocTypes_.map((x) => x.code);
+  },
+
+  watch: {
+    q: {
+      handler(newVal) {
+        this.$emit('input', newVal);
+      },
+      deep: true,
     },
-
-    watch: {
-        q: {
-            handler(newVal) {
-                this.$emit('input', newVal)
-            }
-            ,
-            deep: true
-        },
-        value: function (newVal, oldVal) {
-            if (newVal !== oldVal) {
-                this.q = newVal;
-            }
-        },
-    },
-
-    computed : {
-      showGeomap(){
-          return this.q.locTypes?.length > 0;
+    value: function (newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.q = newVal;
       }
-
     },
+  },
 
+  computed: {
+    showGeomap() {
+      return this.q.locTypes?.length > 0;
+    },
+  },
 
-    methods: {},
+  methods: {},
 
-    template: `
+  template: `
         <v-card flat>
             <v-card-text>
             <v-container class="fluid">
@@ -494,6 +490,5 @@ Vue.component('bulletin-search-box', {
         
         
 
-    `
-
-})
+    `,
+});

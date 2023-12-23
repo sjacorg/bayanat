@@ -1,95 +1,89 @@
 Vue.component('relate-incidents', {
-    props: ['value', 'show', 'exids', 'i18n'],
-    data: () => {
-        return {
-            q: {},
-            loading: true,
-            results: [],
-            visible: false,
-            page: 1,
-            perPage: 10,
-            total: 0,
-            moreItems: false,
-            incident: null,
-            showIncident: false
+  props: ['value', 'show', 'exids', 'i18n'],
+  data: () => {
+    return {
+      q: {},
+      loading: true,
+      results: [],
+      visible: false,
+      page: 1,
+      perPage: 10,
+      total: 0,
+      moreItems: false,
+      incident: null,
+      showIncident: false,
+    };
+  },
+  watch: {
+    value: function (val) {
+      this.$emit('input', val);
+    },
+  },
 
-        }
-
-    }
-    ,
-    watch: {
-        value: function (val) {
-            this.$emit('input', val);
-        }
+  methods: {
+    viewIncident(i) {
+      axios
+        .get(`/admin/api/incident/${i.id}`)
+        .then((response) => {
+          console.log(response.data);
+          this.incident = response.data;
+          this.showIncident = true;
+        })
+        .catch((error) => {
+          this.showIncident = false;
+          this.showSnack("Oops! We couldn't find this item.");
+        });
     },
 
-    methods: {
-
-        viewIncident(i) {
-            axios.get(`/admin/api/incident/${i.id}`).then(response => {
-                console.log(response.data);
-                this.incident = response.data;
-                this.showIncident = true;
-
-
-            }).catch(error => {
-                this.showIncident = false;
-                this.showSnack('Oops! We couldn\'t find this item.')
-
-            });
-        },
-
-
-        open() {
-            this.visible = true;
-
-        },
-        close() {
-            this.visible = false
-        },
-        reSearch() {
-            this.page = 1;
-            this.results = [];
-            this.search();
-
-        },
-
-        search(q = {}) {
-            this.loading = true;
-            axios.post(`/admin/api/incidents/?page=${this.page}&per_page=${this.perPage}&mode=2`, {q: this.q}).then(response => {
-                this.exids = this.exids || [];
-                this.loading = false;
-                this.total = response.data.total;
-
-                this.results = this.results.concat(response.data.items.filter(x => !this.exids.includes(x.id)));
-
-
-                if (this.page * this.perPage >= this.total) {
-                    this.moreItems = false;
-                } else {
-                    this.moreItems = true;
-                }
-            }).catch(err => {
-                this.loading = false;
-                console.log(err.response.data);
-            });
-
-
-        },
-        loadMore() {
-            this.page += 1;
-            this.search()
-        },
-        relateItem(item) {
-            this.results.removeById(item.id);
-            this.$emit('relate', item);
-
-        }
-
+    open() {
+      this.visible = true;
+    },
+    close() {
+      this.visible = false;
+    },
+    reSearch() {
+      this.page = 1;
+      this.results = [];
+      this.search();
     },
 
+    search(q = {}) {
+      this.loading = true;
+      axios
+        .post(`/admin/api/incidents/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
+          q: this.q,
+        })
+        .then((response) => {
+          this.exids = this.exids || [];
+          this.loading = false;
+          this.total = response.data.total;
 
-    template: `
+          this.results = this.results.concat(
+            response.data.items.filter((x) => !this.exids.includes(x.id)),
+          );
+
+          if (this.page * this.perPage >= this.total) {
+            this.moreItems = false;
+          } else {
+            this.moreItems = true;
+          }
+        })
+        .catch((err) => {
+          this.loading = false;
+          console.log(err.response.data);
+        });
+    },
+    loadMore() {
+      this.page += 1;
+      this.search();
+    },
+    relateItem(item) {
+      this.results.removeById(item.id);
+      this.$emit('relate', item);
+    },
+  },
+
+  template: `
       <v-dialog v-model="visible" max-width="1220">
       <v-sheet>
 
@@ -168,5 +162,5 @@ Vue.component('relate-incidents', {
 
       </v-dialog>
 
-    `
-})
+    `,
+});

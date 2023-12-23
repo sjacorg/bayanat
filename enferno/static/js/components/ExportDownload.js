@@ -1,61 +1,53 @@
-Vue.component("export-download", {
-    props: {
-        item: {},
-        i18n: {}
+Vue.component('export-download', {
+  props: {
+    item: {},
+    i18n: {},
+  },
+  data: function () {
+    return {
+      timer: null,
+    };
+  },
+
+  watch: {
+    item: function (val) {
+      this.setupInterval();
     },
-    data: function () {
-        return {
+  },
 
-            timer: null,
+  mounted: function () {
+    this.setupInterval();
+  },
 
-        };
+  methods: {
+    setupInterval() {
+      if (this.item.status === 'Processing' && !this.timer) {
+        const splitInterval = Math.random() * 5 + 3;
+        this.timer = setInterval(this.checkStatus, splitInterval * 1000);
+      }
     },
 
-    watch: {
-
-
-        item: function (val) {
-               this.setupInterval();
-
-        },
-
-
+    checkStatus() {
+      if (this.item.status === 'Ready') {
+        clearInterval(this.timer);
+        this.timer = null;
+        this.$root.refresh();
+        return;
+      }
+      axios
+        .get(`/export/api/export/${this.item.id}`)
+        .then((response) => {
+          this.item = response.data;
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          // Handle finally case if needed
+        });
     },
-
-    mounted: function () {
-        this.setupInterval();
-
-
-    },
-
-    methods: {
-
-        setupInterval() {
-            if (this.item.status === 'Processing' && !this.timer) {
-                const splitInterval = Math.random() * 5 + 3;
-                this.timer = setInterval(this.checkStatus, splitInterval * 1000);
-            }
-        },
-
-       checkStatus() {
-            if (this.item.status === 'Ready') {
-                clearInterval(this.timer);
-                this.timer = null;
-                this.$root.refresh();
-                return;
-            }
-            axios.get(`/export/api/export/${this.item.id}`).then(response => {
-                this.item = response.data;
-            }).catch(error => {
-                console.log(error);
-            }).finally(() => {
-                // Handle finally case if needed
-            });
-        }
-
-    },
-    template:
-        `
+  },
+  template: `
           <div>
             <v-progress-circular v-if="item.status === 'Processing'"
                                  indeterminate

@@ -1,5 +1,5 @@
-Vue.component("bulletin-result", {
-  props: ['bulletin','hidden','showHide', 'i18n'],
+Vue.component('bulletin-result', {
+  props: ['bulletin', 'hidden', 'showHide', 'i18n'],
 
   template: `
     <template v-if="!hidden">
@@ -52,5 +52,5 @@ Vue.component("bulletin-result", {
     
     </v-card>
       </template>
-    `
+    `,
 });

@@ -15,6 +15,7 @@ from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
 from itsdangerous import URLSafeSerializer
 
+
 class Export(db.Model, BaseMixin):
     export_dir = Path("enferno/exports")
     export_file_name = "export"
@@ -32,11 +33,10 @@ class Export(db.Model, BaseMixin):
     file_id = db.Column(db.String)
     ref = db.Column(ARRAY(db.String))
     comment = db.Column(db.Text)
-    status = db.Column(db.String, nullable=False, default='Pending')
+    status = db.Column(db.String, nullable=False, default="Pending")
     approver_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     approver = db.relationship("User", backref="approved_exports", foreign_keys=[approver_id])
     expires_on = db.Column(db.DateTime)
-
 
     @property
     def unique_id(self):
@@ -56,7 +56,7 @@ class Export(db.Model, BaseMixin):
             return dt.utcnow() > self.expires_on
         else:
             return True
-        
+
     def from_json(self, table, json):
         """
         Export Deserializer.
@@ -64,16 +64,16 @@ class Export(db.Model, BaseMixin):
         :param json: json request data
         """
 
-        cfg = json.get('config')
-        items = json.get('items')
+        cfg = json.get("config")
+        items = json.get("items")
 
         self.requester = current_user
         self.table = table
         self.items = items
-        self.ref = cfg.get('ref') if "ref" in cfg else []
-        self.comment = cfg.get('comment')
-        self.file_format = cfg.get('format')
-        self.include_media = cfg.get('includeMedia')
+        self.ref = cfg.get("ref") if "ref" in cfg else []
+        self.comment = cfg.get("comment")
+        self.file_format = cfg.get("format")
+        self.include_media = cfg.get("includeMedia")
 
         return self
 
@@ -83,7 +83,6 @@ class Export(db.Model, BaseMixin):
         """
         return {
             "id": self.id,
-
             "class": self.__tablename__,
             "table": self.table,
             "requester": self.requester.to_compact(),
@@ -94,35 +93,41 @@ class Export(db.Model, BaseMixin):
             "comment": self.comment,
             "ref": self.ref or None,
             "file_id": self.file_id,
-            "expires_on": DateHelper.serialize_datetime(self.expires_on) if self.expires_on else None,
-            "updated_at":  DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None,
-            "created_at" : DateHelper.serialize_datetime(self.created_at) if self.created_at else None,
+            "expires_on": DateHelper.serialize_datetime(self.expires_on)
+            if self.expires_on
+            else None,
+            "updated_at": DateHelper.serialize_datetime(self.updated_at)
+            if self.updated_at
+            else None,
+            "created_at": DateHelper.serialize_datetime(self.created_at)
+            if self.created_at
+            else None,
             "expired": self.expired,
             "uid": self.unique_id,
             "items": self.items,
+        }
 
-            }
-    
     def approve(self):
         """
         Method to approve Export requests.
         """
-        self.status = 'Processing'
+        self.status = "Processing"
         # set download expiry
         self.expires_on = dt.utcnow() + timedelta(
-            seconds=current_app.config.get('EXPORT_DEFAULT_EXPIRY'))
+            seconds=current_app.config.get("EXPORT_DEFAULT_EXPIRY")
+        )
         self.approver = current_user
 
         return self
-    
+
     def reject(self):
         """
         Method to reject Export requests.
         """
-        self.status = 'Rejected'
+        self.status = "Rejected"
 
         return self
-    
+
     def set_expiry(self, date):
         """
         Method to change expiry date/time
@@ -130,11 +135,11 @@ class Export(db.Model, BaseMixin):
         try:
             expires_on = arrow.get(date)
         except Exception as e:
-            print(F"Error saving export #{self.id}: \n {e}")
+            print(f"Error saving export #{self.id}: \n {e}")
 
         if expires_on > arrow.utcnow():
-            self.expires_on = expires_on.format('YYYY-MM-DDTHH:mm')
-        
+            self.expires_on = expires_on.format("YYYY-MM-DDTHH:mm")
+
         return self
 
     @staticmethod
@@ -156,4 +161,3 @@ class Export(db.Model, BaseMixin):
         # Create unique directory
         dir_id = Export.generate_export_dir()
         return Export.export_dir / dir_id / Export.export_file_name, dir_id
-

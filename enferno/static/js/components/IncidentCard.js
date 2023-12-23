@@ -1,170 +1,185 @@
-Vue.component("incident-card", {
-    props: ['incident', 'close', 'log', 'diff', "showEdit", "i18n"],
+Vue.component('incident-card', {
+  props: ['incident', 'close', 'log', 'diff', 'showEdit', 'i18n'],
 
-    watch: {
-        incident: function (b, n) {
-            this.loadBulletinRelations();
-            this.loadActorRelations();
-            this.loadIncidentRelations();
-        }
+  watch: {
+    incident: function (b, n) {
+      this.loadBulletinRelations();
+      this.loadActorRelations();
+      this.loadIncidentRelations();
+    },
+  },
+
+  methods: {
+    loadGeoMap() {
+      this.geoMapLoading = true;
+      //load again all bulletin relations without paging (soft limit is 1000 bulletin)
+
+      axios
+        .get(
+          `/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`,
+        )
+        .then((res) => {
+          // Check if there are related bulletins / then fetch their full data to visualize location
+          let relatedBulletins = res.data.items;
+
+          if (relatedBulletins && relatedBulletins.length) {
+            getBulletinLocations(relatedBulletins.map((x) => x.bulletin.id)).then((res) => {
+              this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
+              this.geoMapLoading = false;
+              this.geoMapOn = true;
+            });
+          } else {
+            this.mapLocations = aggregateIncidentLocations(this.incident);
+            this.geoMapOn = true;
+          }
+        })
+        .catch((err) => {})
+        .catch((err) => {})
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
     },
 
-    methods: {
-
-        loadGeoMap(){
-
-            this.geoMapLoading = true
-            //load again all bulletin relations without paging (soft limit is 1000 bulletin)
-
-            axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=1&per_page=1000`).then(res => {
-            // Check if there are related bulletins / then fetch their full data to visualize location
-            let relatedBulletins = res.data.items;
-
-            if (relatedBulletins && relatedBulletins.length) {
-                getBulletinLocations(relatedBulletins.map(x => x.bulletin.id)).then(res => {
-                this.mapLocations = aggregateIncidentLocations(this.incident).concat(res.flat());
-                this.geoMapLoading = false;
-                this.geoMapOn = true;
-                })
-            } else {
-                this.mapLocations = aggregateIncidentLocations(this.incident);
-                this.geoMapOn = true;
-            }
-                }).catch(err => {
-                }).catch(err => {
-
-            }).catch(err => {
-
-            console.log(err.toJSON());
-            });
-        },
-
-        translate_status(status){
-            return translate_status(status);
-        },
-
-        loadBulletinRelations(page=1) {
-            axios.get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=${page}`).then(res => {
-
-            this.incident.bulletin_relations.push.apply(this.incident.bulletin_relations, res.data.items);
-            this.bulletinPage += 1;
-            this.bulletinLM = res.data.more;
-            }).catch(err => {
-            console.log(err.toJSON());
-            });
-        },
-
-        loadActorRelations(page = 1){
-            axios.get(`/admin/api/incident/relations/${this.incident.id}?class=actor&page=${page}`).then(res=>{
-            //console.log(this.bulletin.actor_relations, res.data.items);
-            this.incident.actor_relations.push.apply(this.incident.actor_relations,res.data.items);
-            this.actorPage +=1;
-            this.actorLM = res.data.more;
-
-            }).catch(err=>{
-                console.log(err.toJSON());
-            });
-        },
-
-        loadIncidentRelations(page =1){
-            // b2i
-            axios.get(`/admin/api/incident/relations/${this.incident.id}?class=incident&page=${page}`).then(res=>{
-                this.incident.incident_relations.push.apply(this.incident.incident_relations, res.data.items);
-                this.incidentPage +=1;
-                this.incidentLM = res.data.more;
-            }).catch(err=>{
-                console.log(err.toJSON());
-            });
-        },
-
-        probability(item) {
-            return translations.probs[item.probability].tr;
-        },
-
-        actor_related_as(rid) {
-            return translations.itoaRelateAs[rid].tr;
-        },
-
-        bulletin_related_as(item) {
-            return translations.itobRelateAs[item.related_as].tr;
-        },
-
-        incident_related_as(item) {
-            return translations.itoiRelateAs[item.related_as].tr;
-        },
-
-        logAllowed() {
-            return this.$root.currentUser.view_simple_history && this.log;
-        },
-
-        diffAllowed() {
-            return this.$root.currentUser.view_full_history && this.diff;
-        },
-
-        editAllowed() {
-            return this.$root.editAllowed(this.incident) && this.showEdit;
-        },
-
-        loadRevisions() {
-            this.hloading = true;
-            axios.get(`/admin/api/incidenthistory/${this.incident.id}`).then(response => {
-                this.revisions = response.data.items;
-            }).catch(error => {
-                console.log(error.body.data)
-            }).finally(() => {
-                this.hloading = false;
-            });
-        },
-
-        showDiff(e, index) {
-
-            this.diffDialog = true;
-            //calculate diff
-            const dp = jsondiffpatch.create({
-                arrays: {
-                    detectMove: true
-                },
-                objectHash: function (obj, index) {
-                    return obj.name || obj.id || obj._id || '$$index:' + index;
-                }
-            });
-
-            const delta = dp.diff(this.revisions[index + 1].data, this.revisions[index].data);
-                if (!delta) {
-                    this.diffResult = 'Both items are Identical :)';
-                } else {
-                    this.diffResult = jsondiffpatch.formatters.html.format(delta)
-                }
-
-        }
+    translate_status(status) {
+      return translate_status(status);
     },
 
-    data: function () {
-        return {
-            geoMapLoading: false,
-            geoMapOn: false,
-            diffResult: '',
-            diffDialog: false,
-            revisions: null,
-            show: false,
-            hloading: false,
-            //global map
-            mapLocations: [],
-
-            // pagers for related entities
-            bulletinPage: 1,
-            actorPage: 1,
-            incidentPage: 1,
-
-            // load more buttons
-            bulletinLM: false,
-            actorLM: false,
-            incidentLM:false
-        }
+    loadBulletinRelations(page = 1) {
+      axios
+        .get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=${page}`)
+        .then((res) => {
+          this.incident.bulletin_relations.push.apply(
+            this.incident.bulletin_relations,
+            res.data.items,
+          );
+          this.bulletinPage += 1;
+          this.bulletinLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
     },
 
+    loadActorRelations(page = 1) {
+      axios
+        .get(`/admin/api/incident/relations/${this.incident.id}?class=actor&page=${page}`)
+        .then((res) => {
+          //console.log(this.bulletin.actor_relations, res.data.items);
+          this.incident.actor_relations.push.apply(this.incident.actor_relations, res.data.items);
+          this.actorPage += 1;
+          this.actorLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
 
-    template: `
+    loadIncidentRelations(page = 1) {
+      // b2i
+      axios
+        .get(`/admin/api/incident/relations/${this.incident.id}?class=incident&page=${page}`)
+        .then((res) => {
+          this.incident.incident_relations.push.apply(
+            this.incident.incident_relations,
+            res.data.items,
+          );
+          this.incidentPage += 1;
+          this.incidentLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
+
+    probability(item) {
+      return translations.probs[item.probability].tr;
+    },
+
+    actor_related_as(rid) {
+      return translations.itoaRelateAs[rid].tr;
+    },
+
+    bulletin_related_as(item) {
+      return translations.itobRelateAs[item.related_as].tr;
+    },
+
+    incident_related_as(item) {
+      return translations.itoiRelateAs[item.related_as].tr;
+    },
+
+    logAllowed() {
+      return this.$root.currentUser.view_simple_history && this.log;
+    },
+
+    diffAllowed() {
+      return this.$root.currentUser.view_full_history && this.diff;
+    },
+
+    editAllowed() {
+      return this.$root.editAllowed(this.incident) && this.showEdit;
+    },
+
+    loadRevisions() {
+      this.hloading = true;
+      axios
+        .get(`/admin/api/incidenthistory/${this.incident.id}`)
+        .then((response) => {
+          this.revisions = response.data.items;
+        })
+        .catch((error) => {
+          console.log(error.body.data);
+        })
+        .finally(() => {
+          this.hloading = false;
+        });
+    },
+
+    showDiff(e, index) {
+      this.diffDialog = true;
+      //calculate diff
+      const dp = jsondiffpatch.create({
+        arrays: {
+          detectMove: true,
+        },
+        objectHash: function (obj, index) {
+          return obj.name || obj.id || obj._id || '$$index:' + index;
+        },
+      });
+
+      const delta = dp.diff(this.revisions[index + 1].data, this.revisions[index].data);
+      if (!delta) {
+        this.diffResult = 'Both items are Identical :)';
+      } else {
+        this.diffResult = jsondiffpatch.formatters.html.format(delta);
+      }
+    },
+  },
+
+  data: function () {
+    return {
+      geoMapLoading: false,
+      geoMapOn: false,
+      diffResult: '',
+      diffDialog: false,
+      revisions: null,
+      show: false,
+      hloading: false,
+      //global map
+      mapLocations: [],
+
+      // pagers for related entities
+      bulletinPage: 1,
+      actorPage: 1,
+      incidentPage: 1,
+
+      // load more buttons
+      bulletinLM: false,
+      actorLM: false,
+      incidentLM: false,
+    };
+  },
+
+  template: `
       <v-card color="grey lighten-3" class="mx-auto pa-3">
       <v-sheet color="grey lighten-5" class="header-fixed mx-2">
       <v-btn v-if="close" @click="$emit('close',$event.target.value)" fab absolute top right x-small text
@@ -424,6 +439,5 @@ Vue.component("incident-card", {
 
       <!-- Root Card   -->
       </v-card>
-    `
+    `,
 });
-  

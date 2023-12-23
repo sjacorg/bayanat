@@ -8,16 +8,17 @@ from sqlalchemy import JSON, ARRAY
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import Mutable
 
-from datetime import  datetime
+from datetime import datetime
 from enferno.utils.base import BaseMixin
 from enferno.extensions import db, rds
-
 
 
 from sqlalchemy.ext.mutable import Mutable
 
 # Redis key namespace to set flag for forcing password reset
 SECURITY_KEY_NAMESPACE = "security:user"
+
+
 class MutableList(Mutable, list):
     def append(self, value):
         list.append(self, value)
@@ -38,11 +39,11 @@ class MutableList(Mutable, list):
             return value
 
 
-roles_users = db.Table('roles_users',
-                       db.Column('user_id', db.Integer(),
-                                 db.ForeignKey('user.id')),
-                       db.Column('role_id', db.Integer(),
-                                 db.ForeignKey('role.id')))
+roles_users = db.Table(
+    "roles_users",
+    db.Column("user_id", db.Integer(), db.ForeignKey("user.id")),
+    db.Column("role_id", db.Integer(), db.ForeignKey("role.id")),
+)
 
 
 class Role(db.Model, RoleMixin, BaseMixin):
@@ -67,24 +68,23 @@ class Role(db.Model, RoleMixin, BaseMixin):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'color': self.color or ''
-
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "color": self.color or "",
         }
 
     def to_json(self):
         return json.dumps(self.to_dict())
 
     def from_json(self, jsn):
-        self.name = jsn.get('name', '')
-        self.description = jsn.get('description', '')
-        self.color = jsn.get('color')
+        self.name = jsn.get("name", "")
+        self.description = jsn.get("description", "")
+        self.color = jsn.get("color")
         return self
 
     def __repr__(self):
-        return '{} - {}'.format(self.id, self.name)
+        return "{} - {}".format(self.id, self.name)
 
 
 class WebAuthn(db.Model):
@@ -108,7 +108,7 @@ class WebAuthn(db.Model):
             nullable=False,
         )
 
-    def get_user_mapping(self) :
+    def get_user_mapping(self):
         """
         Return the mapping from webauthn back to User
         """
@@ -126,8 +126,9 @@ class User(UserMixin, db.Model, BaseMixin):
     username = db.Column(db.String(255), nullable=True, unique=True)
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean, default=False)
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship(
+        "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
+    )
 
     # email confirmation
     confirmed_at = db.Column(db.DateTime())
@@ -140,7 +141,6 @@ class User(UserMixin, db.Model, BaseMixin):
 
     # web authn
     fs_webauthn_user_handle = db.Column(db.String(64), unique=True)
-
 
     tf_phone_number = db.Column(db.String(64))
     tf_primary_method = db.Column(db.String(140))
@@ -176,8 +176,9 @@ class User(UserMixin, db.Model, BaseMixin):
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         timestamp = int(datetime.utcnow().timestamp())
         rds.set(key, timestamp)
+
     def unset_security_reset_key(self):
-        """unSet the security reset key """
+        """unSet the security reset key"""
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         rds.delete(key)
 
@@ -186,7 +187,7 @@ class User(UserMixin, db.Model, BaseMixin):
         return any(chk)
 
     def __unicode__(self):
-        return '%s' % self.id
+        return "%s" % self.id
 
     def __repr__(self):
         return "%s %s %s" % (self.name, self.id, self.email)
@@ -194,29 +195,41 @@ class User(UserMixin, db.Model, BaseMixin):
     @property
     def secure_email(self):
         try:
-            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
+            if (
+                current_user.view_usernames
+                or current_user.has_role("Admin")
+                or current_user is None
+            ):
                 return self.email
         except Exception as ex:
             pass
-        return f'user-{self.id}'
+        return f"user-{self.id}"
 
     @property
     def secure_name(self):
         try:
-            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
+            if (
+                current_user.view_usernames
+                or current_user.has_role("Admin")
+                or current_user is None
+            ):
                 return self.name
         except Exception as ex:
             pass
-        return f'user-{self.id}'
+        return f"user-{self.id}"
 
     @property
     def secure_username(self):
         try:
-            if current_user.view_usernames or current_user.has_role('Admin') or current_user is None:
+            if (
+                current_user.view_usernames
+                or current_user.has_role("Admin")
+                or current_user is None
+            ):
                 return self.username
         except Exception as ex:
             pass
-        return f'user-{self.id}'
+        return f"user-{self.id}"
 
     def can_access(self, obj):
         """
@@ -226,17 +239,17 @@ class User(UserMixin, db.Model, BaseMixin):
         :return: True or False based on access roles
         """
         # grant admin access always to restricted items
-        if self.has_role('Admin'):
+        if self.has_role("Admin"):
             return True
 
         # handle primary entities (bulletins, actors, incidents)
-        if obj.__tablename__ in ['bulletin', 'actor', 'incident']:
+        if obj.__tablename__ in ["bulletin", "actor", "incident"]:
             # intersect roles
             if not obj.roles or set(self.roles) & set(obj.roles):
                 return True
 
         # handle media access
-        elif obj.__tablename__ == 'media':
+        elif obj.__tablename__ == "media":
             # media can be related to either an actor or a bulletin
             # find out which one
             parent = obj.bulletin or obj.actor
@@ -247,49 +260,48 @@ class User(UserMixin, db.Model, BaseMixin):
         return False
 
     def from_json(self, item):
-
-        self.email = item.get('email')
-        self.username = item.get('username')
+        self.email = item.get("email")
+        self.username = item.get("username")
 
         # check password is not empty
-        password = item.get('password')
+        password = item.get("password")
         if password:
             self.password = hash_password(password)
 
-        self.name = item.get('name')
+        self.name = item.get("name")
 
         # roles
-        roles = item.get('roles', [])
+        roles = item.get("roles", [])
         new_roles = []
         if len(roles):
-            ids = [r.get('id', -1) for r in roles]
+            ids = [r.get("id", -1) for r in roles]
             new_roles = Role.query.filter(Role.id.in_(ids)).all()
             self.roles = new_roles
         else:
             self.roles = []
 
         # permissions
-        self.view_usernames = item.get('view_usernames', False)
-        self.view_simple_history = item.get('view_simple_history', False)
-        self.view_full_history = item.get('view_full_history', False)
-        self.can_self_assign = item.get('can_self_assign', False)
-        self.can_edit_locations = item.get('can_edit_locations', False)
-        self.can_export = item.get('can_export', False)
+        self.view_usernames = item.get("view_usernames", False)
+        self.view_simple_history = item.get("view_simple_history", False)
+        self.view_full_history = item.get("view_full_history", False)
+        self.can_self_assign = item.get("can_self_assign", False)
+        self.can_edit_locations = item.get("can_edit_locations", False)
+        self.can_export = item.get("can_export", False)
 
-        self.active = item.get('active')
+        self.active = item.get("active")
         return self
 
     def to_compact(self):
         """
-        Compact serializer for User class. 
-        Hides user data from users without 
+        Compact serializer for User class.
+        Hides user data from users without
         permissions.
         """
         return {
-            'id': self.id,
-            'name': self.secure_name,
-            'username': self.secure_username,
-            'active': self.active
+            "id": self.id,
+            "name": self.secure_name,
+            "username": self.secure_username,
+            "active": self.active,
         }
 
     def to_dict(self):
@@ -297,27 +309,27 @@ class User(UserMixin, db.Model, BaseMixin):
         Main serializer for User class.
         """
         return {
-                'id': self.id,
-                'name': self.secure_name,
-                'google_id': self.google_id,
-                'email': self.secure_email,
-                'username': self.secure_username,
-                'active': self.active,
-                'roles': [role.to_dict() for role in self.roles],
-                'view_usernames': self.view_usernames,
-                'view_simple_history': self.view_simple_history,
-                'view_full_history': self.view_full_history,
-                'can_self_assign': self.can_self_assign,
-                'can_edit_locations': self.can_edit_locations,
-                'can_export': self.can_export,
-                'force_reset': self.security_reset_key
-            }
+            "id": self.id,
+            "name": self.secure_name,
+            "google_id": self.google_id,
+            "email": self.secure_email,
+            "username": self.secure_username,
+            "active": self.active,
+            "roles": [role.to_dict() for role in self.roles],
+            "view_usernames": self.view_usernames,
+            "view_simple_history": self.view_simple_history,
+            "view_full_history": self.view_full_history,
+            "can_self_assign": self.can_self_assign,
+            "can_edit_locations": self.can_edit_locations,
+            "can_export": self.can_export,
+            "force_reset": self.security_reset_key,
+        }
 
     def to_json(self):
         return json.dumps(self.to_dict())
 
     meta = {
-        'allow_inheritance': True,
-        'indexes': ['-created_at', 'email', 'username'],
-        'ordering': ['-created_at']
+        "allow_inheritance": True,
+        "indexes": ["-created_at", "email", "username"],
+        "ordering": ["-created_at"],
     }

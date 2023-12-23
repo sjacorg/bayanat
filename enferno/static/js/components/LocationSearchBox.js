@@ -1,40 +1,38 @@
 Vue.component('location-search-box', {
-    props: {
-        value: {
-            type: Object, required: true
-        },
-        i18n: {
-            type: Object
-        }
+  props: {
+    value: {
+      type: Object,
+      required: true,
+    },
+    i18n: {
+      type: Object,
+    },
+  },
+
+  data: () => {
+    return {
+      q: {},
+    };
+  },
+  watch: {
+    q: {
+      handler(newVal) {
+        this.$emit('input', newVal);
+      },
+      deep: true,
     },
 
-    data: () => {
-        return {
-            q: {},
-
-
-        }
-    }, watch: {
-
-        q: {
-            handler(newVal) {
-                this.$emit('input', newVal)
-            }, deep: true
-        },
-
-        value: function (newVal, oldVal) {
-
-            if (newVal !== oldVal) {
-                this.q = newVal;
-            }
-        }
-
-    }, created() {
-        this.q = this.value;
-
+    value: function (newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.q = newVal;
+      }
     },
+  },
+  created() {
+    this.q = this.value;
+  },
 
-    template: `
+  template: `
       <v-sheet>
       <v-card class="pa-4">
         <v-card-title>
@@ -148,6 +146,5 @@ Vue.component('location-search-box', {
       </v-card>
 
       </v-sheet>
-    `
-
-})
+    `,
+});

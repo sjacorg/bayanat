@@ -1,59 +1,66 @@
 Vue.component('incident-search-box', {
-    props: {
-        value: {
-            type: Object, required: true
-        }, users: {
-            type: Array
-        }, extraFilters: {
-            type: Boolean
-        }, i18n: {
-            type: Object
-        }, roles: {
-            type: Array
-        }, isAdmin: {
-            type: Boolean, default: false
-        }
+  props: {
+    value: {
+      type: Object,
+      required: true,
     },
-
-    data: () => {
-        return {
-            q: {},
-            potentialViolationsCategories: [],
-            claimedViolationsCategories: [],
-        }
-    }, watch: {
-
-
-        q: {
-            handler(newVal) {
-
-                this.$emit('input', newVal)
-            }, deep: true
-        }, value: function (newVal, oldVal) {
-
-            if (newVal !== oldVal) {
-                this.q = newVal;
-            }
-        }
-
-    }, created() {
-        this.q = this.value;
-        this.fetchViolationCategories('potentialviolation', 'potentialViolationsCategories');
-        this.fetchViolationCategories('claimedviolation', 'claimedViolationsCategories');
-
-    }, methods: {
-        fetchViolationCategories(endpointSuffix, categoryVarName) {
-            axios.get(`/admin/api/${endpointSuffix}/`)
-                .then(response => {
-                    this[categoryVarName] = response.data.items;
-                })
-                .catch(error => {
-                    console.error(`Error fetching data for ${categoryVarName}`);
-                });
-        },
+    users: {
+      type: Array,
     },
+    extraFilters: {
+      type: Boolean,
+    },
+    i18n: {
+      type: Object,
+    },
+    roles: {
+      type: Array,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+  },
 
-    template: `
+  data: () => {
+    return {
+      q: {},
+      potentialViolationsCategories: [],
+      claimedViolationsCategories: [],
+    };
+  },
+  watch: {
+    q: {
+      handler(newVal) {
+        this.$emit('input', newVal);
+      },
+      deep: true,
+    },
+    value: function (newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.q = newVal;
+      }
+    },
+  },
+  created() {
+    this.q = this.value;
+    this.fetchViolationCategories('potentialviolation', 'potentialViolationsCategories');
+    this.fetchViolationCategories('claimedviolation', 'claimedViolationsCategories');
+  },
+  methods: {
+    fetchViolationCategories(endpointSuffix, categoryVarName) {
+      axios
+        .get(`/admin/api/${endpointSuffix}/`)
+        .then((response) => {
+          this[categoryVarName] = response.data.items;
+        })
+        .catch((error) => {
+          console.error(`Error fetching data for ${categoryVarName}`);
+        });
+    },
+  },
+
+  template: `
       <v-sheet>
       <v-card class="pa-4">
         
@@ -350,6 +357,5 @@ Vue.component('incident-search-box', {
       
 
       </v-sheet>
-    `
-
-})
+    `,
+});

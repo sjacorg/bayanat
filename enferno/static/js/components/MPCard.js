@@ -1,59 +1,49 @@
-Vue.component("mp-card", {
-    props: {
-        actorId: Number,
-        i18n: Object
+Vue.component('mp-card', {
+  props: {
+    actorId: Number,
+    i18n: Object,
+  },
+  data: function () {
+    return {
+      loading: false,
+      mp: null,
+      show: false,
+    };
+  },
 
-    },
-    data: function () {
-        return {
-            loading: false,
-            mp: null,
-            show: false
-        };
-    },
+  watch: {},
 
-    watch: {},
-
-    computed : {
-      showDPS(){
-          if (this.mp) {
-              if (this.mp.saw_name || this.mp.saw_address || this.mp.saw_email || this.mp.saw_phone){
-                  return true
-              }
-          }
-          return false;
-
-      }
-    },
-
-
-    mounted: function () {
-
-
-    },
-
-    methods: {
-        loadData() {
-
-            this.loading = true;
-            axios.get(`/admin/api/actormp/${this.actorId}`).then((response) => {
-
-                this.mp = response.data;
-                this.show = true;
-
-
-            }).catch(error => {
-                console.log(error.body.data)
-
-            }).finally(() => {
-                this.loading = false;
-            });
-
+  computed: {
+    showDPS() {
+      if (this.mp) {
+        if (this.mp.saw_name || this.mp.saw_address || this.mp.saw_email || this.mp.saw_phone) {
+          return true;
         }
-
+      }
+      return false;
     },
-    template:
-        `
+  },
+
+  mounted: function () {},
+
+  methods: {
+    loadData() {
+      this.loading = true;
+      axios
+        .get(`/admin/api/actormp/${this.actorId}`)
+        .then((response) => {
+          this.mp = response.data;
+          this.show = true;
+        })
+        .catch((error) => {
+          console.log(error.body.data);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+  },
+  template: `
           <v-card class="pa-1 ma-2 elevation-1" color="yellow lighten-4">
           <v-card-title class="subtitle-2">
             <v-btn :loading="loading" @click="loadData" small color="yellow lighten-3 black--text" elevation="0">

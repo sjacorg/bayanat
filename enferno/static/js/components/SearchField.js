@@ -1,86 +1,75 @@
-const SearchField =
-    {
-        props: ['value', 'label', 'multiple', 'itemText', 'itemValue', 'api', 'queryParams', 'disabled'],
-        data: () => {
-            return {
-                loading: false,
-                items: [],
-                searchInput: ''
-            }
-        },
-        mounted() {
+const SearchField = {
+  props: ['value', 'label', 'multiple', 'itemText', 'itemValue', 'api', 'queryParams', 'disabled'],
+  data: () => {
+    return {
+      loading: false,
+      items: [],
+      searchInput: '',
+    };
+  },
+  mounted() {
+    //enable copy paste
+    let dateInputs = document.querySelectorAll('[type="date"]');
 
-            //enable copy paste 
-            let dateInputs = document.querySelectorAll('[type="date"]');
+    dateInputs.forEach((el) => {
+      // register double click event to change date input to text input and select the value
+      el.addEventListener('dblclick', () => {
+        el.type = 'text';
+        el.select();
+      });
 
-            dateInputs.forEach(el => {
-                // register double click event to change date input to text input and select the value
-                el.addEventListener('dblclick', () => {
-                    el.type = "text";
-                    el.select();
-                });
+      // register the focusout event to reset the input back to a date input field
+      el.addEventListener('focusout', () => {
+        el.type = 'date';
+      });
+    });
+  },
 
-                // register the focusout event to reset the input back to a date input field
-                el.addEventListener('focusout', () => {
-                    el.type = "date";
-                });
-            });
+  methods: {
+    emitChange(v) {
+      if (v) {
+        this.$emit('change', v);
+        this.searchInput = '';
+      }
+    },
 
-        },
-
-
-        methods: {
-
-            emitChange(v) {
-                if (v) {
-                    this.$emit('change', v);
-                    this.searchInput = ''
-                }
-            },
-
-            updateValue(val) {
-                // remove free input value in cases of multiple value component and single value component
-                if (this.multiple) {
-
-                    this.$emit('input', val.filter(x => x.id))
-                } else {
-
-
-                    if (val && !val.hasOwnProperty('id')) {
-                        this.$refs.fld.reset();
-
-                    } else {
-
-                        this.$emit('input', val)
-                    }
-                }
-
-
-            },
-            search: debounce(function () {
-                this.loading = true;
-                axios.get(this.api, {
-                    params: {
-                        q: this.searchInput,
-                        ...this.queryParams,
-                        per_page: 100
-                    }
-                })
-                    .then(response => {
-                        this.items = response.data.items;
-                    })
-                    .catch(error => {
-                        console.error("Error fetching data:", error);
-                    })
-                    .finally(() => {
-                        this.loading = false;
-                    });
-            }, 350)
-
-            ,
-
-        },
-        template: `
+    updateValue(val) {
+      // remove free input value in cases of multiple value component and single value component
+      if (this.multiple) {
+        this.$emit(
+          'input',
+          val.filter((x) => x.id),
+        );
+      } else {
+        if (val && !val.hasOwnProperty('id')) {
+          this.$refs.fld.reset();
+        } else {
+          this.$emit('input', val);
+        }
+      }
+    },
+    search: debounce(function () {
+      this.loading = true;
+      axios
+        .get(this.api, {
+          params: {
+            q: this.searchInput,
+            ...this.queryParams,
+            per_page: 100,
+          },
+        })
+        .then((response) => {
+          this.items = response.data.items;
+        })
+        .catch((error) => {
+          console.error('Error fetching data:', error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    }, 350),
+  },
+  template: `
             <v-combobox
                     :disabled="disabled"
                     menu-props="auto"
@@ -110,26 +99,28 @@ const SearchField =
                     :loading="loading"
 
             ></v-combobox>
-        `
-    };
+        `,
+};
 
 Vue.component('search-field', SearchField);
 
 const LocationSearchField = Vue.extend({
-    extends: SearchField,
-    methods: {
-        search: debounce(function (evt) {
-            axios.post(this.api, {
-                q: {
-                    ...this.queryParams,
-                    'title': evt.target.value
-                },
-                options: {},
-            }).then(response => {
-                this.items = response.data.items;
-            });
-        }, 350)
-    }
+  extends: SearchField,
+  methods: {
+    search: debounce(function (evt) {
+      axios
+        .post(this.api, {
+          q: {
+            ...this.queryParams,
+            title: evt.target.value,
+          },
+          options: {},
+        })
+        .then((response) => {
+          this.items = response.data.items;
+        });
+    }, 350),
+  },
 });
 
 Vue.component('location-search-field', LocationSearchField);

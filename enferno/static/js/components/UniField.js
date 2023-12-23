@@ -1,4 +1,4 @@
-Vue.component("uni-field", {
+Vue.component('uni-field', {
   props: {
     caption: String,
     english: String,

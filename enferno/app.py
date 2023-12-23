@@ -7,8 +7,27 @@ from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
 
 import enferno.commands as commands
-from enferno.admin.models import Bulletin, Label, Source, Location, Event, Eventtype, Media, Btob, Actor, Atoa, Atob, \
-    Incident, Itoa, Itob, Itoi, BulletinHistory, Activity, Settings, GeoLocation
+from enferno.admin.models import (
+    Bulletin,
+    Label,
+    Source,
+    Location,
+    Event,
+    Eventtype,
+    Media,
+    Btob,
+    Actor,
+    Atoa,
+    Atob,
+    Incident,
+    Itoa,
+    Itob,
+    Itoi,
+    BulletinHistory,
+    Activity,
+    Settings,
+    GeoLocation,
+)
 from enferno.user.models import WebAuthn
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
@@ -26,12 +45,13 @@ def get_locale():
     :return: system language from the current session.
     """
     from flask import session
+
     # override = request.args.get('lang')
     # if override:
     #     session['lang'] = override
-    default = 'en'
+    default = "en"
     try:
-        default = current_app.config.get('BABEL_DEFAULT_LOCALE')
+        default = current_app.config.get("BABEL_DEFAULT_LOCALE")
     except Exception as e:
         print(e)
 
@@ -43,9 +63,10 @@ def get_locale():
         pass
     else:
         if current_user.settings:
-            if current_user.settings.get('language'):
-                session['lang'] = current_user.settings.get('language')
-    return session.get('lang', default)
+            if current_user.settings.get("language"):
+                session["lang"] = current_user.settings.get("language")
+    return session.get("lang", default)
+
 
 def create_app(config_object=Config):
     app = Flask(__name__)
@@ -63,12 +84,11 @@ def create_app(config_object=Config):
 def register_extensions(app):
     cache.init_app(app)
     db.init_app(app)
-    user_datastore = SQLAlchemyUserDatastore(db, User, Role,webauthn_model=WebAuthn)
-    security = Security(app, user_datastore,
-                        register_form=ExtendedRegisterForm)
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role, webauthn_model=WebAuthn)
+    security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
     session.init_app(app)
     bouncer.init_app(app)
-    babel.init_app(app, locale_selector=get_locale, default_domain='messages', default_locale='en')
+    babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
 
     return None
@@ -79,15 +99,16 @@ def register_signals(app):
     def _after_login_hook(sender, user, **extra):
         # clear login counter
         from flask import session
-        if session.get('failed'):
-            session.pop('failed')
-            print('login counter cleared')
 
-        Activity.create(user, Activity.ACTION_LOGIN, user.to_mini(), 'user')
+        if session.get("failed"):
+            session.pop("failed")
+            print("login counter cleared")
+
+        Activity.create(user, Activity.ACTION_LOGIN, user.to_mini(), "user")
 
     @user_logged_out.connect_via(app)
     def _after_logout_hook(sender, user, **extra):
-        Activity.create(user, Activity.ACTION_LOGOUT, user.to_mini(), 'user')
+        Activity.create(user, Activity.ACTION_LOGOUT, user.to_mini(), "user")
 
 
 def register_blueprints(app):
@@ -96,16 +117,18 @@ def register_blueprints(app):
     app.register_blueprint(admin)
     app.register_blueprint(imports)
 
-    if app.config.get('EXPORT_TOOL'):
+    if app.config.get("EXPORT_TOOL"):
         try:
             from enferno.export.views import export
+
             app.register_blueprint(export)
         except ImportError as e:
             print(e)
 
-    if app.config.get('DEDUP_TOOL'):
+    if app.config.get("DEDUP_TOOL"):
         try:
             from enferno.deduplication.views import deduplication
+
             app.register_blueprint(deduplication)
         except ImportError as e:
             print(e)
@@ -115,7 +138,7 @@ def register_blueprints(app):
 
 def register_errorhandlers(app):
     def render_error(error):
-        error_code = getattr(error, 'code', 500)
+        error_code = getattr(error, "code", 500)
         return render_template("{0}.html".format(error_code)), error_code
 
     for errcode in [401, 404, 500]:
@@ -129,30 +152,30 @@ def register_shellcontext(app):
     def shell_context():
         """Shell context objects."""
         return {
-            'db': db,
-            'pd': pd,
-            'User': User,
-            'Role': Role,
-            'Label': Label,
-            'Bulletin': Bulletin,
-            'BulletinHistory': BulletinHistory,
-            'Location': Location,
-            'GeoLocation': GeoLocation,
-            'Source': Source,
-            'Eventtype': Eventtype,
-            'Event': Event,
-            'Media': Media,
-            'Btob': Btob,
-            'Atoa': Atoa,
-            'Atob': Atob,
-            'Actor': Actor,
-            'Incident': Incident,
-            'Itoi': Itoi,
-            'Itob': Itob,
-            'Itoa': Itoa,
-            'Activity': Activity,
-            'Settings': Settings,
-            'rds': rds
+            "db": db,
+            "pd": pd,
+            "User": User,
+            "Role": Role,
+            "Label": Label,
+            "Bulletin": Bulletin,
+            "BulletinHistory": BulletinHistory,
+            "Location": Location,
+            "GeoLocation": GeoLocation,
+            "Source": Source,
+            "Eventtype": Eventtype,
+            "Event": Event,
+            "Media": Media,
+            "Btob": Btob,
+            "Atoa": Atoa,
+            "Atob": Atob,
+            "Actor": Actor,
+            "Incident": Incident,
+            "Itoi": Itoi,
+            "Itob": Itob,
+            "Itoa": Itoa,
+            "Activity": Activity,
+            "Settings": Settings,
+            "rds": rds,
         }
 
     app.shell_context_processor(shell_context)

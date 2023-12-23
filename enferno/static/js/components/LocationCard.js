@@ -1,91 +1,86 @@
-Vue.component("location-card", {
-    props: ["location", "close", "thumb-click", "active", "log", "diff", "showEdit", "i18n"],
+Vue.component('location-card', {
+  props: ['location', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit', 'i18n'],
 
-    watch: {
-        location: function (val, old) {
-
-          if (!this.$root.currentUser.view_simple_history) {
-              this.log = false;
-          }
-          if (this.$root.currentUser.view_full_history) {
-              this.diff = true;
-          }
-          if (this.location.latlng){
-            let loc = {
-              parentId: null,
-              color: "#00a1f1",
-              full_string: this.location.full_string,
-              id: this.location.id,
-              lat: this.location.latlng.lat,
-              lng: this.location.latlng.lng,
-              title: this.location.title
-            };
-          this.mapLocations = this.mapLocations.concat(loc);
-          }
-        },
-    },
-
-    mounted() {
-      
-    },
-
-    methods: {
-
-        editAllowed() {
-            return this.$root.editAllowed(this.location) && this.showEdit;
-        },
-
-        loadRevisions() {
-            this.hloading = true;
-            axios
-                .get(`/admin/api/locationhistory/${this.location.id}`)
-                .then((response) => {
-                    this.revisions = response.data.items;
-                }).catch(error => {
-                  if(error.response){
-                    console.log(error.response.data)
-                  }
-            }).finally(() => {
-                this.hloading = false;
-            });
-        },
-
-        showDiff(e, index) {
-            this.diffDialog = true;
-            //calculate diff
-            const dp = jsondiffpatch.create({
-                arrays: {
-                    detectMove: true,
-                },
-                objectHash: function (obj, index) {
-                    return obj.name || obj.id || obj._id || "$$index:" + index;
-                },
-            });
-
-            const delta = dp.diff(
-                this.revisions[index + 1].data,
-                this.revisions[index].data
-            );
-            if (!delta) {
-                this.diffResult = "Both items are Identical :)";
-            } else {
-                this.diffResult = jsondiffpatch.formatters.html.format(delta);
-            }
-        },
-    },
-
-    data: function () {
-        return {
-            diffResult: "",
-            diffDialog: false,
-            revisions: null,
-            show: false,
-            hloading: false,
-            mapLocations: []
+  watch: {
+    location: function (val, old) {
+      if (!this.$root.currentUser.view_simple_history) {
+        this.log = false;
+      }
+      if (this.$root.currentUser.view_full_history) {
+        this.diff = true;
+      }
+      if (this.location.latlng) {
+        let loc = {
+          parentId: null,
+          color: '#00a1f1',
+          full_string: this.location.full_string,
+          id: this.location.id,
+          lat: this.location.latlng.lat,
+          lng: this.location.latlng.lng,
+          title: this.location.title,
         };
+        this.mapLocations = this.mapLocations.concat(loc);
+      }
+    },
+  },
+
+  mounted() {},
+
+  methods: {
+    editAllowed() {
+      return this.$root.editAllowed(this.location) && this.showEdit;
     },
 
-    template: `
+    loadRevisions() {
+      this.hloading = true;
+      axios
+        .get(`/admin/api/locationhistory/${this.location.id}`)
+        .then((response) => {
+          this.revisions = response.data.items;
+        })
+        .catch((error) => {
+          if (error.response) {
+            console.log(error.response.data);
+          }
+        })
+        .finally(() => {
+          this.hloading = false;
+        });
+    },
+
+    showDiff(e, index) {
+      this.diffDialog = true;
+      //calculate diff
+      const dp = jsondiffpatch.create({
+        arrays: {
+          detectMove: true,
+        },
+        objectHash: function (obj, index) {
+          return obj.name || obj.id || obj._id || '$$index:' + index;
+        },
+      });
+
+      const delta = dp.diff(this.revisions[index + 1].data, this.revisions[index].data);
+      if (!delta) {
+        this.diffResult = 'Both items are Identical :)';
+      } else {
+        this.diffResult = jsondiffpatch.formatters.html.format(delta);
+      }
+    },
+  },
+
+  data: function () {
+    return {
+      diffResult: '',
+      diffDialog: false,
+      revisions: null,
+      show: false,
+      hloading: false,
+      mapLocations: [],
+    };
+  },
+
+  template: `
 
       <v-card color="grey lighten-3" class="mx-auto pa-3">
         <v-card color="grey lighten-5" outlined class="header-fixed mx-2">

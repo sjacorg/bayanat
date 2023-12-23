@@ -1,50 +1,40 @@
-Vue.component("mix-iii", {
-    props: {
-        title: String,
-        value: [],
-        items: [],
-        i18n: {}
+Vue.component('mix-iii', {
+  props: {
+    title: String,
+    value: [],
+    items: [],
+    i18n: {},
+  },
+  data: function () {
+    return {
+      reporters: [],
+    };
+  },
 
+  watch: {
+    value: function (val) {
+      this.reporters = val || [];
     },
-    data: function () {
-        return {
-            reporters: []
-        }
+    reporters: {
+      handler: 'refresh',
+      deep: true,
     },
+  },
 
-    watch: {
-        value: function (val) {
-            this.reporters = val || [];
-        },
-        reporters: {
-            handler: 'refresh',
-            deep: true
-        }
+  mounted: function () {},
 
+  methods: {
+    addReporter() {
+      this.reporters.push({});
     },
-
-    mounted: function () {
-
-
+    removeMe(i) {
+      this.reporters.splice(i, 1);
     },
-
-
-    methods: {
-
-        addReporter(){
-
-          this.reporters.push({})
-        },
-        removeMe(i){
-        this.reporters.splice(i, 1);
-        },
-        refresh() {
-            this.$emit('input', this.reporters);
-
-        }
+    refresh() {
+      this.$emit('input', this.reporters);
     },
-    template:
-        `
+  },
+  template: `
     <v-card class="pa-3 elevation-1" color="yellow lighten-4">
 
 

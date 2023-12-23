@@ -30,5 +30,8 @@
     "vue2-leaflet": "^2.*",
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.*"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.0"
   }
 }

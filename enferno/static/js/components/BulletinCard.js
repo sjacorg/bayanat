@@ -1,268 +1,241 @@
-Vue.component("bulletin-card", {
-    props: [
-        "bulletin",
-        "close",
-        "thumb-click",
-        "active",
-        "log",
-        "diff",
-        "showEdit",
-        "i18n",
-    ],
+Vue.component('bulletin-card', {
+  props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit', 'i18n'],
 
-    watch: {
-        bulletin: function (val, old) {
-            this.loadBulletinRelations();
-            this.loadActorRelations();
-            this.loadIncidentRelations();
+  watch: {
+    bulletin: function (val, old) {
+      this.loadBulletinRelations();
+      this.loadActorRelations();
+      this.loadIncidentRelations();
 
-            this.mapLocations = aggregateBulletinLocations(this.bulletin);
-        },
+      this.mapLocations = aggregateBulletinLocations(this.bulletin);
+    },
+  },
+
+  mounted() {
+    this.removeVideo();
+  },
+
+  methods: {
+    updateMediaState() {
+      this.mediasReady += 1;
+      if (this.mediasReady == this.bulletin.medias.length && this.mediasReady > 0) {
+        this.prepareImagesForPhotoswipe().then((res) => {
+          this.initLightbox();
+        });
+      }
     },
 
-    mounted() {
-        this.removeVideo();
+    prepareImagesForPhotoswipe() {
+      // Get the <a> tags from the image gallery
+      const imagesList = document.querySelectorAll('#lightbox a');
+      const promisesList = [];
+
+      imagesList.forEach((element) => {
+        const promise = new Promise(function (resolve) {
+          let image = new Image();
+          image.src = element.getAttribute('href');
+          image.onload = () => {
+            element.dataset.pswpWidth = image.width;
+            element.dataset.pswpHeight = image.height;
+            resolve(); // Resolve the promise only if the image has been loaded
+          };
+          image.onerror = () => {
+            resolve();
+          };
+        });
+        promisesList.push(promise);
+      });
+
+      // Use .then() to handle the promise resolution
+      return Promise.all(promisesList);
     },
 
-    methods: {
-        updateMediaState() {
-            this.mediasReady += 1;
-            if (
-                this.mediasReady == this.bulletin.medias.length &&
-                this.mediasReady > 0
-            ) {
-                this.prepareImagesForPhotoswipe().then(res=>{
-                    this.initLightbox();
-                })
-            }
-        },
+    initLightbox() {
+      this.lightbox = new PhotoSwipeLightbox({
+        gallery: '#lightbox',
+        children: 'a',
+        pswpModule: PhotoSwipe,
+        wheelToZoom: true,
+        arrowKeys: true,
+      });
 
-        prepareImagesForPhotoswipe() {
-
-            // Get the <a> tags from the image gallery
-            const imagesList = document.querySelectorAll("#lightbox a");
-            const promisesList = [];
-
-            imagesList.forEach((element) => {
-                const promise = new Promise(function (resolve) {
-                    let image = new Image();
-                    image.src = element.getAttribute('href');
-                    image.onload = () => {
-                        element.dataset.pswpWidth = image.width;
-                        element.dataset.pswpHeight = image.height;
-                        resolve(); // Resolve the promise only if the image has been loaded
-                    }
-                    image.onerror = () => {
-                        resolve();
-                    };
-                });
-                promisesList.push(promise);
-            });
-
-            // Use .then() to handle the promise resolution
-            return Promise.all(promisesList);
-        },
-
-
-        initLightbox() {
-            this.lightbox = new PhotoSwipeLightbox({
-                gallery: "#lightbox",
-                children: "a",
-                pswpModule: PhotoSwipe,
-                wheelToZoom: true,
-                arrowKeys: true,
-            });
-
-
-            this.lightbox.init();
-        },
-
-        translate_status(status) {
-            return translate_status(status);
-        },
-
-        loadBulletinRelations(page = 1) {
-            // b2a
-            axios
-                .get(
-                    `/admin/api/bulletin/relations/${this.bulletin.id}?class=bulletin&page=${page}`
-                )
-                .then((res) => {
-                    this.bulletin.bulletin_relations.push.apply(
-                        this.bulletin.bulletin_relations,
-                        res.data.items
-                    );
-                    this.bulletinPage += 1;
-                    this.bulletinLM = res.data.more;
-                })
-                .catch((err) => {
-                    console.log(err.toJSON());
-                });
-        },
-
-        loadActorRelations(page = 1) {
-            // b2a
-            axios
-                .get(
-                    `/admin/api/bulletin/relations/${this.bulletin.id}?class=actor&page=${page}`
-                )
-                .then((res) => {
-                    //console.log(this.bulletin.actor_relations, res.data.items);
-                    this.bulletin.actor_relations.push.apply(
-                        this.bulletin.actor_relations,
-                        res.data.items
-                    );
-                    this.actorPage += 1;
-                    this.actorLM = res.data.more;
-                })
-                .catch((err) => {
-                    console.log(err.toJSON());
-                });
-        },
-
-        loadIncidentRelations(page = 1) {
-            // b2i
-            axios
-                .get(
-                    `/admin/api/bulletin/relations/${this.bulletin.id}?class=incident&page=${page}`
-                )
-                .then((res) => {
-                    this.bulletin.incident_relations.push.apply(
-                        this.bulletin.incident_relations,
-                        res.data.items
-                    );
-                    this.incidentPage += 1;
-                    this.incidentLM = res.data.more;
-                })
-                .catch((err) => {
-                    console.log(err.toJSON());
-                });
-        },
-
-        probability(item) {
-            return translations.probs[item.probability].tr;
-        },
-
-        showReview(bulletin) {
-            return bulletin.status == "Peer Reviewed" && bulletin.review;
-        },
-
-        logAllowed() {
-            return this.$root.currentUser.view_simple_history && this.log;
-        },
-
-        diffAllowed() {
-            return this.$root.currentUser.view_full_history && this.diff;
-        },
-
-        editAllowed() {
-            return this.$root.editAllowed(this.bulletin) && this.showEdit;
-        },
-
-        loadRevisions() {
-            this.hloading = true;
-            axios
-                .get(`/admin/api/bulletinhistory/${this.bulletin.id}`)
-                .then((response) => {
-                    this.revisions = response.data.items;
-                })
-                .catch((error) => {
-                    if (error.response) {
-                        console.log(error?.response?.data);
-                    }
-                })
-                .finally(() => {
-                    this.hloading = false;
-                });
-        },
-
-        removeVideo() {
-            let video = this.$el.querySelector("#iplayer video");
-            if (video) {
-                video.remove();
-            }
-        },
-
-        viewThumb(s3url) {
-            this.$emit("thumb-click", s3url);
-        },
-
-        viewVideo(s3url) {
-            this.iplayer = true;
-            //solve bug when the player div is not ready yet
-            // wait for vue's next tick
-
-            this.$nextTick(() => {
-                const video = this.$el.querySelector("#iplayer video");
-
-                videojs(
-                    video,
-                    {
-                        playbackRates: VIDEO_RATES,
-                        //resizeManager: false
-                        fluid: true,
-                    },
-                    function () {
-                        this.reset();
-                        this.src(s3url);
-                        this.load();
-                        this.play();
-                    }
-                );
-            });
-        },
-
-        showDiff(e, index) {
-            this.diffDialog = true;
-            //calculate diff
-            const dp = jsondiffpatch.create({
-                arrays: {
-                    detectMove: true,
-                },
-                objectHash: function (obj, index) {
-                    return obj.name || obj.id || obj._id || "$$index:" + index;
-                },
-            });
-
-            const delta = dp.diff(
-                this.revisions[index + 1].data,
-                this.revisions[index].data
-            );
-            if (!delta) {
-                this.diffResult = "Both items are Identical :)";
-            } else {
-                this.diffResult = jsondiffpatch.formatters.html.format(delta);
-            }
-        },
+      this.lightbox.init();
     },
 
-    data: function () {
-        return {
-            diffResult: "",
-            diffDialog: false,
-            revisions: null,
-            show: false,
-            hloading: false,
-            mapLocations: [],
-            iplayer: false,
-
-            // image viewer
-            lightbox: null,
-            mediasReady: 0,
-
-            // pagers for related entities
-            bulletinPage: 1,
-            actorPage: 1,
-            incidentPage: 1,
-
-            // load more buttons
-            bulletinLM: false,
-            actorLM: false,
-            incidentLM: false,
-        };
+    translate_status(status) {
+      return translate_status(status);
     },
 
-    template: `
+    loadBulletinRelations(page = 1) {
+      // b2a
+      axios
+        .get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=bulletin&page=${page}`)
+        .then((res) => {
+          this.bulletin.bulletin_relations.push.apply(
+            this.bulletin.bulletin_relations,
+            res.data.items,
+          );
+          this.bulletinPage += 1;
+          this.bulletinLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
+
+    loadActorRelations(page = 1) {
+      // b2a
+      axios
+        .get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=actor&page=${page}`)
+        .then((res) => {
+          //console.log(this.bulletin.actor_relations, res.data.items);
+          this.bulletin.actor_relations.push.apply(this.bulletin.actor_relations, res.data.items);
+          this.actorPage += 1;
+          this.actorLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
+
+    loadIncidentRelations(page = 1) {
+      // b2i
+      axios
+        .get(`/admin/api/bulletin/relations/${this.bulletin.id}?class=incident&page=${page}`)
+        .then((res) => {
+          this.bulletin.incident_relations.push.apply(
+            this.bulletin.incident_relations,
+            res.data.items,
+          );
+          this.incidentPage += 1;
+          this.incidentLM = res.data.more;
+        })
+        .catch((err) => {
+          console.log(err.toJSON());
+        });
+    },
+
+    probability(item) {
+      return translations.probs[item.probability].tr;
+    },
+
+    showReview(bulletin) {
+      return bulletin.status == 'Peer Reviewed' && bulletin.review;
+    },
+
+    logAllowed() {
+      return this.$root.currentUser.view_simple_history && this.log;
+    },
+
+    diffAllowed() {
+      return this.$root.currentUser.view_full_history && this.diff;
+    },
+
+    editAllowed() {
+      return this.$root.editAllowed(this.bulletin) && this.showEdit;
+    },
+
+    loadRevisions() {
+      this.hloading = true;
+      axios
+        .get(`/admin/api/bulletinhistory/${this.bulletin.id}`)
+        .then((response) => {
+          this.revisions = response.data.items;
+        })
+        .catch((error) => {
+          if (error.response) {
+            console.log(error?.response?.data);
+          }
+        })
+        .finally(() => {
+          this.hloading = false;
+        });
+    },
+
+    removeVideo() {
+      let video = this.$el.querySelector('#iplayer video');
+      if (video) {
+        video.remove();
+      }
+    },
+
+    viewThumb(s3url) {
+      this.$emit('thumb-click', s3url);
+    },
+
+    viewVideo(s3url) {
+      this.iplayer = true;
+      //solve bug when the player div is not ready yet
+      // wait for vue's next tick
+
+      this.$nextTick(() => {
+        const video = this.$el.querySelector('#iplayer video');
+
+        videojs(
+          video,
+          {
+            playbackRates: VIDEO_RATES,
+            //resizeManager: false
+            fluid: true,
+          },
+          function () {
+            this.reset();
+            this.src(s3url);
+            this.load();
+            this.play();
+          },
+        );
+      });
+    },
+
+    showDiff(e, index) {
+      this.diffDialog = true;
+      //calculate diff
+      const dp = jsondiffpatch.create({
+        arrays: {
+          detectMove: true,
+        },
+        objectHash: function (obj, index) {
+          return obj.name || obj.id || obj._id || '$$index:' + index;
+        },
+      });
+
+      const delta = dp.diff(this.revisions[index + 1].data, this.revisions[index].data);
+      if (!delta) {
+        this.diffResult = 'Both items are Identical :)';
+      } else {
+        this.diffResult = jsondiffpatch.formatters.html.format(delta);
+      }
+    },
+  },
+
+  data: function () {
+    return {
+      diffResult: '',
+      diffDialog: false,
+      revisions: null,
+      show: false,
+      hloading: false,
+      mapLocations: [],
+      iplayer: false,
+
+      // image viewer
+      lightbox: null,
+      mediasReady: 0,
+
+      // pagers for related entities
+      bulletinPage: 1,
+      actorPage: 1,
+      incidentPage: 1,
+
+      // load more buttons
+      bulletinLM: false,
+      actorLM: false,
+      incidentLM: false,
+    };
+  },
+
+  template: `
 
       <v-card color="grey lighten-3" class="mx-auto pa-3">
         <v-card color="grey lighten-5" outlined class="header-fixed mx-2">

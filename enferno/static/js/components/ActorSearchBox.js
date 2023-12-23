@@ -1,81 +1,72 @@
 Vue.component('actor-search-box', {
-    props: {
-        value: {
-            type: Object,
-            required: true
-        },
-        users: {
-            type: Array
-        },
-
-        extraFilters: {
-            type: Boolean
-        }
-        ,
-        showOp: {
-            type: Boolean,
-            default: true
-        },
-        i18n: {
-            type: Object,
-
-        },
-
-        roles: {
-            type: Array
-        },
-        isAdmin: {
-            type: Boolean,
-            default: false
-        }
+  props: {
+    value: {
+      type: Object,
+      required: true,
+    },
+    users: {
+      type: Array,
     },
 
-    data: () => {
-        return {
-            translations: translations,
-            searches: [],
-            repr: '',
-            q: {},
-            qName: '',
-
-
-        }
+    extraFilters: {
+      type: Boolean,
     },
-    watch: {
-
-
-        q: {
-            handler(newVal) {
-                this.$emit('input', newVal)
-            },
-            deep: true
-        },
-        value: function (newVal, oldVal) {
-            if (newVal !== oldVal) {
-                this.q = newVal;
-            }
-        }
-
+    showOp: {
+      type: Boolean,
+      default: true,
     },
-    created() {
-        this.q = this.value;
-
+    i18n: {
+      type: Object,
     },
 
-    mounted () {
-      this.q.locTypes = this.translations.actorLocTypes_.map(x=>x.code);
+    roles: {
+      type: Array,
     },
-
-    computed: {
-        showGeoMap() {
-            return this.q.locTypes?.length > 0;
-        }
+    isAdmin: {
+      type: Boolean,
+      default: false,
     },
+  },
 
+  data: () => {
+    return {
+      translations: translations,
+      searches: [],
+      repr: '',
+      q: {},
+      qName: '',
+    };
+  },
+  watch: {
+    q: {
+      handler(newVal) {
+        this.$emit('input', newVal);
+      },
+      deep: true,
+    },
+    value: function (newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.q = newVal;
+      }
+    },
+  },
+  created() {
+    this.q = this.value;
+  },
 
-    methods: {},
+  mounted() {
+    this.q.locTypes = this.translations.actorLocTypes_.map((x) => x.code);
+  },
 
-    template: `
+  computed: {
+    showGeoMap() {
+      return this.q.locTypes?.length > 0;
+    },
+  },
+
+  methods: {},
+
+  template: `
       <v-card outlined class="pa-6">
 
         <v-container class="container--fluid">
@@ -652,6 +643,5 @@ Vue.component('actor-search-box', {
         </v-container>
       </v-card>
 
-    `
-
-})
+    `,
+});

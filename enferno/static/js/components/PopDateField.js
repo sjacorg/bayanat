@@ -1,86 +1,79 @@
 Vue.component('pop-date-field', {
-    props: ['value', 'label'],
+  props: ['value', 'label'],
 
-    data() {
-        return {
-            id: null,
-            menu: false,
-            pickerDate: this.value,
-            textDate: this.value,
-            errorMsg: null,
-        };
+  data() {
+    return {
+      id: null,
+      menu: false,
+      pickerDate: this.value,
+      textDate: this.value,
+      errorMsg: null,
+    };
+  },
+
+  created() {
+    this.id = 'date' + this._uid;
+    this.$emit('input', this.value);
+  },
+
+  methods: {
+    formatDate(s) {
+      // Check if the string matches the 'YYYY-MM-DDTHH:MM' format
+      const pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+      if (pattern.test(s)) {
+        return s.split('T')[0];
+      } else {
+        return s;
+      }
     },
 
-    created() {
-        this.id = 'date' + this._uid;
-        this.$emit('input', this.value);
+    isValidDate() {
+      if (!this.pickerDate) return true;
+
+      const regex = /^(19\d\d|20[0-3]\d|2040)-\d{2}-\d{2}$/;
+      const dateString = this.pickerDate.trim();
+
+      if (!regex.test(dateString)) {
+        this.errorMsg = 'Must be >1900 and <2040';
+        return false;
+      }
+
+      if (isNaN(new Date(dateString).getTime())) {
+        this.errorMsg = 'Invalid date format';
+        return false;
+      }
+
+      return true; // Valid date
     },
 
-    methods: {
-        formatDate(s) {
-            // Check if the string matches the 'YYYY-MM-DDTHH:MM' format
-            const pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+    dateInputFieldEdited() {
+      this.errorMsg = null;
 
-            if (pattern.test(s)) {
-                return s.split('T')[0];
-            } else {
-                return s;
-            }
+      if (this.pickerDate && this.isValidDate()) {
+        this.$emit('input', this.pickerDate);
+      }
+    },
+  },
 
-        },
-
-        isValidDate() {
-            if (!this.pickerDate) return true;
-
-            const regex = /^(19\d\d|20[0-3]\d|2040)-\d{2}-\d{2}$/;
-            const dateString = this.pickerDate.trim();
-
-            if (!regex.test(dateString)) {
-                this.errorMsg = 'Must be >1900 and <2040';
-                return false;
-            }
-
-            if (isNaN(new Date(dateString).getTime())) {
-                this.errorMsg = 'Invalid date format';
-                return false;
-            }
-
-            return true; // Valid date
-        },
-
-        dateInputFieldEdited() {
-            this.errorMsg = null;
-
-            if (this.pickerDate && this.isValidDate()) {
-
-                this.$emit('input', this.pickerDate);
-            }
-
-        },
-
+  watch: {
+    pickerDate(val) {
+      this.$emit('input', val);
     },
 
-    watch: {
-        pickerDate(val) {
-            this.$emit('input', val);
-        },
-
-        textDate(val) {
-            this.$emit('input', val);
-        },
-
-
-        value(val, old) {
-
-            if (val !== old) {
-
-                this.textDate = this.formatDate(val);
-                this.pickerDate = val;
-            }
-        },
+    textDate(val) {
+      this.$emit('input', val);
     },
 
-    template: `
+    value(val, old) {
+      if (val !== old) {
+        this.textDate = this.formatDate(val);
+        this.pickerDate = val;
+      }
+    },
+  },
+
+  template: `
       <v-menu
           v-model="menu"
           ref="dateMenu"

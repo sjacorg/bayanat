@@ -1,57 +1,49 @@
-Vue.component("media-card", {
-    props: {
-        media: {},
+Vue.component('media-card', {
+  props: {
+    media: {},
+  },
+  data: function () {
+    return {
+      s3url: '',
+    };
+  },
+  mounted() {
+    this.init();
+  },
+
+  methods: {
+    init() {
+      axios
+        .get(`/admin/api/media/${this.media.filename}`)
+        .then((response) => {
+          this.s3url = response.data;
+          this.media.s3url = response.data;
+        })
+        .catch((error) => {
+          console.error('Error fetching media:', error);
+        })
+        .finally(() => {
+          this.$emit('ready');
+        });
     },
-    data: function () {
-        return {
-            s3url: '',
-        };
-    },
-    mounted() {
-        this.init()
 
+    showPDF() {
+      this.$root.$refs.pdfViewer.openPDF(this.s3url);
     },
 
-
-    methods: {
-        init() {
-            axios.get(`/admin/api/media/${this.media.filename}`).then(response => {
-                this.s3url = response.data;
-                this.media.s3url = response.data;
-
-            }).catch(error => {
-                console.error("Error fetching media:", error);
-            })
-                .finally(() => {
-                    this.$emit('ready')
-                });
-            ;
-
-
-        },
-
-        showPDF() {
-            this.$root.$refs.pdfViewer.openPDF(this.s3url)
-        },
-
-
-        mediaType(mediaItem) {
-            if (['image/jpeg', 'image/png', 'image/gif'].includes(mediaItem.fileType)) {
-                return 'image'
-            } else if (['video/webm', 'video/mp4', 'video/ogg'].includes(mediaItem.fileType)) {
-                return 'video'
-            } else if (['application/pdf'].includes(mediaItem.fileType)) {
-                return 'pdf'
-
-            } else {
-
-                return 'unknown'
-            }
-        },
-
-
+    mediaType(mediaItem) {
+      if (['image/jpeg', 'image/png', 'image/gif'].includes(mediaItem.fileType)) {
+        return 'image';
+      } else if (['video/webm', 'video/mp4', 'video/ogg'].includes(mediaItem.fileType)) {
+        return 'video';
+      } else if (['application/pdf'].includes(mediaItem.fileType)) {
+        return 'pdf';
+      } else {
+        return 'unknown';
+      }
     },
-    template: `
+  },
+  template: `
 
 
       <!--  Image Media Card -->
@@ -198,5 +190,5 @@ Vue.component("media-card", {
 
 
 
-    `
+    `,
 });

@@ -1,25 +1,21 @@
 Vue.component('preview-card', {
-    props: ['item', 'value', 'i18n'],
-    watch: {
-        value(val) {
-            this.preview = val;
-        },
-        preview(val) {
-
-            this.$emit('input', val)
-        }
+  props: ['item', 'value', 'i18n'],
+  watch: {
+    value(val) {
+      this.preview = val;
     },
-    mounted() {
-
+    preview(val) {
+      this.$emit('input', val);
     },
-    data: function () {
-        return {
-            preview: this.preview || false,
-        };
-    },
+  },
+  mounted() {},
+  data: function () {
+    return {
+      preview: this.preview || false,
+    };
+  },
 
-    template:
-            `
+  template: `
         <v-dialog overlay="false" max-width="1000" v-model="preview">
 
             <v-card v-if="preview" outlined>
@@ -44,5 +40,5 @@ Vue.component('preview-card', {
 
         </v-dialog>
 
-    `
-})
+    `,
+});

@@ -1,37 +1,32 @@
-Vue.component("address-field", {
-    props: {
-        value: {}
+Vue.component('address-field', {
+  props: {
+    value: {},
+  },
+  data: function () {
+    return {
+      address: {},
+    };
+  },
+
+  watch: {
+    value: function (val) {
+      //console.log('called')
+      this.address = val;
     },
-    data: function () {
-        return {
-            address: {}
-        };
+    address: {
+      handler: 'refresh',
+      deep: true,
     },
+  },
 
-    watch: {
-        value: function (val) {
-            //console.log('called')
-            this.address = val;
-        },
-        address: {
-            handler: 'refresh',
-            deep: true
-        }
+  mounted: function () {},
 
+  methods: {
+    refresh() {
+      this.$emit('input', this.address);
     },
-
-    mounted: function () {
-
-
-    },
-
-    methods: {
-        refresh() {
-            this.$emit('input', this.address);
-
-        }
-    },
-    template: `
+  },
+  template: `
       <div>
       <v-text-field label="Address Line 1" v-model="address.line1"></v-text-field>
       <v-text-field label="Address Line 2" v-model="address.line2"></v-text-field>

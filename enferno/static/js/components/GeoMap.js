@@ -1,241 +1,217 @@
-Vue.component("geo-map", {
-    props: {
-        title: String,
-        value: {},
+Vue.component('geo-map', {
+  props: {
+    title: String,
+    value: {},
 
-        mapHeight: {
-            default: 300
-        },
-        mapZoom: {
-            default: 10
-        },
-        editMode: {
-            type: Boolean,
-            default: true
-        },
-        radiusControls: {
-            type: Boolean,
-            default: false,
-        },
-        others: []
+    mapHeight: {
+      default: 300,
+    },
+    mapZoom: {
+      default: 10,
+    },
+    editMode: {
+      type: Boolean,
+      default: true,
+    },
+    radiusControls: {
+      type: Boolean,
+      default: false,
+    },
+    others: [],
+  },
+
+  computed: {
+    map() {
+      return this.$refs.map.mapObject;
     },
 
-    computed: {
-        map() {
-            return this.$refs.map.mapObject;
-        },
-
-        mapCenter() {
-            if (this.lat && this.lng) {
-                return [this.lat, this.lng];
-            }
-            return geoMapDefaultCenter;
-        },
-
-        extra() {
-            // computed property to display other markers, it should exclude the main marker
-            if (this.others && this.value) {
-
-
-                // console.log(this.others.filter(x=> x.lat!=this.value.lat && x.lng != this.value.lng));
-                return this.others.filter(x => x.lat != this.value.lat && x.lng != this.value.lng);
-
-            }
-            return []
-        },
+    mapCenter() {
+      if (this.lat && this.lng) {
+        return [this.lat, this.lng];
+      }
+      return geoMapDefaultCenter;
     },
 
+    extra() {
+      // computed property to display other markers, it should exclude the main marker
+      if (this.others && this.value) {
+        // console.log(this.others.filter(x=> x.lat!=this.value.lat && x.lng != this.value.lng));
+        return this.others.filter((x) => x.lat != this.value.lat && x.lng != this.value.lng);
+      }
+      return [];
+    },
+  },
 
-    data: function () {
+  data: function () {
+    return {
+      mapKey: 0,
+      lat: this.value && this.value.lat,
+      lng: this.value && this.value.lng,
+      radius: this.value && this.value.radius ? this.value.radius : 1000, // Default to 1000
 
-        return {
-            mapKey: 0,
-            lat: (this.value && this.value.lat),
-            lng: (this.value && this.value.lng),
-            radius: this.value && this.value.radius ? this.value.radius : 1000, // Default to 1000
+      subdomains: null,
+      mapsApiEndpoint: mapsApiEndpoint,
 
+      location: null,
+      attribution:
+        '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      osmAttribution:
+        '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
 
-            subdomains: null,
-            mapsApiEndpoint: mapsApiEndpoint,
+      defaultTile: true,
+      satellite: null,
 
-            location: null,
-            attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-            osmAttribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      radiusCircle: null,
+    };
+  },
 
-            defaultTile: true,
-            satellite: null,
+  watch: {
+    value(val) {
+      if (!val) {
+        this.lat = undefined;
+        this.lng = undefined;
+        this.radius = 100; // reset
+        return;
+      }
+      // Prevent string or negative radius on backend
+      if (typeof val.radius !== 'string' && val.radius >= 0) {
+        this.radius = val.radius;
+        this.clearAddRadiusCircle();
+      }
 
-            radiusCircle: null,
+      // Only send coordinate pairs to backend
+      if (val.lat && val.lng) {
+        this.lat = val.lat;
+        this.lng = val.lng;
+      }
+    },
+
+    lat: {
+      handler: 'broadcast',
+    },
+
+    lng: {
+      handler: 'broadcast',
+    },
+
+    radius: {
+      handler: 'broadcast',
+    },
+  },
+
+  mounted() {
+    window.addEventListener('resize', this.fixMap);
+
+    this.fixMap();
+    this.broadcast();
+    this.map.addControl(
+      new L.Control.Fullscreen({
+        title: {
+          false: 'View Fullscreen',
+          true: 'Exit Fullscreen',
+        },
+      }),
+    );
+    this.satellite = L.gridLayer.googleMutant({
+      type: 'satellite', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+    });
+  },
+
+  // clean up resize event listener
+  beforeDestroy() {
+    window.removeEventListener('resize', this.fixMap);
+  },
+
+  methods: {
+    fixMap() {
+      this.$nextTick(() => {
+        if (this.map) {
+          this.map.invalidateSize();
         }
+
+        // Add error handling for the tile layer
+        L.tileLayer(this.mapsApiEndpoint)
+          .on('error', function (error) {
+            console.error('Tile layer error:', error);
+          })
+          .addTo(this.map);
+      });
     },
 
+    toggleSatellite() {
+      if (this.defaultTile) {
+        this.satellite.addTo(this.map);
+        this.defaultTile = false;
+      } else {
+        this.defaultTile = true;
+        this.map.removeLayer(this.satellite);
+      }
 
-    watch: {
-
-        value(val) {
-            if (!val) {
-                this.lat = undefined;
-                this.lng = undefined;
-                this.radius = 100; // reset
-                return;
-            }
-            // Prevent string or negative radius on backend
-        if (typeof val.radius !== 'string' && val.radius >= 0) {
-
-                this.radius = val.radius;
-                this.clearAddRadiusCircle();
-
-            }
-
-            // Only send coordinate pairs to backend
-            if (val.lat && val.lng) {
-                this.lat = val.lat;
-                this.lng = val.lng;
-
-            }
-
-        },
-
-        lat: {
-            handler: 'broadcast',
-        },
-
-        lng: {
-            handler: 'broadcast'
-        },
-
-        radius: {
-            handler: 'broadcast',
-        },
+      // Working hack : redraw the tile layer component via Vue key
+      this.mapKey += 1;
     },
 
-    mounted() {
-
-        window.addEventListener('resize', this.fixMap);
-
-
-        this.fixMap();
-        this.broadcast();
-        this.map.addControl(new L.Control.Fullscreen({
-            title: {
-                'false': 'View Fullscreen',
-                'true': 'Exit Fullscreen'
-            }
-        }));
-        this.satellite = L.gridLayer
-            .googleMutant({
-                type: "satellite", // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
-            })
+    clearMarker(evt) {
+      this.lat = this.lng = null;
+      this.map.removeLayer(this.radiusCircle);
     },
 
-    // clean up resize event listener
-    beforeDestroy() {
-        window.removeEventListener('resize', this.fixMap);
+    setMarker(evt) {
+      if (this.editMode) {
+        this.lat = evt.latlng.lat;
+        this.lng = evt.latlng.lng;
+      }
     },
 
-
-    methods: {
-
-        fixMap() {
-
-            this.$nextTick(() => {
-                if (this.map) {
-                    this.map.invalidateSize();
-                }
-
-
-                // Add error handling for the tile layer
-                L.tileLayer(this.mapsApiEndpoint).on('error', function (error) {
-                    console.error('Tile layer error:', error);
-                }).addTo(this.map);
-            });
-        },
-
-        toggleSatellite() {
-            if (this.defaultTile) {
-                this.satellite.addTo(this.map);
-                this.defaultTile = false;
-
-            } else {
-                this.defaultTile = true;
-                this.map.removeLayer(this.satellite);
-            }
-
-
-            // Working hack : redraw the tile layer component via Vue key
-            this.mapKey += 1;
-
-        },
-
-        clearMarker(evt) {
-
-            this.lat = this.lng = null;
-            this.map.removeLayer(this.radiusCircle);
-
-        },
-
-        setMarker(evt) {
-            if (this.editMode) {
-                this.lat = evt.latlng.lat;
-                this.lng = evt.latlng.lng;
-            }
-        },
-
-
-        updateLocation(point) {
-            this.lat = point.lat;
-            this.lng = point.lng;
-        },
-
-        clearAddRadiusCircle() {
-
-
-            if (!this.radiusControls) {
-                return;
-            }
-
-
-            // Remove existing radius circle if it exists
-            if (this.radiusCircle) {
-                this.map.removeLayer(this.radiusCircle);
-            }
-
-            // If radius is not provided, return
-            if (!this.radius) {
-                return;
-            }
-
-
-            if (!this.lat || !this.lng) {
-                return;
-            }
-            this.radiusCircle = L.circle([this.lat, this.lng], {
-                radius: this.radius
-            });
-            this.radiusCircle.addTo(this.map);
-
-            debounce(() => {
-                const bounds = this.radiusCircle.getBounds();
-                this.map.fitBounds(bounds);
-            }, 250)();
-        },
-
-        broadcast() {
-            // Only return obj if both lat,lng values present
-            if (this.lat && this.lng) {
-                const obj = {lat: this.lat, lng: this.lng};
-                if (this.radiusControls && this.radius) {
-                    obj.radius = this.radius;
-                }
-                this.$emit('input', obj);
-                return;
-            }
-
-            this.$emit('input', undefined);
-        },
+    updateLocation(point) {
+      this.lat = point.lat;
+      this.lng = point.lng;
     },
-    template:
-        `
+
+    clearAddRadiusCircle() {
+      if (!this.radiusControls) {
+        return;
+      }
+
+      // Remove existing radius circle if it exists
+      if (this.radiusCircle) {
+        this.map.removeLayer(this.radiusCircle);
+      }
+
+      // If radius is not provided, return
+      if (!this.radius) {
+        return;
+      }
+
+      if (!this.lat || !this.lng) {
+        return;
+      }
+      this.radiusCircle = L.circle([this.lat, this.lng], {
+        radius: this.radius,
+      });
+      this.radiusCircle.addTo(this.map);
+
+      debounce(() => {
+        const bounds = this.radiusCircle.getBounds();
+        this.map.fitBounds(bounds);
+      }, 250)();
+    },
+
+    broadcast() {
+      // Only return obj if both lat,lng values present
+      if (this.lat && this.lng) {
+        const obj = { lat: this.lat, lng: this.lng };
+        if (this.radiusControls && this.radius) {
+          obj.radius = this.radius;
+        }
+        this.$emit('input', obj);
+        return;
+      }
+
+      this.$emit('input', undefined);
+    },
+  },
+  template: `
           <v-card class="pa-1" elevation="0">
 
           <v-card-text>
