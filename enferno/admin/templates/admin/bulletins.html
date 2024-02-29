@@ -17,6 +17,25 @@
                 {% include 'admin/partials/bulletin_advsearch.html' %}
                 <v-container class="container--fluid">
 
+                    <v-btn
+                            elevation="16"
+                            color="primary"
+                            outlined
+                            v-tippy
+                            @click.stop="visualizeResults"
+                            content="Visualize Results"
+                            v-if="showVisualize"
+                            :loading="visualizeLoading"
+                            fab
+                            absolute
+                            class="mb-5 mr-5"
+                            bottom right
+                    >
+                        <v-icon>mdi-graph</v-icon>
+
+                    </v-btn>
+
+
                     <v-card>
                         <v-card-title>
                             <div class="flex-grow-1"></div>
@@ -211,7 +230,7 @@
 
 
                                         </template>
-                                        <span>Edit</span>
+                                        <span>{{ _('Edit') }}</span>
                                     </v-tooltip>
 
                                     <v-tooltip top>
@@ -229,7 +248,7 @@
 
 
                                         </template>
-                                        <span>Assign to self</span>
+                                        <span>{{ _('Assign to self') }}</span>
                                     </v-tooltip>
 
 
@@ -243,7 +262,7 @@
                                             >mdi-message-draw
                                             </v-icon>
                                         </template>
-                                        <span>Add Review</span>
+                                        <span>{{ _('Add Review') }}</span>
                                     </v-tooltip>
 
                                 </template>
@@ -272,7 +291,7 @@
 
                             <v-dialog width="600" v-model="selfAssignDialog">
                                 <v-card class="pa-3">
-                                    <v-card-title>Self Assign Bulletin #${assignBulletin.id}</v-card-title>
+                                    <v-card-title>{{ _('Self Assign Bulletin') }} #${assignBulletin.id}</v-card-title>
                                     <v-card-text>
                                         <v-combobox
 
@@ -282,11 +301,11 @@
                                                 label="{{ _('Ref') }}"
                                                 class="mr-2"
                                         ></v-combobox>
-                                        <v-textarea v-model="assignBulletin.comments" label="Comments"></v-textarea>
+                                        <v-textarea v-model="assignBulletin.comments" label="{{_('Comments')}}"></v-textarea>
                                     </v-card-text>
                                     <v-card-actions>
                                         <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign"
-                                               color="primary">Assign to self
+                                               color="primary">{{ _('Assign to self') }}
                                         </v-btn>
                                     </v-card-actions>
                                 </v-card>
@@ -297,7 +316,7 @@
                             <v-snackbar v-model="snackbar">
                                 <div class="d-flex justify-space-between align-center">
                                     <span class="text-subtitle-1">${snackMessage}</span>
-                                    <v-btn color="white" fab small color="secondary" text @click="snackbar = false">
+                                    <v-btn fab small color="secondary" text @click="snackbar = false">
                                         <v-icon small>mdi-close</v-icon>
                                     </v-btn>
                                 </div>
@@ -320,7 +339,7 @@
 <div class="d-none" data-btob='{{btobInfo|tojson}}'></div>
 <div class="d-none" data-itoi='{{itoiInfo|tojson}}'></div>
 <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
-<div class="d-none" data-allowed-media-types='{{ ", ".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
+<div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
 
 {% endblock %} {% block js %}
     <script
@@ -439,6 +458,10 @@
 
                 advSearchExpand: false,
                 advSearchMenu: false,
+
+                showVisualize: false,
+                visualizeLoading : false,
+                graphTimer : null,
 
 
                 fsloading: true,
@@ -643,16 +666,7 @@
 
 
                 searchBg() {
-                    for (const s of this.search) {
-                        let props = Object.values(s);
-                        for (const v of props) {
-                            if (v) {
-
-                                return 'yellow lighten-5';
-                            }
-                        }
-                    }
-                    return ''
+                        return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow lighten-5' : '';
 
                 },
 
@@ -780,6 +794,47 @@
             },
 
             methods: {
+
+
+                checkGraphStatus: function () {
+                    axios.get('/admin/api/graph/status', {
+                        params: {
+                            type: 'bulletin'
+                        }
+                    })
+                        .then(res => {
+                            if (res.data.status == 'done') {
+                                clearInterval(this.graphTimer);
+                                this.visualizeLoading = false;
+                                this.$refs.viz.visualizeQuery();
+
+
+                            }
+
+                        })
+                        .catch(error => {
+                            console.error('API check failed:', error);
+                        });
+                }
+            ,
+
+                visualizeResults()
+                {
+                    this.visualizeLoading = true;
+                    axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                        params: {
+                            type: 'bulletin'
+                        }
+                    }).then(res => {
+                        this.showSnack('Graph is being generated.');
+                        this.graphTimer = setInterval(this.checkGraphStatus, 3000);
+                    }).catch(e => {
+                        console.error(e.message);
+                    }).finally(() => {
+                    });
+                }
+            ,
+
 
              exportRequest() {
 
@@ -941,16 +996,11 @@
 
                 },
                 doSearch() {
-                    this.options.page = 1;
+                this.options.page = 1;
+                this.advSearchExpand = this.advSearchExpand && false;
 
-                    // some good UX
-                    if (this.advSearchExpand) {
-                        this.advSearchExpand = false;
-                    } else {
-                        //this.search = Object.assign({},{tsv:this.search.tsv})
-                    }
 
-                    this.searchBulletins();
+                this.searchBulletins();
                 }
                 ,
                 searchBulletins(cached) {
@@ -970,6 +1020,11 @@
                         this.loading = false;
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
+                        this.showVisualize = !(
+                            this.search.length === 1 &&
+                            Object.keys(this.search[0]).length === 0
+                        );
+
                     });
 
 

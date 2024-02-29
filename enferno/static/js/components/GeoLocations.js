@@ -38,9 +38,7 @@ Vue.component('geo-locations', {
       }
     },
 
-    locations() {
-      this.$emit('input', this.locations);
-    },
+
   },
 
   methods: {
@@ -55,6 +53,8 @@ Vue.component('geo-locations', {
       } else {
         this.addLocation();
       }
+        this.$emit('input', this.locations);
+
     },
 
     modifyLocation() {
@@ -63,9 +63,7 @@ Vue.component('geo-locations', {
       this.e.lng = this.e.latlng.lng;
 
       this.locations[this.eindex] = this.e;
-      this.addDlg = false;
-      // reset edited item
-      this.e = {};
+      this.resetLocationEditor();
       // broadcast an event to  refresh parent global map
       this.$emit('locations-updated');
     },
@@ -75,22 +73,25 @@ Vue.component('geo-locations', {
       this.e.lng = this.e.latlng.lng;
 
       this.locations.push(this.e);
-      this.addDlg = false;
-      // reset edited item
-      this.e = {};
+      this.resetLocationEditor();
     },
     editLocation(item, index) {
       item.latlng = { lat: item.lat, lng: item.lng };
-      this.e = item;
+      this.e = {...item, mode: 'edit' };
 
       this.eindex = index;
       this.addDlg = true;
       this.e.mode = 'edit';
     },
+    resetLocationEditor() {
+      this.addDlg = false;
+      this.e = {};
+    },
 
     removeLocation(i) {
       if (confirm('Are you sure?')) {
         this.locations.splice(i, 1);
+        this.$emit('input', this.locations);
       }
     },
   },
@@ -115,8 +116,9 @@ Vue.component('geo-locations', {
               <v-col v-for="(loc,i) in locations" :key="i" cols="12" md="4">
                 <v-card elevation="0">
                   <v-card-text>
+                    
                   <v-chip small class="primary">{{i+1}}</v-chip>
-                    <v-chip small v-if="loc.geoType" class="grey lighten-3">{{ loc.geoType.title }}</v-chip>
+                    <v-chip small v-if="loc.type" class="grey lighten-3">{{ loc.type.title }}</v-chip>
                     <v-chip small v-if="loc.main" class="grey lighten-3">{{translations.mainIncident_}}</v-chip>
                     <h4 class="pa-3 mb-2caption black--text">{{ loc.title }}</h4>
                     <div class="heading black--text"> <v-icon small left >mdi-map-marker</v-icon>
@@ -183,7 +185,7 @@ Vue.component('geo-locations', {
               <search-field
               :label="translations.type_"
               api="/admin/api/geolocationtypes"
-              v-model="e.geoType"
+              v-model="e.type"
               item-text="title"
               item-value="id"
               >

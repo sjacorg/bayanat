@@ -95,7 +95,7 @@ Vue.component('relate-incidents', {
               </v-card>
               <v-card  tile class="text-center  search-toolbar" elevation="0" color="grey lighten-4">
                 <v-card-text>
-                  <v-btn color="primary" @click="reSearch">Search</v-btn>
+                  <v-btn color="primary" @click="reSearch">{{ i18n.search_ }}</v-btn>
                 </v-card-text>
               </v-card>
             </v-col>

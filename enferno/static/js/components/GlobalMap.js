@@ -1,3 +1,42 @@
+Vue.component('location-popup', {
+  props: {
+    loc: Object,
+    i18n: Object
+  },
+  computed: {
+    // Computed property to handle the mainStr logic
+    mainStr() {
+
+
+      return this.loc.main ? this.i18n?.mainIncident_ : '';
+    }
+  },
+  template: `
+    <v-card width="200" class="elevation-0">
+      <v-card-title>
+
+        <span>{{ loc.title }}</span>
+        <v-chip x-small class="ml-2">{{ loc.number }}</v-chip>  <v-chip class="ml-2" x-small>{{ loc.parentId }}</v-chip>
+      </v-card-title>
+      
+      <v-card-text>
+        
+        <v-chip small color="white" >{{ loc.lat.toFixed(6) }}, {{ loc.lng.toFixed(6) }}</v-chip>
+        
+        <v-chip v-if="loc.full_string" small >{{ loc.full_string }}</v-chip>
+        <v-chip v-if="mainStr" small>{{mainStr}}</v-chip>
+      </v-card-text>
+      
+      <v-card-actions>
+        <v-chip v-if="loc.type" small>{{loc.type}}</v-chip>
+        <v-chip v-if="loc.eventtype" small>{{loc.eventtype}}</v-chip>
+      </v-card-actions>
+      
+    </v-card>
+  `,
+});
+
+
 Vue.component('global-map', {
   props: {
     value: {
@@ -128,24 +167,20 @@ Vue.component('global-map', {
             eventLocations.push(loc);
           }
 
-          marker.bindPopup(`
-                    <div>
-                    <span title="No." class="map-bid">${loc.number || ''}</span>
-                    <span title="Bulletin ID" class="map-bid">${loc.parentId || ''}</span>
-                    
-                    <div class="body-2 font-weight-bold">${loc.title || ''}</div>
+          const popupContent = document.createElement('div');
+          const PopupComponent = Vue.extend(Vue.component('location-popup'));
 
-                    <div class="subtitle">
-                    ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
-                    </div>
+          const popupInstance = new PopupComponent({
+            propsData: {
+              loc: loc,
+              i18n: this.i18n,
+            },
+          });
+          popupInstance.$mount();
+          popupContent.appendChild(popupInstance.$el);
 
-                    <span class="mt-1 subtitle">${loc.full_string || ''}</span>
-                    <div>
-                    <span title="Main Incident" class="map-bid">${mainStr || ''}</span>
-                    <span title="Marker Type" class="map-bid">${loc.type || ''}</span>
-                    <span title="Event Type" class="map-bid">${loc.eventtype || ''}</span>
-                    </div>
-                    `);
+          marker.bindPopup(popupContent);
+
           this.markerGroup.addLayer(marker);
         }
 
@@ -271,44 +306,44 @@ Vue.component('global-map', {
 
   template: `
       <div>
-      <v-card outlined color="grey lighten-3">
+        <v-card outlined color="grey lighten-3">
 
-        <v-card-text>
-          <div v-if="legend" class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
-            <div class="caption">
-              <v-icon small color="#00a1f1"> mdi-checkbox-blank-circle</v-icon>
-              {{ i18n.locations_ }}
+          <v-card-text>
+            <div v-if="legend" class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
+              <div class="caption">
+                <v-icon small color="#00a1f1"> mdi-checkbox-blank-circle</v-icon>
+                {{ i18n.locations_ }}
+              </div>
+              <div class="caption">
+                <v-icon small color="#ffbb00"> mdi-checkbox-blank-circle</v-icon>
+                {{ i18n.geoMarkers_ }}
+              </div>
+              <div class="caption">
+                <v-icon small color="#00f166"> mdi-checkbox-blank-circle</v-icon>
+                {{ i18n.events_ }}
+              </div>
+
             </div>
-            <div class="caption">
-              <v-icon small color="#ffbb00"> mdi-checkbox-blank-circle</v-icon>
-              {{ i18n.geoMarkers_ }}
-            </div>
-            <div class="caption">
-              <v-icon small color="#00f166"> mdi-checkbox-blank-circle</v-icon>
-              {{ i18n.events_ }}
-            </div>
 
-          </div>
-
-          <l-map @fullscreenchange="fsHandler" @dragend="redraw" ref="map" @ready="fitMarkers" :zoom="zoom"
-                 :max-zoom="18"
-                 :style=" 'resize:vertical;height:'+ mapHeight + 'px'"
-                 :center="[lat,lng]" :options="{scrollWheelZoom:false}">
-            <l-tile-layer v-if="defaultTile" :attribution="attribution" :key="mapKey" :url="mapsApiEndpoint"
-                          :subdomains="subdomains">
-            </l-tile-layer>
-            <l-control class="example-custom-control">
-              <v-btn v-if="__GOOGLE_MAPS_API_KEY__" @click="toggleSatellite" small fab>
-                <img src="/static/img/satellite-icon.png" width="18"></img>
-              </v-btn>
-            </l-control>
+            <l-map @fullscreenchange="fsHandler" @dragend="redraw" ref="map" @ready="fitMarkers" :zoom="zoom"
+                   :max-zoom="18"
+                   :style=" 'resize:vertical;height:'+ mapHeight + 'px'"
+                   :center="[lat,lng]" :options="{scrollWheelZoom:false}">
+              <l-tile-layer v-if="defaultTile" :attribution="attribution" :key="mapKey" :url="mapsApiEndpoint"
+                            :subdomains="subdomains">
+              </l-tile-layer>
+              <l-control class="example-custom-control">
+                <v-btn v-if="__GOOGLE_MAPS_API_KEY__" @click="toggleSatellite" small fab>
+                  <img src="/static/img/satellite-icon.png" width="18"></img>
+                </v-btn>
+              </l-control>
 
 
-          </l-map>
+            </l-map>
 
 
-        </v-card-text>
-      </v-card>
+          </v-card-text>
+        </v-card>
       </div>
     `,
 });

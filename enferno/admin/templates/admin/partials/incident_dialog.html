@@ -76,7 +76,7 @@
 
                         <v-row>
                             <v-col cols="12" md="12">
-                                <div class="body-1 pa-1 grey--text">Description</div>
+                                <div class="body-1 pa-1 grey--text">{{ _('Description') }}</div>
                                 <tinymce-editor
                                         :init="tinyConfig"
                                         v-model="editedItem.description"
@@ -317,7 +317,7 @@
 
                                                             <v-card-text>
                                                                 <div>
-                                                                    <div class="caption">Probability</div>
+                                                                    <div class="caption">{{ _('Probability') }}</div>
                                                                     <v-chip-group
                                                                             v-model="editedItem.bulletin_relations[index].probability"
                                                                             column
@@ -328,7 +328,7 @@
                                                                         </v-chip>
                                                                     </v-chip-group>
 
-                                                                    <div class="caption">Related As</div>
+                                                                    <div class="caption">{{ _('Related As') }}</div>
                                                                     <v-chip-group
                                                                             v-model="editedItem.bulletin_relations[index].related_as"
                                                                             column
@@ -422,7 +422,7 @@
 
                                                             <v-card-text>
 
-                                                                <div class="caption">Probability</div>
+                                                                <div class="caption">{{ _('Probability') }}</div>
                                                                 <v-chip-group
                                                                         v-model="editedItem.incident_relations[index].probability"
                                                                         column
@@ -434,7 +434,7 @@
                                                                 </v-chip-group>
 
 
-                                                                <div class="caption">Related As</div>
+                                                                <div class="caption">{{ _('Related As') }}</div>
                                                                 <v-chip-group
                                                                         v-model="editedItem.incident_relations[index].related_as"
                                                                         column

@@ -18,7 +18,7 @@
 
                 <v-text-field name="code" placeholder="Enter code"></v-text-field>
 
-                <a href="/mf-recovery">Trouble Accessing Your Account?/Lost Mobile/TFA Device?</a>
+                <a href="/mf-recovery">{{ _("Trouble Accessing Your Account?/Lost Mobile/TFA Device?") }}</a>
 
             </v-card-text>
 
@@ -35,7 +35,7 @@
                 {% endif %}
 
             <v-card-actions class="justify-end pa-4">
-                <v-btn color="primary" type="submit"> Submit</v-btn>
+                <v-btn color="primary" type="submit">{{ _("Submit") }}</v-btn>
             </v-card-actions>
         </form>
     </v-card>
@@ -52,7 +52,7 @@
                 {% if problem=="no_mail_access" %}
                     <p>{{ _("A mail was sent to us in order to reset your application account") }}</p>
                 {% endif %}
-                <v-btn color="primary" type="submit"> Submit</v-btn>
+                <v-btn color="primary" type="submit">{{ _("Submit") }}</v-btn>
             </form>
         </v-card-text>
     </v-card>

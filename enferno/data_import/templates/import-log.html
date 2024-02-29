@@ -180,8 +180,8 @@
                     {text: "{{_('File')}}", value: 'file', sortable: false},
                     {text: "{{_('Format')}}", value: 'file_format', sortable: false},
                     {text: "{{_('Batch ID')}}", value: 'batch_id', sortable: false},
-                    {text: "{{_('Requested time')}}", value: 'created_at', sortable: false},
-                    {text: "{{_('Import time')}}", value: 'imported_at', sortable: false},
+                    {text: "{{_('Requested Time')}}", value: 'created_at', sortable: false},
+                    {text: "{{_('Import Time')}}", value: 'imported_at', sortable: false},
                 ],
 
             }),
@@ -277,7 +277,7 @@
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
-                    this.showSnack('Oops! We couldn\'t find this item.')
+                    this.showSnack("{{_('Oops! We couldn\'t find this item.')}}")
                 }).finally(()=>{
                     this.logLoader = false;
                 });
@@ -291,7 +291,7 @@
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
-                    this.showSnack('Oops! We couldn\'t find this item.')
+                    this.showSnack("{{_('Oops! We couldn\'t find this item.')}}")
                 }).finally(()=>{
                     this.logLoader = false;
                 });

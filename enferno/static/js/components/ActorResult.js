@@ -42,7 +42,7 @@ Vue.component('actor-result', {
         </v-card>
 
         <v-card disabled elevation="0" v-else class="restricted">
-          <v-card-text>{{ actor.id }} - Restricted</v-card-text>
+          <v-card-text>{{ actor.id }} - {{ i18n.restricted_ }}</v-card-text>
         </v-card>
 
 

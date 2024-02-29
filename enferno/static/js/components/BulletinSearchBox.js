@@ -76,8 +76,8 @@ Vue.component('bulletin-search-box', {
                 <v-row v-if="showOp">
                     <v-col>
                         <v-btn-toggle mandatory v-model="q.op">
-                            <v-btn small value="and">And</v-btn>
-                            <v-btn small value="or">Or</v-btn>
+                            <v-btn small value="and">{{ i18n.and_ }}</v-btn>
+                            <v-btn small value="or">{{ i18n.or_ }}</v-btn>
                         </v-btn-toggle>
                     </v-col>
                 </v-row>
@@ -139,6 +139,7 @@ Vue.component('bulletin-search-box', {
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
                             <pop-date-range-field
+                                :i18n="translations" 
                                 ref="publishDateComponent"
                                 :label="i18n.publishDate_"
                                 v-model="q.pubdate"
@@ -149,6 +150,7 @@ Vue.component('bulletin-search-box', {
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
                             <pop-date-range-field
+                                :i18n="translations" 
                                 :label="i18n.documentationDate_"
                                 v-model="q.docdate"
                             />
@@ -160,6 +162,7 @@ Vue.component('bulletin-search-box', {
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
                             <pop-date-range-field
+                                :i18n="translations" 
                                 :label="i18n.createdDate_"
                                 v-model="q.created"
                             />
@@ -169,6 +172,7 @@ Vue.component('bulletin-search-box', {
                     <v-col md="6">
                         <div class="d-flex flex-wrap">
                             <pop-date-range-field
+                                :i18n="translations" 
                                 :label="i18n.updatedDate_"
                                 v-model="q.updated"
                             />
@@ -181,7 +185,7 @@ Vue.component('bulletin-search-box', {
                   <v-alert text color="grey lighten-1" class="pa-5 my-3">
                     <div class="d-flex align-baseline justify-lg-space-between" >
                       
-                      <span class="black--text font-weight-bold text-h6">Events</span>
+                      <span class="black--text font-weight-bold text-h6">{{ i18n.events_ }}</span>
                       <v-checkbox :label="i18n.singleEvent_" dense v-model="q.singleEvent" color="primary" small
                                 class="ma-3"></v-checkbox>
                     </div>
@@ -189,21 +193,16 @@ Vue.component('bulletin-search-box', {
                     
                     
                     <div class="d-flex align-baseline"  > 
-                          <pop-date-range-field
-                              :label="i18n.eventDate_"
-                              v-model="q.edate"
-                              
-                              class="mt-2"
-                              
-                          />
-      
-                    
-      
+                            <pop-date-range-field
+                                :i18n="translations"
+                                :label="i18n.eventDate_"
+                                v-model="q.edate"
+                                class="mt-2"
+                            />
+
       
                         <search-field
                             class="ml-6 mb-3"
-                            persistent-hint 
-                            hint="select event type"
                             v-model="q.etype"
                             api="/admin/api/eventtypes/"
                             :query-params="{ typ: 'for_bulletin' }"
@@ -238,7 +237,7 @@ Vue.component('bulletin-search-box', {
                 
                  <v-row v-if="isAdmin" > 
                     <v-col md="9">
-                        <span class="caption">Access Roles</span>
+                        <span class="caption">{{ i18n.accessRoles_ }}</span>
                         <v-chip-group
                                 column
                                 multiple
@@ -249,7 +248,7 @@ Vue.component('bulletin-search-box', {
                         </v-chip-group>
                     </v-col>
                     <v-col md="3">
-                        <span class="caption">Unrestricted</span>
+                        <span class="caption">{{ i18n.unrestricted_ }}</span>
                         <v-switch v-model="q.norole"></v-switch>
                     </v-col>
                 </v-row>
@@ -314,8 +313,8 @@ Vue.component('bulletin-search-box', {
                   <v-col cols="12">
                     <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
                     <v-chip-group column v-model="q.reviewAction">
-                      <v-chip value="No Review Needed" label small filter outlined >No Review Needed</v-chip>
-                      <v-chip value="Needs Review" label small filter outlined>Needs Review</v-chip>
+                        <v-chip value="No Review Needed" label small filter outlined>{{ i18n.noReviewNeeded_ }}</v-chip>
+                        <v-chip value="Needs Review" label small filter outlined>{{ i18n.needsReview_ }}</v-chip>
                       
                     </v-chip-group>
                     
@@ -445,13 +444,6 @@ Vue.component('bulletin-search-box', {
 
                     </v-col>
                 </v-row>
-
-                <v-text-field
-                    v-model="q.tsv"
-                    label="Title"
-                    clearable
-                    @keydown.enter="$emit('search',q)"
-                ></v-text-field>
             
                 <v-sheet class="ma-4">
                     <span class="caption pt-2">{{ i18n.geospatial_ }}</span>

@@ -60,18 +60,22 @@
   "LANGUAGES": [
     "en",
     "ar",
-    "uk"
+    "uk",
+    "fr",
+    "fa",
+    "es",
+    "ru"
   ],
   "MAPS_API_ENDPOINT": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   "MEDIA_ALLOWED_EXTENSIONS": [
-    ".mp4",
-    ".webm",
-    ".jpg",
-    ".gif",
-    ".png",
-    ".pdf",
-    ".doc",
-    ".txt"
+    "mp4",
+    "webm",
+    "jpg",
+    "gif",
+    "png",
+    "pdf",
+    "doc",
+    "txt"
   ],
   "MISSING_PERSONS": false,
   "OCR_ENABLED": false,
@@ -92,9 +96,9 @@
   "SECURITY_FRESHNESS": 21600,
   "SECURITY_FRESHNESS_GRACE_PERIOD": 1800,
   "SHEETS_ALLOWED_EXTENSIONS": [
-    ".csv",
-    ".xls",
-    ".xlsx"
+    "csv",
+    "xls",
+    "xlsx"
   ],
   "SHEET_IMPORT": true,
   "TESSERACT_CMD": "/opt/homebrew/bin/tesseract"

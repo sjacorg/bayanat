@@ -48,7 +48,7 @@ Vue.component('bulletin-result', {
     
       <v-card disabled elevation="0" v-else class="restricted">
       
-    <v-card-text >{{bulletin.id}} - Restricted</v-card-text>
+    <v-card-text >{{bulletin.id}} - {{ i18n.restricted_ }}</v-card-text>
     
     </v-card>
       </template>

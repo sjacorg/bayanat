@@ -24,7 +24,7 @@
           ><v-icon small>mdi-camera</v-icon>
         </v-btn>
       </template>
-      <span>Take Snapshot</span>
+      <span>{{ _('Take Snapshot') }}</span>
     </v-tooltip>
 
 
@@ -36,7 +36,7 @@
           ><v-icon small>mdi-crop-square</v-icon>
         </v-btn>
       </template>
-      <span>Crop Image</span>
+      <span>{{ _('Crop Image') }}</span>
     </v-tooltip>
 
 
@@ -57,14 +57,14 @@
                   <v-text-field
                   v-model="screenshots[index].title"  
                   v-if="media.sw"
-                    label="Title"
+                    label="{{ _('Title') }}"
                   ></v-text-field>
                   
 
                   <v-text-field
                     v-else
                     v-model="screenshots[index].title_ar"
-                    label="Title (AR)"
+                    label="{{ _('Title (AR)') }}"
                     background-color="lime lighten-5"
                   ></v-text-field>
 
@@ -85,7 +85,7 @@
               <search-field
                             api="/admin/api/mediacategories"
                             v-model="screenshots[index].category"
-                            label="Media Category"
+                            label="{{ _('Media Category') }}"
                             item-text="title"
                             item-value="id"
                             :return-object="false"
@@ -109,7 +109,7 @@
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn @click="attachSnapshots" color="primary">Attach Media</v-btn>
+      <v-btn @click="attachSnapshots" color="primary">{{ _('Attach Media') }}</v-btn>
       <v-spacer></v-spacer>
     </v-card-actions>
   </v-card>

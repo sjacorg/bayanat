@@ -35,13 +35,13 @@
 
 
                 <v-radio-group v-model="selectedOption" name="which">
-                    <v-radio label="Authenticator" value="authenticator"></v-radio>
-                    <v-radio label="Security/Biometric Device" value="webauthn"></v-radio>
+                    <v-radio label="{{ _('Authenticator') }}" value="authenticator"></v-radio>
+                    <v-radio label="{{ _('Security/Biometric Device')}}" value="webauthn"></v-radio>
                 </v-radio-group>
 
             </v-card-text>
             <v-card-actions class="pa-4 justify-end">
-                <v-btn type="submit" name="submit" color="primary">Submit</v-btn>
+                <v-btn type="submit" name="submit" color="primary">{{ _('Submit') }}</v-btn>
             </v-card-actions>
         </v-card>
     </form>

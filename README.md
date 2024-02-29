@@ -12,11 +12,7 @@ Installation guidelines and user manual are available at [docs.bayanat.org](http
 
 Localization
 ------------
-Bayanat currently has translations for the following languages:
-- Arabic
-- Ukrainian
-
-You can help by translating Bayanat to your language. `messages.pot` file is the translation template for Bayanat.
+Check Bayanat's [project](https://poeditor.com/join/project/XRamVw2AD0) on POEditor to check on current available languages and to help translating Bayanat to your language.
 
 Live Demo
 ---------

@@ -47,13 +47,14 @@ class Config(object):
 
     # Redis
     REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
     REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
-    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0"
+    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
 
     # Celery
     # Has to be in small case
-    celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/2"
-    result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/3"
+    celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/2"
+    result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/3"
 
     # Security
     SECURITY_REGISTERABLE = manager.get_config("SECURITY_REGISTERABLE")
@@ -121,7 +122,7 @@ class Config(object):
 
     # Session
     SESSION_TYPE = "redis"
-    SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/1")
+    SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/1")
     PERMANENT_SESSION_LIFETIME = 3600
 
     # Google 0Auth
@@ -134,6 +135,9 @@ class Config(object):
     # File Upload Settings: switch to True to store files privately within the enferno/media directory
     FILESYSTEM_LOCAL = manager.get_config("FILESYSTEM_LOCAL")
 
+    # Access Control settings
+    ACCESS_CONTROL_RESTRICTIVE = manager.get_config("ACCESS_CONTROL_RESTRICTIVE")
+
     # Allowed file upload extensions
     MEDIA_ALLOWED_EXTENSIONS = manager.get_config("MEDIA_ALLOWED_EXTENSIONS")
     MEDIA_UPLOAD_MAX_FILE_SIZE = manager.get_config("MEDIA_UPLOAD_MAX_FILE_SIZE")
@@ -145,8 +149,10 @@ class Config(object):
     ETL_ALLOWED_PATH = os.environ.get("ETL_ALLOWED_PATH", None)
 
     EXPORT_TOOL = manager.get_config("EXPORT_TOOL")
-    # Export file expiry in seconds (2 hours)
-    EXPORT_DEFAULT_EXPIRY = int(os.environ.get("EXPORT_DEFAULT_EXPIRY", 7200))
+    # Export file expiry in hours
+    export_default_expiry = manager.get_config("EXPORT_DEFAULT_EXPIRY")
+    EXPORT_DEFAULT_EXPIRY = timedelta(hours=export_default_expiry)
+
     # Enable data deduplication tool
     DEDUP_TOOL = manager.get_config("DEDUP_TOOL")
 
@@ -156,7 +162,7 @@ class Config(object):
     # valid image extenstions supported by Tesseract OCR
     OCR_ENABLED = manager.get_config("OCR_ENABLED")
     OCR_EXT = manager.get_config("OCR_EXT")
-    TESSERACT_CMD = manager.get_config("TESSERACT_CMD")
+    TESSERACT_CMD = os.environ.get("ETL_ALLOWED_PATH", "/usr/bin/tesseract")
 
     # S3 settings
     # Bucket needs to be private with public access blocked
@@ -220,3 +226,25 @@ class Config(object):
         "httponly": False,
         "secure": os.environ.get("SECURE_COOKIES", "True") == "True",
     }
+
+
+class TestConfig(Config):
+    POSTGRES_USER = os.environ.get("POSTGRES_USER", "")
+    POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
+    POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+    if (POSTGRES_USER and POSTGRES_PASSWORD) or POSTGRES_HOST != "localhost":
+        SQLALCHEMY_DATABASE_URI = (
+            f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/bayanat_test"
+        )
+    else:
+        SQLALCHEMY_DATABASE_URI = "postgresql:///bayanat_test"
+    # Redis
+    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
+    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/15"
+    # Celery
+    # Has to be in small case
+    celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/14"
+    result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/13"
+    SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/12")

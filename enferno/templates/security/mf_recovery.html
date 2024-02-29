@@ -4,17 +4,17 @@
 {% block content %}
     {% include "security/_messages.html" %}
     <v-card style="width:min(90%,400px)" class="ma-auto pa-4">
-        <v-card-title>Recovery Code</v-card-title>
+        <v-card-title>{{ _('Recovery Code')}}</v-card-title>
         <form action="{{ url_for_security("mf_recovery") }}" method="POST"
               name="mf_recovery_form">
             <v-card-text>
 
                 {{ mf_recovery_form.hidden_tag() }}
-                <v-text-field name="code" label="Recovery Code"></v-text-field>
+                <v-text-field name="code" label="{{ _('Recovery Code')}}"></v-text-field>
 
             </v-card-text>
             <v-card-actions>
-                <v-btn type="submit" class="primary">Submit</v-btn>
+                <v-btn type="submit" class="primary"> {{ _('Submit') }} </v-btn>
             </v-card-actions>
 
             {% if mf_recovery_form.errors %}
@@ -28,7 +28,7 @@
             {% endif %}
         </form>
     <v-card-actions class="justify-end">
-        <a href="/login">Back to Login</a>
+        <a href="/login">{{ _('Back to Login')}}</a>
     </v-card-actions>
 
     </v-card>

@@ -1,0 +1,20 @@
+# test compose setup
+name: Bayanat tests
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:latest
+        options: --privileged
+        ports:
+          - 80:80
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Create .env file
+        run: |
+          ./gen-env.sh -d -e .env.test
+      - name: Bayanat Tests
+        run: docker compose -f docker-compose-prebuilt-test.yml --env-file .env.test up --build --exit-code-from bayanat

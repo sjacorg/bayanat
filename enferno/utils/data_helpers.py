@@ -1,4 +1,5 @@
 import pandas as pd
+from hashlib import md5
 
 from enferno.admin.models import (
     ClaimedViolation,
@@ -31,6 +32,17 @@ from enferno.data_import.models import DataImport
 from enferno.user.models import Role
 
 from sqlalchemy import and_, or_
+
+
+def get_file_hash(filepath):
+    """
+    Returns a file md5 hash.
+    :param  filepath
+    """
+    with open(filepath, "rb") as file_check:
+        file_read = file_check.read()
+        etag = md5(file_read).hexdigest()
+    return etag
 
 
 def media_check_duplicates(etag, data_import_id=None):

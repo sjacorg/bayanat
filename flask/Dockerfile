@@ -20,10 +20,8 @@ COPY ./requirements.txt  /app/requirements.txt
 
 RUN . /opt/venv/bin/activate
 
-
 RUN pip install --no-cache-dir -Ur requirements.txt
 RUN ls -la /opt/venv/bin/
-
 
 # ----------------- main container -------------------------
 
@@ -34,9 +32,9 @@ ARG ROLE
 ENV ROLE=${ROLE}
 RUN echo "Building ${ROLE} container."
 RUN if [ "$ROLE" = "flask" ]; then \
-    apt update -y && apt install -yq python3-dev python3.10-venv postgis; \
+    apt update -y && apt install -yq python3-dev python3.10-venv postgis libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libffi-dev libjpeg-dev libopenjp2-7-dev; \
     elif [ "$ROLE" = "celery" ]; then \
-    apt update -y && apt install -yq python3-dev python3.10-venv postgis libimage-exiftool-perl ffmpeg; \
+    apt update -y && apt install -yq python3-dev python3.10-venv postgis libimage-exiftool-perl ffmpeg libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libffi-dev libjpeg-dev libopenjp2-7-dev; \
     fi
 RUN apt clean
 RUN apt autoremove
@@ -62,10 +60,6 @@ ENV PYTHONUNBUFFERED=1
 COPY . /app
 # copy compiled virtualenv
 COPY --from=base /opt/venv /opt/venv
-
-# environments are passed directly to the image
-ARG ENV_FILE
-COPY ${ENV_FILE:-.env} /app
 
 COPY --chown=bayanat:bayanat ./flask/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 

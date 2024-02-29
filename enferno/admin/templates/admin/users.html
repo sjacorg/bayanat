@@ -51,7 +51,7 @@
                                         <v-btn :disabled="item.force_reset" icon>
                                             <v-icon v-tippy
 
-                                                    :content="item.force_reset ? 'Force reset already requested' : 'Force Password Reset'"
+                                            :content="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset.') }}'"
                                                     @click.once="forcePassReset(item)"
                                             >
                                                 mdi-lock-outline
@@ -60,7 +60,7 @@
                                         </v-btn>
 
                                         <v-btn v-if="item.force_reset" x-small plain fab>
-                                            <v-icon small v-tippy content="Force password reset requested!" small
+                                            <v-icon small v-tippy content="{{ _('Password reset requested.') }}" small
                                                     color="red">mdi-exclamation-thick
                                             </v-icon>
                                         </v-btn>
@@ -72,7 +72,7 @@
                                         <v-chip class="ma-1" small color="primary" v-for="role in item.roles">
                                             ${role.name}
                                         </v-chip>
-                                        <v-chip class="ma-1" v-if="!item.roles.length" small v-else>View Only
+                                        <v-chip class="ma-1" v-if="!item.roles.length" small v-else>{{ _('View Only') }}
                                         </v-chip>
 
                                     </template>
@@ -140,7 +140,7 @@
                                                                             @click:append="showPassword = !showPassword"
                                                                     ></v-text-field>
 
-                                                                    <span v-if="!disablePassword && editedItem.password.length > 1 && !errors?.length"
+                                                                    <span v-if="!disablePassword && editedItem.password?.length > 1 && !errors?.length"
                                                                           class="green--text">{{
                                                                             _('Strong Password')
                                                                         }}</span>
@@ -168,7 +168,7 @@
 
                                                                     <v-text-field @blur="checkUsername"
                                                                                   @input="checkUsername"
-                                                                                  label="Username"
+                                                                                  label="{{_('Username')}}"
                                                                                   :disabled="disableUsername"
                                                                                   v-model="editedItem.username"></v-text-field>
                                                                     <span class="orange--text">${errors[0]}</span>
@@ -292,6 +292,7 @@
         delimiters: delimiters,
         data: () => ({
             dialog: dialog,
+            drawer: drawer,
             snackbar: false,
             snackMessage: '',
             loading: true,
@@ -321,7 +322,6 @@
             roles: [],
             editedItem: {},
             defaultItem: {
-                password: '',
                 active: false
             },
             disableUsername: true,
@@ -446,7 +446,6 @@
                 this.editedIndex = this.items.indexOf(item);
                 this.editedItem = structuredClone(item);
                 this.disableUsername = this.disablePassword = this.disableEmail = true;
-                this.editedItem.password = '';
                 this.dialog = true;
             },
 

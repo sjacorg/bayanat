@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  postgres:
+    container_name: postgres
+    image: 'postgis/postgis:15-3.3'
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - 'postgres_dev_data:/var/lib/postgresql/data'
+    expose:
+      - '5432'
+    healthcheck:
+      test: "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"
+      interval: 3s
+      retries: 10
+
+  redis:
+    container_name: redis
+    image: 'redis:latest'
+    expose:
+      - '6379'
+    command: redis-server --requirepass '${REDIS_PASSWORD}'
+    volumes:
+      - 'redis_dev_data:/var/lib/redis/data:rw'
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 3s
+      retries: 10
+
+  bayanat:
+    container_name: bayanat
+    image: bayanat/bayanat:dev
+    build:
+      context: .
+      dockerfile: ./flask/Dockerfile.dev
+      args:
+        - ROLE=flask
+        - ENV_FILE=${ENV_FILE:-.env.dev}
+    volumes:
+      - 'bayanat_dev_media:/app/enferno/media/:rw'
+      - 'bayanat_dev_imports:/app/enferno/imports:rw'
+      - '${PWD}/config.json:/app/config.json:rw'
+      - '${PWD}/reload.ini:/app/reload.ini:rw'
+      - '${PWD}/${ENV_FILE:-.env.dev}:/app/.env:ro'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:5000:5000'
+    restart: always
+
+volumes:
+  redis_dev_data:
+  postgres_dev_data:
+  bayanat_dev_media:
+  bayanat_dev_imports:

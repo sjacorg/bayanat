@@ -26,7 +26,7 @@
                     <form action="{{ url_for_security("mf_recovery_codes") }}" method="GET"
                           name="mf_recovery_codes_form">
                         <input type="hidden" name="show_codes" value="Show Recovery Codes">
-                        <v-btn name="show_codes" type="submit" color="primary" class="my-4">Show Recovery Codes</v-btn>
+                        <v-btn name="show_codes" type="submit" color="primary" class="my-4">{{ _fsdomain('Show Recovery Codes')}}</v-btn>
                     </form>
                 </v-card-actions>
 
@@ -35,14 +35,14 @@
     <v-divider></v-divider>
 
     <v-card>
-    <v-card-title>Generate new Recovery Codes</v-card-title>
+    <v-card-title>{{ _fsdomain('Generate New Recovery Codes')}}</v-card-title>
     <v-card-text>
 
          <form action="{{ url_for_security("mf_recovery_codes") }}" method="POST"
           name="mf_recovery_codes_form">
         {{ mf_recovery_codes_form.hidden_tag() }}
         {{ render_field_errors(mf_recovery_codes_form.csrf_token) }}
-        <v-btn color="primary" class="my-4" type="submit">Generate New Recovery Codes</v-btn>
+        <v-btn color="primary" class="my-4" type="submit">{{ _fsdomain('Generate new recovery codes')}}</v-btn>
     </form>
 
 

@@ -11,7 +11,7 @@ from sqlalchemy.ext.mutable import Mutable
 from datetime import datetime
 from enferno.utils.base import BaseMixin
 from enferno.extensions import db, rds
-
+from enferno.settings import Config as cfg
 
 from sqlalchemy.ext.mutable import Mutable
 
@@ -245,7 +245,10 @@ class User(UserMixin, db.Model, BaseMixin):
         # handle primary entities (bulletins, actors, incidents)
         if obj.__tablename__ in ["bulletin", "actor", "incident"]:
             # intersect roles
-            if not obj.roles or set(self.roles) & set(obj.roles):
+            if set(self.roles) & set(obj.roles):
+                return True
+
+            if not cfg.ACCESS_CONTROL_RESTRICTIVE and not obj.roles:
                 return True
 
         # handle media access
@@ -255,8 +258,12 @@ class User(UserMixin, db.Model, BaseMixin):
             parent = obj.bulletin or obj.actor
             # Restrict all medias without a parent
             # intersect roles with parent
-            if parent and (not parent.roles or set(self.roles) & set(parent.roles)):
-                return True
+            if parent:
+                if set(self.roles) & set(parent.roles):
+                    return True
+                if not cfg.ACCESS_CONTROL_RESTRICTIVE and not parent.roles:
+                    return True
+
         return False
 
     def from_json(self, item):

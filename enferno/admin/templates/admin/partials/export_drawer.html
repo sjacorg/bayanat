@@ -24,7 +24,7 @@
             </v-btn>
             <v-card-text>
 
-                <div class="caption mb-2">Export format</div>
+                <div class="caption mb-2">{{ _('Export format') }}</div>
 
                 <v-btn-toggle color="primary" mandatory v-model="exportConfig.format">
                             <v-btn small value="json"><v-icon left>mdi-code-json</v-icon> json</v-btn>
@@ -37,7 +37,7 @@
             </v-card-text>
 
             <v-card-text>
-                <v-switch v-if="!exportConfig.hideMedia" v-model="exportConfig.includeMedia" label="Include media"></v-switch>
+                <v-switch v-if="!exportConfig.hideMedia" v-model="exportConfig.includeMedia" label="{{ _('Include media')}}"></v-switch>
 
                 <v-combobox
                     small-chips
@@ -58,7 +58,7 @@
                     </v-textarea>
             </v-card-text>
             <v-card-actions>
-                <v-btn @click.stop="exportRequest" style="width:min(300px,90%)" class="primary mx-auto">Create Export Request</v-btn>
+                <v-btn @click.stop="exportRequest" style="width:min(300px,90%)" class="primary mx-auto">{{ _('Create Export Request') }}</v-btn>
             </v-card-actions>
         </v-card>
     </validation-observer>

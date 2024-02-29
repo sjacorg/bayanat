@@ -4,13 +4,13 @@
     
     <v-card-title class="handle">
       <v-icon left>mdi-library-books </v-icon>
-      Search Actors
+      {{ _('Search Actors') }}
       <v-spacer></v-spacer>
 
       <v-text-field
         class="mx-5"
         v-model="relateActorTerm"
-        label="Search & Relate Actors"
+        label="{{ _('Search & Relate Actors') }}"
         @keydown.enter="searchRelatedActors"
         append-icon="mdi-magnify"
       ></v-text-field>
@@ -39,7 +39,7 @@
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" text @click="relateActorDialog=false">Done</v-btn>
+      <v-btn color="blue darken-1" text @click="relateActorDialog=false">{{ _('Done') }}</v-btn>
       
       <v-spacer></v-spacer>
     </v-card-actions>

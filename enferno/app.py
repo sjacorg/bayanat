@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-from flask import Flask, render_template, current_app, request
+from flask import Flask, render_template, current_app
 from flask_security import current_user
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
@@ -31,7 +31,7 @@ from enferno.admin.models import (
 from enferno.user.models import WebAuthn
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import cache, db, session, bouncer, babel, rds
+from enferno.extensions import cache, db, session, babel, rds
 from enferno.public.views import bp_public
 from enferno.settings import Config
 from enferno.user.forms import ExtendedRegisterForm
@@ -87,7 +87,6 @@ def register_extensions(app):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, webauthn_model=WebAuthn)
     security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
     session.init_app(app)
-    bouncer.init_app(app)
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
 

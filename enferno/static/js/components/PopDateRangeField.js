@@ -1,5 +1,5 @@
 Vue.component('pop-date-range-field', {
-  props: ['value', 'label'],
+  props: ['value', 'label', 'i18n'],
 
   data() {
     return {
@@ -85,7 +85,7 @@ Vue.component('pop-date-range-field', {
           prepend-icon="mdi-calendar"
           clearable
           @click:clear="value = null"
-          hint="Select a single date or a range"
+          :hint="i18n.singleRangedate_"
           persistent-hint
         ></v-text-field>
       </template>

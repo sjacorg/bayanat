@@ -18,8 +18,8 @@
 {% endblock %}
 {% block head_js %}
     {{ super() }}
-    <script src="{{ url_for('.static', filename='js/webauthn.js') }}" integrity="sha256-H/xFeFCIRT23BxJzi96Bvepy4miV2/tQmj1kw1DWq/M=" crossorigin="anonymous"></script>
-    <script src="{{ url_for('.static', filename='js/base64.js') }}" integrity="sha256-QRosC0/HfAja/USffcwGTqczjJtktjeA2NaUcG+bqA0=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('.static', filename='js/webauthn.js') }}" integrity="sha384-L2dZWmdjX/by1GmM6QF5TORTNDVWl4K2nhKakiO/m+ECnjp0RyqFwIozkgOjNlRm" crossorigin="anonymous"></script>
+    <script src="{{ url_for('.static', filename='js/base64.js') }}" integrity="sha384-XW/7jUc/w0mXy7L9CGlOsXMdVqGs4t8qFL2UI+7TKBwi4veil6IVr7pffHAQKlah" crossorigin="anonymous"></script>
 
 {% endblock %}
 
@@ -35,7 +35,7 @@
                 <form action="{{ url_for_security('wan_register') }}" method="post" name="wan_register_form"
                       id="wan-register-form">
                     {{ wan_register_form.hidden_tag() }}
-                    <v-text-field name="name" label="Device Name"></v-text-field>
+                    <v-text-field name="name" label="{{ _('Device Name')}} "></v-text-field>
                     {# Default is just second factor #}
                     {% if security.wan_allow_as_first_factor %}
                         <div>
@@ -43,7 +43,7 @@
                                 {{ render_field_with_errors(subfield) }}{% endfor %}
                         </div>
                     {% endif %}
-                    <v-btn class="my-3 primary" type="submit" depressed small>Add Device</v-btn>
+                    <v-btn class="my-3 primary" type="submit" depressed small>{{ _('Add Device')}}</v-btn>
 
                 </form>
             </v-card-text>
@@ -146,8 +146,8 @@
             <v-card-text>
                 <form action="{{ url_for_security('wan_delete') }}" method="post" name="wan_delete_form">
                     {{ wan_delete_form.hidden_tag() }}
-                    <v-text-field name="name" label="Nickname"></v-text-field>
-                    <v-btn type="submit" class="error" dark depressed small>Delete</v-btn>
+                    <v-text-field name="name" label="{{ _('Nickname') }}"></v-text-field>
+                    <v-btn type="submit" class="error" dark depressed small>{{ _('Delete') }}</v-btn>
 
                 </form>
             </v-card-text>

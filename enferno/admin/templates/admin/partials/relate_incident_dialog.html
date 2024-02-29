@@ -5,13 +5,13 @@
         <v-card-title class="handle">
 
             <v-icon left>mdi-library-books</v-icon>
-            Search Incidents
+            {{ _('Search Incidents') }}
             <v-spacer></v-spacer>
 
             <v-text-field
                     class="mx-5"
                     v-model="relateIncidentTerm"
-                    label="Search & Relate Incidents"
+                    label="{{ _('Search & Relate Incidents') }}"
                     @keydown.enter="searchRelatedIncidents"
                     append-icon="mdi-magnify"
             ></v-text-field>
@@ -38,7 +38,7 @@
         </v-card-text>
         <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" text @click="relateIncidentDialog=false">Done</v-btn>
+            <v-btn color="blue darken-1" text @click="relateIncidentDialog=false">{{ _('Done') }}</v-btn>
 
             <v-spacer></v-spacer>
         </v-card-actions>

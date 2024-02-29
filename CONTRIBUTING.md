@@ -82,3 +82,26 @@ The configuration for each tool is as follows:
 
 - **Black:** Configured via `pyproject.toml`.
 - **Prettier:** Configured via `.prettierrc`.
+
+# Tests
+
+Bayanat comes with e2e tests using pytest and pydantic models. To run the tests, install the dependencies with
+```bash
+pip install -r dev-requirements.txt
+```
+
+Bayanat tests require a separate test database to be setup before running any tests.
+
+After setting up the production database, follow the instructions below for creating a test database
+
+```bash
+sudo -u bayanat createdb bayanat_test
+sudo -u postgres psql -d bayanat_test -c 'CREATE EXTENSION if not exists pg_trgm; CREATE EXTENSION if not exists postgis;'
+```
+
+After creating the test db, you can run the existing tests with
+```bash
+pytest
+```
+
+Tests define `pydantic` models to ensure the backend responses and frontend requests conform to expected database schema.

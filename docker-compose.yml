@@ -4,12 +4,14 @@ services:
   postgres:
     container_name: postgres
     image: 'postgis/postgis:15-3.3'
-    env_file:
-      - ${ENV_FILE:-.env}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - 'postgres_data:/var/lib/postgresql/data'
-    ports:
-      - '127.0.0.1:5432:5432'
+      - 'postgres_data:/var/lib/postgresql/data:rw'
+    expose:
+      - '5432'
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -23,14 +25,14 @@ services:
   redis:
     container_name: redis
     image: 'redis:latest'
-    ports:
-      - '127.0.0.1:6379:6379'
+    expose:
+      - '6379'
     command: redis-server --requirepass '${REDIS_PASSWORD}'
     read_only: true
     security_opt:
       - no-new-privileges:true
     volumes:
-      - './redis-data:/var/lib/redis/data:rw'
+      - 'redis_data:/var/lib/redis/data:rw'
     healthcheck:
       test: [ "CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 3s
@@ -38,7 +40,7 @@ services:
 
   bayanat:
     container_name: bayanat
-    image: bayanat
+    image: 'bayanat/bayanat:latest'
     build:
       context: .
       dockerfile: ./flask/Dockerfile
@@ -49,6 +51,9 @@ services:
       - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media:rw'
       - './enferno/imports:/app/enferno/imports:rw'
       - './logs:/app/logs:rw'
+      - '${PWD}/config.json:/app/config.json:rw'
+      - '${PWD}/reload.ini:/app/reload.ini:rw'
+      - '${PWD}/${ENV_FILE:-.env}:/app/.env:ro'
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,8 +64,8 @@ services:
       - /tmp
     security_opt:
       - no-new-privileges:true
-    ports:
-      - '127.0.0.1:5000:5000'
+    expose:
+      - '5000'
 
   celery:
     container_name: celery
@@ -87,13 +92,13 @@ services:
   nginx:
     container_name: nginx
     restart: always
-    image: 'bitnami/nginx:latest'
+    image: nginx
+    build:
+      context: ./nginx
     ports:
       - '80:80'
     volumes:
       - './enferno/static/:/app/static/:ro'
-      - './nginx/nginx.conf:/opt/bitnami/nginx/conf/nginx.conf:ro'
-      - './nginx/bayanat.conf:/opt/bitnami/nginx/conf/server_blocks/bayanat.conf:ro'
     depends_on:
       - bayanat
     read_only: true
@@ -101,6 +106,7 @@ services:
       - no-new-privileges:true
     tmpfs:
       - /opt/bitnami/nginx/tmp/
+      - /opt/bitnami/nginx/conf/bitnami/certs/
     healthcheck:
       test: [ "CMD", "service", "nginx", "status" ]
       interval: 3s

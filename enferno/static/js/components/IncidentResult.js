@@ -30,7 +30,7 @@ Vue.component('incident-result', {
         </v-card>
         <v-card disabled elevation="0" v-else class="restricted">
 
-          <v-card-text>{{ incident.id }} - Restricted</v-card-text>
+          <v-card-text>{{ incident.id }} - {{ i18n.restricted_ }}</v-card-text>
 
         </v-card>
       </template>

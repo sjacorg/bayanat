@@ -82,6 +82,12 @@ button.swh {
     font-family: "Tajawal", sans-serif !important;
     font-size: 14px;
 }
+.rich-description img {
+    max-width: 99%;
+    margin: 2px;
+    height: auto;
+    object-fit: cover;
+}
 
 #bulletins-dt tr, #export-dt tr, #log-dt tr {
     cursor: pointer;
@@ -466,6 +472,10 @@ input[type="date"]::-webkit-input-placeholder {
 
     background: rgba(255, 255, 255, 1);
 
+}
+
+.universal .v-card .v-sheet.header-fixed {
+    top: 66px
 }
 
 .system-admin nav.v-navigation-drawer.v-navigation-drawer--clipped {

@@ -10,6 +10,23 @@
             {% include   'admin/partials/export_drawer.html' %}
             <v-main>
                 <v-container class="container--fluid">
+                     <v-btn
+                            elevation="16"
+                            color="primary"
+                            outlined
+                            v-tippy
+                            @click.stop="visualizeResults"
+                            content="Visualize Results"
+                            v-if="showVisualize"
+                            :loading="visualizeLoading"
+                            fab
+                            absolute
+                            class="mb-5 mr-5"
+                            bottom right
+                    >
+                        <v-icon>mdi-graph</v-icon>
+
+                    </v-btn>
 
 
                     <v-card>
@@ -192,7 +209,7 @@
                                                 mdi-pencil
                                             </v-icon>
                                         </template>
-                                        <span>Edit</span>
+                                        <span>{{ _('Edit') }}</span>
                                     </v-tooltip>
 
 
@@ -211,7 +228,7 @@
 
 
                                         </template>
-                                        <span>Assign to self</span>
+                                        <span>{{ _('Assign to self') }}</span>
                                     </v-tooltip>
 
 
@@ -225,7 +242,7 @@
                                             >mdi-message-draw
                                             </v-icon>
                                         </template>
-                                        <span>Add Review</span>
+                                        <span>{{ _('Add Review') }}</span>
                                     </v-tooltip>
 
 
@@ -247,15 +264,15 @@
 
                             <v-dialog width="600" v-model="selfAssignDialog">
                                 <v-card class="pa-3">
-                                    <v-card-title>Self Assign Incidnet #${assignIncident.id}</v-card-title>
+                                    <v-card-title>{{ _('Self Assign Incident') }} #${assignIncident.id}</v-card-title>
                                     <v-card-text>
 
-                                        <v-textarea v-model="assignIncident.comments" label="Comments"></v-textarea>
+                                        <v-textarea v-model="assignIncident.comments" label="{{ _('Comments') }}"></v-textarea>
                                     </v-card-text>
                                     <v-card-actions>
                                         <v-btn :disabled="!assignIncident.comments" class="ma-auto"
                                                @click="selfAssign"
-                                               color="primary">Assign to self
+                                               color="primary">{{ _('Assign to self') }}
                                         </v-btn>
                                     </v-card-actions>
                                 </v-card>
@@ -367,6 +384,11 @@
 
                 advSearchExpand: false,
                 search: {},
+
+
+                showVisualize: false,
+                visualizeLoading : false,
+                graphTimer : null,
 
                 queryName: null,
                 saveQueryDialog: false,
@@ -644,8 +666,8 @@
                 let self = this;
                 window.addEventListener("beforeunload", function (e) {
                     if (self.dialog) {
-                        var confirmationMessage = 'It looks like you have been editing something. '
-                            + 'If you leave before saving, your changes will be lost.';
+                        var confirmationMessage = "{{_('It looks like you have been editing something. ')}}"
+                            + "{{_('If you leave before saving, your changes will be lost.')}}";
                         (e || window.event).returnValue = confirmationMessage; //Gecko + IE
                         return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
                     }
@@ -693,6 +715,39 @@
             },
 
             methods: {
+
+                 checkGraphStatus: function () {
+                    axios.get('/admin/api/graph/status')
+                        .then(res => {
+                            if (res.data.status == 'done') {
+                                clearInterval(this.graphTimer);
+                                this.visualizeLoading = false;
+                                this.$refs.viz.visualizeQuery();
+
+
+                            }
+
+                        })
+                        .catch(error => {
+                            console.error('API check failed:', error);
+                        });
+                },
+
+                visualizeResults()
+                {
+                    this.visualizeLoading = true;
+                    axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                        params: {
+                            type: 'incident'
+                        }
+                    }).then(res => {
+                        this.showSnack('Graph is being generated.');
+                        this.graphTimer = setInterval(this.checkGraphStatus, 3000);
+                    }).catch(e => {
+                        console.error(e.message);
+                    }).finally(() => {
+                    });
+                },
 
                 exportRequest() {
 
@@ -746,7 +801,7 @@
 
 
                     axios.put(`/admin/api/incident/assign/${this.assignIncident.id}`, {incident: this.assignIncident}).then(res => {
-                        this.showSnack('Incident assigned successfully.')
+                        this.showSnack("{{_('Incident assigned successfully.')}}")
                         this.searchIncidents()
 
                     }).catch(err => {
@@ -796,7 +851,7 @@
                             //reset search pager
                             this.options.page = 1;
                             this.refresh();
-                            this.showSnack('Bulk Update is finished!')
+                            this.showSnack("{{_('Bulk Update is finished!')}}")
                         }
                     });
 
@@ -870,6 +925,10 @@
                         this.searchTime = (endTime - startTime) / 1000;
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
+
+                        this.showVisualize = !(
+                            Object.keys(this.search).length === 0
+                        );
                     });
 
 
@@ -1007,7 +1066,7 @@
 
                 rowClick(item) {
                     if (item.restricted) {
-                        this.showSnack('This item is restricted.')
+                        this.showSnack("{{_('This item is restricted.')}}")
                         return
                     }
                     path = `/admin/incidents/${item.id}`;
@@ -1288,7 +1347,7 @@
 
 
                         }).catch(error => {
-                            this.showSnack('Oops! We couldn\'t find this item.')
+                            this.showSnack("{{_('Oops! We couldn\'t find this item.')}}")
 
                         });
 
@@ -1302,7 +1361,7 @@
                 deleteItem(item) {
                     const index = this.items.indexOf(item);
                     const cfm =
-                        confirm("Are you sure you want to delete this item?") &&
+                        confirm("{{_('Are you sure you want to delete this item?')}}") &&
                         this.items.splice(index, 1);
                     if (cfm) {
                         axios.delete(`/admin/api/incident/${item.id}`).then(response => {
@@ -1313,7 +1372,7 @@
                 },
 
                 confirmClose() {
-                    if (confirm('Are you sure?')) {
+                    if (confirm("{{_('Are you sure?')}}")) {
                         this.close();
                     }
                 },
@@ -1422,7 +1481,7 @@
                 },
 
                 removeIncident: function (evt, index) {
-                    if (confirm("Are you sure?")) {
+                    if (confirm("{{_('Are you sure?')}}")) {
                         this.editedItem.incident_relations.splice(index, 1);
                     }
                 },
@@ -1466,7 +1525,7 @@
                 },
 
                 removeBulletin: function (evt, index) {
-                    if (confirm("Are you sure?")) {
+                    if (confirm("{{_('Are you sure?')}}")) {
                         this.editedItem.bulletin_relations.splice(index, 1);
                     }
                 },
@@ -1496,7 +1555,7 @@
                 },
 
                 removeActor: function (evt, index) {
-                    if (confirm("Are you sure?")) {
+                    if (confirm("{{_('Are you sure?')}}")) {
                         this.editedItem.actor_relations.splice(index, 1);
                     }
                 },

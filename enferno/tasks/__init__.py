@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import hashlib
 import os
 import shutil
 import time
@@ -29,6 +30,8 @@ from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.utils.pdf_utils import PDFUtil
+from enferno.utils.search_utils import SearchUtils
+from enferno.utils.graph_utils import GraphUtils
 
 
 celery = Celery("tasks", broker=cfg.celery_broker_url)
@@ -730,3 +733,97 @@ def export_cleanup_cron():
                     print(f"Export #{export_request.id}'s files not found to delete.")
             else:
                 print(f"Error expiring Export #{export_request.id}")
+
+
+type_map = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}
+
+
+@celery.task
+def generate_graph(query_json, entity_type, user_id):
+    """
+    Generate graph for a given query, with caching to avoid regenerating graphs for identical queries.
+    Redis Hash Sample Structure for a user with `user_id`:
+    Key: "user:123"
+    Fields and Values:
+        - "query_key": "most_recent_generate_query_key"
+        - "graph_data": "most_recent_generated_graph_data"
+
+    """
+    if not user_id:
+        raise ValueError("User ID is required to generate graph")
+
+    entity_type_lower = entity_type.lower()
+    if entity_type_lower not in type_map:
+        raise ValueError(f"Unsupported entity type: {entity_type}")
+
+    query_key = create_query_key(query_json, entity_type, user_id)
+
+    # Redis hash key for the user
+    user_hash_key = f"user:{user_id}"
+
+    # Retrieve the current query key for the user
+    existing_query_key = rds.hget(user_hash_key, "query_key")
+
+    if existing_query_key and existing_query_key.decode() == query_key:
+        # Return the existing graph data if query keys match
+        existing_graph_data = rds.hget(user_hash_key, "graph_data")
+        print("Returning cached graph")
+        return existing_graph_data.decode()
+
+    # Generate the graph if no cache hit
+    graph_data = process_graph_generation(query_json, entity_type_lower, user_id, query_key)
+
+    # Update the hash with the new query key and graph data
+    rds.hset(user_hash_key, "query_key", query_key)
+    rds.hset(user_hash_key, "graph_data", graph_data)
+
+    print("Graph generation complete")
+    return graph_data
+
+
+def create_query_key(query_json, entity_type, user_id):
+    """
+    Create a unique key based on the query JSON, entity type, and user ID.
+    """
+    combined_string = f"{query_json}-{entity_type}-{user_id}"
+    return hashlib.sha256(combined_string.encode()).hexdigest()
+
+
+def process_graph_generation(query_json, entity_type, user_id, query_key):
+    """
+    The core logic for graph generation, querying, and merging graphs.
+    """
+    result_set = get_result_set(query_json, entity_type, type_map)
+    rds.set(f"user{user_id}:graph:status", "pending")
+    graph = merge_graphs(result_set, entity_type, user_id)
+
+    # Cache the generated graph with the unique query key
+    rds.set(query_key, graph)
+    rds.set(f"user{user_id}:graph:data", graph)
+    rds.set(f"user{user_id}:graph:status", "done")
+    return graph
+
+
+def get_result_set(query_json, entity_type, type_map):
+    """
+    Retrieve the result set based on the query JSON and entity type.
+    """
+    search_util = SearchUtils(query_json, cls=entity_type)
+    if entity_type == "incident":
+        query = search_util.get_query()
+    else:
+        queries, operations = search_util.get_query()
+        query = queries.pop(0)
+    model = type_map[entity_type]
+    return model.query.filter(*query)
+
+
+def merge_graphs(result_set, entity_type, user_id):
+    """
+    Merge graphs for each item in the result set.
+    """
+    graph = None
+    for item in result_set.all():
+        current_graph = GraphUtils.get_graph_json(entity_type, item.id)
+        graph = current_graph if graph is None else GraphUtils.merge_graphs(graph, current_graph)
+    return graph

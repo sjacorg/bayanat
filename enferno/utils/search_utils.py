@@ -1,6 +1,6 @@
 from dateutil.parser import parse
 
-from sqlalchemy import or_, not_, and_, func, cast
+from sqlalchemy import or_, not_, and_, func
 
 from enferno.admin.models import (
     Bulletin,
@@ -34,13 +34,13 @@ class SearchUtils:
         self.cls = cls
 
     def get_query(self):
-        if self.cls == "Bulletin":
+        if self.cls == "bulletin":
             return self.build_bulletin_query()
-        elif self.cls == "Actor":
+        elif self.cls == "actor":
             return self.build_actor_query()
-        elif self.cls == "Incident":
+        elif self.cls == "incident":
             return self.build_incident_query()
-        elif self.cls == "Location":
+        elif self.cls == "location":
             return self.build_location_query()
         return []
 

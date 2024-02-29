@@ -1,5 +1,5 @@
-Vue.component('event-card', {
-  props: ['event', 'number'],
+Vue.component('event-card',{
+    props : ['event', 'number', 'i18n'],
 
   template: `
 
@@ -14,7 +14,7 @@ Vue.component('event-card', {
                 >mdi-information</v-icon
               >
             </template>
-            <span>Estimated</span>
+            <span>{{ i18n.estimated_ }}</span>
           </v-tooltip>
           
           <v-chip

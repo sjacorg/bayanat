@@ -1,349 +1,85 @@
 Vue.component('visualization', {
   props: ['item', 'i18n'],
 
-  data: () => ({
-    dlg: false,
-    item: null,
-    graph: null,
-    graphData: {},
-    loading: false,
-    switchMode: false,
-
-    // static color data
-    ACTORCOLOR: '#74daa3',
-    BULLETINCOLOR: '#4a9bed',
-    INCIDENTCOLOR: '#f4be39',
-    LOCATIONCOLOR: '#ff663366',
-  }),
-  mounted() {},
+  data() {
+    return {
+      dlg: false,
+      loading: false,
+      graph: null,
+      graphData: { nodes: [], links: [] }, // Initialize with empty arrays
+      switchMode: false,
+      initRendered: false, // initial zoom to fit flag
+    };
+  },
 
   methods: {
-    switchMode() {
-      this.drawGraph(this.textMode);
-    },
-
-    getAllRelations(item) {
-      let br = item.bulletin_relations;
-      br.map((x) => x.bulletin).map((x) => (x.class = 'bulletin'));
-      let ar = item.actor_relations;
-      ar.map((x) => x.actor).map((x) => (x.class = 'actor'));
-      let ir = item.incident_relations;
-      ir.map((x) => x.incident).map((x) => (x.class = 'incident'));
-      return br
-        .map((x) => x.bulletin)
-        .concat(ar.map((x) => x.actor))
-        .concat(ir.map((x) => x.incident));
-    },
-
-    find_relation_type(item, relation, target) {
-      if (item.class === 'bulletin' && target.toLowerCase() === 'bulletin') {
-        const relatedTitles = [];
-
-        // Iterate over the related_as array and find the title in atobInfo
-        for (const id of relation.related_as) {
-          const infoItem = this.$root.btobInfo.find((item) => item.id === id);
-          if (infoItem) {
-            relatedTitles.push(infoItem.title);
-          }
-        }
-
-        // Join the titles with a space and trim the resulting string
-        return relatedTitles.join(' ').trim();
-      }
-
-      if (
-        (item.class === 'bulletin' && target.toLowerCase() === 'actor') ||
-        (item.class === 'actor' && target.toLowerCase() === 'bulletin')
-      ) {
-        // Use an array to collect the titles
-        const relatedTitles = [];
-
-        // Iterate over the related_as array and find the title in atobInfo
-        for (const id of relation.related_as) {
-          const infoItem = this.$root.atobInfo.find((item) => item.id === id);
-          if (infoItem) {
-            relatedTitles.push(infoItem.title);
-          }
-        }
-
-        // Join the titles with a space and trim the resulting string
-        return relatedTitles.join(' ').trim();
-      }
-
-      if (item.class === 'actor' && target.toLowerCase() === 'actor') {
-        if (relation.related_as) {
-          // Directly find the atoaInfo object with the matching id
-          const atoaInfo = this.$root.atoaInfo.find((info) => info.id === relation.related_as);
-
-          // Return the title, checking which one to return based on the id comparison
-          if (atoaInfo) {
-            if (relation.actor.id > item.id) {
-              return atoaInfo.title;
-            } else {
-              return atoaInfo.reverse_title;
-            }
-          }
-        }
-      }
-
-      if (item.class === 'incident' && target.toLowerCase() === 'incident') {
-        if (relation.related_as) {
-          const itoiInfo = this.$root.itoiInfo.find((info) => info.id === relation.related_as);
-          if (itoiInfo) {
-            return itoiInfo.title;
-          }
-        }
-      }
-
-      if (
-        (item.class === 'incident' && target.toLowerCase() === 'bulletin') ||
-        (item.class === 'bulletin' && target.toLowerCase() === 'incident')
-      ) {
-        if (relation.related_as) {
-          const itobInfo = this.$root.itobInfo.find((info) => info.id === relation.related_as);
-          if (itobInfo) {
-            return itobInfo.title;
-          }
-        }
-      }
-
-      if (
-        (item.class === 'incident' && target.toLowerCase() === 'actor') ||
-        (item.class === 'actor' && target.toLowerCase() === 'incident')
-      ) {
-        // Use map and filter to find and collect titles, handling null with optional chaining and nullish coalescing
-        const relatedTitles = (relation?.related_as ?? [])
-          .map((id) => this.$root.itoaInfo.find((item) => item.id === id)?.title)
-          .filter((title) => title);
-
-        // Join the titles with a space and trim the resulting string
-        return relatedTitles.join(' ').trim();
-      }
-
-      return '';
-    },
-
-    generateGraph(item) {
-      //console.log(this.bulletin);
-
-      // generate ids based on relations
-      // prepend a/b/i based on entity type (actor/bulletin/incident) to avoid clashes during graph construction
-      const bulletins = item.bulletin_relations.map((x) => {
-        return {
-          id: 'b' + x.bulletin.id,
-          related_as: this.find_relation_type(item, x, 'Bulletin'),
-          title: x.bulletin.title,
-          color: this.BULLETINCOLOR,
-
-          type: 'Bulletin',
-          collapsed: true,
-          childLinks: [],
-        };
-      });
-      const actors = item.actor_relations.map((x) => {
-        return {
-          id: 'a' + x.actor.id,
-          related_as: this.find_relation_type(item, x, 'Actor'),
-          title: x.actor.name,
-          color: this.ACTORCOLOR,
-          type: 'Actor',
-          collapsed: x.collapsed || true,
-          childLinks: [],
-        };
-      });
-      const incidents = item.incident_relations.map((x) => {
-        return {
-          id: 'i' + x.incident.id,
-          related_as: this.find_relation_type(item, x, 'Incident'),
-          title: x.incident.title,
-          color: this.INCIDENTCOLOR,
-          type: 'Incident',
-          collapsed: x.collapsed || true,
-          childLinks: [],
-        };
-      });
-      //locations
-      let locations = item.locations || [];
-
-      locations = locations.map((x) => {
-        return {
-          id: 'L' + x.id,
-          related_as: 'location',
-          title: x.title,
-          color: this.LOCATIONCOLOR,
-          type: 'Location',
-          collapsed: false,
-          childLinks: [],
-        };
-      });
-
-      // event locations
-      //helper method
-      let elocations = [];
-      if (item.events && item.events > 0) {
-        elocations = item.events.map((x) => x.location);
-      }
-
-      locations = locations.map((x) => {
-        return {
-          id: 'L' + x.id,
-          related_as: 'location',
-          title: x.title,
-          color: '#ff663366',
-          type: 'Location',
-          collapsed: false,
-          childLinks: [],
-        };
-      });
-
-      let nodes = bulletins.concat(actors).concat(incidents).concat(locations).concat(elocations);
-
-      // generate links
-      // item class will always be one of (Bulletin, Actor, Incident)
-      const links = nodes.map((x) => {
-        return { source: item.class.substring(0, 1) + item.id, target: x.id, type: x.related_as };
-      });
-
-      // console.log(links);
-
-      //lastly add the root node
-      nodes.unshift({
-        id: item.class.substring(0, 1) + item.id,
-        title: item.title || item.name,
-        color: '#000',
-        type: item.class,
-        collapsed: false,
-      });
-      // console.log(nodes);
-
-      return { nodes: nodes, links: links };
-    },
-
-    visualize(item) {
-      this.show();
-      this.item = item;
-      // wait one tick for the component to render
-      this.$nextTick(() => {
-        // always set data to the graph data attribute to be used later when we add more data
-        this.graphData = this.generateGraph(this.item);
-        this.drawGraph();
-
-        // also generate first level
-        const lvl1 = this.getAllRelations(this.item);
-
-        lvl1.forEach((item, index) => {
-          setTimeout(() => {
-            this.loadNode({
-              id: 'x' + item.id,
-              type: item.class,
-            });
-          }, index * 0.1);
-        });
-      });
-    },
-
     show() {
       this.dlg = true;
     },
+
     hide() {
       this.dlg = false;
     },
 
-    mergeGraphData(graphData) {
-      // this will merge additional graph data into existing graph
-      // merge only nodes that don't already exist
-
-      graphData.nodes.forEach((x) => {
-        if (!this.graphData.nodes.some((e) => e.id === x.id)) {
-          this.graphData.nodes.push(x);
-        }
-      });
-      this.graphData = {
-        nodes: this.graphData.nodes,
-        links: this.graphData.links.concat(graphData.links),
-      };
-    },
-    loadNode(node) {
+    getGraphData(id, type, expanded = true) {
       this.loading = true;
-      const id = node.id.substring(1);
 
-      const type = node.type.toLowerCase();
-      if (type === 'bulletin') {
-        axios
-          .get(`/admin/api/${type}/${id}`)
-          .then((res) => {
-            const bulletin = res.data;
-            const extraGraph = this.generateGraph(bulletin);
-            this.mergeGraphData(extraGraph);
-
-            //console.log(this.graph);
-            this.drawGraph();
-          })
-          .catch((err) => {
-            console.log(err);
-          })
-          .finally(() => {
-            this.loading = false;
-            node.collapsed = false;
-            node.color = node.color + '66';
-          });
-      } else if (type === 'actor') {
-        axios
-          .get(`/admin/api/${type}/${id}`)
-          .then((res) => {
-            const actor = res.data;
-            //console.log(actor);
-
-            const extraGraph = this.generateGraph(actor);
-            this.mergeGraphData(extraGraph);
-
-            //console.log(this.graph);
-            this.drawGraph();
-          })
-          .catch((err) => {
-            console.log(err);
-          })
-          .finally(() => {
-            this.loading = false;
-            node.collapsed = false;
-            node.color = node.color + '66';
-          });
-      } else if (type === 'incident') {
-        axios
-          .get(`/admin/api/${type}/${id}`)
-          .then((res) => {
-            const actor = res.data;
-            //console.log(actor);
-
-            const extraGraph = this.generateGraph(actor);
-            this.mergeGraphData(extraGraph);
-
-            //console.log(this.graph);
-            this.drawGraph();
-          })
-          .catch((err) => {
-            console.log(err);
-          })
-          .finally(() => {
-            this.loading = false;
-            node.collapsed = false;
-            node.color = node.color + '66';
-          });
-      }
+      return axios
+        .get('/admin/api/graph/json', {
+          params: { id, type, expanded },
+        })
+        .then((res) => {
+          this.graphData = res.data; // Return the data for further processing
+        })
+        .catch((err) => {
+          console.error(err);
+          return null; // Return null to indicate an error
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
 
-    drawGraph(textNodes = false) {
-      // console.log(this.graphData.links);
-      const elem = document.getElementById('graph');
-      if (!this.graph) {
-        this.graph = ForceGraph()(this.$el.querySelector('#graph'));
-      }
-      this.graph
-        .graphData(this.graphData)
-        .nodeLabel('title')
-        // implement custom link text
+    visualize(item) {
+      this.show();
+      this.getGraphData(item.id, item.class).then(() => {
+        this.drawGraph();
+      });
+    },
 
+    visualizeQuery() {
+      this.show();
+      this.loading = true;
+
+      axios
+        .get('/admin/api/graph/data')
+        .then((response) => {
+          this.graphData = response.data;
+          this.drawGraph(); // Call drawGraph to render the graph with new data
+        })
+        .catch((error) => {
+          console.error('Error fetching graph data from Redis:', error);
+          this.$emit('error', 'Failed to load graph data');
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+
+    drawGraph() {
+      if (!this.graph) {
+        this.graph = ForceGraph()(document.querySelector('#graph'));
+      }
+
+      this.graph
+        .cooldownTime(800)
+        .nodeId('id')
+        .nodeLabel('title')
+        .linkSource('source')
+        .linkTarget('target')
+        .linkColor(() => '#444')
         .linkCanvasObjectMode(() => 'after')
+
         .linkCanvasObject((link, ctx) => {
           const MAX_FONT_SIZE = 1.2;
           const LABEL_NODE_MARGIN = this.graph.nodeRelSize() * 1.5;
@@ -397,24 +133,20 @@ Vue.component('visualization', {
           ctx.fillText(label, 0, 0);
           ctx.restore();
         })
-        .cooldownTime(800)
 
         .linkColor(() => {
           return __settings__.dark ? 'rgba(100,100,100,0.9)' : '#ddd';
         })
 
-        // .linkDirectionalParticles(1)
-        // .linkCurvature(0.07)
-        // .linkDirectionalParticleWidth(1.5)
+        .nodeCanvasObjectMode((node) => 'replace')
 
-        // .onNodeHover(node => elem.style.cursor = node && node.childLinks.length ? 'pointer' : null)
         .onNodeClick((node, event) => {
           if (event.ctrlKey || event.metaKey) {
             // command click or ctrl click
             const id = node.id.substring(1);
             const type = node.type.toLowerCase();
             if (['bulletin', 'actor', 'incident'].includes(type)) {
-              this.$root.previewItem(`/admin/api/${type}/${node.id.substring(1)}`);
+              this.$root.previewItem(`/admin/api/${type}/${node._id}`);
             }
           } else if (node.collapsed) {
             this.loadNode(node);
@@ -422,24 +154,59 @@ Vue.component('visualization', {
 
           //    Graph.graphData([]);
         })
-        .nodeCanvasObjectMode((node) => 'replace')
-        .onZoomEnd(this.zoomHandler);
+        .onEngineStop(() => {
+          if (!this.initRendered) {
+          this.graph.zoomToFit(500);
+          this.initRendered = true; // Update the flag
+        }
 
-      // responsive
-      // elementResizeDetectorMaker().listenTo(
-      //     this.$el.querySelector('#graph'),
-      //     el => {
-      //         this.graph.width(el.offsetWidth);
-      //         this.graph.height(el.offsetHeight);
-      //
-      //
-      //     }
-      // );
+        })
+        .graphData(this.graphData);
+    },
 
-      this.graph.onEngineStop(() => {
-        this.graph.zoomToFit(1200);
-        // better way to disable automatic fitting after first invoke
-        this.graph.onEngineStop(() => {});
+    switchMode() {
+      this.drawGraph(this.textMode);
+    },
+
+    loadNode(node) {
+      const id = node._id;
+      const type = node.type.toLowerCase();
+      if (!['bulletin', 'actor', 'incident'].includes(type)) {
+        return;
+      }
+      this.loading = true;
+      axios
+        .get(`/admin/api/graph/json`, { params: { id, type, expanded: false } })
+        .then((res) => {
+          this.mergeGraphData(res.data);
+          this.drawGraph();
+        })
+        .catch((err) => {
+          console.error(err);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+
+    mergeGraphData(newGraphData) {
+      // Merge nodes
+      const existingNodeIds = new Set(this.graphData.nodes.map((n) => n.id));
+      newGraphData.nodes.forEach((newNode) => {
+        if (!existingNodeIds.has(newNode.id)) {
+          this.graphData.nodes.push(newNode);
+          existingNodeIds.add(newNode.id);
+        }
+      });
+
+      // Merge links (ensure your link data structure matches this logic)
+      const existingLinkPairs = new Set(this.graphData.links.map((l) => `${l.source}-${l.target}`));
+      newGraphData.links.forEach((newLink) => {
+        const linkPair = `${newLink.source}-${newLink.target}`;
+        if (!existingLinkPairs.has(linkPair)) {
+          this.graphData.links.push(newLink);
+          existingLinkPairs.add(linkPair);
+        }
       });
     },
 
@@ -486,17 +253,10 @@ Vue.component('visualization', {
         ctx.fill();
       });
     },
-    zoomHandler() {
-      if (this.graph.zoom() > 5) {
-        this.textMode();
-      } else {
-        this.circleMode();
-      }
-    },
   },
 
   template: `
-      <v-dialog fullscreen v-model="dlg">
+         <v-dialog fullscreen v-model="dlg">
 
 
         <v-card>
@@ -511,22 +271,22 @@ Vue.component('visualization', {
             <div class="graph-legend">
 
               <div class="caption mr-3">
-                <v-icon small :color="this.BULLETINCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                <v-icon small color="blue" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.bulletins_ }}
               </div>
 
               <div class="caption mr-3">
-                <v-icon small :color="this.ACTORCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                <v-icon small color="green" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.actors_ }}
               </div>
 
               <div class="caption mr-3">
-                <v-icon small :color="this.INCIDENTCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                <v-icon small color="yellow" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.incidents_ }}
               </div>
 
               <div class="caption mr-3">
-                <v-icon small :color="this.LOCATIONCOLOR" left> mdi-checkbox-blank-circle</v-icon>
+                <v-icon small color="ff4433" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.locations_ }}
               </div>
               <div>
@@ -543,5 +303,6 @@ Vue.component('visualization', {
         </v-card>
 
       </v-dialog>
-    `,
+
+  `,
 });

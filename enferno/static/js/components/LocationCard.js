@@ -155,7 +155,7 @@ Vue.component('location-card', {
 
           <template v-for="(revision,index) in revisions">
             <v-card color="grey lighten-4" dense flat class="my-1 pa-3 d-flex align-center">
-              <span class="caption"> {{ revision.created_at }} - By {{ revision.user.username }}</span>
+              <span class="caption"> {{ revision.created_at }} - {{ i18n.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
               <v-btn v-if="diff" v-show="index!=revisions.length-1" @click="showDiff($event,index)"

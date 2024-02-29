@@ -216,7 +216,7 @@ Vue.component('incident-card', {
 
       <!-- Map -->
       <v-card :loading="geoMapLoading" outlined class="ma-2 pa-2" color="grey lighten-5">
-        <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0" color="primary lighten-2"> <v-icon left>mdi-map</v-icon> Load Geo Map</v-btn>
+        <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0" color="primary lighten-2"> <v-icon left>mdi-map</v-icon> {{ i18n.loadGeoMap_ }}</v-btn>
         <v-card-text v-if="geoMapOn">
         <global-map :i18n="i18n" :value="mapLocations"></global-map>
           </v-card-text>
@@ -270,7 +270,7 @@ Vue.component('incident-card', {
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="incident.events && incident.events.length">
         <v-card-text class="pa-2">
           <div class="px-1 title black--text">{{ i18n.events_ }}</div>
-          <event-card v-for="event in incident.events" :key="event.id" :event="event"></event-card>
+          <event-card v-for="event in incident.events" :key="event.id" :i18n="translations" :event="event"></event-card>
         </v-card-text>
       </v-card>
 
@@ -286,7 +286,7 @@ Vue.component('incident-card', {
                   </v-icon>
                 </a>
               </template>
-              <span>Filter and display related items in main table</span>
+              <span>{{ i18n.filterRelatedItems_ }}</span>
             </v-tooltip>
           </div>
           <incident-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.incident_relations" :key="index"
@@ -306,7 +306,7 @@ Vue.component('incident-card', {
           </incident-result>
         </v-card-text>
         <v-card-actions>
-          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">Load More <v-icon right>mdi-chevron-down</v-icon> </v-btn>
+          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
         </v-card-actions>
       </v-card>
 
@@ -322,7 +322,7 @@ Vue.component('incident-card', {
                   </v-icon>
                 </a>
               </template>
-              <span>Filter and display related items in main table</span>
+              <span>{{ i18n.filterRelatedItems_ }}</span>
             </v-tooltip>
           </div>
           <bulletin-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.bulletin_relations" :key="index"
@@ -344,7 +344,7 @@ Vue.component('incident-card', {
         </v-card-text>
         
         <v-card-actions>
-          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadBulletinRelations(bulletinPage)" v-if="bulletinLM">Load More <v-icon right>mdi-chevron-down</v-icon> </v-btn>
+          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadBulletinRelations(bulletinPage)" v-if="bulletinLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
         </v-card-actions>
       </v-card>
 
@@ -360,7 +360,7 @@ Vue.component('incident-card', {
                   </v-icon>
                 </a>
               </template>
-              <span>Filter and display related items in main table</span>
+              <span>{{ i18n.filterRelatedItems_ }}</span>
             </v-tooltip>
           </div>
           <actor-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.actor_relations" :key="index"
@@ -381,7 +381,7 @@ Vue.component('incident-card', {
           </actor-result>
         </v-card-text>
         <v-card-actions>
-          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadActorRelations(actorPage)" v-if="actorLM">Load More <v-icon right>mdi-chevron-down</v-icon> </v-btn>
+          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadActorRelations(actorPage)" v-if="actorLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
         </v-card-actions>
       </v-card>
 

@@ -5,7 +5,7 @@ if [ "$ROLE" = "flask" ]; then
   echo ":: Creating Bayanat Database ::"
   flask create-db --create-exts
   echo ":: Starting Bayanat ::"
-  exec uwsgi --http 0.0.0.0:5000 --protocol uwsgi --master --enable-threads --threads 2  --processes 1 --wsgi run:app
+  exec uwsgi --http 0.0.0.0:5000 --protocol uwsgi --master --enable-threads --threads 2  --processes 1 --touch-reload=reload.ini --lazy-apps --touch-workers-reload=true --wsgi run:app
 
 elif [ "$ROLE" = "celery" ]; then
   echo ":: Starting Celery for Bayanat ::"

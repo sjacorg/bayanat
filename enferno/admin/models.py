@@ -23,9 +23,6 @@ from enferno.utils.csv_utils import convert_simple_relation, convert_complex_rel
 from enferno.utils.date_helper import DateHelper
 
 
-# Load configurations based on environment settings
-
-
 ######  Role based Access Control Decorator for Bulletins / Actors  / Incidents  ######
 def check_roles(method):
     @wraps(method)
@@ -585,13 +582,19 @@ class Media(db.Model, BaseMixin):
         )
 
     @staticmethod
-    def validate_media_extension(filename):
-        return pathlib.Path(filename).suffix.lower() in cfg.MEDIA_ALLOWED_EXTENSIONS
+    def validate_file_extension(filepath, allowed_extensions):
+        """
+        Validate file extension against a list of allowed extensions.
 
-    @staticmethod
-    def validate_sheet_extension(filename):
-        extension = pathlib.Path(filename).suffix.lstrip(".")
-        return extension in cfg.SHEETS_ALLOWED_EXTENSIONS
+        Args:
+            filepath (str): Path to the file.
+            allowed_extensions (list): List of allowed file extensions.
+
+        Returns:
+            bool: True if extension is valid, False otherwise.
+        """
+        extension = pathlib.Path(filepath).suffix.lower().lstrip(".")
+        return extension in allowed_extensions
 
 
 # Structure is copied over from previous system
@@ -600,6 +603,7 @@ class Location(db.Model, BaseMixin):
     SQL Alchemy model for locations
     """
 
+    COLOR = "#ff663366"
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
@@ -934,7 +938,7 @@ class GeoLocation(db.Model, BaseMixin):
 
     def from_json(self, jsn):
         self.title = jsn.get("title")
-        type = jsn.get("geoType")
+        type = jsn.get("type")
         if type and (id := type.get("id")):
             self.type_id = id
         self.main = jsn.get("main")
@@ -1347,6 +1351,8 @@ class Bulletin(db.Model, BaseMixin):
     SQL Alchemy model for bulletins
     """
 
+    COLOR = "#4a9bed"
+
     extend_existing = True
 
     id = db.Column(db.Integer, primary_key=True)
@@ -1490,6 +1496,19 @@ class Bulletin(db.Model, BaseMixin):
         b.save()
 
         print("created bulletin revision")
+
+    def related(self, include_self=False):
+        output = {}
+        output["actor"] = [r.actor.id for r in self.related_actors]
+        output["incident"] = [r.incident.id for r in self.related_incidents]
+        output["bulletin"] = []
+        for r in self.bulletin_relations:
+            bulletin = r.bulletin_to if self.id == r.bulletin_id else r.bulletin_from
+            output["bulletin"].append(bulletin.id)
+        if include_self:
+            table_name = self.__tablename__
+            output[table_name].append(self.id)
+        return output
 
     # helper property returns all bulletin relations
     @property
@@ -2130,6 +2149,8 @@ class Actor(db.Model, BaseMixin):
     SQL Alchemy model for actors
     """
 
+    COLOR = "#74daa3"
+
     extend_existing = True
 
     id = db.Column(db.Integer, primary_key=True)
@@ -2349,6 +2370,25 @@ class Actor(db.Model, BaseMixin):
         ),
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
     )
+
+    # helper property to make all entities consistent
+    @property
+    def title(self):
+        return self.name
+
+    def related(self, include_self: False):
+        output = {}
+        output["bulletin"] = [r.bulletin.id for r in self.bulletin_relations]
+        output["actor"] = []
+        for r in self.actor_relations:
+            actor = r.actor_to if self.id == r.actor_id else r.actor_from
+            output["actor"].append(actor.id)
+        output["incident"] = [r.incident.id for r in self.incident_relations]
+
+        if include_self:
+            table_name = self.__tablename__
+            output[table_name].append(self.id)
+        return output
 
     # helper method to create a revision
     def create_revision(self, user_id=None, created=None):
@@ -3582,6 +3622,8 @@ class Incident(db.Model, BaseMixin):
     SQL Alchemy model for incidents
     """
 
+    COLOR = "#f4be39"
+
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
@@ -3684,6 +3726,21 @@ class Incident(db.Model, BaseMixin):
             postgresql_ops={"search": "gin_trgm_ops"},
         ),
     )
+
+    def related(self, include_self=False):
+        output = {}
+        output["bulletin"] = [r.bulletin.id for r in self.bulletin_relations]
+        output["actor"] = [r.actor.id for r in self.actor_relations]
+        output["incident"] = []
+        for r in self.incident_relations:
+            incident = r.incident_to if self.id == r.incident_id else r.incident_from
+            output["incident"].append(incident.id)
+
+        # Include the object's own ID if include_self is True
+        if include_self:
+            table_name = self.__tablename__
+            output[table_name].append(self.id)
+        return output
 
     # helper method to create a revision
     def create_revision(self, user_id=None, created=None):

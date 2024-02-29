@@ -8,9 +8,9 @@
             class="card-header"
             style="z-index: 1000000;"
         >
-            <v-toolbar-title>Add Review</v-toolbar-title>
+            <v-toolbar-title>{{ _('Add Review') }}</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn :disabled="!reviewItem.review_action" @click="saveReview" dark color="primary darken-1" small class="mx-2" depressed>Save Review</v-btn>
+            <v-btn :disabled="!reviewItem.review_action" @click="saveReview" dark color="primary darken-1" small class="mx-2" depressed>{{ _('Save Review') }}</v-btn>
             <v-btn @click="reviewDialog=false" icon>
                 <v-icon>mdi-close</v-icon>
             </v-btn>
@@ -36,8 +36,8 @@
                 chips
                 multiple
                 v-model="reviewItem.revrefs"
-                label="Ref"
-                hint="Appends the reference to the bulletin (does not remove existing refs)"
+                label="{{ _('Ref') }}"
+                hint="{{ _('Appends the reference to the bulletin (does not remove existing refs)') }}"
                 ></v-combobox>
             </v-card>
 
@@ -55,7 +55,7 @@
                                     item-text="full_string"
                                     item-value="id"
                                     :multiple="true"
-                                    label="Locations"
+                                    label="{{ _('Locations') }}"
                             ></location-search-field>
 
                         </div>
@@ -66,7 +66,7 @@
                                     item-text="title"
                                     item-value="id"
                                     :multiple="true"
-                                    label="Labels"
+                                    label="{{ _('Labels') }}"
                             ></search-field>
 
 
@@ -79,7 +79,7 @@
                                     item-text="title"
                                     item-value="id"
                                     :multiple="true"
-                                    label="Verified Labels"
+                                    label="{{ _('Verified Labels') }}"
                             ></search-field>
 
 
@@ -91,7 +91,7 @@
                                     item-text="title"
                                     item-value="id"
                                     :multiple="true"
-                                    label="Sources"
+                                    label="{{ _('Sources') }}"
                             ></search-field>
 
                         </div>
@@ -100,9 +100,9 @@
                 </v-card-text>
                 <v-card-text>
                     <div class="d-flex justify-space-around">
-                        <v-btn class="mx-3" depressed @click="searchRelatedBulletins" > <v-icon left>mdi-magnify</v-icon> Related Bulletins</v-btn>
-                        <v-btn class="mx-3" depressed @click="searchRelatedActors" > <v-icon left>mdi-magnify</v-icon> Related Actors</v-btn>
-                        <v-btn class="mx-3" depressed @click="searchRelatedIncidents" > <v-icon left>mdi-magnify</v-icon> Related Incidents</v-btn>
+                        <v-btn class="mx-3" depressed @click="searchRelatedBulletins" > <v-icon left>mdi-magnify</v-icon> {{ _('Related Bulletins') }} </v-btn>
+                        <v-btn class="mx-3" depressed @click="searchRelatedActors" > <v-icon left>mdi-magnify</v-icon> {{ _('Related Actors') }} </v-btn>
+                        <v-btn class="mx-3" depressed @click="searchRelatedIncidents" > <v-icon left>mdi-magnify</v-icon> {{ _('Related Incidents') }} </v-btn>
 
                     </div>
                 </v-card-text>

@@ -97,7 +97,7 @@
                                                             </v-btn>
                                                         </template>
                                                         <span>
-                                                        {{ _('Process existing files at path, server side(Faster)') }}
+                                                        {{ _('Process existing files in a path on the server.') }}
                                                     </span>
                                                     </v-tooltip>
 
@@ -220,7 +220,7 @@
                                                                 multiple
                                                                 label="{{ _('Refs') }}"
                                                                 v-model="refs"
-                                                                hint="Type and enter free tags"
+                                                                hint="{{ _('Type and enter free tags') }}"
 
                                                         ></v-combobox>
                                                     </v-col>
@@ -241,7 +241,7 @@
                                                                   label="{{ _('Scan images for text') }}"></v-switch>
                                                         <div v-if="!__OCR_ENABLED__">
                                                             <v-icon left>mdi-information-outline</v-icon>
-                                                            Tesseract OCR is disabled.
+                                                            {{ _('Tesseract OCR is disabled.') }}
                                                         </div>
                                                     </v-col>
                                                 </v-row>
@@ -280,12 +280,12 @@
                                     </v-card-title>
                                     <v-card-text class="align-center">
                                         <v-text-field v-model="selectedPath"
-                                                      label="Input a sub-path to scan, leave empty to scan the entire allowed path."></v-text-field>
+                                                      label="{{ _('Input a sub-path to scan, leave empty to scan the entire allowed path.') }}"></v-text-field>
                                                       <v-card-text>
                                                         <v-icon>mdi-information</v-icon>
-                                                        To scan a sub-path of the allowed path, enter the sub-path only without any parents (e.g. 'videos').
+                                                        {{ _('To scan a sub-path of the allowed path, enter the sub-path only without any parents (e.g. \'videos\').') }}
                                                       </v-card-text>
-                                        <v-switch v-model="recursive" label="Search recursively"></v-switch>
+                                        <v-switch v-model="recursive" label="{{ _('Search recursively') }}"></v-switch>
                                     </v-card-text>
 
                                     <v-card-actions class="pb-3">
@@ -318,8 +318,8 @@
                                     </v-card-text>
                                     <v-card-actions>
                                         <v-spacer></v-spacer>
-                                        <v-btn @click="cancelAppend" text>Cancel</v-btn>
-                                        <v-btn @click="appendFiles" color="primary">Add</v-btn>
+                                        <v-btn @click="cancelAppend" text>{{ _('Cancel') }}</v-btn>
+                                        <v-btn @click="appendFiles" color="primary">{{ _('Add') }}</v-btn>
                                         <v-spacer></v-spacer>
                                     </v-card-actions>
                                 </v-card>
@@ -349,7 +349,10 @@
         </v-app>
     </div>
 
-{% endblock %} {% block js %}
+    <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.ETL_VID_EXT) }}'></div>
+
+{% endblock %}
+{% block js %}
 
     <script src="/static/js/dropzone/vue2Dropzone.js"></script>
 
@@ -375,7 +378,7 @@
                 dzOpts: {
                     url: '/admin/api/media/chunk',
                     // accept any file
-                    acceptedFiles: ETL_EXTENSIONS.toString(),
+                    acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
                     addRemoveLinks: true,
                     chunking: true,
                     forceChunking: true,
@@ -553,7 +556,7 @@
 
                 validFile(filename) {
                     const ext = ".".concat("", filename.split(".").pop().toLowerCase());
-                    if (ETL_EXTENSIONS.includes(ext)) {
+                    if (this.dzOpts.acceptedFiles.includes(ext)) {
                         return true;
 
                     } else {

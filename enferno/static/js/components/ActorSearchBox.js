@@ -73,8 +73,8 @@ Vue.component('actor-search-box', {
           <v-row v-if="showOp">
             <v-col>
               <v-btn-toggle mandatory v-model="q.op">
-                <v-btn small value="and">And</v-btn>
-                <v-btn small value="or">Or</v-btn>
+                <v-btn small value="and">{{ i18n.and_ }}</v-btn>
+                <v-btn small value="or">{{ i18n.or_ }}</v-btn>
               </v-btn-toggle>
             </v-col>
           </v-row>
@@ -101,18 +101,20 @@ Vue.component('actor-search-box', {
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
+                    :i18n="translations"
                     :label="i18n.publishDate_"
                     v-model="q.pubdate"
-                />
+                ></pop-date-range-field>
               </div>
             </v-col>
 
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
+                    :i18n="translations" 
                     :label="i18n.documentationDate_"
                     v-model="q.docdate"
-                />
+                ></pop-date-range-field>
               </div>
             </v-col>
           </v-row>
@@ -121,18 +123,20 @@ Vue.component('actor-search-box', {
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
+                    :i18n="translations" 
                     :label="i18n.createdDate_"
                     v-model="q.created"
-                />
+                ></pop-date-range-field>
               </div>
             </v-col>
 
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
+                    :i18n="translations"
                     :label="i18n.updatedDate_"
                     v-model="q.updated"
-                />
+                ></pop-date-range-field>
               </div>
             </v-col>
           </v-row>
@@ -151,12 +155,11 @@ Vue.component('actor-search-box', {
 
                 <div class="d-flex align-baseline">
                   <pop-date-range-field
+                      :i18n="translations"
                       :label="i18n.eventDate_"
-                      v-model="q.edate"
-
+                      v-model="q.edate" 
                       class="mt-2"
-
-                  />
+                  ></pop-date-range-field>
 
 
                   <search-field
@@ -632,7 +635,7 @@ Vue.component('actor-search-box', {
           </v-row>
           <v-row>
             <v-col cols="12" md="6">
-              <pop-date-field :label="i18n.birthDate_" v-model="q.birth_date"></pop-date-field>
+              <pop-date-field :i18n="translations" :label="i18n.birthDate_" v-model="q.birth_date"></pop-date-field>
             </v-col>
             <v-col md="6">
               <v-text-field dense :label="i18n.nationalIdCard_" v-model="q.national_id_card"></v-text-field>

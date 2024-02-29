@@ -1,22 +1,22 @@
-import hashlib
 import os
 import shutil
 from datetime import datetime, timedelta
 import unicodedata
+from functools import wraps
 from uuid import uuid4
+
+
 from zxcvbn import zxcvbn
 import bleach
 import boto3
-import passlib
-import shortuuid
+
 from flask import request, abort, Response, Blueprint, current_app, json, g, send_from_directory
 from flask.templating import render_template
 from flask_babel import gettext
-from flask_bouncer import requires
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy import and_, desc, or_
-from werkzeug.utils import safe_join
-from werkzeug.utils import secure_filename
+from werkzeug.utils import safe_join, secure_filename
+from urllib.parse import urlparse
 
 from enferno.admin.models import (
     Bulletin,
@@ -50,14 +50,20 @@ from enferno.admin.models import (
     GeoLocationType,
     WorkflowStatus,
 )
-from enferno.extensions import bouncer, rds
+from enferno.extensions import rds
 from enferno.extensions import cache
-from enferno.tasks import bulk_update_bulletins, bulk_update_actors, bulk_update_incidents
+from enferno.tasks import (
+    bulk_update_bulletins,
+    bulk_update_actors,
+    bulk_update_incidents,
+    generate_graph,
+)
 from enferno.user.models import User, Role
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.search_utils import SearchUtils
-
+from enferno.utils.data_helpers import get_file_hash
+from enferno.utils.graph_utils import GraphUtils
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -71,6 +77,21 @@ admin = Blueprint(
 # default global items per page
 PER_PAGE = 30
 REL_PER_PAGE = 5
+
+
+### History access decorators
+
+
+def require_view_history(f):
+    @wraps(f)
+    @auth_required("session")  # Ensure the user is logged in before checking permissions
+    def decorated_function(*args, **kwargs):
+        # Check if user has the required view history permissions
+        if not (current_user.view_simple_history or current_user.view_full_history):
+            abort(403)
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 @admin.before_request
@@ -96,36 +117,6 @@ def ctx():
         users = [u.to_compact() for u in users]
         return {"users": users}
     return {}
-
-
-@bouncer.authorization_method
-def define_authorization(user, ability):
-    """
-    Defines users abilities based on their stored permissions.
-    :param user: system user
-    :param ability: used to restrict/allow what a user can do
-    :return: None
-    """
-    if user.view_usernames:
-        ability.can("view", "usernames")
-    if user.view_simple_history or user.view_full_history:
-        ability.can("view", "history")
-    # if user.has_role('Admin'):
-    #     ability.can('edit', 'Bulletin')
-    # else:
-    #     def if_assigned(bulletin):
-    #         return bulletin.assigned_to_id == user.id
-
-    #     ability.can('edit', Bulletin, if_assigned)
-
-
-@admin.route("/dashboard")
-def dashboard():
-    """
-    Endpoint to render the dashboard.
-    :return: html template for dashboard.
-    """
-    return render_template("index.html")
 
 
 # Labels routes
@@ -658,7 +649,7 @@ def locations(id):
 def api_locations():
     """Returns locations in JSON format, allows search and paging."""
     query = []
-    su = SearchUtils(request.json, cls="Location")
+    su = SearchUtils(request.json, cls="location")
     query = su.get_query()
 
     options = request.json.get("options")
@@ -1570,7 +1561,7 @@ def make_cache_key(*args, **kwargs):
 @cache.cached(15, make_cache_key)
 def api_bulletins():
     """Returns bulletins in JSON format, allows search and paging."""
-    su = SearchUtils(request.json, cls="Bulletin")
+    su = SearchUtils(request.json, cls="bulletin")
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
 
@@ -1664,7 +1655,9 @@ def api_bulletin_review_update(id):
         # append refs
         refs = request.json.get("item", {}).get("revrefs", [])
 
-        bulletin.ref = bulletin.ref + refs
+        if bulletin.ref is None:
+            bulletin.ref = []
+        bulletin.ref += refs
 
         if bulletin.save():
             # Create a revision using latest values
@@ -1910,11 +1903,31 @@ def api_incident_self_assign(id):
 @admin.post("/api/media/chunk")
 @roles_accepted("Admin", "DA")
 def api_medias_chunk():
+    """
+    Endpoint for uploading media files based on file system settings
+    :return: success/error based on operation's result
+    """
     file = request.files["file"]
 
-    # we can immediately validate the file type here
-    if not Media.validate_media_extension(file.filename):
-        return "This file type is not allowed", 415
+    # to check if file is uploaded from media import tool
+    import_upload = "/import/media/" in request.referrer
+    # validate file extensions based on user and referrer
+    if import_upload:
+        # uploads from media import tool
+        # must be Admin user
+        if current_user.has_role("Admin"):
+            allowed_extensions = current_app.config["ETL_VID_EXT"]
+            if not Media.validate_file_extension(file.filename, allowed_extensions):
+                return "This file type is not allowed", 415
+        else:
+            # we should log this in the future
+            return HTTPResponse.UNAUTHORIZED
+    else:
+        # normal uploads by DA or Admin users
+        allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
+        if not Media.validate_file_extension(file.filename, allowed_extensions):
+            return "This file type is not allowed", 415
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -1964,18 +1977,15 @@ def api_medias_chunk():
         if os.stat(filepath).st_size != total_size:
             raise abort(400, body=f"Error uploading the file")
 
-        print(f"{file.filename} has been uploaded")
         shutil.rmtree(save_dir)
         # get md5 hash
-        f = open(filepath, "rb").read()
-        etag = hashlib.md5(f).hexdigest()
+        etag = get_file_hash(filepath)
 
         # validate etag here // if it exists // reject the upload and send an error code
         if Media.query.filter(Media.etag == etag).first():
             return "Error, file already exists", 409
 
-        if not current_app.config.get("FILESYSTEM_LOCAL") and not "etl" in request.referrer:
-            print("uploading file to s3 :::>")
+        if not current_app.config["FILESYSTEM_LOCAL"] and not import_upload:
             s3 = boto3.resource("s3")
             s3.Bucket(current_app.config["S3_BUCKET"]).upload_file(filepath, filename)
             # Clean up file if s3 mode is selected
@@ -1994,14 +2004,12 @@ def api_medias_chunk():
 @roles_accepted("Admin", "DA")
 def api_medias_upload():
     """
-    Endpoint to upload files (based on file system settings : s3 or local file system)
-    :return: success /error based on operation's result
+    Endpoint to upload screenshots based on file system settings
+    :return: success/error based on operation's result
     """
     file = request.files.get("file")
     if file:
-        if current_app.config["FILESYSTEM_LOCAL"] or (
-            "etl" in request.referrer and not current_app.config["FILESYSTEM_LOCAL"]
-        ):
+        if current_app.config["FILESYSTEM_LOCAL"]:
             return api_local_medias_upload(request)
         else:
             s3 = boto3.resource(
@@ -2017,7 +2025,7 @@ def api_medias_upload():
             response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(
                 Key=filename, Body=file
             )
-            # print(response.get())
+
             etag = response.get()["ETag"].replace('"', "")
 
             # check if file already exists
@@ -2100,8 +2108,7 @@ def api_local_medias_upload(request):
         filepath = (Media.media_dir / filename).as_posix()
         file.save(filepath)
         # get md5 hash
-        f = open(filepath, "rb").read()
-        etag = hashlib.md5(f).hexdigest()
+        etag = get_file_hash(filepath)
         # check if file already exists
         if Media.query.filter(Media.etag == etag).first():
             return "Error: File already exists", 409
@@ -2205,7 +2212,7 @@ def actors(id):
 @admin.route("/api/actors/", methods=["POST", "GET"])
 def api_actors():
     """Returns actors in JSON format, allows search and paging."""
-    su = SearchUtils(request.json, cls="Actor")
+    su = SearchUtils(request.json, cls="actor")
     queries, ops = su.get_query()
     result = Actor.query.filter(*queries.pop(0))
 
@@ -2432,7 +2439,7 @@ def api_actor_mp_get(id):
 
 
 @admin.route("/api/bulletinhistory/<int:bulletinid>")
-@requires("view", "history")
+@require_view_history
 def api_bulletinhistory(bulletinid):
     """
     Endpoint to get revision history of a bulletin
@@ -2453,7 +2460,7 @@ def api_bulletinhistory(bulletinid):
 
 
 @admin.route("/api/actorhistory/<int:actorid>")
-@requires("view", "history")
+@require_view_history
 def api_actorhistory(actorid):
     """
     Endpoint to get revision history of an actor
@@ -2472,7 +2479,7 @@ def api_actorhistory(actorid):
 
 
 @admin.route("/api/incidenthistory/<int:incidentid>")
-@requires("view", "history")
+@require_view_history
 def api_incidenthistory(incidentid):
     """
     Endpoint to get revision history of an incident item
@@ -2493,7 +2500,7 @@ def api_incidenthistory(incidentid):
 
 
 @admin.route("/api/locationhistory/<int:locationid>")
-@requires("view", "history")
+@require_view_history
 def api_locationhistory(locationid):
     """
     Endpoint to get revision history of a location
@@ -2849,7 +2856,7 @@ def api_incidents():
     """Returns actors in JSON format, allows search and paging."""
     query = []
 
-    su = SearchUtils(request.json, cls="Incident")
+    su = SearchUtils(request.json, cls="incident")
 
     query = su.get_query()
 
@@ -3254,6 +3261,73 @@ def relation_info():
         return json.dumps([item.to_dict() for item in query_class.query.all()])
     else:
         return json.dumps({"error": "Invalid table type"})
+
+
+@admin.get("/api/graph/json")
+def graph_json():
+    """
+    API Endpoint to return graph data in json format
+    :return: json feed of graph data
+    """
+    id = request.args.get("id")
+    entity_type = request.args.get("type")
+    expanded = request.args.get("expanded")
+    if expanded == "false":
+        return GraphUtils.get_graph_json(entity_type, id)
+    else:
+        return GraphUtils.expanded_graph(entity_type, id)
+
+
+from flask import request, jsonify, abort
+
+
+@admin.post("/api/graph/visualize")
+def graph_visualize():
+    user_id = current_user.id
+    graph_type = request.args.get("type")  # Get the type from URL query parameter
+
+    # Check if the type is valid
+    if graph_type not in ["actor", "bulletin", "incident"]:
+        return abort(400, description="Invalid type provided")
+
+    task_id = generate_graph.delay(request.json, graph_type, user_id)
+    return jsonify({"task_id": task_id.id})
+
+
+@admin.route("/api/graph/data", methods=["GET"])
+def get_graph_data():
+    """
+    Endpoint to retrieve graph data from Redis.
+    :return: Graph data in JSON format or error message if data not found.
+    """
+    user_id = current_user.id
+
+    # Construct the key to retrieve the graph data from Redis
+    graph_data_key = f"user{user_id}:graph:data"
+
+    # Retrieve the graph data from Redis
+    graph_data = rds.get(graph_data_key)
+
+    if graph_data:
+        # Return the graph data as a JSON response
+        return Response(graph_data, mimetype="application/json")
+    else:
+        # If data is not found in Redis
+        return HTTPResponse.NOT_FOUND
+
+
+@admin.route("/api/graph/status", methods=["GET"])
+def check_graph_status():
+    user_id = current_user.id
+
+    status_key = f"user{user_id}:graph:status"
+    status = rds.get(status_key)
+
+    if not status:
+        return HTTPResponse.NOT_FOUND
+
+    response_body = json.dumps({"status": status.decode("utf-8")})
+    return Response(response_body, status=200, content_type="application/json")
 
 
 @admin.get("/system-administration/")

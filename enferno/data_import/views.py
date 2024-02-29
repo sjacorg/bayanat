@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import hashlib
 import os
 
 import shortuuid
@@ -14,7 +13,7 @@ from enferno.admin.models import Media
 from enferno.data_import.models import DataImport, Mapping
 from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.tasks import etl_process_file, process_row
-from enferno.utils.data_helpers import media_check_duplicates
+from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.http_response import HTTPResponse
 
 imports = Blueprint(
@@ -140,7 +139,8 @@ def path_process():
     else:
         items = import_path.glob("*")
 
-    files = [str(file) for file in items]
+    # return relative path
+    files = [str(file.relative_to(allowed_path)) for file in items]
 
     output = [{"filename": os.path.basename(file), "path": file} for file in files]
 
@@ -173,8 +173,10 @@ def etl_process():
             # getting hash of file for deduplication
             # server-side import doesn't automatically
             # retrieve files' hashes
-            file_check = open(f, "rb").read()
-            data_import.file_hash = file["etag"] = hashlib.md5(file_check).hexdigest()
+            allowed_path = Path(current_app.config.get("ETL_ALLOWED_PATH"))
+            full_path = safe_join(allowed_path, f)
+
+            data_import.file_hash = file["etag"] = get_file_hash(full_path)
             data_import.save()
 
             # checking for existing media or pending or processing imports
@@ -182,6 +184,8 @@ def etl_process():
                 data_import.add_to_log(f"File already exists {f}.")
                 data_import.fail()
                 continue
+
+            file["path"] = full_path
 
         data_import.add_to_log(f"Added file {file} to import queue.")
         # make sure we have a log id
@@ -213,15 +217,16 @@ def api_local_csv_upload():
     try:
         f = request.files.get("file")
         # validate immediately
-        if not Media.validate_sheet_extension(f.filename):
+        allowed_extensions = current_app.config["SHEETS_ALLOWED_EXTENSIONS"]
+        if not Media.validate_file_extension(f.filename, allowed_extensions):
             return "This file type is not allowed", 415
         # final file
         filename = Media.generate_file_name(f.filename)
         filepath = (import_dir / filename).as_posix()
         f.save(filepath)
+
         # get md5 hash
-        f = open(filepath, "rb").read()
-        etag = hashlib.md5(f).hexdigest()
+        etag = get_file_hash(filepath)
 
         response = {"etag": etag, "filename": filename}
         return Response(json.dumps(response), content_type="application/json"), 200
@@ -371,9 +376,8 @@ def api_process_sheet():
     batch_id = shortuuid.uuid()[:9]
 
     for filename in files:
-        filepath = (import_dir / filename).as_posix()
-        f = open(filepath, "rb").read()
-        etag = hashlib.md5(f).hexdigest()
+        filepath = safe_join(import_dir, filename)
+        etag = get_file_hash(filepath)
 
         df = SheetImport.sheet_to_df(filepath, sheet)
         for row_id, row in df.iterrows():

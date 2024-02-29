@@ -8,6 +8,7 @@ Vue.component('bulletin-card', {
       this.loadIncidentRelations();
 
       this.mapLocations = aggregateBulletinLocations(this.bulletin);
+
     },
   },
 
@@ -16,52 +17,6 @@ Vue.component('bulletin-card', {
   },
 
   methods: {
-    updateMediaState() {
-      this.mediasReady += 1;
-      if (this.mediasReady == this.bulletin.medias.length && this.mediasReady > 0) {
-        this.prepareImagesForPhotoswipe().then((res) => {
-          this.initLightbox();
-        });
-      }
-    },
-
-    prepareImagesForPhotoswipe() {
-      // Get the <a> tags from the image gallery
-      const imagesList = document.querySelectorAll('#lightbox a');
-      const promisesList = [];
-
-      imagesList.forEach((element) => {
-        const promise = new Promise(function (resolve) {
-          let image = new Image();
-          image.src = element.getAttribute('href');
-          image.onload = () => {
-            element.dataset.pswpWidth = image.width;
-            element.dataset.pswpHeight = image.height;
-            resolve(); // Resolve the promise only if the image has been loaded
-          };
-          image.onerror = () => {
-            resolve();
-          };
-        });
-        promisesList.push(promise);
-      });
-
-      // Use .then() to handle the promise resolution
-      return Promise.all(promisesList);
-    },
-
-    initLightbox() {
-      this.lightbox = new PhotoSwipeLightbox({
-        gallery: '#lightbox',
-        children: 'a',
-        pswpModule: PhotoSwipe,
-        wheelToZoom: true,
-        arrowKeys: true,
-      });
-
-      this.lightbox.init();
-    },
-
     translate_status(status) {
       return translate_status(status);
     },
@@ -314,248 +269,225 @@ Vue.component('bulletin-card', {
               <v-chip small label color="blue-grey lighten-5" v-for="source in bulletin.sources"
                       :key="source.id">{{ source.title }}
               </v-chip>
-            </v-chip-group>
-          </v-card-text>
-        </v-card>
+              </v-chip-group>
+              </v-card-text>
+            </v-card>
+      
+            <!-- Events -->
+            <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.events && bulletin.events.length">
+              <v-card-text class="pa-2">
+                <div class="px-1 title black--text">{{ i18n.events_ }}</div>
+                <event-card v-for="(event, index) in bulletin.events" :i18n="translations" :number="index+1" :key="event.id"
+                            :event="event"></event-card>
+              </v-card-text>
+            </v-card>
+      
+            <!-- Labels -->
+      
+            <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.labels && bulletin.labels.length">
+              <v-card-text>
+                <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
+                <v-chip-group column>
+                  <v-chip label small color="blue-grey lighten-5" v-for="label in bulletin.labels"
+                          :key="label.id">{{ label.title }}
+                  </v-chip>
+                </v-chip-group>
+              </v-card-text>
+            </v-card>
+      
+            <!-- Verified Labels -->
+      
+            <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.verLabels && bulletin.verLabels.length">
+              <v-card-text>
+                <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
+                <v-chip-group column>
+                  <v-chip label small color="blue-grey lighten-5" v-for="vlabel in bulletin.verLabels"
+                          :key="vlabel.id">{{ vlabel.title }}
+                  </v-chip>
+                </v-chip-group>
+              </v-card-text>
+            </v-card>
+      
+      
+            <!-- Media -->
+      
+            <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.medias && bulletin.medias.length">
+              <v-card v-if="iplayer" elevation="0" id="iplayer" class="px-2 my-3">
+                <video :id="'player'+_uid" controls class="video-js vjs-default-skin vjs-big-play-centered"
+                       crossorigin="anonymous"
+                       height="360" preload="auto"></video>
+      
+              </v-card>
+              <v-card-text>
+                <div class="pa-2 header-sticky mb-3 title black--text">{{ i18n.media_ }}</div>
+      
+                  <image-gallery :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewVideo"></image-gallery>
 
-        <!-- Events -->
-        <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.events && bulletin.events.length">
-          <v-card-text class="pa-2">
-            <div class="px-1 title black--text">{{ i18n.events_ }}</div>
-            <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id"
-                        :event="event"></event-card>
-          </v-card-text>
-        </v-card>
-
-        <!-- Labels -->
-
-        <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.labels && bulletin.labels.length">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
-            <v-chip-group column>
-              <v-chip label small color="blue-grey lighten-5" v-for="label in bulletin.labels"
-                      :key="label.id">{{ label.title }}
-              </v-chip>
-            </v-chip-group>
-          </v-card-text>
-        </v-card>
-
-        <!-- Verified Labels -->
-
-        <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.verLabels && bulletin.verLabels.length">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
-            <v-chip-group column>
-              <v-chip label small color="blue-grey lighten-5" v-for="vlabel in bulletin.verLabels"
-                      :key="vlabel.id">{{ vlabel.title }}
-              </v-chip>
-            </v-chip-group>
-          </v-card-text>
-        </v-card>
-
-
-        <!-- Media -->
-
-        <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.medias && bulletin.medias.length">
-          <v-card v-if="iplayer" elevation="0" id="iplayer" class="px-2 my-3">
-            <video :id="'player'+_uid" controls class="video-js vjs-default-skin vjs-big-play-centered"
-                   crossorigin="anonymous"
-                   height="360" preload="auto"></video>
-
-          </v-card>
-          <v-card-text>
-            <div class="pa-2 header-sticky mb-3 title black--text">{{ i18n.media_ }}</div>
-
-            <div class="d-flex flex-wrap" id="lightbox">
-              <div class="pa-1 " style="width: 50%" v-for="media in bulletin.medias" :key="media.id">
-
-                <media-card @ready="updateMediaState" v-if="media" @thumb-click="viewThumb" @video-click="viewVideo"
-                            :media="media"></media-card>
-              </div>
+      
+              </v-card-text>
+            </v-card>
+      
+            <!-- Locations -->
+            <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.locations && bulletin.locations.length">
+              <v-card-text>
+                <div class="px-1 title black--text">{{ i18n.locations_ }}</div>
+                <v-chip-group column>
+                  <v-chip label small color="blue-grey lighten-5" v-for="location in bulletin.locations"
+                          :key="location.id">
+                    {{ location.full_string }}
+                  </v-chip>
+                </v-chip-group>
+              </v-card-text>
+            </v-card>
+      
+            <!-- Related Bulletins -->
+      
+            <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.bulletin_relations && bulletin.bulletin_relations.length">
+              <v-card-text>
+                <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}
+                <v-tooltip top>
+                    <template v-slot:activator="{on,attrs}">
+      
+                      <a :href="'/admin/bulletins/?reltob='+bulletin.id" target="_self">
+                        <v-icon v-on="on" small color="grey" class="mb-1">
+                          mdi-image-filter-center-focus-strong
+                        </v-icon>
+                      </a>
+                    </template>
+                    <span>{{ i18n.filterRelatedItems_ }}</span>
+                  </v-tooltip>
+      
+                </div>
+                <bulletin-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.bulletin_relations" :key="index"
+                                 :bulletin="item.bulletin">
+                  <template v-slot:header>
+      
+                    <v-sheet color="yellow lighten-5" class="pa-2">
+      
+                      <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
+                      <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                      <v-chip  class="ma-1" v-for="r in extractValuesById($root.btobInfo, item.related_as, 'title') " color="grey lighten-4" small
+                              label>{{ r }}
+                      </v-chip>
+                      <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+      
+                    </v-sheet>
+      
+                  </template>
+                </bulletin-result>
+              </v-card-text>
+               <v-card-actions>
+                <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadBulletinRelations(bulletinPage)" v-if="bulletinLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
+              </v-card-actions>
+            </v-card>
+      
+            <!-- Related Actors  -->
+            <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.actor_relations && bulletin.actor_relations.length">
+              <v-card-text>
+                <div class="pa-2 header-sticky title black--text">{{ i18n.relatedActors_ }}
+                <v-tooltip top>
+                    <template v-slot:activator="{on,attrs}">
+      
+                      <a :href="'/admin/actors/?reltob='+bulletin.id" target="_self">
+                        <v-icon v-on="on" small color="grey" class="mb-1">
+                          mdi-image-filter-center-focus-strong
+                        </v-icon>
+                      </a>
+                    </template>
+                    <span>{{ i18n.filterRelatedItems_ }}</span>
+                  </v-tooltip>
+                
+                </div>
+                <actor-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.actor_relations" :key="index"
+                              :actor="item.actor">
+                  <template v-slot:header>
+      
+                    <v-sheet color="yellow lighten-5" class="pa-2">
+      
+                      <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
+                      <v-chip v-if="item.probability!== null" class="ma-1" color="grey lighten-4" small label>
+                        {{ probability(item) }}
+                      </v-chip>
+                      <v-chip class="ma-1" v-for="r in extractValuesById($root.atobInfo, item.related_as, 'title')" color="grey lighten-4" small
+                              label>{{ r }}
+                      </v-chip>
+                      <v-chip v-if="item.comment" class="ma-1" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+      
+                    </v-sheet>
+      
+                  </template>
+                </actor-result>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadActorRelations(actorPage)" v-if="actorLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
+              </v-card-actions>
+            </v-card>
+      
+            <!-- Related Incidents -->
+            <v-card outlined color="grey lighten-5" class="ma-2" v-if="bulletin.incident_relations && bulletin.incident_relations.length">
+              <v-card-text>
+                <div class="pa-2 header-sticky title black--text">{{ i18n.relatedIncidents_ }}
+                <v-tooltip top>
+                    <template v-slot:activator="{on,attrs}">
+                      <a :href="'/admin/incidents/?reltob='+bulletin.id" target="_self">
+                        <v-icon v-on="on" small color="grey" class="mb-1">
+                          mdi-image-filter-center-focus-strong
+                        </v-icon>
+                      </a>
+                    </template>
+                    <span>{{ i18n.filterRelatedItems_ }}</span>
+                  </v-tooltip>
+                
+                </div>
+                <incident-result :i18n="i18n"  class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
+                                 :incident="item.incident">
+                  <template v-slot:header>
+      
+                    <v-sheet color="yellow lighten-5" class="pa-2">
+      
+                      <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
+                      <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
+                      
+                      <v-chip v-for="r in extractValuesById($root.itobInfo, [item.related_as],'title')" v-if="item.related_as" color="grey lighten-4" small label>{{ r }}
+                      </v-chip>
+      
+                      <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
+      
+                    </v-sheet>
+      
+                  </template>
+                </incident-result>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
+              </v-card-actions>
+            </v-card>
+      
+            <!-- Pub/Doc Dates -->
+            <div class="d-flex">
+              <uni-field :caption="i18n.publishDate_" :english="bulletin.publish_date"></uni-field>
+              <uni-field :caption="i18n.documentationDate_" :english="bulletin.documentation_date"></uni-field>
             </div>
-
-          </v-card-text>
-        </v-card>
-
-        <!-- Locations -->
-        <v-card outlined class="ma-2" color="grey lighten-5" v-if="bulletin.locations && bulletin.locations.length">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.locations_ }}</div>
-            <v-chip-group column>
-              <v-chip label small color="blue-grey lighten-5" v-for="location in bulletin.locations"
-                      :key="location.id">
-                {{ location.full_string }}
-              </v-chip>
-            </v-chip-group>
-          </v-card-text>
-        </v-card>
-
-        <!-- Related Bulletins -->
-
-        <v-card outlined color="grey lighten-5" class="ma-2"
-                v-if="bulletin.bulletin_relations && bulletin.bulletin_relations.length">
-          <v-card-text>
-            <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}
-              <v-tooltip top>
-                <template v-slot:activator="{on,attrs}">
-
-                  <a :href="'/admin/bulletins/?reltob='+bulletin.id" target="_self">
-                    <v-icon v-on="on" small color="grey" class="mb-1">
-                      mdi-image-filter-center-focus-strong
-                    </v-icon>
-                  </a>
-                </template>
-                <span>Filter and display related items in main table</span>
-              </v-tooltip>
-
-            </div>
-            <bulletin-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.bulletin_relations" :key="index"
-                             :bulletin="item.bulletin">
-              <template v-slot:header>
-
-                <v-sheet color="yellow lighten-5" class="pa-2">
-
-                  <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                  <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}
-                  </v-chip>
-                  <v-chip class="ma-1" v-for="r in extractValuesById($root.btobInfo, item.related_as, 'title') "
-                          color="grey lighten-4" small
-                          label>{{ r }}
-                  </v-chip>
-                  <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
-
-                </v-sheet>
-
-              </template>
-            </bulletin-result>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0"
-                   @click="loadBulletinRelations(bulletinPage)" v-if="bulletinLM">Load More
-              <v-icon right>mdi-chevron-down</v-icon>
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-
-        <!-- Related Actors  -->
-        <v-card outlined color="grey lighten-5" class="ma-2"
-                v-if="bulletin.actor_relations && bulletin.actor_relations.length">
-          <v-card-text>
-            <div class="pa-2 header-sticky title black--text">{{ i18n.relatedActors_ }}
-              <v-tooltip top>
-                <template v-slot:activator="{on,attrs}">
-
-                  <a :href="'/admin/actors/?reltob='+bulletin.id" target="_self">
-                    <v-icon v-on="on" small color="grey" class="mb-1">
-                      mdi-image-filter-center-focus-strong
-                    </v-icon>
-                  </a>
-                </template>
-                <span>Filter and display related items in main table</span>
-              </v-tooltip>
-
-            </div>
-            <actor-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.actor_relations" :key="index"
-                          :actor="item.actor">
-              <template v-slot:header>
-
-                <v-sheet color="yellow lighten-5" class="pa-2">
-
-                  <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                  <v-chip v-if="item.probability!== null" class="ma-1" color="grey lighten-4" small label>
-                    {{ probability(item) }}
-                  </v-chip>
-                  <v-chip class="ma-1" v-for="r in extractValuesById($root.atobInfo, item.related_as, 'title')"
-                          color="grey lighten-4" small
-                          label>{{ r }}
-                  </v-chip>
-                  <v-chip v-if="item.comment" class="ma-1" color="grey lighten-4" small label>{{ item.comment }}
-                  </v-chip>
-
-                </v-sheet>
-
-              </template>
-            </actor-result>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0"
-                   @click="loadActorRelations(actorPage)" v-if="actorLM">Load More
-              <v-icon right>mdi-chevron-down</v-icon>
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-
-        <!-- Related Incidents -->
-        <v-card outlined color="grey lighten-5" class="ma-2"
-                v-if="bulletin.incident_relations && bulletin.incident_relations.length">
-          <v-card-text>
-            <div class="pa-2 header-sticky title black--text">{{ i18n.relatedIncidents_ }}
-              <v-tooltip top>
-                <template v-slot:activator="{on,attrs}">
-                  <a :href="'/admin/incidents/?reltob='+bulletin.id" target="_self">
-                    <v-icon v-on="on" small color="grey" class="mb-1">
-                      mdi-image-filter-center-focus-strong
-                    </v-icon>
-                  </a>
-                </template>
-                <span>Filter and display related items in main table</span>
-              </v-tooltip>
-
-            </div>
-            <incident-result :i18n="i18n" class="mt-1" v-for="(item,index) in bulletin.incident_relations" :key="index"
-                             :incident="item.incident">
-              <template v-slot:header>
-
-                <v-sheet color="yellow lighten-5" class="pa-2">
-
-                  <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                  <v-chip v-if="item.probability!== null" color="grey lighten-4" small label>{{ probability(item) }}
-                  </v-chip>
-
-                  <v-chip v-for="r in extractValuesById($root.itobInfo, [item.related_as],'title')"
-                          v-if="item.related_as" color="grey lighten-4" small label>{{ r }}
-                  </v-chip>
-
-                  <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
-
-                </v-sheet>
-
-              </template>
-            </incident-result>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0"
-                   @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">Load More
-              <v-icon right>mdi-chevron-down</v-icon>
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-
-        <!-- Pub/Doc Dates -->
-        <div class="d-flex">
-          <uni-field :caption="i18n.publishDate_" :english="bulletin.publish_date"></uni-field>
-          <uni-field :caption="i18n.documentationDate_" :english="bulletin.documentation_date"></uni-field>
-        </div>
-
-        <uni-field :caption="i18n.sourceLink_" :english="bulletin.source_link"></uni-field>
-
-        <!-- Review -->
-        <v-card v-if="showReview(bulletin)" outline elevation="0" class="ma-3" color="light-green lighten-5">
-          <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.review_ }}</div>
-            <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
-
-            </div>
-            <v-chip small label color="lime">{{ bulletin.review_action }}</v-chip>
-          </v-card-text>
-        </v-card>
-
-        <!-- Log -->
-        <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
-          <v-card-text>
-            <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
-              <v-btn fab :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
-                <v-icon>mdi-history</v-icon>
+      
+            <uni-field :caption="i18n.sourceLink_" :english="bulletin.source_link"></uni-field>
+      
+            <!-- Review -->
+            <v-card v-if="showReview(bulletin)" outline elevation="0" class="ma-3" color="light-green lighten-5">
+              <v-card-text>
+                <div class="px-1 title black--text">{{ i18n.review_ }}</div>
+                <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
+      
+                </div>
+                <v-chip small label color="lime">{{ bulletin.review_action }}</v-chip>
+              </v-card-text>
+            </v-card>
+      
+            <!-- Log -->
+            <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
+              <v-card-text>
+                <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
+                  <v-btn fab :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
+                    <v-icon>mdi-history</v-icon>
               </v-btn>
             </h3>
 
@@ -565,8 +497,8 @@ Vue.component('bulletin-card', {
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
                                                                               color="gv lighten-3">{{ translate_status(revision.data.status) }}</v-chip> -
                 {{ revision.created_at }}
-                - By {{ revision.user.username }}</span>
-                <v-spacer></v-spacer>
+                - {{ i18n.by_ }} {{ revision.user.username }}</span>
+              <v-spacer></v-spacer>
 
                 <v-btn v-if="diffAllowed()" v-show="index!=revisions.length-1" @click="showDiff($event,index)"
                        class="mx-1"

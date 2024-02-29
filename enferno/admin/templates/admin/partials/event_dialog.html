@@ -27,7 +27,7 @@
             v-for="(item,index) in editedItem.events"
             :key="index"
           >
-           <event-card :number="index+1" :event="item">
+           <event-card :i18n="translations" :number="index+1" :event="item">
 
               <template v-slot:actions>
                 <v-card-actions>

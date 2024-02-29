@@ -102,7 +102,7 @@
                                     v-model="editedItem.parent"
                                     item-value="id"
                                     :multiple="false"
-                                    label="Labels"
+                                    label="{{_('Labels')}}"
                                     :query-params="{ fltr: 'all' }"
                             ></search-field>
 
@@ -118,7 +118,7 @@
                                       <v-col cols="12" md="2">
                                         <v-checkbox
                                         v-model="editedItem.verified"
-                                       label="{{_('Verified')}}"
+                                       label="{{_('Verified Labels')}}"
                                       ></v-checkbox>
                                         
                                       </v-col>
@@ -214,13 +214,13 @@
                                   color="blue darken-1"
                                   text
                                   @click="imDialog=false"
-                                  >Cancel</v-btn
+                                  >{{_('Cancel')}}</v-btn
                                 >
                                 <v-btn
                                   color="blue darken-1"
                                   text
                                   @click="importCSV"
-                                  >Save</v-btn
+                                  >{{_('Save')}}</v-btn
                                 >
                               </v-card-actions>
                             </v-card>
@@ -367,7 +367,7 @@
 
       deleteItem(item) {
         const index = this.items.indexOf(item);
-        const cfm = confirm("Are you sure you want to delete this item?") &&
+        const cfm = confirm("{{_('Are you sure you want to delete this item?')}}") &&
           this.items.splice(index, 1);
           if (cfm){
           axios.delete(`/admin/api/label/${item.id}`)

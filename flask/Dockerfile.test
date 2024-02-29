@@ -1,0 +1,7 @@
+FROM bayanat/bayanat:dev
+
+WORKDIR /app
+RUN rm -rf /app
+COPY . /app
+RUN cp config.sample.json config.json
+CMD [ "pytest" ]

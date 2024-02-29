@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from flask_security import current_user
 from sqlalchemy import JSON
 
 from enferno.admin.models import Bulletin, Btob, Activity

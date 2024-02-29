@@ -140,14 +140,14 @@ Vue.component('export-card', {
 
       <!-- Dates fields -->
       <div class="d-flex">
-        <uni-field caption="Requested On" :english="localDate(exp.created_at)"></uni-field>
-        <uni-field caption="Expires On" :english="localDate(exp.expires_on)"></uni-field>
+        <uni-field :caption="i18n.requestedOn_" :english="localDate(exp.created_at)"></uni-field>
+        <uni-field :caption="i18n.expiresOn_" :english="localDate(exp.expires_on)"></uni-field>
       </div>
 
       <!-- Admin actions cards -->
       <v-card outlined class="mx-2" color="grey lighten-5" v-if="adminMode">
         <v-card-text>
-          <div class="px-1 title black--text">Admin Actions</div>
+          <div class="px-1 title black--text">{{ i18n.adminActions_ }}</div>
 
           <!-- Approve button -->
           <v-btn
@@ -161,7 +161,7 @@ Vue.component('export-card', {
                 left>
               mdi-check
             </v-icon>
-            Approve
+            {{ i18n.approve_ }}
           </v-btn>
 
           <!-- Reject button -->
@@ -175,8 +175,8 @@ Vue.component('export-card', {
                 left>
               mdi-close
             </v-icon>
-            <span v-if="exp.status=='Approved'">Expire Now</span>
-            <span v-else>Reject</span>
+            <span v-if="exp.status=='Approved'">{{ i18n.expireNow_ }}</span>
+            <span v-else>{{ i18n.reject_ }}</span>
             
           </v-btn>
 
@@ -192,7 +192,7 @@ Vue.component('export-card', {
                 left>
               mdi-calendar-edit
             </v-icon>
-            Change Expiry
+            {{ i18n.changeExpiry_ }}
           </v-btn>
 
           <!-- Set expiry date button -->
@@ -207,7 +207,7 @@ Vue.component('export-card', {
                 left>
               mdi-calendar-edit
             </v-icon>
-            Set Expiry
+            {{ i18n.setExpiry_ }}
           </v-btn>
 
         </v-card-text>
@@ -216,7 +216,7 @@ Vue.component('export-card', {
         <v-text-field
             v-if="!expiryFieldDisabled && showChangeExpiry(exp)"
             type="datetime-local"
-            label="Export Expiry"
+            label="{{ i18n.exportExpiry_ }}"
             v-model="exp.expires_on"
         >
         </v-text-field>
@@ -260,7 +260,7 @@ Vue.component('export-card', {
             elevation="0" 
             @click="loadExportItems" 
             v-if="showLoadMore"
-            >Load More
+            >{{ i18n.loadMore_ }}
               <v-icon right>mdi-chevron-down</v-icon></v-btn>
         </v-card-actions>
       </v-card>

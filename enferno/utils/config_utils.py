@@ -29,15 +29,16 @@ class ConfigManager:
             "AWS_SECRET_ACCESS_KEY": "",
             "S3_BUCKET": "",
             "AWS_REGION": "",
+            "ACCESS_CONTROL_RESTRICTIVE": False,
             "MEDIA_ALLOWED_EXTENSIONS": [
-                ".mp4",
-                ".webm",
-                ".jpg",
-                ".gif",
-                ".png",
-                ".pdf",
-                ".doc",
-                ".txt",
+                "mp4",
+                "webm",
+                "jpg",
+                "gif",
+                "png",
+                "pdf",
+                "doc",
+                "txt",
             ],
             "MEDIA_UPLOAD_MAX_FILE_SIZE": 1000,
             "SHEETS_ALLOWED_EXTENSIONS": ["csv", "xls", "xlsx"],
@@ -87,7 +88,6 @@ class ConfigManager:
             ],
             "OCR_ENABLED": False,
             "OCR_EXT": ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"],
-            "TESSERACT_CMD": "/usr/bin/tesseract",
             "SHEET_IMPORT": False,
             "DEDUP_TOOL": False,
             "LANGUAGES": ["en", "ar", "uk", "fr"],
@@ -103,6 +103,7 @@ class ConfigManager:
             "ITEMS_PER_PAGE_OPTIONS": [10, 30, 100],
             "VIDEO_RATES": [0.25, 0.5, 1, 1.5, 2, 4],
             "EXPORT_TOOL": False,
+            "EXPORT_DEFAULT_EXPIRY": 2,
         }
     )
 
@@ -126,6 +127,7 @@ class ConfigManager:
             "AWS_SECRET_ACCESS_KEY": "Aws Secret Access Key",
             "S3_BUCKET": "S3 Bucket",
             "AWS_REGION": "Aws Region",
+            "ACCESS_CONTROL_RESTRICTIVE": "Restrictive Access Control",
             "MEDIA_ALLOWED_EXTENSIONS": "Media Allowed Extensions",
             "MEDIA_UPLOAD_MAX_FILE_SIZE": "Media Maximum File Upload Size",
             "SHEETS_ALLOWED_EXTENSIONS": "Sheets Allowed Extensions",
@@ -134,7 +136,6 @@ class ConfigManager:
             "ETL_VID_EXT": "Etl Vid Ext",
             "OCR_ENABLED": "Ocr Enabled",
             "OCR_EXT": "Ocr Ext",
-            "TESSERACT_CMD": "Tesseract Cmd",
             "SHEET_IMPORT": "Sheet Import",
             "DEDUP_TOOL": "Dedup Tool",
             "LANGUAGES": "Languages",
@@ -151,6 +152,7 @@ class ConfigManager:
             "ITEMS_PER_PAGE_OPTIONS": "Items Per Page Options",
             "VIDEO_RATES": "Video Rates",
             "EXPORT_TOOL": "Export Tool",
+            "EXPORT_DEFAULT_EXPIRY": "Export Default Expiry Time",
         }
     )
 
@@ -196,6 +198,7 @@ class ConfigManager:
             "AWS_SECRET_ACCESS_KEY": ConfigManager.MASK_STRING if cfg.AWS_SECRET_ACCESS_KEY else "",
             "S3_BUCKET": cfg.S3_BUCKET,
             "AWS_REGION": cfg.AWS_REGION,
+            "ACCESS_CONTROL_RESTRICTIVE": cfg.ACCESS_CONTROL_RESTRICTIVE,
             "MEDIA_ALLOWED_EXTENSIONS": cfg.MEDIA_ALLOWED_EXTENSIONS,
             "MEDIA_UPLOAD_MAX_FILE_SIZE": cfg.MEDIA_UPLOAD_MAX_FILE_SIZE,
             "SHEETS_ALLOWED_EXTENSIONS": cfg.SHEETS_ALLOWED_EXTENSIONS,
@@ -204,7 +207,6 @@ class ConfigManager:
             "ETL_VID_EXT": cfg.ETL_VID_EXT,
             "OCR_ENABLED": cfg.OCR_ENABLED,
             "OCR_EXT": cfg.OCR_EXT,
-            "TESSERACT_CMD": cfg.TESSERACT_CMD,
             "SHEET_IMPORT": cfg.SHEET_IMPORT,
             "DEDUP_TOOL": cfg.DEDUP_TOOL,
             "LANGUAGES": cfg.LANGUAGES,
@@ -223,6 +225,7 @@ class ConfigManager:
             "ITEMS_PER_PAGE_OPTIONS": cfg.ITEMS_PER_PAGE_OPTIONS,
             "VIDEO_RATES": cfg.VIDEO_RATES,
             "EXPORT_TOOL": cfg.EXPORT_TOOL,
+            "EXPORT_DEFAULT_EXPIRY": int(cfg.EXPORT_DEFAULT_EXPIRY.total_seconds()) / 3600,
         }
         return conf
 

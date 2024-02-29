@@ -15,8 +15,8 @@
                   method="POST"
                   name="verify_form">
                 {{ verify_form.hidden_tag() }}
-                <v-text-field name="password" label="password" type="password"></v-text-field>
-                <v-btn type="submit" color="primary">Submit</v-btn>
+                <v-text-field name="password" label="{{ _('Password') }}" type="password"></v-text-field>
+                <v-btn type="submit" color="primary">{{ _('Submit') }}</v-btn>
             </form>
 
             {% if verify_form.password.errors %}

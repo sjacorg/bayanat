@@ -621,10 +621,10 @@
                         <v-row v-if="editedItem.review">
                             <v-col cols="12" md="12">
 
-                                <v-card color="light-green lighten-5" elevation="0">
-                                    <v-card-title class="subtitle-2">Review</v-card-title>
+                                <v-card outlined color="gray " elevation="0">
+                                    <v-card-title class="subtitle-2 black--text">{{ _('Review') }}</v-card-title>
                                     <v-card-text>
-                                        <p v-html="editedItem.review">
+                                        <p class="pa-1 my-2 grey--text text--darken-2" v-html="editedItem.review">
 
                                         </p>
                                     </v-card-text>

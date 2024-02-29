@@ -1,11 +1,10 @@
 import os
 
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt
 from pathlib import Path
 
 import arrow
 from sqlalchemy import ARRAY
-from flask import current_app
 from flask_security.decorators import current_user
 
 from enferno.extensions import db
@@ -113,9 +112,7 @@ class Export(db.Model, BaseMixin):
         """
         self.status = "Processing"
         # set download expiry
-        self.expires_on = dt.utcnow() + timedelta(
-            seconds=current_app.config.get("EXPORT_DEFAULT_EXPIRY")
-        )
+        self.expires_on = dt.utcnow() + cfg.EXPORT_DEFAULT_EXPIRY
         self.approver = current_user
 
         return self

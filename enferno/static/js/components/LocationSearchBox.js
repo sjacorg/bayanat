@@ -36,7 +36,7 @@ Vue.component('location-search-box', {
       <v-sheet>
       <v-card class="pa-4">
         <v-card-title>
-          Search Locations
+          {{ i18n.searchLocations_ }}
           <v-spacer></v-spacer>
           <v-btn fab text @click="$emit('close')">
             <v-icon>mdi-close</v-icon>
@@ -58,7 +58,7 @@ Vue.component('location-search-box', {
 
               <v-text-field
                   v-model="q.tsv"
-                  label="Description"
+                  :label="i18n.description_"
                   clearable
               ></v-text-field>
 
@@ -80,7 +80,7 @@ Vue.component('location-search-box', {
 
                   :return-object="false"
                   :multiple="false"
-                  label="Location Type">
+                  :label="i18n.locationType_">
               </search-field>
 
 
@@ -93,7 +93,7 @@ Vue.component('location-search-box', {
 
                   :return-object="false"
                   :multiple="false"
-                  label="Admin level">
+                  label="i18n.adminLevel_">
               </search-field>
 
 
@@ -105,7 +105,7 @@ Vue.component('location-search-box', {
                   :multiple="false"
                   :return-object="false"
                   clearable
-                  label="Country"
+                  :label="i18n.country_"
                   
               ></search-field>
 

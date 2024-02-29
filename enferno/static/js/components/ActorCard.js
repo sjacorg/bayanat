@@ -339,7 +339,7 @@ Vue.component('actor-card', {
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="actor.events && actor.events.length">
         <v-card-text>
           <div class="px-1 title black--text">{{ i18n.events_ }}</div>
-          <event-card v-for="event in actor.events" :key="event.id" :event="event"></event-card>
+          <event-card v-for="event in actor.events" :i18n="translations" :key="event.id" :event="event"></event-card>
         </v-card-text>
       </v-card>
 
@@ -373,7 +373,7 @@ Vue.component('actor-card', {
                   </v-icon>
                 </a>
               </template>
-              <span>Filter and display related items in main table</span>
+              <span>{{ i18n.filterRelatedItems_ }}</span>
             </v-tooltip>
           </div>
           <actor-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.actor_relations" :key="index" :actor="item.actor">
@@ -408,7 +408,7 @@ Vue.component('actor-card', {
               mdi-image-filter-center-focus-strong
             </v-icon></a>
               </template>
-              <span>Filter and display related items in main table</span>
+              <span>{{ i18n.filterRelatedItems_ }}</span>
             </v-tooltip>
           </div>
           <bulletin-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.bulletin_relations" :key="index"
@@ -444,7 +444,7 @@ Vue.component('actor-card', {
                   </v-icon>
                 </a>
               </template>
-              <span>Filter and display related items in main table</span>
+              <span>{{ i18n.filterRelatedItems_ }}</span>
             </v-tooltip>
           </div>
           <incident-result :i18n="i18n"  class="mt-1" v-for="(item,index) in actor.incident_relations" :key="index"
@@ -464,7 +464,7 @@ Vue.component('actor-card', {
           </incident-result>
         </v-card-text>
         <v-card-actions>
-          <v-btn class="ma-auto caption" small color="blue-grey lighten-5" elevation="0" @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">Load More <v-icon right>mdi-chevron-down</v-icon> </v-btn>
+          <v-btn class="ma-auto caption" small color="blue-grey lighten-5" elevation="0" @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
         </v-card-actions>
       </v-card>
 
@@ -499,7 +499,7 @@ Vue.component('actor-card', {
             <v-card color="grey lighten-4" dense flat class="my-1 pa-2 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
                                                                               color="gv lighten-3">{{ translate_status(revision.data.status) }}</v-chip> - {{ revision.created_at }}
-                - By {{ revision.user.username }}</span>
+                - {{ i18n.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
               <v-btn v-if="diffAllowed()" v-show="index!==revisions.length-1" @click="showDiff($event,index)" class="mx-1"

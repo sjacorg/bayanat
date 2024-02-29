@@ -351,7 +351,7 @@ let mediaMixin = {
             //this.locations = this.editedItem.locations;
         },
 
-        removeMedia: function (evt, index) {
+        removeMedia: function (index) {
             if (confirm("Are you sure?")) {
                 this.editedItem.medias.splice(index, 1);
             }

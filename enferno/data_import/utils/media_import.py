@@ -1,13 +1,13 @@
-import hashlib, os, boto3, json
+import os, boto3
 import pyexifinfo as exiflib
 from docx import Document
 from PyPDF2 import PdfReader
-from PIL import Image
 from pdf2image import convert_from_path
 
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
+from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
 from enferno.settings import Config as cfg
@@ -109,20 +109,6 @@ class MediaImport:
             self.data_import.add_to_log("Failed to get video duration")
             self.data_import.add_to_log(str(e))
             return None
-
-    def get_etag(self, filepath):
-        """
-        Returns MD5 hash of file.
-
-            Parameters:
-                filepath: filepath of file
-
-            Returns:
-                etag: md5 hash
-        """
-        f = open(filepath, "rb").read()
-        etag = hashlib.md5(f).hexdigest()
-        return etag
 
     def parse_docx(self, filepath):
         """
@@ -264,7 +250,7 @@ class MediaImport:
                 ]
                 subprocess.call(command, shell=False)
 
-                new_etag = self.get_etag(new_filepath)
+                new_etag = get_file_hash(new_filepath)
                 self.data_import.add_to_log(f"Optimized version saved at {new_filepath}.")
                 return True, new_filename, new_filepath, new_etag
 
