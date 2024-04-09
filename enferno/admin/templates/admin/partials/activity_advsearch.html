@@ -1,0 +1,10 @@
+<v-dialog v-model="advSearchOpen" width="770">
+    <activity-search-box
+            :i18n="translations"
+            @close="advSearchOpen=false"
+            v-model="q"
+            @search="refresh"
+    ></activity-search-box>
+</v-dialog>
+
+

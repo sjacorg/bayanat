@@ -24,7 +24,7 @@ Flask-Login==0.6.3
 Flask-Principal==0.4.0
 flask-redis==0.4.0
 Flask-Script==2.0.6
-flask-security-too==5.3.3
+flask-security-too==5.4.1
 Flask-Session==0.5.0
 flask-shell-ipython==0.5.1
 Flask-SQLAlchemy==3.0.3
@@ -89,4 +89,5 @@ qrcode==7.4.2
 psycopg2==2.9.6
 weasyprint==59.0
 zxcvbn==4.4.28
-webauthn==1.11.1
+webauthn==2.0.0
+Flask-DebugToolbar==0.14.1

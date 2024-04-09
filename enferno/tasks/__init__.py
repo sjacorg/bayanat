@@ -161,7 +161,9 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
 
         # Record Activity
         updated = [b.to_mini() for b in bulletins]
-        Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, "bulletin")
+        Activity.create(
+            cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "bulletin"
+        )
         # perhaps allow a little time out
         time.sleep(0.1)
         print("Chunk Processed")
@@ -246,7 +248,9 @@ def bulk_update_actors(ids, bulk, cur_user_id):
 
         # Record Activity
         updated = [b.to_mini() for b in actors]
-        Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, "actor")
+        Activity.create(
+            cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "actor"
+        )
         # perhaps allow a little time out
         time.sleep(0.25)
         print("Chunk Processed")
@@ -345,7 +349,9 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
 
         # Record Activity
         updated = [b.to_mini() for b in incidents]
-        Activity.create(cur_user, Activity.ACTION_BULK_UPDATE, updated, "incident")
+        Activity.create(
+            cur_user, Activity.ACTION_BULK_UPDATE, Activity.STATUS_SUCCESS, updated, "incident"
+        )
 
         # restrict or assign related items
         if assign_related or restrict_related:
@@ -415,6 +421,10 @@ def setup_periodic_tasks(sender, **kwargs):
     if "export" in db.metadata.tables.keys():
         sender.add_periodic_task(300, export_cleanup_cron.s(), name="Exports Cleanup Cron")
         print("Export cleanup periodic task is set up")
+
+    # activity peroidic task every 24 hours
+    sender.add_periodic_task(24 * 60 * 60, activity_cleanup_cron.s(), name="Activity Cleanup Cron")
+    print("Activity cleanup periodic task is set up")
 
 
 @celery.task
@@ -736,6 +746,26 @@ def export_cleanup_cron():
 
 
 type_map = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}
+
+
+@celery.task
+def activity_cleanup_cron():
+    """
+    Periodic task to cleanup Activity Monitor logs.
+    """
+    expired_activities = Activity.query.filter(
+        datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
+    )
+    print(f"Cleaning up Activities...")
+    deleted = expired_activities.delete(synchronize_session=False)
+    if deleted:
+        db.session.commit()
+        print(f"{deleted} expired activities deleted.")
+    else:
+        print("No expired activities to delete.")
+
+
+## Query graph visualization tasks
 
 
 @celery.task

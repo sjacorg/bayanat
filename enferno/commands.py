@@ -7,6 +7,7 @@ from flask.cli import AppGroup
 from flask.cli import with_appcontext
 from flask_security.utils import hash_password
 
+from enferno.settings import Config
 from enferno.extensions import db
 from enferno.user.models import User, Role
 from enferno.utils.data_helpers import (
@@ -15,6 +16,7 @@ from enferno.utils.data_helpers import (
     generate_workflow_statues,
     create_default_location_data,
 )
+from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 
 
 @click.command()
@@ -185,5 +187,13 @@ def update():
 
 @i18n_cli.command()
 def compile():
-    if os.system('pybabel compile -d enferno/translations'):
-        raise RuntimeError('Compile command failed')
+    if os.system("pybabel compile -d enferno/translations"):
+        raise RuntimeError("Compile command failed")
+
+
+# Database Schema Alignment
+@click.command()
+@with_appcontext
+def check_db_alignment():
+    checker = DBAlignmentChecker()
+    checker.check_db_alignment()

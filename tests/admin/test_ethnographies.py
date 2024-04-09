@@ -109,6 +109,7 @@ def test_put_ethnography(
     ethnography = get_first_or_fail(Ethnography)
     ethno_id = ethnography.id
     new_ethnography = EthnographyFactory()
+    new_ethnography.id = ethno_id
     response = client_.put(
         f"/admin/api/ethnography/{ethno_id}",
         headers={"Content-Type": "application/json"},

@@ -90,9 +90,21 @@ class DedupRelation(db.Model, BaseMixin):
                     # Save Bulletins and register activities
                     b1.create_revision()
                     user = User.query.get(user_id)
-                    Activity.create(user, Activity.ACTION_UPDATE, b1.to_mini(), "bulletin")
+                    Activity.create(
+                        user,
+                        Activity.ACTION_UPDATE,
+                        Activity.STATUS_SUCCESS,
+                        b1.to_mini(),
+                        "bulletin",
+                    )
                     b2.create_revision()
-                    Activity.create(user, Activity.ACTION_UPDATE, b2.to_mini(), "bulletin")
+                    Activity.create(
+                        user,
+                        Activity.ACTION_UPDATE,
+                        Activity.STATUS_SUCCESS,
+                        b2.to_mini(),
+                        "bulletin",
+                    )
 
                     relation_dict = {
                         "class": "btob",

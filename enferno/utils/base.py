@@ -1,5 +1,7 @@
 from datetime import datetime
 from flask_babel import gettext
+from sqlalchemy.orm import declared_attr
+
 from enferno.extensions import db
 from enferno.utils.date_helper import DateHelper
 
@@ -45,6 +47,9 @@ class BaseMixin(object):
         else:
             return f"---- needs implementation -----> {column_name}"
 
+    def serialize_relationship(self, relationship):
+        return [rel.to_dict() for rel in relationship] if relationship else []
+
     def to_mini(self):
         output = {"id": self.id, "class": self.__tablename__}
 
@@ -59,6 +64,7 @@ class BaseMixin(object):
             fp = self.first_peer_reviewer.to_compact()
         output = {
             "id": self.id,
+            "type": getattr(self, "type", None),
             "title": getattr(self, "title", ""),
             "name": getattr(self, "name", ""),
             "assigned_to": at,
@@ -97,3 +103,30 @@ class BaseMixin(object):
                 raise DatabaseException(f"Error deleting {self.__class__.__name__}: {e}")
             else:
                 return False
+
+
+class ComponentDataMixin(BaseMixin):
+    __abstract__ = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    title_tr = db.Column(db.String)
+
+    def from_json(self, jsn):
+        for key, value in jsn.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "title_tr": self.title_tr,
+            "created_at": DateHelper.serialize_datetime(self.created_at),
+            "updated_at": DateHelper.serialize_datetime(self.updated_at),
+        }
+
+    @classmethod
+    def find_by_title(cls, title):
+        item = cls.query.filter(cls.title_tr.ilike(title)).first()
+        return item if item else cls.query.filter(cls.title.ilike(title)).first()

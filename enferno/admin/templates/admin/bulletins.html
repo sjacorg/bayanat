@@ -288,7 +288,6 @@
                             {% include 'admin/partials/video_player_dialog.html' %}
 
 
-
                             <v-dialog width="600" v-model="selfAssignDialog">
                                 <v-card class="pa-3">
                                     <v-card-title>{{ _('Self Assign Bulletin') }} #${assignBulletin.id}</v-card-title>
@@ -301,7 +300,8 @@
                                                 label="{{ _('Ref') }}"
                                                 class="mr-2"
                                         ></v-combobox>
-                                        <v-textarea v-model="assignBulletin.comments" label="{{_('Comments')}}"></v-textarea>
+                                        <v-textarea v-model="assignBulletin.comments"
+                                                    label="{{ _('Comments') }}"></v-textarea>
                                     </v-card-text>
                                     <v-card-actions>
                                         <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign"
@@ -332,14 +332,14 @@
         </v-app>
     </div>
 
-<div class="d-none" data-itob='{{itobInfo|tojson}}'></div>
-<div class="d-none" data-itoa='{{itoaInfo|tojson}}'></div>
-<div class="d-none" data-atob='{{atobInfo|tojson}}'></div>
-<div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
-<div class="d-none" data-btob='{{btobInfo|tojson}}'></div>
-<div class="d-none" data-itoi='{{itoiInfo|tojson}}'></div>
-<div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
-<div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
+    <div class="d-none" data-itob='{{ itobInfo|tojson }}'></div>
+    <div class="d-none" data-itoa='{{ itoaInfo|tojson }}'></div>
+    <div class="d-none" data-atob='{{ atobInfo|tojson }}'></div>
+    <div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
+    <div class="d-none" data-btob='{{ btobInfo|tojson }}'></div>
+    <div class="d-none" data-itoi='{{ itoiInfo|tojson }}'></div>
+    <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
+    <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
 
 {% endblock %} {% block js %}
     <script
@@ -409,13 +409,12 @@
 
                 translations: translations,
 
-                itobInfo : JSON.parse(document.querySelector('[data-itob]').dataset.itob),
-                itoaInfo : JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
-                itoiInfo : JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
-                atobInfo : JSON.parse(document.querySelector('[data-atob]').dataset.atob),
-                btobInfo : JSON.parse(document.querySelector('[data-btob]').dataset.btob),
-                atoaInfo : JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
-
+                itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
+                itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
+                itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
+                atobInfo: JSON.parse(document.querySelector('[data-atob]').dataset.atob),
+                btobInfo: JSON.parse(document.querySelector('[data-btob]').dataset.btob),
+                atoaInfo: JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
 
 
                 dzOpts: {
@@ -460,8 +459,8 @@
                 advSearchMenu: false,
 
                 showVisualize: false,
-                visualizeLoading : false,
-                graphTimer : null,
+                visualizeLoading: false,
+                graphTimer: null,
 
 
                 fsloading: true,
@@ -469,7 +468,7 @@
 
                 dialog: dialog,
                 eventDialog: false,
-                eventParams: { typ: 'for_bulletin' },
+                eventParams: {typ: 'for_bulletin'},
                 reviewDialog: false,
                 reviewKey: 0,
                 descKey: 0,
@@ -511,10 +510,10 @@
 
 
                 statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
-                  .map(s => ({en: s.title, tr: s.title_tr})),
+                    .map(s => ({en: s.title, tr: s.title_tr})),
 
-              statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
-                  .map(s => ({en: s.title, tr: s.title_tr})),
+                statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                    .map(s => ({en: s.title, tr: s.title_tr})),
                 statusDisabled: false,
 
 
@@ -641,32 +640,58 @@
 
 
                 exBulletins() {
-                    let ids = [this.editedItem.id];
-                    if (this.editedItem.bulletin_relations) {
-                        ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id))
+                    let ids = [];
+
+                    if (this.editedItem?.id) {
+                        ids.push(this.editedItem.id);
+                        if (this.editedItem.bulletin_relations) {
+                            ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
+                        }
+                    } else if (this.reviewItem?.id) {
+                        ids.push(this.reviewItem.id);
+                        if (this.reviewItem.bulletin_relations) {
+                            ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
+                        }
                     }
+
                     return ids;
                 },
 
                 exActors() {
                     let ids = [];
-                    if (this.editedItem.actor_relations) {
-                        ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id))
+
+                    if (this.editedItem?.id) {
+                        if (this.editedItem.actor_relations) {
+                            ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
+                        }
+                    } else if (this.reviewItem?.id) {
+                        if (this.reviewItem.actor_relations) {
+                            ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
+                        }
                     }
+
                     return ids;
                 },
 
                 exIncidents() {
                     let ids = [];
-                    if (this.editedItem.incident_relations) {
-                        ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id))
+
+                    if (this.editedItem?.id) {
+                        if (this.editedItem.incident_relations) {
+                            ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
+                        }
+                    } else if (this.reviewItem?.id) {
+                        if (this.reviewItem.incident_relations) {
+                            ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
+                        }
                     }
+
                     return ids;
                 },
 
 
                 searchBg() {
-                        return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow lighten-5' : '';
+                    return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow lighten-5' : '';
 
                 },
 
@@ -720,9 +745,6 @@
                 }
             },
             mounted: function () {
-
-
-
 
 
                 // populate roles for advanced search for admins
@@ -816,10 +838,9 @@
                             console.error('API check failed:', error);
                         });
                 }
-            ,
+                ,
 
-                visualizeResults()
-                {
+                visualizeResults() {
                     this.visualizeLoading = true;
                     axios.post('/admin/api/graph/visualize', {q: this.search}, {
                         params: {
@@ -833,10 +854,10 @@
                     }).finally(() => {
                     });
                 }
-            ,
+                ,
 
 
-             exportRequest() {
+                exportRequest() {
 
                     let ids = this.selected.map(x => x.id);
                     this.loading = true;
@@ -996,11 +1017,11 @@
 
                 },
                 doSearch() {
-                this.options.page = 1;
-                this.advSearchExpand = this.advSearchExpand && false;
+                    this.options.page = 1;
+                    this.advSearchExpand = this.advSearchExpand && false;
 
 
-                this.searchBulletins();
+                    this.searchBulletins();
                 }
                 ,
                 searchBulletins(cached) {

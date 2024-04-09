@@ -111,10 +111,10 @@
                           <v-icon>mdi-checkbox-blank-outline</v-icon>
                         </v-btn>
 
-                        <v-btn 
-                                @click="bulkActorDrawer=true" 
-                                small 
-                                color="primary" 
+                        <v-btn
+                                @click="bulkActorDrawer=true"
+                                small
+                                color="primary"
                                 depressed
                                 v-if="bulkAllowed()"
                         >
@@ -169,6 +169,22 @@
                         ${selected.length} {{ _('Selected items') }}</v-chip>
                     </v-toolbar>
 
+                </template>
+
+                <template v-slot:item.type="{item}">
+                    <v-icon
+                    v-tippy
+                    :content="item.type"
+                    v-if="item.type==='Person'"
+                    >mdi-account
+                    </v-icon>
+
+                    <v-icon
+                        v-tippy
+                        :content="item.type"
+                        v-if="item.type==='Entity'"
+                        >mdi-account-group
+                    </v-icon>
                 </template>
 
                 <template v-slot:item.roles="{item}">
@@ -365,6 +381,8 @@
           },
       });
 
+
+
       let app = new Vue({
           el: "#app",
           vuetify: vuetify,
@@ -393,8 +411,18 @@
               selfAssignDialog: false,
 
 
-              // missing person toggle
-              profile: false,
+
+
+              tab: 0,
+
+              profileModes: [
+                  {id: 1, title: 'Normal', fields: ['source']}, // Normal Profile
+                  {id: 2, title: 'Main', fields: []}, // Main Profile
+                  {id: 3, title: 'Missing Person', fields: ['source', 'mp']}, // Missing Person Profile
+              ],
+
+            profileModeDropdown: false,
+
 
               dzOpts: {
                   url: '/admin/api/media/chunk',
@@ -433,65 +461,65 @@
               saveQueryDialog: false,
               searchPanels: 0,
 
-              searchTime: null,
-              searches: [],
-              savedSearchSelection: null,
+                searchTime: null,
+                searches: [],
+                savedSearchSelection: null,
 
-              roles: [],
+                roles: [],
 
-              fsloading: true,
-
-
-              // Load actor config
-
-              drawer: drawer,
-              sideNav: sideNav,
-              dialog: dialog,
-              //load advsearch constants
+                fsloading: true,
 
 
-              eventDialog: false,
-              eventParams: {typ: 'for_actor'},
-              reviewDialog: false,
-              reviewKey: 0,
-              videoDialog: false,
-              playerOptions: {},
+                // Load actor config
+
+                drawer: drawer,
+                sideNav: sideNav,
+                dialog: dialog,
+                //load advsearch constants
 
 
-              // search and relate actor dialog vars
-              relateActorDialog: false,
-              relateActorLoader: true,
-              relateActorTerm: "",
-              relateActorResults: [],
-              selectedRelatedActors: [],
-
-              // search and relate bulletin dialog vars
-              relateBulletinDialog: false,
-              relateBulletinLoader: true,
-              relateBulletinTerm: "",
-              relateBulletinResults: [],
-              selectedRelatedBulletins: [],
+                eventDialog: false,
+                eventParams: {typ: 'for_actor'},
+                reviewDialog: false,
+                reviewKey: 0,
+                videoDialog: false,
+                playerOptions: {},
 
 
-              // search and relate incident dialog vars
-              relateIncidentDialog: false,
-              relateIncidentLoader: true,
-              relateIncidentTerm: "",
-              relateIncidentResults: [],
-              selectedRelatedIncidents: [],
+                // search and relate actor dialog vars
+                relateActorDialog: false,
+                relateActorLoader: true,
+                relateActorTerm: "",
+                relateActorResults: [],
+                selectedRelatedActors: [],
+
+                // search and relate bulletin dialog vars
+                relateBulletinDialog: false,
+                relateBulletinLoader: true,
+                relateBulletinTerm: "",
+                relateBulletinResults: [],
+                selectedRelatedBulletins: [],
 
 
-              actorDrawer: false,
-              bulkActorDrawer: false,
+                // search and relate incident dialog vars
+                relateIncidentDialog: false,
+                relateIncidentLoader: true,
+                relateIncidentTerm: "",
+                relateIncidentResults: [],
+                selectedRelatedIncidents: [],
 
-              exportDrawer: false,
-              exportConfig: {},
 
-              sources: [],
-              locations: [],
-              labels: [],
-              verLabels: [],
-              eventtypes: [],
+                actorDrawer: false,
+                bulkActorDrawer: false,
+
+                exportDrawer: false,
+                exportConfig: {},
+
+                sources: [],
+                locations: [],
+                labels: [],
+                verLabels: [],
+                eventtypes: [],
 
               statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
                   .map(s => ({en: s.title, tr: s.title_tr})),
@@ -499,234 +527,250 @@
               statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
                   .map(s => ({en: s.title, tr: s.title_tr})),
 
-              statusDisabled: false,
+                statusDisabled: false,
 
 
-              //field language switchers
-              name__: true,
-              nickname__: true,
-              first_name__: true,
-              middle_name__: true,
-              mother_name__: true,
-              last_name__: true,
-              occupation__: true,
-              position__: true,
-              dialects__: true,
-              family_status__: true,
+                //field language switchers
+                name__: true,
+                first_name__: true,
+                middle_name__: true,
+                last_name__: true,
+                nickname__: true,
+                father_name__: true,
+                mother_name__: true,
+                occupation__: true,
+                position__: true,
 
-              //events fields
-              eventTitle__: true,
-              eventComments__: true,
+                //events fields
+                eventTitle__: true,
+                eventComments__: true,
 
+                //rich text config
+                tinyConfig: tinyConfig,
 
-              //source link extras
-              source_alt: null,
-              source_disabled: false,
+                snackbar: false,
+                snackMessage: "",
+                loading: true,
+                parentLoading: false,
+                csvFile: null,
+                options: {},
+                searchLoading: {
+                    assigned: false,
+                    first: false,
+                    second: false,
+                    third: false
+                },
+                sourcesLoading: false,
+                locationsLoading: false,
+                eventLocationLoading: false,
+                labelsLoading: false,
+                eventtypeLoading: false,
 
-              //rich text config
-              tinyConfig: tinyConfig,
+                //event dates popups
+                eventFromMenu: false,
+                eventToMenu: false,
 
-              snackbar: false,
-              snackMessage: "",
-              loading: true,
-              parentLoading: false,
-              csvFile: null,
-              options: {},
-              searchLoading: {
-                  assigned: false,
-                  first: false,
-                  second: false,
-                  third: false
-              },
-              sourcesLoading: false,
-              locationsLoading: false,
-              eventLocationLoading: false,
-              labelsLoading: false,
-              eventtypeLoading: false,
+                //actor dates popups
+                publishDateMenu: false,
+                documentationDateMenu: false,
 
-              //event dates popups
-              eventFromMenu: false,
-              eventToMenu: false,
+                footerProps: {
+                    itemsPerPageOptions: itemsPerPageOptions,
+                    itemsPerPageText: "{{ _('Rows per page')}}"
+                },
 
-              //actor dates popups
-              publishDateMenu: false,
-              documentationDateMenu: false,
-
-              footerProps: {
-                  itemsPerPageOptions: itemsPerPageOptions,
-                  itemsPerPageText: "{{ _('Rows per page')}}"
-              },
-
-              headers: [
-                  {text: "{{_('ID')}}", value: "id", width: 12, sortable: false},
-                  {text: "{{_('Name')}}", value: "name", width: 300, sortable: false},
-                  {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
-                      {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
-                      {text: "{{_('Roles')}}", value: "roles", width: 130, sortable: false},
-                  {% endif %}
+                headers: [
+                    {text: "{{_('ID')}}", value: "id", width: 12, sortable: false},
+                    {text: "{{_('Type')}}", value: "type", width: 20, sortable: false},
+                    {text: "{{_('Name')}}", value: "name", width: 300, sortable: false},
+                    {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
+                        {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
+                        {text: "{{_('Roles')}}", value: "roles", width: 130, sortable: false},
+                    {% endif %}
                   {text: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
-                  {text: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
-              ],
+                    {text: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
+                ],
 
-              items: [],
-              selected: [],
-              itemsLength: 10,
+                items: [],
+                selected: [],
+                itemsLength: 10,
 
-              editedIndex: -1,
-              editedItem: {
-                  events: [],
-                  medias: [],
-                  actor_relations: [],
-                  bulletin_relations: [],
-                  incident_relations: []
+                editedIndex: -1,
+                editedItem: {
+                    events: [],
+                    medias: [],
+                    actor_relations: [],
+                    bulletin_relations: [],
+                    incident_relations: []
 
-              },
-              defaultItem: {
-                  description: "",
+                },
+                defaultItem: {
+                    description: "",
+                    type: 'Person',
+                    // related events
+                    events: [],
+                    // related media
+                    medias: [],
+                    // related actors
+                    actor_relations: [],
 
-                  // related events
-                  events: [],
-                  // related media
-                  medias: [],
-                  // related actors
-                  actor_relations: [],
+                    // related bulletins
+                    bulletin_relations: [],
 
-                  // related bulletins
-                  bulletin_relations: [],
+                    // related incidents
+                    incident_relations: [],
+                    publish_date: '',
+                    documentation_date: '',
+                    actor_profiles: [{
+                        mode: 1
+                    }]
 
-                  // related incidents
-                  incident_relations: [],
-                  publish_date: '',
-                  documentation_date: ''
-              },
+                },
 
-              //events
-              editedEventIndex: -1,
-              editedEvent: {
-                  title: ""
-              },
-              defaultEvent: {
-                  title: "",
-                  from_date: '',
-                  to_date: ''
+                //events
+                editedEventIndex: -1,
+                editedEvent: {
+                    title: ""
+                },
+                defaultEvent: {
+                    title: "",
+                    from_date: '',
+                    to_date: ''
 
-              },
-
-
-              reviewItem: {},
-
-              // bulk actions
-              bulk: {},
-              bulkIcons: false,
-              jobs: [],
-              bulkTimer: 0,
-
-              actor: {},
-              actorLoader: false
-          }),
-
-          computed: {
-              compLocations() {
-                  return aggregateActorLocations(this.editedItem);
-              },
-
-              exBulletins() {
-                  let ids = [];
-                  if (this.editedItem.bulletin_relations) {
-                      ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id))
-                  }
-                  return ids;
-              },
-
-              exActors() {
-                  let ids = [this.editedItem.id];
-                  if (this.editedItem.actor_relations) {
-                      ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id))
-                  }
-                  return ids;
-              },
-
-              exIncidents() {
-                  let ids = [];
-                  if (this.editedItem.incident_relations) {
-                      ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id))
-                  }
-                  return ids;
-              },
+                },
 
 
-              formTitle() {
-                  return this.editedItem.id ? this.translations.editActor_ : this.translations.newActr_;
-              },
-              videoPlayer() {
-                  return document.querySelector("#player");
-              }
-          },
+                reviewItem: {},
 
-          watch: {
+                // bulk actions
+                bulk: {},
+                bulkIcons: false,
+                jobs: [],
+                bulkTimer: 0,
 
-              actorDrawer: function (val) {
-                  if (val == false) {
+                actor: {},
+                actorLoader: false
+            }),
 
-                      if (this.$route.path != '/admin/actors/')
-                          this.$router.push('/admin/actors/')
-                  }
-              },
+            computed: {
+                hasMainProfile() {
+                    return this.editedItem.actor_profiles.some(profile => profile.mode === 2);
+                },
+
+                compLocations() {
+                    return aggregateActorLocations(this.editedItem);
+                },
+
+               exBulletins() {
+                    let ids = [];
+
+                    if (this.editedItem?.id) {
+                        if (this.editedItem.bulletin_relations) {
+                            ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
+                        }
+                    } else if (this.reviewItem?.id) {
+                        if (this.reviewItem.bulletin_relations) {
+                            ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
+                        }
+                    }
+
+                    return ids;
+                },
+
+                exActors() {
+                    let ids = [];
+                    ids.push(this.editedItem.id);
+                    if (this.editedItem?.id) {
+                        if (this.editedItem.actor_relations) {
+                            ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
+                        }
+                    } else if (this.reviewItem?.id) {
+                        ids.push(this.reviewItem.id);
+                        if (this.reviewItem.actor_relations) {
+                            ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
+                        }
+                    }
+
+                    return ids;
+                },
+
+                exIncidents() {
+                    let ids = [];
+
+                    if (this.editedItem?.id) {
+                        if (this.editedItem.incident_relations) {
+                            ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
+                        }
+                    } else if (this.reviewItem?.id) {
+                        if (this.reviewItem.incident_relations) {
+                            ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
+                        }
+                    }
+
+                    return ids;
+                },
 
 
-              selected: function (val) {
-                  this.bulkIcons = val.length ? true : false;
+                formTitle() {
+                    return this.editedItem.id ? this.translations.editActor_ : this.translations.newActr_;
+                },
+                videoPlayer() {
+                    return document.querySelector("#player");
+                }
+            },
 
-              },
-              source_alt: function (val) {
+            watch: {
 
-                  if (val) {
-                      this.editedItem.source_link = 'NA';
-                      this.source_disabled = true;
-                  } else {
-                      //this.editedItem.source_link = '';
-                      this.source_disabled = false;
-                  }
-              },
+                actorDrawer: function (val) {
+                    if (val == false) {
+
+                        if (this.$route.path != '/admin/actors/')
+                            this.$router.push('/admin/actors/')
+                    }
+                },
+
+                selected: function (val) {
+                    this.bulkIcons = val.length ? true : false;
+
+                },
+
+                eventDialog(val) {
+                    val || this.closeEvent();
+                },
+
+                mediaDialog(val) {
+                    val || this.closeMedia();
+                },
+
+                options: {
+                    handler: "refresh"
+                }
+            },
+            mounted: function () {
+
+                // populate roles for advanced search for admins
+                {% if current_user.has_role('Admin') %}
+                    axios.get('/admin/api/roles/').then(res => {
+                        this.roles = res.data.items;
+                    }).catch(e => {
+                        this.roles = [];
+                        console.log(e.message);
+                    });
+                {% endif  %}
 
 
-              eventDialog(val) {
-                  val || this.closeEvent();
-              },
-
-              mediaDialog(val) {
-                  val || this.closeMedia();
-              },
-
-              options: {
-                  handler: "refresh"
-              }
-          },
-          mounted: function () {
-
-              // populate roles for advanced search for admins
-              {% if current_user.has_role('Admin') %}
-                  axios.get('/admin/api/roles/').then(res => {
-                      this.roles = res.data.items;
-                  }).catch(e => {
-                      this.roles = [];
-                      console.log(e.message);
-                  });
-              {% endif  %}
 
 
-
-
-              // display confirmation alert if edit dialog is open.
-              let self = this;
-              window.addEventListener("beforeunload", function (e) {
-                  if (self.dialog) {
-                      var confirmationMessage = 'It looks like you have been editing something. '
-                          + 'If you leave before saving, your changes will be lost.';
-                      (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-                      return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
-                  }
-              });
+                // display confirmation alert if edit dialog is open.
+                let self = this;
+                window.addEventListener("beforeunload", function (e) {
+                    if (self.dialog) {
+                        var confirmationMessage = 'It looks like you have been editing something. '
+                            + 'If you leave before saving, your changes will be lost.';
+                        (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+                        return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+                    }
+                });
 
 
               if (this.$route.params.id) {
@@ -771,6 +815,74 @@
 
           methods: {
 
+              modeName (modeId) {
+                return this.profileModes.find(x=>x.id ==modeId).title;
+              },
+
+              deleteProfile(index) {
+                  if (confirm('Are you sure you want to delete this profile?')) {
+                      if (this.editedItem.actor_profiles.length > 1) {
+                          this.editedItem.actor_profiles.splice(index, 1);
+                      } else {
+                          console.log("Cannot delete the last remaining profile.");
+                      }
+                  }
+              },
+
+
+              shouldDisplayField(mode, fieldName) {
+                  return this.profileModes.find(x=>x.id === mode).fields.includes(fieldName);
+              },
+
+
+                createProfile(profileMode){
+
+                    if (profileMode.id === 2 && this.hasMainProfile) {
+                        this.showSnack('Main profile already exists.');
+                        return;
+                    }
+
+
+                    this.profileModeDropdown = false
+                    this.editedItem.actor_profiles.push({
+                        mode: profileMode.id
+                    });
+                    this.tab = this.editedItem.actor_profiles.length - 1 ;
+
+                },
+
+              duplicateProfile(index) {
+                  profileToDuplicate = this.editedItem.actor_profiles[index]
+
+                  // Use structuredClone to create a deep copy of the profile
+                  const newProfile = structuredClone(profileToDuplicate);
+
+                  // reset the id of the new profile
+                  newProfile.id = null;
+
+                  // Check if the profile being duplicated is a main profile and if another main profile exists
+                  if (profileToDuplicate.mode === 2 && this.hasMainProfile) {
+                      this.showSnack('A main profile already exists. Cannot duplicate another main profile.');
+                      return;
+                  }
+
+
+                  // Append the new profile to the actor_profiles array
+                  this.editedItem.actor_profiles.push(newProfile);
+                  this.tab = this.editedItem.actor_profiles.length - 1;
+              },
+
+
+
+                getValidationRules(profile) {
+                    if (profile.source_link != null) {
+                        return 'url';
+                    } else {
+                        return '';
+                    }
+                },
+
+
                checkGraphStatus: function () {
                     axios.get('/admin/api/graph/status')
                         .then(res => {
@@ -788,8 +900,7 @@
                         });
                 },
 
-                visualizeResults()
-                {
+                visualizeResults() {
                     this.visualizeLoading = true;
                     axios.post('/admin/api/graph/visualize', {q: this.search}, {
                         params: {
@@ -805,7 +916,6 @@
                 },
 
               exportRequest() {
-
                   let ids = this.selected.map(x => x.id);
                   this.loading = true;
                   axios.post(`/export/api/actor/export`, {
@@ -1003,270 +1113,270 @@
                   this.doSearch();
               },
 
-              openSaveQueryDialog() {
-                  // Separate method to include auto-focus on input
+                openSaveQueryDialog() {
+                    // Separate method to include auto-focus on input
 
-                  this.saveQueryDialog = true;
-                  this.$nextTick(() => {
-                      setTimeout(() => {
-                          this.$refs.saveQueryInput.focus();
-                      }, 0);
-                  })
-              },
+                    this.saveQueryDialog = true;
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.$refs.saveQueryInput.focus();
+                        }, 0);
+                    })
+                },
 
-              loadSearch(item) {
+                loadSearch(item) {
 
-                  if (item) {
-                      this.savedSearchSelection = Object.assign([], item);
-                      this.search = Object.assign([], item.data);
-                  }
-                  this.$refs.savedSearchDropdown.blur()
-              },
-
-
-              loadSearchesFromAPI(selectLast = false) {
-                  axios.get('/admin/api/queries/', {
-                      params: {
-                          type: 'actor'
-                      }
-                  }).then(
-                      res => {
-                          this.searches = res.data;
-                          if (selectLast === true) {
-
-                              this.savedSearchSelection = this.searches.at(-1);
+                    if (item) {
+                        this.savedSearchSelection = Object.assign([], item);
+                        this.search = Object.assign([], item.data);
+                    }
+                    this.$refs.savedSearchDropdown.blur()
+                },
 
 
-                          }
-                      }
-                  ).catch(error => {
-                      this.showSnack(handleRequestError(error))
-                  });
+                loadSearchesFromAPI(selectLast = false) {
+                    axios.get('/admin/api/queries/', {
+                        params: {
+                            type: 'actor'
+                        }
+                    }).then(
+                        res => {
+                            this.searches = res.data;
+                            if (selectLast === true) {
 
-              },
-
-              saveSearch() {
-                  const newSearch = {q: this.search, name: this.queryName, type: 'actor'};
-
-                  axios.post('/admin/api/query/', newSearch)
-                      .then(res => {
-                          this.showSnack(res.data);
-                          this.saveQueryDialog = false;
+                                this.savedSearchSelection = this.searches.at(-1);
 
 
-                          this.queryName = null;
-                          // just reload searches and select the last one
-                          this.loadSearchesFromAPI(true);
-                      })
-                      .catch(error => {
-                          this.showSnack(handleRequestError(error));
-                      });
-              },
+                            }
+                        }
+                    ).catch(error => {
+                        this.showSnack(handleRequestError(error))
+                    });
+
+                },
+
+                saveSearch() {
+                    const newSearch = {q: this.search, name: this.queryName, type: 'actor'};
+
+                    axios.post('/admin/api/query/', newSearch)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.saveQueryDialog = false;
 
 
-              updateSearch() {
-                  axios.put('/admin/api/query/' + this.savedSearchSelection.name, {q: this.search})
-                      .then(res => {
-                          this.showSnack(res.data);
-                      })
-                      .catch(error => {
-                          this.showSnack(handleRequestError(error));
-                      });
-              },
+                            this.queryName = null;
+                            // just reload searches and select the last one
+                            this.loadSearchesFromAPI(true);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
 
 
-              deleteSearch(searchName) {
-                  axios.delete('/admin/api/query/' + searchName)
-                      .then(res => {
-                          this.showSnack(res.data);
-                          this.searches = this.searches.filter(item => item.name !== searchName);
-                          this.resetSearch();
-                      })
-                      .catch(error => {
-                          this.showSnack(handleRequestError(error));
-                      });
-              }
-              ,
+                updateSearch() {
+                    axios.put('/admin/api/query/' + this.savedSearchSelection.name, {q: this.search})
+                        .then(res => {
+                            this.showSnack(res.data);
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                },
 
 
-              // ---------------- end advanced search -----------------------
+                deleteSearch(searchName) {
+                    axios.delete('/admin/api/query/' + searchName)
+                        .then(res => {
+                            this.showSnack(res.data);
+                            this.searches = this.searches.filter(item => item.name !== searchName);
+                            this.resetSearch();
+                        })
+                        .catch(error => {
+                            this.showSnack(handleRequestError(error));
+                        });
+                }
+                ,
 
 
-              /* Actors Custom Lists */
-
-              allActors() {
-                  this.search = [{}];
-                  this.doSearch();
-
-              },
-              myAssigned() {
-                  q = {};
-                  this.options.page = 1;
-                  q.assigned = [this.currentUser.id];
-                  q.statuses = ["Assigned"];
-                  this.search = [q];
-                  this.searchActors();
-              },
-
-              myReview() {
-                  q = {};
-                  this.options.page = 1;
-                  q.reviewer = [this.currentUser.id];
-                  q.statuses = ["Peer Review Assigned"];
-                  this.search = [q]
-                  this.searchActors();
-              },
+                // ---------------- end advanced search -----------------------
 
 
-              removeEvent: function (evt, index) {
-                  if (confirm('Confirm deleting this event?')) {
-                      this.editedItem.events.splice(index, 1);
-                  }
-              },
+                /* Actors Custom Lists */
+
+                allActors() {
+                    this.search = [{}];
+                    this.doSearch();
+
+                },
+                myAssigned() {
+                    q = {};
+                    this.options.page = 1;
+                    q.assigned = [this.currentUser.id];
+                    q.statuses = ["Assigned"];
+                    this.search = [q];
+                    this.searchActors();
+                },
+
+                myReview() {
+                    q = {};
+                    this.options.page = 1;
+                    q.reviewer = [this.currentUser.id];
+                    q.statuses = ["Peer Review Assigned"];
+                    this.search = [q]
+                    this.searchActors();
+                },
 
 
-              //reset initial visible fields to english language
-
-              resetSwitchers: function () {
-                  this.name__ = true;
-                  this.nickname__ = true;
-                  this.first_name__ = true;
-                  this.middle_name__ = true;
-                  this.mother_name__ = true;
-                  this.last_name__ = true;
-                  this.occupation__ = true;
-                  this.position__ = true;
-                  this.dialects__ = true;
-                  this.family_status__ = true;
-              },
-
-              refresh(options) {
-                  this.searchActors();
-              },
-
-              rowClick(item) {
-                  if (item.restricted) {
-                      this.showSnack('This item is restricted.')
-                      return
-                  }
-                  path = `/admin/actors/${item.id}`;
-                  if (this.$route.path !== path)
-                      this.$router.push(path);
-
-              },
-
-              showActor(id) {
-                  this.actorLoader = true;
-                  this.actorDrawer = true;
-                  axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
-                      this.actor = response.data;
-                  }).catch(error => {
-                      this.actorDrawer = false;
-                      if (error.response) {
-                          this.showSnack(error.response.data)
-                          this.snackbar = true;
-                      }
-                  }).finally(() => {
-                      this.actorLoader = false;
-                  });
-              },
-
-              searchUsers: debounce(function (evt) {
-                  this.searchLoading[evt.target.dataset.loader] = true;
-
-                  axios.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
-                      this.users = response.data.items;
-                      this.searchLoading[evt.target.dataset.loader] = false;
-                  });
-              }, 350),
+                removeEvent: function (evt, index) {
+                    if (confirm('Confirm deleting this event?')) {
+                        this.editedItem.events.splice(index, 1);
+                    }
+                },
 
 
-              handleStatus(actor) {
+                //reset initial visible fields to english language
+
+                resetSwitchers: function () {
+                    this.name__ = true;
+                    this.first_name__ = true;
+                    this.middle_name__ = true;
+                    this.last_name__ = true;
+                    this.nickname__ = true;
+                    this.father_name__ = true;
+                    this.mother_name__ = true;
+                    this.occupation__ = true;
+                    this.position__ = true;
+                },
+
+                refresh(options) {
+                    this.searchActors();
+                },
+
+                rowClick(item) {
+                    if (item.restricted) {
+                        this.showSnack('This item is restricted.')
+                        return
+                    }
+                    path = `/admin/actors/${item.id}`;
+                    if (this.$route.path !== path)
+                        this.$router.push(path);
+
+                },
+
+                showActor(id) {
+                    this.actorLoader = true;
+
+                    axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
+                        this.actor = response.data;
+                        this.actorDrawer = true;
+                    }).catch(error => {
+                        this.actorDrawer = false;
+                        if (error.response) {
+                            this.showSnack(error.response.data)
+                            this.snackbar = true;
+                        }
+                    }).finally(() => {
+                        this.actorLoader = false;
+                    });
+                },
+
+                searchUsers: debounce(function (evt) {
+                    this.searchLoading[evt.target.dataset.loader] = true;
+
+                    axios.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
+                        this.users = response.data.items;
+                        this.searchLoading[evt.target.dataset.loader] = false;
+                    });
+                }, 350),
 
 
-                  if (this.editedItem.id) {
-                      // edit existing bulletin mode
-                      if (this.has_role(this.currentUser, 'Admin')) {
-
-                          this.statusDisabled = false;
-                          return;
-                      }
-
-                      // else is a standard user
-                      this.statusItems = this.statuses;
-
-                      if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created') {
-                          this.editedItem.status = this.statusItems[2].en;
-                      }
-
-                      if (this.editedItem.status == 'Peer Reviewed') {
-                          this.editedItem.status = this.statusItems[9].en;
-                      }
-
-                      this.statusDisabled = true;
-                  } else {
-                      // new bulletin mode
-
-                      this.editedItem.status = this.statusItems[1].en;
-                      this.statusDisabled = true;
-
-                  }
-              },
+                handleStatus(actor) {
 
 
-              showSnack(message) {
-                  this.snackMessage = message;
-                  this.snackbar = true;
-              },
-              has_role(user, role) {
-                  for (r of user.roles) {
-                      if (r.name == role) {
-                          return true
-                      }
-                  }
-                  return false;
-              },
+                    if (this.editedItem.id) {
+                        // edit existing bulletin mode
+                        if (this.has_role(this.currentUser, 'Admin')) {
+
+                            this.statusDisabled = false;
+                            return;
+                        }
+
+                        // else is a standard user
+                        this.statusItems = this.statuses;
+
+                        if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created') {
+                            this.editedItem.status = this.statusItems[2].en;
+                        }
+
+                        if (this.editedItem.status == 'Peer Reviewed') {
+                            this.editedItem.status = this.statusItems[9].en;
+                        }
+
+                        this.statusDisabled = true;
+                    } else {
+                        // new bulletin mode
+
+                        this.editedItem.status = this.statusItems[1].en;
+                        this.statusDisabled = true;
+
+                    }
+                },
+
+
+                showSnack(message) {
+                    this.snackMessage = message;
+                    this.snackbar = true;
+                },
+                has_role(user, role) {
+                    for (r of user.roles) {
+                        if (r.name == role) {
+                            return true
+                        }
+                    }
+                    return false;
+                },
 
               bulkAllowed() {
                   return this.has_role(this.currentUser, 'Admin') || this.has_role(this.currentUser, 'Mod');
               },
 
-              exportAllowed() {
-                  if (__EXPORT_TOOL__) {
-                      if (this.has_role(this.currentUser, 'Admin')) {
-                          return true;
-                      }
-                      if (this.currentUser.can_export) {
-                          return true;
-                      }
-                  }
-                  return false;
-              },
+                exportAllowed() {
+                    if (__EXPORT_TOOL__) {
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (this.currentUser.can_export) {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
 
-              editAllowed(actor) {
+                editAllowed(actor) {
 
-                  if (actor.restricted) {
-                      return false;
-                  }
+                    if (actor.restricted) {
+                        return false;
+                    }
 
-                  if (this.has_role(this.currentUser, 'Admin')) {
-                      return true;
-                  }
-                  if (!this.has_role(this.currentUser, 'DA')) {
-                      return false;
-                  }
-                  const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
-                  if (actor.assigned_to && actor.assigned_to.id == this.currentUser.id && statuses.includes(actor.status)) {
-                      return true
-                  }
-                  return false;
-              },
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return true;
+                    }
+                    if (!this.has_role(this.currentUser, 'DA')) {
+                        return false;
+                    }
+                    const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
+                    if (actor.assigned_to && actor.assigned_to.id == this.currentUser.id && statuses.includes(actor.status)) {
+                        return true
+                    }
+                    return false;
+                },
 
-              reviewAllowed(actor) {
+                reviewAllowed(actor) {
 
-                  if (actor.restricted) {
-                      return false;
-                  }
+                    if (actor.restricted) {
+                        return false;
+                    }
 
                   if (!this.currentUser.roles.length) {
                       return false;
@@ -1335,7 +1445,6 @@
 
                   if (!item.id) {
                       this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
-                      this.source_alt = null;
                       this.dialog = true;
                       this.handleStatus(item);
                   } else {
@@ -1346,11 +1455,6 @@
 
                           this.$nextTick(() => {
                               this.loading = false;
-                              if (this.editedItem.source_link == 'NA') {
-                                  this.source_alt = true;
-                              } else {
-                                  this.source_alt = false;
-                              }
                               this.editedItem = response.data;
                               this.editedItem.comments = '';
                               this.editedItem.comments = '';
@@ -1406,41 +1510,53 @@
               },
 
               save() {
-                  if (this.editedItem.id) {
-                      //update record
-                      this.loading = true;
-                      axios
-                          .put(`/admin/api/actor/${this.editedItem.id}`, {
-                              item: this.editedItem
-                          })
-                          .then(response => {
-                              this.showSnack(response.data);
-                              this.refresh(this.options);
-                          }).catch(err => {
-                          console.log(err.response.data);
-                          this.showSnack(err.response.data)
-                      }).finally(() => {
-                          this.loading = false;
+                  const validator = this.$refs.observer;
+                  validator.validate().then(valid => {
+                      if (!valid) {
+                          this.showSnack('Please fix the errors before saving.');
+                          return; // Add this line
+                      }
+
+                      if (this.editedItem.id) {
+                          //update record
+                          this.loading = true;
+                          axios
+                              .put(`/admin/api/actor/${this.editedItem.id}`, {
+                                  item: this.editedItem
+                              })
+                              .then(response => {
+                                  this.showSnack(response.data);
+                                  this.refresh(this.options);
+                              }).catch(err => {
+                              console.log(err.response.data);
+                              this.showSnack(err.response.data)
+                          }).finally(() => {
+                              this.loading = false;
 
 
-                      });
-                  } else {
+                          });
+                      } else {
 
-                      //create new record
-                      this.loading = true;
-                      axios
-                          .post("/admin/api/actor/", {item: this.editedItem})
-                          .then(response => {
-                              this.showSnack(response.data);
-                              this.refresh(this.options);
-                          }).catch(err => {
-                          console.log(err.response.data);
-                          this.showSnack(err.response.data)
-                      }).finally(() => {
-                          this.loading = false;
-                      });
-                  }
-                  this.close();
+                          //create new record
+                          this.loading = true;
+                          axios
+                              .post("/admin/api/actor/", {item: this.editedItem})
+                              .then(response => {
+                                  this.showSnack(response.data);
+                                  this.refresh(this.options);
+                              }).catch(err => {
+                              console.log(err.response.data);
+                              this.showSnack(err.response.data)
+                          }).finally(() => {
+                              this.loading = false;
+                          });
+                      }
+                      this.close();
+                  });
+
+
+
+
               },
 
               editEvent(evt, item, index) {

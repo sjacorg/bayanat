@@ -40,6 +40,7 @@ class ActorFactory(factory.Factory):
 
     name = factory.Sequence(lambda n: f"Actor {n}")
     age = 25
+    type = "Entity"
     review = factory.Sequence(lambda n: f"Actor review {n}")
 
 

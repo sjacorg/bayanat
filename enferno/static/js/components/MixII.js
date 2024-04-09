@@ -14,6 +14,7 @@ Vue.component('mix-ii', {
 
   watch: {
     value: function (val) {
+
       if (val) {
         this.mix = val;
       }
@@ -24,7 +25,12 @@ Vue.component('mix-ii', {
     },
   },
 
-  mounted: function () {},
+  mounted: function () {
+      if (this.value) {
+    this.mix = this.value;
+  }
+
+  },
 
   methods: {
     refresh() {

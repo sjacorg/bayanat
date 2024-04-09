@@ -121,32 +121,15 @@
 
             <div>
                 <dt>Actor Type</dt>
-                <dd>{{ actor.actor_type }}</dd>
+                <dd>{{ actor.type }}</dd>
             </div>
         </article>
 
         <article class="two-col">
-            <div>
-                <dt>Date of Birth</dt>
-                <dd>{{ actor.birth_date }}</dd>
-            </div>
-
-            <div>
-                <dt>Place of Birth</dt>
-                <dd>{{ actor.birth_place.title if actor.birth_place else '-' }} </dd>
-            </div>
-        </article>
-
-
-        <article class="two-col">
-            <div>
-                <dt>Place of Residence</dt>
-                <dd>{{ actor.residence_place.title if actor.residence_place else '-' }}</dd>
-            </div>
 
             <div>
                 <dt>Place of Origin</dt>
-                <dd>{{ actor.birth_place.title if actor.birth_place else '-' }} </dd>
+                <dd>{{ actor.origin_place.title if actor.origin_place else '-' }} </dd>
             </div>
         </article>
 
@@ -225,7 +208,7 @@
     <article>
         <div>
             <dt>National ID Number</dt>
-            <dd>{{ actor.national_id_card }}</dd>
+            <dd>{{ actor.id_number }}</dd>
         </div>
     </article>
 

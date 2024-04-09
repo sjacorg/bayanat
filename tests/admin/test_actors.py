@@ -2,12 +2,14 @@ import json
 import pytest
 
 from enferno.admin.models import Actor
+from enferno.user.models import User
 from tests.factories import ActorFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
     get_first_or_fail,
     load_data,
+    get_uid_from_client,
 )
 
 ##### PYDANTIC MODELS #####
@@ -106,7 +108,7 @@ def test_actors_endpoint(create_actor, request, client_fixture, expected_status)
     assert response.status_code == expected_status
     # If expected response is 200, assert that the response conforms to schema
     if expected_status == 200:
-        conform_to_schema_or_fail(response.json, ActorsResponseModel)
+        conform_to_schema_or_fail(convert_empty_strings_to_none(response.json), ActorsResponseModel)
 
 
 ##### GET /admin/api/actor/<int:id> #####
@@ -125,7 +127,7 @@ def test_actor_endpoint(create_actor, request, client_fixture, expected_status):
         # Mode 1
         data = convert_empty_strings_to_none(load_data(response))
         conform_to_schema_or_fail(data, ActorItemMinModel)
-        assert "originid" not in dict.keys(data)
+        assert "comments" not in dict.keys(data)
         # Mode 2
         response = client_.get(
             f"/admin/api/actor/{actor.id}?mode=2", headers={"Content-Type": "application/json"}
@@ -133,7 +135,7 @@ def test_actor_endpoint(create_actor, request, client_fixture, expected_status):
         assert response.status_code == 200
         data = convert_empty_strings_to_none(load_data(response))
         conform_to_schema_or_fail(data, ActorItemMode2Model)
-        assert "originid" in dict.keys(data)
+        assert "comments" in dict.keys(data)
         assert "bulletin_relations" not in dict.keys(data)
         # Mode 3
         response = client_.get(
@@ -142,8 +144,8 @@ def test_actor_endpoint(create_actor, request, client_fixture, expected_status):
         assert response.status_code == 200
         data = convert_empty_strings_to_none(load_data(response))
         conform_to_schema_or_fail(data, ActorItemMode3Model)
-        assert "originid" in dict.keys(data)
-        assert "bulletin_relations" in dict.keys(data)
+        assert "actor_profiles" in dict.keys(data)
+        assert "comments" in dict.keys(data)
         # Mode 3+/unspecified
         response = client_.get(
             f"/admin/api/actor/{actor.id}", headers={"Content-Type": "application/json"}
@@ -171,7 +173,7 @@ def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expect
     response = client_.post(
         "/admin/api/actor",
         headers={"content-type": "application/json"},
-        json={"item": {"name": actor.name}},
+        json={"item": {"name": actor.name, "type": "Entity"}},
         follow_redirects=True,
     )
     assert response.status_code == expected_status
@@ -188,14 +190,16 @@ def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expect
 
 put_actor_endpoint_roles = [
     ("admin_client", 200),
-    ("da_client", 200),
+    ("da_client", 403),
     ("mod_client", 403),
     ("client", 401),
 ]
 
 
 @pytest.mark.parametrize("client_fixture,expected_status", put_actor_endpoint_roles)
-def test_put_actor_endpoint(create_actor, request, client_fixture, expected_status):
+def test_put_actor_endpoint(
+    clean_slate_actors, create_actor, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_actor_or_fail()
     actor_id = actor.id
@@ -203,7 +207,39 @@ def test_put_actor_endpoint(create_actor, request, client_fixture, expected_stat
     response = client_.put(
         f"/admin/api/actor/{actor_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"name": new_name}},
+        json={"item": {"name": new_name, "type": "Entity"}},
+    )
+    assert response.status_code == expected_status
+    found_actor = Actor.query.filter(Actor.id == actor_id).first()
+    if expected_status == 200:
+        assert found_actor.name == new_name
+    else:
+        assert found_actor.name != new_name
+
+
+put_actor_endpoint_roles2 = [
+    ("admin_client", 200),
+    ("da_client", 200),
+    ("mod_client", 403),
+    ("client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture,expected_status", put_actor_endpoint_roles2)
+def test_put_actor_assigned_endpoint(
+    users, clean_slate_actors, create_actor, request, client_fixture, expected_status
+):
+    client_ = request.getfixturevalue(client_fixture)
+    actor = get_first_actor_or_fail()
+    uid = get_uid_from_client(users, client_fixture)
+    actor.assigned_to = User.query.filter(User.id == uid).first()
+    actor.save()
+    actor_id = actor.id
+    new_name = ActorFactory().name
+    response = client_.put(
+        f"/admin/api/actor/{actor_id}",
+        headers={"content-type": "application/json"},
+        json={"item": {"name": new_name, "type": "Entity"}},
     )
     assert response.status_code == expected_status
     found_actor = Actor.query.filter(Actor.id == actor_id).first()

@@ -1,0 +1,80 @@
+import logging
+from sqlalchemy import create_engine, MetaData
+from enferno.settings import Config as cfg
+from enferno.extensions import db
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger()
+
+
+class DBAlignmentChecker:
+    def __init__(self):
+        self.engine = create_engine(cfg.SQLALCHEMY_DATABASE_URI)
+        self.metadata = MetaData(bind=self.engine)
+        self.metadata.reflect(self.engine)
+        self.model_classes = self._get_model_classes()
+        self.db_tables = set(self.metadata.tables.keys())
+        self.joint_tables = self._get_joint_tables()
+
+    def _type_check(self, model_type, db_type):
+        return isinstance(model_type, type(db_type)) or isinstance(db_type, type(model_type))
+
+    def _get_model_classes(self):
+        return [(model, model.__tablename__) for model in db.Model.__subclasses__()]
+
+    def _get_joint_tables(self):
+        joint_tables = set()
+        for model, _ in self.model_classes:
+            for attr in dir(model):
+                if attr.startswith("_"):
+                    continue
+                field = getattr(model, attr)
+                if hasattr(field, "property") and hasattr(field.property, "mapper"):
+                    # Check if it's a relationship and a secondary table is involved
+                    if field.property.secondary is not None:
+                        joint_tables.add(field.property.secondary.name)
+        return joint_tables
+
+    def _report_table_discrepancies(self, model, table_name):
+        table = self.metadata.tables.get(table_name)
+        if table is None:
+            logger.error(f"Table '{table_name}' for model {model.__name__} does not exist")
+            return False
+
+        model_columns = {c.name: c.type for c in model.__table__.columns}
+        table_columns = {c.name: c.type for c in table.columns}
+
+        for name, model_type in model_columns.items():
+            if name not in table_columns:
+                logger.warning(f"Column '{name}' missing in table '{table_name}'.")
+            elif not self._type_check(model_type, table_columns[name]):
+                logger.warning(
+                    f"Type mismatch for '{name}' in table '{table_name}': Model type {model_type} vs. Table type {table_columns[name]}."
+                )
+
+        for name in table_columns:
+            if name not in model_columns:
+                logger.info(f"Extra column '{name}' in table '{table_name}', not in model.")
+
+        return True
+
+    def _find_extra_tables(self):
+        model_tables = {name for _, name in self.model_classes}
+        extras = self.db_tables - model_tables - self.joint_tables
+        return {t for t in extras if not t.startswith('spatial_')}
+
+    def check_db_alignment(self):
+        aligned = True
+        for model, table_name in self.model_classes:
+            if not self._report_table_discrepancies(model, table_name):
+                aligned = False
+
+        extra_tables = self._find_extra_tables()
+        if extra_tables:
+            logger.info(
+                f"Extra tables in database not present in models: {', '.join(extra_tables)}"
+            )
+
+        if aligned:
+            logger.info("The database is aligned with the schema")

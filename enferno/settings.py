@@ -126,17 +126,25 @@ class Config(object):
     PERMANENT_SESSION_LIFETIME = 3600
 
     # Google 0Auth
+    GOOGLE_OAUTH_ENABLED = manager.get_config("GOOGLE_OAUTH_ENABLED")
     GOOGLE_CLIENT_ID = manager.get_config("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = manager.get_config("GOOGLE_CLIENT_SECRET")
     GOOGLE_DISCOVERY_URL = manager.get_config("GOOGLE_DISCOVERY_URL")
 
-    GOOGLE_CLIENT_ALLOWED_DOMAIN = os.environ.get("GOOGLE_CLIENT_ALLOWED_DOMAIN", "gmail.com")
+    GOOGLE_CLIENT_ALLOWED_DOMAIN = os.environ.get("GOOGLE_CLIENT_ALLOWED_DOMAIN", False)
 
     # File Upload Settings: switch to True to store files privately within the enferno/media directory
     FILESYSTEM_LOCAL = manager.get_config("FILESYSTEM_LOCAL")
 
     # Access Control settings
     ACCESS_CONTROL_RESTRICTIVE = manager.get_config("ACCESS_CONTROL_RESTRICTIVE")
+
+    # Activities
+    ACTIVITIES = manager.get_config("ACTIVITIES")
+    activities = [x for x, value in ACTIVITIES.items() if value]
+    # minimum retention for 90 days
+    activities_retention = max(90, int(manager.get_config("ACTIVITIES_RETENTION")))
+    ACTIVITIES_RETENTION = timedelta(days=activities_retention)
 
     # Allowed file upload extensions
     MEDIA_ALLOWED_EXTENSIONS = manager.get_config("MEDIA_ALLOWED_EXTENSIONS")
@@ -162,7 +170,7 @@ class Config(object):
     # valid image extenstions supported by Tesseract OCR
     OCR_ENABLED = manager.get_config("OCR_ENABLED")
     OCR_EXT = manager.get_config("OCR_EXT")
-    TESSERACT_CMD = os.environ.get("ETL_ALLOWED_PATH", "/usr/bin/tesseract")
+    TESSERACT_CMD = os.environ.get("TESSERACT_CMD", "/usr/bin/tesseract")
 
     # S3 settings
     # Bucket needs to be private with public access blocked
@@ -172,8 +180,8 @@ class Config(object):
     AWS_REGION = manager.get_config("AWS_REGION")
 
     # i18n
-    LANGUAGES = manager.get_config("LANGUAGES")
-    BABEL_DEFAULT_LOCALE = os.environ.get("DEFAULT_LANGUAGE", "en")
+    LANGUAGES = ["en", "ar", "uk", "fr", "es", "ru", "fa"]
+    BABEL_DEFAULT_LOCALE = manager.get_config("BABEL_DEFAULT_LOCALE")
     # extract messages with the following command
     # pybabel extract -F babel.cfg -k _l -o messages.pot .
     # generate a new language using the following command
@@ -185,9 +193,6 @@ class Config(object):
 
     MAPS_API_ENDPOINT = manager.get_config("MAPS_API_ENDPOINT")
     GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-
-    # Missing persons
-    MISSING_PERSONS = manager.get_config("MISSING_PERSONS")
 
     # Deduplication
 

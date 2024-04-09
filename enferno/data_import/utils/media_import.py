@@ -509,7 +509,13 @@ class MediaImport:
             bulletin.save(raise_exception=True)
             bulletin.create_revision(user_id=user.id)
             # Record bulletin creation activity
-            Activity.create(user, Activity.ACTION_CREATE, bulletin.to_mini(), "bulletin")
+            Activity.create(
+                user,
+                Activity.ACTION_CREATE,
+                Activity.STATUS_SUCCESS,
+                bulletin.to_mini(),
+                "bulletin",
+            )
 
             self.data_import.add_to_log(f"Created Bulletin {bulletin.id} successfully.")
             self.data_import.add_item(bulletin.id)

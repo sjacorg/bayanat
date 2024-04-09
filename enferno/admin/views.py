@@ -46,9 +46,11 @@ from enferno.admin.models import (
     ItobInfo,
     Country,
     Ethnography,
+    Dialect,
     MediaCategory,
     GeoLocationType,
     WorkflowStatus,
+    ActorProfile,
 )
 from enferno.extensions import rds
 from enferno.extensions import cache
@@ -192,6 +194,9 @@ def api_label_create():
     label = Label()
     created = label.from_json(request.json["item"])
     if created.save():
+        Activity.create(
+            current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
+        )
         return f"Created Label #{label.id}", 200
     else:
         return "Save Failed", 417
@@ -209,6 +214,9 @@ def api_label_update(id):
     if label is not None:
         label = label.from_json(request.json["item"])
         label.save()
+        Activity.create(
+            current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
+        )
         return f"Saved Label #{label.id}", 200
     else:
         return HTTPResponse.NOT_FOUND
@@ -223,8 +231,16 @@ def api_label_delete(id):
     :return: Success/error based on operation's result.
     """
     label = Label.query.get(id)
-    label.delete()
-    return f"Deleted Label #{label.id}", 200
+    if label is None:
+        return HTTPResponse.NOT_FOUND
+
+    if label.delete():
+        Activity.create(
+            current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
+        )
+        return f"Deleted Label #{label.id}", 200
+    else:
+        return "Error deleting Label", 417
 
 
 @admin.post("/api/label/import/")
@@ -292,6 +308,13 @@ def api_eventtype_create():
     eventtype = Eventtype()
     created = eventtype.from_json(request.json["item"])
     if created.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            eventtype.to_mini(),
+            "eventtype",
+        )
         return f"Created Event #{eventtype.id}", 200
     else:
         return "Save Failed", 417
@@ -310,8 +333,17 @@ def api_eventtype_update(id):
         return HTTPResponse.NOT_FOUND
 
     eventtype = eventtype.from_json(request.json["item"])
-    eventtype.save()
-    return f"Saved Event #{eventtype.id}", 200
+    if eventtype.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            eventtype.to_mini(),
+            "eventtype",
+        )
+        return f"Saved Event #{eventtype.id}", 200
+    else:
+        return "Save Failed", 417
 
 
 @admin.delete("/api/eventtype/<int:id>")
@@ -326,8 +358,17 @@ def api_eventtype_delete(id):
     if eventtype is None:
         return HTTPResponse.NOT_FOUND
 
-    eventtype.delete()
-    return f"Deleted Event #{eventtype.id}", 200
+    if eventtype.delete():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            eventtype.to_mini(),
+            "eventtype",
+        )
+        return f"Deleted Event Type #{eventtype.id}", 200
+    else:
+        return "Error deleting Event Type", 417
 
 
 @admin.post("/api/eventtype/import/")
@@ -378,8 +419,15 @@ def api_potentialviolation_create():
     :return: success/error based on operation's result
     """
     potentialviolation = PotentialViolation()
-    created = potentialviolation.from_json(request.json["item"])
-    if created.save():
+    potentialviolation = potentialviolation.from_json(request.json["item"])
+    if potentialviolation.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            potentialviolation.to_mini(),
+            "potentialviolation",
+        )
         return f"Created Potential Violation #{potentialviolation.id}", 200
     else:
         return "Save Failed", 417
@@ -398,8 +446,17 @@ def api_potentialviolation_update(id):
         return HTTPResponse.NOT_FOUND
 
     potentialviolation = potentialviolation.from_json(request.json["item"])
-    potentialviolation.save()
-    return f"Saved Potential Violation #{potentialviolation.id}", 200
+    if potentialviolation.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            potentialviolation.to_mini(),
+            "potentialviolation",
+        )
+        return f"Saved Potential Violation #{potentialviolation.id}", 200
+    else:
+        return "Save Failed", 417
 
 
 @admin.delete("/api/potentialviolation/<int:id>")
@@ -413,8 +470,18 @@ def api_potentialviolation_delete(id):
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
         return HTTPResponse.NOT_FOUND
-    potentialviolation.delete()
-    return f"Deleted Potential Violation #{potentialviolation.id}", 200
+
+    if potentialviolation.delete():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            potentialviolation.to_mini(),
+            "potentialviolation",
+        )
+        return f"Deleted Potential Violation #{potentialviolation.id}", 200
+    else:
+        return "Error deleting Potential Violation", 417
 
 
 @admin.post("/api/potentialviolation/import/")
@@ -465,8 +532,15 @@ def api_claimedviolation_create():
     :return: success / error based on operation's result
     """
     claimedviolation = ClaimedViolation()
-    created = claimedviolation.from_json(request.json["item"])
-    if created.save():
+    claimedviolation = claimedviolation.from_json(request.json["item"])
+    if claimedviolation.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            claimedviolation.to_mini(),
+            "claimedviolation",
+        )
         return f"Created Claimed Violation #{claimedviolation.id}", 200
     else:
         return "Save Failed", 417
@@ -485,8 +559,17 @@ def api_claimedviolation_update(id):
         return HTTPResponse.NOT_FOUND
 
     claimedviolation = claimedviolation.from_json(request.json["item"])
-    claimedviolation.save()
-    return f"Saved Claimed Violation #{claimedviolation.id}", 200
+    if claimedviolation.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            claimedviolation.to_mini(),
+            "claimedviolation",
+        )
+        return f"Saved Claimed Violation #{claimedviolation.id}", 200
+    else:
+        return "Save Failed", 417
 
 
 @admin.delete("/api/claimedviolation/<int:id>")
@@ -501,8 +584,17 @@ def api_claimedviolation_delete(id):
     if claimedviolation is None:
         return HTTPResponse.NOT_FOUND
 
-    claimedviolation.delete()
-    return f"Deleted Claimed Violation #{claimedviolation.id}", 200
+    if claimedviolation.delete():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            claimedviolation.to_mini(),
+            "claimedviolation",
+        )
+        return f"Deleted Claimed Violation #{claimedviolation.id}", 200
+    else:
+        return "Error deleting Claimed Violation", 417
 
 
 @admin.post("/api/claimedviolation/import/")
@@ -581,8 +673,15 @@ def api_source_create():
     :return: success/error based on operation's result
     """
     source = Source()
-    created = source.from_json(request.json["item"])
-    if created.save():
+    source = source.from_json(request.json["item"])
+    if source.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            source.to_mini(),
+            "source",
+        )
         return f"Created Source #{source.id}", 200
     else:
         return "Save Failed", 417
@@ -601,8 +700,17 @@ def api_source_update(id):
         return HTTPResponse.NOT_FOUND
 
     source = source.from_json(request.json["item"])
-    source.save()
-    return f"Saved Source #{source.id}", 200
+    if source.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            source.to_mini(),
+            "source",
+        )
+        return f"Saved Source #{source.id}", 200
+    else:
+        return "Save Failed", 417
 
 
 @admin.delete("/api/source/<int:id>")
@@ -616,11 +724,21 @@ def api_source_delete(id):
     source = Source.query.get(id)
     if source is None:
         return HTTPResponse.NOT_FOUND
-    source.delete()
-    return f"Deleted Source #{source.id}", 200
+
+    if source.delete():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            source.to_mini(),
+            "source",
+        )
+        return f"Deleted Source #{source.id}", 200
+    else:
+        return "Error deleting Source", 417
 
 
-@admin.route("/api/source/import/", methods=["POST"])
+@admin.post("/api/source/import/")
 @roles_required("Admin")
 def api_source_import():
     """
@@ -685,6 +803,13 @@ def api_location_create():
         location.full_location = location.get_full_string()
         location.id_tree = location.get_id_tree()
         location.create_revision()
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            location.to_mini(),
+            "location",
+        )
         return f"Created Location #{location.id}", 200
 
 
@@ -705,6 +830,13 @@ def api_location_update(id):
             location.full_location = location.get_full_string()
             location.id_tree = location.get_id_tree()
             location.create_revision()
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                location.to_mini(),
+                "location",
+            )
             return f"Saved Location #{location.id}", 200
         else:
             return "Save Failed", 417
@@ -716,11 +848,21 @@ def api_location_update(id):
 @roles_required("Admin")
 def api_location_delete(id):
     """Endpoint for deleting locations."""
+    location = Location.query.get(id)
+    if location is None:
+        return HTTPResponse.NOT_FOUND
 
-    if request.method == "DELETE":
-        location = Location.query.get(id)
-        location.delete()
+    if location.delete():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            location.to_mini(),
+            "location",
+        )
         return f"Deleted Location #{location.id}", 200
+    else:
+        return "Error deleting Location", 417
 
 
 @admin.post("/api/location/import/")
@@ -747,6 +889,13 @@ def api_location_get(id):
     if location is None:
         return HTTPResponse.NOT_FOUND
     else:
+        Activity.create(
+            current_user,
+            Activity.ACTION_VIEW,
+            Activity.STATUS_SUCCESS,
+            location.to_mini(),
+            "location",
+        )
         return json.dumps(location.to_dict()), 200
 
 
@@ -784,7 +933,14 @@ def api_location_admin_level_create():
     admin_level.from_json(request.json["item"])
 
     if admin_level.save():
-        return f"Item created successfully ID ${admin_level.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            admin_level.to_mini(),
+            "adminlevel",
+        )
+        return f"Item created successfully ID ${admin_level.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -796,7 +952,14 @@ def api_location_admin_level_update(id):
     if admin_level:
         admin_level.from_json(request.json.get("item"))
         if admin_level.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                admin_level.to_mini(),
+                "adminlevel",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -830,7 +993,14 @@ def api_location_type_create():
     location_type.from_json(request.json["item"])
 
     if location_type.save():
-        return f"Item created successfully ID ${location_type.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            location_type.to_mini(),
+            "locationtype",
+        )
+        return f"Item created successfully ID ${location_type.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -843,7 +1013,14 @@ def api_location_type_update(id):
     if location_type:
         location_type.from_json(request.json.get("item"))
         if location_type.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                location_type.to_mini(),
+                "locationtype",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -859,14 +1036,20 @@ def api_location_type_delete(id):
     :return: success/error
     """
     location_type = LocationType.query.get(id)
+    if location_type is None:
+        return HTTPResponse.NOT_FOUND
+
     if location_type.delete():
-        # Record Activity
         Activity.create(
-            current_user, Activity.ACTION_DELETE, location_type.to_mini(), "location_type"
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            location_type.to_mini(),
+            "locationtype",
         )
         return f"Location Type Deleted #{location_type.id}", 200
     else:
-        return "Error deleting location type", 417
+        return "Error deleting Location Type", 417
 
 
 @admin.route("/api/countries/", methods=["GET", "POST"])
@@ -903,7 +1086,15 @@ def api_country_create():
     country.from_json(request.json["item"])
 
     if country.save():
-        return f"Item created successfully ID ${country.id} !", 200
+        # Record Activity
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            country.to_mini(),
+            "country",
+        )
+        return f"Item created successfully ID ${country.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -916,7 +1107,14 @@ def api_country_update(id):
     if country:
         country.from_json(request.json.get("item"))
         if country.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                country.to_mini(),
+                "country",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -932,12 +1130,21 @@ def api_country_delete(id):
     :return: success/error
     """
     country = Country.query.get(id)
+    if country is None:
+        return HTTPResponse.NOT_FOUND
+
     if country.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, country.to_mini(), "country")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            country.to_mini(),
+            "country",
+        )
         return f"Country Deleted #{country.id}", 200
     else:
-        return "Error deleting country", 417
+        return "Error deleting Country", 417
 
 
 @admin.route("/api/ethnographies/", methods=["GET", "POST"])
@@ -974,7 +1181,14 @@ def api_ethnography_create():
     ethnography.from_json(request.json["item"])
 
     if ethnography.save():
-        return f"Item created successfully ID ${ethnography.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            ethnography.to_mini(),
+            "ethnography",
+        )
+        return f"Item created successfully ID ${ethnography.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -987,7 +1201,14 @@ def api_ethnography_update(id):
     if ethnography:
         ethnography.from_json(request.json.get("item"))
         if ethnography.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                ethnography.to_mini(),
+                "ethnography",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1003,12 +1224,128 @@ def api_ethnography_delete(id):
     :return: success/error
     """
     ethnography = Ethnography.query.get(id)
+    if ethnography is None:
+        return HTTPResponse.NOT_FOUND
+
     if ethnography.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, ethnography.to_mini(), "ethnography")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            ethnography.to_mini(),
+            "ethnography",
+        )
         return f"Ethnography Deleted #{ethnography.id}", 200
     else:
-        return "Error deleting ethnography", 417
+        return "Error deleting Ethnography", 417
+
+
+@admin.route("/api/dialects/", methods=["GET", "POST"])
+def api_dialects():
+    """
+    Returns Dialects in JSON format, allows search and paging.
+    """
+    page = request.args.get("page", 1, int)
+    per_page = request.args.get("per_page", PER_PAGE, int)
+
+    q = request.args.get("q")
+    if q:
+        result = (
+            Dialect.query.filter(
+                or_(Dialect.title.ilike(f"%{q}%"), Dialect.title_tr.ilike(f"%{q}%"))
+            )
+            .order_by(-Dialect.id)
+            .paginate(page=page, per_page=per_page, count=True)
+        )
+    else:
+        result = Dialect.query.order_by(-Dialect.id).paginate(
+            page=page, per_page=per_page, count=True
+        )
+
+    response = {
+        "items": [item.to_dict() for item in result.items],
+        "perPage": per_page,
+        "total": result.total,
+    }
+    return Response(json.dumps(response), content_type="application/json"), 200
+
+
+@admin.post("/api/dialect")
+@roles_required("Admin")
+def api_dialect_create():
+    """
+    Endpoint to create a dialect
+    :param id: id of the dialect to be created
+    :return: success/error
+    """
+    dialect = Dialect()
+    dialect.from_json(request.json["item"])
+
+    if dialect.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            dialect.to_mini(),
+            "dialect",
+        )
+        return f"Item created successfully ID ${dialect.id}", 200
+    else:
+        return "Creation failed.", 417
+
+
+@admin.put("/api/dialect/<int:id>")
+@roles_required("Admin")
+def api_dialect_update(id):
+    """
+    Endpoint to update a dialect
+    :param id: id of the dialect to be updated
+    :return: success/error
+    """
+    dialect = Dialect.query.get(id)
+
+    if dialect:
+        dialect.from_json(request.json.get("item"))
+        if dialect.save():
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                dialect.to_mini(),
+                "dialect",
+            )
+            return "Updated", 200
+        else:
+            return "Error saving item", 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+
+@admin.delete("/api/dialect/<int:id>")
+@roles_required("Admin")
+def api_dialect_delete(id):
+    """
+    Endpoint to delete a dialect
+    :param id: id of the dialect to be deleted
+    :return: success/error
+    """
+    dialect = Dialect.query.get(id)
+    if dialect is None:
+        return HTTPResponse.NOT_FOUND
+
+    if dialect.delete():
+        # Record Activity
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            dialect.to_mini(),
+            "dialect",
+        )
+        return f"Dialect Deleted #{dialect.id}", 200
+    else:
+        return "Error deleting Dialect", 417
 
 
 @admin.route("/api/atoainfos/", methods=["GET", "POST"])
@@ -1040,7 +1377,14 @@ def api_atoainfo_create():
         return "Title and Reverse Title are required.", 417
 
     if atoainfo.save():
-        return f"Item created successfully ID ${atoainfo.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            atoainfo.to_mini(),
+            "atoainfo",
+        )
+        return f"Item created successfully ID ${atoainfo.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1053,7 +1397,14 @@ def api_atoainfo_update(id):
     if atoainfo:
         atoainfo.from_json(request.json.get("item"))
         if atoainfo.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                atoainfo.to_mini(),
+                "atoainfo",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1069,12 +1420,21 @@ def api_atoainfo_delete(id):
     :return: success/error
     """
     atoainfo = AtoaInfo.query.get(id)
+    if atoainfo is None:
+        return HTTPResponse.NOT_FOUND
+
     if atoainfo.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, atoainfo.to_mini(), "atoainfo")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            atoainfo.to_mini(),
+            "atoainfo",
+        )
         return f"AtoaInfo Deleted #{atoainfo.id}", 200
     else:
-        return "Error deleting AtoaInfo", 417
+        return "Error deleting Atoa Info", 417
 
 
 @admin.route("/api/atobinfos/", methods=["GET", "POST"])
@@ -1103,7 +1463,14 @@ def api_atobinfo_create():
     atobinfo.from_json(request.json["item"])
 
     if atobinfo.save():
-        return f"Item created successfully ID ${atobinfo.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            atobinfo.to_mini(),
+            "atobinfo",
+        )
+        return f"Item created successfully ID ${atobinfo.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1116,7 +1483,14 @@ def api_atobinfo_update(id):
     if atobinfo:
         atobinfo.from_json(request.json.get("item"))
         if atobinfo.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                atobinfo.to_mini(),
+                "atobinfo",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1132,12 +1506,21 @@ def api_atobinfo_delete(id):
     :return: success/error
     """
     atobinfo = AtobInfo.query.get(id)
+    if atobinfo is None:
+        return HTTPResponse.NOT_FOUND
+
     if atobinfo.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, atobinfo.to_mini(), "atobinfo")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            atobinfo.to_mini(),
+            "atobinfo",
+        )
         return f"AtobInfo Deleted #{atobinfo.id}", 200
     else:
-        return "Error deleting AtobInfo", 417
+        return "Error deleting Atob Info", 417
 
 
 @admin.route("/api/btobinfos/", methods=["GET", "POST"])
@@ -1166,7 +1549,14 @@ def api_btobinfo_create():
     btobinfo.from_json(request.json["item"])
 
     if btobinfo.save():
-        return f"Item created successfully ID ${btobinfo.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            btobinfo.to_mini(),
+            "btobinfo",
+        )
+        return f"Item created successfully ID ${btobinfo.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1179,7 +1569,14 @@ def api_btobinfo_update(id):
     if btobinfo:
         btobinfo.from_json(request.json.get("item"))
         if btobinfo.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                btobinfo.to_mini(),
+                "btobinfo",
+            )
+            return "Item created successfully ID ${btobinfo.id}", 200
         else:
             return "Error saving item", 417
     else:
@@ -1195,12 +1592,21 @@ def api_btobinfo_delete(id):
     :return: success/error
     """
     btobinfo = BtobInfo.query.get(id)
+    if btobinfo is None:
+        return HTTPResponse.NOT_FOUND
+
     if btobinfo.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, btobinfo.to_mini(), "btobinfo")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            btobinfo.to_mini(),
+            "btobinfo",
+        )
         return f"BtobInfo Deleted #{btobinfo.id}", 200
     else:
-        return "Error deleting BtobInfo", 417
+        return "Error deleting Btob Info", 417
 
 
 @admin.route("/api/itoainfos/", methods=["GET", "POST"])
@@ -1229,7 +1635,14 @@ def api_itoainfo_create():
     itoainfo.from_json(request.json["item"])
 
     if itoainfo.save():
-        return f"Item created successfully ID ${itoainfo.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            itoainfo.to_mini(),
+            "itoainfo",
+        )
+        return f"Item created successfully ID ${itoainfo.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1242,7 +1655,14 @@ def api_itoainfo_update(id):
     if itoainfo:
         itoainfo.from_json(request.json.get("item"))
         if itoainfo.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                itoainfo.to_mini(),
+                "itoainfo",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1258,12 +1678,21 @@ def api_itoainfo_delete(id):
     :return: success/error
     """
     itoainfo = ItoaInfo.query.get(id)
+    if itoainfo is None:
+        return HTTPResponse.NOT_FOUND
+
     if itoainfo.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, itoainfo.to_mini(), "itoainfo")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            itoainfo.to_mini(),
+            "itoainfo",
+        )
         return f"ItoaInfo Deleted #{itoainfo.id}", 200
     else:
-        return "Error deleting ItoaInfo", 417
+        return "Error deleting Itoa Info", 417
 
 
 @admin.route("/api/itobinfos/", methods=["GET", "POST"])
@@ -1292,7 +1721,14 @@ def api_itobinfo_create():
     itobinfo.from_json(request.json["item"])
 
     if itobinfo.save():
-        return f"Item created successfully ID ${itobinfo.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            itobinfo.to_mini(),
+            "itobinfo",
+        )
+        return f"Item created successfully ID ${itobinfo.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1305,7 +1741,14 @@ def api_itobinfo_update(id):
     if itobinfo:
         itobinfo.from_json(request.json.get("item"))
         if itobinfo.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                itobinfo.to_mini(),
+                "itobinfo",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1321,12 +1764,21 @@ def api_itobinfo_delete(id):
     :return: success/error
     """
     itobinfo = ItobInfo.query.get(id)
+    if itobinfo is None:
+        return HTTPResponse.NOT_FOUND
+
     if itobinfo.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, itobinfo.to_mini(), "itobinfo")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            itobinfo.to_mini(),
+            "itobinfo",
+        )
         return f"ItobInfo Deleted #{itobinfo.id}", 200
     else:
-        return "Error deleting ItobInfo", 417
+        return "Error deleting Itob Info", 417
 
 
 @admin.route("/api/itoiinfos/", methods=["GET", "POST"])
@@ -1355,7 +1807,14 @@ def api_itoiinfo_create():
     itoiinfo.from_json(request.json["item"])
 
     if itoiinfo.save():
-        return f"Item created successfully ID ${itoiinfo.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            itoiinfo.to_mini(),
+            "itoiinfo",
+        )
+        return f"Item created successfully ID ${itoiinfo.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1368,7 +1827,14 @@ def api_itoiinfo_update(id):
     if itoiinfo:
         itoiinfo.from_json(request.json.get("item"))
         if itoiinfo.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                itoiinfo.to_mini(),
+                "itoiinfo",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1384,12 +1850,21 @@ def api_itoiinfo_delete(id):
     :return: success/error
     """
     itoiinfo = ItoiInfo.query.get(id)
+    if itoiinfo is None:
+        return HTTPResponse.NOT_FOUND
+
     if itoiinfo.delete():
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_DELETE, itoiinfo.to_mini(), "itoiinfo")
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            itoiinfo.to_mini(),
+            "itoiinfo",
+        )
         return f"ItoiInfo Deleted #{itoiinfo.id}", 200
     else:
-        return "Error deleting ItoiInfo", 417
+        return "Error deleting Itoi Info", 417
 
 
 @admin.route("/api/mediacategories/", methods=["GET", "POST"])
@@ -1418,7 +1893,14 @@ def api_mediacategory_create():
     mediacategory.from_json(request.json["item"])
 
     if mediacategory.save():
-        return f"Item created successfully ID {mediacategory.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            mediacategory.to_mini(),
+            "mediacategory",
+        )
+        return f"Item created successfully ID {mediacategory.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1431,7 +1913,14 @@ def api_mediacategory_update(id):
     if mediacategory:
         mediacategory.from_json(request.json.get("item"))
         if mediacategory.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                mediacategory.to_mini(),
+                "mediacategory",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1447,14 +1936,21 @@ def api_mediacategory_delete(id):
     :return: success/error
     """
     mediacategory = MediaCategory.query.get(id)
+    if mediacategory is None:
+        return HTTPResponse.NOT_FOUND
+
     if mediacategory.delete():
         # Record Activity
         Activity.create(
-            current_user, Activity.ACTION_DELETE, mediacategory.to_mini(), "mediacategory"
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            mediacategory.to_mini(),
+            "mediacategory",
         )
         return f"MediaCategory Deleted #{mediacategory.id}", 200
     else:
-        return "Error deleting MediaCategory", 417
+        return "Error deleting Media Category", 417
 
 
 @admin.route("/api/geolocationtypes/", methods=["GET", "POST"])
@@ -1483,7 +1979,14 @@ def api_geolocationtype_create():
     geolocationtype.from_json(request.json["item"])
 
     if geolocationtype.save():
-        return f"Item created successfully ID {geolocationtype.id} !", 200
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            geolocationtype.to_mini(),
+            "geolocationtype",
+        )
+        return f"Item created successfully ID {geolocationtype.id}", 200
     else:
         return "Creation failed.", 417
 
@@ -1496,7 +1999,14 @@ def api_geolocationtype_update(id):
     if geolocationtype:
         geolocationtype.from_json(request.json.get("item"))
         if geolocationtype.save():
-            return "Updated !", 200
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                geolocationtype.to_mini(),
+                "geolocationtype",
+            )
+            return "Updated", 200
         else:
             return "Error saving item", 417
     else:
@@ -1512,14 +2022,21 @@ def api_geolocationtype_delete(id):
     :return: success/error
     """
     geolocationtype = GeoLocationType.query.get(id)
+    if geolocationtype is None:
+        return HTTPResponse.NOT_FOUND
+
     if geolocationtype.delete():
         # Record Activity
         Activity.create(
-            current_user, Activity.ACTION_DELETE, geolocationtype.to_mini(), "geolocationtype"
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            geolocationtype.to_mini(),
+            "geolocationtype",
         )
         return f"GeoLocationType Deleted #{geolocationtype.id}", 200
     else:
-        return "Error deleting GeoLocationType", 417
+        return "Error deleting GeoLocation Type", 417
 
 
 # Bulletin routes
@@ -1560,7 +2077,20 @@ def make_cache_key(*args, **kwargs):
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
 @cache.cached(15, make_cache_key)
 def api_bulletins():
-    """Returns bulletins in JSON format, allows search and paging."""
+    """
+    Returns bulletins in JSON format, allows search and paging.
+    """
+    # log search query
+    q = request.json.get("q", None)
+    if q and q != [{}]:
+        Activity.create(
+            current_user,
+            Activity.ACTION_SEARCH,
+            Activity.STATUS_SUCCESS,
+            q,
+            "bulletin",
+        )
+
     su = SearchUtils(request.json, cls="bulletin")
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
@@ -1604,7 +2134,13 @@ def api_bulletin_create():
     # the below will create the first revision by default
     bulletin.create_revision()
     # Record activity
-    Activity.create(current_user, Activity.ACTION_CREATE, bulletin.to_mini(), "bulletin")
+    Activity.create(
+        current_user,
+        Activity.ACTION_CREATE,
+        Activity.STATUS_SUCCESS,
+        bulletin.to_mini(),
+        "bulletin",
+    )
     return f"Created Bulletin #{bulletin.id}", 200
 
 
@@ -1616,11 +2152,37 @@ def api_bulletin_update(id):
     bulletin = Bulletin.query.get(id)
     if bulletin is not None:
         if not current_user.can_access(bulletin):
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_DENIED,
+                request.json,
+                "bulletin",
+                details=f"Unauthorized attempt to update restricted Bulletin {id}.",
+            )
             return "Restricted Access", 403
+
+        if not current_user.has_role("Admin") and current_user != bulletin.assigned_to:
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_DENIED,
+                request.json,
+                "bulletin",
+                details=f"Unauthorized attempt to update unassigned Bulletin {id}.",
+            )
+            return "Restricted Access", 403
+
         bulletin = bulletin.from_json(request.json["item"])
         bulletin.create_revision()
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), "bulletin")
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            bulletin.to_mini(),
+            "bulletin",
+        )
         return f"Saved Bulletin #{bulletin.id}", 200
     else:
         return HTTPResponse.NOT_FOUND
@@ -1638,6 +2200,14 @@ def api_bulletin_review_update(id):
     bulletin = Bulletin.query.get(id)
     if bulletin is not None:
         if not current_user.can_access(bulletin):
+            Activity.create(
+                current_user,
+                Activity.ACTION_REVIEW,
+                Activity.STATUS_DENIED,
+                request.json,
+                "bulletin",
+                details=f"Unauthorized attempt to update restricted Bulletin {id}.",
+            )
             return "Restricted Access", 403
 
         bulletin.review = request.json["item"]["review"] if "review" in request.json["item"] else ""
@@ -1666,7 +2236,13 @@ def api_bulletin_review_update(id):
             bulletin.create_revision()
 
             # Record Activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), "bulletin")
+            Activity.create(
+                current_user,
+                Activity.ACTION_REVIEW,
+                Activity.STATUS_SUCCESS,
+                bulletin.to_mini(),
+                "bulletin",
+            )
             return f"Bulletin review updated #{bulletin.id}", 200
         else:
             return f"Error saving Bulletin #{id}", 417
@@ -1714,15 +2290,30 @@ def api_bulletin_get(id):
     bulletin = Bulletin.query.get(id)
     mode = request.args.get("mode", None)
     if not bulletin:
-        return "Not found", 404
+        return HTTPResponse.NOT_FOUND
     else:
         # hide review from view-only users
         if not current_user.roles:
             bulletin.review = None
         if current_user.can_access(bulletin):
+            Activity.create(
+                current_user,
+                Activity.ACTION_VIEW,
+                Activity.STATUS_SUCCESS,
+                bulletin.to_mini(),
+                "bulletin",
+            )
             return json.dumps(bulletin.to_dict(mode)), 200
         else:
             # block access altogether here, doesn't make sense to send only the id
+            Activity.create(
+                current_user,
+                Activity.ACTION_VIEW,
+                Activity.STATUS_DENIED,
+                bulletin.to_mini(),
+                "bulletin",
+                details=f"Unauthorized attempt to view restricted Bulletin {id}.",
+            )
             return "Restricted Access", 403
 
 
@@ -1764,7 +2355,7 @@ def bulletin_relations(id):
     return json.dumps({"items": data, "more": load_more}), 200
 
 
-@admin.route("/api/bulletin/import/", methods=["POST"])
+@admin.post("/api/bulletin/import/")
 @roles_required("Admin")
 def api_bulletin_import():
     """
@@ -1781,7 +2372,7 @@ def api_bulletin_import():
 # ----- self assign endpoints -----
 
 
-@admin.route("/api/bulletin/assign/<int:id>", methods=["PUT"])
+@admin.put("/api/bulletin/assign/<int:id>")
 @roles_accepted("Admin", "DA")
 def api_bulletin_self_assign(id):
     """assign a bulletin to the user"""
@@ -1793,6 +2384,14 @@ def api_bulletin_self_assign(id):
     bulletin = Bulletin.query.get(id)
 
     if not current_user.can_access(bulletin):
+        Activity.create(
+            current_user,
+            Activity.ACTION_SELF_ASSIGN,
+            Activity.STATUS_DENIED,
+            bulletin.to_mini(),
+            "bulletin",
+            details=f"Unauthorized attempt to self-assign restricted Bulletin {id}.",
+        )
         return "Restricted Access", 403
 
     if bulletin:
@@ -1817,13 +2416,19 @@ def api_bulletin_self_assign(id):
         bulletin.create_revision()
 
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_UPDATE, bulletin.to_mini(), "bulletin")
+        Activity.create(
+            current_user,
+            Activity.ACTION_SELF_ASSIGN,
+            Activity.STATUS_SUCCESS,
+            bulletin.to_mini(),
+            "bulletin",
+        )
         return f"Saved Bulletin #{bulletin.id}", 200
     else:
         return HTTPResponse.NOT_FOUND
 
 
-@admin.route("/api/actor/assign/<int:id>", methods=["PUT"])
+@admin.put("/api/actor/assign/<int:id>")
 @roles_accepted("Admin", "DA")
 def api_actor_self_assign(id):
     """self assign an actor to the user"""
@@ -1835,6 +2440,14 @@ def api_actor_self_assign(id):
     actor = Actor.query.get(id)
 
     if not current_user.can_access(actor):
+        Activity.create(
+            current_user,
+            Activity.ACTION_SELF_ASSIGN,
+            Activity.STATUS_DENIED,
+            request.json,
+            "actor",
+            details=f"Unauthorized attempt to self-assign restricted Actor {id}.",
+        )
         return "Restricted Access", 403
 
     if actor:
@@ -1854,13 +2467,15 @@ def api_actor_self_assign(id):
         actor.create_revision()
 
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), "actor")
+        Activity.create(
+            current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
+        )
         return f"Saved Actor #{actor.id}", 200
     else:
         return HTTPResponse.NOT_FOUND
 
 
-@admin.route("/api/incident/assign/<int:id>", methods=["PUT"])
+@admin.put("/api/incident/assign/<int:id>")
 @roles_accepted("Admin", "DA")
 def api_incident_self_assign(id):
     """self assign an incident to the user"""
@@ -1872,6 +2487,14 @@ def api_incident_self_assign(id):
     incident = Incident.query.get(id)
 
     if not current_user.can_access(incident):
+        Activity.create(
+            current_user,
+            Activity.ACTION_SELF_ASSIGN,
+            Activity.STATUS_DENIED,
+            request.json,
+            "incident",
+            details=f"Unauthorized attempt to self-assign restricted Incident {id}.",
+        )
         return "Restricted Access", 403
 
     if incident:
@@ -1891,7 +2514,13 @@ def api_incident_self_assign(id):
         incident.create_revision()
 
         # Record Activity
-        Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), "incident")
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            incident.to_mini(),
+            "incident",
+        )
         return f"Saved Incident #{incident.id}", 200
     else:
         return HTTPResponse.NOT_FOUND
@@ -1920,23 +2549,33 @@ def api_medias_chunk():
             if not Media.validate_file_extension(file.filename, allowed_extensions):
                 return "This file type is not allowed", 415
         else:
-            # we should log this in the future
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPLOAD,
+                Activity.STATUS_DENIED,
+                request.json,
+                "media",
+                details="Non-admin user attempted to upload media file using import endpoint.",
+            )
             return HTTPResponse.UNAUTHORIZED
     else:
         # normal uploads by DA or Admin users
         allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
         if not Media.validate_file_extension(file.filename, allowed_extensions):
+            Activity.create(
+                current_user,
+                Activity.STATUS_DENIED,
+                Activity.ACTION_UPLOAD,
+                request.json,
+                "media",
+                details="User attempted to upload unallowed file type.",
+            )
             return "This file type is not allowed", 415
 
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
     dz_uuid = request.form.get("dzuuid")
-    if not dz_uuid:
-        # Assume this file has not been chunked
-        with open(f"{filepath}", "wb") as f:
-            file.save(f)
-        return "File Saved", 200
 
     # Chunked upload
     try:
@@ -1986,7 +2625,12 @@ def api_medias_chunk():
             return "Error, file already exists", 409
 
         if not current_app.config["FILESYSTEM_LOCAL"] and not import_upload:
-            s3 = boto3.resource("s3")
+            s3 = boto3.resource(
+                "s3",
+                aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+                aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+                region_name=current_app.config["AWS_REGION"],
+            )
             s3.Bucket(current_app.config["S3_BUCKET"]).upload_file(filepath, filename)
             # Clean up file if s3 mode is selected
             try:
@@ -1995,12 +2639,15 @@ def api_medias_chunk():
                 print(e)
 
         response = {"etag": etag, "filename": filename}
+        Activity.create(
+            current_user, Activity.ACTION_UPLOAD, Activity.STATUS_SUCCESS, response, "media"
+        )
         return Response(json.dumps(response), content_type="application/json"), 200
 
     return "Chunk upload successful", 200
 
 
-@admin.route("/api/media/upload/", methods=["POST"])
+@admin.post("/api/media/upload/")
 @roles_accepted("Admin", "DA")
 def api_medias_upload():
     """
@@ -2008,33 +2655,59 @@ def api_medias_upload():
     :return: success/error based on operation's result
     """
     file = request.files.get("file")
-    if file:
-        if current_app.config["FILESYSTEM_LOCAL"]:
-            return api_local_medias_upload(request)
-        else:
-            s3 = boto3.resource(
-                "s3",
-                aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
-                aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
-            )
+    if not file:
+        return "Invalid request params", 417
 
-            # final file
-            filename = Media.generate_file_name(file.filename)
-            # filepath = (Media.media_dir/filename).as_posix()
+    # normal uploads by DA or Admin users
+    allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
+    if not Media.validate_file_extension(file.filename, allowed_extensions):
+        Activity.create(
+            current_user,
+            Activity.STATUS_DENIED,
+            Activity.ACTION_UPLOAD,
+            request.json,
+            "media",
+            details="User attempted to upload unallowed file type.",
+        )
+        return "This file type is not allowed", 415
 
-            response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(
-                Key=filename, Body=file
-            )
+    if current_app.config["FILESYSTEM_LOCAL"]:
+        file = request.files.get("file")
+        # final file
+        filename = Media.generate_file_name(file.filename)
+        filepath = (Media.media_dir / filename).as_posix()
 
-            etag = response.get()["ETag"].replace('"', "")
+        with open(filepath, "wb") as f:
+            file.save(f)
+        # get md5 hash
+        etag = get_file_hash(filepath)
+        # check if file already exists
+        if Media.query.filter(Media.etag == etag).first():
+            return "Error: File already exists", 409
 
-            # check if file already exists
-            if Media.query.filter(Media.etag == etag).first():
-                return "Error: File already exists", 409
+        response = {"etag": etag, "filename": filename}
 
-            return json.dumps({"filename": filename, "etag": etag}), 200
+        return Response(json.dumps(response), content_type="application/json"), 200
+    else:
+        s3 = boto3.resource(
+            "s3",
+            aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
+        )
 
-    return "Invalid request params", 417
+        # final file
+        filename = Media.generate_file_name(file.filename)
+        # filepath = (Media.media_dir/filename).as_posix()
+
+        response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
+
+        etag = response.get()["ETag"].replace('"', "")
+
+        # check if file already exists
+        if Media.query.filter(Media.etag == etag).first():
+            return "Error: File already exists", 409
+
+        return json.dumps({"filename": filename, "etag": etag}), 200
 
 
 GRACE_PERIOD = timedelta(hours=2)  # 2 hours
@@ -2082,6 +2755,14 @@ def serve_media(filename):
                     url = s3.generate_presigned_url("get_object", Params=params, ExpiresIn=36000)
                     return url, 200
                 else:
+                    Activity.create(
+                        current_user,
+                        Activity.ACTION_VIEW,
+                        Activity.STATUS_DENIED,
+                        {"file": filename},
+                        "media",
+                        details="Unauthorized attempt to access restricted media file.",
+                    )
                     return HTTPResponse.FORBIDDEN
             except s3.exceptions.NoSuchKey:
                 return HTTPResponse.NOT_FOUND
@@ -2090,35 +2771,20 @@ def serve_media(filename):
         else:
             # media exists in the database, check access control restrictions
             if not current_user.can_access(media):
+                Activity.create(
+                    current_user,
+                    Activity.ACTION_VIEW,
+                    Activity.STATUS_DENIED,
+                    request.json,
+                    "media",
+                    details="Unauthorized attempt to access restricted media file.",
+                )
                 return "Restricted Access", 403
 
             params = {"Bucket": current_app.config["S3_BUCKET"], "Key": filename}
             if filename.lower().endswith("pdf"):
                 params["ResponseContentType"] = "application/pdf"
-
             return s3.generate_presigned_url("get_object", Params=params, ExpiresIn=S3_URL_EXPIRY)
-
-
-def api_local_medias_upload(request):
-    # file pond sends multiple requests for multiple files (handle each request as a separate file )
-    try:
-        file = request.files.get("file")
-        # final file
-        filename = Media.generate_file_name(file.filename)
-        filepath = (Media.media_dir / filename).as_posix()
-        file.save(filepath)
-        # get md5 hash
-        etag = get_file_hash(filepath)
-        # check if file already exists
-        if Media.query.filter(Media.etag == etag).first():
-            return "Error: File already exists", 409
-
-        response = {"etag": etag, "filename": filename}
-
-        return Response(json.dumps(response), content_type="application/json"), 200
-    except Exception as e:
-        print(e)
-        return f"Request Failed", 417
 
 
 @admin.route("/api/serve/media/<filename>")
@@ -2128,9 +2794,26 @@ def api_local_serve_media(filename):
     """
 
     media = Media.query.filter(Media.media_file == filename).first()
+
     if media and not current_user.can_access(media):
+        Activity.create(
+            current_user,
+            Activity.ACTION_VIEW,
+            Activity.STATUS_DENIED,
+            request.json,
+            "media",
+            details="Unauthorized attempt to access restricted media file.",
+        )
         return "Restricted Access", 403
     else:
+        if media:
+            Activity.create(
+                current_user,
+                Activity.ACTION_VIEW,
+                Activity.STATUS_SUCCESS,
+                media.to_mini() if media else {"file": filename},
+                "media",
+            )
         return send_from_directory("media", filename)
 
 
@@ -2162,7 +2845,7 @@ def api_local_serve_inline_media(filename):
 # Medias routes
 
 
-@admin.route("/api/media/<int:id>", methods=["PUT"])
+@admin.put("/api/media/<int:id>")
 @roles_accepted("Admin", "DA")
 def api_media_update(id):
     """
@@ -2170,17 +2853,33 @@ def api_media_update(id):
     :param id: id of the item to be updated
     :return: success / error
     """
-    if request.method == "PUT":
-        media = Media.query.get(id)
-        if media is not None:
-            media = media.from_json(request.json["item"])
-            media.save()
-            return "Saved!", 200
-        else:
-            return HTTPResponse.NOT_FOUND
+    media = Media.query.get(id)
+    if media is None:
+        return HTTPResponse.NOT_FOUND
 
+    if not current_user.can_access(media):
+        Activity.create(
+            current_user,
+            Activity.ACTION_VIEW,
+            Activity.STATUS_DENIED,
+            request.json,
+            "media",
+            details="Unauthorized attempt to update restricted media.",
+        )
+        return "Restricted Access", 403
+
+    media = media.from_json(request.json["item"])
+    if media.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_VIEW,
+            Activity.STATUS_SUCCESS,
+            request.json,
+            "media",
+        )
+        return "Media {id} updated", 200
     else:
-        return HTTPResponse.FORBIDDEN
+        return "Error updating Media", 417
 
 
 # Actor routes
@@ -2212,6 +2911,17 @@ def actors(id):
 @admin.route("/api/actors/", methods=["POST", "GET"])
 def api_actors():
     """Returns actors in JSON format, allows search and paging."""
+    # log search query
+    q = request.json.get("q", None)
+    if q and q != [{}]:
+        Activity.create(
+            current_user,
+            Activity.ACTION_SEARCH,
+            Activity.STATUS_SUCCESS,
+            q,
+            "actor",
+        )
+
     su = SearchUtils(request.json, cls="actor")
     queries, ops = su.get_query()
     result = Actor.query.filter(*queries.pop(0))
@@ -2258,7 +2968,9 @@ def api_actor_create():
         # the below will create the first revision by default
         actor.create_revision()
         # Record activity
-        Activity.create(current_user, Activity.ACTION_CREATE, actor.to_mini(), "actor")
+        Activity.create(
+            current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
+        )
         return f"Created Actor #{actor.id}", 200
     else:
         return "Error creating actor", 417
@@ -2277,16 +2989,41 @@ def api_actor_update(id):
     if actor is not None:
         # check for restrictions
         if not current_user.can_access(actor):
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_DENIED,
+                request.json,
+                "actor",
+                details=f"Unauthorized attempt to update restricted Actor {id}.",
+            )
+            return "Restricted Access", 403
+
+        if not current_user.has_role("Admin") and current_user != actor.assigned_to:
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_DENIED,
+                request.json,
+                "actor",
+                details=f"Unauthorized attempt to update unassigned Actor {id}.",
+            )
             return "Restricted Access", 403
 
         actor = actor.from_json(request.json["item"])
         # Create a revision using latest values
         # this method automatically commits
         # actor changes (referenced)
-        if actor:
+        if actor.save():
             actor.create_revision()
             # Record activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), "actor")
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                actor.to_mini(),
+                "actor",
+            )
             return f"Saved Actor #{actor.id}", 200
         else:
             return f"Error saving Actor #{id}", 417
@@ -2306,6 +3043,14 @@ def api_actor_review_update(id):
     actor = Actor.query.get(id)
     if actor is not None:
         if not current_user.can_access(actor):
+            Activity.create(
+                current_user,
+                Activity.ACTION_REVIEW,
+                Activity.STATUS_DENIED,
+                request.json,
+                "actor",
+                details=f"Unauthorized attempt to update restricted Actor {id}.",
+            )
             return "Restricted Access", 403
 
         actor.review = request.json["item"]["review"] if "review" in request.json["item"] else ""
@@ -2321,7 +3066,13 @@ def api_actor_review_update(id):
         if actor.save():
             actor.create_revision()
             # Record activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, actor.to_mini(), "actor")
+            Activity.create(
+                current_user,
+                Activity.ACTION_REVIEW,
+                Activity.STATUS_SUCCESS,
+                actor.to_mini(),
+                "actor",
+            )
             return f"Actor review updated #{id}", 200
         else:
             return f"Error saving Actor #{id}'s Review", 417
@@ -2370,14 +3121,56 @@ def api_actor_get(id):
     """
     actor = Actor.query.get(id)
     if not actor:
-        return "Not found", 404
+        return HTTPResponse.NOT_FOUND
     else:
         mode = request.args.get("mode", None)
         if current_user.can_access(actor):
+            Activity.create(
+                current_user,
+                Activity.ACTION_VIEW,
+                Activity.STATUS_SUCCESS,
+                actor.to_mini(),
+                "actor",
+            )
             return json.dumps(actor.to_dict(mode)), 200
         else:
             # block access altogether here, doesn't make sense to send only the id
+            Activity.create(
+                current_user,
+                Activity.ACTION_VIEW,
+                Activity.STATUS_DENIED,
+                actor.to_mini(),
+                "actor",
+                details="Unauthorized attempt to view restricted Actor.",
+            )
             return "Restricted Access", 403
+
+
+@admin.get("/api/actor/<int:actor_id>/profiles")
+def api_actor_profiles(actor_id):
+    """
+    Endpoint to get all profiles associated with a specific actor
+    :param actor_id: ID of the actor
+    :return: JSON array of actor profiles or an error message
+    """
+    actor = Actor.query.get(actor_id)
+    if not actor:
+        return HTTPResponse.NOT_FOUND
+
+    if not current_user.can_access(actor):
+        Activity.create(
+            current_user,
+            Activity.ACTION_VIEW,
+            Activity.STATUS_DENIED,
+            actor.to_mini(),
+            "actor",
+            details="Unauthorized attempt to view restricted Actor profiles.",
+        )
+        return HTTPResponse.FORBIDDEN
+
+    profiles = actor.actor_profiles
+    profiles_data = [profile.to_dict() for profile in profiles]
+    return json.dumps(profiles_data), 200
 
 
 # get actor relations
@@ -2420,19 +3213,29 @@ def actor_relations(id):
     return json.dumps({"items": data, "more": load_more}), 200
 
 
-@admin.route("/api/actormp/<int:id>", methods=["GET"])
+@admin.get("/api/actormp/<int:id>")
 def api_actor_mp_get(id):
     """
-    Endpoint to get missing person data for an actor
-    :param id: id of the actor
-    :return: actor data in json format + success or error in case of failure
+    Endpoint to get missing person data for an actor profile
+    :param id: id of the actor profile
+    :return: actor profile data in json format + success or error in case of failure
     """
-    if request.method == "GET":
-        actor = Actor.query.get(id)
-        if not actor:
-            return HTTPResponse.NOT_FOUND
-        else:
-            return json.dumps(actor.mp_json()), 200
+    profile = ActorProfile.query.get(id)
+    if not profile:
+        return HTTPResponse.NOT_FOUND
+
+    if not current_user.can_access(profile.actor):
+        Activity.create(
+            current_user,
+            Activity.ACTION_VIEW,
+            Activity.STATUS_DENIED,
+            profile.actor.to_mini(),
+            "actor",
+            details="Unauthorized attempt to view restricted Actor.",
+        )
+        return HTTPResponse.FORBIDDEN
+
+    return json.dumps(profile.mp_json()), 200
 
 
 # Bulletin History Helpers
@@ -2585,13 +3388,15 @@ def api_user_create():
     result = user.save()
     if result:
         # Record activity
-        Activity.create(current_user, Activity.ACTION_CREATE, user.to_mini(), "user")
+        Activity.create(
+            current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
+        )
         return f"User {username} has been created successfully", 200
     else:
         return "Error creating user", 417
 
 
-@admin.route("/api/checkuser/", methods=["POST"])
+@admin.post("/api/checkuser/")
 @roles_required("Admin")
 def api_user_check():
     data = request.json.get("item")
@@ -2626,7 +3431,13 @@ def api_user_update(uid):
         user = user.from_json(u)
         if user.save():
             # Record activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, user.to_mini(), "user")
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                user.to_mini(),
+                "user",
+            )
             return f"Saved User {user.id} {user.name}", 200
         else:
             return f"Error saving User {user.id} {user.name}", 417
@@ -2695,15 +3506,21 @@ def api_user_delete(id):
     :param id: id of the user to be deleted
     :return: success/error
     """
-    if request.method == "DELETE":
-        user = User.query.get(id)
-        if user.active:
-            return "User is active, make inactive before deleting", 403
-        user.delete()
+    user = User.query.get(id)
+    if user is None:
+        return HTTPResponse.NOT_FOUND
 
+    if user.active:
+        return "User is active, make inactive before deleting", 403
+
+    if user.delete():
         # Record activity
-        Activity.create(current_user, Activity.ACTION_DELETE, user.to_mini(), "user")
-        return "Deleted!", 200
+        Activity.create(
+            current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
+        )
+        return "Deleted", 200
+    else:
+        return "Error deleting User", 417
 
 
 # Roles routes
@@ -2754,8 +3571,10 @@ def api_role_create():
     created = role.from_json(request.json["item"])
     if created.save():
         # Record activity
-        Activity.create(current_user, Activity.ACTION_CREATE, role.to_mini(), "role")
-        return "Created!", 200
+        Activity.create(
+            current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
+        )
+        return "Created", 200
 
     else:
         return "Save Failed", 417
@@ -2779,8 +3598,10 @@ def api_role_update(id):
     role = role.from_json(request.json["item"])
     role.save()
     # Record activity
-    Activity.create(current_user, Activity.ACTION_UPDATE, role.to_mini(), "role")
-    return "Saved!", 200
+    Activity.create(
+        current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
+    )
+    return f"Role {id} Updated", 200
 
 
 @admin.delete("/api/role/<int:id>")
@@ -2803,10 +3624,14 @@ def api_role_delete(id):
     if role.bulletins.first() or role.actors.first() or role.incidents.first():
         return "Role assigned to restricted items", 403
 
-    role.delete()
-    # Record activity
-    Activity.create(current_user, Activity.ACTION_DELETE, role.to_mini(), "role")
-    return "Deleted!", 200
+    if role.delete():
+        # Record activity
+        Activity.create(
+            current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
+        )
+        return "Deleted", 200
+    else:
+        return "Error deleting Role", 417
 
 
 @admin.post("/api/role/import/")
@@ -2854,6 +3679,17 @@ def incidents(id):
 @admin.route("/api/incidents/", methods=["POST", "GET"])
 def api_incidents():
     """Returns actors in JSON format, allows search and paging."""
+    # log search query
+    q = request.json.get("q", None)
+    if q and q != [{}]:
+        Activity.create(
+            current_user,
+            Activity.ACTION_SEARCH,
+            Activity.STATUS_SUCCESS,
+            q,
+            "incident",
+        )
+
     query = []
 
     su = SearchUtils(request.json, cls="incident")
@@ -2892,7 +3728,13 @@ def api_incident_create():
     # the below will create the first revision by default
     incident.create_revision()
     # Record activity
-    Activity.create(current_user, Activity.ACTION_CREATE, incident.to_mini(), "incident")
+    Activity.create(
+        current_user,
+        Activity.ACTION_CREATE,
+        Activity.STATUS_SUCCESS,
+        incident.to_mini(),
+        "incident",
+    )
     return f"Created Incident #{incident.id}", 200
 
 
@@ -2906,7 +3748,27 @@ def api_incident_update(id):
 
     if incident is not None:
         if not current_user.can_access(incident):
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_DENIED,
+                request.json,
+                "incident",
+                details=f"Unauthorized attempt to update restricted Incident {id}.",
+            )
             return "Restricted Access", 403
+
+        if not current_user.has_role("Admin") and current_user != incident.assigned_to:
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_DENIED,
+                request.json,
+                "incident",
+                details=f"Unauthorized attempt to update unassigned Incident {id}.",
+            )
+            return "Restricted Access", 403
+
         incident = incident.from_json(request.json["item"])
         # Create a revision using latest values
         # this method automatically commits
@@ -2914,7 +3776,13 @@ def api_incident_update(id):
         if incident:
             incident.create_revision()
             # Record activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), "incident")
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                incident.to_mini(),
+                "incident",
+            )
             return f"Saved Incident #{id}", 200
         else:
             return f"Error saving Incident {id}", 417
@@ -2934,6 +3802,14 @@ def api_incident_review_update(id):
     incident = Incident.query.get(id)
     if incident is not None:
         if not current_user.can_access(incident):
+            Activity.create(
+                current_user,
+                Activity.ACTION_REVIEW,
+                Activity.STATUS_DENIED,
+                request.json,
+                "incident",
+                details=f"Unauthorized attempt to update restricted Incident {id}.",
+            )
             return "Restricted Access", 403
 
         incident.review = request.json["item"]["review"] if "review" in request.json["item"] else ""
@@ -2948,7 +3824,13 @@ def api_incident_review_update(id):
             # incident changes (referenced)
             incident.create_revision()
             # Record activity
-            Activity.create(current_user, Activity.ACTION_UPDATE, incident.to_mini(), "incident")
+            Activity.create(
+                current_user,
+                Activity.ACTION_REVIEW,
+                Activity.STATUS_SUCCESS,
+                incident.to_mini(),
+                "incident",
+            )
             return f"Bulletin review updated #{id}", 200
         else:
             return f"Error saving Incident #{id}'s Review", 417
@@ -2994,13 +3876,28 @@ def api_incident_get(id):
     """
     incident = Incident.query.get(id)
     if not incident:
-        return "Not Found", 404
+        return HTTPResponse.NOT_FOUND
     else:
         mode = request.args.get("mode", None)
         if current_user.can_access(incident):
+            Activity.create(
+                current_user,
+                Activity.ACTION_VIEW,
+                Activity.STATUS_SUCCESS,
+                incident.to_mini(),
+                "incident",
+            )
             return json.dumps(incident.to_dict(mode)), 200
         else:
             # block access altogether here, doesn't make sense to send only the id
+            Activity.create(
+                current_user,
+                Activity.ACTION_VIEW,
+                Activity.STATUS_DENIED,
+                request.json,
+                "incident",
+                details=f"Unauthorized attempt to view restricted Incident {id}.",
+            )
             return "Restricted Access", 403
 
 
@@ -3053,7 +3950,7 @@ def incident_relations(id):
     return json.dumps({"items": data, "more": load_more}), 200
 
 
-@admin.route("/api/incident/import/", methods=["POST"])
+@admin.post("/api/incident/import/")
 @roles_required("Admin")
 def api_incident_import():
     """
@@ -3075,33 +3972,32 @@ def activity():
     Endpoint to render activity backend page
     :return: html of the page
     """
-    return render_template("admin/activity.html")
+    return render_template("admin/activity.html", actions_types=Activity.get_action_values())
 
 
-@admin.route("/api/activity", methods=["POST", "GET"])
+@admin.route("/api/activities/", methods=["POST", "GET"])
 @roles_required("Admin")
-def api_activity():
-    """
-    API endpoint to feed activity items in json format, supports paging and filtering by tag
-    :return: successful json feed or error
-    """
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
-    query = []
-    tag = request.json.get("tag", None)
-    if tag:
-        query.append(Activity.tag == tag)
+def api_activities():
+    """Returns activities in JSON format, allows search and paging."""
+    su = SearchUtils(request.json, cls="Activity")
+    query = su.get_query()
+
+    options = request.json.get("options")
+    page = options.get("page", 1)
+    per_page = options.get("itemsPerPage", PER_PAGE)
 
     result = (
         Activity.query.filter(*query)
         .order_by(-Activity.id)
         .paginate(page=page, per_page=per_page, count=True)
     )
+
     response = {
         "items": [item.to_dict() for item in result.items],
         "perPage": per_page,
         "total": result.total,
     }
+
     return Response(json.dumps(response), content_type="application/json"), 200
 
 
@@ -3161,7 +4057,7 @@ def api_query_check_name_exists(name: str):
     :return: true if exists, else false
     """
     if Query.query.filter_by(name=name, user_id=current_user.id).first():
-        return "Query name already exists!", 409
+        return "Query name already exists", 409
 
     return "Query name is available", 200
 
@@ -3185,7 +4081,7 @@ def api_query_create():
         query.query_type = query_type
         query.user_id = current_user.id
         query.save()
-        return "Query successfully saved!", 200
+        return "Query successfully saved", 200
     else:
         return "Error parsing query data", 417
 
@@ -3213,7 +4109,7 @@ def api_query_update(name: str):
         return f"Query {name} not found", 404
 
     if query_found.save():
-        return f"Query {name} updated!", 200
+        return f"Query {name} updated", 200
 
     return f"Query {name} save failed", 409
 
@@ -3236,7 +4132,7 @@ def api_query_delete(name: str):
         return f"Query: {name} not found", 404
 
     if query_found.delete():
-        return f"Query {name} deleted!", 200
+        return f"Query {name} deleted", 200
 
     return f"Query {name} delete failed", 409
 
@@ -3294,7 +4190,7 @@ def graph_visualize():
     return jsonify({"task_id": task_id.id})
 
 
-@admin.route("/api/graph/data", methods=["GET"])
+@admin.get("/api/graph/data")
 def get_graph_data():
     """
     Endpoint to retrieve graph data from Redis.
@@ -3316,7 +4212,7 @@ def get_graph_data():
         return HTTPResponse.NOT_FOUND
 
 
-@admin.route("/api/graph/status", methods=["GET"])
+@admin.get("/api/graph/status")
 def check_graph_status():
     user_id = current_user.id
 

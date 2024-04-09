@@ -21,6 +21,7 @@ class ConfigManager:
             "RECAPTCHA_ENABLED": False,
             "RECAPTCHA_PUBLIC_KEY": "",
             "RECAPTCHA_PRIVATE_KEY": "",
+            "GOOGLE_OAUTH_ENABLED": False,
             "GOOGLE_CLIENT_ID": "",
             "GOOGLE_CLIENT_SECRET": "",
             "GOOGLE_DISCOVERY_URL": "https://accounts.google.com/.well-known/openid-configuration",
@@ -90,11 +91,9 @@ class ConfigManager:
             "OCR_EXT": ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"],
             "SHEET_IMPORT": False,
             "DEDUP_TOOL": False,
-            "LANGUAGES": ["en", "ar", "uk", "fr"],
             "BABEL_DEFAULT_LOCALE": "en",
             "MAPS_API_ENDPOINT": "https://{s}.tile.osm.org/{z}/{x}/{y}.png",
             "GOOGLE_MAPS_API_KEY": "",
-            "MISSING_PERSONS": False,
             "DEDUP_LOW_DISTANCE": 0.3,
             "DEDUP_MAX_DISTANCE": 0.5,
             "DEDUP_BATCH_SIZE": 30,
@@ -104,6 +103,24 @@ class ConfigManager:
             "VIDEO_RATES": [0.25, 0.5, 1, 1.5, 2, 4],
             "EXPORT_TOOL": False,
             "EXPORT_DEFAULT_EXPIRY": 2,
+            "ACTIVITIES": {
+                "APPROVE": True,
+                "BULK": True,
+                "CREATE": True,
+                "DELETE": True,
+                "DOWNLOAD": True,
+                "LOGIN": True,
+                "LOGOUT": True,
+                "REVIEW": True,
+                "REJECT": True,
+                "REQUEST": True,
+                "SEARCH": True,
+                "SELF-ASSIGN": True,
+                "UPDATE": True,
+                "UPLOAD": True,
+                "VIEW": True,
+            },
+            "ACTIVITIES_RETENTION": 90,
         }
     )
 
@@ -138,11 +155,9 @@ class ConfigManager:
             "OCR_EXT": "Ocr Ext",
             "SHEET_IMPORT": "Sheet Import",
             "DEDUP_TOOL": "Dedup Tool",
-            "LANGUAGES": "Languages",
-            "BABEL_DEFAULT_LOCALE": "Babel Default Locale",
+            "BABEL_DEFAULT_LOCALE": "Default System Language",
             "MAPS_API_ENDPOINT": "Maps Api Endpoint",
             "GOOGLE_MAPS_API_KEY": "Google Maps Api Key",
-            "MISSING_PERSONS": "Missing Persons",
             "DEDUP_LOW_DISTANCE": "Dedup Low Distance",
             "DEDUP_MAX_DISTANCE": "Dedup Low Distance",
             "DEDUP_BATCH_SIZE": "Dedup Batch Size",
@@ -153,6 +168,8 @@ class ConfigManager:
             "VIDEO_RATES": "Video Rates",
             "EXPORT_TOOL": "Export Tool",
             "EXPORT_DEFAULT_EXPIRY": "Export Default Expiry Time",
+            "ACTIVITIES": "List of users activities to log.",
+            "ACTIVITIES_RETENTION": "Activity Retention Period",
         }
     )
 
@@ -190,6 +207,7 @@ class ConfigManager:
             "RECAPTCHA_ENABLED": cfg.RECAPTCHA_ENABLED,
             "RECAPTCHA_PUBLIC_KEY": cfg.RECAPTCHA_PUBLIC_KEY,
             "RECAPTCHA_PRIVATE_KEY": cfg.RECAPTCHA_PRIVATE_KEY,
+            "GOOGLE_OAUTH_ENABLED": cfg.GOOGLE_OAUTH_ENABLED,
             "GOOGLE_CLIENT_ID": cfg.GOOGLE_CLIENT_ID,
             "GOOGLE_CLIENT_SECRET": cfg.GOOGLE_CLIENT_SECRET,
             "GOOGLE_DISCOVERY_URL": cfg.GOOGLE_DISCOVERY_URL,
@@ -213,7 +231,6 @@ class ConfigManager:
             "BABEL_DEFAULT_LOCALE": cfg.BABEL_DEFAULT_LOCALE,
             "MAPS_API_ENDPOINT": cfg.MAPS_API_ENDPOINT,
             "GOOGLE_MAPS_API_KEY": cfg.GOOGLE_MAPS_API_KEY,
-            "MISSING_PERSONS": cfg.MISSING_PERSONS,
             "DEDUP_LOW_DISTANCE": cfg.DEDUP_LOW_DISTANCE,
             "DEDUP_MAX_DISTANCE": cfg.DEDUP_MAX_DISTANCE,
             "DEDUP_BATCH_SIZE": cfg.DEDUP_BATCH_SIZE,
@@ -226,6 +243,8 @@ class ConfigManager:
             "VIDEO_RATES": cfg.VIDEO_RATES,
             "EXPORT_TOOL": cfg.EXPORT_TOOL,
             "EXPORT_DEFAULT_EXPIRY": int(cfg.EXPORT_DEFAULT_EXPIRY.total_seconds()) / 3600,
+            "ACTIVITIES": cfg.ACTIVITIES,
+            "ACTIVITIES_RETENTION": int(cfg.ACTIVITIES_RETENTION.total_seconds()) / 86400,
         }
         return conf
 
@@ -255,7 +274,11 @@ class ConfigManager:
 
                 # record activity
                 Activity.create(
-                    current_user, Activity.ACTION_CREATE, app_config.to_mini(), "config"
+                    current_user,
+                    Activity.ACTION_CREATE,
+                    Activity.STATUS_SUCCESS,
+                    app_config.to_mini(),
+                    "config",
                 )
 
                 with open(ConfigManager.CONFIG_FILE_PATH, "w") as f:

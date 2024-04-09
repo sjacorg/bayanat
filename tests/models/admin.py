@@ -35,7 +35,7 @@ class LocationItemModel(BaseModel):
     latlng: Optional[Dict[str, float]] = Field(None, alias="latlng")
     postal_code: Optional[str]
     country: Optional[CountryModel]
-    parent: Optional[ForwardRef("LocationItemModel")]
+    parent: Optional[ForwardRef("LocationItemModel")]  # type: ignore
     tags: List[str] = []
     lat: Optional[float]
     lng: Optional[float]
@@ -60,6 +60,7 @@ class LocationRequestModel(BaseModel):
 
 class ActorItemMinModel(BaseModel):
     id: int
+    type_: Optional[str] = Field(..., alias="type")
     title: str = Field(None, max_length=255)
     name: Optional[str] = Field(None, max_length=255)
     assigned_to: Optional["UserCompactModel"]
@@ -87,13 +88,14 @@ class VerLabelsJSONModel(BaseModel):
 class ActorItemMode2Model(BaseModel):
     class_: str = Field("Actor", alias="class")
     id: int
-    originid: Optional[str] = Field(None, max_length=255)
+    type_: Optional[str] = Field(None, alias="type", max_length=255)
+    # originid: Optional[str] = Field(None, max_length=255)
     name: Optional[str] = Field(None, max_length=255)
-    description: Optional[str]
+    # description: Optional[str]
     comments: Optional[str]
-    sources: Optional[List["SourcesJSONModel"]]
-    publish_date: Optional[str]
-    documentation_date: Optional[str]
+    # sources: Optional[List["SourcesJSONModel"]]
+    # publish_date: Optional[str]
+    # documentation_date: Optional[str]
     status: Optional[str] = Field(None, max_length=255)
 
 
@@ -142,13 +144,59 @@ class MediaModel(BaseModel):
     updated_at: Optional[str] = None
 
 
+class DialectModel(BaseModel):
+    id: int
+    title: str
+    title_tr: Optional[str]
+    created_at: Optional[str]
+    updated_at: Optional[str]
+
+
+class SourceModel(BaseModel):
+    id: int
+    title: Optional[str]
+    etl_id: Optional[int]
+    parent: Optional[SourcesJSONModel]
+    comments: Optional[str]
+    updated_at: Optional[str]
+
+
+class LabelModel(BaseModel):
+    id: int
+    title: Optional[str]
+    title_ar: Optional[str]
+    comments: Optional[str]
+    comments_ar: Optional[str]
+    order: Optional[int]
+    verified: Optional[bool] = Field(False)
+    for_bulletin: Optional[bool] = Field(False)
+    for_actor: Optional[bool] = Field(False)
+    for_incident: Optional[bool] = Field(False)
+    for_offline: Optional[bool] = Field(False)
+    parent: Optional[LabelsJSONModel]
+    updated_at: Optional[str]
+
+
+class ActorProfileModel(BaseModel):
+    id: int
+    mode: int = Field(1)
+    description: Optional[str]
+    source_link: Optional[str]
+    publish_date: Optional[str]
+    documentation_date: Optional[str]
+    actor_id: int
+    sources: Optional[List[SourceModel]] = []
+    labels: Optional[List[LabelModel]] = []
+    ver_labels: Optional[List[LabelModel]] = []
+
+
 class ActorItemMode3Model(BaseModel):
     class_: str = Field(..., alias="class")  # nolimit
     id: int
     originid: Optional[str] = Field(None, max_length=255)
     name: Optional[str] = Field(None, max_length=255)
     name_ar: Optional[str] = Field(None, max_length=255)
-    description: Optional[str]  # nolimit
+    # description: Optional[str]  # nolimit
     nickname: Optional[str] = Field(None, max_length=255)
     nickname_ar: Optional[str] = Field(None, max_length=255)
     first_name: Optional[str] = Field(None, max_length=255)
@@ -159,33 +207,40 @@ class ActorItemMode3Model(BaseModel):
     last_name_ar: Optional[str] = Field(None, max_length=255)
     mother_name: Optional[str] = Field(None, max_length=255)
     mother_name_ar: Optional[str] = Field(None, max_length=255)
+    father_name: Optional[str] = Field(None, max_length=255)
+    father_name_ar: Optional[str] = Field(None, max_length=255)
     sex: Optional[str] = Field(None, max_length=255)
     u_sex: Optional[str] = Field(..., alias="_sex")  # nolimit
     age: Optional[str] = Field(None, max_length=255)
     u_age: Optional[str] = Field(..., alias="_age")  # nolimit
     civilian: Optional[str] = Field(None, max_length=255)
     u_civilian: Optional[str] = Field(..., alias="_civilian")  # nolimit
-    actor_type: Optional[str] = Field(None, max_length=255)
-    u_actor_type: Optional[str] = Field(..., alias="_actor_type")  # nolimit
+    type_: Optional[str] = Field(..., alias="type", max_length=255)
+    u_type: Optional[str] = Field(..., alias="_type")
+    # actor_type: Optional[str] = Field(None, max_length=255)
+    # u_actor_type: Optional[str] = Field(..., alias="_actor_type")  # nolimit
     occupation: Optional[str] = Field(None, max_length=255)
     occupation_ar: Optional[str] = Field(None, max_length=255)
     position: Optional[str] = Field(None, max_length=255)
     position_ar: Optional[str] = Field(None, max_length=255)
-    dialects: Optional[str] = Field(None, max_length=255)
-    dialects_ar: Optional[str] = Field(None, max_length=255)
+    # dialects: Optional[str] = Field(None, max_length=255)
+    # dialects_ar: Optional[str] = Field(None, max_length=255)
     family_status: Optional[str] = Field(None, max_length=255)
-    family_status_ar: Optional[str] = Field(None, max_length=255)
-    ethnography: List[EthnographyModel] = []
-    nationality: List[CountryModel] = []
-    national_id_card: Optional[str] = Field(None, max_length=255)
+    # family_status_ar: Optional[str] = Field(None, max_length=255)
+    no_children: Optional[int]
+    ethnographies: List[EthnographyModel] = []
+    nationalities: List[CountryModel] = []
+    dialects: Optional[List[DialectModel]] = []
+    # national_id_card: Optional[str] = Field(None, max_length=255)
+    id_number: Optional[str] = Field(..., max_length=255)
     assigned_to: Optional["UserCompactModel"]
     first_peer_reviewer: Optional["UserCompactModel"]
     source_link: Optional[str] = Field(None, max_length=255)
     source_link_type: Optional[bool] = False
     comments: Optional[str]  # nolimit
-    sources: Optional[List["SourcesJSONModel"]] = []
-    labels: Optional[List[LabelsJSONModel]] = []
-    verLabels: Optional[List[VerLabelsJSONModel]] = []
+    # sources: Optional[List["SourcesJSONModel"]] = []
+    # labels: Optional[List[LabelsJSONModel]] = []
+    # verLabels: Optional[List[VerLabelsJSONModel]] = []
     events: Optional[List[EventModel]] = []
     medias: Optional[List[MediaModel]] = []
     actor_relations: Optional[List] = []  # Lazy load in mode3
@@ -195,25 +250,26 @@ class ActorItemMode3Model(BaseModel):
     residence_place: Optional[LocationItemModel]
     origin_place: Optional[LocationItemModel]
     birth_date: Optional[str]
-    publish_date: Optional[str]
-    documentation_date: Optional[str]
+    # publish_date: Optional[str]
+    # documentation_date: Optional[str]
     status: Optional[str] = Field(None, max_length=255)
     review: Optional[str]  # nolimit
     review_action: Optional[str]  # nolimit
     updated_at: Optional[str]
     roles: List[RoleModel] = []
+    actor_profiles: List[ActorProfileModel] = []
 
 
 class ActorCompactModel(BaseModel):
     id: int
     name: Optional[str] = Field(None, max_length=255)
-    originid: Optional[str] = Field(None, max_length=255)
-    sources: Optional[SourcesJSONModel]
-    description: Optional[str]
-    source_link: Optional[str] = Field(None, max_length=255)
-    source_link_type: Optional[bool] = False
-    publish_date: str
-    documentation_date: str
+    # originid: Optional[str] = Field(None, max_length=255)
+    # sources: Optional[SourcesJSONModel]
+    # description: Optional[str]
+    # source_link: Optional[str] = Field(None, max_length=255)
+    # source_link_type: Optional[bool] = False
+    # publish_date: str
+    # documentation_date: str
 
 
 class LocationsJSONModel(BaseModel):
@@ -756,8 +812,9 @@ class ActivityItemModel(BaseModel):
     id: int
     user_id: int
     action: Optional[str] = Field(..., max_length=100)
+    model: Optional[str] = Field(..., max_length=100)
     subject: Optional[Dict]
-    tag: Optional[str] = Field(..., max_length=100)
+    details: Optional[str]
     created_at: str
 
 

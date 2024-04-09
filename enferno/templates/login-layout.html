@@ -65,10 +65,8 @@
     {% else %}
     <div class="d-none" data-settings='{}'></div>
 {% endif %}
-<div class="d-none" data-lang='{{session.get('lang','en')}}'></div>
 <script>
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
-    window.__lang__ =  document.querySelector('[data-lang]').dataset.lang;
 </script>
 
 

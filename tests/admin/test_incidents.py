@@ -1,6 +1,7 @@
 import json
 import pytest
 from enferno.admin.models import Incident
+from enferno.user.models import User
 from tests.factories import IncidentFactory
 
 from tests.test_utils import (
@@ -8,6 +9,7 @@ from tests.test_utils import (
     convert_empty_strings_to_none,
     get_first_or_fail,
     load_data,
+    get_uid_from_client,
 )
 
 ##### PYDANTIC MODELS #####
@@ -170,7 +172,7 @@ def test_post_incident_endpoint(clean_slate_incidents, request, client_fixture, 
 
 put_incident_endpoint_roles = [
     ("admin_client", 200),
-    ("da_client", 200),
+    ("da_client", 403),
     ("mod_client", 403),
     ("client", 401),
 ]
@@ -180,6 +182,38 @@ put_incident_endpoint_roles = [
 def test_put_incident_endpoint(create_incident, request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     incident = get_first_or_fail(Incident)
+    incident_id = incident.id
+    new_title = IncidentFactory().title
+    response = client_.put(
+        f"/admin/api/incident/{incident_id}",
+        headers={"content-type": "application/json"},
+        json={"item": {"title": new_title}},
+    )
+    assert response.status_code == expected_status
+    found_incident = Incident.query.filter(Incident.id == incident_id).first()
+    if expected_status == 200:
+        assert found_incident.title == new_title
+    else:
+        assert found_incident.title != new_title
+
+
+put_incident_endpoint_roles2 = [
+    ("admin_client", 200),
+    ("da_client", 200),
+    ("mod_client", 403),
+    ("client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", put_incident_endpoint_roles2)
+def test_put_incident_assigned_endpoint(
+    users, create_incident, request, client_fixture, expected_status
+):
+    client_ = request.getfixturevalue(client_fixture)
+    incident = get_first_or_fail(Incident)
+    uid = get_uid_from_client(users, client_fixture)
+    incident.assigned_to = User.query.filter(User.id == uid).first()
+    incident.save()
     incident_id = incident.id
     new_title = IncidentFactory().title
     response = client_.put(

@@ -10,19 +10,13 @@ on:
 name: pip-audit
 jobs:
   selftest:
+    name: pip-audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: install
+      - name: exiftool
         run: |
           sudo apt install libimage-exiftool-perl
-          python -m venv env/
-          source env/bin/activate
-          python -m pip install -r requirements.txt
-      - uses: pypa/gh-action-pip-audit@v1.0.6
+      - uses: pypa/gh-action-pip-audit@v1.0.8
         with:
-          inputs: requirements.txt
-          virtual-environment: env/
-          local: true
-          ignore-vulns: |
-            PYSEC-2021-13
+          inputs: requirements.txt dev-requirements.txt

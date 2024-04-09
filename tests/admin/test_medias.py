@@ -35,7 +35,16 @@ def test_post_media_chunk_endpoint(create_media_file, request, client_fixture, e
     client_ = request.getfixturevalue(client_fixture)
     _, ext = os.path.splitext(create_media_file)
     with open(create_media_file, "rb") as f:
-        data = {"file": (f, f"test{ext}")}
+        file_size = os.path.getsize(create_media_file)
+        chunk_size = file_size
+        dzuuid = "test-uuid"
+        data = {
+            "file": (f, f"test{ext}"),
+            "dzuuid": dzuuid,
+            "dzchunkindex": str(0),
+            "dztotalchunkcount": str(1),
+            "dztotalfilesize": str(file_size),
+        }
         response = client_.post(
             "/admin/api/media/chunk",
             content_type="multipart/form-data",

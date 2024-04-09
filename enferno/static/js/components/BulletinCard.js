@@ -87,7 +87,11 @@ Vue.component('bulletin-card', {
     },
 
     editAllowed() {
-      return this.$root.editAllowed(this.bulletin) && this.showEdit;
+      if (typeof this.$root.editAllowed === 'function') {
+        return this.$root.editAllowed(this.bulletin) && this.showEdit;
+      }
+      return false;
+
     },
 
     loadRevisions() {

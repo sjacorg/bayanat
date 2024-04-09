@@ -1,0 +1,36 @@
+<v-dialog v-model="activityBulkViews" width="770">
+    <v-card>
+        <v-toolbar class="header-fixed">
+            <v-spacer></v-spacer>
+            <v-btn fab text @click="closeBulk()">
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </v-toolbar>
+        <v-card>
+            <v-btn 
+                v-for="b in bulkItems"
+                color="grey lighten-2" 
+                elevation="0" 
+                class="ma-2 pa-2"
+                @click="previewItem('/admin/api/' + b.class + '/' + b.id + '?mode=3')"
+                >
+
+                <v-icon color="grey darken-2" left
+                v-if="b.class == 'bulletin'">
+                    mdi-file-document-multiple
+                </v-icon>
+                <v-icon color="grey darken-2" left x-small
+                v-if="b.class == 'actor'">
+                    mdi-account-multiple
+                </v-icon>
+                <v-icon color="grey darken-2" left x-small
+                v-if="b.class == 'incident'">
+                    mdi-hazard-lights
+                </v-icon>
+
+                ${b.id}
+                </v-btn>
+
+        </v-card>
+    </v-card>
+</v-dialog>

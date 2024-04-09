@@ -120,6 +120,7 @@ def test_put_geolocationtype_endpoint(
     typ = get_first_or_fail(GeoLocationType)
     geo_id = typ.id
     new_type = GeoLocationTypeFactory()
+    new_type.id = geo_id
     response = client_.put(
         f"/admin/api/geolocationtype/{geo_id}",
         headers={"Content-Type": "application/json"},

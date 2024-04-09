@@ -15,6 +15,9 @@ from enferno.admin.models import (
     ClaimedViolation,
     Ethnography,
     Country,
+    Dialect,
+    ActorProfile,
+    Activity,
 )
 from enferno.user.models import Role
 
@@ -42,6 +45,8 @@ class SearchUtils:
             return self.build_incident_query()
         elif self.cls == "location":
             return self.build_location_query()
+        elif self.cls == "Activity":
+            return self.build_activity_query()
         return []
 
     def to_dict(self):
@@ -89,6 +94,9 @@ class SearchUtils:
 
     def build_location_query(self):
         return self.location_query(self.search)
+
+    def build_activity_query(self):
+        return self.activity_query(self.search)
 
     def bulletin_query(self, q):
         query = []
@@ -441,6 +449,15 @@ class SearchUtils:
                 or_(Actor.last_name.ilike(f"%{search}%"), Actor.last_name_ar.ilike(f"%{search}%"))
             )
 
+        # father name
+        if search := q.get("father_name"):
+            query.append(
+                or_(
+                    Actor.father_name.ilike(f"%{search}%"),
+                    Actor.father_name_ar.ilike(f"%{search}%"),
+                )
+            )
+
         # mother name
         if search := q.get("mother_name"):
             query.append(
@@ -469,47 +486,63 @@ class SearchUtils:
                 query.extend([Actor.nationalities.any(Country.id == id) for id in ids])
 
         labels = q.get("labels", [])
-        if len(labels):
+        if labels:
             ids = [item.get("id") for item in labels]
             if q.get("oplabels"):
-                query.append(Actor.labels.any(Label.id.in_(ids)))
+                query.append(Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
             else:
-                query.extend([Actor.labels.any(Label.id == id) for id in ids])
+                query.extend(
+                    [
+                        Actor.actor_profiles.any(ActorProfile.labels.any(Label.id == id))
+                        for id in ids
+                    ]
+                )
 
         # Excluded labels
         exlabels = q.get("exlabels", [])
-        if len(exlabels):
+        if exlabels:
             ids = [item.get("id") for item in exlabels]
-            query.append(~Actor.labels.any(Label.id.in_(ids)))
+            query.append(~Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
 
         vlabels = q.get("vlabels", [])
-        if len(vlabels):
+        if vlabels:
             ids = [item.get("id") for item in vlabels]
             if q.get("opvlabels"):
-                # And query
-                query.append(Actor.ver_labels.any(Label.id.in_(ids)))
+                query.append(
+                    Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
+                )
             else:
-                query.extend([Actor.ver_labels.any(Label.id == id) for id in ids])
+                query.extend(
+                    [
+                        Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id == id))
+                        for id in ids
+                    ]
+                )
 
         # Excluded vlabels
         exvlabels = q.get("exvlabels", [])
-        if len(exvlabels):
+        if exvlabels:
             ids = [item.get("id") for item in exvlabels]
-            query.append(~Actor.ver_labels.any(Label.id.in_(ids)))
+            query.append(~Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids))))
 
         sources = q.get("sources", [])
-        if len(sources):
+        if sources:
             ids = [item.get("id") for item in sources]
             if q.get("opsources"):
-                query.append(Actor.sources.any(Source.id.in_(ids)))
+                query.append(Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
             else:
-                query.extend([Actor.sources.any(Source.id == id) for id in ids])
+                query.extend(
+                    [
+                        Actor.actor_profiles.any(ActorProfile.sources.any(Source.id == id))
+                        for id in ids
+                    ]
+                )
 
         # Excluded sources
         exsources = q.get("exsources", [])
-        if len(exsources):
+        if exsources:
             ids = [item.get("id") for item in exsources]
-            query.append(~Actor.sources.any(Source.id.in_(ids)))
+            query.append(~Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
 
         res_locations = q.get("resLocations", [])
         if res_locations:
@@ -549,11 +582,17 @@ class SearchUtils:
 
         # publish date
         if pubdate := q.get("pubdate", None):
-            query.append(date_between_query(Actor.publish_date, pubdate))
+            query.append(
+                Actor.actor_profiles.any(date_between_query(ActorProfile.publish_date, pubdate))
+            )
 
         # documentation date
         if docdate := q.get("docdate", None):
-            query.append(date_between_query(Actor.documentation_date, docdate))
+            query.append(
+                Actor.actor_profiles.any(
+                    date_between_query(ActorProfile.documentation_date, docdate)
+                )
+            )
 
         # creation date
         if created := q.get("created", None):
@@ -614,12 +653,8 @@ class SearchUtils:
 
         if loc_types and latlng and (radius := latlng.get("radius")):
             conditions = []
-            if "birthplace" in loc_types:
-                conditions.append(Actor.geo_query_birth_place(latlng, radius))
             if "originplace" in loc_types:
                 conditions.append(Actor.geo_query_origin_place(latlng, radius))
-            if "residenceplace" in loc_types:
-                conditions.append(Actor.geo_query_residence_place(latlng, radius))
             if "events" in loc_types:
                 conditions.append(Actor.geo_query_event_location(latlng, radius))
 
@@ -641,17 +676,18 @@ class SearchUtils:
 
         # Spoken Dialects
         dialects = q.get("dialects", None)
+        op = q.get("opDialects")
         if dialects:
-            search = "%{}%".format(dialects)
-            query.append(or_(Actor.dialects.ilike(search), Actor.dialects_ar.ilike(search)))
+            ids = [item.get("id") for item in dialects]
+            if op:
+                query.append(Actor.dialects.any(Dialect.id.in_(ids)))
+            else:
+                query.extend([Actor.dialects.any(Dialect.id == id) for id in ids])
 
         # Family Status
         family_status = q.get("family_status", None)
         if family_status:
-            search = "%{}%".format(family_status)
-            query.append(
-                or_(Actor.family_status.ilike(search), Actor.family_status_ar.ilike(search))
-            )
+            query.append(Actor.family_status == family_status)
 
         # Sex
         sex = q.get("sex", None)
@@ -669,25 +705,15 @@ class SearchUtils:
             query.append(Actor.civilian == civilian)
 
         # Actor type
-        actor_type = q.get("actor_type", None)
-        if actor_type:
-            query.append(Actor.actor_type == actor_type)
-
-        # Place of birth
-        birth_place = q.get("birth_place", {})
-        if birth_place:
-            query.append(Actor.birth_place_id == birth_place.get("id"))
-
-        # date of birth
-        birth_date = q.get("birth_date")
-        if birth_date:
-            query.append(Actor.birth_date == birth_date)
+        type = q.get("type", None)
+        if type:
+            query.append(Actor.type == type)
 
         # National ID card
-        national_id_card = q.get("national_id_card", {})
-        if national_id_card:
-            search = "%{}%".format(national_id_card)
-            query.append(Actor.national_id_card.ilike(search))
+        id_number = q.get("id_number", {})
+        if id_number:
+            search = "%{}%".format(id_number)
+            query.append(Actor.id_number.ilike(search))
 
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")
@@ -962,5 +988,26 @@ class SearchUtils:
                 query.append(or_(func.array_to_string(Location.tags, "").ilike(r) for r in search))
             else:
                 query.append(and_(func.array_to_string(Location.tags, "").ilike(r) for r in search))
+
+        return query
+
+    def activity_query(self, q):
+        query = []
+
+        # Filtering by user_id
+        if user_id := q.get("user"):
+            query.append(Activity.user_id == user_id)
+
+        # Use strict matching for action
+        if action := q.get("action"):
+            query.append(Activity.action == action)
+
+        # Use strict matching for tag
+        if tag := q.get("tag"):
+            query.append(Activity.tag == tag)
+
+        # activity date
+        if created := q.get("created", None):
+            query.append(date_between_query(Activity.created_at, created))
 
         return query

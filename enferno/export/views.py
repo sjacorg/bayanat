@@ -50,7 +50,11 @@ def export_bulletins():
     if export_request.save():
         # Record activity
         Activity.create(
-            current_user, Activity.ACTION_CREATE, export_request.to_mini(), Export.__table__.name
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            export_request.to_mini(),
+            Export.__table__.name,
         )
 
         return f"Export request created successfully, id:  {export_request.id} ", 200
@@ -69,7 +73,11 @@ def export_actors():
     if export_request.save():
         # Record activity
         Activity.create(
-            current_user, Activity.ACTION_CREATE, export_request.to_mini(), Export.__table__.name
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            export_request.to_mini(),
+            Export.__table__.name,
         )
         return f"Export request created successfully, id:  {export_request.id} ", 200
     return "Error creating export request", 417
@@ -87,7 +95,11 @@ def export_incidents():
     if export_request.save():
         # Record activity
         Activity.create(
-            current_user, Activity.ACTION_CREATE, export_request.to_mini(), Export.__table__.name
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            export_request.to_mini(),
+            Export.__table__.name,
         )
         return f"Export request created successfully, id:  {export_request.id} ", 200
     return "Error creating export request", 417
@@ -167,6 +179,7 @@ def change_export_status():
             Activity.create(
                 current_user,
                 Activity.ACTION_APPROVE_EXPORT,
+                Activity.STATUS_SUCCESS,
                 export_request.to_mini(),
                 Export.__table__.name,
             )
@@ -186,6 +199,7 @@ def change_export_status():
             Activity.create(
                 current_user,
                 Activity.ACTION_REJECT_EXPORT,
+                Activity.STATUS_SUCCESS,
                 export_request.to_mini(),
                 Export.__table__.name,
             )
@@ -243,7 +257,11 @@ def download_export_file():
         if not export.expired:
             # Record activity
             Activity.create(
-                current_user, Activity.ACTION_DOWNLOAD, export.to_mini(), Export.__table__.name
+                current_user,
+                Activity.ACTION_DOWNLOAD,
+                Activity.STATUS_SUCCESS,
+                export.to_mini(),
+                Export.__table__.name,
             )
             return send_from_directory(
                 f"{Path(*Export.export_dir.parts[1:])}", f"{export.file_id}.zip"

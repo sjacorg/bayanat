@@ -109,6 +109,7 @@ def test_put_mediacategory_endpoint(
     new_cat = MediaCategoryFactory()
     cat = get_first_or_fail(MediaCategory)
     cat_id = cat.id
+    new_cat.id = cat_id
     response = client_.put(
         f"/admin/api/mediacategory/{cat_id}",
         headers={"Content-Type": "application/json"},

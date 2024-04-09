@@ -59,6 +59,9 @@ def auth():
     Endpoint to authorize with Google OpenID
     if successful a user is loaded/created and logged in. otherwise, returns an error.
     """
+    if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
+        return "Google Auth is not enabled or configured properly", 417
+
     google_provider_cfg = get_google_provider_cfg()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
@@ -80,6 +83,9 @@ def auth_callback():
 
     :return:
     """
+    if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
+        return "Google Auth is not enabled or configured properly", 417
+
     code = request.args.get("code")
     # Find out what URL to hit to get tokens that allow you to ask for
     # things on behalf of a user
@@ -120,19 +126,21 @@ def auth_callback():
         users_name = userinfo_response.json()["name"]
     else:
         return "User email not available or not verified by Google.", 400
-    if not users_email.endswith(current_app.config.get("GOOGLE_CLIENT_ALLOWED_DOMAIN")):
-        return "User email rejected!  ", 403
 
-    # Create a user in our db with the information provided
-    # by Google
-    u = User.query.filter(User.google_id == unique_id).first()
+    # check if email belongs to the allowed domain
+    if not users_email.split("@")[-1] == cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
+        return "User email rejected!", 403
+
+    # secure login by restricting access to only matching users who already have an account
+    # Check if the user with the provided email exists in the database
+    u = User.query.filter(User.email == users_email).first()
     if u is None:
-        u = User()
-        u.email = users_email
+        # User with the provided email does not exist
+        return "User not found. Ask an administrator to create an account for you.", 404
+
+    # Update the user's Google ID if it doesn't exist
+    if u.google_id is None:
         u.google_id = unique_id
-        u.name = users_name
-        u.active = True
-        u.password = os.urandom(32).hex()
         u.save()
 
     login_user(u)

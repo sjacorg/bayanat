@@ -1,17 +1,127 @@
+Vue.component("actor-profiles", {
+    props:
+
+        {
+            actorId: {
+                type: Number,
+                required: true
+            },
+            i18n: {
+                type: Object
+            }
+        },
+
+    data: function () {
+        return {
+            actorProfiles: [],
+            tab: null,
+        };
+    },
+
+    mounted() {
+        this.fetchProfiles();
+    },
+
+    methods: {
+        fetchProfiles() {
+            axios.get(`/admin/api/actor/${this.actorId}/profiles`).then(response => {
+                this.actorProfiles = response.data;
+            }).catch(error => {
+                console.error("Error fetching profiles:", error);
+            });
+        },
+    },
+
+    template: `
+      <v-card class="ma-2">
+        <v-tabs v-model="tab"
+            background-color="primary"
+              slider-color="grey lighten-2"
+                show-arrows
+
+                dark>
+          <v-tab v-for="(_, index) in actorProfiles" :key="index">
+            Profile {{ index + 1 }}
+          </v-tab>
+        </v-tabs>
+
+        <v-tabs-items v-model="tab">
+          <v-tab-item class="pa-2" v-for="(profile, index) in actorProfiles" :key="index">
+            <v-card flat>
+              <v-chip :href="profile.source_link" target="_blank" small pill label color="lime darken-3 "
+                  class="white--text ml-1">
+                  # {{ profile.originid }}</v-chip>
+              <v-subheader class="px-2">Description</v-subheader>
+              
+              <div  class="pa-3 actor-description" v-html="profile.description"></div>
+
+              <uni-field :caption="i18n.sourceLink_" :english="profile.source_link"></uni-field>
+              <uni-field :caption="i18n.publishDate_" :english="profile.publish_date"></uni-field>
+              <uni-field :caption="i18n.documentationDate_" :english="profile.documentation_date"></uni-field>
+
+              <v-card outlined class="ma-2" color="grey lighten-5" v-if="profile.sources?.length">
+                <v-card-text>
+                  <div class="px-1 title black--text">{{ i18n.sources_ }}</div>
+                  <v-chip-group column>
+                    <v-chip small label color="blue-grey lighten-5" v-for="source in profile.sources" :key="source.id">
+                      {{ source.title }}
+                    </v-chip>
+                  </v-chip-group>
+                </v-card-text>
+              </v-card>
+
+              <v-card outlined class="ma-2" color="grey lighten-5" v-if="profile.labels?.length">
+                <v-card-text>
+                  <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
+                  <v-chip-group column>
+                    <v-chip small label color="blue-grey lighten-5" v-for="label in profile.labels" :key="label.id">
+                      {{ label.title }}
+                    </v-chip>
+                  </v-chip-group>
+                </v-card-text>
+              </v-card>
+
+
+              <v-card outlined class="ma-2" color="grey lighten-5" v-if="profile.ver_labels?.length">
+                <v-card-text>
+                  <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
+                  <v-chip-group column>
+                    <v-chip small label color="blue-grey lighten-5" v-for="verLabel in profile.ver_labels"
+                            :key="verLabel.id">
+                      {{ verLabel.title }}
+                    </v-chip>
+                  </v-chip-group>
+                </v-card-text>
+              </v-card>
+              
+              <mp-card v-if="profile.mode == 3" :i18n="i18n" :profile-id="profile.id"></mp-card>
+
+              
+
+            </v-card>
+          </v-tab-item>
+        </v-tabs-items>
+      </v-card>
+    `,
+});
+
+
 Vue.component('actor-card', {
   props: ['actor', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit', 'i18n'],
 
-  watch: {
-    actor: function (b, n) {
+    mounted() {
+      this.fetchData();
+    },
+
+  methods: {
+    fetchData() {
       this.loadBulletinRelations();
       this.loadActorRelations();
       this.loadIncidentRelations();
 
       this.mapLocations = aggregateActorLocations(this.actor);
     },
-  },
 
-  methods: {
     updateMediaState() {
       this.mediasReady += 1;
       if (this.mediasReady == this.actor.medias.length && this.mediasReady > 0) {
@@ -217,10 +327,19 @@ Vue.component('actor-card', {
       <v-card-text class="d-flex align-center">
         <v-chip small pill label color="gv darken-2" class="white--text">
           {{ i18n.id_ }} {{ actor.id }}</v-chip>
+  
+          <v-avatar size="28" small pill  color=" pa-2 gv ml-1 darken-2" class="white--text" v-tippy :content="actor.type">
+            <v-icon 
+                color="white"
+              v-if="actor.type==='Person'"
+              >mdi-account
+              </v-icon>
 
-        <v-chip :href="actor.source_link" target="_blank" small pill label color="lime darken-3 "
-                class="white--text ml-1">
-          # {{ actor.originid }}</v-chip>
+              <v-icon
+                  v-if="actor.type==='Entity'"
+                  >mdi-account-group
+            </v-icon>
+          </v-avatar>
         <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',actor)" small outlined><v-icon color="primary" left>mdi-pencil</v-icon> {{ i18n.edit_ }}</v-btn>
         <v-btn @click.stop="$root.$refs.viz.visualize(actor)" class="ml-2" outlined small elevation="0"><v-icon color="primary" left>mdi-graph-outline</v-icon> {{ i18n.visualize_ }}</v-btn>
       </v-card-text>
@@ -238,103 +357,74 @@ Vue.component('actor-card', {
 
       <v-card outlined class="ma-2" color="grey lighten-5">
       <v-card-text>
-        <h2 class="title black--text d-block">{{ actor.name }} ({{ actor.sex }})</h2>
+        <h2 class="title black--text d-block">{{ actor.name }} {{ actor.name_ar }}</h2>
 
-        <div class="actor-description" v-html="actor.description"></div>
+        
       </v-card-text>
     </v-card>
 
-
-      <uni-field :caption="i18n.fullName_" :english="actor.name" :arabic="actor.name_ar"></uni-field>
       <uni-field :caption="i18n.nickName_" :english="actor.nickname" :arabic="actor.nickname_ar"></uni-field>
+
       <div class="d-flex">
         <uni-field :caption="i18n.firstName_" :english="actor.first_name" :arabic="actor.first_name_ar"></uni-field>
         <uni-field :caption="i18n.middleName_" :english="actor.middle_name" :arabic="actor.middle_name_ar"></uni-field>
-
       </div>
+
       <uni-field :caption="i18n.lastName_" :english="actor.last_name" :arabic="actor.last_name_ar"></uni-field>
       <div class="d-flex">
+        <uni-field :caption="i18n.fathersName_" :english="actor.father_name" :arabic="actor.father_name_ar"></uni-field>
         <uni-field :caption="i18n.mothersName_" :english="actor.mother_name" :arabic="actor.mother_name_ar"></uni-field>
+      </div>
+
+      <div class="d-flex">
         <uni-field :caption="i18n.sex_" :english="actor._sex"></uni-field>
         <uni-field :caption="i18n.age_" :english="actor._age"></uni-field>
-      </div>
-      <div class="d-flex">
         <uni-field :caption="i18n.civilian_" :english="actor._civilian"></uni-field>
-        <uni-field :caption="i18n.actorType_" :english="actor._actor_type"></uni-field>
-
       </div>
-      <uni-field :caption="i18n.birthDate_" :english="actor.birth_date"></uni-field>
-      <uni-field :caption="i18n.birthPlace_" v-if="actor.birth_place" :english="actor.birth_place.full_string"></uni-field>
-      <uni-field :caption="i18n.residencePlace_" v-if="actor.residence_place"
-                 :english="actor.residence_place.full_string"></uni-field>
+
       <uni-field :caption="i18n.originPlace_" v-if="actor.origin_place"
                  :english="actor.origin_place.full_string"></uni-field>
 
-      <!-- Map -->
-      <v-card outlined class="ma-2 pa-2" color="grey lighten-5">
-        <global-map :i18n="i18n" :value="mapLocations"></global-map>
-      </v-card>
+      <div class="d-flex">
+        <uni-field :caption="i18n.familyStatus_" :english="actor.family_status"></uni-field>
+      </div>
 
       <div class="d-flex">
         <uni-field :caption="i18n.occupation_" :english="actor.occupation" :arabic="actor.occupation_ar"></uni-field>
         <uni-field :caption="i18n.position_" :english="actor.position" :arabic="actor.position_ar"></uni-field>
       </div>
 
-      <div class="d-flex">
-        <uni-field :caption="i18n.spokenDialects_" :english="actor.dialects" :arabic="actor.dialects_ar"></uni-field>
-        <uni-field :caption="i18n.familyStatus_" :english="actor.family_status" :arabic="actor.family_status_ar"></uni-field>
-      </div>
+      <v-card v-if="actor.dialects?.length" outlined
+              class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
+        <div class="caption grey--text mr-2">{{ i18n.spokenDialects_ }}</div>
+        <v-chip x-small v-for="e in actor.dialects" color="blue-grey lighten-5" class="caption black--text mx-1">{{ e.title }}</v-chip>
 
+      </v-card>
 
-      <v-card v-if="actor.ethnography?.length" outlined
+      <v-card v-if="actor.ethnographies?.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
         <div class="caption grey--text mr-2">{{ i18n.ethnographicInfo_ }}</div>
-        <v-chip x-small v-for="e in actor.ethnography" color="blue-grey lighten-5" class="caption black--text mx-1">{{ e.title }}</v-chip>
+        <v-chip x-small v-for="e in actor.ethnographies" color="blue-grey lighten-5" class="caption black--text mx-1">{{ e.title }}</v-chip>
 
       </v-card>
-      <v-card v-if="actor.nationality?.length" outlined
+      <v-card v-if="actor.nationalities?.length" outlined
               class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 ">
         <div class="caption grey--text mr-2">{{ i18n.nationalities_ }}</div>
-        <v-chip x-small v-for="n in actor.nationality" color="blue-grey lighten-5" class="caption black--text mx-1">{{ n.title }}</v-chip>
+        <v-chip x-small v-for="n in actor.nationalities" color="blue-grey lighten-5" class="caption black--text mx-1">{{ n.title }}</v-chip>
 
       </v-card>
 
+      <uni-field :caption="i18n.idNumber_" :english="actor.id_number"></uni-field>
 
-      <uni-field :caption="i18n.nationalIDCard_" :english="actor.national_id_card"></uni-field>
-
-
-      <v-card outlined class="ma-2" color="grey lighten-5" v-if="actor.sources && actor.sources.length">
-
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.sources_ }}</div>
-          <v-chip-group column>
-            <v-chip small color="blue-grey lighten-5" v-for="source in actor.sources"
-                    :key="source.id">{{ source.title }}</v-chip>
-          </v-chip-group>
-        </v-card-text>
+      <!-- profiles -->
+      <actor-profiles v-if="actor.id" :actor-id="actor.id" :i18n="i18n"> </actor-profiles>
+    
+      <!-- Map -->
+      <v-card outlined class="ma-2 pa-2" color="grey lighten-5">
+        <global-map :i18n="i18n" :value="mapLocations"></global-map>
       </v-card>
 
-
-      <v-card outlined class="ma-2" color="grey lighten-5" v-if="actor.labels && actor.labels.length">
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
-          <v-chip-group column>
-            <v-chip small color="blue-grey lighten-5" v-for="label in actor.labels"
-                    :key="label.id">{{ label.title }}</v-chip>
-          </v-chip-group>
-        </v-card-text>
-      </v-card>
-
-      <v-card outlined class="ma-2" color="grey lighten-5" v-if="actor.verLabels && actor.verLabels.length">
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
-          <v-chip-group column>
-            <v-chip small color="blue-grey lighten-5" v-for="label in actor.verLabels"
-                    :key="label.id">{{ label.title }}</v-chip>
-          </v-chip-group>
-        </v-card-text>
-      </v-card>
-
+    
 
       <v-card outlined class="ma-2" color="grey lighten-5" v-if="actor.events && actor.events.length">
         <v-card-text>
@@ -358,7 +448,7 @@ Vue.component('actor-card', {
         </v-card-text>
       </v-card>
 
-      <mp-card v-if="actor.MP" :i18n="i18n" :actorId="actor.id"></mp-card>
+      
 
       <!-- Related Actors -->
       <v-card outlined color="grey lighten-5" class="ma-2" v-if="actor.actor_relations && actor.actor_relations.length">

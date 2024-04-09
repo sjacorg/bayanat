@@ -54,11 +54,9 @@
     {% else %}
     <div class="d-none" data-settings='{}'></div>
 {% endif %}
-<div class="d-none" data-lang='{{session.get('lang','en')}}'></div>
-<div class="d-none" data-maps-api-endpoint='{{config.MAPS_API_ENDPOINT}}'></div>
+<div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
 <script>
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
-    window.__lang__ =  document.querySelector('[data-lang]').dataset.lang;
     window.__MAPS_API_ENDPOINT__ =  document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
 </script>
 

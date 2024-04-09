@@ -31,10 +31,10 @@ from enferno.admin.models import (
 from enferno.user.models import WebAuthn
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import cache, db, session, babel, rds
+from enferno.extensions import cache, db, session, babel, rds, debug_toolbar
 from enferno.public.views import bp_public
 from enferno.settings import Config
-from enferno.user.forms import ExtendedRegisterForm
+from enferno.user.forms import ExtendedRegisterForm, ExtendedLoginForm
 from enferno.user.models import User, Role
 from enferno.user.views import bp_user
 
@@ -44,28 +44,12 @@ def get_locale():
     Sets the system global language.
     :return: system language from the current session.
     """
-    from flask import session
+    default = current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
 
-    # override = request.args.get('lang')
-    # if override:
-    #     session['lang'] = override
-    default = "en"
-    try:
-        default = current_app.config.get("BABEL_DEFAULT_LOCALE")
-    except Exception as e:
-        print(e)
+    if getattr(current_user, "is_authenticated", False) and current_user.settings:
+        return current_user.settings.get("language", default)
 
-    if not current_user:
-        # working outside of a session context
-        return default
-    if not current_user.is_authenticated:
-        # will return default language
-        pass
-    else:
-        if current_user.settings:
-            if current_user.settings.get("language"):
-                session["lang"] = current_user.settings.get("language")
-    return session.get("lang", default)
+    return default
 
 
 def create_app(config_object=Config):
@@ -84,8 +68,21 @@ def create_app(config_object=Config):
 def register_extensions(app):
     cache.init_app(app)
     db.init_app(app)
+    debug_toolbar.init_app(app)
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, webauthn_model=WebAuthn)
-    security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
+
+    # Initialize security options with common configurations
+    security_options = {
+        "register_form": ExtendedRegisterForm,
+    }
+
+    # Add the login form to the security options if reCAPTCHA is enabled
+    if app.config.get("RECAPTCHA_ENABLED", False):
+        security_options["login_form"] = ExtendedLoginForm
+
+    # Initialize Flask-Security with the configured options
+    security = Security(app, user_datastore, **security_options)
+
     session.init_app(app)
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
@@ -103,11 +100,15 @@ def register_signals(app):
             session.pop("failed")
             print("login counter cleared")
 
-        Activity.create(user, Activity.ACTION_LOGIN, user.to_mini(), "user")
+        Activity.create(
+            user, Activity.ACTION_LOGIN, Activity.STATUS_SUCCESS, user.to_mini(), "user"
+        )
 
     @user_logged_out.connect_via(app)
     def _after_logout_hook(sender, user, **extra):
-        Activity.create(user, Activity.ACTION_LOGOUT, user.to_mini(), "user")
+        Activity.create(
+            user, Activity.ACTION_LOGOUT, Activity.STATUS_SUCCESS, user.to_mini(), "user"
+        )
 
 
 def register_blueprints(app):
@@ -191,3 +192,4 @@ def register_commands(app):
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
+    app.cli.add_command(commands.check_db_alignment)

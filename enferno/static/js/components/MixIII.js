@@ -21,7 +21,11 @@ Vue.component('mix-iii', {
     },
   },
 
-  mounted: function () {},
+  mounted: function () {
+
+      this.reporters = this.value || [];
+
+  },
 
   methods: {
     addReporter() {

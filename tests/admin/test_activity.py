@@ -52,7 +52,9 @@ def test_activity_endpoint(
 ):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get(
-        "/admin/api/activity", headers={"Content-Type": "application/json"}, json={}
+        "/admin/api/activities/",
+        headers={"Content-Type": "application/json"},
+        json={"q": {}, "options": {}},
     )
     assert response.status_code == expected_status
     if expected_status == 200:

@@ -1,6 +1,5 @@
 // global vuetify config object passed to most pages of the system
 const vuetify = new Vuetify({
-  //rtl: __lang__ &&__lang__ == 'ar',
   theme: {
     // read dark mode from settings (passed from python)
     dark: __settings__.dark,
@@ -317,6 +316,13 @@ String.prototype.trunc = function (n) {
   return this.substr(0, n - 1) + (this.length > n ? '&hellip;' : '');
 };
 
+String.prototype.getInitials = function() {
+    return this.split(' ')
+               .map(word => word[0].toUpperCase())
+               .join('');
+};
+
+
 //helper method to translate front-end strings using an array of translation objects (constructed in i18n.jinja2)
 function translate_status(str) {
   // placeholder, will handle translations in a future release
@@ -409,8 +415,6 @@ var aggregateActorLocations = function (actor) {
     }
   };
 
-  addLocation(actor.birth_place, 'Birth Place');
-  addLocation(actor.residence_place, 'Residence Place');
   addLocation(actor.origin_place, 'Origin Place');
 
   // Event locations

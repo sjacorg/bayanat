@@ -8,9 +8,11 @@ from flask_caching import Cache
 from flask_session import Session
 from flask_redis import FlaskRedis
 from flask_babel import Babel
+from flask_debugtoolbar import DebugToolbarExtension
 
 db = SQLAlchemy()
 cache = Cache()
 session = Session()
 rds = FlaskRedis()
 babel = Babel()
+debug_toolbar = DebugToolbarExtension()

@@ -23,7 +23,7 @@
 
                                     <v-stepper-step step="2">{{ _('Fields Map') }}</v-stepper-step>
                                     <v-divider></v-divider>
-                                    <v-stepper-step step="3">{{ _('Bulk Upload & Import') }}</v-stepper-step>
+                                    <v-stepper-step step="3">{{ _('Bulk Upload \& Import') }}</v-stepper-step>
                                     <v-divider></v-divider>
                                     <v-stepper-step step="4">{{ _('Status') }}</v-stepper-step>
                                 </v-stepper-header>
@@ -73,7 +73,6 @@
 
                                         <v-sheet max-width="800" class="pa-4 my-8 mx-auto" v-show="firstAction==1">
 
-
                                             <v-autocomplete
                                                     outlined
                                                     class="mt-2 mx-2"
@@ -86,11 +85,8 @@
                                                     @change="selectMap"
 
                                                     @click:clear="resetFields"
-
-
                                             >
                                             </v-autocomplete>
-
 
                                             <template v-if="selectedMap">
                                                 <v-btn @click="step=3" class=" mx-2" color="primary" elevation="0">
@@ -100,19 +96,15 @@
                                                 </v-btn>
                                             </template>
 
-
                                         </v-sheet>
 
                                         <v-sheet max-height="calc(100vh - 560px)">
                                             <v-img v-show="firstAction!=1" style="max-width: 75%; margin:auto"
                                                    src="/static/img/csv-tool-bg.jpg">
-
                                             </v-img>
                                         </v-sheet>
 
-
                                     </v-stepper-content>
-
 
                                     <v-stepper-content step="2">
                                         <v-sheet color="white lighten-4" class=" pa-3 align-center d-flex">
@@ -131,18 +123,12 @@
                                                       item-value="id"
                                                       return-object
                                                       @change="loadMap"
-
-                                                    {#                      @click:clear="resetSearch"#}
-
                                                       clearable
-
                                             >
                                             </v-select>
 
-
                                             <v-btn small
                                                    class="mx-2"
-                                                   :disabled="!mapValid"
                                                    color="success"
                                                    @click="toStepThree"
                                                    elevation="0">
@@ -167,23 +153,15 @@
                                                                       label="{{ _('Search Fields') }}" v-model="ffilter"
                                                                       clearable></v-text-field>
 
-
                                                         <draggable
-
-
                                                                 class="list-group"
-
                                                                 :clone="clone"
                                                                 :group="{ name: 'columns', pull: customPull , animation: 100, ghostClass: 'ghost' }"
                                                                 v-model="fields"
                                                                 @start="start"
                                                         >
-
-
                                                             <v-chip v-for="(item,i) in fields" small
-
                                                                     @click:close="removeMe(i)"
-
                                                                     class="ma-1 list-group-item" dark :key="i" close
                                                                     color="green">
                                                                 <v-menu top nudge-top="20" open-on-hover offset-y>
@@ -201,11 +179,8 @@
                                                                 </v-menu>
                                                                 ${item}
                                                             </v-chip>
-
-
                                                         </draggable>
                                                     </v-sheet>
-
 
                                                 </v-col>
 
@@ -238,10 +213,40 @@
                                                         </div>
 
                                                         <v-divider class="mb-2"></v-divider>
+                                                        
                                                         <v-row>
+                                                            <v-sheet class="d-flex align-center">
+                                                                <drop-field v-if="dynamicAtype"
+                                                                            caption="{{ _('Actor Type') }}"
+                                                                            v-model="map.dtype"></drop-field>
+
+                                                                <v-select v-if="!dynamicAtype" dense
+                                                                          class="ml-3 mt-2" :items="translations.actorTypes"
+                                                                          item-text="tr"
+                                                                          item-value="en"
+                                                                          clearable
+                                                                          label="{{ _('Actor Type') }}"
+                                                                          v-model="map.type"></v-select>
+
+                                                                <v-icon @click="switchAtype" x-small
+                                                                        color="primary">mdi-swap-horizontal
+                                                                </v-icon>
+                                                            </v-sheet>
+
                                                             <drop-field v-model="map.originid"
                                                                         caption="{{ _('Origin ID') }}">
+                                                                <template v-slot:extra>
+                                                                    <v-btn-toggle v-model="vmap.originid" borderless
+                                                                                    color="primary accent-3"
+                                                                                    group>
+                                                                        <v-btn v-tippy content="{{ _('Make it Unique!') }}"  value="1" small text>
+                                                                            <v-icon small>mdi-key</v-icon>
+                                                                        </v-btn>
+                                                                    </v-btn-toggle>
+                                                                </template>
+                                                            </drop-field>
                                                         </v-row>
+
                                                         <v-row style="gap: 20px">
 
                                                             <drop-field v-model="map.name" caption="{{ _('Name') }}">
@@ -265,17 +270,6 @@
                                                             <drop-field v-model="map.nickname_ar"
                                                                         caption="{{ _('Nickname (AR)') }}"></drop-field>
 
-
-                                                            <template v-slot:extra>
-                                                                <v-btn-toggle v-model="vmap.originid" borderless
-                                                                              color="primary accent-3"
-                                                                              group>
-                                                                    <v-btn v-tippy content="{{ _('Make it Unique!') }}"  value="1" small text>
-                                                                        <v-icon small>mdi-key</v-icon>
-                                                                    </v-btn>
-                                                                </v-btn-toggle>
-                                                            </template>
-                                                            </drop-field>
                                                         </v-row>
                                                         <v-row>
                                                             <drop-field v-model="map.first_name"
@@ -286,10 +280,10 @@
 
 
                                                             <drop-field v-model="map.middle_name"
-                                                                        caption="{{ _('Middle/Father\'s Name') }}"></drop-field>
+                                                                        caption="{{ _('Middle Name(s)') }}"></drop-field>
 
                                                             <drop-field v-model="map.middle_name_ar"
-                                                                        caption="{{ _('Middle/Father\'s Name (AR)') }}"></drop-field>
+                                                                        caption="{{ _('Middle Name(s) (AR)') }}"></drop-field>
 
 
                                                             <drop-field v-model="map.last_name"
@@ -298,46 +292,19 @@
                                                             <drop-field v-model="map.last_name_ar"
                                                                         caption="{{ _('Last Name (AR)') }}"></drop-field>
 
+                                                            <drop-field v-model="map.father_name"
+                                                                        caption="{{ _('Father\'s Name') }}"></drop-field>
+
+                                                            <drop-field v-model="map.father_name_ar"
+                                                                        caption="{{ _('Father\'s Name (AR)') }}"></drop-field>
+
                                                             <drop-field v-model="map.mother_name"
                                                                         caption="{{ _('Mother\'s Name') }}"></drop-field>
 
                                                             <drop-field v-model="map.mother_name_ar"
                                                                         caption="{{ _('Mother\'s Name (AR)') }}"></drop-field>
 
-
                                                         </v-row>
-                                                        <v-row>
-                                                            <v-sheet class="d-flex align-center ma-1 pa-1">
-                                                                <template v-for="d,i in map.description" :key="i">
-                                                                    <input v-if="i!=0" class="d-sep" width="10" outlined
-                                                                           dense v-model="map.description[i].sep">
-                                                                    <drop-field v-model="map.description[i].data"
-                                                                                caption="{{ _('Description') }}"></drop-field>
-                                                                    <v-icon v-if="i!=0" color="red" small
-                                                                            @click="map.description.splice(i,1)">
-                                                                        mdi-minus
-                                                                    </v-icon>
-                                                                </template>
-
-
-                                                            </v-sheet>
-                                                            <v-btn @click="map.description.push({})" class="my-auto" fab
-                                                                   text color="green" small>
-                                                                <v-icon>mdi-plus</v-icon>
-                                                            </v-btn>
-
-
-                                                        </v-row>
-                                                        <v-row>
-                                                            <drop-field v-model="map.sources"
-                                                                        caption="{{ _('Sources') }}"></drop-field>
-                                                            <drop-field v-model="map.labels"
-                                                                        caption="{{ _('Labels') }}"></drop-field>
-                                                            <drop-field v-model="map.verLabels"
-                                                                        caption="{{ _('Verified Labels') }}"></drop-field>
-
-                                                        </v-row>
-
 
                                                         <v-row>
                                                             <drop-field v-model="map.sex"
@@ -348,45 +315,331 @@
                                                                         caption="{{ _('Civilian/Non Civilian') }}"></drop-field>
                                                         </v-row>
                                                         <v-row>
-                                                            <drop-field v-model="map.actor_type"
-                                                                        caption="{{ _('Actor Type') }}"></drop-field>
-                                                            <drop-field v-model="map.birth_date"
-                                                                        caption="{{ _('Date of Birth') }}"></drop-field>
-
-
-                                                        </v-row>
-                                                        <v-row>
-                                                            <drop-field v-model="map.birth_place"
-                                                                        caption="{{ _('Place of Birth') }}"></drop-field>
-                                                            <drop-field v-model="map.residence_place"
-                                                                        caption="{{ _('Place of Residence') }}"></drop-field>
                                                             <drop-field v-model="map.origin_place"
                                                                         caption="{{ _('Place of Origin') }}"></drop-field>
                                                         </v-row>
+
                                                         <v-row>
+                                                            <drop-field v-model="map.occupation"
+                                                                        caption="{{ _('Occupation') }}"></drop-field>
+
+                                                            <drop-field v-model="map.occupation_ar"
+                                                                        caption="{{ _('Occupation (AR)') }}"></drop-field>
 
 
+                                                            <drop-field v-model="map.position"
+                                                                        caption="{{ _('Position') }}"></drop-field>
+                                                            <drop-field v-model="map.position_ar"
+                                                                        caption="{{ _('Position (AR)') }}"></drop-field>
+
+
+                                                            <drop-field v-model="map.family_status"
+                                                                        caption="{{ _('Family Status') }}"></drop-field>
+
+                                                            <drop-field v-model="map.no_children"
+                                                                        caption="{{ _('No of Children') }}"></drop-field>
+
+                                                        </v-row>
+                                                        <v-row>
+                                                            <drop-field v-model="map.ethnographies"
+                                                                        caption="{{ _('Ethnographic Information') }}"></drop-field>
+                                                            <drop-field v-model="map.nationalities"
+                                                                        caption="{{ _('Nationalities') }}"></drop-field>
+                                                            <drop-field v-model="map.dialects"
+                                                                        caption="{{ _('Spoken Dialects') }}"></drop-field>
+                                                            <drop-field v-model="map.id_number"
+                                                                        caption="{{ _('ID Number') }}"></drop-field>
+                                                        </v-row>
+
+                                                        <!-- Actor Profile -->
+                                                        <v-row>
+                                                            <v-card  class="pa-3 my-2 flex-wrap align-center"
+                                                            outlined>
+                                                                <h3 class="pa-2 my-3">
+                                                                        {{ _('Actor Profile') }}
+                                                                </h3>
+
+                                                                <v-row>
+                                                                    <drop-field v-model="map.sources"
+                                                                                caption="{{ _('Sources') }}"></drop-field>
+                                                                    <drop-field v-model="map.labels"
+                                                                                caption="{{ _('Labels') }}"></drop-field>
+                                                                    <drop-field v-model="map.verLabels"
+                                                                                caption="{{ _('Verified Labels') }}"></drop-field>
+                                                                </v-row>
+
+                                                                <v-row>
+                                                                    <v-sheet class="d-flex align-center ma-1 pa-1">
+                                                                        <template v-for="(d,i) in map.description" :key="i">
+                                                                            <input v-if="i!=0" class="d-sep" width="10" outlined
+                                                                                   dense v-model="map.description[i].sep">
+                                                                            <drop-field v-model="map.description[i].data"
+                                                                                        caption="{{ _('Description') }}"></drop-field>
+                                                                            <v-icon v-if="i!=0" color="red" small
+                                                                                    @click="map.description.splice(i,1)">
+                                                                                mdi-minus
+                                                                            </v-icon>
+                                                                        </template>
+        
+                                                                    </v-sheet>
+                                                                    <v-btn @click="map.description.push({})" class="my-auto" fab
+                                                                           text color="green" small>
+                                                                        <v-icon>mdi-plus</v-icon>
+                                                                    </v-btn>
+                                                                </v-row>
+
+                                                                <v-row>
+                                                                    <drop-field v-model="map.source_link"
+                                                                                caption="{{ _('Source Link') }}">
+                                                                    <template v-slot:extra>
+                                                                        <v-btn-toggle v-model="vmap.source_link" borderless
+                                                                                    color="primary accent-3"
+                                                                                    group>
+                                                                            <v-btn v-tippy content="Make it Unique!" value="1" small text>
+                                                                                <v-icon small>mdi-key</v-icon>
+                                                                            </v-btn>
+                                                                        </v-btn-toggle>
+                                                                    </template>
+
+                                                                    </drop-field>
+                                                                    <drop-field v-model="map.source_link_type"
+                                                                                caption="{{ _('Private') }}"></drop-field>
+                                                                    <drop-field v-model="map.publish_date"
+                                                                                caption="{{ _('Publish Date') }}"></drop-field>
+                                                                    <drop-field v-model="map.documentation_date"
+                                                                                caption="{{ _('Documentation Date') }}"></drop-field>
+
+                                                                </v-row>
+
+                                                                    <v-divider class="my-3"></v-divider>
+
+                                                                    <h3 class="pa-2 my-3">
+                                                                        {{ _('Missing Person Details') }}
+                                                                    </h3>
+                                                                    
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.last_address"
+                                                                                    caption="{{ _('Last Address') }}"></drop-field>
+                                                                        <drop-field v-model="map.marriage_history"
+                                                                                    caption="{{ _('Marriage History') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.pregnant_at_disappearance"
+                                                                                    caption="{{ _('Pregnant at Disappearance') }}"></drop-field>
+                                                                        <drop-field v-model="map.months_pregnant"
+                                                                                    caption="{{ _('Months Pregnant') }}"></drop-field>
+                                                                        <drop-field v-model="map.missing_relatives"
+                                                                                    caption="{{ _('Missing Relatives') }}"></drop-field>
+
+                                                                    </v-row>
+
+                                                                    <v-subheader>
+                                                                        {{ _('Details of the person who saw them last') }}
+                                                                    </v-subheader>
+                                                                    
+                                                                    <v-row>
+                                                                        <v-sheet class="pa-3 ma-2 d-flex align-center" outlined>
+                                                                            <drop-field v-model="map.saw_name"
+                                                                                        caption="{{ _('Name') }}"></drop-field>
+                                                                            <drop-field v-model="map.saw_address"
+                                                                                        caption="{{ _('Address') }}"></drop-field>
+                                                                            <drop-field v-model="map.saw_phone"
+                                                                                        caption="{{ _('Phone') }}"></drop-field>
+                                                                            <drop-field v-model="map.saw_email"
+                                                                                        caption="{{ _('Email') }}"></drop-field>
+                                                                        </v-sheet>
+                                                                    </v-row>
+                                                                    
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.seen_in_detention_opts"
+                                                                                    caption="{{ _('Seen in a detention center') }}"></drop-field>
+                                                                        <drop-field v-model="map.seen_in_detention_details"
+                                                                                    caption="{{ _('Details') }}"></drop-field>
+
+                                                                        <drop-field v-model="map.injured_opts"
+                                                                                    caption="{{ _('Injured around time of disappearance') }}"></drop-field>
+                                                                        <drop-field v-model="map.injured_details"
+                                                                                    caption="{{ _('Details') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+
+                                                                        <drop-field v-model="map.known_dead_opts"
+                                                                                    caption="{{ _('Known to be dead') }}"></drop-field>
+                                                                        <drop-field v-model="map.known_dead_details"
+                                                                                    caption="{{ _('Details') }}"></drop-field>
+                                                                        <drop-field v-model="map.personal_items"
+                                                                                    caption="{{ _('Personal Items') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.height"
+                                                                                    caption="{{ _('Height') }}"></drop-field>
+                                                                        <drop-field v-model="map.weight"
+                                                                                    caption="{{ _('Weight') }}"></drop-field>
+                                                                        <drop-field v-model="map.physique"
+                                                                                    caption="{{ _('Physique') }}"></drop-field>
+                                                                        <drop-field v-model="map.hair_loss"
+                                                                                    caption="{{ _('Hair Loss') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.hair_type"
+                                                                                    caption="{{ _('Hair Type') }}"></drop-field>
+                                                                        <drop-field v-model="map.hair_length"
+                                                                                    caption="{{ _('Hair Length') }}"></drop-field>
+                                                                        <drop-field v-model="map.hair_color"
+                                                                                    caption="{{ _('Hair Color') }}"></drop-field>
+                                                                        <drop-field v-model="map.facial_hair"
+                                                                                    caption="{{ _('Facial Hair') }}"></drop-field>
+                                                                    </v-row>
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.posture"
+                                                                                    caption="{{ _('Notes on posture') }}"></drop-field>
+                                                                        <drop-field v-model="map.handedness"
+                                                                                    caption="{{ _('Handedness') }}"></drop-field>
+                                                                        <drop-field v-model="map.glasses"
+                                                                                    caption="{{ _('Glasses') }}"></drop-field>
+                                                                        <drop-field v-model="map.eye_color"
+                                                                                    caption="{{ _('Eye Color') }}"></drop-field>
+                                                                    </v-row>
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.skin_markings_opts"
+                                                                                    caption="{{ _('Skin Markings Options') }}"></drop-field>
+                                                                        <drop-field v-model="map.skin_markings_details"
+                                                                                    caption="{{ _('Skin Markings Details') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+
+                                                                        <drop-field v-model="map.dist_char_con"
+                                                                                    caption="{{ _('Distinctive characteristics (congenital)') }}"></drop-field>
+                                                                        <drop-field v-model="map.dist_char_acq"
+                                                                                    caption="{{ _('Distinctive characteristics (acquired)') }}"></drop-field>
+                                                                    </v-row>
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.physical_habits"
+                                                                                    caption="{{ _('Physical Habits') }}"></drop-field>
+                                                                        <drop-field v-model="map.other"
+                                                                                    caption="{{ _('Other comments') }}"></drop-field>
+                                                                    </v-row>
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.phys_name_contact"
+                                                                                    caption="{{ _('Physician\'s name and contact') }}"></drop-field>
+                                                                        <drop-field v-model="map.injuries"
+                                                                                    caption="{{ _('Fractures / Injuries') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.implants"
+                                                                                    caption="{{ _('Implants') }}"></drop-field>
+                                                                        <drop-field v-model="map.malforms"
+                                                                                    caption="{{ _('Congenital malformations') }}"></drop-field>
+
+                                                                    </v-row>
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.pain"
+                                                                                    caption="{{ _('Pain and/or ailments') }}"></drop-field>
+                                                                        <drop-field v-model="map.other_conditions"
+                                                                                    caption="{{ _('Other medical conditions') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.accidents"
+                                                                                    caption="{{ _('Accidents') }}"></drop-field>
+                                                                        <drop-field v-model="map.pres_drugs"
+                                                                                    caption="{{ _('Prescription drugs taken') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.smoker"
+                                                                                    caption="{{ _('Smoker') }}"></drop-field>
+                                                                        <drop-field v-model="map.dental_record"
+                                                                                    caption="{{ _('Dental Record') }}"></drop-field>
+                                                                    </v-row>
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.dentist_info"
+                                                                                    caption="{{ _('Dentist\'s name and contact') }}"></drop-field>
+                                                                        <drop-field v-model="map.teeth_features"
+                                                                                    caption="{{ _('Teeth features') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.dental_problems"
+                                                                                    caption="{{ _('Dental problems') }}"></drop-field>
+                                                                        <drop-field v-model="map.dental_treatments"
+                                                                                    caption="{{ _('Dental treatments') }}"></drop-field>
+                                                                        <drop-field v-model="map.dental_habits"
+                                                                                    caption="{{ _('Dental Habits') }}"></drop-field>
+                                                                        <drop-field v-model="map.case_status"
+                                                                                    caption="{{ _('Case Status') }}"></drop-field>
+                                                                    </v-row>
+
+                                                                    <v-subheader>
+                                                                        {{ _('Details of the person(s) who reported them missing') }}
+                                                                    </v-subheader>
+
+                                                                    <v-row>
+
+                                                                        <v-sheet class="pa-3 ma-2 d-flex align-center" outlined
+                                                                                v-for="(reporter,i) in map.reporters">
+                                                                            <drop-field caption="{{ _('Reporter name') }}"
+                                                                                        v-model="map.reporters[i].name"></drop-field>
+                                                                            <drop-field caption="{{ _('Reporter contact') }}"
+                                                                                        v-model="map.reporters[i].contact"></drop-field>
+                                                                            <drop-field caption="{{ _('Reporter relationship') }}"
+                                                                                        v-model="map.reporters[i].relationship"></drop-field>
+                                                                            <v-btn v-if="i==map.reporters.length-1" small fab
+                                                                                text
+                                                                                @click="map.reporters.push({})">
+                                                                                <v-icon small color="green lighten-2">mdi-plus
+                                                                                </v-icon>
+                                                                            </v-btn>
+                                                                            <v-btn v-if="i==map.reporters.length-1 && map.reporters.length !=1"
+                                                                                small fab text
+                                                                                @click="map.reporters.splice(i,1)">
+                                                                                <v-icon small color="red lighten-2">mdi-minus
+                                                                                </v-icon>
+                                                                            </v-btn>
+                                                                        </v-sheet>
+
+                                                                    </v-row>
+
+                                                                    <v-row>
+                                                                        <drop-field v-model="map.identified_by"
+                                                                                    caption="{{ _('Identified by') }}"></drop-field>
+                                                                        <drop-field v-model="map.family_notified"
+                                                                                    caption="{{ _('Family Notified') }}"></drop-field>
+                                                                        <drop-field v-model="map.reburial_location"
+                                                                                    caption="{{ _('Location of reburial') }}"></drop-field>
+
+                                                                    </v-row>
+                                                            </v-card>
+                                                        </v-row>
+                                                        
+                                                        <v-row>
                                                             <div>
                                                                 <v-subheader>{{ _('Events') }}</v-subheader>
                                                             </div>
 
                                                             <v-sheet class="pa-3 my-2 d-flex flex-wrap align-center"
                                                                      outlined
-                                                                     v-for="event,i in map.events" :key="i">
+                                                                     v-for="(event,i) in map.events" :key="i">
                                                                 <drop-field caption="{{ _('Title') }}"
                                                                             v-model="map.events[i].title"></drop-field>
 
                                                                 <v-sheet class="d-flex align-center">
 
-                                                                    <drop-field v-if="!dynamicEtype"
+                                                                    <drop-field v-if="dynamicEtype"
                                                                                 caption="{{ _('Event Type') }}"
-                                                                                v-model="map.events[i].type"></drop-field>
+                                                                                v-model="map.events[i].dtype"></drop-field>
 
-                                                                    <v-select v-if="dynamicEtype" dense
+                                                                    <v-select v-if="!dynamicEtype" dense
                                                                               class="ml-3 mt-2" :items="eventtypes"
                                                                               item-text="title" item-value="title"
                                                                               label="{{ _('Event Type') }}"
-                                                                              v-model="map.events[i].etype"></v-select>
+                                                                              v-model="map.events[i].type"></v-select>
 
                                                                     <v-icon @click="switchEtype" x-small
                                                                             color="primary">mdi-swap-horizontal
@@ -420,269 +673,8 @@
                                                                 </v-btn>
                                                             </v-sheet>
                                                         </v-row>
-
-                                                        <v-row>
-                                                            <drop-field v-model="map.occupation"
-                                                                        caption="{{ _('Occupation') }}"></drop-field>
-
-                                                            <drop-field v-model="map.occupation_ar"
-                                                                        caption="{{ _('Occupation (AR)') }}"></drop-field>
-
-
-                                                            <drop-field v-model="map.position"
-                                                                        caption="{{ _('Position') }}"></drop-field>
-                                                            <drop-field v-model="map.position_ar"
-                                                                        caption="{{ _('Position (AR)') }}"></drop-field>
-
-
-                                                            <drop-field v-model="map.dialects"
-                                                                        caption="{{ _('Spoken Dialects') }}"></drop-field>
-                                                            <drop-field v-model="map.dialects_ar"
-                                                                        caption="{{ _('Spoken Dialects (AR)') }}"></drop-field>
-
-
-                                                            <drop-field v-model="map.family_status"
-                                                                        caption="{{ _('Family Status') }}"></drop-field>
-                                                            <drop-field v-model="map.family_status_ar"
-                                                                        caption="{{ _('Family Status (AR)') }}"></drop-field>
-
-                                                        </v-row>
-                                                        <v-row>
-                                                            <drop-field v-model="map.ethnography"
-                                                                        caption="{{ _('Ethnographic Information') }}"></drop-field>
-                                                            <drop-field v-model="map.nationality"
-                                                                        caption="{{ _('Nationality') }}"></drop-field>
-                                                            <drop-field v-model="map.national_id_card"
-                                                                        caption="{{ _('National ID Card') }}"></drop-field>
-
-
-                                                        </v-row>
-                                                        <v-row>
-                                                            <drop-field v-model="map.source_link"
-                                                                        caption="{{ _('Source Link') }}">
-                                                            <template v-slot:extra>
-                                                                <v-btn-toggle v-model="vmap.source_link" borderless
-                                                                              color="primary accent-3"
-                                                                              group>
-                                                                    <v-btn v-tippy content="Make it Unique!" value="1" small text>
-                                                                        <v-icon small>mdi-key</v-icon>
-                                                                    </v-btn>
-                                                                </v-btn-toggle>
-                                                            </template>
-
-                                                            </drop-field>
-                                                            <drop-field v-model="map.source_link_type"
-                                                                        caption="{{ _('Private') }}"></drop-field>
-                                                            <drop-field v-model="map.publish_date"
-                                                                        caption="{{ _('Publish Date') }}"></drop-field>
-                                                            <drop-field v-model="map.documentation_date"
-                                                                        caption="{{ _('Documentation Date') }}"></drop-field>
-
-                                                        </v-row>
-
-
-
-                                                        {% if config.MISSING_PERSONS %}
-                                                            <v-divider></v-divider>
-                                                            <v-row>
-                                                                <drop-field v-model="map.last_address"
-                                                                            caption="{{ _('Last Address') }}"></drop-field>
-                                                                <drop-field v-model="map.marriage_history"
-                                                                            caption="{{ _('Marriage History') }}"></drop-field>
-                                                                <drop-field v-model="map.bio_children"
-                                                                            caption="{{ _('Bio Children') }}"></drop-field>
-
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.pregnant_at_disappearance"
-                                                                            caption="{{ _('Pregnant at Disappearance') }}"></drop-field>
-                                                                <drop-field v-model="map.months_pregnant"
-                                                                            caption="{{ _('Months Pregnant') }}"></drop-field>
-                                                                <drop-field v-model="map.missing_relatives"
-                                                                            caption="{{ _('Missing Relatives') }}"></drop-field>
-
-                                                            </v-row>
-                                                            <v-subheader>Details of the person who saw them last
-                                                            </v-subheader>
-                                                            <v-row>
-
-                                                                <drop-field v-model="map.saw_name"
-                                                                            caption="{{ _('Name') }}"></drop-field>
-                                                                <drop-field v-model="map.saw_address"
-                                                                            caption="{{ _('Address') }}"></drop-field>
-                                                                <drop-field v-model="map.saw_phone"
-                                                                            caption="{{ _('Phone') }}"></drop-field>
-                                                                <drop-field v-model="map.saw_email"
-                                                                            caption="{{ _('Email') }}"></drop-field>
-
-                                                            </v-row>
-                                                            <v-row>
-                                                                <drop-field v-model="map.seen_in_detention_opts"
-                                                                            caption="{{ _('Seen in a detention center') }}"></drop-field>
-                                                                <drop-field v-model="map.seen_in_detention_details"
-                                                                            caption="{{ _('Details') }}"></drop-field>
-
-                                                                <drop-field v-model="map.injured_opts"
-                                                                            caption="{{ _('Injured around time of disappearance') }}"></drop-field>
-                                                                <drop-field v-model="map.injured_details"
-                                                                            caption="{{ _('Details') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-
-                                                                <drop-field v-model="map.known_dead_opts"
-                                                                            caption="{{ _('Known to be dead') }}"></drop-field>
-                                                                <drop-field v-model="map.known_dead_details"
-                                                                            caption="{{ _('Details') }}"></drop-field>
-                                                                <drop-field v-model="map.personal_items"
-                                                                            caption="{{ _('Personal Items') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.height"
-                                                                            caption="{{ _('Height') }}"></drop-field>
-                                                                <drop-field v-model="map.weight"
-                                                                            caption="{{ _('Weight') }}"></drop-field>
-                                                                <drop-field v-model="map.physique"
-                                                                            caption="{{ _('Physique') }}"></drop-field>
-                                                                <drop-field v-model="map.hair_loss"
-                                                                            caption="{{ _('Hair Loss') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.hair_type"
-                                                                            caption="{{ _('Hair Type') }}"></drop-field>
-                                                                <drop-field v-model="map.hair_length"
-                                                                            caption="{{ _('Hair Length') }}"></drop-field>
-                                                                <drop-field v-model="map.hair_color"
-                                                                            caption="{{ _('Hair Color') }}"></drop-field>
-                                                                <drop-field v-model="map.facial_hair"
-                                                                            caption="{{ _('Facial Hair') }}"></drop-field>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <drop-field v-model="map.posture"
-                                                                            caption="{{ _('Notes on posture') }}"></drop-field>
-                                                                <drop-field v-model="map.handedness"
-                                                                            caption="{{ _('Handedness') }}"></drop-field>
-                                                                <drop-field v-model="map.glasses"
-                                                                            caption="{{ _('Glasses') }}"></drop-field>
-                                                                <drop-field v-model="map.eye_color"
-                                                                            caption="{{ _('Eye Color') }}"></drop-field>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <drop-field v-model="map.skin_markings_opts"
-                                                                            caption="{{ _('Skin Markings Options') }}"></drop-field>
-                                                                <drop-field v-model="map.skin_markings_details"
-                                                                            caption="{{ _('Skin Markings Details') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-
-                                                                <drop-field v-model="map.dist_char_con"
-                                                                            caption="{{ _('Distinctive characteristics (congenital)') }}"></drop-field>
-                                                                <drop-field v-model="map.dist_char_acq"
-                                                                            caption="{{ _('Distinctive characteristics (acquired)') }}"></drop-field>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <drop-field v-model="map.physical_habits"
-                                                                            caption="{{ _('Physical Habits') }}"></drop-field>
-                                                                <drop-field v-model="map.other"
-                                                                            caption="{{ _('Other comments') }}"></drop-field>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <drop-field v-model="map.phys_name_contact"
-                                                                            caption="{{ _('Physician\’s name and contact') }}"></drop-field>
-                                                                <drop-field v-model="map.injuries"
-                                                                            caption="{{ _('Fractures / Injuries') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.implants"
-                                                                            caption="{{ _('Implants') }}"></drop-field>
-                                                                <drop-field v-model="map.malforms"
-                                                                            caption="{{ _('Congenital malformations') }}"></drop-field>
-
-                                                            </v-row>
-                                                            <v-row>
-                                                                <drop-field v-model="map.pain"
-                                                                            caption="{{ _('Pain and/or ailments') }}"></drop-field>
-                                                                <drop-field v-model="map.other_conditions"
-                                                                            caption="{{ _('Other medical conditions') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.accidents"
-                                                                            caption="{{ _('Accidents') }}"></drop-field>
-                                                                <drop-field v-model="map.pres_drugs"
-                                                                            caption="{{ _('Prescription drugs taken') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.smoker"
-                                                                            caption="{{ _('Smoker') }}"></drop-field>
-                                                                <drop-field v-model="map.dental_record"
-                                                                            caption="{{ _('Dental Record') }}"></drop-field>
-                                                            </v-row>
-                                                            <v-row>
-                                                                <drop-field v-model="map.dentist_info"
-                                                                            caption="{{ _('Dentist\’s name and contact') }}"></drop-field>
-                                                                <drop-field v-model="map.teeth_features"
-                                                                            caption="{{ _('Teeth features') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.dental_problems"
-                                                                            caption="{{ _('Dental problems') }}"></drop-field>
-                                                                <drop-field v-model="map.dental_treatments"
-                                                                            caption="{{ _('Dental treatments') }}"></drop-field>
-                                                                <drop-field v-model="map.dental_habits"
-                                                                            caption="{{ _('Dental Habits') }}"></drop-field>
-                                                                <drop-field v-model="map.case_status"
-                                                                            caption="{{ _('Case Status') }}"></drop-field>
-                                                            </v-row>
-
-                                                            <v-row>
-
-                                                                <v-sheet class="pa-3 my-2 d-flex" outlined
-                                                                         v-for="reporter,i in map.reporters">
-                                                                    <drop-field caption="{{ _('Reporter name') }}"
-                                                                                v-model="map.reporters[i].name"></drop-field>
-                                                                    <drop-field caption="{{ _('Reporter contact') }}"
-                                                                                v-model="map.reporters[i].contact"></drop-field>
-                                                                    <drop-field caption="{{ _('Reporter relationship') }}"
-                                                                                v-model="map.reporters[i].relationship"></drop-field>
-                                                                    <v-btn v-if="i==map.reporters.length-1" small fab
-                                                                           text
-                                                                           @click="map.reporters.push({})">
-                                                                        <v-icon small color="green lighten-2">mdi-plus
-                                                                        </v-icon>
-                                                                    </v-btn>
-                                                                    <v-btn v-if="i==map.reporters.length-1 && map.reporters.length !=1"
-                                                                           small fab text
-                                                                           @click="map.reporters.splice(i,1)">
-                                                                        <v-icon small color="red lighten-2">mdi-minus
-                                                                        </v-icon>
-                                                                    </v-btn>
-                                                                </v-sheet>
-
-                                                            </v-row>
-
-                                                            <v-row>
-                                                                <drop-field v-model="map.identified_by"
-                                                                            caption="{{ _('Identified by') }}"></drop-field>
-                                                                <drop-field v-model="map.family_notified"
-                                                                            caption="{{ _('Family Notified') }}"></drop-field>
-                                                                <drop-field v-model="map.reburial_location"
-                                                                            caption="{{ _('Location of reburial') }}"></drop-field>
-
-                                                            </v-row>
-                                                        {% endif %}
-
-
                                                     </v-sheet>
                                                 </v-col>
-
                                             </v-row>
                                         </v-card>
 
@@ -727,15 +719,12 @@
                                                 {{ _('Optional: Upload more sheets to process') }}
                                             </v-card-title>
 
-
                                             <v-card-text>
 
                                                  <vue-dropzone ref="extradropzone" id="dropzone" class="ma-auto" :options="dzMoreOpts"
                                                           @vdropzone-error="showError"
                                                                @vdropzone-removed-file="fileRemoveHandler"
                                                           @vdropzone-success="extraUploadSuccess"></vue-dropzone>
-
-
 
                                                   <search-field
                                                                 api="/admin/api/roles/"
@@ -745,12 +734,6 @@
                                                                 label="{{ _('Access Roles') }}"
                                                                 v-model="roles"
                                                         ></search-field>
-
-
-
-
-                                                
-
                                             </v-card-text>
                                             <v-card-actions class="d-flex justify-center">
                                                 <v-btn @click="toStepFour" :disabled="processDisabled" color="primary">
@@ -779,7 +762,6 @@
                                 </v-stepper-items>
                             </v-stepper>
 
-
                             <v-snackbar v-model="snackbar" class="">
                                 <div class="d-flex justify-space-between align-center">
                                     ${snackMessage}
@@ -790,7 +772,6 @@
                                 </div>
                             </v-snackbar>
 
-
                         </v-col>
                     </v-row>
                 </v-container>
@@ -798,7 +779,6 @@
             {% include 'footer.html' %}
 
             <v-overlay v-model="loading">
-
 
             </v-overlay>
         </v-app>
@@ -864,9 +844,11 @@
                 processDisabled: false,
 
                 controlOnStart: true,
+                
+                dynamicAtype: true,
 
                 eventtypes: [],
-                dynamicEtype: false,
+                dynamicEtype: true,
 
 
                 maps: null,
@@ -933,10 +915,6 @@
             },
 
             computed: {
-                mapValid() {
-                    return this.map.name && this.map.name.length > 0;
-                },
-
                 allFiles() {
                     return this.files.concat(this.extra);
                 }
@@ -1044,13 +1022,6 @@
 
                 },
 
-                returnToStack(item) {
-                    let field = item.pop();
-                    this.fields.indexOf(field) === -1 ? this.fields.unshift(field) : console.log("This item already exists");
-
-                },
-
-
                 sheetSelected() {
                     axios.post('/import/api/xls/analyze', {
                         file: this.files[0],
@@ -1078,20 +1049,38 @@
                     this.sheets = [];
                 },
 
+                returnToStack(item) {
+                    let field = item.pop();
+                    this.fields.indexOf(field) === -1 ? this.fields.unshift(field) : console.log("This item already exists");
+
+                },
+
+                switchAtype() {
+                    if (this.map.dtype && this.dynamicAtype) {
+                        this.returnToStack(this.map.dtype);
+                    }
+                    if (!this.dynamicAtype) {
+                        this.map.type = null;
+                    }
+                    this.dynamicAtype=!this.dynamicAtype;
+                },
 
                 switchEtype() {
-
-                    this.dynamicEtype = !this.dynamicEtype;
-                    // use etype as a way to identify the mode of import
-
-                    if (this.dynamicEtype == true) {
+                    // use dtype as a way to identify the mode of import
+                    if (this.dynamicEtype) {
+                        for (const ev of this.map.events) {
+                            if (ev.dtype){
+                                this.returnToStack(ev.dtype);
+                            }   
+                        }
                     } else {
                         for (const ev of this.map.events) {
-                            delete (ev.etype)
+                            if (ev.type){
+                                ev.type = null;
+                            }   
                         }
-
-
                     }
+                    this.dynamicEtype = !this.dynamicEtype;
                 },
 
                 resetFields() {

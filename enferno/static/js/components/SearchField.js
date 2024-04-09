@@ -98,9 +98,22 @@ const SearchField = {
                     v-bind="$attrs"
                     :loading="loading"
 
-            ></v-combobox>
-        `,
-};
+            >
+<!--              <template v-slot:selection="{ item, index }">-->
+<!--                <v-chip-->
+<!--                    :key="index"-->
+<!--                    color="white"-->
+<!--                    text-color="black"-->
+<!--                    close-->
+<!--                    @click:close="removeItem(index)"-->
+<!--                >-->
+<!--                   {{ item[itemText] }}-->
+<!--                </v-chip>-->
+<!--              </template>-->
+              
+            </v-combobox>
+        `
+    };
 
 Vue.component('search-field', SearchField);
 

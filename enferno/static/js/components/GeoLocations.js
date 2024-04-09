@@ -187,9 +187,8 @@ Vue.component('geo-locations', {
               api="/admin/api/geolocationtypes"
               v-model="e.type"
               item-text="title"
-              item-value="id"
+              
               >
-                
               </search-field>
                 </div>
             <div  class="d-flex px-5" style="column-gap: 20px">

@@ -18,9 +18,10 @@ from werkzeug.utils import secure_filename
 
 from enferno.extensions import db
 from enferno.settings import Config as cfg
-from enferno.utils.base import BaseMixin
+from enferno.utils.base import BaseMixin, ComponentDataMixin
 from enferno.utils.csv_utils import convert_simple_relation, convert_complex_relation
 from enferno.utils.date_helper import DateHelper
+from enferno.user.models import User
 
 
 ######  Role based Access Control Decorator for Bulletins / Actors  / Incidents  ######
@@ -518,11 +519,12 @@ class Media(db.Model, BaseMixin):
         db.Text,
         db.Computed(
             """
-        ((((((((id::text || ' '::text) || COALESCE(title, ''::character varying)::text) || ' '::text)
-         || COALESCE(media_file, ''::character varying)::text) || ' '::text) ||
-          COALESCE(media_file_type, ''::character varying)::text) || ' '::text) || 
-          COALESCE(comments, ''::character varying)::text) 
-        """
+            CAST(id AS TEXT) || ' ' ||
+            COALESCE(title, '') || ' ' ||
+            COALESCE(media_file, '') || ' ' ||
+            COALESCE(media_file_type, '') || ' ' ||
+            COALESCE(comments, '')
+            """
         ),
     )
 
@@ -950,7 +952,7 @@ class GeoLocation(db.Model, BaseMixin):
         return {
             "id": self.id,
             "title": self.title,
-            "type": self.type.to_dict() if self.type else None,
+            "geoType": self.type.to_dict() if self.type else None,
             "main": self.main,
             "lat": to_shape(self.latlng).y,
             "lng": to_shape(self.latlng).x,
@@ -1464,15 +1466,16 @@ class Bulletin(db.Model, BaseMixin):
         db.Text,
         db.Computed(
             """
-        (((((((((((((((((id)::text || ' '::text) || (COALESCE(title, ''::character varying))::text) || ' '::text) ||
-                        (COALESCE(title_ar, ''::character varying))::text) || ' '::text) ||
-                      COALESCE(description, ''::text)) || ' '::text) ||
-                    (COALESCE(originid, ''::character varying))::text) || ' '::text) ||
-                  (COALESCE(sjac_title, ''::character varying))::text) || ' '::text) ||
-                (COALESCE(sjac_title_ar, ''::character varying))::text) || ' '::text) ||
-                (COALESCE(source_link, ''::character varying))::text) || ' '::text) 
-                ||  ' '::text) || COALESCE(comments, ''::text)
-        """
+            CAST(id AS TEXT) || ' ' ||
+            COALESCE(title, '') || ' ' ||
+            COALESCE(title_ar, '') || ' ' ||
+            COALESCE(description, '') || ' ' ||
+            COALESCE(originid, '') || ' ' ||
+            COALESCE(sjac_title, '') || ' ' ||
+            COALESCE(sjac_title_ar, '') || ' ' ||
+            COALESCE(source_link, '') || ' ' ||
+            COALESCE(comments, '')
+            """
         ),
     )
 
@@ -2096,26 +2099,42 @@ class Bulletin(db.Model, BaseMixin):
             return self.updated_at
 
 
-# joint table
+# Updated joint table for actor_sources
 actor_sources = db.Table(
     "actor_sources",
     db.Column("source_id", db.Integer, db.ForeignKey("source.id"), primary_key=True),
-    db.Column("actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True),
+    db.Column(
+        "actor_profile_id",
+        db.Integer,
+        db.ForeignKey("actor_profile.id"),
+        primary_key=True,
+    ),
 )
 
-# joint table
+# joint table for actor_labels
 actor_labels = db.Table(
     "actor_labels",
     db.Column("label_id", db.Integer, db.ForeignKey("label.id"), primary_key=True),
-    db.Column("actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True),
+    db.Column(
+        "actor_profile_id",
+        db.Integer,
+        db.ForeignKey("actor_profile.id"),
+        primary_key=True,
+    ),
 )
 
-# joint table
+# joint table for actor_verlabels
 actor_verlabels = db.Table(
     "actor_verlabels",
     db.Column("label_id", db.Integer, db.ForeignKey("label.id"), primary_key=True),
-    db.Column("actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True),
+    db.Column(
+        "actor_profile_id",
+        db.Integer,
+        db.ForeignKey("actor_profile.id"),
+        primary_key=True,
+    ),
 )
+
 
 # joint table
 actor_events = db.Table(
@@ -2143,6 +2162,308 @@ actor_ethnographies = db.Table(
     db.Column("ethnography_id", db.Integer, db.ForeignKey("ethnographies.id"), primary_key=True),
 )
 
+actor_dialects = db.Table(
+    "actor_dialects",
+    db.Column("actor_id", db.Integer, db.ForeignKey("actor.id"), primary_key=True),
+    db.Column("dialect_id", db.Integer, db.ForeignKey("dialects.id"), primary_key=True),
+)
+
+
+class ActorProfile(db.Model, BaseMixin):
+    __tablename__ = "actor_profile"
+
+    # Mode Constants
+    MODE_PROFILE = 1
+    MODE_MAIN = 2
+    MODE_MISSING_PERSON = 3
+
+    id = db.Column(db.Integer, primary_key=True)
+    mode = db.Column(
+        db.Integer, default=MODE_PROFILE, nullable=False
+    )  # 1: profile , 2: main , 3: missing person
+    originid = db.Column(db.String, index=True)
+    description = db.Column(db.Text)
+    source_link = db.Column(db.String(255))
+    source_link_type = db.Column(db.Boolean, default=False)
+    publish_date = db.Column(db.DateTime)
+    documentation_date = db.Column(db.DateTime)
+
+    # Foreign key to reference the Actor
+    actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"))
+
+    # Relationship back to the Actor
+    actor = db.relationship(
+        "Actor", backref=db.backref("actor_profiles", lazy=True, order_by="ActorProfile.created_at")
+    )
+
+    # sources, labels, and verlabels relationships
+    sources = db.relationship(
+        "Source",
+        secondary=actor_sources,
+        backref=db.backref("actor_profiles", lazy="dynamic"),
+    )
+    labels = db.relationship(
+        "Label",
+        secondary=actor_labels,
+        backref=db.backref("actor_profiles", lazy="dynamic"),
+    )
+    ver_labels = db.relationship(
+        "Label",
+        secondary=actor_verlabels,
+        backref=db.backref("verlabels_actor_profiles", lazy="dynamic"),
+    )
+
+    last_address = db.Column(db.Text, comment="MP")
+    social_networks = db.Column(JSONB, comment="MP")
+    marriage_history = db.Column(db.String, comment="MP")
+    pregnant_at_disappearance = db.Column(db.String, comment="MP")
+    months_pregnant = db.Column(db.Integer, comment="MP")
+    missing_relatives = db.Column(db.Boolean, comment="MP")
+    saw_name = db.Column(db.String, comment="MP")
+    saw_address = db.Column(db.Text, comment="MP")
+    saw_email = db.Column(db.String, comment="MP")
+    saw_phone = db.Column(db.String, comment="MP")
+    detained_before = db.Column(db.String, comment="MP")
+    seen_in_detention = db.Column(JSONB, comment="MP")
+    injured = db.Column(JSONB, comment="MP")
+    known_dead = db.Column(JSONB, comment="MP")
+    death_details = db.Column(db.Text, comment="MP")
+    personal_items = db.Column(db.Text, comment="MP")
+    height = db.Column(db.Integer, comment="MP")
+    weight = db.Column(db.Integer, comment="MP")
+    physique = db.Column(db.String, comment="MP")
+    hair_loss = db.Column(db.String, comment="MP")
+    hair_type = db.Column(db.String, comment="MP")
+    hair_length = db.Column(db.String, comment="MP")
+    hair_color = db.Column(db.String, comment="MP")
+    facial_hair = db.Column(db.String, comment="MP")
+    posture = db.Column(db.Text, comment="MP")
+    skin_markings = db.Column(JSONB, comment="MP")
+    handedness = db.Column(db.String, comment="MP")
+    glasses = db.Column(db.String, comment="MP")
+    eye_color = db.Column(db.String, comment="MP")
+    dist_char_con = db.Column(db.String, comment="MP")
+    dist_char_acq = db.Column(db.String, comment="MP")
+    physical_habits = db.Column(db.String, comment="MP")
+    other = db.Column(db.Text, comment="MP")
+    phys_name_contact = db.Column(db.Text, comment="MP")
+    injuries = db.Column(db.Text, comment="MP")
+    implants = db.Column(db.Text, comment="MP")
+    malforms = db.Column(db.Text, comment="MP")
+    pain = db.Column(db.Text, comment="MP")
+    other_conditions = db.Column(db.Text, comment="MP")
+    accidents = db.Column(db.Text, comment="MP")
+    pres_drugs = db.Column(db.Text, comment="MP")
+    smoker = db.Column(db.String, comment="MP")
+    dental_record = db.Column(db.Boolean, comment="MP")
+    dentist_info = db.Column(db.Text, comment="MP")
+    teeth_features = db.Column(db.Text, comment="MP")
+    dental_problems = db.Column(db.Text, comment="MP")
+    dental_treatments = db.Column(db.Text, comment="MP")
+    dental_habits = db.Column(db.Text, comment="MP")
+    case_status = db.Column(db.String, comment="MP")
+    # array of objects: name, email,phone, email, address, relationship
+    reporters = db.Column(JSONB, comment="MP")
+    identified_by = db.Column(db.String, comment="MP")
+    family_notified = db.Column(db.Boolean, comment="MP")
+    hypothesis_based = db.Column(db.Text, comment="MP")
+    hypothesis_status = db.Column(db.String, comment="MP")
+    # death_cause = db.Column(db.String)
+    reburial_location = db.Column(db.String, comment="MP")
+
+    def from_json(self, json):
+        self.mode = json.get("mode", self.mode)
+        self.originid = json["originid"] if "originid" in json else None
+        self.description = json.get("description", self.description)
+        self.source_link = json.get("source_link", self.source_link)
+        self.source_link_type = json.get("source_link_type", self.source_link_type)
+        self.publish_date = json.get("publish_date", self.publish_date)
+        self.documentation_date = json.get("documentation_date", self.documentation_date)
+
+        # Handling Sources
+        if "sources" in json:
+            source_ids = [source["id"] for source in json["sources"] if "id" in source]
+            self.sources = (
+                Source.query.filter(Source.id.in_(source_ids)).all() if source_ids else []
+            )
+
+        # Handling Labels
+        if "labels" in json:
+            label_ids = [label["id"] for label in json["labels"] if "id" in label]
+            self.labels = Label.query.filter(Label.id.in_(label_ids)).all() if label_ids else []
+
+        # Handling Verified Labels
+        if "ver_labels" in json:
+            ver_label_ids = [label["id"] for label in json["ver_labels"] if "id" in label]
+            self.ver_labels = (
+                Label.query.filter(Label.id.in_(ver_label_ids)).all() if ver_label_ids else []
+            )
+
+        if self.mode == 3:
+            self.last_address = json.get("last_address")
+            self.marriage_history = json.get("marriage_history")
+            self.pregnant_at_disappearance = json.get("pregnant_at_disappearance")
+            months_pregnant_value = json.get("months_pregnant")
+            self.months_pregnant = int(months_pregnant_value) if months_pregnant_value else None
+            self.missing_relatives = json.get("missing_relatives")
+            self.saw_name = json.get("saw_name")
+            self.saw_address = json.get("saw_address")
+            self.saw_phone = json.get("saw_phone")
+            self.saw_email = json.get("saw_email")
+            self.seen_in_detention = json.get("seen_in_detention")
+            # Flag json fields for saving
+            flag_modified(self, "seen_in_detention")
+            self.injured = json.get("injured")
+            flag_modified(self, "injured")
+            self.known_dead = json.get("known_dead")
+            flag_modified(self, "known_dead")
+            self.death_details = json.get("death_details")
+            self.personal_items = json.get("personal_items")
+            height_value = json.get("height")
+            self.height = int(height_value) if height_value else None
+            weight_value = json.get("weight")
+            self.weight = int(weight_value) if weight_value else None
+            self.physique = json.get("physique")
+            self.hair_loss = json.get("hair_loss")
+            self.hair_type = json.get("hair_type")
+            self.hair_length = json.get("hair_length")
+            self.hair_color = json.get("hair_color")
+            self.facial_hair = json.get("facial_hair")
+            self.posture = json.get("posture")
+            self.skin_markings = json.get("skin_markings")
+            flag_modified(self, "skin_markings")
+            self.handedness = json.get("handedness")
+            self.eye_color = json.get("eye_color")
+            self.glasses = json.get("glasses")
+            self.dist_char_con = json.get("dist_char_con")
+            self.dist_char_acq = json.get("dist_char_acq")
+            self.physical_habits = json.get("physical_habits")
+            self.other = json.get("other")
+            self.phys_name_contact = json.get("phys_name_contact")
+            self.injuries = json.get("injuries")
+            self.implants = json.get("implants")
+            self.malforms = json.get("malforms")
+            self.pain = json.get("pain")
+            self.other_conditions = json.get("other_conditions")
+            self.accidents = json.get("accidents")
+            self.pres_drugs = json.get("pres_drugs")
+            self.smoker = json.get("smoker")
+            self.dental_record = json.get("dental_record")
+            self.dentist_info = json.get("dentist_info")
+            self.teeth_features = json.get("teeth_features")
+            self.dental_problems = json.get("dental_problems")
+            self.dental_treatments = json.get("dental_treatments")
+            self.dental_habits = json.get("dental_habits")
+            self.case_status = json.get("case_status")
+            self.reporters = json.get("reporters")
+            flag_modified(self, "reporters")
+            self.identified_by = json.get("identified_by")
+            self.family_notified = json.get("family_notified")
+            self.reburial_location = json.get("reburial_location")
+            self.hypothesis_based = json.get("hypothesis_based")
+            self.hypothesis_status = json.get("hypothesis_status")
+
+        return self
+
+    def mp_json(self):
+        mp = {}
+        mp["MP"] = True
+        mp["last_address"] = getattr(self, "last_address")
+        mp["marriage_history"] = getattr(self, "marriage_history")
+        mp["pregnant_at_disappearance"] = getattr(self, "pregnant_at_disappearance")
+        mp["months_pregnant"] = str(self.months_pregnant) if self.months_pregnant else None
+        mp["missing_relatives"] = getattr(self, "missing_relatives")
+        mp["saw_name"] = getattr(self, "saw_name")
+        mp["saw_address"] = getattr(self, "saw_address")
+        mp["saw_phone"] = getattr(self, "saw_phone")
+        mp["saw_email"] = getattr(self, "saw_email")
+        mp["seen_in_detention"] = getattr(self, "seen_in_detention")
+        mp["injured"] = getattr(self, "injured")
+        mp["known_dead"] = getattr(self, "known_dead")
+        mp["death_details"] = getattr(self, "death_details")
+        mp["personal_items"] = getattr(self, "personal_items")
+        mp["height"] = str(self.height) if self.height else None
+        mp["weight"] = str(self.weight) if self.weight else None
+        mp["physique"] = getattr(self, "physique")
+        mp["_physique"] = getattr(self, "physique")
+
+        mp["hair_loss"] = getattr(self, "hair_loss")
+        mp["_hair_loss"] = gettext(self.hair_loss)
+
+        mp["hair_type"] = getattr(self, "hair_type")
+        mp["_hair_type"] = gettext(self.hair_type)
+
+        mp["hair_length"] = getattr(self, "hair_length")
+        mp["_hair_length"] = gettext(self.hair_length)
+
+        mp["hair_color"] = getattr(self, "hair_color")
+        mp["_hair_color"] = gettext(self.hair_color)
+
+        mp["facial_hair"] = getattr(self, "facial_hair")
+        mp["_facial_hair"] = gettext(self.facial_hair)
+
+        mp["posture"] = getattr(self, "posture")
+        mp["skin_markings"] = getattr(self, "skin_markings")
+        if self.skin_markings and self.skin_markings.get("opts"):
+            mp["_skin_markings"] = [gettext(item) for item in self.skin_markings["opts"]]
+
+        mp["handedness"] = getattr(self, "handedness")
+        mp["_handedness"] = gettext(self.handedness)
+        mp["eye_color"] = getattr(self, "eye_color")
+        mp["_eye_color"] = gettext(self.eye_color)
+
+        mp["glasses"] = getattr(self, "glasses")
+        mp["dist_char_con"] = getattr(self, "dist_char_con")
+        mp["dist_char_acq"] = getattr(self, "dist_char_acq")
+        mp["physical_habits"] = getattr(self, "physical_habits")
+        mp["other"] = getattr(self, "other")
+        mp["phys_name_contact"] = getattr(self, "phys_name_contact")
+        mp["injuries"] = getattr(self, "injuries")
+        mp["implants"] = getattr(self, "implants")
+        mp["malforms"] = getattr(self, "malforms")
+        mp["pain"] = getattr(self, "pain")
+        mp["other_conditions"] = getattr(self, "other_conditions")
+        mp["accidents"] = getattr(self, "accidents")
+        mp["pres_drugs"] = getattr(self, "pres_drugs")
+        mp["smoker"] = getattr(self, "smoker")
+        mp["dental_record"] = getattr(self, "dental_record")
+        mp["dentist_info"] = getattr(self, "dentist_info")
+        mp["teeth_features"] = getattr(self, "teeth_features")
+        mp["dental_problems"] = getattr(self, "dental_problems")
+        mp["dental_treatments"] = getattr(self, "dental_treatments")
+        mp["dental_habits"] = getattr(self, "dental_habits")
+        mp["case_status"] = getattr(self, "case_status")
+        mp["_case_status"] = gettext(self.case_status)
+        mp["reporters"] = getattr(self, "reporters")
+        mp["identified_by"] = getattr(self, "identified_by")
+        mp["family_notified"] = getattr(self, "family_notified")
+        mp["reburial_location"] = getattr(self, "reburial_location")
+        mp["hypothesis_based"] = getattr(self, "hypothesis_based")
+        mp["hypothesis_status"] = getattr(self, "hypothesis_status")
+        return mp
+
+    def to_dict(self):
+        actor_profile_dict = {
+            "id": self.id,
+            "mode": self.mode,
+            "originid": self.originid or None,
+            "description": self.description or None,
+            "source_link": self.source_link or None,
+            "publish_date": DateHelper.serialize_datetime(self.publish_date),
+            "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
+            "actor_id": self.actor_id,
+            "sources": self.serialize_relationship(self.sources),
+            "labels": self.serialize_relationship(self.labels),
+            "ver_labels": self.serialize_relationship(self.ver_labels),
+        }
+
+        # Include missing person fields if mode is MODE_MISSING_PERSON
+        if self.mode == ActorProfile.MODE_MISSING_PERSON:
+            mp_data = self.mp_json()
+            actor_profile_dict.update(mp_data)
+
+        return actor_profile_dict
+
 
 class Actor(db.Model, BaseMixin):
     """
@@ -2158,8 +2479,6 @@ class Actor(db.Model, BaseMixin):
     name = db.Column(db.String(255))
     name_ar = db.Column(db.String(255))
 
-    description = db.Column(db.Text)
-
     nickname = db.Column(db.String(255))
     nickname_ar = db.Column(db.String(255))
 
@@ -2172,10 +2491,11 @@ class Actor(db.Model, BaseMixin):
     last_name = db.Column(db.String(255))
     last_name_ar = db.Column(db.String(255))
 
+    father_name = db.Column(db.String(255))
+    father_name_ar = db.Column(db.String(255))
+
     mother_name = db.Column(db.String(255))
     mother_name_ar = db.Column(db.String(255))
-
-    originid = db.Column(db.String(255))
 
     assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     assigned_to = db.relationship(
@@ -2190,20 +2510,6 @@ class Actor(db.Model, BaseMixin):
     )
     second_peer_reviewer = db.relationship(
         "User", backref="second_rev_actors", foreign_keys=[second_peer_reviewer_id]
-    )
-
-    sources = db.relationship(
-        "Source", secondary=actor_sources, backref=db.backref("actors", lazy="dynamic")
-    )
-
-    labels = db.relationship(
-        "Label", secondary=actor_labels, backref=db.backref("actors", lazy="dynamic")
-    )
-
-    ver_labels = db.relationship(
-        "Label",
-        secondary=actor_verlabels,
-        backref=db.backref("verlabels_actors", lazy="dynamic"),
     )
 
     roles = db.relationship(
@@ -2229,19 +2535,11 @@ class Actor(db.Model, BaseMixin):
     # Related Incidents
     related_incidents = db.relationship("Itoa", backref="actor", foreign_keys="Itoa.actor_id")
 
-    actor_type = db.Column(db.String(255))
+    type = db.Column(db.String(255))
     sex = db.Column(db.String(255))
     age = db.Column(db.String(255))
     civilian = db.Column(db.String(255))
-    birth_date = db.Column(db.DateTime)
 
-    birth_place_id = db.Column(db.Integer, db.ForeignKey("location.id"))
-    birth_place = db.relationship("Location", backref="actors_born", foreign_keys=[birth_place_id])
-
-    residence_place_id = db.Column(db.Integer, db.ForeignKey("location.id"))
-    residence_place = db.relationship(
-        "Location", backref="actors_residence_place", foreign_keys=[residence_place_id]
-    )
     origin_place_id = db.Column(db.Integer, db.ForeignKey("location.id"))
     origin_place = db.relationship(
         "Location", backref="actors_origin_place", foreign_keys=[origin_place_id]
@@ -2253,28 +2551,25 @@ class Actor(db.Model, BaseMixin):
     position = db.Column(db.String(255))
     position_ar = db.Column(db.String(255))
 
-    dialects = db.Column(db.String(255))
-    dialects_ar = db.Column(db.String(255))
-
     family_status = db.Column(db.String(255))
-    family_status_ar = db.Column(db.String(255))
+    no_children = db.Column(db.Integer)
 
     ethnographies = db.relationship(
         "Ethnography", secondary="actor_ethnographies", backref=db.backref("actors", lazy="dynamic")
     )
 
     nationalities = db.relationship(
-        "Country", secondary=actor_countries, backref=db.backref("actors", lazy="dynamic")
+        "Country", secondary="actor_countries", backref=db.backref("actors", lazy="dynamic")
     )
 
-    national_id_card = db.Column(db.String(255))
+    dialects = db.relationship(
+        "Dialect", secondary="actor_dialects", backref=db.backref("actors", lazy="dynamic")
+    )
 
-    publish_date = db.Column(db.DateTime, index=True)
-    documentation_date = db.Column(db.DateTime, index=True)
+    id_number = db.Column(db.String(255))
 
     status = db.Column(db.String(255))
-    source_link = db.Column(db.String(255))
-    source_link_type = db.Column(db.Boolean, default=False)
+
     comments = db.Column(db.Text)
     # review fields
     review = db.Column(db.Text)
@@ -2285,67 +2580,6 @@ class Actor(db.Model, BaseMixin):
 
     tsv = db.Column(TSVECTOR)
 
-    if cfg.MISSING_PERSONS:
-        last_address = db.Column(db.Text)
-        social_networks = db.Column(JSONB)
-        marriage_history = db.Column(db.String)
-        bio_children = db.Column(db.Integer)
-        pregnant_at_disappearance = db.Column(db.String)
-        months_pregnant = db.Column(db.Integer)
-        missing_relatives = db.Column(db.Boolean)
-        saw_name = db.Column(db.String)
-        saw_address = db.Column(db.Text)
-        saw_email = db.Column(db.String)
-        saw_phone = db.Column(db.String)
-        detained_before = db.Column(db.String)
-        seen_in_detention = db.Column(JSONB)
-        injured = db.Column(JSONB)
-        known_dead = db.Column(JSONB)
-        death_details = db.Column(db.Text)
-        personal_items = db.Column(db.Text)
-        height = db.Column(db.Integer)
-        weight = db.Column(db.Integer)
-        physique = db.Column(db.String)
-        hair_loss = db.Column(db.String)
-        hair_type = db.Column(db.String)
-        hair_length = db.Column(db.String)
-        hair_color = db.Column(db.String)
-        facial_hair = db.Column(db.String)
-        posture = db.Column(db.Text)
-        skin_markings = db.Column(JSONB)
-        handedness = db.Column(db.String)
-        glasses = db.Column(db.String)
-        eye_color = db.Column(db.String)
-        dist_char_con = db.Column(db.String)
-        dist_char_acq = db.Column(db.String)
-        physical_habits = db.Column(db.String)
-        other = db.Column(db.Text)
-        phys_name_contact = db.Column(db.Text)
-        injuries = db.Column(db.Text)
-        implants = db.Column(db.Text)
-        malforms = db.Column(db.Text)
-        pain = db.Column(db.Text)
-        other_conditions = db.Column(db.Text)
-        accidents = db.Column(db.Text)
-        pres_drugs = db.Column(db.Text)
-        smoker = db.Column(db.String)
-        dental_record = db.Column(db.Boolean)
-        dentist_info = db.Column(db.Text)
-        teeth_features = db.Column(db.Text)
-        dental_problems = db.Column(db.Text)
-        dental_treatments = db.Column(db.Text)
-        dental_habits = db.Column(db.Text)
-        case_status = db.Column(db.String)
-        # array of objects: name, email,phone, email, address, relationship
-        reporters = db.Column(JSONB)
-        identified_by = db.Column(db.String)
-        family_notified = db.Column(db.Boolean)
-        hypothesis_based = db.Column(db.Text)
-        hypothesis_status = db.Column(db.String)
-
-        # death_cause = db.Column(db.String)
-        reburial_location = db.Column(db.String)
-
     search = db.Column(
         db.Text,
         db.Computed(
@@ -2353,9 +2587,6 @@ class Actor(db.Model, BaseMixin):
          (id)::text || ' ' ||
          COALESCE(name, ''::character varying) || ' ' ||
          COALESCE(name_ar, ''::character varying) || ' ' ||
-         COALESCE(originid, ''::character varying) || ' ' ||
-         COALESCE(source_link, ''::character varying) || ' ' ||
-         COALESCE(description, ''::text) || ' ' ||
          COALESCE(comments, ''::text)
         """
         ),
@@ -2376,7 +2607,7 @@ class Actor(db.Model, BaseMixin):
     def title(self):
         return self.name
 
-    def related(self, include_self: False):
+    def related(self, include_self=False):
         output = {}
         output["bulletin"] = [r.bulletin.id for r in self.bulletin_relations]
         output["actor"] = []
@@ -2429,98 +2660,109 @@ class Actor(db.Model, BaseMixin):
     def incident_relations_dict(self):
         return [relation.to_dict() for relation in self.incident_relations]
 
+    @property
+    def sources(self):
+        return list(set(source for profile in self.actor_profiles for source in profile.sources))
+
+    @property
+    def labels(self):
+        return list(set(label for profile in self.actor_profiles for label in profile.labels))
+
+    @property
+    def verlabels(self):
+        return list(
+            set(ver_label for profile in self.actor_profiles for ver_label in profile.ver_labels)
+        )
+
+    @staticmethod
+    def gen_full_name(first_name, last_name, middle_name=None):
+        name = first_name
+        if middle_name:
+            name = name + " " + middle_name
+        name = name + " " + last_name
+        return name
+
     # populate actor object from json dict
     def from_json(self, json):
         # All text fields
 
-        self.originid = json["originid"] if "originid" in json else None
-        self.name = json["name"] if "name" in json else None
-        self.name_ar = json["name_ar"] if "name_ar" in json else None
+        self.type = json["type"] if "type" in json else None
+
+        if self.type == "Entity":
+            self.name = json["name"] if "name" in json else ""
+            self.name_ar = json["name_ar"] if "name_ar" in json else ""
+
+        elif self.type == "Person":
+            self.first_name = (
+                json["first_name"] if "first_name" in json and json["first_name"] else ""
+            )
+            self.first_name_ar = (
+                json["first_name_ar"] if "first_name_ar" in json and json["first_name_ar"] else ""
+            )
+
+            self.middle_name = (
+                json["middle_name"] if "middle_name" in json and json["middle_name"] else ""
+            )
+            self.middle_name_ar = (
+                json["middle_name_ar"]
+                if "middle_name_ar" in json and json["middle_name_ar"]
+                else ""
+            )
+
+            self.last_name = json["last_name"] if "last_name" in json and json["last_name"] else ""
+            self.last_name_ar = (
+                json["last_name_ar"] if "last_name_ar" in json and json["last_name_ar"] else ""
+            )
+
+            self.name = self.gen_full_name(self.first_name, self.last_name, self.middle_name)
+            self.name_ar = self.gen_full_name(
+                self.first_name_ar, self.last_name_ar, self.middle_name_ar
+            )
+
+            self.father_name = json["father_name"] if "father_name" in json else ""
+            self.father_name_ar = json["father_name_ar"] if "father_name_ar" in json else ""
+
+            self.mother_name = json["mother_name"] if "mother_name" in json else ""
+            self.mother_name_ar = json["mother_name_ar"] if "mother_name_ar" in json else ""
+
+            self.sex = json["sex"] if "sex" in json else None
+            self.age = json["age"] if "age" in json else None
+            self.civilian = json["civilian"] if "civilian" in json else None
+
+            self.occupation = json["occupation"] if "occupation" in json else None
+            self.occupation_ar = json["occupation_ar"] if "occupation_ar" in json else None
+            self.position = json["position"] if "position" in json else None
+            self.position_ar = json["position_ar"] if "position_ar" in json else None
+
+            self.family_status = json["family_status"] if "family_status" in json else None
+
+            if "no_children" in json:
+                try:
+                    self.no_children = int(json["no_children"])
+                except:
+                    self.no_children = None
+
+            # Ethnographies
+            if "ethnographies" in json:
+                ids = [ethnography.get("id") for ethnography in json["ethnographies"]]
+                ethnographies = Ethnography.query.filter(Ethnography.id.in_(ids)).all()
+                self.ethnographies = ethnographies
+
+            # Nationalitites
+            if "nationalities" in json:
+                ids = [country.get("id") for country in json["nationalities"]]
+                countries = Country.query.filter(Country.id.in_(ids)).all()
+                self.nationalities = countries
+
+            # Dialects
+            if "dialects" in json:
+                ids = [dialect.get("id") for dialect in json["dialects"]]
+                dialects = Dialect.query.filter(Dialect.id.in_(ids)).all()
+                self.dialects = dialects
 
         self.nickname = json["nickname"] if "nickname" in json else None
         self.nickname_ar = json["nickname_ar"] if "nickname_ar" in json else None
-
-        self.first_name = json["first_name"] if "first_name" in json else None
-        self.first_name_ar = json["first_name_ar"] if "first_name_ar" in json else None
-
-        self.middle_name = json["middle_name"] if "middle_name" in json else None
-        self.middle_name_ar = json["middle_name_ar"] if "middle_name_ar" in json else None
-
-        self.last_name = json["last_name"] if "last_name" in json else None
-        self.last_name_ar = json["last_name_ar"] if "last_name_ar" in json else None
-
-        self.mother_name = json["mother_name"] if "mother_name" in json else None
-        self.mother_name_ar = json["mother_name_ar"] if "mother_name_ar" in json else None
-
-        self.description = json["description"] if "description" in json else None
-
-        self.occupation = json["occupation"] if "occupation" in json else None
-        self.occupation_ar = json["occupation_ar"] if "occupation_ar" in json else None
-        self.position = json["position"] if "position" in json else None
-        self.position_ar = json["position_ar"] if "position_ar" in json else None
-        self.dialects = json["dialects"] if "dialects" in json else None
-        self.dialects_ar = json["dialects_ar"] if "dialects_ar" in json else None
-        self.family_status = json["family_status"] if "family_status" in json else None
-        self.family_status_ar = json["family_status_ar"] if "family_status_ar" in json else None
-
-        self.national_id_card = json["national_id_card"] if "national_id_card" in json else None
-
-        self.source_link = json["source_link"] if "source_link" in json else None
-        self.source_link_type = json.get("source_link_type")
-
-        # Ethnographies
-        if "ethnography" in json:
-            ids = [ethnography.get("id") for ethnography in json["ethnography"]]
-            ethnographies = Ethnography.query.filter(Ethnography.id.in_(ids)).all()
-            self.ethnographies = ethnographies
-
-        # Nationalitites
-        if "nationality" in json:
-            ids = [country.get("id") for country in json["nationality"]]
-            countries = Country.query.filter(Country.id.in_(ids)).all()
-            self.nationalities = countries
-
-        # Sources
-        if "sources" in json:
-            ids = [source["id"] for source in json["sources"]]
-            sources = Source.query.filter(Source.id.in_(ids)).all()
-            self.sources = sources
-
-        # Labels
-        if "labels" in json:
-            ids = [label["id"] for label in json["labels"]]
-            labels = Label.query.filter(Label.id.in_(ids)).all()
-            self.labels = labels
-
-        # verified Labels
-        if "verLabels" in json:
-            ids = [label["id"] for label in json["verLabels"]]
-            ver_labels = Label.query.filter(Label.id.in_(ids)).all()
-            self.ver_labels = ver_labels
-
-        self.sex = json["sex"] if "sex" in json else None
-        self.age = json["age"] if "age" in json else None
-        self.civilian = json["civilian"] if "civilian" in json else None
-        self.actor_type = json["actor_type"] if "actor_type" in json else None
-
-        if "birth_date" in json and json["birth_date"]:
-            self.birth_date = json["birth_date"]
-        else:
-            self.birth_date = None
-
-        if "birth_place" in json and json["birth_place"] and "id" in json["birth_place"]:
-            self.birth_place_id = json["birth_place"]["id"]
-        else:
-            self.birth_place_id = None
-
-        if (
-            "residence_place" in json
-            and json["residence_place"]
-            and "id" in json["residence_place"]
-        ):
-            self.residence_place_id = json["residence_place"]["id"]
-        else:
-            self.residence_place_id = None
+        self.id_number = json["id_number"] if "id_number" in json else None
 
         if "origin_place" in json and json["origin_place"] and "id" in json["origin_place"]:
             self.origin_place_id = json["origin_place"]["id"]
@@ -2576,13 +2818,6 @@ class Actor(db.Model, BaseMixin):
                     media.comments + "\n" + delete_comment if media.comments else delete_comment
                 )
                 media.save()
-
-        self.publish_date = json.get("publish_date", None)
-        if self.publish_date == "":
-            self.publish_date = None
-        self.documentation_date = json.get("documentation_date", None)
-        if self.documentation_date == "":
-            self.documentation_date = None
 
         # Related Actors (actor_relations)
         if "actor_relations" in json:
@@ -2662,168 +2897,44 @@ class Actor(db.Model, BaseMixin):
         if "status" in json:
             self.status = json["status"]
 
-        # Missing Persons
-        if cfg.MISSING_PERSONS:
-            self.last_address = json.get("last_address")
-            self.marriage_history = json.get("marriage_history")
-            self.bio_children = json.get("bio_children")
-            self.pregnant_at_disappearance = json.get("pregnant_at_disappearance")
-            self.months_pregnant = json.get("months_pregnant")
-            self.missing_relatives = json.get("missing_relatives")
-            self.saw_name = json.get("saw_name")
-            self.saw_address = json.get("saw_address")
-            self.saw_phone = json.get("saw_phone")
-            self.saw_email = json.get("saw_email")
-            self.seen_in_detention = json.get("seen_in_detention")
-            # Flag json fields for saving
-            flag_modified(self, "seen_in_detention")
-            self.injured = json.get("injured")
-            flag_modified(self, "injured")
-            self.known_dead = json.get("known_dead")
-            flag_modified(self, "known_dead")
-            self.death_details = json.get("death_details")
-            self.personal_items = json.get("personal_items")
-            self.height = json.get("height")
-            self.weight = json.get("weight")
-            self.physique = json.get("physique")
-            self.hair_loss = json.get("hair_loss")
-            self.hair_type = json.get("hair_type")
-            self.hair_length = json.get("hair_length")
-            self.hair_color = json.get("hair_color")
-            self.facial_hair = json.get("facial_hair")
-            self.posture = json.get("posture")
-            self.skin_markings = json.get("skin_markings")
-            flag_modified(self, "skin_markings")
-            self.handedness = json.get("handedness")
-            self.eye_color = json.get("eye_color")
-            self.glasses = json.get("glasses")
-            self.dist_char_con = json.get("dist_char_con")
-            self.dist_char_acq = json.get("dist_char_acq")
-            self.physical_habits = json.get("physical_habits")
-            self.other = json.get("other")
-            self.phys_name_contact = json.get("phys_name_contact")
-            self.injuries = json.get("injuries")
-            self.implants = json.get("implants")
-            self.malforms = json.get("malforms")
-            self.pain = json.get("pain")
-            self.other_conditions = json.get("other_conditions")
-            self.accidents = json.get("accidents")
-            self.pres_drugs = json.get("pres_drugs")
-            self.smoker = json.get("smoker")
-            self.dental_record = json.get("dental_record")
-            self.dentist_info = json.get("dentist_info")
-            self.teeth_features = json.get("teeth_features")
-            self.dental_problems = json.get("dental_problems")
-            self.dental_treatments = json.get("dental_treatments")
-            self.dental_habits = json.get("dental_habits")
-            self.case_status = json.get("case_status")
-            self.reporters = json.get("reporters")
-            flag_modified(self, "reporters")
-            self.identified_by = json.get("identified_by")
-            self.family_notified = json.get("family_notified")
-            self.reburial_location = json.get("reburial_location")
-            self.hypothesis_based = json.get("hypothesis_based")
-            self.hypothesis_status = json.get("hypothesis_status")
+        # Handling Actor Profiles
+        if "actor_profiles" in json:
+            existing_profile_ids = [profile.id for profile in self.actor_profiles]
+            new_profile_data = json["actor_profiles"]
+
+            # Update existing profiles or create new ones
+            for profile_data in new_profile_data:
+                if "id" in profile_data and profile_data["id"] in existing_profile_ids:
+                    # Update existing profile
+                    profile = next(
+                        (p for p in self.actor_profiles if p.id == profile_data["id"]), None
+                    )
+                    if profile:
+                        profile.from_json(profile_data)
+                else:
+                    # Create new profile
+                    new_profile = ActorProfile()
+                    new_profile = new_profile.from_json(profile_data)
+                    new_profile.actor = self
+                    self.actor_profiles.append(new_profile)
+
+            # Remove profiles that are no longer associated
+            for existing_id in existing_profile_ids:
+                if existing_id not in [p.get("id") for p in new_profile_data]:
+                    profile_to_remove = next(
+                        (p for p in self.actor_profiles if p.id == existing_id), None
+                    )
+                    if profile_to_remove:
+                        self.actor_profiles.remove(profile_to_remove)
 
         return self
-
-    def mp_json(self):
-        mp = {}
-        mp["MP"] = True
-        mp["last_address"] = getattr(self, "last_address")
-        mp["marriage_history"] = getattr(self, "marriage_history")
-        mp["bio_children"] = getattr(self, "bio_children")
-        mp["pregnant_at_disappearance"] = getattr(self, "pregnant_at_disappearance")
-        mp["months_pregnant"] = str(self.months_pregnant) if self.months_pregnant else None
-        mp["missing_relatives"] = getattr(self, "missing_relatives")
-        mp["saw_name"] = getattr(self, "saw_name")
-        mp["saw_address"] = getattr(self, "saw_address")
-        mp["saw_phone"] = getattr(self, "saw_phone")
-        mp["saw_email"] = getattr(self, "saw_email")
-        mp["seen_in_detention"] = getattr(self, "seen_in_detention")
-        mp["injured"] = getattr(self, "injured")
-        mp["known_dead"] = getattr(self, "known_dead")
-        mp["death_details"] = getattr(self, "death_details")
-        mp["personal_items"] = getattr(self, "personal_items")
-        mp["height"] = str(self.height) if self.height else None
-        mp["weight"] = str(self.weight) if self.weight else None
-        mp["physique"] = getattr(self, "physique")
-        mp["_physique"] = getattr(self, "physique")
-
-        mp["hair_loss"] = getattr(self, "hair_loss")
-        mp["_hair_loss"] = gettext(self.hair_loss)
-
-        mp["hair_type"] = getattr(self, "hair_type")
-        mp["_hair_type"] = gettext(self.hair_type)
-
-        mp["hair_length"] = getattr(self, "hair_length")
-        mp["_hair_length"] = gettext(self.hair_length)
-
-        mp["hair_color"] = getattr(self, "hair_color")
-        mp["_hair_color"] = gettext(self.hair_color)
-
-        mp["facial_hair"] = getattr(self, "facial_hair")
-        mp["_facial_hair"] = gettext(self.facial_hair)
-
-        mp["posture"] = getattr(self, "posture")
-        mp["skin_markings"] = getattr(self, "skin_markings")
-        if self.skin_markings and self.skin_markings.get("opts"):
-            mp["_skin_markings"] = [gettext(item) for item in self.skin_markings["opts"]]
-
-        mp["handedness"] = getattr(self, "handedness")
-        mp["_handedness"] = gettext(self.handedness)
-        mp["eye_color"] = getattr(self, "eye_color")
-        mp["_eye_color"] = gettext(self.eye_color)
-
-        mp["glasses"] = getattr(self, "glasses")
-        mp["dist_char_con"] = getattr(self, "dist_char_con")
-        mp["dist_char_acq"] = getattr(self, "dist_char_acq")
-        mp["physical_habits"] = getattr(self, "physical_habits")
-        mp["other"] = getattr(self, "other")
-        mp["phys_name_contact"] = getattr(self, "phys_name_contact")
-        mp["injuries"] = getattr(self, "injuries")
-        mp["implants"] = getattr(self, "implants")
-        mp["malforms"] = getattr(self, "malforms")
-        mp["pain"] = getattr(self, "pain")
-        mp["other_conditions"] = getattr(self, "other_conditions")
-        mp["accidents"] = getattr(self, "accidents")
-        mp["pres_drugs"] = getattr(self, "pres_drugs")
-        mp["smoker"] = getattr(self, "smoker")
-        mp["dental_record"] = getattr(self, "dental_record")
-        mp["dentist_info"] = getattr(self, "dentist_info")
-        mp["teeth_features"] = getattr(self, "teeth_features")
-        mp["dental_problems"] = getattr(self, "dental_problems")
-        mp["dental_treatments"] = getattr(self, "dental_treatments")
-        mp["dental_habits"] = getattr(self, "dental_habits")
-        mp["case_status"] = getattr(self, "case_status")
-        mp["_case_status"] = gettext(self.case_status)
-        mp["reporters"] = getattr(self, "reporters")
-        mp["identified_by"] = getattr(self, "identified_by")
-        mp["family_notified"] = getattr(self, "family_notified")
-        mp["reburial_location"] = getattr(self, "reburial_location")
-        mp["hypothesis_based"] = getattr(self, "hypothesis_based")
-        mp["hypothesis_status"] = getattr(self, "hypothesis_status")
-        return mp
 
     # Compact dict for relationships
     @check_roles
     def to_compact(self):
-        # sources json
-        sources_json = []
-        if self.sources and len(self.sources):
-            for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
-
         return {
             "id": self.id,
             "name": self.name,
-            "originid": self.originid or None,
-            "sources": sources_json,
-            "description": self.description or None,
-            "source_link": self.source_link or None,
-            "source_link_type": getattr(self, "source_link_type"),
-            "publish_date": DateHelper.serialize_datetime(self.publish_date),
-            "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
         }
 
     def to_csv_dict(self):
@@ -2842,15 +2953,7 @@ class Actor(db.Model, BaseMixin):
             "sex": self.serialize_column("sex"),
             "age": self.serialize_column("age"),
             "civilian": self.serialize_column("civilian"),
-            "actor_type": self.serialize_column("actor_type"),
-            "birth_date": self.serialize_column("birth_date"),
-            "birth_place": self.serialize_column("birth_place"),
-            "description": self.serialize_column("description"),
-            "publish_date": self.serialize_column("publish_date"),
-            "documentation_date": self.serialize_column("documentation_date"),
-            "labels": convert_simple_relation(self.labels),
-            "verified_labels": convert_simple_relation(self.ver_labels),
-            "sources": convert_simple_relation(self.sources),
+            "type": self.serialize_column("type"),
             "media": convert_simple_relation(self.medias),
             "events": convert_simple_relation(self.events),
             "related_bulletins": convert_complex_relation(
@@ -2959,24 +3062,6 @@ class Actor(db.Model, BaseMixin):
         if mode == "2":
             return self.to_mode2()
 
-        # Sources json
-        sources_json = []
-        if self.sources and len(self.sources):
-            for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
-
-        # Labels json
-        labels_json = []
-        if self.labels and len(self.labels):
-            for label in self.labels:
-                labels_json.append({"id": label.id, "title": label.title})
-
-        # verified labels json
-        ver_labels_json = []
-        if self.ver_labels and len(self.ver_labels):
-            for vlabel in self.ver_labels:
-                ver_labels_json.append({"id": vlabel.id, "title": vlabel.title})
-
         # Events json
         events_json = []
         if self.events and len(self.events):
@@ -3007,10 +3092,8 @@ class Actor(db.Model, BaseMixin):
         actor = {
             "class": self.__tablename__,
             "id": self.id,
-            "originid": self.originid or None,
             "name": self.name or None,
             "name_ar": getattr(self, "name_ar"),
-            "description": self.description or None,
             "nickname": self.nickname or None,
             "nickname_ar": getattr(self, "nickname_ar"),
             "first_name": self.first_name or None,
@@ -3019,6 +3102,8 @@ class Actor(db.Model, BaseMixin):
             "middle_name_ar": self.middle_name_ar or None,
             "last_name": self.last_name or None,
             "last_name_ar": self.last_name_ar or None,
+            "father_name": self.father_name or None,
+            "father_name_ar": self.father_name_ar or None,
             "mother_name": self.mother_name or None,
             "mother_name_ar": self.mother_name_ar or None,
             "sex": self.sex,
@@ -3027,78 +3112,51 @@ class Actor(db.Model, BaseMixin):
             "_age": gettext(self.age),
             "civilian": self.civilian or None,
             "_civilian": gettext(self.civilian),
-            "actor_type": self.actor_type,
-            "_actor_type": gettext(self.actor_type),
+            "type": self.type,
+            "_type": gettext(self.type),
             "occupation": self.occupation or None,
             "occupation_ar": self.occupation_ar or None,
             "position": self.position or None,
             "position_ar": self.position_ar or None,
-            "dialects": self.dialects or None,
-            "dialects_ar": self.dialects_ar or None,
             "family_status": self.family_status or None,
-            "family_status_ar": self.family_status_ar or None,
-            "ethnography": [
+            "no_children": self.no_children or None,
+            "ethnographies": [
                 ethnography.to_dict() for ethnography in getattr(self, "ethnographies", [])
             ],
-            "nationality": [country.to_dict() for country in getattr(self, "nationalities", [])],
-            "national_id_card": self.national_id_card or None,
+            "nationalities": [country.to_dict() for country in getattr(self, "nationalities", [])],
+            "dialects": [dialect.to_dict() for dialect in getattr(self, "dialects", [])],
+            "id_number": self.id_number or None,
             # assigned to
             "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
             # first peer reviewer
             "first_peer_reviewer": self.first_peer_reviewer.to_compact()
             if self.first_peer_reviewer
             else None,
-            "source_link": self.source_link or None,
-            "source_link_type": getattr(self, "source_link_type"),
             "comments": self.comments or None,
-            "sources": sources_json,
-            "labels": labels_json,
-            "verLabels": ver_labels_json,
             "events": events_json,
             "medias": medias_json,
             "actor_relations": actor_relations_dict,
             "bulletin_relations": bulletin_relations_dict,
             "incident_relations": incident_relations_dict,
-            "birth_place": self.birth_place.to_dict() if self.birth_place else None,
-            "residence_place": self.residence_place.to_dict() if self.residence_place else None,
             "origin_place": self.origin_place.to_dict() if self.origin_place else None,
-            "birth_date": DateHelper.serialize_datetime(self.birth_date)
-            if self.birth_date
-            else None,
-            "publish_date": DateHelper.serialize_datetime(self.publish_date),
-            "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
             "status": self.status,
             "review": self.review if self.review else None,
             "review_action": self.review_action if self.review_action else None,
             "updated_at": DateHelper.serialize_datetime(self.get_modified_date()),
             "roles": [role.to_dict() for role in self.roles] if self.roles else [],
+            "actor_profiles": [profile.to_dict() for profile in self.actor_profiles],
         }
-
-        # handle missing actors mode
-        if cfg.MISSING_PERSONS:
-            mp = self.mp_json()
-            actor.update(mp)
 
         return actor
 
     def to_mode2(self):
-        # Sources json
-        sources_json = []
-        if self.sources and len(self.sources):
-            for source in self.sources:
-                sources_json.append({"id": source.id, "title": source.title})
-
         return {
             "class": "Actor",
             "id": self.id,
-            "originid": self.originid or None,
+            "type": self.type or None,
             "name": self.name or None,
-            "description": self.description or None,
             "comments": self.comments or None,
-            "sources": sources_json,
-            "publish_date": DateHelper.serialize_datetime(self.publish_date),
-            "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
-            "status": self.status if self.status else None,
+            "status": self.status or None,
         }
 
     def to_json(self):
@@ -3113,42 +3171,6 @@ class Actor(db.Model, BaseMixin):
         return Actor.id.in_(
             db.session.query(Actor.id)
             .join(Location, Actor.origin_place_id == Location.id)
-            .filter(
-                func.ST_DWithin(
-                    func.cast(Location.latlng, Geography),
-                    func.cast(point, Geography),
-                    radius_in_meters,
-                )
-            )
-        )
-
-    @staticmethod
-    def geo_query_birth_place(target_point, radius_in_meters):
-        """Condition for direct association between actor and birth_place."""
-        point = func.ST_SetSRID(
-            func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
-        )
-        return Actor.id.in_(
-            db.session.query(Actor.id)
-            .join(Location, Actor.birth_place_id == Location.id)
-            .filter(
-                func.ST_DWithin(
-                    func.cast(Location.latlng, Geography),
-                    func.cast(point, Geography),
-                    radius_in_meters,
-                )
-            )
-        )
-
-    @staticmethod
-    def geo_query_residence_place(target_point, radius_in_meters):
-        """Condition for direct association between actor and residence_place."""
-        point = func.ST_SetSRID(
-            func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
-        )
-        return Actor.id.in_(
-            db.session.query(Actor.id)
-            .join(Location, Actor.residence_place_id == Location.id)
             .filter(
                 func.ST_DWithin(
                     func.cast(Location.latlng, Geography),
@@ -3711,9 +3733,11 @@ class Incident(db.Model, BaseMixin):
         db.Text,
         db.Computed(
             """
-             ((((((((id)::text || ' '::text) || (COALESCE(title, ''::character varying))::text) || ' '::text) ||
-                (COALESCE(title_ar, ''::character varying))::text) || ' '::text) || COALESCE(regexp_replace(regexp_replace(description, E'<.*?>', '', 'g' ), E'&nbsp;', '', 'g'), ' '::text)) ||
-             ' '::text) || COALESCE(comments, ''::text)
+            CAST(id AS TEXT) || ' ' ||
+            COALESCE(title, '') || ' ' ||
+            COALESCE(title_ar, '') || ' ' ||
+            COALESCE(regexp_replace(regexp_replace(description, E'<.*?>', '', 'g'), E'&nbsp;', '', 'g'), '') || ' ' ||
+            COALESCE(comments, '')
             """
         ),
     )
@@ -4262,46 +4286,85 @@ class Activity(db.Model, BaseMixin):
     SQL Alchemy model for activity
     """
 
+    STATUS_SUCCESS = "SUCCESS"
+    STATUS_DENIED = "DENIED"
+
+    ACTION_VIEW = "VIEW"
     ACTION_UPDATE = "UPDATE"
     ACTION_DELETE = "DELETE"
-    ACTION_CREATE = "CREATE-REVISION"
-    ACTION_BULK_UPDATE = "BULK-UPDATE"
-    ACTION_APPROVE_EXPORT = "APPROVE-EXPORT"
-    ACTION_REJECT_EXPORT = "REJECT-EXPORT"
+    ACTION_CREATE = "CREATE"
+    ACTION_REVIEW = "REVIEW"
+    ACTION_UPLOAD = "UPLOAD"
+    ACTION_BULK_UPDATE = "BULK"
+    ACTION_REQUEST_EXPORT = "REQUEST"
+    ACTION_APPROVE_EXPORT = "APPROVE"
+    ACTION_REJECT_EXPORT = "REJECT"
     ACTION_DOWNLOAD = "DOWNLOAD"
+    ACTION_SEARCH = "SEARCH"
+    ACTION_SELF_ASSIGN = "SELF-ASSIGN"
     ACTION_LOGIN = "LOGIN"
     ACTION_LOGOUT = "LOGOUT"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
     action = db.Column(db.String(100))
+    status = db.Column(db.String(100))
+    model = db.Column(db.String(100))
     subject = db.Column(JSON)
-    tag = db.Column(db.String(100))
+    details = db.Column(db.Text)
+
+    @staticmethod
+    def get_action_values():
+        return [getattr(Activity, attr) for attr in dir(Activity) if attr.startswith("ACTION_")]
 
     # serialize data
     def to_dict(self):
+        # Ensure self.subject is a dictionary.
+        if isinstance(self.subject, dict) and self.subject.get("class") == "user":
+            user_id = self.subject.get("id")
+            if user_id:
+                user = User.query.get(user_id)
+                if user:
+                    # Directly add the username to the subject dictionary.
+                    self.subject["username"] = user.username
+
         return {
             "id": self.id,
             "user_id": self.user_id,
             "action": self.action,
-            "subject": self.subject,
-            "tag": self.tag,
+            "status": self.status,
+            "subject": self.subject,  # Now includes the username if applicable.
+            "model": self.model,
+            "details": self.details,
             "created_at": DateHelper.serialize_datetime(self.created_at),
         }
 
     # helper static method to create different type of activities (tags)
     @staticmethod
-    def create(user, action, subject, tag):
+    def create(user, action, status, subject, model, details=None):
+        # this will check if the action is
+        # enabled in system settings
+        # if disabled the activity will not be logged
+        # denied actions will be always logged
+        if not status == Activity.STATUS_DENIED and not action in cfg.activities:
+            return
+
         try:
             activity = Activity()
             activity.user_id = user.id
             activity.action = action
+            activity.status = status
             activity.subject = subject
-            activity.tag = tag
+            activity.model = model
+            activity.details = details
             activity.save()
 
         except Exception:
-            print("Oh Noes! Error creating activity.")
+            print("Error creating activity")
+            # print to sys log to preserve log
+            print(
+                f"user id: {user.id} | action: {action} | status: {status} | model: {model} | details: {details}"
+            )
 
 
 class Settings(db.Model, BaseMixin):
@@ -4335,72 +4398,28 @@ class Query(db.Model, BaseMixin):
         return json.dumps(self.to_dict())
 
 
-class Country(db.Model, BaseMixin):
-    """
-    SQL Alchemy model for countries
-    """
-
+class Country(db.Model, ComponentDataMixin):
     __tablename__ = "countries"
-    __table_args__ = {"extend_existing": True}
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    title_tr = db.Column(db.String)
-
-    def from_json(self, jsn):
-        self.title = jsn.get("title", self.title)
-        self.title_tr = jsn.get("title_tr", self.title_tr)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "title_tr": self.title_tr,
-            "created_at": DateHelper.serialize_datetime(self.created_at),
-            "updated_at": DateHelper.serialize_datetime(self.updated_at),
-        }
-
-    @staticmethod
-    def find_by_title(title):
-        country = Country.query.filter(Country.title_tr.ilike(title)).first()
-        if country:
-            return country
-        else:
-            return Country.query.filter(Country.title.ilike(title)).first()
 
 
-class Ethnography(db.Model, BaseMixin):
-    """
-    SQL Alchemy model for ethnographies
-    """
-
+class Ethnography(db.Model, ComponentDataMixin):
     __tablename__ = "ethnographies"
-    __table_args__ = {"extend_existing": True}
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    title_tr = db.Column(db.String)
 
-    def from_json(self, jsn):
-        self.title = jsn.get("title", self.title)
-        self.title_tr = jsn.get("title_tr", self.title_tr)
+class Dialect(db.Model, ComponentDataMixin):
+    __tablename__ = "dialects"
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "title_tr": self.title_tr,
-            "created_at": DateHelper.serialize_datetime(self.created_at),
-            "updated_at": DateHelper.serialize_datetime(self.updated_at),
-        }
 
-    @staticmethod
-    def find_by_title(title):
-        ethnography = Ethnography.query.filter(Ethnography.title_tr.ilike(title)).first()
-        if ethnography:
-            return ethnography
-        else:
-            return Ethnography.query.filter(Ethnography.title.ilike(title)).first()
+class MediaCategory(db.Model, ComponentDataMixin):
+    __tablename__ = "media_categories"
+
+
+class GeoLocationType(db.Model, ComponentDataMixin):
+    __tablename__ = "geo_location_types"
+
+
+class WorkflowStatus(db.Model, ComponentDataMixin):
+    __tablename__ = "workflow_statuses"
 
 
 class AppConfig(db.Model, BaseMixin):
@@ -4420,82 +4439,4 @@ class AppConfig(db.Model, BaseMixin):
             "config": self.config,
             "created_at": DateHelper.serialize_datetime(self.created_at),
             "user": self.user.to_dict() if self.user else {},
-        }
-
-
-class MediaCategory(db.Model, BaseMixin):
-    """
-    SQL Alchemy model for media categories
-    """
-
-    __tablename__ = "media_categories"
-    __table_args__ = {"extend_existing": True}
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    title_tr = db.Column(db.String)
-
-    def from_json(self, jsn):
-        self.title = jsn.get("title", self.title)
-        self.title_tr = jsn.get("title_tr", self.title_tr)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "title_tr": self.title_tr,
-            "created_at": DateHelper.serialize_datetime(self.created_at),
-            "updated_at": DateHelper.serialize_datetime(self.updated_at),
-        }
-
-
-class GeoLocationType(db.Model, BaseMixin):
-    """
-    SQL Alchemy model for geo location types
-    """
-
-    __tablename__ = "geo_location_types"
-    __table_args__ = {"extend_existing": True}
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    title_tr = db.Column(db.String)
-
-    def from_json(self, jsn):
-        self.title = jsn.get("title", self.title)
-        self.title_tr = jsn.get("title_tr", self.title_tr)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "title_tr": self.title_tr,
-            "created_at": DateHelper.serialize_datetime(self.created_at),
-            "updated_at": DateHelper.serialize_datetime(self.updated_at),
-        }
-
-
-class WorkflowStatus(db.Model, BaseMixin):
-    """
-    SQL Alchemy model for workflow statuses
-    """
-
-    __tablename__ = "workflow_statuses"
-    __table_args__ = {"extend_existing": True}
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    title_tr = db.Column(db.String)
-
-    def from_json(self, jsn):
-        self.title = jsn.get("title", self.title)
-        self.title_tr = jsn.get("title_tr", self.title_tr)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "title_tr": self.title_tr,
-            "created_at": DateHelper.serialize_datetime(self.created_at),
-            "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }

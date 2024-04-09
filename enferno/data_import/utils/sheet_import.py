@@ -2,9 +2,12 @@ import re
 import time
 
 import pandas as pd
+import gettext
+from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.admin.models import (
     Actor,
+    ActorProfile,
     Event,
     Eventtype,
     Location,
@@ -12,6 +15,7 @@ from enferno.admin.models import (
     Source,
     Country,
     Ethnography,
+    Dialect,
     Activity,
 )
 from enferno.data_import.models import DataImport
@@ -19,7 +23,7 @@ from enferno.data_import.models import DataImport
 from enferno.utils.base import DatabaseException
 from enferno.utils.date_helper import DateHelper
 from enferno.user.models import Role, User
-import gettext
+
 
 # configurations
 
@@ -29,7 +33,7 @@ config_dict = {
     "age": "actorAge",
     "sex": "actorSex",
     "civilian": "actorCivilian",
-    "actor_type": "actorTypes",
+    "type": "actorTypes",
     "physique": "physique",
     "hair_loss": "hairLoss",
     "hair_type": "hairType",
@@ -46,11 +50,12 @@ config_dict = {
 }
 
 sec_dict = {
-    "labels": {"model": Label, "attr": "labels"},
-    "verLabels": {"model": Label, "attr": "labels"},
-    "sources": {"model": Source, "attr": "sources"},
-    "ethnography": {"model": Ethnography, "attr": "ethnographies"},
-    "nationality": {"model": Country, "attr": "nationalities"},
+    "labels": {"model": Label, "attr": "labels", "parent": "P"},
+    "verLabels": {"model": Label, "attr": "ver_labels", "parent": "P"},
+    "sources": {"model": Source, "attr": "sources", "parent": "P"},
+    "ethnographies": {"model": Ethnography, "attr": "ethnographies", "parent": "A"},
+    "nationalities": {"model": Country, "attr": "nationalities", "parent": "A"},
+    "dialects": {"model": Dialect, "attr": "dialects", "parent": "A"},
 }
 
 details_list = [
@@ -64,8 +69,8 @@ opts_list = ["seen_in_detention_opts", "known_dead_opts", "injured_opts"]
 
 bool_list = ["dental_record", "family_notified", "missing_relatives", "source_link_type"]
 
-location_list = ["birth_place", "origin_place", "residence_place"]
-date_list = ["birth_date", "documentation_date", "publish_date"]
+location_list = ["origin_place"]
+date_list = ["documentation_date", "publish_date"]
 
 
 class SheetImport:
@@ -94,7 +99,10 @@ class SheetImport:
 
         self.actor = Actor()
         self.actor.name = "Temp"
-        self.actor.description = ""
+        self.actor_profile = ActorProfile()
+        self.actor_profile.actor = self.actor
+        self.actor.actor_profiles.append(self.actor_profile)
+        self.actor_profile.description = ""
 
         # Install translator based on selected sheet language to be used for matching
         if lang != "en":
@@ -174,58 +182,98 @@ class SheetImport:
         :return: matching list item in correct exact case
         """
         for item in lst:
-            if item.lower().strip() == txt.lower().strip():
+            if item.lower().strip() == str(txt).lower().strip():
                 return item
         return None
 
-    def set_from_list(self, field, value):
+    def set_actor_or_profile_attr(self, field, value):
         """
-        Method to set single and multi list columns.
+        Method to set actor or actor profile attributes.
+
+        Args:
+            field (str): The name of the attribute to set.
+            value: The value to set for the attribute.
+
         """
-        # check if list allows one choice only
-        one_choice = field not in ["ethnography", "nationality"]
-        if value and not one_choice:
-            value = SheetImport.parse_array_field(value)
+        if field in ActorProfile.__table__.columns:
+            setattr(self.actor_profile, field, value)
+        else:
+            setattr(self.actor, field, value)
+
+    def set_skin_markings(self, value, markings, trans):
+        """
+        Sets the skin markings for the actor profile based on the provided field, value, list, and trans parameters.
+
+        Args:
+            value (str): The value of the field.
+            markings (list): The list of available skin markings.
+            trans (list): The list of translations for the skin markings.
+
+        Returns:
+            None
+        """
+        # check if array is sent
+        results = SheetImport.parse_array_field(value)
+        results = [x for x in results if x in trans]
+        if not self.actor_profile.skin_markings:
+            self.actor_profile.skin_markings = {"opts": [], "details": ""}
+        self.actor_profile.skin_markings["opts"] = [markings[trans.index(x)] for x in results]
+        flag_modified(self.actor_profile, "skin_markings")
+
+    def generate_translations(self, field):
+        """
+        Generate translations for a given list field.
+
+        Args:
+            field (str): The list field for which translations need to be generated.
+
+        Returns:
+            tuple: A tuple containing two lists - restrict and trans.
+                - restrict: A list of entries in the configuration dictionary for the given field.
+                - trans: A list of translated strings for the entries in the restrict list, if a translator is available.
+                         Otherwise, it points to the restrict list itself.
+        """
         # create a list from dict of entries in conf
         restrict = [x["en"] for x in self.config.get(config_dict[field])]
         # generate a list of translated strings if lang other than en
         # point to previous list if lang is eng
         trans = [self.translator.gettext(x) for x in restrict] if self.translator else restrict
+
+        return restrict, trans
+
+    def set_from_list(self, field, value):
+        """
+        Method to set single and multi list columns.
+        """
+        restrict, trans = self.generate_translations(field)
+
         if value and restrict:
-            if one_choice:
-                result = SheetImport.closest_match(value, trans)
+            # skin markings are special
+            # it's a multi select field
+            if field == "skin_markings_opts":
+                self.set_skin_markings(value, restrict, trans)
+            elif result := SheetImport.closest_match(value, trans):
+                self.set_actor_or_profile_attr(field, restrict[trans.index(result)])
             else:
-                result = [
-                    SheetImport.closest_match(item, trans)
-                    for item in value
-                    if SheetImport.closest_match(item, trans)
-                ]
-            if result:
-                if one_choice:
-                    setattr(self.actor, field, restrict[trans.index(result)])
-                # skin markings are kinda special
-                elif field == "skin_markings_opts":
-                    self.actor.skin_markings["opts"] = [restrict[trans.index(x)] for x in result]
-                else:
-                    setattr(self.actor, field, [restrict[trans.index(x)] for x in result])
-            else:
-                return self.handle_mismatch(field, value)
+                self.handle_mismatch(field, value)
 
             self.data_import.add_to_log(f"Processed {field}")
+        else:
+            self.handle_mismatch(field, value)
 
     def set_opts(self, opts, value):
         """
         Method to set option columns.
         """
         field = opts.replace("_opts", "")
-
         if not str(value).lower().strip() in ["yes", "no", "unknown"]:
             return self.handle_mismatch(field, value)
 
-        attr = getattr(self.actor, field)
+        attr = getattr(self.actor_profile, field)
         if not attr:
-            setattr(self.actor, field, {})
-        getattr(self.actor, field)["opts"] = str(value).strip().capitalize()
+            setattr(self.actor_profile, field, {"opts": [], "details": ""})
+        getattr(self.actor_profile, field)["opts"] = str(value).strip().capitalize()
+        flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")
 
     def set_details(self, details, value):
@@ -233,22 +281,23 @@ class SheetImport:
         Method to set details fields.
         """
         field = details.replace("_details", "")
-        attr = getattr(self.actor, field)
+        attr = getattr(self.actor_profile, field)
         if not attr:
-            setattr(self.actor, field, {})
-        getattr(self.actor, field)["details"] = str(value)
+            setattr(self.actor_profile, field, {"opts": [], "details": ""})
+        getattr(self.actor_profile, field)["details"] = str(value)
+        flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")
 
     def set_location(self, field, value):
         """
         Method to set location columns.
         """
-        location = Location.find_by_title(value)
+        location = Location.find_by_title(str(value))
         if location:
             setattr(self.actor, field, location)
             self.data_import.add_to_log(f"Processed {field}")
         else:
-            return self.handle_mismatch(field, value)
+            self.handle_mismatch(field, value)
 
     def set_secondaries(self, field, value):
         """
@@ -262,31 +311,74 @@ class SheetImport:
         # set to avoid dups
         s = set()
         for item in items:
-            x = model.find_by_title(item)
+            x = model.find_by_title(str(item))
             if x:
                 s.add(x)
-
         if s:
-            setattr(self.actor, attr, list(s))
-        self.data_import.add_to_log(f"Processed {field}")
+            try:
+                if sec_dict[field]["parent"] == "A":
+                    setattr(self.actor, attr, list(s))
+                else:
+                    setattr(self.actor_profile, attr, list(s))
+                self.data_import.add_to_log(f"Processed {field}")
+            except:
+                self.handle_mismatch(field, value)
 
     def set_date(self, field, value):
         """
         Method to set date columns.
         """
-        setattr(self.actor, field, DateHelper.parse_date(value))
-
-        self.data_import.add_to_log(f"Processed {field}")
+        try:
+            setattr(self.actor_profile, field, DateHelper.parse_date(value))
+            self.data_import.add_to_log(f"Processed {field}")
+        except:
+            self.handle_mismatch(field, value)
 
     def set_bool(self, field, value):
         """
         Method to set boolean columns.
         """
-        if value.__class__ == str and value.lower() in boolean_positive or value == 1:
-            setattr(self.actor, field, True)
+        try:
+            if value.__class__ == str and value.lower() in boolean_positive or value == 1:
+                setattr(self.actor_profile, field, True)
+            else:
+                setattr(self.actor_profile, field, False)
+            self.data_import.add_to_log(f"Processed {field}")
+        except:
+            self.handle_mismatch(field, value)
+
+    def set_actor_type(self, field, map_item):
+        """
+        Sets the actor type based on the given map_item.
+
+        Args:
+            field (str): The field to set the actor type for: "type" for fixed actor type, "dtype" for dynamic actor type.
+            map_item (str or tuple): The map item to determine the actor type.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+        restrict, trans = self.generate_translations("type")
+        result = None
+        value = None
+
+        # fixed actor type
+        if field == "type":
+            # to ensure that the value has been set
+            # in case of a mismatch
+            result = value = map_item
+        # dynamic actor type
+        elif field == "dtype" and map_item[0].__class__ == str:
+            value = self.row.get(map_item[0])
+            result = SheetImport.closest_match(value, trans)
+
+        if result:
+            self.actor.type = restrict[trans.index(result)]
         else:
-            setattr(self.actor, field, False)
-        self.data_import.add_to_log(f"Processed {field}")
+            self.handle_mismatch("type", value)
 
     def set_description(self, map_item):
         """
@@ -298,9 +390,9 @@ class SheetImport:
 
         # save existing description
         # from any field/value mismatch
-        if self.actor.description:
-            old_description = self.actor.description
-            self.actor.description = ""
+        if self.actor_profile.description:
+            old_description = self.actor_profile.description
+            self.actor_profile.description = ""
 
         for item in map_item:
             # first separator is always null
@@ -315,9 +407,9 @@ class SheetImport:
             description += "\n"
 
         if description:
-            self.actor.description = description
+            self.actor_profile.description = description
             if old_description:
-                self.actor.description += old_description
+                self.actor_profile.description += old_description
         self.data_import.add_to_log(f"Processed description")
 
     def set_events(self, map_item):
@@ -329,7 +421,7 @@ class SheetImport:
             e = {}
             for attr in event:
                 # detect event type mode
-                if attr == "etype" and event.get(attr):
+                if attr == "type" and event.get(attr):
                     e["type"] = event.get(attr)
                 else:
                     if event.get(attr):
@@ -368,12 +460,14 @@ class SheetImport:
                     e.to_date = DateHelper.parse_date(to_date)
 
                 # validate event here
-                if (from_date and not pd.isnull(from_date)) or loc:
+                if (from_date and not pd.isnull(from_date)) or loc or title:
                     self.actor.events.append(e)
                 else:
                     self.data_import.add_to_log(
-                        f"Invalid event. Skipped due to invalid from_date or missing location {e.__dict__}"
+                        f"Invalid event. Skipped due to missing or invalid from_date or missing location"
                     )
+                    self.data_import.add_to_log(f"Event: {event}")
+                    self.handle_mismatch("event", event)
 
     def set_reporters(self, map_item):
         """
@@ -395,20 +489,24 @@ class SheetImport:
         data to the end of the Actor's description.
         """
         self.data_import.add_to_log(f"Field value mismatch {field}.\n Appending to description.")
-        self.actor.description += f"</p>\n<p>{field}: {value}"
+        self.actor_profile.description += f"</p>\n<p>{field}: {str(value)}"
 
     def gen_value(self, field):
         """
-        get value from a csv row based on the mapping provided
-        this method generates the value of a field mapping for a single row
-        :param actor actor to assign value to
-        :param field name of the field:
-        :param row: a csv row
-        :param map_item: mapping value
-        :return: value based on row data and mapping provided
+        Generate the value of a field mapping for a single row.
+
+        This method retrieves the value from a CSV row based on the provided mapping.
+        It handles various field mappings and sets the corresponding values accordingly.
+
+        Args:
+            field (str): The field to generate the value for.
+
+        Returns:
+            None
         """
         map_item = self.map.get(field)
         # more generic solution // get field value for simple mapped columns
+        value = None
         if map_item[0].__class__ == str:
             value = self.row.get(map_item[0])
 
@@ -416,6 +514,10 @@ class SheetImport:
 
         # handle complex list of dicts for reporters
         # detect reporters map
+
+        if field == "type" or field == "etype":
+            self.set_actor_type(field, map_item)
+            return
 
         if field == "description":
             self.set_description(map_item)
@@ -468,16 +570,19 @@ class SheetImport:
 
             # default case scenario set value directly to actor
             # check if the the value matches the column
-            field_type = getattr(Actor, field).type.python_type
-            if field_type == type(value) or field_type == "str":
-                setattr(self.actor, field, value)
-            elif field_type == "int":
-                try:
-                    setattr(self.actor, field, int(value))
-                except:
-                    self.handle_mismatch(field, value)
-            else:
-                # if not append to description
+            field_type = (
+                getattr(ActorProfile, field).type.python_type
+                if field in ActorProfile.__table__.columns
+                else getattr(Actor, field).type.python_type
+            )
+
+            # cast the value into the correct type
+            # this avoids errors caused by type mismatch
+            value = field_type(value)
+
+            try:
+                self.set_actor_or_profile_attr(field, value)
+            except:
                 self.handle_mismatch(field, value)
 
     def import_row(self):
@@ -517,15 +622,24 @@ class SheetImport:
             actor_roles = Role.query.filter(Role.id.in_([r.get("id") for r in self.roles])).all()
             self.actor.roles.extend(actor_roles)
 
+        # check if profile should be MP
+        for col in [col.name for col in ActorProfile.__table__.columns if col.comment == "MP"]:
+            if getattr(self.actor_profile, col):
+                self.actor_profile.mode = 3
+                self.data_import.add_to_log(f"Changed Actor Profile to MP.")
+                break
+
         # Save actor
         try:
-            self.actor.save(raise_exception=True)
+            self.actor_profile.save(raise_exception=True)
             self.actor.meta = self.row.to_json(orient="index")
             self.actor.create_revision()
 
             # Creating Activity
             user = User.query.get(self.data_import.user_id)
-            Activity.create(user, Activity.ACTION_CREATE, self.actor.to_mini(), "actor")
+            Activity.create(
+                user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, self.actor.to_mini(), "actor"
+            )
 
             self.data_import.add_to_log(f"Created Actor {self.actor.id} successfully.")
             self.data_import.add_item(self.actor.id)

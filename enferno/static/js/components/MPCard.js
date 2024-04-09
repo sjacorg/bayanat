@@ -1,6 +1,6 @@
 Vue.component('mp-card', {
   props: {
-    actorId: Number,
+    profileId: Number,
     i18n: Object,
   },
   data: function () {
@@ -30,7 +30,7 @@ Vue.component('mp-card', {
     loadData() {
       this.loading = true;
       axios
-        .get(`/admin/api/actormp/${this.actorId}`)
+        .get(`/admin/api/actormp/${this.profileId}`)
         .then((response) => {
           this.mp = response.data;
           this.show = true;

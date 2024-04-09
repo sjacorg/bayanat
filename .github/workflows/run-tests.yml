@@ -8,8 +8,6 @@ jobs:
       docker:
         image: docker:latest
         options: --privileged
-        ports:
-          - 80:80
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,4 +15,4 @@ jobs:
         run: |
           ./gen-env.sh -d -e .env.test
       - name: Bayanat Tests
-        run: docker compose -f docker-compose-prebuilt-test.yml --env-file .env.test up --build --exit-code-from bayanat
+        run: docker compose -f docker-compose-test.yml --env-file .env.test up --build --exit-code-from bayanat

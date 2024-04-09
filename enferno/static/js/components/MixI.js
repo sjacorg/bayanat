@@ -11,10 +11,14 @@ Vue.component('mix-i', {
   },
 
   watch: {
-    value: function (val) {
-      if (val) {
-        this.mix = val;
-      }
+    value: {
+      handler(val) {
+        if (val) {
+          Vue.set(this, 'mix', val);
+        }
+      },
+      immediate: true,
+      deep: true,
     },
     mix: {
       handler: 'refresh',

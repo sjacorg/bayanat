@@ -105,6 +105,7 @@ def test_put_country(
     country = get_first_or_fail(Country)
     country_id = country.id
     new_country = CountryFactory()
+    new_country.id = country_id
     response = client_.put(
         f"/admin/api/country/{country_id}",
         headers={"Content-Type": "application/json"},

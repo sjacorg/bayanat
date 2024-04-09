@@ -52,8 +52,6 @@ includeLocations_: "{{ _('Include locations') }}",
 radius_: "{{ _('Radius') }}",
 meters_: "{{ _('Meters') }}",
 excludeLocations_: "{{ _('Exclude locations (All)') }}",
-includeResLocations_: "{{ _('Include residence locations (Any)') }}",
-excludeResLocations_: "{{ _('Exclude residence locations (All)') }}",
 includeOriginLocations_: "{{ _('Include origin locations (Any)') }}",
 excludeOriginLocations_: "{{ _('Exclude origin locations (All)') }}",
 includeEventLocations_: "{{ _('Include event locations') }}",
@@ -78,9 +76,6 @@ civilian_ : "{{ _('Civilian/Non Civilian') }}",
 actorType_ : "{{ _('Actor Type') }}",
 ethnography_ : "{{ _('Ethnography') }}",
 nationality_ : "{{ _('Nationality') }}",
-birthPlace_ : "{{ _('Place of birth') }}",
-birthDate_ : "{{ _('Date of birth') }}",
-nationalIdCard_ : "{{ _('National ID Card') }}",
 yes_: "{{ _('Yes') }}",
 no_: "{{ _('No') }}",
 unknown_: "{{ _('Unknown') }}",
@@ -114,6 +109,8 @@ country_: "{{ _('Country') }}",
 estimated_: "{{ _('Estimated') }}",
 
 
+searchActivities_: "{{ _('Search Activities') }}",
+
 //bulletin/actor/incident cards
 id_: "{{ _('ID') }}",
 edit_: "{{ _('Edit') }}",
@@ -141,20 +138,20 @@ singleRangedate_: "{{ _('Select a single date or a range') }}",
 
 // actors
 fullName_: "{{ _('Full Name') }}",
-nickName_: "{{ _('Nick Name') }}",
+nickName_: "{{ _('Nickname(s)') }}",
 firstName_: "{{ _('First Name') }}",
-middleName_: "{{ _('Middle Name') }}",
+middleName_: "{{ _('Middle Name(s)') }}",
 lastName_ : "{{ _('Last Name') }}",
+fathersName_ : "{{ _('Father\'s Name') }}",
 mothersName_ : "{{ _('Mother\'s Name') }}",
 sex_ : "{{ _('Sex') }}",
 age_ : "{{ _('Age') }}",
 civilian_ : "{{ _('Civilian') }}",
 actorType_ : "{{ _('Actor Type') }}",
 
-birthDate_ : "{{ _('Date of Birth') }}",
-birthPlace_ : "{{ _('Place of Birth') }}",
 originPlace_ : "{{ _('Place of Origin') }}",
-residencePlace_ : "{{ _('Place of Residence') }}",
+
+idNumber_ : "{{ _('ID Number') }}",
 
 occupation_ : "{{ _('Occupation') }}",
 position_ : "{{ _('Position') }}",
@@ -210,7 +207,7 @@ characteristicsCongenital_ : "{{ _('Distinctive characteristics (congenital)') }
 characteristicsAcquired_ : "{{ _('Distinctive characteristics (acquired)') }}",
 physicalHabits_ : "{{ _('Physical habits') }}",
 otherComments_ : "{{ _('Other comments') }}",
-physiciansContact_ : "{{ _('Physician\’s name and contact') }}",
+physiciansContact_ : "{{ _('Physician\'s name and contact') }}",
 fracturesInjuries_ : "{{ _('Fractures / Injuries') }}",
 implants_  : "{{ _('Implants ') }}",
 congenitalMalformations_ : "{{ _('Congenital malformations') }}",
@@ -220,7 +217,7 @@ accidents_ : "{{ _('Accidents') }}",
 prescriptionDrugsTaken_ : "{{ _('Prescription drugs taken') }}",
 smoker_ : "{{ _('Smoker') }}",
 isDentalRecord_ : "{{ _('Is there a Dental Record') }}",
-DentistContact_ : "{{ _('Dentist’s name and contact') }}",
+DentistContact_ : "{{ _('Dentist\'s name and contact') }}",
 teethFeatures_ : "{{ _('Teeth features') }}",
 dentalProblems_ : "{{ _('Dental problems') }}",
 dentalTreatmetns_ : "{{ _('Dental treatments') }}",
@@ -278,8 +275,6 @@ bulletinLocTypes_:
 // actor location types
 actorLocTypes_:
 [
-{"en": "Birth Place", "tr": "{{ _('Birth Place') }}", "code": "birthplace"},
-{"en": "Residence Place", "tr": "{{ _('Residence Place') }}", "code": "residenceplace"},
 {"en": "Origin Place", "tr": "{{ _('Origin Place') }}", "code": "originplace"},
 {"en": "Events", "tr": "{{ _('Events') }}", "code": "events"}
 ],
@@ -310,8 +305,16 @@ actorCivilian: [
 {"en": "Non-Civilian", "tr": "{{ _('Non-Civilian') }}"},
 {"en": "Police", "tr": "{{ _('Police') }}"},
 {"en": "Other Security Forces", "tr": "{{ _('Other Security Forces') }}"}
-]
-,
+],
+
+actorFamilyStatuses: [
+{"en": "Single", "tr": "{{ _('Single') }}"},
+{"en": "Married", "tr": "{{ _('Married') }}"},
+{"en": "Seperated", "tr": "{{ _('Seperated') }}"},
+{"en": "Divorced", "tr": "{{ _('Divorced') }}"},
+{"en": "Widowed", "tr": "{{ _('Widowed') }}"},
+],
+
 //Bulletin to Actor relations
 btoaRelateAs : {{ 'atob'|get_data }},
 
@@ -333,7 +336,6 @@ probs : [
 ],
 }
 
-{% if config.MISSING_PERSONS %}
     // add localized configurations for lists with static values
 
     translations['physique'] = [
@@ -435,7 +437,6 @@ probs : [
     {"en": "Identified", "tr": "{{ _('Identified') }}"}
     ];
 
-{% endif %}
 
 
 

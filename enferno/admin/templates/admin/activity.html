@@ -3,6 +3,8 @@
 <div id="app">
   <v-app id="activity" v-cloak>
     {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+    {% include 'admin/partials/activity_search_viewer.html' %}
+    {% include 'admin/partials/activity_bulk_viewer.html' %}
     <v-main>
 
             <v-container class="container--fluid">
@@ -30,24 +32,104 @@
                             <v-toolbar-title>{{ _('System Activity') }}</v-toolbar-title>
 
                             <v-divider class="mx-4" inset vertical></v-divider>
+
+                             <v-btn  @click="toggleAdvSearch"><v-icon left color="grey darken-2">mdi-ballot</v-icon> Filter Options</v-btn>
                             <v-spacer></v-spacer>
-                           
-                         
+
+
                           </v-toolbar>
                           <v-toolbar flat>
 
-                            <v-chip-group @change="refresh" v-model="tag">
-                              <v-chip  :value="item" v-for="item in tagFilters" filter >${item}</v-chip>
-                            </v-chip-group>
+
 
                           </v-toolbar>
                         </template>
+
+                        <template v-slot:item.user_id="{ item }">
+                            ${ getUsername(item.user_id) }
+                        </template>
+
+                        <template v-slot:item.status="{ item }">
+                          <v-icon v-tippy content="Success" class="ml-2"
+                                  v-if="item.status == 'SUCCESS'" color="success">mdi-check-circle
+                          </v-icon>
+
+                          <v-icon v-tippy content="Denied" class="ml-2" 
+                          v-if="item.status == 'DENIED'">mdi-cancel
+                          </v-icon>
+                      </template>
+
                        <template v-slot:item.subject="{item}">
-                          ${item.subject | formatSubject}
+                          <!-- search button -->
+                          <v-btn v-if="item.action == 'SEARCH'"
+                            color="grey lighten-2" 
+                            elevation="0" 
+                            class="mx-2"
+                            @click="showSearch(item)"
+                            >
+
+                            <v-icon color="grey darken-2" left>
+                            mdi-magnify
+                            </v-icon>
+
+                            {{ _('Show Query') }}
+                          </v-btn>
+
+                          <v-btn 
+                            v-else-if="item.action == 'BULK'"
+                            color="grey lighten-2" 
+                            elevation="0" 
+                            class="mx-2"
+                            @click="showBulk(item)"
+                            >
+
+                            <v-icon color="grey darken-2" left>
+                            mdi-expand-all
+                            </v-icon>
+
+                            {{ _('Show Items') }}
+                          </v-btn>
+                          
+                          <!-- A/B/I preview button -->
+                          <v-btn 
+                            v-else-if="['bulletin', 'actor', 'incident'].includes(item.subject.class)"
+                            color="grey lighten-2" 
+                            elevation="0" 
+                            class="mx-2"
+                            @click="previewItem('/admin/api/' + item.subject.class + '/' + item.subject.id + '?mode=3')"
+                            >
+
+                            <v-icon color="grey darken-2" left
+                            v-if="item.subject.class == 'bulletin'">
+                              mdi-file-document-multiple
+                            </v-icon>
+                            <v-icon color="grey darken-2" left x-small
+                            v-if="item.subject.class == 'actor'">
+                              mdi-account-multiple
+                            </v-icon>
+                            <v-icon color="grey darken-2" left x-small
+                            v-if="item.subject.class == 'incident'">
+                              mdi-hazard-lights
+                            </v-icon>
+
+                            ${item.subject.id}
+                          </v-btn>
+
+                          <v-chip
+                            v-else
+                            label
+                            color="grey lighten-2" 
+                            elevation="0" 
+                            class="mx-2"
+                            > ${ item.subject.id }                        
+                          </v-chip>
 
                        </template>
+
                         <template v-slot:no-data> </template>
                       </v-data-table>
+
+                        {% include 'admin/partials/activity_advsearch.html' %}
 
                       <v-snackbar v-model="snackbar">
                         ${snackMessage}
@@ -62,48 +144,89 @@
             </v-container>
 
     </v-main>
+
+          <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
       {% include 'footer.html' %}
   </v-app>
 </div>
 
+    <div class="d-none" data-types='{{ actions_types|tojson }}'></div>
+    <div class="d-none" data-user='{{ current_user.to_dict()|tojson }}'></div>
 {% endblock %} {% block js %}
-<script>
-  
+<script src="/static/js/mixins/global-mixin.js"></script>
+<script src="/static/js/components/PopDateRangeField.js" ></script>
+<script src="/static/js/components/ActivitySearchBox.js" ></script>
+<script src="/static/js/components/MediaCard.js"></script>
+<script src="/static/js/mixins/media-mixin.js"></script>
+<script src="/static/js/actorConfig.js"></script>
+<script src="/static/js/components/PdfViewer.js"></script>
+<script src="/static/js/components/GeoLocations.js"></script>
+<script src="/static/js/components/GlobalMap.js"></script>
+<script src="/static/js/components/Visualization.js"></script>
+<script src="/static/js/element-resize-detector.min.js"></script>
+<script src="/static/js/force-graph.min.js"></script>
+{% if config.GOOGLE_MAPS_API_KEY %}
+    {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+{% endif %}
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
-  
+
+
+<script>
+  window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+
 const app =   new Vue({
     el: "#app",
     vuetify: vuetify,
     delimiters: delimiters,
+
+    mixins: [globalMixin],
     data: () => ({
+      currentUser: JSON.parse(document.querySelector('[data-user]').dataset.user),
       dialog: dialog,
+      preview: false,
+      pitem: {},
+      advSearchOpen: false,
       imDialog: false,
       drawer: drawer,
       sideNav: sideNav,
       parents: [],
+      
+      // search popup vars
+      activitySearchViews: false,
+      searchPanels: 0,
+      searchClass: '',
+      search: [],
+
+      // bulk vars
+      activityBulkViews: false,
+      bulkItems: [],
+
       snackbar: false,
       snackMessage: '',
       loading: true,
       parentLoading: false,
-      tagFilters: ['bulletin', 'actor','incident','user'],
+      models: ['bulletin', 'actor', 'incident', 'user', 'location', 'media'],
+      users: JSON.parse(`{{users|tojson}}`),
       csvFile: null,
-      tag: '',
       options: {},
       footerProps: {
         itemsPerPageOptions: itemsPerPageOptions,
           itemsPerPageText: "{{ _('Rows per page')}}"
       },
 
+        q: {},
+
+        actionTypes : JSON.parse(document.querySelector('[data-types]').dataset.types),
+
       headers: [
         { text: "{{_('Date')}}", value: "created_at",width:200 },
         { text: "{{_('User')}}", value: "user_id" },
         { text: "{{_('Action')}}", value: "action" },
+        { text: "{{_('Status')}}", value: "status" },
         { text: "{{_('Subject')}}", value: "subject" },
-        { text: "{{_('Tag')}}", value: "tag" },
-
-
-        
-        
+        { text: "{{_('Class')}}", value: "model" },
+        { text: "{{_('Details')}}", value: "details" },
       ],
 
       items: [],
@@ -124,17 +247,21 @@ const app =   new Vue({
       formatSubject: function(val){
         if (val.length > 1){
           return val.map(x=> x.class + '-' + x.id)
-          
+
+        } else {
+            if (val.class === 'user') {
+                return val.username;
+            } else {
+                return val.class + '-' + val.id;
+            }
+
         }
-        else {
-          return (val.class + '-'+val.id);
-        }
-        
+
       }
     },
 
     computed: {
-      
+
     },
 
     watch: {
@@ -147,25 +274,103 @@ const app =   new Vue({
       }
     },
 
-    methods: {
-      refresh() {
-        this.loading = true;
-              axios.post(`/admin/api/activity?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {tag: this.tag}).then(res => {
-                    this.items = res.data.items;
-                    this.itemsLength = res.data.total;
-                    this.loading = false;
+    mounted: function () {
+      // populate roles for advanced search for admins
+      // needed for search popup
+      axios.get('/admin/api/roles/').then(res => {
+          this.roles = res.data.items;
+      }).catch(e => {
+          this.roles = [];
+          console.error(e.message);
+      });
+    },
 
+    methods: {
+
+         has_role(user, role) {
+          for (r of user.roles) {
+              if (r.name == role) {
+                  return true
+              }
+          }
+          return false;
+        },
+
+
+
+        previewItem(endpoint) {
+        axios.get(endpoint).then(res => {
+            this.pitem = res.data;
+            this.preview = true;
+          })
+        },
+        getUsername(userId) {
+            return this.users.find(user => user.id === userId)?.username;
+        },
+
+        resetSearch() {
+            this.q = {};
+            this.refresh();
+        },
+
+
+        toggleAdvSearch() {
+
+            this.advSearchOpen = true;
+
+        },
+
+        refresh() {
+              if (this.advSearchOpen){
+                  this.advSearchOpen = false;
+              }
+              if (! this.options.page) {
+                  this.options.page = 1;
+              }
+          this.loading = true;
+                axios.post(`/admin/api/activities/`, {
+                    q: this.q,
+                    options: this.options,
+                    model: this.model
+                }).then(response => {
+                    this.itemsLength = response.data.total;
+                    this.items = response.data.items;
+                }).catch(err => {
+                    console.error(err);
+                    this.showSnack(err.response?.data);
+                }).finally(() => {
+                    this.loading = false;
                 });
 
+        },
 
-      },
+        showSearch(item) {
+            this.search = item.subject;
+            this.searchClass = item.model;
+            // incident search has only one query
+            if (this.searchClass != 'incident') {
+              this.searchPanels = Array.from(this.search.keys());
+            }
+            
+            this.activitySearchViews = true;
+        },
 
-        
-      
-        
-     
+        closeSearch() {
+          this.activitySearchViews = false;
+          this.searchPanels = 0;
+          this.searchClass = '';
+          this.search = [];
+        },
 
-     
+        showBulk(item) {
+            this.bulkItems = item.subject;
+            this.activityBulkViews = true;
+        },
+
+        closeBulk() {
+            this.bulkItems = [];
+            this.activityBulkViews = false;
+        },
 
       close() {
         this.dialog = false;
@@ -175,7 +380,7 @@ const app =   new Vue({
         }, 300);
       },
 
-      
+
     }
   });
 </script>

@@ -1,6 +1,7 @@
 import json
 import pytest
 from enferno.admin.models import Bulletin
+from enferno.user.models import User
 from tests.factories import BulletinFactory
 
 from tests.test_utils import (
@@ -8,6 +9,7 @@ from tests.test_utils import (
     convert_empty_strings_to_none,
     get_first_or_fail,
     load_data,
+    get_uid_from_client,
 )
 
 ##### PYDANTIC MODELS #####
@@ -173,7 +175,7 @@ def test_post_bulletin_endpoint(clean_slate_bulletins, request, client_fixture, 
 
 put_bulletin_endpoint_roles = [
     ("admin_client", 200),
-    ("da_client", 200),
+    ("da_client", 403),
     ("mod_client", 403),
     ("client", 401),
 ]
@@ -183,6 +185,36 @@ put_bulletin_endpoint_roles = [
 def test_put_bulletin_endpoint(create_bulletin, request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
+    bulletin_id = bulletin.id
+    new_title = BulletinFactory().title
+    response = client_.put(
+        f"/admin/api/bulletin/{bulletin_id}",
+        headers={"content-type": "application/json"},
+        json={"item": {"title": new_title}},
+    )
+    assert response.status_code == expected_status
+    found_bulletin = Bulletin.query.filter(Bulletin.id == bulletin_id).first()
+    if expected_status == 200:
+        assert found_bulletin.title == new_title
+    else:
+        assert found_bulletin.title != new_title
+
+
+put_bulletin_endpoint_roles2 = [
+    ("admin_client", 200),
+    ("da_client", 200),
+    ("mod_client", 403),
+    ("client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_endpoint_roles2)
+def test_put_bulletin_endpoint(users, create_bulletin, request, client_fixture, expected_status):
+    client_ = request.getfixturevalue(client_fixture)
+    bulletin = get_first_or_fail(Bulletin)
+    uid = get_uid_from_client(users, client_fixture)
+    bulletin.assigned_to = User.query.filter(User.id == uid).first()
+    bulletin.save()
     bulletin_id = bulletin.id
     new_title = BulletinFactory().title
     response = client_.put(
