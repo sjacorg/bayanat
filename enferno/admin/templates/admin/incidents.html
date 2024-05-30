@@ -508,10 +508,6 @@
                 eventFromMenu: false,
                 eventToMenu: false,
 
-                //incident dates popups
-                publishDateMenu: false,
-                documentationDateMenu: false,
-
                 footerProps: {
                     itemsPerPageOptions: itemsPerPageOptions,
                     itemsPerPageText: "{{ _('Rows per page')}}"
@@ -558,12 +554,13 @@
 
                     // related actors
                     actor_relations: [],
-                    publish_date: '',
-                    documentation_date: ''
+                    roles: []
 
                 },
 
                 reviewItem: {},
+
+                unrestricted: false,
 
                 // bulk actions
                 // bulk actions
@@ -1244,6 +1241,13 @@
 
                 },
 
+                allowedRoles() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return this.roles;
+                    }
+                    return this.currentUser.roles;
+                },
+
 
                 addReview(item) {
                     this.loading = true;
@@ -1403,6 +1407,7 @@
                     this.dialog = false;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
+                        this.unrestricted = false;
                         this.editedIndex = -1;
                         this.br_loaded = false;
                         this.ir_loaded = false;

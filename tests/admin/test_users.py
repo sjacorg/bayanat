@@ -46,14 +46,6 @@ def create_inactive_user(session):
     session.add(user)
     session.commit()
     yield user
-    try:
-        session.query(Activity).filter(Activity.user_id == user.id).delete(
-            synchronize_session=False
-        )
-        session.delete(user)
-        session.commit()
-    except:
-        pass
 
 
 ##### UTILITIES #####

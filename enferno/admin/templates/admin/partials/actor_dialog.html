@@ -1473,34 +1473,69 @@
                             </v-col>
                         </v-row>
 
-
-                      
                         <v-row>
-                            <v-col cols="12" md="8">
-
-
+                            <v-col cols="12" md="6">
                                 <validation-provider
                                         name="Comments"
                                         rules="required"
                                         v-slot="{ errors }"
                                 >
+                                    <v-textarea
+                                            outlined
+                                            v-model="editedItem.comments"
+                                            label="{{ _('Comments') }}"
+                                    ></v-textarea>
 
-
-                                    <v-textarea outlined v-model="editedItem.comments"
-                                                label="{{ _('Comments') }}"></v-textarea>
                                     <span class="orange--text"> ${errors[0]}</span>
                                 </validation-provider>
                             </v-col>
-                            <v-col cols="12" md="4">
-                                <v-select
-                                        :disabled="statusDisabled"
-                                        item-text="tr"
-                                        item-value="en"
-                                        :items="statusItems"
 
-                                        v-model="editedItem.status"
-                                        label="{{ _('Status') }}"
-                                ></v-select>
+                            <v-col cols="12" md="6">
+                                <v-row>
+                                   <v-select
+
+                                            :disabled="statusDisabled"
+                                            item-text="tr"
+                                            item-value="en"
+                                            :items="statusItems"
+                                            class="mx-2"
+                                            v-model="editedItem.status"
+                                            label="{{ _('Status') }}"
+                                    ></v-select>
+                                </v-row>
+
+                                {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
+                                <v-row>
+                                    <span v-if="!editedItem.id" class="d-flex">
+                                        <validation-provider name="Access Roles"
+                                            :rules="unrestricted? '':'required'"
+                                            v-slot="{errors}">
+                                            <v-select
+                                                    :color="editedItem.roles?.length ? 'error' : 'blue darken-1'"
+                                                    :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
+                                                    small-chips
+                                                    :disabled="unrestricted"
+                                                    item-text="name"
+                                                    item-value="id"
+                                                    :items="allowedRoles()"
+                                                    multiple
+                                                    v-model="editedItem.roles"
+                                                    label="{{ _('Restrict Actor to Role(s)') }}"
+                                                    clearable
+                                            ></v-select>
+                                        </validation-provider>
+                                        <v-checkbox
+                                            small
+                                            color="error"
+                                            @change="unrestricted? editedItem.roles = [] : null"
+                                            class="mx-2"
+                                            label="{{ _('No Access Roles') }}"
+                                            v-model="unrestricted">
+                                        </v-checkbox>
+                                    </span>
+                                </v-row>
+                                {% endif %}
+
                             </v-col>
                         </v-row>
 

@@ -32,6 +32,7 @@ def create_activity(session, create_user):
 @pytest.fixture(scope="function")
 def clean_slate_activities(session):
     session.query(Activity).delete(synchronize_session=False)
+    session.query(User).delete(synchronize_session=False)
     session.commit()
     yield
 

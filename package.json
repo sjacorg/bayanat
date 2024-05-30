@@ -16,7 +16,7 @@
     "leaflet-textpath": "^1.2.3",
     "leaflet.markercluster": "^1.5.3",
     "leaflet.polylinemeasure": "^3.0.0",
-    "npm": "^9.*",
+    "npm": "^10.*",
     "photoswipe": "^5.4.2",
     "photoswipe-deep-zoom-plugin": "^1.1.2",
     "sortablejs": "^1.14.0",

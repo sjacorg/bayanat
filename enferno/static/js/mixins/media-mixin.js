@@ -224,7 +224,13 @@ let mediaMixin = {
             let dataUrl = canvas.toDataURL("image/jpeg");
             let blob = dataUriToBlob(dataUrl);
             let data = new FormData();
-            data.append('file', blob, media.filename)
+            let filename = media.filename;
+            if (!filename.endsWith('.jpg')) {
+              filename += '.jpg';
+            }
+
+
+            data.append('file', blob, filename)
 
             axios.post("/admin/api/media/upload", data, {
                 headers: {"content-type": false}

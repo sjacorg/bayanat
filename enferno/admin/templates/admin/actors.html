@@ -623,7 +623,8 @@
                     documentation_date: '',
                     actor_profiles: [{
                         mode: 1
-                    }]
+                    }],
+                    roles: []
 
                 },
 
@@ -641,6 +642,8 @@
 
 
                 reviewItem: {},
+
+                unrestricted: false,
 
                 // bulk actions
                 bulk: {},
@@ -1406,6 +1409,12 @@
 
               },
 
+              allowedRoles() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return this.roles;
+                    }
+                    return this.currentUser.roles;
+                },
 
               addReview(item) {
                   this.loading = true;
@@ -1492,11 +1501,7 @@
 
               confirmClose() {
                   if (confirm('Are you sure?')) {
-                      this.dialog = false;
-                      setTimeout(() => {
-                          this.editedItem = Object.assign({}, this.defaultItem);
-                          this.editedIndex = -1;
-                      }, 300);
+                      this.close();
                   }
               },
               close() {
@@ -1504,6 +1509,7 @@
                   this.dialog = false;
                   setTimeout(() => {
                       this.editedItem = Object.assign({}, this.defaultItem);
+                      this.unrestricted = false;
                       this.editedIndex = -1;
                   }, 300);
 

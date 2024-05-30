@@ -1,6 +1,7 @@
-from typing import ForwardRef, Optional, List, Dict
+from typing import ForwardRef, Optional, List, Dict, Union
 from pydantic import BaseModel, Field
 from tests.models.user import UserCompactModel, RoleModel, UserItemModel
+from tests.models.common import StrictModel, BaseResponseModel
 
 ## PYDANTIC MODELS ##
 
@@ -58,7 +59,7 @@ class LocationRequestModel(BaseModel):
     item: Dict
 
 
-class ActorItemMinModel(BaseModel):
+class ActorItemMinModel(StrictModel):
     id: int
     type_: Optional[str] = Field(..., alias="type")
     title: str = Field(None, max_length=255)
@@ -85,7 +86,7 @@ class VerLabelsJSONModel(BaseModel):
     title: Optional[str]
 
 
-class ActorItemMode2Model(BaseModel):
+class ActorItemMode2Model(StrictModel):
     class_: str = Field("Actor", alias="class")
     id: int
     type_: Optional[str] = Field(None, alias="type", max_length=255)
@@ -155,7 +156,7 @@ class DialectModel(BaseModel):
 class SourceModel(BaseModel):
     id: int
     title: Optional[str]
-    etl_id: Optional[int]
+    etl_id: Optional[str]
     parent: Optional[SourcesJSONModel]
     comments: Optional[str]
     updated_at: Optional[str]
@@ -260,7 +261,7 @@ class ActorItemMode3Model(BaseModel):
     actor_profiles: List[ActorProfileModel] = []
 
 
-class ActorCompactModel(BaseModel):
+class ActorCompactModel(StrictModel):
     id: int
     name: Optional[str] = Field(None, max_length=255)
     # originid: Optional[str] = Field(None, max_length=255)
@@ -280,7 +281,7 @@ class LocationsJSONModel(BaseModel):
     lng: Optional[float]
 
 
-class BulletinCompactModel(BaseModel):
+class BulletinCompactModel(StrictModel):
     id: int
     title: str = Field(None, max_length=255)
     title_ar: Optional[str] = Field(None, max_length=255)
@@ -335,9 +336,9 @@ class ActorItemMode3PlusModel(ActorItemMode3Model):
     incident_relations: Optional[List[ItoaModel]] = []
 
 
-class ActorsResponseModel(BaseModel):
+class ActorsResponseModel(BaseResponseModel):
     items: List[
-        ActorItemMinModel | ActorItemMode2Model | ActorItemMode3Model | ActorItemMode3PlusModel
+        Union[ActorItemMinModel, ActorItemMode2Model, ActorItemMode3Model, ActorItemMode3PlusModel]
     ]
     perPage: int
     total: int
@@ -347,8 +348,9 @@ class ActorRequestModel(BaseModel):
     item: Dict
 
 
-class BulletinItemMinModel(BaseModel):
+class BulletinItemMinModel(StrictModel):
     id: int
+    type_: str = Field(None, alias="type")
     title: str = Field(None, max_length=255)
     name: Optional[str] = Field(None, max_length=255)
     assigned_to: Optional["UserCompactModel"]
@@ -366,7 +368,7 @@ class LocationItemCompactModel(BaseModel):
     lng: Optional[float]
 
 
-class BulletinItemMode2Model(BaseModel):
+class BulletinItemMode2Model(StrictModel):
     class_: str = Field("Bulletin", alias="class")
     id: int
     title: str
@@ -403,7 +405,7 @@ class GeoLocationItemModel(BaseModel):
     updated_at: Optional[str]
 
 
-class BulletinItemMode3Model(BaseModel):
+class BulletinItemMode3Model(StrictModel):
     class_: str = Field(..., alias="class")
     id: int
     title: str
@@ -460,12 +462,14 @@ class BulletinItemMode3PlusModel(BulletinItemMode3Model):
     incident_relations: Optional[List[ItobModel]] = []
 
 
-class BulletinsResponseModel(BaseModel):
+class BulletinsResponseModel(BaseResponseModel):
     items: list[
-        BulletinItemMinModel
-        | BulletinItemMode2Model
-        | BulletinItemMode3Model
-        | BulletinItemMode3PlusModel
+        Union[
+            BulletinItemMinModel,
+            BulletinItemMode2Model,
+            BulletinItemMode3Model,
+            BulletinItemMode3PlusModel,
+        ]
     ]
     perPage: int
     total: int
@@ -480,9 +484,10 @@ class IncidentItemRestrictedModel(BaseModel):
     restricted: bool = True
 
 
-class IncidentItemMinModel(BaseModel):
+class IncidentItemMinModel(StrictModel):
     id: int
     title: str = Field(None, max_length=255)
+    type_: str = Field(None, alias="type")
     name: Optional[str] = Field(None, max_length=255)
     assigned_to: Optional["UserCompactModel"]
     first_peer_reviewer: Optional["UserCompactModel"]
@@ -518,7 +523,7 @@ class ClaimedViolationJSONModel(BaseModel):
     title: Optional[str]
 
 
-class IncidentItemMode3Model(BaseModel):
+class IncidentItemMode3Model(StrictModel):
     class_: str = Field(..., alias="class")
     id: int
     title: Optional[str]
@@ -556,13 +561,15 @@ class IncidentItemMode3PlusModel(IncidentItemMode3Model):
     incident_relations: List[ItoiModel] = []
 
 
-class IncidentsResponseModel(BaseModel):
+class IncidentsResponseModel(BaseResponseModel):
     items: List[
-        IncidentItemRestrictedModel
-        | IncidentItemMinModel
-        | IncidentItemMode2Model
-        | IncidentItemMode3Model
-        | IncidentItemMode3PlusModel
+        Union[
+            IncidentItemRestrictedModel,
+            IncidentItemMinModel,
+            IncidentItemMode2Model,
+            IncidentItemMode3Model,
+            IncidentItemMode3PlusModel,
+        ]
     ]
     perPage: int
     total: int

@@ -1,8 +1,8 @@
 import pytest
-import tempfile
 
 from enferno.admin.models import Eventtype
 from tests.factories import EventtypeFactory
+from tests.models.admin import EventtypesResponseModel
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
@@ -10,9 +10,8 @@ from tests.test_utils import (
     create_csv_for_entities,
 )
 
-#### PYDANTIC MODELS #####
 
-from tests.models.admin import EventtypesResponseModel
+#### PYDANTIC MODELS #####
 
 ##### FIXTURES #####
 
@@ -39,7 +38,6 @@ def clean_slate_eventtypes(session):
 
 @pytest.fixture(scope="function")
 def create_eventtype_csv():
-    tmp = tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".csv")
     evt1 = EventtypeFactory()
     evt2 = EventtypeFactory()
     evt2.for_bulletin = True
@@ -179,7 +177,6 @@ def test_import_eventtype_endpoint(
     client_ = request.getfixturevalue(client_fixture)
     with open(create_eventtype_csv, "rb") as f:
         data = {"csv": (f, "test.csv")}
-        print(data)
         response = client_.post(
             "/admin/api/eventtype/import",
             content_type="multipart/form-data",

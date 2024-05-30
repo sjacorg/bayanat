@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import Location
-from tests.factories import LocationFactory
+from tests.factories import LocationFactory, create_location
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
@@ -14,21 +14,6 @@ from tests.test_utils import (
 from tests.models.admin import LocationItemModel, LocationResponseModel
 
 ##### FIXTURES #####
-
-
-@pytest.fixture(scope="function")
-def create_location(session):
-    from enferno.admin.models import LocationHistory
-
-    location = LocationFactory()
-    session.add(location)
-    session.commit()
-    yield location
-    session.query(LocationHistory).filter(LocationHistory.location_id == location.id).delete(
-        synchronize_session=False
-    )
-    session.delete(location)
-    session.commit()
 
 
 @pytest.fixture(scope="function")

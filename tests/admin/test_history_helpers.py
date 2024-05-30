@@ -1,6 +1,10 @@
 import pytest
 
 from enferno.admin.models import ActorHistory, BulletinHistory, IncidentHistory, LocationHistory
+from tests.admin.test_actors import clean_slate_actors
+from tests.admin.test_bulletins import clean_slate_bulletins
+from tests.admin.test_incidents import clean_slate_incidents
+from tests.admin.test_locations import clean_slate_locations
 from tests.factories import (
     ActorFactory,
     ActorHistoryFactory,
@@ -12,18 +16,13 @@ from tests.factories import (
     LocationHistoryFactory,
 )
 from tests.models.admin import HistoryHelpersResponseModel
-from tests.admin.test_actors import clean_slate_actors
-from tests.admin.test_bulletins import clean_slate_bulletins
-from tests.admin.test_incidents import clean_slate_incidents
-from tests.admin.test_locations import clean_slate_locations
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
 )
 
-#### PYDANTIC MODELS #####
 
-from tests.models.admin import GeoLocationTypesResponseModel
+#### PYDANTIC MODELS #####
 
 ##### FIXTURES #####
 

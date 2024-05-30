@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import Source
-from tests.factories import SourceFactory
+from tests.factories import SourceFactory, create_source
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
@@ -14,19 +14,6 @@ from tests.test_utils import (
 from tests.models.admin import SourcesResponseModel
 
 ##### FIXTURES #####
-
-
-@pytest.fixture(scope="function")
-def create_source(session):
-    source = SourceFactory()
-    session.add(source)
-    session.commit()
-    yield source
-    try:
-        session.query(Source).filter(Source.id == source.id).delete(synchronize_session=False)
-        session.commit()
-    except:
-        pass
 
 
 @pytest.fixture(scope="function")

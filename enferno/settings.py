@@ -138,6 +138,7 @@ class Config(object):
 
     # Access Control settings
     ACCESS_CONTROL_RESTRICTIVE = manager.get_config("ACCESS_CONTROL_RESTRICTIVE")
+    AC_USERS_CAN_RESTRICT_NEW = manager.get_config("AC_USERS_CAN_RESTRICT_NEW")
 
     # Activities
     ACTIVITIES = manager.get_config("ACTIVITIES")

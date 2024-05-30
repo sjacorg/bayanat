@@ -13,7 +13,7 @@ from tests.test_utils import (
 
 
 @pytest.fixture(scope="function")
-def create_media_file(request):
+def create_media_file(request, app):
     app = request.getfixturevalue("app")
     allowed_ext = app.config["MEDIA_ALLOWED_EXTENSIONS"]
     ext = random.choice(allowed_ext)

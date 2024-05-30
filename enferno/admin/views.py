@@ -96,6 +96,40 @@ def require_view_history(f):
     return decorated_function
 
 
+def can_assign_roles(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        roles = request.json["item"].get("roles", [])
+        if roles:
+            if not has_role_assignment_permission(roles):
+                Activity.create(
+                    current_user,
+                    Activity.ACTION_CREATE,
+                    Activity.STATUS_DENIED,
+                    request.json,
+                    "bulletin",
+                    details="Unauthorized attempt to assign roles.",
+                )
+                return HTTPResponse.UNAUTHORIZED
+        return func(*args, **kwargs)
+
+    return decorated_function
+
+
+def has_role_assignment_permission(roles):
+    # admins can assign any roles
+    if not current_user.has_role("Admin"):
+        # non-admins can only assign their roles
+        user_roles = {role.id for role in current_user.roles}
+        requested_roles = set(roles)
+        if not (user_roles & requested_roles == requested_roles) or not current_app.config.get(
+            "AC_USERS_CAN_RESTRICT_NEW"
+        ):
+            return False
+
+    return True
+
+
 @admin.before_request
 @auth_required("session")
 def before_request():
@@ -2122,26 +2156,31 @@ def api_bulletins():
 
 @admin.post("/api/bulletin/")
 @roles_accepted("Admin", "DA")
+@can_assign_roles
 def api_bulletin_create():
     """Creates a new bulletin."""
     bulletin = Bulletin()
     bulletin.from_json(request.json["item"])
-
-    # assign automatically to the creator user
     bulletin.assigned_to_id = current_user.id
-    bulletin.save()
 
-    # the below will create the first revision by default
-    bulletin.create_revision()
-    # Record activity
-    Activity.create(
-        current_user,
-        Activity.ACTION_CREATE,
-        Activity.STATUS_SUCCESS,
-        bulletin.to_mini(),
-        "bulletin",
-    )
-    return f"Created Bulletin #{bulletin.id}", 200
+    roles = request.json["item"].get("roles", [])
+    if roles:
+        new_roles = Role.query.filter(Role.id.in_(roles)).all()
+        bulletin.roles = new_roles
+
+    if bulletin.save():
+        bulletin.create_revision()
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            bulletin.to_mini(),
+            "bulletin",
+        )
+
+        return f"Created Bulletin #{bulletin.id}", 200
+    else:
+        return "Error creating Bulletin", 417
 
 
 @admin.put("/api/bulletin/<int:id>")
@@ -2954,6 +2993,7 @@ def api_actors():
 # create actor endpoint
 @admin.post("/api/actor/")
 @roles_accepted("Admin", "DA")
+@can_assign_roles
 def api_actor_create():
     """
     Endpoint to create an Actor item
@@ -2962,9 +3002,14 @@ def api_actor_create():
     actor = Actor()
     actor.from_json(request.json["item"])
     # assign actor to creator by default
+
     actor.assigned_to_id = current_user.id
-    result = actor.save()
-    if result:
+    roles = request.json["item"].get("roles", [])
+    if roles:
+        new_roles = Role.query.filter(Role.id.in_(roles)).all()
+        actor.roles = new_roles
+
+    if actor.save():
         # the below will create the first revision by default
         actor.create_revision()
         # Record activity
@@ -2973,7 +3018,7 @@ def api_actor_create():
         )
         return f"Created Actor #{actor.id}", 200
     else:
-        return "Error creating actor", 417
+        return "Error creating Actor", 417
 
 
 # update actor endpoint
@@ -3717,6 +3762,7 @@ def api_incidents():
 
 @admin.post("/api/incident/")
 @roles_accepted("Admin", "DA")
+@can_assign_roles
 def api_incident_create():
     """API endpoint to create an incident."""
 
@@ -3724,18 +3770,25 @@ def api_incident_create():
     incident.from_json(request.json["item"])
     # assign to creator by default
     incident.assigned_to_id = current_user.id
-    incident.save()
-    # the below will create the first revision by default
-    incident.create_revision()
-    # Record activity
-    Activity.create(
-        current_user,
-        Activity.ACTION_CREATE,
-        Activity.STATUS_SUCCESS,
-        incident.to_mini(),
-        "incident",
-    )
-    return f"Created Incident #{incident.id}", 200
+    roles = request.json["item"].get("roles", [])
+    if roles:
+        new_roles = Role.query.filter(Role.id.in_(roles)).all()
+        incident.roles = new_roles
+
+    if incident.save():
+        # the below will create the first revision by default
+        incident.create_revision()
+        # Record activity
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            incident.to_mini(),
+            "incident",
+        )
+        return f"Created Incident #{incident.id}", 200
+    else:
+        return "Error creating Incident", 417
 
 
 # update incident endpoint

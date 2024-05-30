@@ -1,4 +1,5 @@
 from uuid import uuid4
+
 import pytest
 
 from enferno.settings import TestConfig as cfg
@@ -7,7 +8,6 @@ from enferno.settings import TestConfig as cfg
 @pytest.fixture(scope="session", autouse=True)
 def flush_redis_after_tests():
     import redis
-    import os
 
     yield
     # Code here will execute after all tests are done

@@ -1,5 +1,5 @@
 # ---- use a base image to compile requirements / save image size -----
-FROM ubuntu as base
+FROM ubuntu:22.04 as base
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y && \
     apt install -yq python3-dev python3.10-venv libjpeg8-dev libzip-dev libxml2-dev libssl-dev libffi-dev libxslt1-dev libmysqlclient-dev libncurses5-dev python-setuptools python3-pip libpq-dev libimage-exiftool-perl
@@ -25,7 +25,7 @@ RUN ls -la /opt/venv/bin/
 
 # ----------------- main container -------------------------
 
-FROM ubuntu
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ARG ROLE

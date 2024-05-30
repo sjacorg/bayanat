@@ -339,6 +339,12 @@
                                                           persistent-hint
                                                           hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
                                                           v-model="eitem.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
+                                                          <!-- Enabling  -->
+
+                                                <v-switch class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
+                                                          persistent-hint
+                                                          hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
+                                                          v-model="eitem.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
                                             </v-card-text>
 
                                         </v-card>

@@ -1,8 +1,20 @@
-import json
 import pytest
-from enferno.admin.models import Bulletin
+from enferno.admin.models import Bulletin, Btob
 from enferno.user.models import User
-from tests.factories import BulletinFactory
+from tests.factories import (
+    BulletinFactory,
+    create_source,
+    create_location,
+    create_label_for,
+    create_ver_label_for,
+    create_eventtype_for,
+    create_event_for,
+)
+from tests.admin.data.generators import (
+    create_simple_bulletin,
+    create_related_bulletin,
+    create_full_bulletin,
+)
 
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -26,57 +38,14 @@ from tests.models.admin import (
 
 
 @pytest.fixture(scope="function")
-def create_bulletin(session):
-    from enferno.admin.models import BulletinHistory
-
-    bulletin = BulletinFactory()
-    session.add(bulletin)
-    session.commit()
-    yield bulletin
-    session.query(BulletinHistory).filter(BulletinHistory.bulletin_id == bulletin.id).delete(
-        synchronize_session=False
-    )
-    session.delete(bulletin)
-    session.commit()
-
-
-@pytest.fixture(scope="function")
 def clean_slate_bulletins(session):
     from enferno.admin.models import BulletinHistory
 
+    session.query(Btob).delete(synchronize_session=False)
     session.query(BulletinHistory).delete(synchronize_session=False)
     session.query(Bulletin).delete(synchronize_session=False)
     session.commit()
     yield
-
-
-@pytest.fixture(scope="function")
-def create_related_bulletin(session):
-    from enferno.admin.models import BulletinHistory, Btob
-
-    b1 = BulletinFactory()
-    b2 = BulletinFactory()
-    b3 = BulletinFactory()
-    session.add(b3)
-    session.add(b2)
-    session.add(b1)
-    session.commit()
-    b2.relate_bulletin(b1, json.dumps({}), False)
-    b3.relate_bulletin(b1, json.dumps({}), False)
-    yield b1, b2, b3
-    session.query(Btob).filter(Btob.bulletin_id.in_([b1.id, b2.id, b3.id])).delete(
-        synchronize_session=False
-    )
-    session.query(Btob).filter(Btob.related_bulletin_id.in_([b1.id, b2.id, b3.id])).delete(
-        synchronize_session=False
-    )
-    session.query(BulletinHistory).filter(
-        BulletinHistory.bulletin_id.in_([b1.id, b2.id, b3.id])
-    ).delete(synchronize_session=False)
-    session.query(Bulletin).filter(Bulletin.id.in_([b1.id, b2.id, b3.id])).delete(
-        synchronize_session=False
-    )
-    session.commit()
 
 
 ##### GET /admin/api/bulletins #####
@@ -90,7 +59,9 @@ bulletins_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", bulletins_endpoint_roles)
-def test_bulletins_endpoint(create_bulletin, request, client_fixture, expected_status):
+def test_bulletins_endpoint(
+    clean_slate_bulletins, create_full_bulletin, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get(
         "/admin/api/bulletins?page=1&per_page=10&cache=1",
@@ -115,7 +86,9 @@ bulletin_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", bulletin_endpoint_roles)
-def test_bulletin_endpoint(create_bulletin, request, client_fixture, expected_status):
+def test_bulletin_endpoint(
+    clean_slate_bulletins, create_full_bulletin, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
     response = client_.get(f"/admin/api/bulletin/{bulletin.id}")
@@ -182,7 +155,9 @@ put_bulletin_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_endpoint_roles)
-def test_put_bulletin_endpoint(create_bulletin, request, client_fixture, expected_status):
+def test_put_bulletin_endpoint(
+    clean_slate_bulletins, create_simple_bulletin, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
     bulletin_id = bulletin.id
@@ -209,7 +184,9 @@ put_bulletin_endpoint_roles2 = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_endpoint_roles2)
-def test_put_bulletin_endpoint(users, create_bulletin, request, client_fixture, expected_status):
+def test_put_bulletin_endpoint(
+    users, create_full_bulletin, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
     uid = get_uid_from_client(users, client_fixture)
@@ -242,7 +219,7 @@ put_bulletin_review_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_review_endpoint_roles)
 def test_put_bulletin_review_endpoint(
-    clean_slate_bulletins, create_bulletin, request, client_fixture, expected_status
+    clean_slate_bulletins, create_full_bulletin, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     nb = BulletinFactory()
@@ -274,7 +251,7 @@ put_bulletin_bulk_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_bulk_endpoint_roles)
 def test_put_bulletin_bulk_endpoint(
-    clean_slate_bulletins, create_bulletin, request, client_fixture, expected_status
+    clean_slate_bulletins, create_full_bulletin, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
@@ -315,15 +292,6 @@ def test_get_bulletin_relations_endpoint(
         assert all([x["bulletin"]["id"] in [b2.id, b3.id] for x in load_data(response)["items"]])
 
 
-##### POST /admin/api/bulletin/import #####
-
-post_bulletin_import_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 403),
-    ("mod_client", 403),
-    ("client", 401),
-]
-
 ##### PUT /admin/api/bulletin/assign/<int:id> #####
 
 put_bulletin_assign_endpoint_roles = [
@@ -339,7 +307,7 @@ put_bulletin_assign_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_assign_endpoint_roles)
 def test_put_bulletin_assign_endpoint(
-    clean_slate_bulletins, create_bulletin, request, client_fixture, expected_status
+    clean_slate_bulletins, create_simple_bulletin, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)

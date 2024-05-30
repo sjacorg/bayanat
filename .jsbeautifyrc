@@ -1,0 +1,10 @@
+{
+  "html": {
+    "indent_size": 2,
+    "indent_char": " ",
+    "max_preserve_newlines": 2,
+    "preserve_newlines": true,
+    "indent_inner_html": true,
+    "extra_liners": ["/html"]
+  }
+}

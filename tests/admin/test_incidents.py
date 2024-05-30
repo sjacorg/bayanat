@@ -1,8 +1,21 @@
-import json
 import pytest
-from enferno.admin.models import Incident
+from enferno.admin.models import Incident, Itoi
 from enferno.user.models import User
-from tests.factories import IncidentFactory
+from tests.factories import (
+    IncidentFactory,
+    create_event_for,
+    create_label_for,
+    create_ver_label_for,
+    create_source,
+    create_eventtype_for,
+    create_profile_for,
+    create_location,
+)
+from tests.admin.data.generators import (
+    create_full_incident,
+    create_related_incident,
+    create_simple_incident,
+)
 
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -26,57 +39,14 @@ from tests.models.admin import (
 
 
 @pytest.fixture(scope="function")
-def create_incident(session):
-    from enferno.admin.models import IncidentHistory
-
-    incident = IncidentFactory()
-    session.add(incident)
-    session.commit()
-    yield incident
-    session.query(IncidentHistory).filter(IncidentHistory.incident_id == incident.id).delete(
-        synchronize_session=False
-    )
-    session.delete(incident)
-    session.commit()
-
-
-@pytest.fixture(scope="function")
 def clean_slate_incidents(session):
     from enferno.admin.models import IncidentHistory
 
     session.query(IncidentHistory).delete(synchronize_session=False)
+    session.query(Itoi).delete(synchronize_session=False)
     session.query(Incident).delete(synchronize_session=False)
     session.commit()
     yield
-
-
-@pytest.fixture(scope="function")
-def create_related_incident(session):
-    from enferno.admin.models import IncidentHistory, Itoi
-
-    i1 = IncidentFactory()
-    i2 = IncidentFactory()
-    i3 = IncidentFactory()
-    session.add(i3)
-    session.add(i2)
-    session.add(i1)
-    session.commit()
-    i2.relate_incident(i1, json.dumps({}), False)
-    i3.relate_incident(i1, json.dumps({}), False)
-    yield i1, i2, i3
-    session.query(Itoi).filter(Itoi.incident_id.in_([i1.id, i2.id, i3.id])).delete(
-        synchronize_session=False
-    )
-    session.query(Itoi).filter(Itoi.related_incident_id.in_([i1.id, i2.id, i3.id])).delete(
-        synchronize_session=False
-    )
-    session.query(IncidentHistory).filter(
-        IncidentHistory.incident_id.in_([i1.id, i2.id, i3.id])
-    ).delete(synchronize_session=False)
-    session.query(Incident).filter(Incident.id.in_([i1.id, i2.id, i3.id])).delete(
-        synchronize_session=False
-    )
-    session.commit()
 
 
 ##### GET /admin/api/incidents #####
@@ -90,7 +60,9 @@ incidents_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", incidents_endpoint_roles)
-def test_incidents_endpoint(create_incident, request, client_fixture, expected_status):
+def test_incidents_endpoint(
+    clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get(
         "/admin/api/incidents",
@@ -115,7 +87,9 @@ incident_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", incident_endpoint_roles)
-def test_incident_endpoint(create_incident, request, client_fixture, expected_status):
+def test_incident_endpoint(
+    clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     incident = get_first_or_fail(Incident)
     response = client_.get(f"/admin/api/incident/{incident.id}")
@@ -179,7 +153,9 @@ put_incident_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_incident_endpoint_roles)
-def test_put_incident_endpoint(create_incident, request, client_fixture, expected_status):
+def test_put_incident_endpoint(
+    clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     incident = get_first_or_fail(Incident)
     incident_id = incident.id
@@ -207,7 +183,7 @@ put_incident_endpoint_roles2 = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_incident_endpoint_roles2)
 def test_put_incident_assigned_endpoint(
-    users, create_incident, request, client_fixture, expected_status
+    users, clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     incident = get_first_or_fail(Incident)
@@ -244,7 +220,7 @@ put_incident_assign_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_incident_assign_endpoint_roles)
 def test_put_incident_assign_endpoint(
-    clean_slate_incidents, create_incident, request, client_fixture, expected_status
+    clean_slate_incidents, create_simple_incident, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     incident = get_first_or_fail(Incident)
@@ -272,7 +248,7 @@ put_incident_review_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_incident_review_endpoint_roles)
 def test_put_incident_review_endpoint(
-    clean_slate_incidents, create_incident, request, client_fixture, expected_status
+    clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     i = IncidentFactory()
@@ -304,7 +280,7 @@ put_incident_bulk_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_incident_bulk_endpoint_roles)
 def test_put_incident_bulk_endpoint(
-    clean_slate_incidents, create_incident, request, client_fixture, expected_status
+    clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     incident = get_first_or_fail(Incident)

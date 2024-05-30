@@ -31,6 +31,7 @@ class ConfigManager:
             "S3_BUCKET": "",
             "AWS_REGION": "",
             "ACCESS_CONTROL_RESTRICTIVE": False,
+            "AC_USERS_CAN_RESTRICT_NEW": False,
             "MEDIA_ALLOWED_EXTENSIONS": [
                 "mp4",
                 "webm",
@@ -145,6 +146,7 @@ class ConfigManager:
             "S3_BUCKET": "S3 Bucket",
             "AWS_REGION": "Aws Region",
             "ACCESS_CONTROL_RESTRICTIVE": "Restrictive Access Control",
+            "AC_USERS_CAN_RESTRICT_NEW": "Users Can Restrict New Items",
             "MEDIA_ALLOWED_EXTENSIONS": "Media Allowed Extensions",
             "MEDIA_UPLOAD_MAX_FILE_SIZE": "Media Maximum File Upload Size",
             "SHEETS_ALLOWED_EXTENSIONS": "Sheets Allowed Extensions",
@@ -217,6 +219,7 @@ class ConfigManager:
             "S3_BUCKET": cfg.S3_BUCKET,
             "AWS_REGION": cfg.AWS_REGION,
             "ACCESS_CONTROL_RESTRICTIVE": cfg.ACCESS_CONTROL_RESTRICTIVE,
+            "AC_USERS_CAN_RESTRICT_NEW": cfg.AC_USERS_CAN_RESTRICT_NEW,
             "MEDIA_ALLOWED_EXTENSIONS": cfg.MEDIA_ALLOWED_EXTENSIONS,
             "MEDIA_UPLOAD_MAX_FILE_SIZE": cfg.MEDIA_UPLOAD_MAX_FILE_SIZE,
             "SHEETS_ALLOWED_EXTENSIONS": cfg.SHEETS_ALLOWED_EXTENSIONS,

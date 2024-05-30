@@ -3,9 +3,8 @@ import pytest
 from enferno.user.models import Role
 from tests.factories import RoleFactory
 
-#### PYDANTIC MODELS #####
 
-from tests.models.admin import RolesResponseModel
+#### PYDANTIC MODELS #####
 
 ##### FIXTURES #####
 

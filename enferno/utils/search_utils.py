@@ -1003,8 +1003,8 @@ class SearchUtils:
             query.append(Activity.action == action)
 
         # Use strict matching for tag
-        if tag := q.get("tag"):
-            query.append(Activity.tag == tag)
+        if model := q.get("model"):
+            query.append(Activity.model == model)
 
         # activity date
         if created := q.get("created", None):

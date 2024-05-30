@@ -1,9 +1,17 @@
-import json
 import pytest
 
-from enferno.admin.models import Actor
+from enferno.admin.models import Actor, Atoa
 from enferno.user.models import User
-from tests.factories import ActorFactory
+from tests.factories import (
+    ActorFactory,
+    create_label_for,
+    create_ver_label_for,
+    create_source,
+    create_event_for,
+    create_eventtype_for,
+    create_location,
+    create_profile_for,
+)
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
@@ -11,6 +19,7 @@ from tests.test_utils import (
     load_data,
     get_uid_from_client,
 )
+from tests.admin.data.generators import create_simple_actor, create_related_actor, create_full_actor
 
 ##### PYDANTIC MODELS #####
 
@@ -26,57 +35,15 @@ from tests.models.admin import (
 
 
 @pytest.fixture(scope="function")
-def create_actor(session):
-    from enferno.admin.models import ActorHistory
-
-    actor = ActorFactory()
-    session.add(actor)
-    session.commit()
-    yield actor
-    session.query(ActorHistory).filter(ActorHistory.actor_id == actor.id).delete(
-        synchronize_session=False
-    )
-    session.query(Actor).filter(Actor.id == actor.id).delete(synchronize_session=False)
-    session.commit()
-
-
-@pytest.fixture(scope="function")
 def clean_slate_actors(session):
-    from enferno.admin.models import ActorHistory
+    from enferno.admin.models import ActorHistory, ActorProfile
 
+    session.query(ActorProfile).delete(synchronize_session=False)
     session.query(ActorHistory).delete(synchronize_session=False)
+    session.query(Atoa).delete(synchronize_session=False)
     session.query(Actor).delete(synchronize_session=False)
     session.commit()
     yield
-
-
-@pytest.fixture(scope="function")
-def create_related_actor(session, users):
-    from enferno.admin.models import ActorHistory, Atoa
-
-    a1 = ActorFactory()
-    a2 = ActorFactory()
-    a3 = ActorFactory()
-    session.add(a3)
-    session.add(a2)
-    session.add(a1)
-    session.commit()
-    a2.relate_actor(a1, json.dumps({}), False)
-    a3.relate_actor(a1, json.dumps({}), False)
-    yield a1, a2, a3
-    session.query(Atoa).filter(Atoa.actor_id.in_([a1.id, a2.id, a3.id])).delete(
-        synchronize_session=False
-    )
-    session.query(Atoa).filter(Atoa.related_actor_id.in_([a1.id, a2.id, a3.id])).delete(
-        synchronize_session=False
-    )
-    session.query(ActorHistory).filter(ActorHistory.actor_id.in_([a1.id, a2.id, a3.id])).delete(
-        synchronize_session=False
-    )
-    session.query(Actor).filter(Actor.id.in_([a1.id, a2.id, a3.id])).delete(
-        synchronize_session=False
-    )
-    session.commit()
 
 
 ##### UTILITIES #####
@@ -97,7 +64,9 @@ actors_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture,expected_status", actors_endpoint_roles)
-def test_actors_endpoint(create_actor, request, client_fixture, expected_status):
+def test_actors_endpoint(
+    clean_slate_actors, create_full_actor, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get(
         "/admin/api/actors",
@@ -115,7 +84,9 @@ def test_actors_endpoint(create_actor, request, client_fixture, expected_status)
 
 
 @pytest.mark.parametrize("client_fixture,expected_status", actors_endpoint_roles)
-def test_actor_endpoint(create_actor, request, client_fixture, expected_status):
+def test_actor_endpoint(
+    clean_slate_actors, create_full_actor, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_actor_or_fail()
     response = client_.get(
@@ -198,7 +169,7 @@ put_actor_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture,expected_status", put_actor_endpoint_roles)
 def test_put_actor_endpoint(
-    clean_slate_actors, create_actor, request, client_fixture, expected_status
+    clean_slate_actors, create_full_actor, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_actor_or_fail()
@@ -227,7 +198,7 @@ put_actor_endpoint_roles2 = [
 
 @pytest.mark.parametrize("client_fixture,expected_status", put_actor_endpoint_roles2)
 def test_put_actor_assigned_endpoint(
-    users, clean_slate_actors, create_actor, request, client_fixture, expected_status
+    users, clean_slate_actors, create_full_actor, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_actor_or_fail()
@@ -264,19 +235,19 @@ put_actor_assign_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_actor_assign_endpoint_roles)
 def test_put_actor_assign_endpoint(
-    clean_slate_actors, create_actor, request, client_fixture, expected_status
+    clean_slate_actors, create_simple_actor, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_or_fail(Actor)
-    id = actor.id
+    actor_id = actor.id
     response = client_.put(
-        f"/admin/api/actor/assign/{id}",
+        f"/admin/api/actor/assign/{actor_id}",
         headers={"content-type": "application/json"},
         json={"actor": {"comments": ""}},
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        found_actor = Actor.query.filter(Actor.id == id).first()
+        found_actor = Actor.query.filter(Actor.id == actor_id).first()
         assert found_actor.assigned_to is not None
 
 
@@ -292,7 +263,7 @@ put_actor_review_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_actor_review_endpoint_roles)
 def test_put_actor_review_endpoint(
-    clean_slate_actors, create_actor, request, client_fixture, expected_status
+    clean_slate_actors, create_full_actor, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     nb = ActorFactory()
@@ -324,7 +295,7 @@ put_actor_bulk_endpoint_roles = [
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_actor_bulk_endpoint_roles)
 def test_put_actor_bulk_endpoint(
-    clean_slate_actors, create_actor, request, client_fixture, expected_status
+    clean_slate_actors, create_simple_actor, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_or_fail(Actor)

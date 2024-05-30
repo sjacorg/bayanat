@@ -376,6 +376,7 @@
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
+
         VeeValidate.extend("uniqueQueryName", {
             validate: async (str) => {
                 try {
@@ -605,10 +606,13 @@
                     // related incidents
                     incident_relations: [],
                     publish_date: '',
-                    documentation_date: ''
+                    documentation_date: '',
+                    roles: []
                 },
 
                 reviewItem: {},
+
+                unrestricted: false,
 
                 // bulk actions
                 bulk: {},
@@ -1356,6 +1360,12 @@
 
                 },
 
+                allowedRoles() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return this.roles;
+                    }
+                    return this.currentUser.roles;
+                },
 
                 addReview(item) {
 
@@ -1471,27 +1481,23 @@
                     }
                 },
 
-                confirmClose() {
-
-                    if (confirm('Are you sure?')) {
-                        this.dialog = false;
-                        setTimeout(() => {
-                            this.editedItem = Object.assign({}, this.defaultItem);
-                            this.editedIndex = -1;
-                        }, 300);
-                    }
-                },
                 close() {
-
                     this.dialog = false;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
+
+                        this.unrestricted = false;
                         this.editedIndex = -1;
                     }, 300);
                 },
 
-                save() {
+                confirmClose() {
+                    if (confirm('Are you sure?')) {
+                        this.close();
+                    }
+                },
 
+                save() {
                     if (this.editedItem.id) {
                         axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
                             item: this.editedItem
@@ -1499,16 +1505,17 @@
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh(this.options);
-                                this.close();
                             }).catch(err => {
                             this.showSnack(err.response.data);
                         }).then(() => {
-                            this.close()
+                            this.close();
                         });
                     } else {
                         this.items.push(this.editedItem);
                         //create new record
-                        axios.post("/admin/api/bulletin/", {item: this.editedItem})
+                        axios.post("/admin/api/bulletin/", {
+                            item: this.editedItem,
+                        })
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh(this.options);
@@ -1518,7 +1525,6 @@
                             this.close();
                         });
                     }
-
                 },
 
                 editEvent(evt, item, index) {
