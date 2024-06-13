@@ -4308,6 +4308,7 @@ def api_app_config():
 
 
 @admin.get("/api/configuration/")
+@roles_required("Admin")
 def api_config():
     """
     :return: serialized app configuration
@@ -4317,6 +4318,7 @@ def api_config():
 
 
 @admin.put("api/configuration/")
+@roles_required("Admin")
 def api_config_write():
     """
     writes back app configurations & reloads the app
