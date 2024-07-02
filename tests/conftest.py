@@ -1,12 +1,16 @@
 from uuid import uuid4
+from unittest.mock import patch
 
 import pytest
+from enferno.utils.config_utils import ConfigManager
 
-from enferno.settings import TestConfig as cfg
+with patch.object(ConfigManager, "CONFIG_FILE_PATH", "config.sample.json"):
+    from enferno.settings import TestConfig as cfg
 
 
 @pytest.fixture(scope="session", autouse=True)
 def flush_redis_after_tests():
+    """Fixture to flush redis db after all tests are done."""
     import redis
 
     yield
@@ -24,6 +28,7 @@ def flush_redis_after_tests():
 
 @pytest.fixture(scope="session")
 def app():
+    """Create a Flask app context for testing."""
     from enferno.app import create_app
     from flask_login import FlaskLoginClient
 
@@ -35,6 +40,7 @@ def app():
 
 @pytest.fixture(scope="session")
 def setup_db(app):
+    """Create a test database for the app."""
     from enferno.extensions import db as _db
     from enferno.utils.data_helpers import (
         generate_user_roles,
@@ -59,6 +65,7 @@ def setup_db(app):
 
 @pytest.fixture(scope="function")
 def session(setup_db, app):
+    """Create a new database session for a test."""
     from enferno.extensions import db
 
     with app.app_context():
@@ -70,6 +77,7 @@ def session(setup_db, app):
 
 @pytest.fixture(scope="function")
 def users(session):
+    """Create users for testing."""
     from enferno.user.models import Role, User
     from enferno.admin.models import Activity
 
@@ -131,60 +139,74 @@ def users(session):
 # test client for a user logged in as Admin role
 @pytest.fixture(scope="function")
 def admin_client(app, session, users):
+    """Test client for a user logged in as Admin role."""
     with app.app_context():
         admin_user, _, _, _ = users
         with app.test_client(user=admin_user) as client:
+            client.follow_redirects = True
             yield client
 
 
 # test client for a user logged in as DA role
 @pytest.fixture(scope="function")
 def da_client(app, session, users):
+    """Test client for a user logged in as DA role."""
     with app.app_context():
         _, da_user, _, _ = users
         with app.test_client(user=da_user) as client:
+            client.follow_redirects = True
             yield client
 
 
 # test client for a user logged in as Mod role
 @pytest.fixture(scope="function")
 def mod_client(app, session, users):
+    """Test client for a user logged in as Mod role."""
     with app.app_context():
         _, _, mod_user, _ = users
         with app.test_client(user=mod_user) as client:
+            client.follow_redirects = True
             yield client
 
 
 # test client for an unauthenticated user
 @pytest.fixture(scope="function")
 def client(app, session):
+    """Test client for an unauthenticated user."""
     with app.app_context():
         with app.test_client() as client:
+            client.follow_redirects = True
             yield client
 
 
 # test client for admin that can self-assign
 @pytest.fixture(scope="function")
 def admin_sa_client(app, session, users):
+    """Test client for admin that can self-assign."""
     with app.app_context():
         _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["admin"]) as client:
+            client.follow_redirects = True
             yield client
 
 
 # test client for da that can self-assign
 @pytest.fixture(scope="function")
 def da_sa_client(app, session, users):
+    """Test client for da that can self-assign."""
     with app.app_context():
         _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["da"]) as client:
+            client.follow_redirects = True
             yield client
 
 
 # test client for mod that can self-assign
 @pytest.fixture(scope="function")
 def mod_sa_client(app, session, users):
+    """Test client for mod that can self-assign."""
     with app.app_context():
         _, _, _, sa_dict = users
         with app.test_client(user=sa_dict["mod"]) as client:
+            client.follow_redirects = True
             yield client

@@ -1,6 +1,7 @@
 from dateutil.parser import parse
 
 from sqlalchemy import or_, not_, and_, func
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
     Bulletin,
@@ -25,18 +26,34 @@ from enferno.user.models import Role
 # helper methods
 
 
-def date_between_query(field, dates):
+def date_between_query(field: ColumnElement, dates: list) -> BinaryExpression:
+    """
+    Create a date range query for a given field.
+
+    Args:
+        - field: The field to search on.
+        - dates: A list of two dates in string format.
+
+    Returns:
+        - A binary expression for the date range query.
+    """
     start_date = parse(dates[0]).date()
-    end_date = parse(dates[1]).date()
+    if len(dates) == 1:
+        end_date = start_date
+    else:
+        end_date = parse(dates[1]).date()
     return func.date(field).between(start_date, end_date)
 
 
 class SearchUtils:
+    """Utility class to build search queries for different models."""
+
     def __init__(self, json=None, cls=None):
         self.search = json.get("q") if json else [{}]
         self.cls = cls
 
     def get_query(self):
+        """Get the query for the given class."""
         if self.cls == "bulletin":
             return self.build_bulletin_query()
         elif self.cls == "actor":
@@ -50,9 +67,11 @@ class SearchUtils:
         return []
 
     def to_dict(self):
+        """Return the search arguments."""
         return self.args
 
     def build_bulletin_query(self):
+        """Build a query for the bulletin model."""
         main = self.bulletin_query(self.search[0])
         if len(self.search) == 1:
             return [main], []
@@ -71,6 +90,7 @@ class SearchUtils:
         return queries, ops
 
     def build_actor_query(self):
+        """Build a query for the actor model."""
         main = self.actor_query(self.search[0])
         if len(self.search) == 1:
             return [main], []
@@ -90,15 +110,27 @@ class SearchUtils:
         return queries, ops
 
     def build_incident_query(self):
+        """Build a query for the incident model."""
         return self.incident_query(self.search)
 
     def build_location_query(self):
+        """Build a query for the location model."""
         return self.location_query(self.search)
 
     def build_activity_query(self):
+        """Build a query for the activity model."""
         return self.activity_query(self.search)
 
-    def bulletin_query(self, q):
+    def bulletin_query(self, q: dict) -> list:
+        """
+        Build a query for the bulletin model.
+
+        Args:
+            - q: The search query.
+
+        Returns:
+            - A list of query conditions.
+        """
         query = []
 
         # Support query using a range of ids
@@ -406,7 +438,16 @@ class SearchUtils:
 
         return query
 
-    def actor_query(self, q):
+    def actor_query(self, q: dict) -> list:
+        """
+        Build a query for the actor model.
+
+        Args:
+            - q: The search query.
+
+        Returns:
+            - A list of query conditions.
+        """
         query = []
 
         tsv = q.get("tsv")
@@ -741,7 +782,16 @@ class SearchUtils:
 
         return query
 
-    def incident_query(self, q):
+    def incident_query(self, q: dict):
+        """
+        Build a query for the incident model.
+
+        Args:
+            - q: The search query.
+
+        Returns:
+            - A list of query conditions.
+        """
         query = []
 
         tsv = q.get("tsv")
@@ -916,7 +966,16 @@ class SearchUtils:
 
         return query
 
-    def location_query(self, q):
+    def location_query(self, q: dict) -> list:
+        """
+        Build a query for the location model.
+
+        Args:
+            - q: The search query.
+
+        Returns:
+            - A list of query conditions.
+        """
         query = []
 
         # restrict parent search by admin level
@@ -991,7 +1050,16 @@ class SearchUtils:
 
         return query
 
-    def activity_query(self, q):
+    def activity_query(self, q: dict) -> list:
+        """
+        Build a query for the activity model.
+
+        Args:
+            - q: The search query.
+
+        Returns:
+            - A list of query conditions.
+        """
         query = []
 
         # Filtering by user_id

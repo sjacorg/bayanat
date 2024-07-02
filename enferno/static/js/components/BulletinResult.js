@@ -1,56 +1,77 @@
-Vue.component('bulletin-result', {
+const BulletinResult = Vue.defineComponent({
   props: ['bulletin', 'hidden', 'showHide', 'i18n'],
 
+  data: () => {
+    return {
+      hide: this.hidden || false,
+    }
+  },
+
   template: `
-    <template v-if="!hidden">
-    <v-card v-if="!bulletin.restricted" outlined class="ma-1"  >     
-        <v-card-title class="d-flex">
-            <v-chip label small color="gv darken-2" dark>{{ i18n.id_ }} {{bulletin.id}} </v-chip>
-            <v-chip :href="bulletin.source_link" target="_blank" color="lime darken-3" class="white--text ml-1"  label small ># {{bulletin.originid}}</v-chip>
-            <v-spacer></v-spacer>
-            <v-chip v-if="bulletin.publish_date" small color="grey lighten-4">{{bulletin.publish_date}}</v-chip>
-        </v-card-title>
-        <slot name="header"></slot>            
+    <template v-if="!hide">
+      <v-card v-if="!bulletin.restricted" hover class="ma-2">
+        <v-toolbar density="compact" class="d-flex px-2">
+          <v-chip color="primary" variant="flat" size="small">{{ i18n.id_ }} {{ bulletin.id }}</v-chip>
+          <v-chip variant="text" :href="bulletin.source_link" target="_blank" class="white--text ml-1" label
+                  size="small"># {{ bulletin.originid }}
+          </v-chip>
+          <v-spacer></v-spacer>
+          <v-chip variant="text" v-if="bulletin.publish_date" size="small">{{ bulletin.publish_date }}</v-chip>
+        </v-toolbar>
+        <v-card-title class="text-subtitle-2">{{bulletin.title}}</v-card-title>
+        <v-divider></v-divider>
+        <slot name="header"></slot>
+        
+        
         <v-card-text>
+        
             
-          <div class="subtitle-2 black--text mb-1 mt-2" >
-            {{bulletin.title}}
-          </div>
-          <div v-html="bulletin.description" class="caption">
-          </div>
-          <v-divider class="my-2"></v-divider>
-          <div class="caption">{{ i18n.locations_ }}</div>
-          <v-chip-group
-             column
-          >
-        <v-chip small color="grey lighten-4" v-for="location in bulletin.locations" :key="location">
-          {{ location.full_string }}
-        </v-chip>
-      </v-chip-group>
 
 
-      <div class="caption mt-2">{{ i18n.sources_ }}</div>
-          <v-chip-group
-             column
-          >
-        <v-chip small color="grey lighten-4" v-for="source in bulletin.sources" :key="source">
-          {{ source.title }}
-        </v-chip>
-      </v-chip-group>
+
+              <v-list-item v-if="bulletin.locations?.length" :title="i18n.locations_">
+                <v-list-item-subtitle>
+                  <v-chip-group column>
+                    <v-chip size="small" v-for="location in bulletin.locations" :key="location">
+                      {{ location.full_string }}
+                    </v-chip>
+                  </v-chip-group>
+                </v-list-item-subtitle>
+              </v-list-item>
+
+
+              <v-list-item v-if="bulletin.sources?.length" :title="i18n.sources_">
+                <v-list-item-subtitle>
+                  <v-chip-group
+                      column
+                  >
+                    <v-chip size="small" color="grey" v-for="source in bulletin.sources" :key="source">
+                      {{ source.title }}
+                    </v-chip>
+                  </v-chip-group>
+                </v-list-item-subtitle>
+
+              </v-list-item>
           
+        
         </v-card-text>
-        <v-card-actions>
-            <slot name="actions"></slot>  
-            <v-btn v-if="showHide" @click="hidden=true" small depressed  color="grey lighten-4"> {{ i18n.hide_ }}</v-btn>
-          <v-btn @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')" text small icon color="gv darken-1" ><v-icon>mdi-eye</v-icon></v-btn>
+        
+        <v-card-actions class="justify-end">
+          <slot name="actions"></slot>
+          <v-btn size="small" v-if="showHide" @click="hide=true" variant="plain"> {{ i18n.hide_ }}</v-btn>
+          <v-btn size="small" icon="mdi-eye"
+                 @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')"
+                 color="primary">
+
+          </v-btn>
         </v-card-actions>
-      </v-card >
-    
+      </v-card>
+
       <v-card disabled elevation="0" v-else class="restricted">
-      
-    <v-card-text >{{bulletin.id}} - {{ i18n.restricted_ }}</v-card-text>
-    
-    </v-card>
-      </template>
-    `,
+
+        <v-card-text>{{ bulletin.id }} - {{ i18n.restricted_ }}</v-card-text>
+
+      </v-card>
+    </template>
+  `,
 });

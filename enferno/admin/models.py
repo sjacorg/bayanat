@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Any, Optional, Union
 
 import pandas as pd
 from dateutil.parser import parse
@@ -12,8 +13,10 @@ from flask_login import current_user
 from geoalchemy2 import Geometry, Geography
 from geoalchemy2.shape import to_shape
 from sqlalchemy import JSON, ARRAY, text, and_, or_, func
+import sqlalchemy
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.orm.attributes import flag_modified
+import werkzeug
 from werkzeug.utils import secure_filename
 
 from enferno.extensions import db
@@ -23,9 +26,17 @@ from enferno.utils.csv_utils import convert_simple_relation, convert_complex_rel
 from enferno.utils.date_helper import DateHelper
 from enferno.user.models import User
 
+import enferno.utils.typing as t
+
 
 ######  Role based Access Control Decorator for Bulletins / Actors  / Incidents  ######
 def check_roles(method):
+    """
+    Decorator to check if the current user has access to the resource. If the
+    user does not have access, the restricted_json method is called to return
+    a restricted response.
+    """
+
     @wraps(method)
     def _impl(self, *method_args, **method_kwargs):
         method_output = method(self, *method_args, **method_kwargs)
@@ -38,6 +49,12 @@ def check_roles(method):
 
 
 def check_relation_roles(method):
+    """
+    Decorator to check if the current user has access to the related resource.
+    If the user does not have access, the restricted_json method is called to
+    return a restricted related item in response.
+    """
+
     @wraps(method)
     def _impl(self, *method_args, **method_kwargs):
         method_output = method(self, *method_args, **method_kwargs)
@@ -77,8 +94,7 @@ class Source(db.Model, BaseMixin):
     parent_id = db.Column(db.Integer, db.ForeignKey("source.id"), index=True)
     parent = db.relationship("Source", remote_side=id, backref="sub_source")
 
-    # populate object from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Source":
         self.title = json["title"]
         if "title_ar" in json:
             self.title_ar = json["title_ar"]
@@ -93,8 +109,8 @@ class Source(db.Model, BaseMixin):
             self.parent_id = None
         return self
 
-    # custom serialization method
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the source."""
         return {
             "id": self.id,
             "title": self.title,
@@ -106,17 +122,23 @@ class Source(db.Model, BaseMixin):
             else None,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Source {} {}>".format(self.id, self.title)
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the source."""
         return json.dumps(self.to_dict())
 
     @staticmethod
-    def find_by_ids(ids: list):
+    def find_by_ids(ids: list[t.id]) -> list[dict[str, Any]]:
         """
         finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
-        :return: matching records
+
+        Args:
+            - ids: list of ids to search for.
+
+        Returns:
+            - matching records
         """
         if not ids:
             return []
@@ -132,7 +154,17 @@ class Source(db.Model, BaseMixin):
         return [{"id": x[0], "title": x[2]} for x in result]
 
     @staticmethod
-    def get_children(sources, depth=3):
+    def get_children(sources: list, depth: int = 3) -> list:
+        """
+        Retrieves the children of the given sources up to a specified depth.
+
+        Args:
+            - sources: list of sources to retrieve children for.
+            - depth: the depth of the search.
+
+        Returns:
+            - list of children sources.
+        """
         all = []
         targets = sources
         while depth != 0:
@@ -143,23 +175,49 @@ class Source(db.Model, BaseMixin):
         return all
 
     @staticmethod
-    def get_direct_children(sources):
+    def get_direct_children(sources: list) -> list:
+        """
+        Retrieves the direct children of the given sources.
+
+        Args:
+            - sources: list of sources to retrieve children for.
+
+        Returns:
+            - list of children sources.
+        """
         children = []
         for source in sources:
             children += source.sub_source
         return children
 
     @staticmethod
-    def find_by_title(title):
+    def find_by_title(title: str) -> Optional["Source"]:
+        """
+        Finds a source by its title.
+
+        Args:
+            - title: the title of the source.
+
+        Returns:
+            - the source object.
+        """
         ar = Source.query.filter(Source.title_ar.ilike(title)).first()
         if ar:
             return ar
         else:
             return Source.query.filter(Source.title.ilike(title)).first()
 
-    # import csv data into db
     @staticmethod
-    def import_csv(file_storage):
+    def import_csv(file_storage: werkzeug.datastructures.FileStorage) -> str:
+        """
+        Imports Source data from a CSV file.
+
+        Args:
+            - file_storage: the file storage object containing the CSV data.
+
+        Returns:
+            - empty string on success.
+        """
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
@@ -199,7 +257,17 @@ class Label(db.Model, BaseMixin):
     parent = db.relationship("Label", remote_side=id, backref="sub_label")
 
     # custom serialization method
-    def to_dict(self, mode="1"):
+    def to_dict(self, mode: str = "1") -> dict[str, Any]:
+        """
+        Return a dictionary representation of the label.
+
+        Args:
+            - mode: the serialization mode. Default is "1". If "2" is passed, a compact
+            representation of the label is returned.
+
+        Returns:
+            - dictionary representation of the label.
+        """
         if mode == "2":
             return self.to_mode2()
         return {
@@ -221,23 +289,35 @@ class Label(db.Model, BaseMixin):
         }
 
     # custom compact serialization
-    def to_mode2(self):
+    def to_mode2(self) -> dict[str, Any]:
+        """
+        Compact serialization for labels
+
+        Returns:
+            - dictionary with id and title keys.
+        """
         return {
             "id": self.id,
             "title": self.title,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the label."""
         return json.dumps(self.to_dict())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Label {} {}>".format(self.id, self.title)
 
     @staticmethod
-    def find_by_ids(ids: list):
+    def find_by_ids(ids: list[t.id]) -> list[dict[str, Any]]:
         """
         finds all items and subitems of a given list of ids, using raw sql query instead of the orm.
-        :return: matching records
+
+        Args:
+            - ids: list of ids to search for.
+
+        Returns:
+            - matching records
         """
         if not ids:
             return []
@@ -254,7 +334,17 @@ class Label(db.Model, BaseMixin):
         return [{"id": x[0], "title": x[2]} for x in result]
 
     @staticmethod
-    def get_children(labels, depth=3):
+    def get_children(labels: list, depth: int = 3) -> list:
+        """
+        Get the children of the given labels up to a specified depth.
+
+        Args:
+            - labels: list of labels to retrieve children for.
+            - depth: the depth of the search.
+
+        Returns:
+            - list of children labels.
+        """
         all = []
         targets = labels
         while depth != 0:
@@ -265,14 +355,32 @@ class Label(db.Model, BaseMixin):
         return all
 
     @staticmethod
-    def get_direct_children(labels):
+    def get_direct_children(labels: list) -> list:
+        """
+        Get the direct children of the given labels.
+
+        Args:
+            - labels: list of labels to retrieve children for.
+
+        Returns:
+            - list of children labels.
+        """
         children = []
         for label in labels:
             children += label.sub_label
         return children
 
     @staticmethod
-    def find_by_title(title):
+    def find_by_title(title: str) -> Optional["Label"]:
+        """
+        Find a label by its title.
+
+        Args:
+            - title: the title of the label.
+
+        Returns:
+            - the label object.
+        """
         ar = Label.query.filter(Label.title_ar.ilike(title)).first()
         if ar:
             return ar
@@ -280,7 +388,16 @@ class Label(db.Model, BaseMixin):
             return Label.query.filter(Label.title.ilike(title)).first()
 
     # populate object from json data
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Label":
+        """
+        Create a label object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the label from.
+
+        Returns:
+            - the label object.
+        """
         self.title = json["title"]
         self.title_ar = json["title_ar"] if "title_ar" in json else ""
         self.comments = json["comments"] if "comments" in json else ""
@@ -314,7 +431,16 @@ class Label(db.Model, BaseMixin):
 
     # import csv data into db
     @staticmethod
-    def import_csv(file_storage):
+    def import_csv(file_storage: werkzeug.datastructures.FileStorage) -> str:
+        """
+        Imports Label data from a CSV file.
+
+        Args:
+            - file_storage: the file storage object containing the CSV data.
+
+        Returns:
+            - empty string on success.
+        """
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
@@ -355,7 +481,8 @@ class Eventtype(db.Model, BaseMixin):
     comments = db.Column(db.String)
 
     # custom serialization method
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the event type."""
         return {
             "id": self.id,
             "title": self.title,
@@ -366,11 +493,21 @@ class Eventtype(db.Model, BaseMixin):
             "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the event type."""
         return json.dumps(self.to_dict())
 
     # populates model from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Eventtype":
+        """
+        Create an event type object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the event type from.
+
+        Returns:
+            - the event type object.
+        """
         self.title = json.get("title", self.title)
         self.title_ar = json.get("title_ar", self.title_ar)
         self.for_actor = json.get("for_actor", self.for_actor)
@@ -380,13 +517,23 @@ class Eventtype(db.Model, BaseMixin):
         return self
 
     @staticmethod
-    def find_by_title(title):
+    def find_by_title(title: str) -> Optional["Eventtype"]:
+        """Return the first event type with the given title."""
         # search
         return Eventtype.query.filter(Eventtype.title.ilike(title.strip())).first()
 
     # imports data from csv
     @staticmethod
-    def import_csv(file_storage):
+    def import_csv(file_storage: werkzeug.datastructures.FileStorage) -> str:
+        """
+        Imports Eventtype data from a CSV file.
+
+        Args:
+            - file_storage: the file storage object containing the CSV data.
+
+        Returns:
+            - empty string on success.
+        """
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
@@ -427,12 +574,30 @@ class Event(db.Model, BaseMixin):
     estimated = db.Column(db.Boolean)
 
     @staticmethod
-    def get_event_filters(dates=None, eventtype_id=None, event_location_id=None):
+    def get_event_filters(
+        dates: Optional[list] = None,
+        eventtype_id: Optional[t.id] = None,
+        event_location_id: Optional[t.id] = None,
+    ) -> list:
+        """
+        Get the filters for querying events based on the given parameters.
+
+        Args:
+            - dates: list of dates to filter by.
+            - eventtype_id: the event type id to filter by.
+            - event_location_id: the event location id to filter by.
+
+        Returns:
+            - list of conditions to filter by.
+        """
         conditions = []
 
         if dates:
             start_date = parse(dates[0]).date()
-            end_date = parse(dates[1]).date()
+            if len(dates) == 1:
+                end_date = start_date
+            else:
+                end_date = parse(dates[1]).date()
 
             date_condition = or_(
                 and_(
@@ -451,7 +616,8 @@ class Event(db.Model, BaseMixin):
         return conditions
 
     # custom serialization method
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the event."""
         return {
             "id": self.id,
             "title": self.title if self.title else None,
@@ -466,11 +632,21 @@ class Event(db.Model, BaseMixin):
             "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the event."""
         return json.dumps(self.to_dict())
 
     # populates model from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Event":
+        """
+        Create an event object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the event from.
+
+        Returns:
+            - the event object.
+        """
         self.title = json["title"] if "title" in json else None
         self.title_ar = json["title_ar"] if "title_ar" in json else None
         self.comments = json["comments"] if "comments" in json else None
@@ -543,7 +719,8 @@ class Media(db.Model, BaseMixin):
 
     # custom serialization method
     @check_roles
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the media."""
         return {
             "id": self.id,
             "title": self.title if self.title else None,
@@ -559,11 +736,21 @@ class Media(db.Model, BaseMixin):
             else None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the media."""
         return json.dumps(self.to_dict())
 
     # populates model from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Media":
+        """
+        Create a media object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the media from.
+
+        Returns:
+            - the media object.
+        """
         self.title = json["title"] if "title" in json else None
         self.title_ar = json["title_ar"] if "title_ar" in json else None
         self.media_file_type = json["fileType"] if "fileType" in json else None
@@ -577,23 +764,32 @@ class Media(db.Model, BaseMixin):
 
     # generate custom file name for upload purposes
     @staticmethod
-    def generate_file_name(filename):
+    def generate_file_name(filename: str) -> str:
+        """
+        Generate a secure and timestamped file name.
+
+        Args:
+            - filename: the original file name.
+
+        Returns:
+            - the generated file name.
+        """
         return "{}-{}".format(
             datetime.utcnow().strftime("%Y%m%d-%H%M%S"),
             secure_filename(filename).lower(),
         )
 
     @staticmethod
-    def validate_file_extension(filepath, allowed_extensions):
+    def validate_file_extension(filepath: str, allowed_extensions: list[str]) -> bool:
         """
         Validate file extension against a list of allowed extensions.
 
         Args:
-            filepath (str): Path to the file.
-            allowed_extensions (list): List of allowed file extensions.
+            - filepath: the path to the file.
+            - allowed_extensions: list of allowed file extensions.
 
         Returns:
-            bool: True if extension is valid, False otherwise.
+            - True if extension is valid, False otherwise.
         """
         extension = pathlib.Path(filepath).suffix.lower().lstrip(".")
         return extension in allowed_extensions
@@ -621,7 +817,6 @@ class Location(db.Model, BaseMixin):
     description = db.Column(db.Text)
     postal_code = db.Column(db.String)
 
-    # migrate to a froeign key
     country_id = db.Column(db.Integer, db.ForeignKey("countries.id"))
     country = db.relationship("Country", backref="locations")
 
@@ -629,7 +824,14 @@ class Location(db.Model, BaseMixin):
     full_location = db.Column(db.String)
     id_tree = db.Column(db.String)
 
-    def create_revision(self, user_id=None, created=None):
+    def create_revision(self, user_id: Optional[t.id] = None, created: Optional[datetime] = None):
+        """
+        Create a revision of the current location.
+
+        Args:
+            - user_id: the user id to associate with the revision.
+            - created: the creation date of the revision.
+        """
         if not user_id:
             user_id = getattr(current_user, "id", 1)
         l = LocationHistory(location_id=self.id, data=self.to_dict(), user_id=user_id)
@@ -640,7 +842,13 @@ class Location(db.Model, BaseMixin):
 
         print("Created Location revision")
 
-    def get_children_ids(self):
+    def get_children_ids(self) -> list:
+        """
+        Get the ids of the children of the current location.
+
+        Returns:
+            - list of children ids.
+        """
         children = (
             Location.query.with_entities(Location.id)
             .filter(Location.id_tree.like(f"%[{self.id}]%"))
@@ -650,7 +858,16 @@ class Location(db.Model, BaseMixin):
         return [x[0] for x in children]
 
     @staticmethod
-    def get_children_by_id(id: int):
+    def get_children_by_id(id: t.id) -> list:
+        """
+        Get the children of the location with the given id.
+
+        Args:
+            - id: the id of the location.
+
+        Returns:
+            - list of children locations.
+        """
         children = (
             Location.query.with_entities(Location.id)
             .filter(Location.id_tree.like(f"%[{id}]%"))
@@ -660,7 +877,16 @@ class Location(db.Model, BaseMixin):
         return [x[0] for x in children]
 
     @staticmethod
-    def find_by_title(title):
+    def find_by_title(title: str) -> Optional["Location"]:
+        """
+        Find the first location with the given title.
+
+        Args:
+            - title: the title of the location.
+
+        Returns:
+            - the location object.
+        """
         ar = Location.query.filter(Location.title_ar.ilike(title)).first()
         if ar:
             return ar
@@ -668,7 +894,8 @@ class Location(db.Model, BaseMixin):
             return Location.query.filter(Location.title.ilike(title)).first()
 
     # custom serialization method
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the location."""
         if self.parent:
             if not self.parent.admin_level:
                 print(self.parent, " <-")
@@ -694,7 +921,8 @@ class Location(db.Model, BaseMixin):
             "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }
 
-    def to_parent_dict(self):
+    def to_parent_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of current object's parent."""
         if not self.parent:
             return None
         else:
@@ -708,14 +936,26 @@ class Location(db.Model, BaseMixin):
             }
 
     # custom compact serialization method
-    def min_json(self):
+    def min_json(self) -> dict[str, Any]:
+        """
+        Minified JSON representation of the location.
+
+        Returns:
+            - dictionary with id, location_type and full_string keys.
+        """
         return {
             "id": self.id,
             "location_type": self.location_type.to_dict() if self.location_type else "",
             "full_string": "{} | {}".format(self.full_location, self.title_ar),
         }
 
-    def to_compact(self):
+    def to_compact(self) -> dict[str, Any]:
+        """
+        Compact serialization for locations.
+
+        Returns:
+            - dictionary with id, title, full_string, lat and lng keys.
+        """
         return {
             "id": self.id,
             "title": self.title,
@@ -724,11 +964,21 @@ class Location(db.Model, BaseMixin):
             "lng": to_shape(self.latlng).x if self.latlng else None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the location."""
         return json.dumps(self.to_dict())
 
     # populate model from json dict
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "Location":
+        """
+        Create a location object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the location from.
+
+        Returns:
+            - the location object.
+        """
         self.title = jsn.get("title")
         self.title_ar = jsn.get("title_ar")
         self.description = jsn.get("description")
@@ -774,7 +1024,8 @@ class Location(db.Model, BaseMixin):
         return self
 
     # helper method
-    def get_sub_locations(self):
+    def get_sub_locations(self) -> list:
+        """Helper method to get full location hierarchy."""
         if not self.sub_location:
             return [self]
         else:
@@ -785,10 +1036,7 @@ class Location(db.Model, BaseMixin):
 
     # helper method to get full location hierarchy
     def get_full_string(self, descending=True):
-        """
-        Generates full string of location and parents.
-        """
-
+        """Generates full string of location and parents."""
         pid = self.parent_id
         if not pid or self.admin_level is None:
             return self.title
@@ -813,12 +1061,9 @@ class Location(db.Model, BaseMixin):
 
         return ", ".join(string)
 
-    def get_id_tree(self):
-        """
-        use common table expressions to generate the full tree of ids, this is very useful to reduce
-        search complexity when using autocomplete locations
-        :return:
-        """
+    def get_id_tree(self) -> str:
+        """Use common table expressions to generate the full tree of ids, this is very useful to reduce
+        search complexity when using autocomplete locations."""
         query = """
         with recursive tree(id,depth) as (
         select id, title, parent_id from location where id = :id
@@ -832,8 +1077,17 @@ class Location(db.Model, BaseMixin):
         return " ".join(["[{}]".format(loc[0]) for loc in result])
 
     @staticmethod
-    def geo_query_location(target_point, radius_in_meters):
-        """Geosearch via locations"""
+    def geo_query_location(target_point: dict[str, Any], radius_in_meters: int) -> Any:
+        """
+        Geosearch via locations.
+
+        Args:
+            - target_point: dictionary with lat and lng keys.
+            - radius_in_meters: radius in meters.
+
+        Returns:
+            - query object.
+        """
         point = func.ST_SetSRID(
             func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
         )
@@ -844,6 +1098,7 @@ class Location(db.Model, BaseMixin):
 
     @staticmethod
     def rebuild_id_trees():
+        """Rebuild the id tree for all locations."""
         for l in Location.query.all():
             print("Generating id tree for Location - {}".format(l.id))
             l.id_tree = l.get_id_tree()
@@ -853,7 +1108,16 @@ class Location(db.Model, BaseMixin):
 
     # imports csv data into db
     @staticmethod
-    def import_csv(file_storage):
+    def import_csv(file_storage: werkzeug.datastructures.FileStorage) -> str:
+        """
+        Imports Location data from a CSV file.
+
+        Args:
+            - file_storage: the file storage object containing the CSV data.
+
+        Returns:
+            - empty string on success.
+        """
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
@@ -897,10 +1161,17 @@ class LocationAdminLevel(db.Model, BaseMixin):
     code = db.Column(db.Integer, nullable=False)
     title = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the location admin level."""
         return {"id": self.id, "code": self.code, "title": self.title}
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "LocationAdminLevel":
+        """
+        Create a location admin level object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the location admin level from.
+        """
         self.code = jsn.get("code")
         self.title = jsn.get("title")
 
@@ -915,10 +1186,17 @@ class LocationType(db.Model, BaseMixin):
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the location type."""
         return {"id": self.id, "title": self.title, "description": self.description}
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "LocationType":
+        """
+        Create a location type object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the location type from.
+        """
         self.title = jsn.get("title")
         self.description = jsn.get("description")
 
@@ -938,21 +1216,31 @@ class GeoLocation(db.Model, BaseMixin):
     comment = db.Column(db.Text)
     bulletin_id = db.Column(db.Integer, db.ForeignKey("bulletin.id"))
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "GeoLocation":
+        """
+        Create a geo location object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the geo location from.
+
+        Returns:
+            - the geo location object.
+        """
         self.title = jsn.get("title")
-        type = jsn.get("type")
-        if type and (id := type.get("id")):
+        geotype = jsn.get("geotype")
+        if geotype and (id := geotype.get("id")):
             self.type_id = id
         self.main = jsn.get("main")
         self.latlng = f'POINT({jsn.get("lng")} {jsn.get("lat")})'
         self.comment = jsn.get("comment")
         return self
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the geo location."""
         return {
             "id": self.id,
             "title": self.title,
-            "geoType": self.type.to_dict() if self.type else None,
+            "geotype": self.type.to_dict() if self.type else None,
             "main": self.main,
             "lat": to_shape(self.latlng).y,
             "lng": to_shape(self.latlng).x,
@@ -1032,7 +1320,13 @@ class Btob(db.Model, BaseMixin):
     user = db.relationship("User", backref="user_btobs", foreign_keys=[user_id])
 
     @property
-    def relation_info(self):
+    def relation_info(self) -> list[dict[str, Any]]:
+        """
+        Return the relation information.
+
+        Returns:
+            - the relation information.
+        """
         related_infos = (
             BtobInfo.query.filter(BtobInfo.id.in_(self.related_as)).all() if self.related_as else []
         )
@@ -1041,7 +1335,17 @@ class Btob(db.Model, BaseMixin):
 
     # Check if two bulletins are related , if so return the relation, otherwise false
     @staticmethod
-    def are_related(a_id, b_id):
+    def are_related(a_id: t.id, b_id: t.id) -> Union["Btob", bool]:
+        """
+        Check if two bulletins are related.
+
+        Args:
+            - a_id: the id of the first bulletin.
+            - b_id: the id of the second bulletin.
+
+        Returns:
+            - the relation if the bulletins are related, False otherwise.
+        """
         if a_id == b_id:
             return False
 
@@ -1054,25 +1358,63 @@ class Btob(db.Model, BaseMixin):
             return False
 
     # Give an id, get the other bulletin id (relating in or out)
-    def get_other_id(self, id):
+    def get_other_id(self, id: t.id) -> Optional[t.id]:
+        """
+        Return the other bulletin id.
+
+        Args:
+            - id: the id of the bulletin.
+
+        Returns:
+            - the other bulletin id or None.
+        """
         if id in (self.bulletin_id, self.related_bulletin_id):
             return self.bulletin_id if id == self.related_bulletin_id else self.related_bulletin_id
         return None
 
     # Create and return a relation between two bulletins making sure the relation goes from the lower id to the upper id
     @staticmethod
-    def relate(a, b):
+    def relate(a: "Bulletin", b: "Bulletin") -> "Btob":
+        """
+        Create a relation between two bulletins making sure the relation goes from the lower id to the upper id.
+
+        Args:
+            - a: the first bulletin.
+            - b: the second bulletin.
+
+        Returns:
+            - the relation between the two bulletins.
+        """
         f, t = min(a.id, b.id), max(a.id, b.id)
         return Btob(bulletin_id=f, related_bulletin_id=t)
 
     @staticmethod
-    def relate_by_id(a, b):
+    def relate_by_id(a: t.id, b: t.id) -> "Btob":
+        """
+        Relate two bulletins by their ids.
+
+        Args:
+            - a: the id of the first bulletin.
+            - b: the id of the second bulletin.
+
+        Returns:
+            - the created relation between the two bulletins.
+        """
         f, t = min(a, b), max(a, b)
         return Btob(bulletin_id=f, related_bulletin_id=t)
 
     # Exclude the primary bulletin from output to get only the related/relating bulletin
     @check_relation_roles
-    def to_dict(self, exclude=None):
+    def to_dict(self, exclude: Optional["Bulletin"] = None) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the relation.
+
+        Args:
+            - exclude: the bulletin to exclude.
+
+        Returns:
+            - the dictionary representation of the relation.
+        """
         if not exclude:
             return {
                 "bulletin_from": self.bulletin_from.to_compact(),
@@ -1094,7 +1436,16 @@ class Btob(db.Model, BaseMixin):
             }
 
     # this will update only relationship data
-    def from_json(self, relation=None):
+    def from_json(self, relation: Optional[dict] = None) -> "Btob":
+        """
+        Update the relationship data.
+
+        Args:
+            - relation: the relation data.
+
+        Returns:
+            - the updated relation.
+        """
         if relation:
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
@@ -1118,7 +1469,8 @@ class BtobInfo(db.Model, BaseMixin):
     title_tr = db.Column(db.String)
     reverse_title_tr = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation information."""
         return {
             "id": self.id,
             "title": self.title,
@@ -1127,7 +1479,16 @@ class BtobInfo(db.Model, BaseMixin):
             "reverse_title_tr": self.reverse_title_tr,
         }
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "BtobInfo":
+        """
+        Create a relation information object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the relation information from.
+
+        Returns:
+            - the relation information object.
+        """
         self.title = jsn.get("title", self.title)
         self.reverse_title = jsn.get("reverse_title", self.reverse_title)
         self.title_tr = jsn.get("title_tr", self.title_tr)
@@ -1160,7 +1521,7 @@ class Atob(db.Model, BaseMixin):
 
     # Exclude the primary bulletin from output to get only the related/relating bulletin
     @property
-    def relation_info(self):
+    def relation_info(self) -> list[dict[str, Any]]:
         # Query the AtobInfo table based on the related_as list
         related_infos = (
             AtobInfo.query.filter(AtobInfo.id.in_(self.related_as)).all() if self.related_as else []
@@ -1169,7 +1530,8 @@ class Atob(db.Model, BaseMixin):
         return [info.to_dict() for info in related_infos]
 
     # custom serialization method
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation."""
         return {
             "bulletin": self.bulletin.to_compact(),
             "actor": self.actor.to_compact(),
@@ -1180,7 +1542,16 @@ class Atob(db.Model, BaseMixin):
         }
 
     # this will update only relationship data
-    def from_json(self, relation=None):
+    def from_json(self, relation: Optional[dict[str, Any]] = None) -> "Atob":
+        """
+        Update the relationship data.
+
+        Args:
+            - relation: the relation data.
+
+        Returns:
+            - the updated relation.
+        """
         if relation:
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
@@ -1204,7 +1575,8 @@ class AtobInfo(db.Model, BaseMixin):
     title_tr = db.Column(db.String)
     reverse_title_tr = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation information."""
         return {
             "id": self.id,
             "title": self.title,
@@ -1213,7 +1585,16 @@ class AtobInfo(db.Model, BaseMixin):
             "reverse_title_tr": self.reverse_title_tr,
         }
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "AtobInfo":
+        """
+        Create a relation information object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the relation information from.
+
+        Returns:
+            - the relation information object.
+        """
         self.title = jsn.get("title", self.title)
         self.reverse_title = jsn.get("reverse_title", self.reverse_title)
         self.title_tr = jsn.get("title_tr", self.title_tr)
@@ -1243,7 +1624,7 @@ class Atoa(db.Model, BaseMixin):
     user = db.relationship("User", backref="user_atoas", foreign_keys=[user_id])
 
     @property
-    def relation_info(self):
+    def relation_info(self) -> dict[str, Any]:
         related_info = (
             AtoaInfo.query.filter(AtoaInfo.id == self.related_as).first()
             if self.related_as
@@ -1254,7 +1635,17 @@ class Atoa(db.Model, BaseMixin):
 
     # helper method to check if two actors are related and returns the relationship
     @staticmethod
-    def are_related(a_id, b_id):
+    def are_related(a_id: t.id, b_id: t.id) -> Union["Atoa", bool]:
+        """
+        Check if two actors are related.
+
+        Args:
+            - a_id: the id of the first actor.
+            - b_id: the id of the second actor.
+
+        Returns:
+            - the relation if the actors are related, False otherwise.
+        """
         if a_id == b_id:
             return False
 
@@ -1267,7 +1658,16 @@ class Atoa(db.Model, BaseMixin):
             return False
 
     # given one actor id, this method will return the other related actor id
-    def get_other_id(self, id):
+    def get_other_id(self, id: t.id) -> Optional[t.id]:
+        """
+        Return the other actor id.
+
+        Args:
+            - id: the id of the actor.
+
+        Returns:
+            - the other actor id or None.
+        """
         if id in (self.actor_id, self.related_actor_id):
             return self.actor_id if id == self.related_actor_id else self.related_actor_id
         return None
@@ -1284,7 +1684,16 @@ class Atoa(db.Model, BaseMixin):
 
     # custom serialization method
     @check_relation_roles
-    def to_dict(self, exclude=None):
+    def to_dict(self, exclude: Optional["Actor"] = None) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the relation.
+
+        Args:
+            - exclude: the actor to exclude.
+
+        Returns:
+            - the dictionary representation of the relation.
+        """
         if not exclude:
             return {
                 "actor_from": self.actor_from.to_compact(),
@@ -1305,7 +1714,16 @@ class Atoa(db.Model, BaseMixin):
             }
 
     # this will update only relationship data
-    def from_json(self, relation=None):
+    def from_json(self, relation: dict[str, Any] = None) -> "Atoa":
+        """
+        Return a dictionary representation of the relation.
+
+        Args:
+            - relation: the relation data.
+
+        Returns:
+            - the updated relation.
+        """
         if relation:
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
@@ -1332,7 +1750,8 @@ class AtoaInfo(db.Model, BaseMixin):
     title_tr = db.Column(db.String)
     reverse_title_tr = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation information."""
         return {
             "id": self.id,
             "title": self.title,
@@ -1341,7 +1760,16 @@ class AtoaInfo(db.Model, BaseMixin):
             "reverse_title_tr": self.reverse_title_tr,
         }
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "AtoaInfo":
+        """
+        Create a relation information object from a json dictionary.
+
+        Args:
+            - json: the json dictionary to create the relation information from.
+
+        Returns:
+            - the relation information object.
+        """
         self.title = jsn.get("title", self.title)
         self.reverse_title = jsn.get("reverse_title", self.reverse_title)
         self.title_tr = jsn.get("title_tr", self.title_tr)
@@ -1489,7 +1917,16 @@ class Bulletin(db.Model, BaseMixin):
     )
 
     # custom method to create new revision in history table
-    def create_revision(self, user_id=None, created=None):
+    def create_revision(
+        self, user_id: Optional[t.id] = None, created: Optional[datetime] = None
+    ) -> None:
+        """
+        Create a new revision in the history table.
+
+        Args:
+            - user_id: the id of the user.
+            - created: the created date.
+        """
         if not user_id:
             user_id = getattr(current_user, "id", 1)
         b = BulletinHistory(bulletin_id=self.id, data=self.to_dict(), user_id=user_id)
@@ -1500,7 +1937,16 @@ class Bulletin(db.Model, BaseMixin):
 
         print("created bulletin revision")
 
-    def related(self, include_self=False):
+    def related(self, include_self: bool = False) -> dict[str, Any]:
+        """
+        Get related objects.
+
+        Args:
+            - include_self: include self in output.
+
+        Returns:
+            - dictionary containing related objects ids by type.
+        """
         output = {}
         output["actor"] = [r.actor.id for r in self.related_actors]
         output["incident"] = [r.incident.id for r in self.related_incidents]
@@ -1515,33 +1961,48 @@ class Bulletin(db.Model, BaseMixin):
 
     # helper property returns all bulletin relations
     @property
-    def bulletin_relations(self):
+    def bulletin_relations(self) -> list["Btob"]:
+        """Return all bulletin relations."""
         return self.bulletins_to + self.bulletins_from
 
     @property
-    def bulletin_relations_dict(self):
+    def bulletin_relations_dict(self) -> list[dict[str, Any]]:
+        """Return a list of dictionary representations of the bulletin relations."""
         return [relation.to_dict(exclude=self) for relation in self.bulletin_relations]
 
     @property
-    def actor_relations_dict(self):
+    def actor_relations_dict(self) -> list[dict[str, Any]]:
+        """Return a list of dictionary representations of the actor relations."""
         return [relation.to_dict() for relation in self.actor_relations]
 
     @property
-    def incident_relations_dict(self):
+    def incident_relations_dict(self) -> list[dict[str, Any]]:
+        """Return a list of dictionary representations of the incident relations."""
         return [relation.to_dict() for relation in self.incident_relations]
 
     # helper property returns all actor relations
     @property
-    def actor_relations(self):
+    def actor_relations(self) -> list["Atob"]:
+        """Return all actor relations."""
         return self.related_actors
 
     # helper property returns all incident relations
     @property
-    def incident_relations(self):
+    def incident_relations(self) -> list["Itob"]:
+        """Return all incident relations."""
         return self.related_incidents
 
     # populate object from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Bulletin":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - json: the json dictionary.
+
+        Returns:
+            - the populated object.
+        """
         self.originid = json["originid"] if "originid" in json else None
         self.title = json["title"] if "title" in json else None
         self.sjac_title = json["sjac_title"] if "sjac_title" in json else None
@@ -1747,7 +2208,8 @@ class Bulletin(db.Model, BaseMixin):
 
     # Compact dict for relationships
     @check_roles
-    def to_compact(self):
+    def to_compact(self) -> dict[str, Any]:
+        """Return a compact dictionary representation of the bulletin."""
         # locations json
         locations_json = []
         if self.locations and len(self.locations):
@@ -1777,7 +2239,8 @@ class Bulletin(db.Model, BaseMixin):
             "comments": self.comments or "",
         }
 
-    def to_csv_dict(self):
+    def to_csv_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the bulletin for csv export."""
         output = {
             "id": self.id,
             "title": self.serialize_column("title"),
@@ -1809,7 +2272,17 @@ class Bulletin(db.Model, BaseMixin):
         return output
 
     # Helper method to handle logic of relating bulletins  (from bulletin)
-    def relate_bulletin(self, bulletin, relation=None, create_revision=True):
+    def relate_bulletin(
+        self, bulletin: "Bulletin", relation: Optional[dict] = None, create_revision: bool = True
+    ) -> None:
+        """
+        Relate two bulletins.
+
+        Args:
+            - bulletin: the bulletin to relate to.
+            - relation: the relation data.
+            - create_revision: create a revision.
+        """
         # if a new bulletin is being created, we must save it to get the id
         if not self.id:
             self.save()
@@ -1842,7 +2315,17 @@ class Bulletin(db.Model, BaseMixin):
 
     # Helper method to handle logic of relating incidents (from a bulletin)
 
-    def relate_incident(self, incident, relation=None, create_revision=True):
+    def relate_incident(
+        self, incident: "Incident", relation: Optional[dict] = None, create_revision: bool = True
+    ):
+        """
+        Relate a bulletin to an incident.
+
+        Args:
+            - incident: the incident to relate to.
+            - relation: the relation data.
+            - create_revision: create a revision.
+        """
         # if current bulletin is new, save it to get the id
         if not self.id:
             self.save()
@@ -1867,7 +2350,17 @@ class Bulletin(db.Model, BaseMixin):
                 incident.create_revision()
 
     # helper method to relate actors
-    def relate_actor(self, actor, relation=None, create_revision=True):
+    def relate_actor(
+        self, actor: "Actor", relation: Optional[dict] = None, create_revision: bool = True
+    ) -> None:
+        """
+        Relate a bulletin to an actor.
+
+        Args:
+            - actor: the actor to relate to.
+            - relation: the relation data.
+            - create_revision: create a revision.
+        """
         # if current bulletin is new, save it to get the id
         if not self.id:
             self.save()
@@ -1893,7 +2386,17 @@ class Bulletin(db.Model, BaseMixin):
 
     # custom serialization method
     @check_roles
-    def to_dict(self, mode=None):
+    def to_dict(self, mode: Optional[str] = None) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the bulletin.
+
+        Args:
+            - mode: the serialization mode. "1" for minimal, "2" for compact, "3" to skip relations,
+            None for full. Defaults to None.
+
+        Returns:
+            - the dictionary representation of the bulletin.
+        """
         if mode == "2":
             return self.to_mode2()
         if mode == "1":
@@ -1998,7 +2501,8 @@ class Bulletin(db.Model, BaseMixin):
         }
 
     # custom serialization mode
-    def to_mode2(self):
+    def to_mode2(self) -> dict[str, Any]:
+        """Return a compact dictionary representation of the bulletin."""
         locations_json = []
         if self.locations and len(self.locations):
             for location in self.locations:
@@ -2028,19 +2532,32 @@ class Bulletin(db.Model, BaseMixin):
             "documentation_date": DateHelper.serialize_datetime(self.documentation_date),
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a json representation of the bulletin."""
         return json.dumps(self.to_dict())
 
     @staticmethod
-    def get_columns():
+    def get_columns() -> list[str]:
+        """Return the columns of the bulletin table."""
         columns = []
         for column in Bulletin.__table__.columns:
             columns.append(column.name)
         return columns
 
     @staticmethod
-    def geo_query_location(target_point, radius_in_meters):
-        """Geosearch via locations"""
+    def geo_query_location(
+        target_point: dict[str, float], radius_in_meters: int
+    ) -> sqlalchemy.sql.elements.BinaryExpression:
+        """
+        Geosearch via locations.
+
+        Args:
+            - target_point: the target point dict with 'lat' and 'lng' keys.
+            - radius_in_meters: the radius in meters.
+
+        Returns:
+            - the query.
+        """
         point = func.ST_SetSRID(
             func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
         )
@@ -2057,8 +2574,19 @@ class Bulletin(db.Model, BaseMixin):
         )
 
     @staticmethod
-    def geo_query_geo_location(target_point, radius_in_meters):
-        """Geosearch via geolocations"""
+    def geo_query_geo_location(
+        target_point: dict[str, float], radius_in_meters: int
+    ) -> sqlalchemy.sql.elements.BinaryExpression:
+        """
+        Geosearch via geolocations.
+
+        Args:
+            - target_point: the target point dict with 'lat' and 'lng' keys.
+            - radius_in_meters: the radius in meters.
+
+        Returns:
+            - the query.
+        """
         point = func.ST_SetSRID(
             func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
         )
@@ -2073,8 +2601,19 @@ class Bulletin(db.Model, BaseMixin):
         )
 
     @staticmethod
-    def geo_query_event_location(target_point, radius_in_meters):
-        """Condition for association between bulletin and location via events."""
+    def geo_query_event_location(
+        target_point: dict[str, float], radius_in_meters: int
+    ) -> sqlalchemy.sql.elements.BinaryExpression:
+        """
+        Condition for association between bulletin and location via events.
+
+        Args:
+            - target_point: the target point dict with 'lat' and 'lng' keys.
+            - radius_in_meters: the radius in meters.
+
+        Returns:
+            - the query.
+        """
         point = func.ST_SetSRID(
             func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
         )
@@ -2092,7 +2631,8 @@ class Bulletin(db.Model, BaseMixin):
             )
         )
 
-    def get_modified_date(self):
+    def get_modified_date(self) -> datetime:
+        """Return the modified date of the bulletin."""
         if self.history:
             return self.history[-1].updated_at
         else:
@@ -2271,7 +2811,16 @@ class ActorProfile(db.Model, BaseMixin):
     # death_cause = db.Column(db.String)
     reburial_location = db.Column(db.String, comment="MP")
 
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "ActorProfile":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - json: the json dictionary.
+
+        Returns:
+            - the populated object.
+        """
         self.mode = json.get("mode", self.mode)
         self.originid = json["originid"] if "originid" in json else None
         self.description = json.get("description", self.description)
@@ -2365,7 +2914,8 @@ class ActorProfile(db.Model, BaseMixin):
 
         return self
 
-    def mp_json(self):
+    def mp_json(self) -> dict[str, Any]:
+        """Return a dictionary representation of the missing person fields."""
         mp = {}
         mp["MP"] = True
         mp["last_address"] = getattr(self, "last_address")
@@ -2442,7 +2992,8 @@ class ActorProfile(db.Model, BaseMixin):
         mp["hypothesis_status"] = getattr(self, "hypothesis_status")
         return mp
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the actor profile."""
         actor_profile_dict = {
             "id": self.id,
             "mode": self.mode,
@@ -2607,7 +3158,16 @@ class Actor(db.Model, BaseMixin):
     def title(self):
         return self.name
 
-    def related(self, include_self=False):
+    def related(self, include_self: bool = False) -> dict[str, Any]:
+        """
+        Return a dictionary of related entities.
+
+        Args:
+            - include_self: whether to include the current entity.
+
+        Returns:
+            - the dictionary of related entities.
+        """
         output = {}
         output["bulletin"] = [r.bulletin.id for r in self.bulletin_relations]
         output["actor"] = []
@@ -2622,7 +3182,16 @@ class Actor(db.Model, BaseMixin):
         return output
 
     # helper method to create a revision
-    def create_revision(self, user_id=None, created=None):
+    def create_revision(
+        self, user_id: Optional[t.id] = None, created: Optional[datetime] = None
+    ) -> None:
+        """
+        Create a revision for the actor.
+
+        Args:
+            - user_id: the user id.
+            - created: the created date.
+        """
         if not user_id:
             user_id = getattr(current_user, "id", 1)
 
@@ -2675,7 +3244,7 @@ class Actor(db.Model, BaseMixin):
         )
 
     @staticmethod
-    def gen_full_name(first_name, last_name, middle_name=None):
+    def gen_full_name(first_name: str, last_name: str, middle_name: Optional[str] = None) -> str:
         name = first_name
         if middle_name:
             name = name + " " + middle_name
@@ -2683,7 +3252,16 @@ class Actor(db.Model, BaseMixin):
         return name
 
     # populate actor object from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Actor":
+        """
+        Populate the actor object from a json dictionary.
+
+        Args:
+            - json: the json dictionary.
+
+        Returns:
+            - the populated object.
+        """
         # All text fields
 
         self.type = json["type"] if "type" in json else None
@@ -2931,13 +3509,15 @@ class Actor(db.Model, BaseMixin):
 
     # Compact dict for relationships
     @check_roles
-    def to_compact(self):
+    def to_compact(self) -> dict[str, Any]:
+        """Return a compact dictionary representation of the actor."""
         return {
             "id": self.id,
             "name": self.name,
         }
 
-    def to_csv_dict(self):
+    def to_csv_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the actor for CSV export."""
         output = {
             "id": self.id,
             "name": self.serialize_column("name"),
@@ -2968,7 +3548,8 @@ class Actor(db.Model, BaseMixin):
         }
         return output
 
-    def get_modified_date(self):
+    def get_modified_date(self) -> datetime:
+        """Return the last modified date of the actor."""
         if self.history:
             return self.history[-1].updated_at
         else:
@@ -2976,7 +3557,20 @@ class Actor(db.Model, BaseMixin):
 
     # Helper method to handle logic of relating actors (from actor)
 
-    def relate_actor(self, actor, relation=None, create_revision=True):
+    def relate_actor(
+        self,
+        actor: "Actor",
+        relation: Optional[dict[str, Any]] = None,
+        create_revision: bool = True,
+    ) -> None:
+        """
+        Relate the actor to another actor.
+
+        Args:
+            - actor: the actor to relate to.
+            - relation: the relation dictionary.
+            - create_revision: whether to create a revision.
+        """
         # if a new actor is being created, we must save it to get the id
         if not self.id:
             self.save()
@@ -3006,7 +3600,20 @@ class Actor(db.Model, BaseMixin):
                 actor.create_revision()
 
     # Helper method to handle logic of relating bulletin (from am actor)
-    def relate_bulletin(self, bulletin, relation=None, create_revision=True):
+    def relate_bulletin(
+        self,
+        bulletin: "Bulletin",
+        relation: Optional[dict[str, Any]] = None,
+        create_revision: bool = True,
+    ) -> None:
+        """
+        Relate the actor to a bulletin.
+
+        Args:
+            - bulletin: the bulletin to relate to.
+            - relation: the relation dictionary.
+            - create_revision: whether to create a revision.
+        """
         # if current actor is new, save it to get the id
         if not self.id:
             self.save()
@@ -3031,7 +3638,20 @@ class Actor(db.Model, BaseMixin):
                 bulletin.create_revision()
 
     # Helper method to handle logic of relating incidents (from an actor)
-    def relate_incident(self, incident, relation=None, create_revision=True):
+    def relate_incident(
+        self,
+        incident: "Incident",
+        relation: Optional[dict[str, Any]] = None,
+        create_revision: bool = True,
+    ) -> None:
+        """
+        Relate the actor to an incident.
+
+        Args:
+            - incident: the incident to relate to.
+            - relation: the relation dictionary.
+            - create_revision: whether to create a revision.
+        """
         # if current bulletin is new, save it to get the id
         if not self.id:
             self.save()
@@ -3056,7 +3676,17 @@ class Actor(db.Model, BaseMixin):
                 incident.create_revision()
 
     @check_roles
-    def to_dict(self, mode=None):
+    def to_dict(self, mode: Optional[str] = None) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the actor.
+
+        Args:
+            - mode: the mode of serialization. "1" for minimal, "2" for mode2, "3" for skip relations,
+                    and None for full serialization.
+
+        Returns:
+            - the dictionary representation of the actor.
+        """
         if mode == "1":
             return self.min_json()
         if mode == "2":
@@ -3149,7 +3779,8 @@ class Actor(db.Model, BaseMixin):
 
         return actor
 
-    def to_mode2(self):
+    def to_mode2(self) -> dict[str, Any]:
+        """Return a dictionary representation of the actor in mode 2."""
         return {
             "class": "Actor",
             "id": self.id,
@@ -3159,12 +3790,24 @@ class Actor(db.Model, BaseMixin):
             "status": self.status or None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the actor."""
         return json.dumps(self.to_dict())
 
     @staticmethod
-    def geo_query_origin_place(target_point, radius_in_meters):
-        """Condition for direct association between actor and origin_place."""
+    def geo_query_origin_place(
+        target_point: dict[str, float], radius_in_meters: int
+    ) -> sqlalchemy.sql.elements.BinaryExpression:
+        """
+        Condition for direct association between actor and origin_place.
+
+        Args:
+            - target_point: the target point.
+            - radius_in_meters: the radius in meters.
+
+        Returns:
+            - the query.
+        """
         point = func.ST_SetSRID(
             func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
         )
@@ -3181,8 +3824,19 @@ class Actor(db.Model, BaseMixin):
         )
 
     @staticmethod
-    def geo_query_event_location(target_point, radius_in_meters):
-        """Condition for association between actor and location via events."""
+    def geo_query_event_location(
+        target_point: dict[str, float], radius_in_meters: int
+    ) -> sqlalchemy.sql.elements.BinaryExpression:
+        """
+        Condition for association between actor and location via events.
+
+        Args:
+            - target_point: the target point.
+            - radius_in_meters: the radius in meters.
+
+        Returns:
+            - the query.
+        """
         point = func.ST_SetSRID(
             func.ST_MakePoint(target_point.get("lng"), target_point.get("lat")), 4326
         )
@@ -3199,7 +3853,7 @@ class Actor(db.Model, BaseMixin):
             )
         )
 
-    def validate(self):
+    def validate(self) -> bool:
         """
         a helper method to validate actors upon setting values from CSV row, invalid actors can be dropped.
         :return:
@@ -3243,7 +3897,8 @@ class Itob(db.Model, BaseMixin):
         return related_info.to_dict() if related_info else {}
 
     # custom serialization method
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation."""
         return {
             "bulletin": self.bulletin.to_compact(),
             "incident": self.incident.to_compact(),
@@ -3254,7 +3909,16 @@ class Itob(db.Model, BaseMixin):
         }
 
     # this will update only relationship data
-    def from_json(self, relation=None):
+    def from_json(self, relation: Optional[dict[str, Any]] = None) -> "Itob":
+        """
+        Update the relationship data.
+
+        Args:
+            - relation: the relation dictionary.
+
+        Returns:
+            - the updated object.
+        """
         if relation:
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
@@ -3278,7 +3942,8 @@ class ItobInfo(db.Model, BaseMixin):
     title_tr = db.Column(db.String)
     reverse_title_tr = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation information."""
         return {
             "id": self.id,
             "title": self.title,
@@ -3287,7 +3952,16 @@ class ItobInfo(db.Model, BaseMixin):
             "reverse_title_tr": self.reverse_title_tr,
         }
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "ItobInfo":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - jsn: the json dictionary.
+
+        Returns:
+            - the updated object.
+        """
         self.title = jsn.get("title", self.title)
         self.reverse_title = jsn.get("reverse_title", self.reverse_title)
         self.title_tr = jsn.get("title_tr", self.title_tr)
@@ -3327,7 +4001,8 @@ class Itoa(db.Model, BaseMixin):
         return [info.to_dict() for info in related_infos]
 
     # custom serialization method
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation."""
         return {
             "actor": self.actor.to_compact(),
             "incident": self.incident.to_compact(),
@@ -3338,7 +4013,16 @@ class Itoa(db.Model, BaseMixin):
         }
 
     # this will update only relationship data, (populates it from json dict)
-    def from_json(self, relation=None):
+    def from_json(self, relation: Optional[dict[str, Any]] = None) -> "Itoa":
+        """
+        Update the relationship data.
+
+        Args:
+            - relation: the relation dictionary.
+
+        Returns:
+            - the updated object.
+        """
         if relation:
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
@@ -3362,7 +4046,8 @@ class ItoaInfo(db.Model, BaseMixin):
     title_tr = db.Column(db.String)
     reverse_title_tr = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation information."""
         return {
             "id": self.id,
             "title": self.title,
@@ -3371,7 +4056,16 @@ class ItoaInfo(db.Model, BaseMixin):
             "reverse_title_tr": self.reverse_title_tr,
         }
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "ItoaInfo":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - jsn: the json dictionary.
+
+        Returns:
+            - the updated object.
+        """
         self.title = jsn.get("title", self.title)
         self.reverse_title = jsn.get("reverse_title", self.reverse_title)
         self.title_tr = jsn.get("title_tr", self.title_tr)
@@ -3418,7 +4112,17 @@ class Itoi(db.Model, BaseMixin):
 
     # Check if two incidents are related , if so return the relation, otherwise false
     @staticmethod
-    def are_related(a_id, b_id):
+    def are_related(a_id: t.id, b_id: t.id) -> Union["Itoi", bool]:
+        """
+        Check if two incidents are related.
+
+        Args:
+            - a_id: the first incident id.
+            - b_id: the second incident id.
+
+        Returns:
+            - the relationship if it exists, or False.
+        """
         if a_id == b_id:
             return False
 
@@ -3431,20 +4135,48 @@ class Itoi(db.Model, BaseMixin):
             return False
 
     # Give an id, get the other bulletin id (relating in or out)
-    def get_other_id(self, id):
+    def get_other_id(self, id: t.id) -> Optional[t.id]:
+        """
+        Get the other incident id.
+
+        Args:
+            - id: the incident id.
+
+        Returns:
+            - the other incident id if it exists, or None.
+        """
         if id in (self.incident_id, self.related_incident_id):
             return self.incident_id if id == self.related_incident_id else self.related_incident_id
         return None
 
     # Create and return a relation between two bulletins making sure the relation goes from the lower id to the upper id
     @staticmethod
-    def relate(a, b):
+    def relate(a: "Incident", b: "Incident") -> "Itoi":
+        """
+        Create a relationship between two incidents.
+
+        Args:
+            - a: the first incident.
+            - b: the second incident.
+
+        Returns:
+            - the relationship.
+        """
         f, t = min(a.id, b.id), max(a.id, b.id)
         return Itoi(incident_id=f, related_incident_id=t)
 
     # custom serialization method
     @check_relation_roles
-    def to_dict(self, exclude=None):
+    def to_dict(self, exclude: Optional["Incident"] = None) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the relation.
+
+        Args:
+            - exclude: the incident to exclude.
+
+        Returns:
+            - the dictionary representation of the relation.
+        """
         if not exclude:
             return {
                 "incident_from": self.incident_from.to_compact(),
@@ -3465,7 +4197,16 @@ class Itoi(db.Model, BaseMixin):
             }
 
     # this will update only relationship data
-    def from_json(self, relation=None):
+    def from_json(self, relation: dict[str, Any] = None) -> "Itoi":
+        """
+        Update the relationship data.
+
+        Args:
+            - relation: the relation dictionary.
+
+        Returns:
+            - the updated object.
+        """
         if relation:
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
@@ -3489,7 +4230,8 @@ class ItoiInfo(db.Model, BaseMixin):
     title_tr = db.Column(db.String)
     reverse_title_tr = db.Column(db.String)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the relation information."""
         return {
             "id": self.id,
             "title": self.title,
@@ -3498,7 +4240,16 @@ class ItoiInfo(db.Model, BaseMixin):
             "reverse_title_tr": self.reverse_title_tr,
         }
 
-    def from_json(self, jsn):
+    def from_json(self, jsn: dict[str, Any]) -> "ItoiInfo":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - jsn: the json dictionary.
+
+        Returns:
+            - the updated object.
+        """
         self.title = jsn.get("title", self.title)
         self.reverse_title = jsn.get("reverse_title", self.reverse_title)
         self.title_tr = jsn.get("title_tr", self.title_tr)
@@ -3517,20 +4268,40 @@ class PotentialViolation(db.Model, BaseMixin):
     title_ar = db.Column(db.String)
 
     # to serialize data
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the potential violation."""
         return {"id": self.id, "title": self.title}
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the potential violation."""
         return json.dumps(self.to_dict())
 
     # load from json dit
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "PotentialViolation":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - json: the json dictionary.
+
+        Returns:
+            - the updated object.
+        """
         self.title = json["title"]
         return self
 
     # import csv data in to db items
     @staticmethod
-    def import_csv(file_storage):
+    def import_csv(file_storage: werkzeug.datastructures.FileStorage) -> str:
+        """
+        Import CSV data into the database.
+
+        Args:
+            - file_storage: the file storage.
+
+        Returns:
+            - an empty string on success.
+        """
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
@@ -3560,20 +4331,40 @@ class ClaimedViolation(db.Model, BaseMixin):
     title_ar = db.Column(db.String)
 
     # serialize
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the claimed violation."""
         return {"id": self.id, "title": self.title}
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the claimed violation."""
         return json.dumps(self.to_dict())
 
     # populate from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "ClaimedViolation":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - json: the json dictionary.
+
+        Returns:
+            - the updated object.
+        """
         self.title = json["title"]
         return self
 
     # import csv data into db items
     @staticmethod
-    def import_csv(file_storage):
+    def import_csv(file_storage: werkzeug.datastructures.FileStorage) -> str:
+        """
+        Import CSV data into the database.
+
+        Args:
+            - file_storage: the file storage.
+
+        Returns:
+            - an empty string on success.
+        """
         tmp = NamedTemporaryFile().name
         file_storage.save(tmp)
         df = pd.read_csv(tmp)
@@ -3751,7 +4542,16 @@ class Incident(db.Model, BaseMixin):
         ),
     )
 
-    def related(self, include_self=False):
+    def related(self, include_self: bool = False) -> dict[str, Any]:
+        """
+        Return a dictionary of related objects.
+
+        Args:
+            - include_self: whether to include the object itself.
+
+        Returns:
+            - the dictionary of related objects.
+        """
         output = {}
         output["bulletin"] = [r.bulletin.id for r in self.bulletin_relations]
         output["actor"] = [r.actor.id for r in self.actor_relations]
@@ -3767,7 +4567,16 @@ class Incident(db.Model, BaseMixin):
         return output
 
     # helper method to create a revision
-    def create_revision(self, user_id=None, created=None):
+    def create_revision(
+        self, user_id: Optional[t.id] = None, created: Optional[datetime] = None
+    ) -> None:
+        """
+        Create a revision of the incident.
+
+        Args:
+            - user_id: the user id.
+            - created: the creation date.
+        """
         if not user_id:
             user_id = getattr(current_user, "id", 1)
         i = IncidentHistory(incident_id=self.id, data=self.to_dict(), user_id=user_id)
@@ -3805,7 +4614,16 @@ class Incident(db.Model, BaseMixin):
         return [relation.to_dict(exclude=self) for relation in self.incident_relations]
 
     # populate model from json dict
-    def from_json(self, json):
+    def from_json(self, json: dict[str, Any]) -> "Incident":
+        """
+        Populate the object from a json dictionary.
+
+        Args:
+            - json: the json dictionary.
+
+        Returns:
+            - the updated object.
+        """
         # All text fields
 
         self.title = json["title"] if "title" in json else None
@@ -3940,7 +4758,8 @@ class Incident(db.Model, BaseMixin):
 
     # Compact dict for relationships
     @check_roles
-    def to_compact(self):
+    def to_compact(self) -> dict[str, Any]:
+        """Return a compact dictionary representation of the incident."""
         return {
             "id": self.id,
             "title": self.title,
@@ -3948,7 +4767,20 @@ class Incident(db.Model, BaseMixin):
         }
 
     # Helper method to handle logic of relating incidents
-    def relate_incident(self, incident, relation=None, create_revision=True):
+    def relate_incident(
+        self,
+        incident: "Incident",
+        relation: Optional[dict[str, Any]] = None,
+        create_revision: bool = True,
+    ) -> None:
+        """
+        Relate two incidents.
+
+        Args:
+            - incident: the incident to relate.
+            - relation: the relation dictionary.
+            - create_revision: whether to create a revision.
+        """
         # if a new actor is being created, we must save it to get the id
         if not self.id:
             self.save()
@@ -3977,7 +4809,20 @@ class Incident(db.Model, BaseMixin):
                 incident.create_revision()
 
     # Helper method to handle logic of relating actors
-    def relate_actor(self, actor, relation=None, create_revision=True):
+    def relate_actor(
+        self,
+        actor: "Actor",
+        relation: Optional[dict[str, Any]] = None,
+        create_revision: bool = True,
+    ) -> None:
+        """
+        Relate an incident to an actor.
+
+        Args:
+            - actor: the actor to relate.
+            - relation: the relation dictionary.
+            - create_revision: whether to create a revision.
+        """
         # if current incident is new, save it to get the id
         if not self.id:
             self.save()
@@ -4002,7 +4847,20 @@ class Incident(db.Model, BaseMixin):
                 actor.create_revision()
 
     # Helper method to handle logic of relating bulletins
-    def relate_bulletin(self, bulletin, relation=None, create_revision=True):
+    def relate_bulletin(
+        self,
+        bulletin: "Bulletin",
+        relation: Optional[dict[str, Any]] = None,
+        create_revision: bool = True,
+    ) -> None:
+        """
+        Relate an incident to a bulletin.
+
+        Args:
+            - bulletin: the bulletin to relate.
+            - relation: the relation dictionary.
+            - create_revision: whether to create a revision.
+        """
         # if current incident is new, save it to get the id
         if not self.id:
             self.save()
@@ -4027,7 +4885,17 @@ class Incident(db.Model, BaseMixin):
                 bulletin.create_revision()
 
     @check_roles
-    def to_dict(self, mode=None):
+    def to_dict(self, mode: Optional[str] = None) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the incident.
+
+        Args:
+            - mode: the serialization mode. "1" for minimal, "2" for compact, "3"
+                    for skip relations, None for full. Default is None.
+
+        Returns:
+            - the dictionary representation of the incident.
+        """
         # Try to detect a user session
         if current_user:
             if not current_user.can_access(self):
@@ -4112,7 +4980,8 @@ class Incident(db.Model, BaseMixin):
         }
 
     # custom serialization mode
-    def to_mode2(self):
+    def to_mode2(self) -> dict[str, Any]:
+        """Return a compact dictionary representation of the incident."""
         # Labels json
         labels_json = []
         if self.labels and len(self.labels):
@@ -4136,10 +5005,12 @@ class Incident(db.Model, BaseMixin):
             "status": self.status if self.status else None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the incident."""
         return json.dumps(self.to_dict())
 
-    def get_modified_date(self):
+    def get_modified_date(self) -> datetime:
+        """Return the last modified date of the incident."""
         if self.history:
             return self.history[-1].updated_at
         else:
@@ -4167,7 +5038,8 @@ class BulletinHistory(db.Model, BaseMixin):
     user = db.relationship("User", backref="bulletin_revisions", foreign_keys=[user_id])
 
     # serialize
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the bulletin revision."""
         return {
             "id": self.id,
             "data": self.data,
@@ -4175,7 +5047,8 @@ class BulletinHistory(db.Model, BaseMixin):
             "user": self.user.to_compact() if self.user else None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the bulletin revision."""
         return json.dumps(self.to_dict(), sort_keys=True)
 
     def __repr__(self):
@@ -4203,7 +5076,8 @@ class ActorHistory(db.Model, BaseMixin):
     user = db.relationship("User", backref="actor_revisions", foreign_keys=[user_id])
 
     # serialize
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the actor revision."""
         return {
             "id": self.id,
             "data": self.data,
@@ -4211,7 +5085,8 @@ class ActorHistory(db.Model, BaseMixin):
             "user": self.user.to_compact() if self.user else None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the actor revision."""
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
@@ -4236,7 +5111,8 @@ class IncidentHistory(db.Model, BaseMixin):
     user = db.relationship("User", backref="incident_revisions", foreign_keys=[user_id])
 
     # serialize
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the incident revision."""
         return {
             "id": self.id,
             "data": self.data,
@@ -4244,7 +5120,8 @@ class IncidentHistory(db.Model, BaseMixin):
             "user": self.user.to_compact() if self.user else None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the incident revision."""
         return json.dumps(self.to_dict(), sort_keys=True)
 
 
@@ -4266,7 +5143,8 @@ class LocationHistory(db.Model, BaseMixin):
     user = db.relationship("User", backref="location_revisions", foreign_keys=[user_id])
 
     # serialize
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the location revision."""
         return {
             "id": self.id,
             "data": self.data,
@@ -4274,7 +5152,8 @@ class LocationHistory(db.Model, BaseMixin):
             "user": self.user.to_compact() if self.user else None,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the location revision."""
         return json.dumps(self.to_dict(), sort_keys=True)
 
     def __repr__(self):
@@ -4314,11 +5193,13 @@ class Activity(db.Model, BaseMixin):
     details = db.Column(db.Text)
 
     @staticmethod
-    def get_action_values():
+    def get_action_values() -> list[str]:
+        """Return a list of action values."""
         return [getattr(Activity, attr) for attr in dir(Activity) if attr.startswith("ACTION_")]
 
     # serialize data
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the activity."""
         # Ensure self.subject is a dictionary.
         if isinstance(self.subject, dict) and self.subject.get("class") == "user":
             user_id = self.subject.get("id")
@@ -4341,7 +5222,25 @@ class Activity(db.Model, BaseMixin):
 
     # helper static method to create different type of activities (tags)
     @staticmethod
-    def create(user, action, status, subject, model, details=None):
+    def create(
+        user: t.id,
+        action: str,
+        status: str,
+        subject: str,
+        model: str,
+        details: Optional[str] = None,
+    ) -> None:
+        """
+        Create an activity.
+
+        Args:
+            - user: the user id.
+            - action: the action.
+            - status: the status.
+            - subject: the subject.
+            - model: the model.
+            - details: the details.
+        """
         # this will check if the action is
         # enabled in system settings
         # if disabled the activity will not be logged
@@ -4391,10 +5290,12 @@ class Query(db.Model, BaseMixin):
     query_type = db.Column(db.String, nullable=False, default=Bulletin.__tablename__)
 
     # serialize data
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the query."""
         return {"id": self.id, "name": self.name, "data": self.data, "query_type": self.query_type}
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the query."""
         return json.dumps(self.to_dict())
 
 
@@ -4432,7 +5333,8 @@ class AppConfig(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_configs", foreign_keys=[user_id])
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the app config."""
         print(self.user)
         return {
             "id": self.id,

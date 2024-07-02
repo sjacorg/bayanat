@@ -119,6 +119,7 @@ def test_put_cv_endpoint(clean_slate_cvs, create_cv, request, client_fixture, ex
         f"/admin/api/claimedviolation/{cv.id}",
         headers={"Content-Type": "application/json"},
         json={"item": new_cv.to_dict()},
+        follow_redirects=True,
     )
     assert response.status_code == expected_status
     found_cv = ClaimedViolation.query.filter(ClaimedViolation.id == cv.id).first()

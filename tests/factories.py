@@ -2,7 +2,11 @@ import random
 import factory
 from uuid import uuid4
 
+from geoalchemy2.shape import WKTElement
+
+
 import pytest
+
 from enferno.admin.models import (
     Activity,
     Actor,
@@ -19,6 +23,7 @@ from enferno.admin.models import (
     Ethnography,
     Event,
     Eventtype,
+    GeoLocation,
     GeoLocationType,
     Incident,
     IncidentHistory,
@@ -56,7 +61,7 @@ class ActorFactory(factory.Factory):
     class Meta:
         model = Actor
 
-    name = factory.Faker("name")
+    type = "Entity"
     name_ar = factory.LazyAttribute(lambda obj: f"{obj.name} (Ar)")
     nickname = factory.Faker("user_name")
     nickname_ar = factory.LazyAttribute(lambda obj: f"{obj.nickname} (Ar)")
@@ -66,11 +71,11 @@ class ActorFactory(factory.Factory):
     middle_name_ar = factory.LazyAttribute(lambda obj: f"{obj.middle_name} (Ar)")
     last_name = factory.Faker("last_name")
     last_name_ar = factory.LazyAttribute(lambda obj: f"{obj.last_name} (Ar)")
+    name = factory.Faker("name")
     mother_name = factory.Faker("name_female")
     mother_name_ar = factory.LazyAttribute(lambda obj: f"{obj.mother_name} (Ar)")
     father_name = factory.Faker("name_male")
     father_name_ar = factory.LazyAttribute(lambda obj: f"{obj.father_name} (Ar)")
-    type = factory.Faker("text", max_nb_chars=255)
     sex = factory.LazyFunction(lambda: random.choice(["male", "female"]))
     age = factory.LazyFunction(lambda: random.randint(9, 99))
     civilian = factory.Faker("text", max_nb_chars=255)
@@ -148,6 +153,12 @@ class LocationFactory(factory.Factory):
         model = Location
 
     title = factory.Sequence(lambda n: f"Location {n}")
+    latlng = factory.LazyFunction(
+        lambda: WKTElement(
+            f"POINT({random.uniform(-180.00000, 180.00000)} {random.uniform(-90.00000, 90.00000)})",
+            srid=4326,
+        )
+    )
 
 
 class LocationHistoryFactory(factory.Factory):
@@ -167,6 +178,7 @@ class LabelFactory(factory.Factory):
     for_incident = False
     for_offline = False
     verified = False
+    comments = factory.Faker("sentence")
 
 
 class EventtypeFactory(factory.Factory):
@@ -178,6 +190,7 @@ class EventtypeFactory(factory.Factory):
     comments = factory.Faker("paragraph")
     for_actor = False
     for_bulletin = False
+    comments = factory.Faker("sentence")
 
 
 class EventFactory(factory.Factory):
@@ -318,6 +331,7 @@ class UserFactory(factory.Factory):
 
     username = factory.Sequence(lambda n: f"Uniqueuser{n}")
     password = factory.Sequence(lambda n: f"SecurePassword{n}!")
+    email = factory.Faker("email")
     active = True
     name = factory.Sequence(lambda n: f"Name {n}")
     fs_uniquifier = uuid4().hex
@@ -344,7 +358,7 @@ class QueryFactory(factory.Factory):
         model = Query
 
     name = factory.Sequence(lambda n: f"Query_{n}")
-    query_type = random.choice(["bulletin", "incident", "actor"])
+    query_type = factory.Faker("random_element", elements=Query.TYPES)
     data = {"key": "val"}
 
 
@@ -353,6 +367,21 @@ class AppConfigFactory(factory.Factory):
         model = AppConfig
 
     config = {"config_key": "config_val"}
+
+
+class GeoLocationFactory(factory.Factory):
+    class Meta:
+        model = GeoLocation
+
+    title = factory.Sequence(lambda n: f"GeoLocation {n}")
+    main = factory.Faker("boolean")
+    latlng = factory.LazyFunction(
+        lambda: WKTElement(
+            f"POINT({random.uniform(-180.00000, 180.00000)} {random.uniform(-90.00000, 90.00000)})",
+            srid=4326,
+        )
+    )
+    comment = factory.Faker("text")
 
 
 # endregion: factory models
@@ -439,6 +468,34 @@ def create_location(session):
     )
     session.delete(location)
     session.commit()
+
+
+##### GEOLOCATIONS #####
+@pytest.fixture(scope="function")
+def create_geolocation(request, session):
+    def _clean(geolocation):
+        session.delete(geolocation)
+
+    def _create_geolocation(bulletin_id, type_id=None):
+        geolocation = GeoLocationFactory()
+        if type_id is None:
+            typ = session.query(GeoLocationType).first()
+            if typ is None:
+                typ = GeoLocationTypeFactory()
+                session.add(typ)
+                session.commit()
+                request.addfinalizer(lambda: session.delete(typ))
+        else:
+            typ = session.query(GeoLocationType).filter(GeoLocationType.id == type_id).first()
+        geolocation.type = typ
+        b = session.query(Bulletin).filter(Bulletin.id == bulletin_id).first()
+        geolocation.bulletin = b
+        session.add(geolocation)
+        session.commit()
+        request.addfinalizer(lambda: _clean(geolocation))
+        return geolocation
+
+    return _create_geolocation
 
 
 ##### EVENTS #####

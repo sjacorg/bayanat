@@ -1,11 +1,27 @@
-Vue.component('mix-ii', {
+const MixII = Vue.defineComponent({
   props: {
-    title: String,
-    multiple: Boolean,
-    value: {},
-    items: [],
-    i18n: {},
+    title: {
+      type: String,
+      default: '',
+    },
+    multiple: {
+      type: Boolean,
+      default: false,
+    },
+    modelValue: {
+      type: Object,
+      default: () => ({}),
+    },
+    items: {
+      type: Array,
+      default: () => [],
+    },
+    i18n: {
+      type: Object,
+      default: () => ({}),
+    },
   },
+  emits: ['update:modelValue'],
   data: function () {
     return {
       mix: {},
@@ -13,8 +29,7 @@ Vue.component('mix-ii', {
   },
 
   watch: {
-    value: function (val) {
-
+    modelValue: function (val) {
       if (val) {
         this.mix = val;
       }
@@ -26,38 +41,35 @@ Vue.component('mix-ii', {
   },
 
   mounted: function () {
-      if (this.value) {
-    this.mix = this.value;
-  }
-
+    if (this.modelValue) {
+      this.mix = this.modelValue;
+    }
   },
 
   methods: {
     refresh() {
-      this.$emit('input', this.mix);
+      this.$emit('update:modelValue', this.mix);
     },
   },
   template: `
-<v-card class="pa-3 elevation-1" color="yellow lighten-4">
-    <v-card-title class="subtitle-2">{{title}}</v-card-title> 
+      <v-card :title="title" class="pa-3">
+        <v-card-text>
+          <div>
+            <v-select v-model="mix.opts"
+                      item-title="tr"
+                      item-value="en"
+                      :items="items" 
+                      :multiple="this.multiple">
+            </v-select>
+          </div>
+          <div class="flex-grow-1 ml-2">
+            <v-textarea rows="2" :label="i18n.details_" v-model="mix.details"></v-textarea>
 
-      <v-card-text>
-      <div>
-      <v-select v-model="mix.opts"
-                item-text="tr"
-                item-value="en"
-                :items="items" :multiple="this.multiple">
-        
-        </v-select>
-        </div>
-      <div class="flex-grow-1 ml-2">
-      <v-textarea rows="2" :label="i18n.details_" v-model="mix.details" > </v-textarea>
-      
-        </div>
-      
+          </div>
+
         </v-card-text>
-        
-    </v-card>
+
+      </v-card>
 
     `,
 });

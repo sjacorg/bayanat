@@ -2,7 +2,7 @@
       v-model="exportDrawer"
       clipped
       fixed
-      right
+      location="right"
       temporary
       width="520"
       app
@@ -16,7 +16,14 @@
 
   <div v-else>
     <!-- @ emit events passed to card to approve, reject and set expiry datetime -->
-    <export-card :admin-mode="has_role(currentUser, 'Admin')" @approve="approveExport" @reject="rejectExport" @change="setExpiry" :i18n="translations" v-if="exportDrawer && eitem"  @close="exportDrawer=false" :exp="eitem" />
+    <export-card :admin-mode="has_role(currentUser, 'Admin')"
+                 @approve="approveExport"
+                 @reject="rejectExport"
+                 @change="setExpiry"
+                 :i18n="translations"
+                 v-if="exportDrawer && eitem"
+                 @close="exportDrawer=false"
+                 :exp="eitem"></export-card>
 
   </div>
     </v-navigation-drawer>

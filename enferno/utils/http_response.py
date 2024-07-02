@@ -2,6 +2,8 @@ from flask import Response
 
 
 class HTTPResponse:
+    """Utility class for HTTP responses."""
+
     UNAUTHORIZED = Response("Unauthorized", status=401)
     FORBIDDEN = Response("Forbidden", status=403)
     NOT_FOUND = Response("Not Found", status=404)

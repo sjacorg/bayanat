@@ -4,11 +4,14 @@ import os
 import shutil
 import time
 from collections import namedtuple
-from datetime import datetime
+
+from typing import Any, Generator, Literal, Optional
+from datetime import datetime, timedelta, date
 
 import boto3
 import pandas as pd
 from celery import Celery, chain
+from celery.schedules import crontab
 from sqlalchemy import and_
 
 from enferno.admin.models import (
@@ -24,7 +27,7 @@ from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
 from enferno.settings import Config as cfg
-from enferno.user.models import Role, User
+from enferno.user.models import Role, User, Session
 from enferno.utils.csv_utils import convert_list_attributes
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
@@ -32,7 +35,9 @@ from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
+import enferno.utils.typing as t
 
+from enferno.utils.backup_utils import pg_dump, upload_to_s3
 
 celery = Celery("tasks", broker=cfg.celery_broker_url)
 # remove deprecated warning
@@ -66,14 +71,34 @@ celery.Task = ContextTask
 BULK_CHUNK_SIZE = 250
 
 
-def chunk_list(lst, n):
-    """Yield successive n-sized chunks from lst."""
+def chunk_list(lst: list, n: int) -> Generator[list, Any, None]:
+    """
+    Yield successive n-sized chunks from lst.
+
+    Args:
+        - lst: List to be chunked.
+        - n: Size of each chunk.
+
+    Yields:
+        - Generator: n-sized chunks of lst.
+    """
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
 
 
 @celery.task
-def bulk_update_bulletins(ids, bulk, cur_user_id):
+def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
+    """
+    Bulk update bulletins task.
+
+    Args:
+        - ids: List of bulletin ids to update.
+        - bulk: Bulk update data.
+        - cur_user_id: ID of the user performing the bulk update.
+
+    Returns:
+        None
+    """
     print("processing bulletin bulk update")
     # build mappings
     u = {"id": cur_user_id}
@@ -172,7 +197,18 @@ def bulk_update_bulletins(ids, bulk, cur_user_id):
 
 
 @celery.task
-def bulk_update_actors(ids, bulk, cur_user_id):
+def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
+    """
+    Bulk update actors task.
+
+    Args:
+        - ids: List of actor ids to update.
+        - bulk: Bulk update data.
+        - cur_user_id: ID of the user performing the bulk update.
+
+    Returns:
+        None
+    """
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -259,7 +295,18 @@ def bulk_update_actors(ids, bulk, cur_user_id):
 
 
 @celery.task
-def bulk_update_incidents(ids, bulk, cur_user_id):
+def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
+    """
+    Bulk update incidents task.
+
+    Args:
+        - ids: List of incident ids to update.
+        - bulk: Bulk update data.
+        - cur_user_id: ID of the user performing the bulk update.
+
+    Returns:
+        None
+    """
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -382,7 +429,22 @@ def bulk_update_incidents(ids, bulk, cur_user_id):
 
 
 @celery.task(rate_limit=10)
-def etl_process_file(batch_id, file, meta, user_id, data_import_id):
+def etl_process_file(
+    batch_id: t.id, file: str, meta: Any, user_id: t.id, data_import_id: t.id
+) -> Optional[Literal["done"]]:
+    """
+    ETL process file task.
+
+    Args:
+        - batch_id: Batch ID.
+        - file: File path.
+        - meta: Metadata.
+        - user_id: User ID.
+        - data_import_id: Data Import ID.
+
+    Returns:
+        - "done" if successful.
+    """
     try:
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
@@ -393,14 +455,25 @@ def etl_process_file(batch_id, file, meta, user_id, data_import_id):
 
 
 # this will publish a message to redis and will be captured by the front-end client
-def update_stats():
+def update_stats() -> None:
+    """Send a message to update the stats on the UI."""
     # send any message to refresh the UI
     # this will run only if the process is on
     rds.publish("dedprocess", 1)
 
 
 @celery.task
-def process_dedup(id, user_id):
+def process_dedup(id: t.id, user_id: t.id) -> None:
+    """
+    Process deduplication task.
+
+    Args:
+        - id: Deduplication ID.
+        - user_id: User ID.
+
+    Returns:
+        None
+    """
     # print('processing {}'.format(id))
     d = DedupRelation.query.get(id)
     if d:
@@ -411,7 +484,17 @@ def process_dedup(id, user_id):
 
 
 @celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
+def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
+    """
+    Setup periodic tasks.
+
+    Args:
+        - sender: Sender.
+        - **kwargs: Keyword arguments.
+
+    Returns:
+        None
+    """
     # Deduplication periodic task
     if cfg.DEDUP_TOOL == True:
         seconds = int(os.environ.get("DEDUP_INTERVAL", cfg.DEDUP_INTERVAL))
@@ -426,9 +509,48 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(24 * 60 * 60, activity_cleanup_cron.s(), name="Activity Cleanup Cron")
     print("Activity cleanup periodic task is set up")
 
+    # Backups periodic task
+    if cfg.BACKUPS:
+        every_x_day = f"*/{cfg.BACKUP_INTERVAL}"
+        sender.add_periodic_task(
+            crontab(minute=0, hour=3, day_of_month=every_x_day),
+            daily_backup_cron.s(),
+            name="Backups Cron",
+        )
+        print(
+            f"Backup periodic task is set up. Backups will run at 3:00 every {cfg.BACKUP_INTERVAL} day(s)."
+        )
+
+    # session cleanup task
+    sender.add_periodic_task(24 * 60 * 60, session_cleanup.s(), name="Session Cleanup Cron")
+
 
 @celery.task
-def dedup_cron():
+def session_cleanup():
+    """
+    Periodic task to cleanup old sessions.
+    """
+    if cfg.SESSION_RETENTION_PERIOD:
+        session_retention_days = int(cfg.SESSION_RETENTION_PERIOD)
+        if session_retention_days == 0:
+            print("Session cleanup is disabled")
+            return
+
+        cutoff_date = datetime.utcnow() - timedelta(days=session_retention_days)
+        expired_sessions = db.session.query(Session).filter(Session.created_at < cutoff_date)
+
+        print("Cleaning up expired sessions...")
+        deleted = expired_sessions.delete(synchronize_session=False)
+        if deleted:
+            db.session.commit()
+            print(f"{deleted} expired sessions deleted.")
+        else:
+            print("No expired sessions to delete.")
+
+
+@celery.task
+def dedup_cron() -> None:
+    """Deduplication cron task."""
     # shut down processing when we hit 0 items in the queue or when we turn off the processing
     if rds.get("dedup") != b"1" or rds.scard("dedq") == 0:
         rds.delete("dedup")
@@ -448,8 +570,35 @@ def dedup_cron():
 
 @celery.task
 def process_row(
-    filepath, sheet, row_id, data_import_id, map, batch_id, vmap, actor_config, lang, roles=[]
-):
+    filepath: str,
+    sheet: Any,
+    row_id: Any,
+    data_import_id: t.id,
+    map: Any,
+    batch_id: Any,
+    vmap: Optional[Any],
+    actor_config: Any,
+    lang: str,
+    roles: list = [],
+) -> None:
+    """
+    Process row task.
+
+    Args:
+        - filepath: File path.
+        - sheet: Sheet.
+        - row_id: Row ID.
+        - data_import_id: Data Import ID.
+        - map: Map.
+        - batch_id: Batch ID.
+        - vmap: Vmap.
+        - actor_config: Actor config.
+        - lang: Language.
+        - roles: Roles.
+
+    Returns:
+        None
+    """
     si = SheetImport(
         filepath,
         sheet,
@@ -466,7 +615,8 @@ def process_row(
 
 
 @celery.task
-def reload_app():
+def reload_app() -> None:
+    """Reload the application."""
     try:
         os.system("touch reload.ini")
         # this workaround will also restart local flask server if it is being used to run bayanat
@@ -476,9 +626,18 @@ def reload_app():
 
 
 # ---- Export tasks ----
-def generate_export(export_id):
+def generate_export(export_id: t.id) -> None:
     """
     Main Export generator task.
+
+    Args:
+        - export_id: Export ID.
+
+    Raises:
+        - NotImplementedError: If file format is not supported.
+
+    Returns:
+        - chained tasks' result.
     """
     export_request = Export.query.get(export_id)
 
@@ -500,7 +659,16 @@ def generate_export(export_id):
         raise NotImplementedError
 
 
-def clear_failed_export(export_request):
+def clear_failed_export(export_request: Export) -> None:
+    """
+    Clear failed export task.
+
+    Args:
+        - export_request: Export request.
+
+    Returns:
+        None
+    """
     shutil.rmtree(f"{Export.export_dir}/{export_request.file_id}")
     export_request.status = "Failed"
     export_request.file_id = None
@@ -508,9 +676,15 @@ def clear_failed_export(export_request):
 
 
 @celery.task
-def generate_pdf_files(export_id):
+def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
     """
     PDF export generator task.
+
+    Args:
+        - export_id: Export ID.
+
+    Returns:
+        - export_id if successful, False otherwise.
     """
     export_request = Export.query.get(export_id)
 
@@ -547,9 +721,15 @@ def generate_pdf_files(export_id):
 
 
 @celery.task
-def generate_json_file(export_id: int):
+def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
     """
     JSON export generator task.
+
+    Args:
+        - export_id: Export ID.
+
+    Returns:
+        - export_id if successful, False otherwise.
     """
     export_request = Export.query.get(export_id)
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
@@ -593,9 +773,15 @@ def generate_json_file(export_id: int):
 
 
 @celery.task
-def generate_csv_file(export_id: int):
+def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
     """
     CSV export generator task.
+
+    Args:
+        - export_id: Export ID.
+
+    Returns:
+        - export_id if successful, False otherwise.
     """
     export_request = Export.query.get(export_id)
     file_path, dir_id = Export.generate_export_file()
@@ -641,9 +827,15 @@ def generate_csv_file(export_id: int):
 
 
 @celery.task
-def generate_export_media(previous_result: int):
+def generate_export_media(previous_result: int) -> Optional[t.id]:
     """
     Task to attach media files to export.
+
+    Args:
+        - previous_result: Previous result.
+
+    Returns:
+        - export_request.id if successful, None otherwise.
     """
     if previous_result == False:
         return False
@@ -693,10 +885,16 @@ def generate_export_media(previous_result: int):
 
 
 @celery.task
-def generate_export_zip(previous_result: int):
+def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     """
     Final export task to compress export folder
     into a zip archive.
+
+    Args:
+        - previous_result: Previous result.
+
+    Returns:
+        - False if previous task failed, None otherwise.
     """
     if previous_result == False:
         return False
@@ -720,7 +918,7 @@ def generate_export_zip(previous_result: int):
 
 
 @celery.task
-def export_cleanup_cron():
+def export_cleanup_cron() -> None:
     """
     Periodic task to change status of
     expired Exports to 'Expired'.
@@ -749,7 +947,7 @@ type_map = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}
 
 
 @celery.task
-def activity_cleanup_cron():
+def activity_cleanup_cron() -> None:
     """
     Periodic task to cleanup Activity Monitor logs.
     """
@@ -765,11 +963,35 @@ def activity_cleanup_cron():
         print("No expired activities to delete.")
 
 
+@celery.task
+def daily_backup_cron():
+    """
+    Daily task to backup the database.
+    """
+    filename = f"bayanat-backup-{date.today().isoformat()}.tar"
+    filepath = f"{cfg.BACKUPS_LOCAL_PATH}/{filename}"
+    try:
+        pg_dump(filepath)
+    except:
+        print("Error during daily backups")
+        return
+
+    if cfg.BACKUPS_S3_BUCKET:
+        if upload_to_s3(filepath):
+            try:
+                os.remove(filepath)
+            except FileNotFoundError:
+                print(f"Backup file {filename} not found to delete.")
+            except OSError as e:
+                print("Unable to remove backup file {filename}.")
+                print(str(e))
+
+
 ## Query graph visualization tasks
 
 
 @celery.task
-def generate_graph(query_json, entity_type, user_id):
+def generate_graph(query_json: Any, entity_type: str, user_id: t.id) -> Optional[str]:
     """
     Generate graph for a given query, with caching to avoid regenerating graphs for identical queries.
     Redis Hash Sample Structure for a user with `user_id`:
@@ -778,6 +1000,13 @@ def generate_graph(query_json, entity_type, user_id):
         - "query_key": "most_recent_generate_query_key"
         - "graph_data": "most_recent_generated_graph_data"
 
+    Args:
+        - query_json: Query JSON.
+        - entity_type: Entity type.
+        - user_id: User ID.
+
+    Returns:
+        - Graph data.
     """
     if not user_id:
         raise ValueError("User ID is required to generate graph")
@@ -811,17 +1040,36 @@ def generate_graph(query_json, entity_type, user_id):
     return graph_data
 
 
-def create_query_key(query_json, entity_type, user_id):
+def create_query_key(query_json: Any, entity_type: str, user_id: t.id) -> str:
     """
     Create a unique key based on the query JSON, entity type, and user ID.
+
+    Args:
+        - query_json: Query JSON.
+        - entity_type: Entity type.
+        - user_id: User ID.
+
+    Returns:
+        - Query key.
     """
     combined_string = f"{query_json}-{entity_type}-{user_id}"
     return hashlib.sha256(combined_string.encode()).hexdigest()
 
 
-def process_graph_generation(query_json, entity_type, user_id, query_key):
+def process_graph_generation(
+    query_json: Any, entity_type: str, user_id: t.id, query_key: str
+) -> Optional[str]:
     """
     The core logic for graph generation, querying, and merging graphs.
+
+    Args:
+        - query_json: Query JSON.
+        - entity_type: Entity type.
+        - user_id: User ID.
+        - query_key: Query key.
+
+    Returns:
+        - Graph data.
     """
     result_set = get_result_set(query_json, entity_type, type_map)
     rds.set(f"user{user_id}:graph:status", "pending")
@@ -834,9 +1082,17 @@ def process_graph_generation(query_json, entity_type, user_id, query_key):
     return graph
 
 
-def get_result_set(query_json, entity_type, type_map):
+def get_result_set(query_json: Any, entity_type: str, type_map: dict) -> Any:
     """
     Retrieve the result set based on the query JSON and entity type.
+
+    Args:
+        - query_json: Query JSON.
+        - entity_type: Entity type.
+        - type_map: Type map.
+
+    Returns:
+        - Result set.
     """
     search_util = SearchUtils(query_json, cls=entity_type)
     if entity_type == "incident":
@@ -848,9 +1104,17 @@ def get_result_set(query_json, entity_type, type_map):
     return model.query.filter(*query)
 
 
-def merge_graphs(result_set, entity_type, user_id):
+def merge_graphs(result_set: Any, entity_type: str, user_id: t.id) -> Optional[str]:
     """
     Merge graphs for each item in the result set.
+
+    Args:
+        - result_set: Result set.
+        - entity_type: Entity type.
+        - user_id: User ID.
+
+    Returns:
+        - Merged graph data.
     """
     graph = None
     for item in result_set.all():

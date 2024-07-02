@@ -1,8 +1,15 @@
-def convert_list_attributes(dictionary):
+from typing import Iterable, Optional
+
+
+def convert_list_attributes(dictionary: dict) -> dict:
     """
-    convert dictionary list attributes into named attributes based on their index
-    :param dictionary: input dict
-    :return: dictionary with named attributes in place of list attributes
+    convert dictionary list attributes into named attributes based on their index.
+
+    Args:
+        - dictionary: input dict
+
+    Returns:
+        - dictionary: dictionary with named attributes in place of list attributes
     """
     keys = list(dictionary.keys())  # Create a copy of the dictionary keys
     for key in keys:
@@ -16,7 +23,16 @@ def convert_list_attributes(dictionary):
     return dictionary
 
 
-def convert_simple_relation(relation):
+def convert_simple_relation(relation: Iterable) -> Optional[dict]:
+    """
+    Convert a simple relation to a dictionary.
+
+    Args:
+        - relation (Iterable): The relation to convert.
+
+    Returns:
+        - dict: The converted relation as a dictionary.
+    """
     output = {}
     if relation:
         for i, v in enumerate(relation):
@@ -25,7 +41,17 @@ def convert_simple_relation(relation):
     return None
 
 
-def convert_complex_relation(relation, table_name):
+def convert_complex_relation(relation: Iterable, table_name: str) -> Optional[dict]:
+    """
+    Convert a complex relation to a dictionary.
+
+    Args:
+        - relation (Iterable): The relation to convert.
+        - table_name (str): The name of the table.
+
+    Returns:
+        - dict: The converted relation as a dictionary.
+    """
     output = {}
     if relation:
         for i, v in enumerate(relation):

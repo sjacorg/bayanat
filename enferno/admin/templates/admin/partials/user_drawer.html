@@ -1,0 +1,12 @@
+<v-navigation-drawer
+    v-model="userDrawer"
+    location="right"
+    temporary
+    width="880"
+    disable-route-watcher
+>
+    <v-card variant="flat">
+       <user-card v-if="user && userDrawer" :close="true" @close="userDrawer=false" :i18n="translations" :user="user"></user-card>
+    </v-card>
+
+</v-navigation-drawer>

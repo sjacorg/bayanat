@@ -1,5 +1,29 @@
-const SearchField = {
-  props: ['value', 'label', 'multiple', 'itemText', 'itemValue', 'api', 'queryParams', 'disabled'],
+const SearchField = Vue.defineComponent({
+  props: {
+    modelValue: {
+      type: [String, Number, Object, Array],
+      default: () => [],
+    },
+    label: String,
+    multiple: Boolean,
+    itemTitle: String,
+    itemValue: String,
+    api: String,
+    queryParams: {
+      type: Object,
+      default: () => ({}),
+    },
+    disabled: Boolean,
+    returnObject: {
+      type: Boolean,
+      default: true, // Default value set to true
+    },
+    rules: {
+      type: Array,
+      default: () => [(v) => true],
+    },
+  },
+  emits: ['update:model-value'],
   data: () => {
     return {
       loading: false,
@@ -7,44 +31,65 @@ const SearchField = {
       searchInput: '',
     };
   },
-  mounted() {
-    //enable copy paste
-    let dateInputs = document.querySelectorAll('[type="date"]');
+  created() {
+    this.$nextTick(() => {
+      //enable copy paste
+      let dateInputs = document.querySelectorAll('[type="date"]');
 
-    dateInputs.forEach((el) => {
-      // register double click event to change date input to text input and select the value
-      el.addEventListener('dblclick', () => {
-        el.type = 'text';
-        el.select();
-      });
+      dateInputs.forEach((el) => {
+        // register double click event to change date input to text input and select the value
+        el.addEventListener('dblclick', () => {
+          el.type = 'text';
+          el.select();
+        });
 
-      // register the focusout event to reset the input back to a date input field
-      el.addEventListener('focusout', () => {
-        el.type = 'date';
+        // register the focusout event to reset the input back to a date input field
+        el.addEventListener('focusout', () => {
+          el.type = 'date';
+        });
       });
     });
   },
-
-  methods: {
-    emitChange(v) {
-      if (v) {
-        this.$emit('change', v);
+  watch: {
+    modelValue(val) {
+      if (this.multiple && Array.isArray(val)) {
+        this.searchInput = '';
+      } else if (val && typeof val === 'object') {
+        this.searchInput = val[this.itemTitle] || '';
+      } else {
         this.searchInput = '';
       }
     },
-
+  },
+  computed: {
+    checkValue() {
+      return this.modelValue === '' ? [] : this.modelValue;
+    },
+  },
+  methods: {
     updateValue(val) {
-      // remove free input value in cases of multiple value component and single value component
       if (this.multiple) {
+        // Handle multiple values: emit an array of either full objects or specific item values
         this.$emit(
-          'input',
-          val.filter((x) => x.id),
+          'update:model-value',
+          this.returnObject ? val.filter((x) => x.id) : val.map((item) => item[this.itemValue]),
         );
       } else {
-        if (val && !val.hasOwnProperty('id')) {
-          this.$refs.fld.reset();
+        // Handle single value: emit the object or a specific item value
+        if (this.returnObject) {
+          if (val === null) {
+            // If the value is cleared (null), emit null instead of resetting the field
+            this.$emit('update:model-value', null);
+          } else if (typeof val === 'object' && !val.hasOwnProperty(this.itemValue)) {
+            this.$refs.fld.reset();
+          } else {
+            this.$emit('update:model-value', val);
+          }
         } else {
-          this.$emit('input', val);
+          if (val !== this.modelValue) {
+            // Emit the value directly if returnObject is false
+            this.$emit('update:model-value', val);
+          }
         }
       }
     },
@@ -70,54 +115,41 @@ const SearchField = {
     }, 350),
   },
   template: `
-            <v-combobox
-                    :disabled="disabled"
-                    menu-props="auto"
-                    auto-select-first
-                    v-bind:value="value"
-                    @input="updateValue"
-                    ref="fld"
-                    hide-no-data
-                    no-filter
-                    item-color="secondary"
-                    :label="label"
-                    :items="items"
-                    :item-text="itemText"
-                    :item-value="itemValue"
-                    prepend-inner-icon="mdi-magnify"
-                    :multiple="multiple"
-                    small-chips
-                    :deletable-chips="true"
-                    clearable
-                    @input.native="search"
-                    @focus="search"
-                    return-object
-                    @click:clear="search"
-                    :search-input.sync="searchInput"
-                    @change="emitChange"
-                    v-bind="$attrs"
-                    :loading="loading"
+      <v-combobox
+          variant="outlined"
+          ref="fld"
+          :disabled="disabled"
+          :menu-props="{ offsetY: true }"
+          :auto-select-first="true"
+          :model-value="checkValue"
+          @update:model-value="updateValue"
+          :hide-no-data="true"
+          :no-filter="true"
+          :item-color="'secondary'"
+          :label="label"
+          :items="items"
+          :item-title="itemTitle"
+          :item-value="itemValue"
+          :prepend-inner-icon="'mdi-magnify'"
+          :multiple="multiple"
+          :chips="true"
+          :closable-chips="true"
+          :clearable="true"
+          @click:input="search"
+          @update:focused="search"
+          :return-object="returnObject"
+          @click:clear="search"
+          v-model:search="searchInput"
+          @update:search="search"
+          v-bind="$attrs"
+          :loading="loading"
+          :rules="rules"
+      >
+      </v-combobox>
+    `,
+});
 
-            >
-<!--              <template v-slot:selection="{ item, index }">-->
-<!--                <v-chip-->
-<!--                    :key="index"-->
-<!--                    color="white"-->
-<!--                    text-color="black"-->
-<!--                    close-->
-<!--                    @click:close="removeItem(index)"-->
-<!--                >-->
-<!--                   {{ item[itemText] }}-->
-<!--                </v-chip>-->
-<!--              </template>-->
-              
-            </v-combobox>
-        `
-    };
-
-Vue.component('search-field', SearchField);
-
-const LocationSearchField = Vue.extend({
+const LocationSearchField = Vue.defineComponent({
   extends: SearchField,
   methods: {
     search: debounce(function (evt) {
@@ -125,7 +157,7 @@ const LocationSearchField = Vue.extend({
         .post(this.api, {
           q: {
             ...this.queryParams,
-            title: evt.target.value,
+            title: this.searchInput,
           },
           options: {},
         })
@@ -135,5 +167,3 @@ const LocationSearchField = Vue.extend({
     }, 350),
   },
 });
-
-Vue.component('location-search-field', LocationSearchField);

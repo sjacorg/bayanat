@@ -1,482 +1,464 @@
-{% extends 'layout.html' %} {% block css %}
-  <link rel="stylesheet" href="/static/js/dropzone/vue2Dropzone.min.css"/>
-  <link rel="stylesheet" href="/static/js/dropzone/basic.css"/>
+{% extends 'layout.html' %}
+
+{% block css %}
+    <link rel="stylesheet" href="/static/css/dropzone.min.css"/>
+    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 {% endblock %} {% block content %}
 
-  <div id="app">
-    <v-app id="actors" v-cloak>
-      {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
-    'admin/partials/actor_drawer.html' %}
-      {% include
-      'admin/partials/bulk_actor_drawer.html' %}
-      {% include
-    'admin/partials/export_drawer.html' %}
-      <v-main>
+
+    {% include  'admin/partials/actor_drawer.html' %}
+    {% include 'admin/partials/bulk_actor_drawer.html' %}
+    {% include 'admin/partials/export_drawer.html' %}
+    <v-main>
         {% include 'admin/partials/actor_advsearch.html' %}
-        <v-container class="container--fluid">
-             <v-btn
-                            elevation="16"
+        <v-container fluid>
+            <v-tooltip text="{{ _('Visualize Results') }}">
+                <template v-slot:activator="{ props }">
+                    <v-btn
                             color="primary"
-                            outlined
-                            v-tippy
+                            elevation="16"
+                            v-bind="props"
                             @click.stop="visualizeResults"
-                            content="Visualize Results"
                             v-if="showVisualize"
                             :loading="visualizeLoading"
-                            fab
-                            absolute
-                            class="mb-5 mr-5"
-                            bottom right
+                            variant="elevated"
+                            class="mb-5 mr-5 position-absolute "
+                            style="right: 20px; bottom: 20px; z-index: 1000;"
+                            icon="mdi-graph"
                     >
-                        <v-icon>mdi-graph</v-icon>
 
                     </v-btn>
-
-          <v-card>
-            <v-card-title>
-              <div class="flex-grow-1"></div>
-            </v-card-title>
-            <v-card-text>
-              <v-data-table
-                  fixed-header
-                  height="calc(100vh - 355px)"
-                  id="actors-dt"
-                  v-model="selected"
-                  :headers="headers"
-                  @click:row="rowClick"
-                  :item-class="rowClass"
-
-                  show-select
-
-                  :items="items"
-                  :options.sync="options"
-                  :footer-props.sync="footerProps"
-                  :loading="loading"
-                  :server-items-length="itemsLength"
-                  class="elevation-1"
-                  @toggle-select-all="selectAllRestrict"
-              >
-
-                <template v-slot:item.data-table-select="{ item, isSelected, select }">
-                  <v-simple-checkbox
-                      :value="isSelected"
-                      :readonly="item.restricted"
-                      :disabled="item.restricted"
-                      @input="select($event)"
-                  ></v-simple-checkbox>
                 </template>
-                <template v-slot:top>
-                  <v-toolbar flat color="white">
-                    <v-btn class="hidden-sm-and-down" small @click="allActors"
-                           text>{{ _('All Actors') }}</v-btn>
-                    <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                    <v-btn class="hidden-sm-and-down" small @click="myAssigned"
-                           text>{{ _('Assigned to me') }}</v-btn>
-                    <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                    <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down"
-                           text>{{ _('My Review List') }}</v-btn>
+            </v-tooltip>
 
-                    <v-text-field
-                        flat
-                        dense
-                        outlined
-                        small
-                        v-model.trim="search[0].tsv"
-                        @keydown.enter="doSearch"
+            <v-card>
+                <v-card-title>
+                    <div class="flex-grow-1"></div>
+                </v-card-title>
+                <v-card-text>
+                    <v-data-table-server
+                            fixed-header
+                            height="calc(100vh - 328px)"
+                            id="actors-dt"
+                            v-model="selected"
+                            hover
+                            :headers="headers"
+                            @click:row="rowClick"
+                            show-select
+                            :items="items"
+                            @update:options="refresh"
+                            :loading="loading"
+                            :items-length="itemsLength"
+                            :row-props="rowClass"
+                            select-strategy="page"
+                            return-object
+                            class="elevation-1"
+                    >
 
-                        hide-details
-                        append-outer-icon="mdi-ballot"
-                        append-icon="mdi-close"
-                        @click:append-outer="toggleAdvSearch"
-                        @click:append="resetSearch"
-                        prepend-inner-icon="mdi-magnify"
-                        label="{{ _('Search') }}"
-                    ></v-text-field>
+                        <template #item.data-table-select="{ item }">
+
+                            <v-checkbox-btn
+                                    color="primary"
+                                    :model-value="selected.includes(item)"
+                                    @click.stop="toggleSelect(item)"
+
+                            ></v-checkbox-btn>
+
+                        </template>
+                        <template v-slot:top>
+                            <v-toolbar class="mt-1" color="white">
+                                <v-btn class="hidden-sm-and-down" small @click="allActors"
+                                       text>{{ _('All Actors') }}</v-btn>
+                                <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                                <v-btn class="hidden-sm-and-down" small @click="myAssigned"
+                                       text>{{ _('Assigned to me') }}</v-btn>
+                                <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                                <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down"
+                                       text>{{ _('My Review List') }}</v-btn>
+
+                                <v-text-field
+                                        variant="outlined"
+                                        density="compact"
+                                        v-model.trim="search[0].tsv"
+                                        @keydown.enter="doSearch"
+                                        hide-details
+                                        append-icon="mdi-ballot"
+                                        :append-inner-icon="searchEmpty ? '' : 'mdi-close'"
+                                        @click:append-inner="resetSearch"
+                                        @click:append="toggleAdvSearch"
+                                        prepend-inner-icon="mdi-magnify"
+                                        label="{{ _('Search') }}"
+                                ></v-text-field>
 
 
-                    <v-spacer></v-spacer>
-                    {% if current_user.roles_in(['Admin','DA']) %}
-                      <v-btn @click="editItem" color="primary" dark
-                             class="ma-2">{{ _('New Actor') }}</v-btn>
-                    {% endif %}
-                    {% include 'admin/partials/actor_dialog.html' %}
-                    {% include 'admin/partials/review_dialog.html' %}
-                  </v-toolbar>
+                                <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','DA']) %}
+                                    <v-btn @click="editItem" color="primary" variant="elevated"
+                                           class="ma-2">{{ _('New Actor') }}</v-btn>
+                                {% endif %}
+                                {% include 'admin/partials/actor_dialog.html' %}
+                                {% include 'admin/partials/review_dialog.html' %}
+                            </v-toolbar>
 
-                  <v-toolbar v-if="bulkAllowed() || exportAllowed()" dense color="white" flat>
-                      <template v-if="bulkIcons">
+                            <v-toolbar class="px-3" color="grey-lighten-4" v-if="bulkAllowed() || exportAllowed()">
 
-                        <v-btn @click="selected=[]" x-small fab
-                               class="mr-3" elevation="0" color="white">
-                          <v-icon>mdi-checkbox-blank-outline</v-icon>
-                        </v-btn>
+                                <template v-if="bulkIcons">
 
-                        <v-btn
-                                @click="bulkActorDrawer=true"
-                                small
-                                color="primary"
-                                depressed
-                                v-if="bulkAllowed()"
-                        >
-                          <v-icon small left>mdi-circle-edit-outline</v-icon>
-                          {{ _('Bulk update') }}</v-btn>
+                                    <v-btn icon="mdi-checkbox-blank-outline"
+                                           @click="selected=[]"
+                                           class="mr-3">
+                                    </v-btn>
 
-                          <v-btn
-                              @click="exportDrawer=true"
-                              small
-                              color="primary"
-                              class="mx-2"
-                              depressed
-                              v-if="exportAllowed()"
-                          >
-                            <v-icon small left
-                            >mdi-file-export-outline
-                            </v-icon>
-                            {{ _('Export') }}
-                          </v-btn>
+                                    <v-btn
+                                            @click="bulkActorDrawer=true"
+                                            prepend-icon="mdi-circle-edit-outline"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="mx-2"
+                                            v-if="bulkAllowed()"
+                                    >
+                                        {{ _('Bulk update') }}
+                                    </v-btn>
 
-                      </template>
+                                    <v-btn
+                                            @click="exportDrawer=true"
+                                            color="primary"
+                                            class="mx-2"
+                                            variant="elevated"
+                                            v-if="exportAllowed()"
+                                    >
+                                        <v-icon small left
+                                        >mdi-file-export-outline
+                                        </v-icon>
+                                        {{ _('Export') }}
+                                    </v-btn>
 
-                      <template>
-                        <v-progress-circular v-for="job in jobs"
-                                             size="20" small
-                                             :indeterminate="job.status!='SUCCESS'"
-                                             :color="job.status=='SUCCESS' ? 'success': 'amber'"
-                                             :value="job.status=='SUCCESS'?100:null"
-                                             class="mx-1"
-                                             stroke="1"
-                        ></v-progress-circular>
-                      </template>
+                                </template>
 
-                      <v-spacer></v-spacer>
+                                <template>
+                                    <v-progress-circular v-for="job in jobs"
+                                                         size="20" small
+                                                         :indeterminate="job.status!='SUCCESS'"
+                                                         :color="job.status=='SUCCESS' ? 'success': 'amber'"
+                                                         :value="job.status=='SUCCESS'?100:null"
+                                                         class="mx-1"
+                                                         stroke="1"
+                                    ></v-progress-circular>
+                                </template>
 
-                      <div>
-                        <v-tooltip top>
-                          <template v-slot:activator="{ on, attrs }">
-                            <v-chip v-on="on" label small close color="yellow lighten-4"
-                                    class="grey--text text--darken-2"
-                                    @click:close="allActors"
-                            >{{ _('About') }} ${itemsLength} {{ _('results') }}
-                              (${searchTime} {{ _('seconds') }})
+                                <v-spacer></v-spacer>
+
+                                <div>
+                                    <v-chip label small close color="yellow"
+                                            class="grey--text text-"
+                                            @click:close="allActors"
+                                    >{{ _('About') }} ${itemsLength} {{ _('results') }}
+                                        (${searchTime} {{ _('seconds') }})
+                                    </v-chip>
+                                </div>
+                                <v-spacer></v-spacer>
+
+                                <v-chip small color="accent" v-if="selected.length">
+                                    ${selected.length} {{ _('Selected items') }}
+                                </v-chip>
+                            </v-toolbar>
+
+                        </template>
+
+                        <template v-slot:item.type="{item}">
+                            <v-tooltip :text="item.type">
+                                <template v-slot:activator="{props}">
+                                    <v-icon
+                                            v-if="item.type==='Person'"
+                                            v-bind="props"
+                                    >mdi-account
+                                    </v-icon>
+
+
+                                    <v-icon
+                                            v-if="item.type==='Entity'"
+                                            v-bind="props"
+                                    >mdi-account-group
+                                    </v-icon>
+                                </template>
+                            </v-tooltip>
+                        </template>
+
+                        <template v-slot:item.roles="{item}">
+                            <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
+                                <template v-slot:activator="{props}">
+                                    <v-icon
+                                            :="props"
+                                            size="small"
+                                            :color="role.color || 'grey-lighten-1'"
+                                            icon="mdi-shield-lock"
+                                    >
+                                    </v-icon>
+                                </template>
+                            </v-tooltip>
+                        </template>
+
+
+                        <template v-slot:item.status="{ item }">
+                            ${item.status}
+                            <v-chip v-if="item.review_action" color="grey"
+                                    class="secondary--text">${item.review_action}
                             </v-chip>
-                          </template>
-                          <span>${search}</span>
-                        </v-tooltip>
-                      </div>
-                      <v-spacer></v-spacer>
-
-                      <v-chip small color="accent" v-if="selected.length">
-                        ${selected.length} {{ _('Selected items') }}</v-chip>
-                    </v-toolbar>
-
-                </template>
-
-                <template v-slot:item.type="{item}">
-                    <v-icon
-                    v-tippy
-                    :content="item.type"
-                    v-if="item.type==='Person'"
-                    >mdi-account
-                    </v-icon>
-
-                    <v-icon
-                        v-tippy
-                        :content="item.type"
-                        v-if="item.type==='Entity'"
-                        >mdi-account-group
-                    </v-icon>
-                </template>
-
-                <template v-slot:item.roles="{item}">
-                  <v-chip
-                      class="mx-2"
-                      small
-                      style="scale:0.7"
-                      v-tippy
-                      :content="role.name"
-                      v-for="role in item.roles"
-                      :color="role.color"
-                  >
-
-                  </v-chip>
-                </template>
-
-                <template v-slot:item.status="{ item }">
-                  ${item.status}
-                  <v-chip x-small v-if="item.review_action" color="grey lighten-4"
-                          class="secondary--text">${item.review_action}
-                  </v-chip>
-                </template>
-
-                <template v-slot:item.action="{ item }">
-                  <v-tooltip top>
-                    <template v-slot:activator="{ on }">
-                      <v-icon
-                          v-on="on"
-                          color="ov darken-1"
-                          class="mr-2"
-                          @click.stop="editItem(item)"
-                          v-if="editAllowed(item)"
-                      >
-                        mdi-pencil
-                      </v-icon>
-                    </template>
-                    <span>{{ _('Edit') }}</span>
-                  </v-tooltip>
+                        </template>
 
 
-                  <v-tooltip top>
-                    <template v-slot:activator="{ on }">
-                      <v-icon
-                          v-on="on"
-                          color="primary lighten-1"
-                          class="mr-2"
+                        <template #item.action="{ item }">
 
-                          @click.stop="openSelfAssign(item)"
-                          v-if="selfAssignAllowed(item)"
-                      >
-                        mdi-arrow-left-thin-circle-outline
-                      </v-icon>
+                            <v-icon
+                                    class="mr-2"
+                                    @click.stop="editItem(item)"
+                                    v-if="editAllowed(item)"
+                            >
+                                mdi-pencil
+                            </v-icon>
 
 
-                    </template>
-                    <span>Assign to self</span>
-                  </v-tooltip>
+                            <v-icon
+                                    color="primary"
+                                    class="mr-2"
+                                    @click.stop="openSelfAssign(item)"
+                                    v-if="selfAssignAllowed(item)"
+                            >
+                                mdi-arrow-left-thin-circle-outline
+                            </v-icon>
 
 
-                  <v-tooltip top>
-                    <template v-slot:activator="{ on }">
-                      <v-icon v-on="on"
-                              v-if="reviewAllowed(item)"
-                              @click.stop="addReview(item)"
-                              color="gv darken-1"
-                              class="mr-2"
-                      >mdi-message-draw
-                      </v-icon>
-                    </template>
-                    <span>{{ _('Add Review') }}</span>
-                  </v-tooltip>
+                            <v-btn
+                                    icon="mdi-message-draw"
+                                    size="small"
+                                    variant="plain"
+                                    color="primary"
+                                    v-if="reviewAllowed(item)"
+                                    @click.stop="addReview(item)"
+                                    class="mr-2"
+
+                            >
+                            </v-btn>
+
+                        </template>
+                        <template v-slot:no-data></template>
+                    </v-data-table-server>
+                    <v-overlay :value="loading">
+                        <v-progress-circular
+                                indeterminate
+                                size="64"
+                        ></v-progress-circular>
+                    </v-overlay>
+
+                    <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
+                                      ref="relateBulletins"></relate-bulletins>
+                    <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
+                                   ref="relateActors"></relate-actors>
+                    <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
+                                      ref="relateIncidents"></relate-incidents>
+
+                    {% include 'admin/partials/video_player_dialog.html' %}
 
 
-                </template>
-                <template v-slot:no-data></template>
-              </v-data-table>
-              <v-overlay :value="loading">
-                <v-progress-circular
-                    indeterminate
-                    size="64"
-                ></v-progress-circular>
-              </v-overlay>
+                    <v-dialog width="600" v-model="selfAssignDialog">
+                        <v-card class="pa-3">
+                            <v-card-title>{{ _('Self Assign Actor') }} #${assignActor.id}</v-card-title>
+                            <v-card-text>
 
-              <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
-                                ref="relateBulletins"></relate-bulletins>
-              <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
-                             ref="relateActors"></relate-actors>
-              <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
-                                ref="relateIncidents"></relate-incidents>
+                                <v-textarea v-model="assignActor.comments" label="{{ _('Comments') }}"></v-textarea>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-btn :disabled="!assignActor.comments" class="ma-auto" @click="selfAssign"
+                                       color="primary">{{ _('Assign to self') }}
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
 
-              {% include 'admin/partials/video_player_dialog.html' %}
+                    </v-dialog>
 
 
-
-
-              <v-dialog width="600" v-model="selfAssignDialog">
-                <v-card class="pa-3">
-                  <v-card-title>{{ _('Self Assign Actor') }} #${assignActor.id}</v-card-title>
-                  <v-card-text>
-
-                    <v-textarea v-model="assignActor.comments" label="{{ _('Comments') }}"></v-textarea>
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn :disabled="!assignActor.comments" class="ma-auto" @click="selfAssign"
-                           color="primary">{{ _('Assign to self') }}
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-
-              </v-dialog>
-
-              <v-snackbar v-model="snackbar">
-                <div class="d-flex justify-space-between align-center">
-                  <span class="text-subtitle-1">${snackMessage}</span>
-                  <v-btn color="white" fab small color="secondary" text @click="snackbar = false">
-                    <v-icon small>mdi-close</v-icon>
-                  </v-btn>
-                </div>
-              </v-snackbar>
-            </v-card-text>
-          </v-card>
+                </v-card-text>
+            </v-card>
 
         </v-container>
-      </v-main>
-      {% include 'footer.html' %}
-    </v-app>
-  </div>
+    </v-main>
 
-  <div class="d-none" data-itob='{{ itobInfo|tojson }}'></div>
-  <div class="d-none" data-itoa='{{ itoaInfo|tojson }}'></div>
-  <div class="d-none" data-atob='{{ atobInfo|tojson }}'></div>
-  <div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
-  <div class="d-none" data-btob='{{ btobInfo|tojson }}'></div>
-  <div class="d-none" data-itoi='{{ itoiInfo|tojson }}'></div>
-  <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
-  <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
+    {% block outside %}
+        <div class="d-none" data-itob='{{ itobInfo|tojson }}'></div>
+        <div class="d-none" data-itoa='{{ itoaInfo|tojson }}'></div>
+        <div class="d-none" data-atob='{{ atobInfo|tojson }}'></div>
+        <div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
+        <div class="d-none" data-btob='{{ btobInfo|tojson }}'></div>
+        <div class="d-none" data-itoi='{{ itoiInfo|tojson }}'></div>
+        <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
+        <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
+
+    {% endblock %}
+
+
 
 {% endblock %} {% block js %}
-  <script
-      src="/static/js/tinymce/js/tinymce/tinymce.min.js"
-      referrerpolicy="origin"
-  ></script>
-  <script src="/static/js/tinymce-vue.min.js"></script>
+    <script
+            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            referrerpolicy="origin"
+    ></script>
 
-  <script src="/static/js/dropzone/vue2Dropzone.js"></script>
-  <script src="/static/js/components/ActorResult.js"></script>
-  <script src="/static/js/components/BulletinResult.js"></script>
-  <script src="/static/js/components/IncidentResult.js"></script>
-  <script src="/static/js/components/MediaCard.js"></script>
-  <script src="/static/js/components/UniField.js"></script>
-  <script src="/static/js/components/Visualization.js"></script>
-  <script src="/static/js/element-resize-detector.min.js"></script>
-  <script src="/static/js/force-graph.min.js"></script>
+    <script src="/static/js/tinymce-vue.min.js"></script>
 
-  <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/dropzone.min.js"></script>
+    <script src="/static/js/components/VueDropzone.js"></script>
 
-  <script src="/static/js/Leaflet.GoogleMutant.js"></script>
+    <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/DualField.js"></script>
+    <script src="/static/js/components/SearchField.js"></script>
 
+    <script src="/static/js/components/BulletinCard.js"></script>
+    <script src="/static/js/components/ActorProfiles.js"></script>
+    <script src="/static/js/components/ActorCard.js"></script>
+    <script src="/static/js/components/IncidentCard.js"></script>
 
-  {#Missing Persons Components#}
-  <script src="/static/js/components/Address.js"></script>
-  <script src="/static/js/components/MixI.js"></script>
-  <script src="/static/js/components/MixII.js"></script>
-  <script src="/static/js/components/MixIII.js"></script>
-  <script src="/static/js/components/MPCard.js"></script>
-  <script src="/static/js/components/MPField.js"></script>
-
-  <script src="/static/js/mixins/media-mixin.js"></script>
-  <script src="/static/js/components/PdfViewer.js"></script>
-
-
-  <script>
-      window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
-      window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
-
-      VeeValidate.extend('oneisnull', {
-          computesRequired: true,
-          validate: (value, param) => {
-              if (['', null, undefined].indexOf(value) !== -1 && ['', null, undefined].indexOf(param[0]) !== -1) {
-                  return 'Either Name or Name(ar) should not be empty'
-              }
-              return true
-          },
-      });
-
-      VeeValidate.extend("uniqueQueryName", {
-          validate: async (str) => {
-              try {
-                  await axios.get(`/admin/api/query/${str}/exists`);
-                  return true;
-              } catch (error) {
-                  return error?.response?.data ?? 'An error occurred.';
-              }
-          },
-      });
+    <script src="/static/js/components/BulletinSearchBox.js"></script>
+    <script src="/static/js/components/ActorSearchBox.js"></script>
+    <script src="/static/js/components/IncidentSearchBox.js"></script>
 
 
 
-      let app = new Vue({
-          el: "#app",
-          vuetify: vuetify,
-          delimiters: delimiters,
-          router,
+    <script src="/static/js/components/BulletinResult.js"></script>
+    <script src="/static/js/components/ActorResult.js"></script>
+    <script src="/static/js/components/IncidentResult.js"></script>
 
-          components: {
-              "tinymce-editor": Editor,
-              vueDropzone: vue2Dropzone
+    <script src="/static/js/components/RelateBulletins.js"></script>
+    <script src="/static/js/components/RelateActors.js"></script>
+    <script src="/static/js/components/RelateIncidents.js"></script>
 
-          },
-          mixins: [mediaMixin],
+    <script src="/static/js/components/RelatedBulletinsCard.js"></script>
+    <script src="/static/js/components/RelatedActorsCard.js"></script>
+    <script src="/static/js/components/RelatedIncidentsCard.js"></script>
 
-          data: () => ({
+    <script src="/static/js/components/EventCard.js"></script>
+    <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateRangeField.js"></script>
+    <script src="/static/js/components/PopDateTimeField.js"></script>
+    <script src="/static/js/components/GeoLocations.js"></script>
+    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/PreviewCard.js"></script>
 
-              translations: translations,
+    <script src="/static/js/actorConfig.js"></script>
+    <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/Visualization.js"></script>
+    <script src="/static/js/element-resize-detector.min.js"></script>
+    <script src="/static/js/force-graph.min.js"></script>
 
-              itobInfo : JSON.parse(document.querySelector('[data-itob]').dataset.itob),
-                itoaInfo : JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
-                itoiInfo : JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
-                atobInfo : JSON.parse(document.querySelector('[data-atob]').dataset.atob),
-                btobInfo : JSON.parse(document.querySelector('[data-btob]').dataset.btob),
-                atoaInfo : JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
 
-              assignActor: {},
-              selfAssignDialog: false,
+    <script src="/static/js/components/MPCard.js"></script>
+    <script src="/static/js/components/MPField.js"></script>
+    <script src="/static/js/components/MixI.js"></script>
+    <script src="/static/js/components/MixII.js"></script>
+    <script src="/static/js/components/MixIII.js"></script>
+    <script src="/static/js/videojs/video.min.js"></script>
+    <script src="/static/js/croppr/croppr.min.js"></script>
+
+    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
 
 
 
-              tab: 0,
-
-              profileModes: [
-                  {id: 1, title: 'Normal', fields: ['source']}, // Normal Profile
-                  {id: 2, title: 'Main', fields: []}, // Main Profile
-                  {id: 3, title: 'Missing Person', fields: ['source', 'mp']}, // Missing Person Profile
-              ],
-
-            profileModeDropdown: false,
+    {% if config.GOOGLE_MAPS_API_KEY %}
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+    {% endif %}
 
 
-              dzOpts: {
-                  url: '/admin/api/media/chunk',
-                  acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
-                  addRemoveLinks: true,
-                  chunking: true,
-                  forceChunking: true,
-                  chunkSize: 500000, // Bytes
-                  thumbnailWidth: 80, // px
-                  thumbnailHeight: 80,
-                  parallelUploads: 1,
-                  maxFilesize: mediaUploadMaxFileSize,
-
-              },
+    <script>
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
 
-              currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
-              users: JSON.parse(`{{users|tojson}}`),
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
 
-              // advanced search
+        const app = createApp({
+            delimiters: delimiters,
 
-              advSearchExpand: false,
+            components: {
+                "tinymce-editor": Editor,
+            },
 
+            mixins: [mediaMixin, globalMixin],
 
+            data: () => ({
+                valid: false,
+
+                translations: window.translations,
+
+                itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
+                itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
+                itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
+                atobInfo: JSON.parse(document.querySelector('[data-atob]').dataset.atob),
+                btobInfo: JSON.parse(document.querySelector('[data-btob]').dataset.btob),
+                atoaInfo: JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
+
+                assignActor: {},
+                selfAssignDialog: false,
+
+                tab: 0,
+
+                profileModes: [
+                    {id: 1, title: "{{ _('Normal')}}", fields: ['source']}, // Normal Profile
+                    {id: 2, title: "{{ _('Main')}}", fields: []}, // Main Profile
+                    {id: 3, title: "{{ _('Missing Person')}}", fields: ['source', 'mp']}, // Missing Person Profile
+                ],
+
+                profileModeDropdown: false,
+
+                dzOpts: {
+                    url: '/admin/api/media/chunk',
+                    acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
+                    addRemoveLinks: true,
+                    chunking: true,
+                    forceChunking: true,
+                    chunkSize: 500000, // Bytes
+                    thumbnailWidth: 80, // px
+                    thumbnailHeight: 80,
+                    parallelUploads: 1,
+                    maxFilesize: mediaUploadMaxFileSize,
+                },
+
+                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+                users: JSON.parse(`{{users|tojson}}`),
+
+                // advanced search
+                advSearchExpand: false,
 
                 showVisualize: false,
-                visualizeLoading : false,
-                graphTimer : null,
+                visualizeLoading: false,
+                graphTimer: null,
 
-              //global preview dialog
-              preview: false,
-              pitem: null,
+                //global preview dialog
+                preview: false,
+                pitem: null,
 
-              search: [{}],
-              queryName: null,
-              saveQueryDialog: false,
-              searchPanels: 0,
+                search: [{}],
+                queryName: null,
+                saveQueryDialog: false,
+                searchPanels: 0,
 
                 searchTime: null,
                 searches: [],
                 savedSearchSelection: null,
 
-                roles: [],
-
                 fsloading: true,
-
 
                 // Load actor config
 
                 drawer: drawer,
-                sideNav: sideNav,
                 dialog: dialog,
                 //load advsearch constants
-
 
                 eventDialog: false,
                 eventParams: {typ: 'for_actor'},
@@ -484,7 +466,6 @@
                 reviewKey: 0,
                 videoDialog: false,
                 playerOptions: {},
-
 
                 // search and relate actor dialog vars
                 relateActorDialog: false,
@@ -500,14 +481,12 @@
                 relateBulletinResults: [],
                 selectedRelatedBulletins: [],
 
-
                 // search and relate incident dialog vars
                 relateIncidentDialog: false,
                 relateIncidentLoader: true,
                 relateIncidentTerm: "",
                 relateIncidentResults: [],
                 selectedRelatedIncidents: [],
-
 
                 actorDrawer: false,
                 bulkActorDrawer: false,
@@ -521,14 +500,13 @@
                 verLabels: [],
                 eventtypes: [],
 
-              statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
-                  .map(s => ({en: s.title, tr: s.title_tr})),
+                statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                    .map(s => ({en: s.title, tr: s.title_tr})),
 
-              statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
-                  .map(s => ({en: s.title, tr: s.title_tr})),
+                statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                    .map(s => ({en: s.title, tr: s.title_tr})),
 
                 statusDisabled: false,
-
 
                 //field language switchers
                 name__: true,
@@ -548,8 +526,6 @@
                 //rich text config
                 tinyConfig: tinyConfig,
 
-                snackbar: false,
-                snackMessage: "",
                 loading: true,
                 parentLoading: false,
                 csvFile: null,
@@ -574,21 +550,16 @@
                 publishDateMenu: false,
                 documentationDateMenu: false,
 
-                footerProps: {
-                    itemsPerPageOptions: itemsPerPageOptions,
-                    itemsPerPageText: "{{ _('Rows per page')}}"
-                },
-
                 headers: [
-                    {text: "{{_('ID')}}", value: "id", width: 12, sortable: false},
-                    {text: "{{_('Type')}}", value: "type", width: 20, sortable: false},
-                    {text: "{{_('Name')}}", value: "name", width: 300, sortable: false},
+                    {title: "{{_('ID')}}", value: "id", width: 12, sortable: false},
+                    {title: "{{_('Type')}}", value: "type", width: 20, sortable: false},
+                    {title: "{{_('Name')}}", value: "name", width: 300, sortable: false},
                     {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
-                        {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
-                        {text: "{{_('Roles')}}", value: "roles", width: 130, sortable: false},
+                        {title: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
+                        {title: "{{_('Access Groups')}}", value: "roles", width: 130, sortable: false},
                     {% endif %}
-                  {text: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
-                    {text: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
+                    {title: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
+                    {title: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
                 ],
 
                 items: [],
@@ -625,7 +596,6 @@
                         mode: 1
                     }],
                     roles: []
-
                 },
 
                 //events
@@ -639,7 +609,6 @@
                     to_date: ''
 
                 },
-
 
                 reviewItem: {},
 
@@ -656,6 +625,46 @@
             }),
 
             computed: {
+                searchEmpty() {
+                    return this.search.every(search =>
+                        Object.values(search).every(value => !value)
+                    );
+
+                },
+                nameRule() {
+                    return [this.editedItem.name || this.editedItem.name_ar ? v => true : this.rules.required]
+                },
+                firstNameRule() {
+                    return [this.editedItem.first_name || this.editedItem.first_name_ar ? v => true : this.rules.required]
+                },
+                lastNameRule() {
+                    return [this.editedItem.last_name || this.editedItem.last_name_ar ? v => true : this.rules.required]
+                },
+
+                accessRule() {
+                    return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
+                },
+
+                bulletinRelationTypes() {
+                    return this.atobInfo;
+                },
+                actorRelationTypes() {
+                    return this.atoaInfo;
+                },
+                incidentRelationTypes() {
+                    return this.itoaInfo;
+                },
+                bulletinRelationMultiple() {
+                    return true;
+                },
+                actorRelationMultiple() {
+                    return false;
+                },
+                incidentRelationMultiple() {
+                    return true;
+                },
+
+
                 hasMainProfile() {
                     return this.editedItem.actor_profiles.some(profile => profile.mode === 2);
                 },
@@ -664,7 +673,7 @@
                     return aggregateActorLocations(this.editedItem);
                 },
 
-               exBulletins() {
+                exBulletins() {
                     let ids = [];
 
                     if (this.editedItem?.id) {
@@ -717,9 +726,7 @@
                 formTitle() {
                     return this.editedItem.id ? this.translations.editActor_ : this.translations.newActr_;
                 },
-                videoPlayer() {
-                    return document.querySelector("#player");
-                }
+
             },
 
             watch: {
@@ -727,15 +734,19 @@
                 actorDrawer: function (val) {
                     if (val == false) {
 
-                        if (this.$route.path != '/admin/actors/')
+                        if (this.$route.path !== '/admin/actors/')
                             this.$router.push('/admin/actors/')
                     }
                 },
 
-                selected: function (val) {
-                    this.bulkIcons = val.length ? true : false;
-
+                selected: {
+                    handler(val) {
+                        this.bulkIcons = !!val.length;
+                    },
+                    deep: true, // Enable deep watching
+                    //  immediate: true
                 },
+
 
                 eventDialog(val) {
                     val || this.closeEvent();
@@ -768,80 +779,88 @@
                 let self = this;
                 window.addEventListener("beforeunload", function (e) {
                     if (self.dialog) {
-                        var confirmationMessage = 'It looks like you have been editing something. '
-                            + 'If you leave before saving, your changes will be lost.';
+                        var confirmationMessage = "{{ _('It looks like you have been editing something. ')}}"
+                            + "{{ _('If you leave before saving, your changes will be lost.')}}";
                         (e || window.event).returnValue = confirmationMessage; //Gecko + IE
                         return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
                     }
                 });
 
 
-              if (this.$route.params.id) {
-                  this.showActor(this.$route.params.id);
-              }
+                if (this.$route.params.id) {
+                    this.showActor(this.$route.params.id);
+                }
 
-              if (this.$route.query.reltob) {
-                  this.filter_related_to_bulletin(this.$route.query.reltob);
-              }
+                if (this.$route.query.reltob) {
+                    this.filter_related_to_bulletin(this.$route.query.reltob);
+                }
 
-              if (this.$route.query.reltoa) {
-                  this.filter_related_to_actor(this.$route.query.reltoa);
-              }
+                if (this.$route.query.reltoa) {
+                    this.filter_related_to_actor(this.$route.query.reltoa);
+                }
 
-              if (this.$route.query.reltoi) {
-                  this.filter_related_to_incident(this.$route.query.reltoi);
-              }
+                if (this.$route.query.reltoi) {
+                    this.filter_related_to_incident(this.$route.query.reltoi);
+                }
 
-              this.$router.afterEach((to, from, next) => {
+                this.$router.afterEach((to, from) => {
 
-                  if (this.$route.query.reltob) {
-                      this.filter_related_to_bulletin(this.$route.query.reltob);
-                  }
+                    if (this.$route.query.reltob) {
+                        this.filter_related_to_bulletin(this.$route.query.reltob);
+                    }
 
-                  if (this.$route.query.reltoa) {
-                      this.filter_related_to_actor(this.$route.query.reltoa);
-                  }
+                    if (this.$route.query.reltoa) {
+                        this.filter_related_to_actor(this.$route.query.reltoa);
+                    }
 
-                  if (this.$route.query.reltoi) {
-                      this.filter_related_to_incident(this.$route.query.reltoi);
-                  }
-
-
-                  if (this.$route.params.id) {
-                      this.showActor(this.$route.params.id);
-                  }
-
-              })
+                    if (this.$route.query.reltoi) {
+                        this.filter_related_to_incident(this.$route.query.reltoi);
+                    }
 
 
-          },
+                    if (this.$route.params.id) {
+                        this.showActor(this.$route.params.id);
+                    }
 
-          methods: {
-
-              modeName (modeId) {
-                return this.profileModes.find(x=>x.id ==modeId).title;
-              },
-
-              deleteProfile(index) {
-                  if (confirm('Are you sure you want to delete this profile?')) {
-                      if (this.editedItem.actor_profiles.length > 1) {
-                          this.editedItem.actor_profiles.splice(index, 1);
-                      } else {
-                          console.log("Cannot delete the last remaining profile.");
-                      }
-                  }
-              },
+                })
 
 
-              shouldDisplayField(mode, fieldName) {
-                  return this.profileModes.find(x=>x.id === mode).fields.includes(fieldName);
-              },
+            },
+
+            methods: {
+                validateForm() {
+                    this.$refs.form.validate().then(valid => {
+                        if (valid) {
+                            this.save();
+                        }
+                    });
+                },
 
 
-                createProfile(profileMode){
+                modeName(modeId) {
+                    return this.profileModes.find(x => x.id == modeId).title;
+                },
+
+                deleteProfile(index) {
+                    if (confirm("{{ _('Are you sure you want to delete this profile?')}}")) {
+                        if (this.editedItem.actor_profiles.length > 1) {
+                            this.editedItem.actor_profiles.splice(index, 1);
+                        } else {
+                            console.log("Cannot delete the last remaining profile.");
+                        }
+                    }
+                },
+
+
+                shouldDisplayField(mode, fieldName) {
+                    return this.profileModes.find(x => x.id === mode).fields.includes(fieldName);
+                },
+
+
+                createProfile(profileMode) {
 
                     if (profileMode.id === 2 && this.hasMainProfile) {
-                        this.showSnack('Main profile already exists.');
+                        this.showSnack("{{ _('Main profile already exists.')}}");
                         return;
                     }
 
@@ -850,31 +869,38 @@
                     this.editedItem.actor_profiles.push({
                         mode: profileMode.id
                     });
-                    this.tab = this.editedItem.actor_profiles.length - 1 ;
+                    this.tab = this.editedItem.actor_profiles.length - 1;
 
                 },
 
-              duplicateProfile(index) {
-                  profileToDuplicate = this.editedItem.actor_profiles[index]
+                duplicateProfile(index) {
 
-                  // Use structuredClone to create a deep copy of the profile
-                  const newProfile = structuredClone(profileToDuplicate);
+                    // Check if the profile being duplicated is a main profile and if another main profile exists
+                    if (this.editedItem.actor_profiles[index].mode === 2 && this.hasMainProfile) {
+                        this.showSnack('A main profile already exists, cannot create another main profile.');
+                        return;
+                    }
 
-                  // reset the id of the new profile
-                  newProfile.id = null;
+                    const profileToDuplicate = this.editedItem.actor_profiles[index]
+                    const newProfile = {...profileToDuplicate};
 
-                  // Check if the profile being duplicated is a main profile and if another main profile exists
-                  if (profileToDuplicate.mode === 2 && this.hasMainProfile) {
-                      this.showSnack('A main profile already exists. Cannot duplicate another main profile.');
-                      return;
-                  }
+                    // reset the id of the new profile
+                    newProfile.id = null;
 
+                    // Check if the profile being duplicated is a main profile and if another main profile exists
+                    if (profileToDuplicate.mode === 2 && this.hasMainProfile) {
+                        this.showSnack("{{ _('A main profile already exists. Cannot duplicate another main profile.')}}");
+                        return;
+                    }
 
-                  // Append the new profile to the actor_profiles array
-                  this.editedItem.actor_profiles.push(newProfile);
-                  this.tab = this.editedItem.actor_profiles.length - 1;
-              },
+                    newProfile.originid = null;
+                    newProfile.source_link = null;
+                    newProfile.source_link_type = null; 
 
+                    // Append the new profile to the actor_profiles array
+                    this.editedItem.actor_profiles.push(newProfile);
+                    this.tab = this.editedItem.actor_profiles.length - 1;
+                },
 
 
                 getValidationRules(profile) {
@@ -886,7 +912,7 @@
                 },
 
 
-               checkGraphStatus: function () {
+                checkGraphStatus: function () {
                     axios.get('/admin/api/graph/status')
                         .then(res => {
                             if (res.data.status == 'done') {
@@ -910,7 +936,7 @@
                             type: 'actor'
                         }
                     }).then(res => {
-                        this.showSnack('Graph is being generated.');
+                        this.showSnack("{{ _('Graph is being generated.')}}");
                         this.graphTimer = setInterval(this.checkGraphStatus, 3000);
                     }).catch(e => {
                         console.error(e.message);
@@ -918,203 +944,215 @@
                     });
                 },
 
-              exportRequest() {
-                  let ids = this.selected.map(x => x.id);
-                  this.loading = true;
-                  axios.post(`/export/api/actor/export`, {
-                      items: ids,
-                      config: this.exportConfig
-                  })
-                      .then(response => {
-                          this.showSnack(response.data);
-                      }).catch(error => {
-                      console.error(error.response?.data);
-                      this.showSnack(error.response?.data)
-                  }).finally(() => {
-                      this.loading = false;
-                      this.exportDrawer = false;
-                      this.selected = [];
-                      this.exportConfig = {};
+                exportRequest() {
+                    let ids = this.selected.map(x => x.id);
+                    this.loading = true;
+                    axios.post(`/export/api/actor/export`, {
+                        items: ids,
+                        config: this.exportConfig
+                    })
+                        .then(response => {
+                            this.showSnack(response.data);
+                        }).catch(error => {
+                        console.error(error.response?.data);
+                        this.showSnack(error.response?.data)
+                    }).finally(() => {
+                        this.loading = false;
+                        this.exportDrawer = false;
+                        this.selected = [];
+                        this.exportConfig = {};
 
-                  });
-              },
-
-
-              selectAllRestrict(props) {
-
-                  if (this.selected.length > 0) {
-                      // untoggle on next tick
-                      this.$nextTick(() => {
-                          this.selected = [];
-                      })
-
-                  }
-                  this.selected = props.items.filter(x => !x.restricted);
-              },
-
-              rowClass(item) {
-                  if (item.restricted) {
-                      return 'restricted'
-                  }
-                  return ''
-              },
-
-              openSelfAssign(actor) {
-                  this.assignActor = {id: actor.id};
-                  this.selfAssignDialog = true;
-
-              },
-
-              selfAssign() {
+                    });
+                },
 
 
-                  axios.put(`/admin/api/actor/assign/${this.assignActor.id}`, {actor: this.assignActor}).then(res => {
-                      this.showSnack('Actor assigned successfully.')
-                      this.searchActors(true)
+                selectAllRestrict(props) {
 
-                  }).catch(err => {
-                      this.showSnack(err.response.data);
-                  }).finally(() => {
-                      this.selfAssignDialog = false;
-                      this.assignActor = {};
+                    if (this.selected.length > 0) {
+                        // untoggle on next tick
+                        this.$nextTick(() => {
+                            this.selected = [];
+                        })
 
-                  });
+                    }
+                    this.selected = props.items.filter(x => !x.restricted);
+                },
 
-              },
+                rowClass(row) {
+                    if (row.item.restricted) {
+                        return {class: 'restricted'}
+                    }
+                    return {class: ''}
+                },
 
+                openSelfAssign(actor) {
+                    this.assignActor = {id: actor.id};
+                    this.selfAssignDialog = true;
 
-              filter_related_to_bulletin(id) {
-                  this.bulletinDrawer = false;
-                  this.search = [{rel_to_bulletin: id}];
-                  this.searchActors();
-              },
+                },
 
-              filter_related_to_actor(id) {
-                  this.bulletinDrawer = false;
-                  this.search = [{rel_to_actor: id}];
-                  this.searchActors();
-              },
-
-              filter_related_to_incident(id) {
-                  this.bulletinDrawer = false;
-                  this.search = [{rel_to_incident: id}];
-                  this.searchActors();
-              },
-
-              previewItem(endpoint) {
-
-                  axios.get(endpoint).then(res => {
-                      this.pitem = res.data;
-                      this.preview = true;
-
-                  })
+                selfAssign() {
 
 
-              }
-              ,
+                    axios.put(`/admin/api/actor/assign/${this.assignActor.id}`, {actor: this.assignActor}).then(res => {
+                        this.showSnack("{{ _('Actor assigned successfully.')}}")
+                        this.refresh();
 
-              bulkStatus() {
+                    }).catch(err => {
+                        this.showSnack(err.response.data);
+                    }).finally(() => {
+                        this.selfAssignDialog = false;
+                        this.assignActor = {};
 
-                  axios.get('/admin/api/bulk/status/?type=actor').then(res => {
-                      this.jobs = res.data;
-                      if (!this.jobs.length) {
-                          clearInterval(this.bulkTimer);
-                          this.options.page = 1;
-                          this.refresh();
-                          this.showSnack('Bulk Update is finished!')
-                      }
-                  });
+                    });
 
-              },
+                },
 
 
-              // bulk updates
+                filter_related_to_bulletin(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_bulletin: id}];
+                    this.refresh();
+                },
+
+                filter_related_to_actor(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_actor: id}];
+                    this.refresh();
+                },
+
+                filter_related_to_incident(id) {
+                    this.bulletinDrawer = false;
+                    this.search = [{rel_to_incident: id}];
+                    this.refresh();
+                },
+
+                previewItem(endpoint) {
+
+                    axios.get(endpoint).then(res => {
+                        this.pitem = res.data;
+                        this.preview = true;
+
+                    })
 
 
-              bulk_update() {
-                  let ids = this.selected.map(x => x.id);
-                  this.loading = true;
-                  axios.put(`/admin/api/actor/bulk/`, {
-                      items: ids,
-                      bulk: this.bulk
-                  })
-                      .then(response => {
-                          this.loading = false;
-                          this.showSnack(response.data);
-                          this.refresh(this.options);
-                          //reset bulk drawer, and bulk data
-                          this.bulkActorDrawer = false;
-                          this.selected = [];
-                          this.bulk = {};
-                          clearInterval(this.bulkTimer);
-                          // if (!this.bulkProcInterval)
-                          this.bulkTimer = setInterval(this.bulkStatus, 3000);
+                }
+                ,
 
-                      });
-              },
+                bulkStatus() {
+
+                    axios.get('/admin/api/bulk/status/?type=actor').then(res => {
+                        this.jobs = res.data;
+                        if (!this.jobs.length) {
+                            clearInterval(this.bulkTimer);
+                            this.options.page = 1;
+                            this.refresh();
+                            this.showSnack("{{ _('Bulk Update is finished!')}}")
+                        }
+                    });
+
+                },
 
 
-              // ---------------- advanced search -----------------------
-              toggleAdvSearch() {
-                  this.advSearchExpand = !this.advSearchExpand
-                  this.advSearchMenu = !this.advSearchMenu;
-                  this.$nextTick(() => {
-                      // trick to just invoke the binding
-
-                  })
-
-              },
-
-              doSearch() {
-                  this.options.page = 1;
-
-                  // some good UX
-                  if (this.advSearchExpand) {
-                      this.advSearchExpand = false;
-                  } else {
-                      //this.search = Object.assign({},{tsv:this.search.tsv})
-                  }
-
-                  this.searchActors();
-              },
+                // bulk updates
 
 
-              searchActors() {
+                bulk_update() {
+                    let ids = this.selected.map(x => x.id);
+                    this.loading = true;
+                    axios.put(`/admin/api/actor/bulk/`, {
+                        items: ids,
+                        bulk: this.bulk
+                    })
+                        .then(response => {
+                            this.loading = false;
+                            this.showSnack(response.data);
+                            this.refresh(this.options);
+                            //reset bulk drawer, and bulk data
+                            this.bulkActorDrawer = false;
+                            this.selected = [];
+                            this.bulk = {};
+                            clearInterval(this.bulkTimer);
+                            // if (!this.bulkProcInterval)
+                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
 
-                  this.loading = true;
-                  const startTime = new Date();
-                  axios.post(`/admin/api/actors/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
-                      this.loading = false;
-                      const endTime = new Date();
-                      this.searchTime = (endTime - startTime) / 1000;
-                      this.itemsLength = response.data.total;
-                      this.items = response.data.items;
-                      this.showVisualize = !(
+                        });
+                },
+
+
+                // ---------------- advanced search -----------------------
+                toggleAdvSearch() {
+
+                    this.advSearchExpand = !this.advSearchExpand
+                    this.advSearchMenu = !this.advSearchMenu;
+                    this.$nextTick(() => {
+                        // trick to just invoke the binding
+
+                    })
+
+                },
+
+                doSearch() {
+                    this.options.page = 1;
+
+                    // some good UX
+                    if (this.advSearchExpand) {
+                        this.advSearchExpand = false;
+                    } else {
+                        //this.search = Object.assign({},{tsv:this.search.tsv})
+                    }
+
+                    this.refresh();
+                },
+
+
+                refresh(options) {
+                    this.options = options || this.options;
+                    this.loading = true;
+                    const startTime = new Date();
+
+                    let url = `/admin/api/actors/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
+
+                    axios.post(url, {
+                        q: this.search,
+                        options: this.options
+                    }).then(response => {
+                        this.loading = false;
+                        const endTime = new Date();
+                        this.searchTime = (endTime - startTime) / 1000;
+                        this.itemsLength = response.data.total;
+                        this.items = response.data.items;
+                        this.showVisualize = !(
                             this.search.length === 1 &&
                             Object.keys(this.search[0]).length === 0
                         );
-                  });
+                    });
 
 
-              },
+                },
 
-              removeQueryAt(i) {
+                removeQueryAt(i) {
 
-                  this.search.splice(i, 1);
+                    this.search.splice(i, 1);
 
-              },
+                },
 
-              addQuery() {
-                  this.search.push({})
-                  this.searchPanels = this.search.length - 1;
-              },
+                addQuery() {
+                    this.search.push({})
+                    this.searchPanels = this.search.length - 1;
+                },
 
 
-              resetSearch() {
-                  this.savedSearchSelection = null;
-                  this.search = [{}];
-                  this.doSearch();
-              },
+                resetQuery() {
+                    this.savedSearchSelection = null;
+                    this.search = [{}];
+                },
+
+
+                resetSearch() {
+                    this.resetQuery();
+                    this.doSearch();
+                },
 
                 openSaveQueryDialog() {
                     // Separate method to include auto-focus on input
@@ -1178,7 +1216,7 @@
 
 
                 updateSearch() {
-                    axios.put('/admin/api/query/' + this.savedSearchSelection.name, {q: this.search})
+                    axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                         .then(res => {
                             this.showSnack(res.data);
                         })
@@ -1187,20 +1225,20 @@
                         });
                 },
 
-
-                deleteSearch(searchName) {
-                    axios.delete('/admin/api/query/' + searchName)
+                deleteSearch(id) {
+                    axios.delete('/admin/api/query/' + id)
                         .then(res => {
                             this.showSnack(res.data);
-                            this.searches = this.searches.filter(item => item.name !== searchName);
-                            this.resetSearch();
+                            this.searches = this.searches.filter(item => item.id !== id);
+                            if (this.savedSearchSelection.id == id) {
+                                this.savedSearchSelection = null;
+                                this.search = [{}];
+                            }
                         })
                         .catch(error => {
                             this.showSnack(handleRequestError(error));
                         });
-                }
-                ,
-
+                },
 
                 // ---------------- end advanced search -----------------------
 
@@ -1218,7 +1256,7 @@
                     q.assigned = [this.currentUser.id];
                     q.statuses = ["Assigned"];
                     this.search = [q];
-                    this.searchActors();
+                    this.refresh();
                 },
 
                 myReview() {
@@ -1227,12 +1265,12 @@
                     q.reviewer = [this.currentUser.id];
                     q.statuses = ["Peer Review Assigned"];
                     this.search = [q]
-                    this.searchActors();
+                    this.refresh();
                 },
 
 
                 removeEvent: function (evt, index) {
-                    if (confirm('Confirm deleting this event?')) {
+                    if (confirm("{{ _('Confirm deleting this event?')}}")) {
                         this.editedItem.events.splice(index, 1);
                     }
                 },
@@ -1252,13 +1290,10 @@
                     this.position__ = true;
                 },
 
-                refresh(options) {
-                    this.searchActors();
-                },
-
-                rowClick(item) {
+                rowClick(e, row) {
+                    const item = row.item;
                     if (item.restricted) {
-                        this.showSnack('This item is restricted.')
+                        this.showSnack("{{ _('This item is restricted.')}}")
                         return
                     }
                     path = `/admin/actors/${item.id}`;
@@ -1277,7 +1312,6 @@
                         this.actorDrawer = false;
                         if (error.response) {
                             this.showSnack(error.response.data)
-                            this.snackbar = true;
                         }
                     }).finally(() => {
                         this.actorLoader = false;
@@ -1326,11 +1360,6 @@
                     }
                 },
 
-
-                showSnack(message) {
-                    this.snackMessage = message;
-                    this.snackbar = true;
-                },
                 has_role(user, role) {
                     for (r of user.roles) {
                         if (r.name == role) {
@@ -1340,9 +1369,9 @@
                     return false;
                 },
 
-              bulkAllowed() {
-                  return this.has_role(this.currentUser, 'Admin') || this.has_role(this.currentUser, 'Mod');
-              },
+                bulkAllowed() {
+                    return this.has_role(this.currentUser, 'Admin') || this.has_role(this.currentUser, 'Mod');
+                },
 
                 exportAllowed() {
                     if (__EXPORT_TOOL__) {
@@ -1381,331 +1410,391 @@
                         return false;
                     }
 
-                  if (!this.currentUser.roles.length) {
-                      return false;
-                  }
+                    if (!this.currentUser.roles.length) {
+                        return false;
+                    }
 
-                  const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
-                  if (actor.first_peer_reviewer && actor.first_peer_reviewer.id == this.currentUser.id && statuses.includes(actor.status)) {
-                      return true
-                  }
-                  return false;
-              },
+                    const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
+                    if (actor.first_peer_reviewer && actor.first_peer_reviewer.id == this.currentUser.id && statuses.includes(actor.status)) {
+                        return true
+                    }
+                    return false;
+                },
 
-              selfAssignAllowed(actor) {
+                selfAssignAllowed(actor) {
 
-                  if (actor.restricted) {
-                      return false;
-                  }
+                    if (actor.restricted) {
+                        return false;
+                    }
 
-                  if (this.currentUser.can_self_assign) {
-                      if ((!actor.assigned_to) || (actor.assigned_to && !actor.assigned_to.active)) {
-                          return true
-                      }
+                    if (this.currentUser.can_self_assign) {
+                        if ((!actor.assigned_to) || (actor.assigned_to && !actor.assigned_to.active)) {
+                            return true
+                        }
 
-                  }
+                    }
 
-                  return false;
+                    return false;
 
-              },
+                },
 
-              allowedRoles() {
+                editOIDAllowed(actor_profile) {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return true;
+                    }
+                    if (actor_profile.originid == null) {
+                        return true;
+                    }
+                    return false;
+                },
+
+                initializeProfiles() {
+
+                    if (this.editedItem && this.editedItem.actor_profiles) {
+                        this.editedItem.actor_profiles.forEach(profile => {
+                            // Set the disabled state only once
+
+                            profile.originidDisabled = !this.editOIDAllowed(profile);
+                        });
+                    }
+                },
+
+                allowedRoles() {
                     if (this.has_role(this.currentUser, 'Admin')) {
                         return this.roles;
                     }
                     return this.currentUser.roles;
                 },
 
-              addReview(item) {
-                  this.loading = true;
-                  this.reviewDialog = true;
-                  axios.get(`/admin/api/actor/${item.id}`).then(response => {
-                      this.loading = false;
-                      this.$nextTick(() => {
-                          this.reviewItem = response.data;
-                          this.reviewKey += 1;
-                          if (!response.data.review) {
-                              this.reviewItem.review = '';
-                          }
+                addReview(item) {
+                    this.loading = true;
+                    this.reviewDialog = true;
+                    axios.get(`/admin/api/actor/${item.id}`).then(response => {
+                        this.loading = false;
+                        this.$nextTick(() => {
+                            this.reviewItem = response.data;
+                            this.reviewKey += 1;
+                            if (!response.data.review) {
+                                this.reviewItem.review = '';
+                            }
 
-                      })
-
-
-                  })
-
-              },
-
-              saveReview() {
-
-                  axios.put(`/admin/api/actor/review/${this.reviewItem.id}`, {
-                      item: this.reviewItem
-                  })
-                      .then(response => {
-                          this.reviewDialog = false;
-                          this.showSnack(response.data);
-                          this.refresh(this.options);
-                      });
-
-              },
+                        })
 
 
-              editItem(item) {
-                  this.actorDrawer = false;
+                    })
 
-                  if (!item.id) {
-                      this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
-                      this.dialog = true;
-                      this.handleStatus(item);
-                  } else {
+                },
 
-                      this.loading = true;
-                      axios.get(`/admin/api/actor/${item.id}`).then(response => {
-                          this.dialog = true;
+                saveReview() {
 
-                          this.$nextTick(() => {
-                              this.loading = false;
-                              this.editedItem = response.data;
-                              this.editedItem.comments = '';
-                              this.editedItem.comments = '';
-                              this.resetSwitchers();
-                              this.handleStatus(item);
+                    axios.put(`/admin/api/actor/review/${this.reviewItem.id}`, {
+                        item: this.reviewItem
+                    })
+                        .then(response => {
+                            this.reviewDialog = false;
+                            this.showSnack(response.data);
+                            this.refresh(this.options);
+                        });
 
-                          });
+                },
 
 
-                      }).catch(error => {
-                          this.showSnack('Oops! We couldn\'t find this item.')
+                editItem(item) {
+                    this.actorDrawer = false;
 
-                      });
+                    if (!item.id) {
+                        this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                        this.dialog = true;
+                        this.handleStatus(item);
+                    } else {
 
-                  }
+                        this.loading = true;
+                        axios.get(`/admin/api/actor/${item.id}`).then(response => {
+                            this.dialog = true;
 
-
-                  //this.locations = this.editedItem.locations;
-              },
-
-              deleteItem(item) {
-                  const index = this.items.indexOf(item);
-                  const cfm =
-                      confirm("Are you sure you want to delete this item?") &&
-                      this.items.splice(index, 1);
-                  if (cfm) {
-                      axios.delete(`/admin/api/actor/${item.id}`).then(response => {
-                          this.showSnack(response.data);
-
-                          this.refresh(this.options);
-                      });
-                  }
-              },
+                            this.$nextTick(() => {
 
 
-              confirmClose() {
-                  if (confirm('Are you sure?')) {
-                      this.close();
-                  }
-              },
-              close() {
+                                this.editedItem = response.data;
+                                this.initializeProfiles();
+                                this.editedItem.comments = '';
+                                this.resetSwitchers();
+                                this.handleStatus(item);
 
-                  this.dialog = false;
-                  setTimeout(() => {
-                      this.editedItem = Object.assign({}, this.defaultItem);
-                      this.unrestricted = false;
-                      this.editedIndex = -1;
-                  }, 300);
-
-              },
-
-              save() {
-                  const validator = this.$refs.observer;
-                  validator.validate().then(valid => {
-                      if (!valid) {
-                          this.showSnack('Please fix the errors before saving.');
-                          return; // Add this line
-                      }
-
-                      if (this.editedItem.id) {
-                          //update record
-                          this.loading = true;
-                          axios
-                              .put(`/admin/api/actor/${this.editedItem.id}`, {
-                                  item: this.editedItem
-                              })
-                              .then(response => {
-                                  this.showSnack(response.data);
-                                  this.refresh(this.options);
-                              }).catch(err => {
-                              console.log(err.response.data);
-                              this.showSnack(err.response.data)
-                          }).finally(() => {
-                              this.loading = false;
+                            });
 
 
-                          });
-                      } else {
+                        }).catch(error => {
+                            this.showSnack("{{ _('Oops! We couldn\'t find this item.')}}")
 
-                          //create new record
-                          this.loading = true;
-                          axios
-                              .post("/admin/api/actor/", {item: this.editedItem})
-                              .then(response => {
-                                  this.showSnack(response.data);
-                                  this.refresh(this.options);
-                              }).catch(err => {
-                              console.log(err.response.data);
-                              this.showSnack(err.response.data)
-                          }).finally(() => {
-                              this.loading = false;
-                          });
-                      }
-                      this.close();
-                  });
+                        }).finally(() => {
+                            this.loading = false;
+                        });
+
+                    }
 
 
+                    //this.locations = this.editedItem.locations;
+                },
+
+                deleteItem(item) {
+                    const index = this.items.indexOf(item);
+                    const cfm =
+                        confirm("{{ _('Are you sure you want to delete this item?')}}") &&
+                        this.items.splice(index, 1);
+                    if (cfm) {
+                        axios.delete(`/admin/api/actor/${item.id}`).then(response => {
+                            this.showSnack(response.data);
+
+                            this.refresh(this.options);
+                        });
+                    }
+                },
 
 
-              },
+                confirmClose() {
+                    if (confirm(translations.confirm_)) {
+                        this.close();
+                    }
+                },
+                close() {
 
-              editEvent(evt, item, index) {
-                  this.editedEvent = Object.assign({}, item);
-                  //console.log(this.editedEvent);
-                  this.editedEventIndex = index;
+                    this.dialog = false;
+                    setTimeout(() => {
+                        this.editedItem = Object.assign({}, this.defaultItem);
+                        this.editedIndex = -1;
+                        this.unrestricted = false;
+                    }, 300);
 
-                  //reset dual fields display to english
-                  this.eventTitle__ = true;
-                  this.eventComments__ = true;
-                  this.eventDialog = true;
-                  //this.locations = this.editedItem.locations;
-              },
+                },
 
-              closeEvent() {
-                  this.eventDialog = false;
-                  setTimeout(() => {
-                      this.editedEvent = Object.assign({}, this.defaultEvent);
-                      this.editedEventIndex = -1;
-                  }, 300);
-              },
+                save() {
+                    if (!this.valid) {
+                        this.showSnack("{{ _('Please review the form for errors.')}}");
+                        return;
+                    }
 
-              saveEvent() {
-                  if (this.editedEventIndex > -1) {
-                      Object.assign(
-                          this.editedItem.events[this.editedEventIndex],
-                          this.editedEvent
-                      );
-                      //update record
-                  } else {
-                      this.editedItem.events.push(this.editedEvent);
-                      //create new record
-                  }
-                  this.closeEvent();
-              },
+                    if (this.editedItem.id) {
+                        //update record
+                        this.loading = true;
+                        axios.put(`/admin/api/actor/${this.editedItem.id}`, {
+                            item: this.editedItem
+                        })
+                            .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                                this.close();
+                            }).catch(err => {
+                            console.error(err.response?.data);
+                            this.showSnack(this.parseValidationError(err.response?.data))
+                        }).finally(() => {
+                            this.loading = false;
+                        });
+                    } else {
 
-              // related actors functions --------------------
+                        //create new record
+                        this.loading = true;
+                        axios.post("/admin/api/actor/", {item: this.editedItem})
+                            .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                                this.close();
+                            }).catch(err => {
+                            console.error(err.response?.data);
+                            this.showSnack(this.parseValidationError(err.response?.data));
+                        }).finally(() => {
+                            this.loading = false;
+                        });
+                    }
 
-              detectDirection(editedItem, actor) {
-                  // Since relationships always enforced to flow from smaller id to bigger id
-                  // this can be used to determine the relationship label displayed
-                  // one special case needs handling is when a new actor is created (id is null) in this case
-                  // new actor id will be definitely larger than any id in the system
+                },
 
-                  if (!editedItem.id) {
-                      return false;
-                  } else {
-                      return editedItem.id < actor.id
-                  }
+                editEvent(evt, item, index) {
+                    this.editedEvent = Object.assign({}, item);
+                    //console.log(this.editedEvent);
+                    this.editedEventIndex = index;
 
-              },
+                    //reset dual fields display to english
+                    this.eventTitle__ = true;
+                    this.eventComments__ = true;
+                    this.eventDialog = true;
+                    //this.locations = this.editedItem.locations;
+                },
 
-              searchRelatedActors() {
-                  this.$refs.relateActors.open();
-                  this.$nextTick(() => {
-                      this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-                      this.$refs.relateActors.reSearch();
-                  });
-              },
+                closeEvent() {
+                    this.eventDialog = false;
+                    setTimeout(() => {
+                        this.editedEvent = Object.assign({}, this.defaultEvent);
+                        this.editedEventIndex = -1;
+                    }, 300);
+                },
 
-              relateActor(actor) {
-                  // get list of existing attached actors
-                  let ex = this.editedItem.actor_relations.map(x => x.actor.id);
+                saveEvent() {
+                    if (this.editedEventIndex > -1) {
+                        Object.assign(
+                            this.editedItem.events[this.editedEventIndex],
+                            this.editedEvent
+                        );
+                        //update record
+                    } else {
+                        this.editedItem.events.push(this.editedEvent);
+                        //create new record
+                    }
+                    this.closeEvent();
+                },
 
-                  if (!ex.includes(actor.id)) {
-                      relation = {
-                          actor: actor
-                      };
-                      this.editedItem.actor_relations.push(relation);
-                      this.relateActorResults.removeById(actor.id);
-                  }
-              },
+                // related actors functions --------------------
 
-              removeActor: function (evt, index) {
-                  if (confirm("Are you sure?")) {
-                      this.editedItem.actor_relations.splice(index, 1);
-                  }
-              },
+                detectDirection(editedItem, actor) {
+                    // Since relationships always enforced to flow from smaller id to bigger id
+                    // this can be used to determine the relationship label displayed
+                    // one special case needs handling is when a new actor is created (id is null) in this case
+                    // new actor id will be definitely larger than any id in the system
 
+                    if (!editedItem.id) {
+                        return false;
+                    } else {
+                        return editedItem.id < actor.id
+                    }
 
-              // related bulletins functions --------------------
+                },
 
-              searchRelatedBulletins() {
+                searchRelatedActors() {
+                    this.$refs.relateActors.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateActors.q = {tsv: this.relateActorTerm};
+                        this.$refs.relateActors.reSearch();
+                    });
+                },
 
-                  this.$refs.relateBulletins.open();
-                  this.$nextTick(() => {
-                      this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-                      this.$refs.relateBulletins.reSearch();
-                  });
-              },
+                relateActor(actor) {
+                    // get list of existing attached actors
+                    let ex = this.editedItem.actor_relations.map(x => x.actor.id);
 
-              relateBulletin(bulletin) {
-                  // get list of existing attached bulletins
-                  let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
+                    if (!ex.includes(actor.id)) {
+                        relation = {
+                            actor: actor
+                        };
+                        this.editedItem.actor_relations.push(relation);
+                        this.relateActorResults.removeById(actor.id);
+                    }
+                },
 
-                  if (!ex.includes(bulletin.id)) {
-                      relation = {
-                          bulletin: bulletin
-                      };
-                      this.editedItem.bulletin_relations.push(relation);
-                      this.relateBulletinResults.removeById(bulletin.id);
-                  }
-              },
-
-              removeBulletin: function (evt, index) {
-                  if (confirm("Are you sure?")) {
-                      this.editedItem.bulletin_relations.splice(index, 1);
-                  }
-              },
-
-
-              // related incidents functions ------------------------
-
-              searchRelatedIncidents() {
-
-                  this.$refs.relateIncidents.open();
-                  this.$nextTick(() => {
-                      this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-                      this.$refs.relateIncidents.reSearch();
-                  });
-
-              },
-              relateIncident(incident) {
-                  // get list of existing attached actors
-                  let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-                  if (!ex.includes(incident.id)) {
-                      relation = {
-                          incident: incident
-                      };
-                      this.editedItem.incident_relations.push(relation);
-                      this.relateIncidentResults.removeById(incident.id);
-                  }
-              },
-
-              removeIncident: function (evt, index) {
-                  if (confirm("Are you sure?")) {
-                      this.editedItem.incident_relations.splice(index, 1);
-                  }
-              },
+                removeActor: function (evt, index) {
+                    if (confirm(translations.confirm_)) {
+                        this.editedItem.actor_relations.splice(index, 1);
+                    }
+                },
 
 
-          }
-      });
-  </script>
+                // related bulletins functions --------------------
+
+                searchRelatedBulletins() {
+
+                    this.$refs.relateBulletins.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
+                        this.$refs.relateBulletins.reSearch();
+                    });
+                },
+
+                relateBulletin(bulletin) {
+                    // get list of existing attached bulletins
+                    let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
+
+                    if (!ex.includes(bulletin.id)) {
+                        relation = {
+                            bulletin: bulletin
+                        };
+                        this.editedItem.bulletin_relations.push(relation);
+                        this.relateBulletinResults.removeById(bulletin.id);
+                    }
+                },
+
+                removeBulletin: function (evt, index) {
+                    if (confirm(translations.confirm_)) {
+                        this.editedItem.bulletin_relations.splice(index, 1);
+                    }
+                },
+
+
+                // related incidents functions ------------------------
+
+                searchRelatedIncidents() {
+
+                    this.$refs.relateIncidents.open();
+                    this.$nextTick(() => {
+                        this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
+                        this.$refs.relateIncidents.reSearch();
+                    });
+
+                },
+                relateIncident(incident) {
+                    // get list of existing attached actors
+                    let ex = this.editedItem.incident_relations.map(x => x.incident.id);
+
+                    if (!ex.includes(incident.id)) {
+                        relation = {
+                            incident: incident
+                        };
+                        this.editedItem.incident_relations.push(relation);
+                        this.relateIncidentResults.removeById(incident.id);
+                    }
+                },
+
+                removeIncident: function (evt, index) {
+                    if (confirm(translations.confirm_)) {
+                        this.editedItem.incident_relations.splice(index, 1);
+                    }
+                },
+
+
+            }
+        });
+
+        app.component('SearchField', SearchField);
+        app.component('UniField', UniField);
+        app.component('DualField', DualField);
+        app.component('LocationSearchField', LocationSearchField);
+        app.component('GeoMap', GeoMap);
+        app.component('RelateBulletins', RelateBulletins);
+        app.component('RelateActors', RelateActors);
+        app.component('RelateIncidents', RelateIncidents);
+        app.component('BulletinResult', BulletinResult);
+        app.component('BulletinSearchBox', BulletinSearchBox);
+        app.component('ActorSearchBox', ActorSearchBox);
+        app.component('IncidentSearchBox', IncidentSearchBox);
+        app.component('ActorResult', ActorResult);
+        app.component('IncidentResult', IncidentResult);
+        app.component('BulletinCard', BulletinCard);
+        app.component('ActorProfiles', ActorProfiles);
+        app.component('ActorCard', ActorCard);
+        app.component('IncidentCard', IncidentCard);
+        app.component('EventCard', EventCard);
+        app.component('PopDateField', PopDateField);
+        app.component('PopDateTimeField', PopDateTimeField);
+        app.component('PopDateRangeField', PopDateRangeField);
+        app.component('GeoLocations', GeoLocations);
+        app.component('GlobalMap', GlobalMap);
+        app.component('ImageGallery', ImageGallery);
+        app.component('MediaCard', MediaCard);
+        app.component('Visualization', Visualization);
+        app.component('PdfViewer', PdfViewer);
+        app.component('PreviewCard', PreviewCard);
+
+        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
+        app.component('RelatedActorsCard', RelatedActorsCard);
+        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
+
+        app.component('mix-i', MixI);
+        app.component('mix-ii', MixII);
+        app.component('mix-iii', MixIII);
+        app.component('mp-field', MPField);
+        app.component('mp-card', MPCard);
+        app.component('vue-dropzone', VueDropzone);
+
+
+        app.use(router).use(vuetify).mount('#app');
+        window.app = app;
+    </script>
 {% endblock %}

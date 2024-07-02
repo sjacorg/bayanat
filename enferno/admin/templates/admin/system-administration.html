@@ -1,1037 +1,969 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-<v-app id="app" v-cloak class="system-admin">
-    {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-    <v-main>
-        <v-container class="container--fluid">
-            <v-row>
-                <v-col cols="12">
-                    <v-card>
-                        <v-card-title class="justify-end">
-                            <v-btn class="ma-1" small @click="showRevisions=!showRevisions" depressed
-                                   color="secondary">
-                                <v-icon left>mdi-history</v-icon>
+    <v-main class="system-admin overflow-auto">
+        <v-card class="ma-5 pa-2">
+
+                        <v-card-title  class="d-flex">
+                            {{ _('Administration Dashboard') }}
+                                <v-spacer></v-spacer>
+                            <v-btn prepend-icon="mdi-history" variant="elevated" class="ma-1" size="small" @click="showRevisions=!showRevisions">
+
                                 {{ _('Revision History') }}
                             </v-btn>
+
+
                         </v-card-title>
                         <v-card-text class="pa-4">
-                            <validation-observer v-slot="{invalid}">
-                                <v-tabs v-model="tab" class="mb-9 sticky-tabs">
-                                    <v-tab key="general">{{ _('General') }}</v-tab>
-                                    <v-tab key="storage">{{ _('Storage') }}</v-tab>
-                                    <v-tab key="security">{{ _('Security') }}</v-tab>
-                                    <v-tab key="control">{{ _('Access Control') }}</v-tab>
-                                    <v-tab key="logging">{{ _('Activity Monitor') }}</v-tab>
-                                    <v-tab key="import">{{ _('Import Tools') }}</v-tab>
-                                    <v-tab key="export">{{ _('Export Tool') }}</v-tab>
-                                    <v-tab key="maps">{{ _('Maps') }}</v-tab>
-                                </v-tabs>
+                            <v-tabs bg-color="primary" v-model="tab" class="mb-9 ">
+                                <v-tab value="general">{{ _('General') }}</v-tab>
+                                <v-tab value="storage">{{ _('Storage') }}</v-tab>
+                                <v-tab value="security">{{ _('Security') }}</v-tab>
+                                <v-tab value="control">{{ _('Access Control') }}</v-tab>
+                                <v-tab value="logging">{{ _('Activity Monitor') }}</v-tab>
+                                <v-tab value="import">{{ _('Import Tools') }}</v-tab>
+                                <v-tab value="export">{{ _('Export Tool') }}</v-tab>
+                                <v-tab value="maps">{{ _('Maps') }}</v-tab>
+                            </v-tabs>
 
 
-                                <v-tabs-items v-model="tab">
-                                    <v-tab-item key="general">
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
+                            <v-window v-model="tab" >
+                                <v-window-item value="general">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
 
-                                                <v-combobox class="mb-9"
-                                                            multiple small-chips
-                                                            persistent-hint
-                                                            hint="{{ _('Allows to load different set of items in pages that has data tables') }}"
-                                                            :items="eitem.ITEMS_PER_PAGE_OPTIONS"
-                                                            label="{{ _('Items Per Page Options') }}"
-                                                            v-model="eitem.ITEMS_PER_PAGE_OPTIONS"></v-combobox>
+                                            <v-combobox class="mb-9"
+                                                        multiple
+                                                        persistent-hint
+                                                        chips
+                                                        hint="{{ _('Allows to load different set of items in pages that has data tables') }}"
+                                                        :items="eitem.ITEMS_PER_PAGE_OPTIONS"
+                                                        label="{{ _('Items Per Page Options') }}"
+                                                        v-model="eitem.ITEMS_PER_PAGE_OPTIONS"></v-combobox>
 
-                                                <v-combobox class="mb-9" multiple small-chips
-                                                            :items="eitem.VIDEO_RATES"
-                                                            persistent-hint
-                                                            hint="{{ _('Allows to play videos at different speed rates') }}"
-                                                            label="{{ _('Video Player Playback Rates') }}"
-                                                            v-model="eitem.VIDEO_RATES"></v-combobox>
+                                            <v-combobox class="mb-9" multiple chips
+                                                        :items="eitem.VIDEO_RATES"
+                                                        persistent-hint
+                                                        hint="{{ _('Allows to play videos at different speed rates') }}"
+                                                        label="{{ _('Video Player Playback Rates') }}"
+                                                        v-model="eitem.VIDEO_RATES"></v-combobox>
 
-                                                <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Language') }}</h4>
-                                                <v-btn-toggle mandatory class="mb-3"
-                                                              v-model="eitem.BABEL_DEFAULT_LOCALE">
-                                                    <v-btn small v-for="lang in eitem.LANGUAGES" :value="lang">
-                                                        ${lang}
-                                                    </v-btn>
-                                                </v-btn-toggle>
-                                                <p class="caption">{{
-                                                        _('Changes default interface language. This will affect new users. Users can still choose their own interface language from their settings.')
-                                                    }}</p>
-
-                                              
-
-                                                <v-switch label="{{ _('Deduplication Tool') }}"
-                                                          v-model="eitem.DEDUP_TOOL"
-                                                          persistent-hint
-                                                          hint="{{ _('Enables integration with Benetech\'s Deduplication tool.') }}"></v-switch>
-
-                                                <v-slide-y-transition>
-                                                    <v-sheet v-show="eitem.DEDUP_TOOL" class=" pa-4 grey lighten-4">
-
-                                                        <validation-provider name="Deduplication Low Distance"
-                                                                             :rules="eitem.DEDUP_TOOL? 'required':''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field class="mb-5" type="number"
-                                                                          persistent-hint
-                                                                          hint="{{ _('Lowest value of distance to process.') }}"
-                                                                          label="{{ _('Deduplication Low Distance') }}"
-                                                                          v-model.number="eitem.DEDUP_LOW_DISTANCE"></v-text-field>
-
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="Deduplication Max Distance"
-                                                                             :rules="eitem.DEDUP_TOOL? 'required':''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field class="mb-9" type="number"
-                                                                          persistent-hint
-                                                                          hint="{{ _('Highest value of distance to process.') }}"
-                                                                          label="{{ _('Deduplication Max Distance') }}"
-                                                                          v-model.number="eitem.DEDUP_MAX_DISTANCE"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="Deduplication Batch Size"
-                                                                             :rules="eitem.DEDUP_TOOL? 'required':''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field class="mb-9" type="number"
-                                                                          persistent-hint
-                                                                          hint="{{ _('Number of matches to send for processing in every batch. Affects speed of processing and performance of the server.') }}"
-                                                                          label="{{ _('Deduplication Batch Size') }}"
-                                                                          v-model.number="eitem.DEDUP_BATCH_SIZE"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="Deduplication Interval"
-                                                                             :rules="eitem.DEDUP_TOOL? 'required':''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field class="mb-9" type="number"
-                                                                          persistent-hint
-                                                                          hint="{{ _('Interval of batches sent for processing. Affects speed of processing and performance of the server.') }}"
-                                                                          label="{{ _('Deduplication Interval') }}"
-                                                                          v-model.number="eitem.DEDUP_INTERVAL"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                    </v-sheet>
-                                                </v-slide-y-transition>
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-tab-item>
-
-
-                                    <v-tab-item key="storage">
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
-                                                <h4 class="mt-3 subtitle-2 mb-2">{{ _('Media Storage') }}</h4>
-                                                <p class="caption">{{
-                                                        _('Storage options for media files uploaded to Bayanat. It\'s possible to store these files locally on the host or in S3 bucket.')
-                                                    }}</p>
-                                                <v-btn-toggle v-model="eitem.FILESYSTEM_LOCAL"
-                                                              mandatory class="my-3 mb-9">
-                                                    <v-btn :value="1">{{ _('Local Filesystem') }}</v-btn>
-                                                    <v-btn :value="0">{{ _('S3 Storage') }}</v-btn>
-                                                </v-btn-toggle>
-
-                                                <v-slide-y-transition>
-                                                    <v-sheet v-show="!eitem.FILESYSTEM_LOCAL"
-                                                             class="pa-4 grey lighten-4">
-
-                                                        <validation-provider name="AWS Access Key ID"
-                                                                             :rules="!eitem.FILESYSTEM_LOCAL ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('AWS Access Key ID') }}"
-                                                                          v-model="eitem.AWS_ACCESS_KEY_ID"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="AWS Access Key Secret"
-                                                                             :rules="!eitem.FILESYSTEM_LOCAL ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('AWS Access Key Secret') }}"
-                                                                          v-model="eitem.AWS_SECRET_ACCESS_KEY"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="S3 Bucket Name"
-                                                                             :rules="!eitem.FILESYSTEM_LOCAL ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('S3 Bucket Name') }}"
-                                                                          v-model="eitem.S3_BUCKET"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="S3 Region"
-                                                                             :rules="!eitem.FILESYSTEM_LOCAL ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('S3 Region') }}"
-                                                                          v-model="eitem.AWS_REGION"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                    </v-sheet>
-                                                </v-slide-y-transition>
-
-                                                <v-combobox class="mb-9" multiple small-chips
-                                                            :items="eitem.MEDIA_ALLOWED_EXTENSIONS"
-                                                            v-model="eitem.MEDIA_ALLOWED_EXTENSIONS"
-                                                            label="{{ _('Allowed Media Extensions') }}"
-                                                            persistent-hint
-                                                            hint="{{ _('The system will only allow files uploaded whose extensions are included in this list and reject all other extensions.') }}"></v-combobox>
-
-                                                <v-text-field class="mb-9" v-model="eitem.MEDIA_UPLOAD_MAX_FILE_SIZE"
-                                                              label="{{ _('Media Max Upload Size') }}"
-                                                              persistent-hint
-                                                              hint="{{ _('Sets the maximum allowed file size for media uploads.') }}"></v-text-field>
-
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-tab-item>
-
-
-                                    <v-tab-item key="security">
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
-
-                                                <v-text-field class="mb-9" type="number"
-                                                              label="{{ _('Security Freshness') }}"
-                                                              persistent-hint
-                                                              hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
-                                                              suffix="minutes"
-                                                              v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
-                                                <v-text-field class="mb-9" type="number"
-                                                              label="{{ _('Security Freshness Grace Period') }}"
-                                                              persistent-hint
-                                                              hint="{{ _('Re-authentication will require a second factor after this period.') }}"
-                                                              suffix="minutes"
-                                                              v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
-
-                                                <v-switch class="mb-9" label="{{ _('Recaptcha Enabled') }}"
-                                                          persistent-hint
-                                                          hint="{{ _('Require Google Recaptcha on the login form.') }}"
-                                                          v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
-
-                                                <v-slide-y-transition>
-                                                    <v-sheet v-show="eitem.RECAPTCHA_ENABLED"
-                                                             class="pa-4 grey lighten-4">
-                                                        <validation-provider name="Recaptcha Site Key"
-                                                                             :rules="eitem.RECAPTCHA_ENABLED ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('Recaptcha Site Key') }}"
-                                                                          v-model="eitem.RECAPTCHA_PUBLIC_KEY"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="Recaptcha Secret Key"
-                                                                             :rules="eitem.RECAPTCHA_ENABLED ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('Recaptcha Secret Key') }}"
-                                                                          v-model="eitem.RECAPTCHA_PRIVATE_KEY"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-                                                    </v-sheet>
-                                                </v-slide-y-transition>
-
-                                                <v-switch class="mb-9" label="{{ _('Enable Google OAuth') }}"
-                                                          persistent-hint
-                                                          hint="{{ _('Allow users to login using their Google account.') }}"
-                                                          v-model="eitem.GOOGLE_OAUTH_ENABLED"></v-switch>
-
-                                                <v-slide-y-transition>
-                                                    <v-sheet v-show="eitem.GOOGLE_OAUTH_ENABLED"
-                                                             class="pa-4 grey lighten-4">
-                                                        <validation-provider name="Google Client ID"
-                                                                             :rules="eitem.GOOGLE_OAUTH_ENABLED ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('Google Client ID') }}"
-                                                                          v-model="eitem.GOOGLE_CLIENT_ID"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="Google Client Secret"
-                                                                             :rules="eitem.GOOGLE_OAUTH_ENABLED ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('Google Client Secret') }}"
-                                                                          v-model="eitem.GOOGLE_CLIENT_SECRET"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                        <validation-provider name="Google Discovery URL"
-                                                                             :rules="eitem.GOOGLE_OAUTH_ENABLED ? 'required' : ''"
-                                                                             v-slot="{ errors }">
-                                                            <v-text-field label="{{ _('Google Discovery URL') }}"
-                                                                          v-model="eitem.GOOGLE_DISCOVERY_URL"></v-text-field>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                    </v-sheet>
-                                                </v-slide-y-transition>
-
-
-                                                <v-switch class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
-                                                          persistent-hint
-                                                          hint="{{ _('Force users to enroll in two factor authentication') }}"
-                                                          v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
-                                                >
-
-                                                </v-switch>
-
-                                                 <v-switch class="mb-9" label="{{_('Hardware-Enhanced 2FA via WebAuthn & FIDO')}}"
-                                                          persistent-hint
-                                                          hint="{{_('Secure your account with FIDO hardware for robust WebAuthn-based 2FA')}}"
-                                                          v-model="eitem.SECURITY_WEBAUTHN"
-                                                >
-
-                                                </v-switch>
-
-                                             
-
-
-                                            </v-card-text>
-
-                                            <v-card-title>{{ _('Password Policies') }}</v-card-title>
-                                            <v-card-text>
-
-                                                <v-text-field class="mb-9" type="number"
-                                                              label="{{_('Password Minimum Length')}}"
-                                                              persistent-hint
-                                                              hint="{{_('Minimum required length for passwords')}}"
-                                                              suffix="charachters"
-                                                              v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
-
-                                            </v-card-text>
-
-                                            <v-card-title>{{ _('Password Strength') }}</v-card-title>
-                                            <v-card-text>
-                                                <v-sheet width="400">
-                                                    <v-slider
-                                                            color="grey"
-                                                            v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
-                                                            min="0"
-                                                            max="4"
-                                                            hint="{{_('0 is weekest, 4 is strongest')}}"
-                                                            persistent-hint
-                                                            :tick-labels="[0,1,2,3,4]"
-                                                            tick-size="4"
-                                                            step="1"
-                                                    ></v-slider>
-                                                </v-sheet>
-                                            </v-card-text>
-
-
-                                            <v-card-text>
-                                                <v-btn @click.once="forceGlobalReset" color="yv" dark>
-                                                    {{ _('Force Global Password Reset') }}
+                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Language') }}</h4>
+                                            <v-btn-toggle divided variant="outlined" color="" mandatory class="mb-3"
+                                                          v-model="eitem.BABEL_DEFAULT_LOCALE">
+                                                <v-btn size="small" v-for="(name, code) in eitem.LANGUAGES"
+                                                       :value="code">
+                                                    ${name}
                                                 </v-btn>
-                                            </v-card-text>
+                                            </v-btn-toggle>
+                                            <p class="caption">{{ _('Changes default interface language for all users. Users can still choose their own interface language.') }}</p>
 
-                                        </v-card>
-                                    </v-tab-item>
 
-                                    <v-tab-item key="control">
+                                            <v-switch color="primary" label="{{ _('Deduplication Tool') }}"
+                                                      v-model="eitem.DEDUP_TOOL"
+                                                      persistent-hint
+                                                      hint="{{ _('Enables integration with Benetech\'s Deduplication tool.') }}"></v-switch>
 
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.DEDUP_TOOL" class=" pa-4 grey lighten-4">
 
-                                                <v-switch class="mb-9" label="{{ _('Restrictive Access Control') }}"
-                                                          persistent-hint
-                                                          hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
-                                                          v-model="eitem.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
-                                                          <!-- Enabling  -->
+                                                    <v-text-field class="mb-5" type="number"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Lowest value of distance to process.') }}"
+                                                                  label="{{ _('Deduplication Low Distance') }}"
+                                                                  v-model.number="eitem.DEDUP_LOW_DISTANCE"></v-text-field>
 
-                                                <v-switch class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
-                                                          persistent-hint
-                                                          hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
-                                                          v-model="eitem.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
-                                            </v-card-text>
-
-                                        </v-card>
-                                    </v-tab-item>
-
-                                    <v-tab-item key="logging">
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
-                                                <h4 class="mt-3 subtitle-2 mb-2">{{ _('Activity Monitor') }}</h4>
-                                                <p class="caption">{{
-                                                        _('Set users\' actions to be logged in the Activity Monitor.')
-                                                    }}</p>
-
-                                                    <v-switch class="mb-9" label="{{ _('Items created by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items created by users.') }}"
-                                                        v-model="eitem.ACTIVITIES['CREATE']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Items viewed by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will log all Actors, Bulletins and Incidents viewed by users.') }}"
-                                                        v-model="eitem.ACTIVITIES['VIEW']">
-                                                    </v-switch>
-                                                    
-                                                    <v-switch class="mb-9" label="{{ _('Items edited by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items edited by users.') }}"
-                                                        v-model="eitem.ACTIVITIES['UPDATE']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Items deleted by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all secondary items deleted by authorized users. Note: Actors, Bulletins and Incidents cannot be deleted.') }}"
-                                                        v-model="eitem.ACTIVITIES['DELETE']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Items reviewer by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all items peer-viewed by authorized users.') }}"
-                                                        v-model="eitem.ACTIVITIES['REVIEW']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Files uploaded by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all files uploaded users to media storage.') }}"
-                                                        v-model="eitem.ACTIVITIES['UPLOAD']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Bulk operations queued by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}"
-                                                        v-model="eitem.ACTIVITIES['BULK']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Export requests made by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all export requests submitted by authorized users.') }}"
-                                                        v-model="eitem.ACTIVITIES['REQUEST']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Export requests approved by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all export requests approvals by administrators.') }}"
-                                                        v-model="eitem.ACTIVITIES['APPROVE']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Export requests rejected by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all export requests rejections by administrators.') }}"
-                                                        v-model="eitem.ACTIVITIES['REJECT']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Export requests downloaded by  users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all export requests downloads by authorized users.') }}"
-                                                        v-model="eitem.ACTIVITIES['DOWNLOAD']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Search queries made by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all searches conducted by users on Actors, Bulletins and Incidents.') }}"
-                                                        v-model="eitem.ACTIVITIES['SEARCH']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Items self-assigned by users') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all items self-assigned by users.') }}"
-                                                        v-model="eitem.ACTIVITIES['SELF-ASSIGN']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Logins by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all user login activities.') }}"
-                                                        v-model="eitem.ACTIVITIES['LOGIN']">
-                                                    </v-switch>
-
-                                                    <v-switch class="mb-9" label="{{ _('Logouts by users.') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('This setting will enable logging all user logout activities. Note: only explicit logout will be logged, users closing their browsers without logging out will not for example.') }}"
-                                                        v-model="eitem.ACTIVITIES['LOGOUT']">
-                                                    </v-switch>
 
                                                     <v-text-field class="mb-9" type="number"
-                                                        label="{{ _('Activity Retention Period') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Highest value of distance to process.') }}"
+                                                                  label="{{ _('Deduplication Max Distance') }}"
+                                                                  v-model.number="eitem.DEDUP_MAX_DISTANCE"></v-text-field>
+
+                                                    <v-text-field class="mb-9" type="number"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Number of matches to send for processing in every batch. Affects speed of processing and performance of the server.') }}"
+                                                                  label="{{ _('Deduplication Batch Size') }}"
+                                                                  v-model.number="eitem.DEDUP_BATCH_SIZE"></v-text-field>
+                                                    <v-text-field class="mb-9" type="number"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Interval of batches sent for processing. Affects speed of processing and performance of the server.') }}"
+                                                                  label="{{ _('Deduplication Interval') }}"
+                                                                  v-model.number="eitem.DEDUP_INTERVAL"></v-text-field>
+
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
+
+
+                                <v-window-item value="storage">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Media Storage') }}</h4>
+                                            <p class="caption">{{ _('Storage options for media files uploaded to Bayanat. It\'s possible to store these files locally on the host or in S3 bucket.') }}</p>
+                                            <v-btn-toggle v-model="eitem.FILESYSTEM_LOCAL"
+                                                          mandatory class="my-3 mb-9">
+                                                <v-btn :value="1">{{ _('Local Filesystem') }}</v-btn>
+                                                <v-btn :value="0">{{ _('S3 Storage') }}</v-btn>
+                                            </v-btn-toggle>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="!eitem.FILESYSTEM_LOCAL"
+                                                         class="pa-4 grey lighten-4">
+
+                                                    <v-text-field label="{{ _('AWS Access Key ID') }}"
+                                                                  v-model="eitem.AWS_ACCESS_KEY_ID"></v-text-field>
+
+                                                    <v-text-field label="{{ _('AWS Access Key Secret') }}"
+                                                                  v-model="eitem.AWS_SECRET_ACCESS_KEY"></v-text-field>
+
+                                                    <v-text-field label="{{ _('S3 Bucket Name') }}"
+                                                                  v-model="eitem.S3_BUCKET"></v-text-field>
+
+                                                    <v-text-field label="{{ _('S3 Region') }}"
+                                                                  v-model="eitem.AWS_REGION"></v-text-field>
+
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+
+                                            <v-combobox class="mb-9" multiple chips
+                                                        :items="eitem.MEDIA_ALLOWED_EXTENSIONS"
+                                                        v-model="eitem.MEDIA_ALLOWED_EXTENSIONS"
+                                                        label="{{ _('Allowed Media Extensions') }}"
                                                         persistent-hint
-                                                        hint="{{ _('Period after which activities will be deleted.') }}"
-                                                        suffix="days"
-                                                        v-model.number="eitem.ACTIVITIES_RETENTION"></v-text-field>
+                                                        hint="{{ _('The system will only allow files uploaded whose extensions are included in this list and reject all other extensions.') }}"></v-combobox>
 
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-tab-item>
-
-                                    <v-tab-item key="import">
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
-
-                                                <v-switch class="mb-9" label="{{ _('Media Import Tool') }}"
+                                            <v-text-field class="mb-9" v-model="eitem.MEDIA_UPLOAD_MAX_FILE_SIZE"
+                                                          label="{{ _('Media Max Upload Size') }}"
                                                           persistent-hint
-                                                          hint="{{ _('Enable importing and parsing media items in bulk directly into bulletins.') }}"
-                                                          v-model="eitem.ETL_TOOL"></v-switch>
+                                                          hint="{{ _('Sets the maximum allowed file size for media uploads.') }}"></v-text-field>
 
-                                                <v-slide-y-transition>
-                                                    <v-sheet v-show="eitem.ETL_TOOL" class=" pa-4 grey lighten-4">
-                                                        <v-switch 
-                                                                class="mb-9"
-                                                                label="{{ _('Media Import Path Scanning') }}"
-                                                                persistent-hint
-                                                                hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilise this feature. It should be turned on only when it\'s needed.') }}"
-                                                                v-model="eitem.ETL_PATH_IMPORT"></v-switch>
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
 
-                                                        <validation-provider name="ETL Video Extensions"
-                                                                             :rules="eitem.ETL_VID_EXT? 'required':''"
-                                                                             v-slot="{ errors }">
-                                                            <v-combobox class="mb-9" multiple small-chips
-                                                                        persistent-hint
-                                                                        hint="{{ _('Allowed file extensions for the Media Import Tool.') }}"
-                                                                        :items="eitem.ETL_VID_EXT"
-                                                                        label="{{ _('ETL Video Extensions') }}"
-                                                                        v-model="eitem.ETL_VID_EXT"></v-combobox>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
 
-                                                        <v-switch class="mb-9"
+                                <v-window-item value="security">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+
+                                            <v-text-field class="mb-9" type="number"
+                                                          label="{{ _('Security Freshness') }}"
+                                                          persistent-hint
+                                                          hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
+                                                          suffix="minutes"
+                                                          v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
+                                            <v-text-field class="mb-9" type="number"
+                                                          label="{{ _('Security Freshness Grace Period') }}"
+                                                          persistent-hint
+                                                          hint="{{ _('Re-authentication will require a second factor after this period.') }}"
+                                                          suffix="minutes"
+                                                          v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
+
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Recaptcha Enabled') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Require Google Recaptcha on the login form.') }}"
+                                                      v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.RECAPTCHA_ENABLED"
+                                                         class="pa-4 grey lighten-4">
+                                                    <v-text-field label="{{ _('Recaptcha Public Key') }}"
+                                                                  v-model="eitem.RECAPTCHA_PUBLIC_KEY"></v-text-field>
+
+                                                    <v-text-field label="{{ _('Recaptcha Private Key') }}"
+                                                                  v-model="eitem.RECAPTCHA_PRIVATE_KEY"></v-text-field>
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Enable Google OAuth') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Allow users to login using their Google account.') }}"
+                                                      v-model="eitem.GOOGLE_OAUTH_ENABLED"></v-switch>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.GOOGLE_OAUTH_ENABLED"
+                                                         class="pa-4 grey lighten-4">
+                                                    <v-text-field label="{{ _('Google Client ID') }}"
+                                                                  v-model="eitem.GOOGLE_CLIENT_ID"></v-text-field>
+
+                                                    <v-text-field label="{{ _('Google Client Secret') }}"
+                                                                  v-model="eitem.GOOGLE_CLIENT_SECRET"></v-text-field>
+
+                                                    <v-text-field label="{{ _('Google Discovery URL') }}"
+                                                                  v-model="eitem.GOOGLE_DISCOVERY_URL"></v-text-field>
+
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+
+
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Force users to enroll in two factor authentication') }}"
+                                                      v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
+                                            >
+
+                                            </v-switch>
+
+                                            <v-switch color="primary" class="mb-9"
+                                                      label="{{ _('Hardware-Enhanced 2FA via WebAuthn & FIDO') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Secure your account with FIDO hardware for robust WebAuthn-based 2FA') }}"
+                                                      v-model="eitem.SECURITY_WEBAUTHN"
+                                            >
+
+                                            </v-switch>
+
+                                             <v-switch class="mb-9"
+                                                              label="{{ _('Disallow Multiple Concurrent Sessions') }}"
+                                                              persistent-hint
+                                                              hint="{{ _('Prevents users from logging in to multiple devices simultaneously') }}"
+                                                              v-model="eitem.DISABLE_MULTIPLE_SESSIONS">
+                                                    </v-switch>
+
+                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Session Data Retention Period') }}</h4>
+                                            <v-btn-toggle mandatory class="mb-3"
+                                                          divided variant="outlined"
+                                                          v-model="eitem.SESSION_RETENTION_PERIOD">
+                                                <v-btn small value="7">{{ _('7 DAYS') }}</v-btn>
+                                                <v-btn small value="30">{{ _('30 DAYS') }}</v-btn>
+                                                <v-btn small value="90">{{ _('90 DAYS') }}</v-btn>
+                                                <v-btn small value="180">{{ _('180 DAYS') }}</v-btn>
+                                                <v-btn small value="365">{{ _('365 DAYS') }}</v-btn>
+                                                <v-btn small value="0">{{ _('INFINITE') }}</v-btn>
+                                            </v-btn-toggle>
+
+
+                                        </v-card-text>
+
+                                        <v-card-title>{{ _('Password Policies') }}</v-card-title>
+                                        <v-card-text>
+
+                                            <v-text-field class="mb-9" type="number"
+                                                          label="{{ _('Password Minimum Length') }}"
+                                                          persistent-hint
+                                                          hint="{{ _('Minimum required length for passwords') }}"
+                                                          suffix="charachters"
+                                                          v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
+
+                                        </v-card-text>
+
+                                        <v-card-title>{{ _('Password Strength') }}</v-card-title>
+                                        <v-card-text>
+                                            <v-sheet width="400">
+                                                <v-slider
+                                                        v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
+                                                        :min="0"
+                                                        :max="4"
+                                                        hint="{{ _('0 is weekest, 4 is strongest') }}"
+                                                        persistent-hint
+
+                                                        show-ticks="always"
+                                                        :ticks="[0,1,2,3,4]"
+                                                        :tick-size="4"
+                                                        step="1"
+                                                ></v-slider>
+                                            </v-sheet>
+                                        </v-card-text>
+
+
+                                        <v-card-text>
+                                            <v-btn @click.once="forceGlobalReset" color="yv" dark>
+                                                {{ _('Force Global Password Reset') }}
+                                            </v-btn>
+                                        </v-card-text>
+
+                                    </v-card>
+                                </v-window-item>
+
+                                <v-window-item value="control">
+
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Restrictive Access Control') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
+                                                      v-model="eitem.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
+                                            <v-switch class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
+                                                      v-model="eitem.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
+                                        </v-card-text>
+
+                                    </v-card>
+                                </v-window-item>
+
+                                <v-window-item value="logging">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Activity Monitor') }}</h4>
+                                            <p class="caption">{{
+                                                    _('Set users\' actions to be logged in the Activity Monitor.')
+                                                }}</p>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Items created by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items created by users.') }}"
+                                                    v-model="eitem.ACTIVITIES['CREATE']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Items viewed by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will log all Actors, Bulletins and Incidents viewed by users.') }}"
+                                                    v-model="eitem.ACTIVITIES['VIEW']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Items edited by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items edited by users.') }}"
+                                                    v-model="eitem.ACTIVITIES['UPDATE']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Items deleted by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all secondary items deleted by authorized users. Note: Actors, Bulletins and Incidents cannot be deleted.') }}"
+                                                    v-model="eitem.ACTIVITIES['DELETE']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Items reviewer by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all items peer-viewed by authorized users.') }}"
+                                                    v-model="eitem.ACTIVITIES['REVIEW']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Files uploaded by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all files uploaded users to media storage.') }}"
+                                                    v-model="eitem.ACTIVITIES['UPLOAD']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Bulk operations queued by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}"
+                                                    v-model="eitem.ACTIVITIES['BULK']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests made by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all export requests submitted by authorized users.') }}"
+                                                    v-model="eitem.ACTIVITIES['REQUEST']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests approved by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all export requests approvals by administrators.') }}"
+                                                    v-model="eitem.ACTIVITIES['APPROVE']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests rejected by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all export requests rejections by administrators.') }}"
+                                                    v-model="eitem.ACTIVITIES['REJECT']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests downloaded by  users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all export requests downloads by authorized users.') }}"
+                                                    v-model="eitem.ACTIVITIES['DOWNLOAD']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Search queries made by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all searches conducted by users on Actors, Bulletins and Incidents.') }}"
+                                                    v-model="eitem.ACTIVITIES['SEARCH']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Items self-assigned by users') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all items self-assigned by users.') }}"
+                                                    v-model="eitem.ACTIVITIES['SELF-ASSIGN']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Logins by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all user login activities.') }}"
+                                                    v-model="eitem.ACTIVITIES['LOGIN']">
+                                                </v-switch>
+
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Logouts by users.') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('This setting will enable logging all user logout activities. Note: only explicit logout will be logged, users closing their browsers without logging out will not for example.') }}"
+                                                    v-model="eitem.ACTIVITIES['LOGOUT']">
+                                                </v-switch>
+
+                                                <v-text-field class="mb-9" type="number"
+                                                    label="{{ _('Activity Retention Period') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('Period after which activities will be deleted.') }}"
+                                                    suffix="days"
+                                                    v-model.number="eitem.ACTIVITIES_RETENTION"></v-text-field>
+
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
+
+
+                                <v-window-item value="import">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Media Import Tool') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Enable importing and parsing media items in bulk directly into bulletins.') }}"
+                                                      v-model="eitem.ETL_TOOL"></v-switch>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.ETL_TOOL" class=" pa-4 grey lighten-4">
+                                                    <v-switch color="primary"
+                                                            class="mb-9"
+                                                            label="{{ _('Media Import Path Scanning') }}"
                                                             persistent-hint
-                                                            hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
-                                                            label="{{ _('Enable OCR') }}"
-                                                            v-model="eitem.OCR_ENABLED"></v-switch>
+                                                            hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilise this feature. It should be turned on only when it\'s needed.') }}"
+                                                            v-model="eitem.ETL_PATH_IMPORT"></v-switch>
 
-                                                        <v-slide-y-transition>
-                                                            <v-sheet v-show="eitem.OCR_ENABLED"
-                                                                    class=" pa-4 grey lighten-4">
-
-                                                                <validation-provider name="OCR Extensions"
-                                                                                    :rules="eitem.OCR_ENABLED? 'required':''"
-                                                                                    v-slot="{ errors }">
-                                                                    <v-combobox class="mb-9" multiple small-chips
-                                                                                persistent-hint
-                                                                                hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}"
-                                                                                :items="eitem.OCR_EXT"
-                                                                                label="{{ _('OCR Extensions') }}"
-                                                                                v-model="eitem.OCR_EXT"></v-combobox>
-                                                                    <span class="orange--text"> ${errors[0]}</span>
-                                                                </validation-provider>
-                                                            </v-sheet>
-
-                                                        </v-slide-y-transition>
-                                                    </v-sheet>
-                                                </v-slide-y-transition>
-
-                                                <v-switch class="mb-9" label="{{ _('Sheet Import') }}"
-                                                          persistent-hint
-                                                          hint="{{ _('Enable importing spreadsheets and mapping them to Actors.') }}"
-                                                          v-model="eitem.SHEET_IMPORT"></v-switch>
-
-                                                <v-slide-y-transition>
-                                                    <v-sheet v-show="eitem.SHEET_IMPORT"
-                                                             class=" pa-4 grey lighten-4">
-
-                                                        <validation-provider name="Allowed Sheets Extensions"
-                                                                             :rules="eitem.SHEET_IMPORT? 'required':''"
-                                                                             v-slot="{ errors }">
-                                                            <v-combobox class="mb-9" multiple small-chips
-                                                                        persistent-hint
-                                                                        hint="{{ _('Allowed spreadsheet extensions for Sheets Import Tool.') }}"
-                                                                        label="{{ _('Allowed Sheets Extensions') }}"
-                                                                        :items="eitem.SHEETS_ALLOWED_EXTENSIONS"
-                                                                        v-model="eitem.SHEETS_ALLOWED_EXTENSIONS"></v-combobox>
-                                                            <span class="orange--text"> ${errors[0]}</span>
-                                                        </validation-provider>
-
-                                                    </v-sheet>
-                                                </v-slide-y-transition> 
-                                                
-                                            </v-card-text>
-
-                                        </v-card>
-                                    </v-tab-item>
-
-
-                                    <v-tab-item key="export">
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
-                                                <v-switch class="mb-9" label="{{ _('Export System') }}"
-                                                          v-model="eitem.EXPORT_TOOL"
-                                                          persistent-hint
-                                                          hint="{{ _('Enables Export System.') }}"></v-switch>
-                                                <v-slide-y-transition>
-                                                    <v-sheet v-show="eitem.EXPORT_TOOL">
-                                                        <v-text-field class="mb-9" type="number"
-                                                                label="{{ _('Export Expiry Time') }}"
+                                                    <v-combobox class="mb-9" multiple chips
                                                                 persistent-hint
-                                                                hint="{{ _('Time after which exports will expired and be deleted') }}"
-                                                                suffix="hours"
-                                                                v-model.number="eitem.EXPORT_DEFAULT_EXPIRY"></v-text-field>
-                                                    </v-sheet>
-                                                </v-slide-y-transition>
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-tab-item>
+                                                                hint="{{ _('Allowed file extensions for the Media Import Tool.') }}"
+                                                                :items="eitem.ETL_VID_EXT"
+                                                                label="{{ _('ETL Video Extensions') }}"
+                                                                v-model="eitem.ETL_VID_EXT"></v-combobox>
 
-
-                                    <v-tab-item key="maps">
-                                        <v-card :disabled="loading" :loading="loading">
-                                            <v-card-text>
-                                                
-                                                <v-text-field class="mb-9" label="{{ _('Maps API Endpoint') }}"
+                                                    <v-switch color="primary" class="mb-9"
                                                               persistent-hint
-                                                              hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
-                                                              v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
+                                                              hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
+                                                              label="{{ _('Enable OCR') }}"
+                                                              v-model="eitem.OCR_ENABLED"></v-switch>
 
-                                                <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
-                                                              persistent-hint
-                                                              hint="{{ _('API key for Google Maps. Adding a key enables satalite imagery in Bayanat\'s maps.') }}"
-                                                              v-model="eitem.GOOGLE_MAPS_API_KEY"></v-text-field>
-                                                
-                                                <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Map Position') }}</h4>
-                                                <span class="caption">{{
-                                                        _('Changes default position for all maps in all components.')
-                                                    }}</span>
+                                                    <v-slide-y-transition>
+                                                        <v-sheet v-show="eitem.OCR_ENABLED"
+                                                                 class=" pa-4 grey lighten-4">
 
-                                                <geo-map style="z-index:200" v-model="eitem.GEO_MAP_DEFAULT_CENTER"
-                                                         map-height="300"></geo-map>
+                                                            <v-combobox class="mb-9" multiple chips
+                                                                        persistent-hint
+                                                                        hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}"
+                                                                        :items="eitem.OCR_EXT"
+                                                                        label="{{ _('OCR Extensions') }}"
+                                                                        v-model="eitem.OCR_EXT"></v-combobox>
+                                                        </v-sheet>
 
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-tab-item>
-                                </v-tabs-items>
+                                                    </v-slide-y-transition>
+                                                </v-sheet>
+                                            </v-slide-y-transition>
 
-                                <v-card-actions class="pa-4 justify-center">
-                                    <v-btn :disabled="invalid" @click.stop="showConfigDiff" width="200" class="primary">
-                                        {{ _('Save') }}
-                                    </v-btn>
-                                </v-card-actions>
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Sheet Import') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Enable importing spreadsheets and mapping them to Actors.') }}"
+                                                      v-model="eitem.SHEET_IMPORT"></v-switch>
 
-                            </validation-observer>
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.SHEET_IMPORT"
+                                                         class=" pa-4 grey lighten-4">
+
+                                                    <v-combobox class="mb-9" multiple chips
+                                                                persistent-hint
+                                                                hint="{{ _('Allowed spreadsheet extensions for Sheets Import Tool.') }}"
+                                                                label="{{ _('Allowed Sheets Extensions') }}"
+                                                                :items="eitem.SHEETS_ALLOWED_EXTENSIONS"
+                                                                v-model="eitem.SHEETS_ALLOWED_EXTENSIONS"></v-combobox>
+
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+
+                                        </v-card-text>
+
+                                    </v-card>
+                                </v-window-item>
+
+
+                                <v-window-item value="export">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Export System') }}"
+                                                      v-model="eitem.EXPORT_TOOL"
+                                                      persistent-hint
+                                                      hint="{{ _('Enables Export System.') }}"></v-switch>
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.EXPORT_TOOL">
+                                                    <v-text-field class="mb-9" type="number"
+                                                                  label="{{ _('Export Expiry Time') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Time after which exports will expired and be deleted') }}"
+                                                                  suffix="hours"
+                                                                  v-model.number="eitem.EXPORT_DEFAULT_EXPIRY"></v-text-field>
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
+
+
+                                <v-window-item value="maps">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+
+                                            <v-text-field class="mb-9" label="{{ _('Maps API Endpoint') }}"
+                                                          persistent-hint
+                                                          hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
+                                                          v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
+
+                                            <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
+                                                          persistent-hint
+                                                          hint="{{ _('API key for Google Maps. Adding a key enables satalite imagery in Bayanat\'s maps.') }}"
+                                                          v-model="eitem.GOOGLE_MAPS_API_KEY"></v-text-field>
+
+                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Map Position') }}</h4>
+                                            <span class="caption">{{ _('Changes default position for all maps in all components.') }}</span>
+
+                                            <geo-map style="z-index:200" v-model="eitem.GEO_MAP_DEFAULT_CENTER"
+                                                     :map-height="300"></geo-map>
+
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
+                            </v-window>
+
+
+
                         </v-card-text>
+                        <v-card-actions class="pa-4 justify-center">
+                                <v-btn @click.stop="showConfigDiff" width="200" variant="elevated" color="primary">
+                                    {{ _('Save') }}
+                                </v-btn>
+                            </v-card-actions>
                     </v-card>
-                </v-col>
+
+    </v-main>
+    <v-navigation-drawer
+            v-model="showRevisions"
+            location="right"
+            temporary
+            width="500"
+            clipped
+
+    >
+
+        <v-card :loading="revisionLoading">
+            <v-card-title>{{ _('Revision History') }}</v-card-title>
+            <v-card-text>
+                <v-sheet  
+                    v-for="(config, i) in revisions" 
+                    :key="i"
+                    class="ma-1 pa-2 d-flex align-center justify-lg-space-between">
+                    
+                    <span class="font-weight-bold">
+                        {{ _('Version') }} ${config.id}
+                    </span>
+                    
+                    <span class="caption ml-2 font-italic">
+                        ${config.created_at}
+                    </span>
+                    
+                    <span v-if="config.user?.name" class="ml-2 caption">
+                        - {{ _('by') }} ${config.user.name}
+                    </span>
+
+                    <template v-if="i !== 0">
+                        <v-tooltip location="top" text="{{ _('Revert to this version') }}">
+                            <template #activator="{props}">
+                                <v-btn 
+                                    :="props" 
+                                    icon="mdi-history" 
+                                    variant="text" 
+                                    size="small"
+                                    @click.stop="revertVersion(config)">
+                                </v-btn>
+                            </template>
+                        </v-tooltip>
+                    </template>
+                    
+                    <template v-else>
+                        <span  class="font-italic caption grey--text">{{ _('Current') }}</span>
+                    </template>
+                </v-sheet>
+            </v-card-text>
+
+            <v-card-actions class="justify-center">
+                <v-pagination
+                        v-model="page"
+                        :length="totalPages"
+                        rounded="circle"
+                ></v-pagination>
+            </v-card-actions>
+        </v-card>
 
 
-            </v-row>
+    </v-navigation-drawer>
 
 
-        </v-container>
 
-        <v-navigation-drawer
-                v-model="showRevisions"
-                right
-                temporary
-                width="400"
-                clipped
-                app
-
-        >
-
-            <v-card :loading="revisionLoading">
-                <v-card-title>{{ _('Revision History') }}</v-card-title>
-                <v-card-text>
-                    <v-sheet color="grey lighten-4" v-for="(config, i) in revisions" :key="i"
-                             class="ma-1 pa-2 d-flex align-center justify-lg-space-between">
-            <span class="font-weight-bold">
-                {{ _('Version') }} ${config.id}
-            </span>
-                        <span class="caption ml-2 font-italic">
-                ${config.created_at}
-            </span>
-                        <span v-if="config.user?.name" class="ml-2 caption">
-                - {{ _('by') }} ${config.user.name}
-            </span>
-                        <v-spacer></v-spacer>
-                        <v-btn fab v-tippy content="{{_('Revert to this version')}}" @click.stop="revertVersion(config)"
-                               v-if="i !== 0" x-small text>
-                            <v-icon small>mdi-history</v-icon>
-                        </v-btn>
-                        <span v-else class="font-italic caption grey--text">{{ _('Current') }}</span>
-                    </v-sheet>
-                </v-card-text>
-                <v-card-actions class="justify-center">
-                    <v-pagination
-                            v-model="page"
-                            :length="totalPages"
-                            rounded="circle"
-                    ></v-pagination>
-                </v-card-actions>
-            </v-card>
-
-
-        </v-navigation-drawer>
-
-        <v-snackbar v-model="snackbar">
-            ${snackMessage}
-            <v-btn color="secondary" text @click="snackbar = false">
-                {{ _('Close') }}
-            </v-btn>
-        </v-snackbar>
-
-        <v-dialog v-model="confirmDialog" max-width="900">
-            <v-card>
-                <v-card-title>{{ _('Review and Confirm Changes') }}
+    <v-dialog v-model="confirmDialog" max-width="900">
+        <v-card>
+            <v-toolbar>
+                <v-toolbar-title class="d-flex">
+                    {{ _('Review and Confirm Changes') }}
                     <v-spacer></v-spacer>
 
 
-                    <v-btn @click="confirmDialog=false" icon>
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </v-card-title>
-                <v-card-text>
-                    <v-sheet class="pa-5" color="yellow lighten-5 d-flex">
-                        <div class="d-flex align-center body-2">
 
-                            <v-avatar class="mr-2" size="18" color="red lighten-3"></v-avatar>
-                            {{ _('Removed') }}
-                        </div>
+                <v-btn icon="mdi-close" variant="text" @click="confirmDialog=false"></v-btn>
+                </v-toolbar-title>
 
-                        <div class="d-flex align-center ml-4 body-2">
-                            <v-avatar class="mr-2" size="18" color="green lighten-2"></v-avatar>
-                            {{ _('Added') }}
-                        </div>
+            </v-toolbar>
+            <v-card-text>
+                <v-sheet class="pa-5" color="yellow lighten-5 d-flex">
+                    <div class="d-flex align-center body-2">
 
-                    </v-sheet>
-                </v-card-text>
-                <v-card-text class="pa-4">
-                    <div v-if="configDiff">
-                        <v-sheet class="change-item my-3 pa-2 d-flex align-center" v-for="change in configDiff">
-                            <span class="body-2 font-weight-bold text--black mr-3">${change.label}</span>
-                            <span v-html="change.diff"></span>
-
-                        </v-sheet>
+                        <v-avatar class="mr-2" size="18" color="red lighten-3"></v-avatar>
+                        {{ _('Removed') }}
                     </div>
 
-                    <v-sheet v-else class=" text-center mt-3 align-center">
-                        <v-icon color="primary" left>mdi-alert</v-icon>
-                        {{ _('No changes detected') }}
+                    <div class="d-flex align-center ml-4 body-2">
+                        <v-avatar class="mr-2" size="18" color="green lighten-2"></v-avatar>
+                        {{ _('Added') }}
+                    </div>
+
+                </v-sheet>
+            </v-card-text>
+            <v-card-text class="pa-4">
+                <div v-if="configDiff">
+                    <v-sheet class="change-item my-3 pa-2 d-flex align-center" v-for="change in configDiff">
+                        <span class="body-2 font-weight-bold text--black mr-3">${change.label}</span>
+                        <span v-html="change.diff"></span>
+
                     </v-sheet>
+                </div>
 
-                </v-card-text>
-                <v-divider></v-divider>
-                <v-card-actions class="pa-4 justify-center">
-                    <v-btn @click.stop="confirmDialog=false" class="grey lighten-4" elevation="0">{{
-                            _('Cancel')
-                        }}
-                    </v-btn>
-                    <v-btn :disabled="!configDiff" @click.stop="saveConfiguration" color="primary" class="ml-4">
-                        {{ _('Confirm') }}
-                    </v-btn>
-                </v-card-actions>
+                <v-sheet v-else class=" text-center mt-3 align-center">
+                    <v-icon color="primary" left>mdi-alert</v-icon>
+                    {{ _('No changes detected') }}
+                </v-sheet>
 
-            </v-card>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions class="pa-4 justify-center">
+                <v-btn @click.stop="confirmDialog=false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
+                </v-btn>
+                <v-btn variant="elevated" :disabled="!configDiff" @click.stop="saveConfiguration" color="primary" class="ml-4">
+                    {{ _('Confirm') }}
+                </v-btn>
+            </v-card-actions>
 
-        </v-dialog>
+        </v-card>
 
-        <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
-            <v-progress-circular
-                    class="mr-3"
-                    color="white"
-                    indeterminate
-                    size="32"
+    </v-dialog>
 
-            >
+    <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
+        <v-progress-circular
+                class="mr-3"
+                color="white"
+                indeterminate
+                size="32"
 
-            </v-progress-circular>
+        >
 
-            {{ _('Restarting Bayanat, please wait...') }}
+        </v-progress-circular>
 
-        </v-overlay>
-    </v-main>
+        {{ _('Restarting Bayanat, please wait...') }}
 
-    {% include 'footer.html' %}
-</v-app>
+    </v-overlay>
 
 {% endblock %}
 
 {% block js %}
-<script src="/static/js/components/GeoMap.js"></script>
-<script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
+    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
+    <script src="/static/js/components/GeoMap.js"></script>
+    <script>
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
 
-<script>
-    window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
-    let app = new Vue({
-        el: "#app",
-        vuetify: vuetify,
-        delimiters: delimiters,
 
-        data: () => ({
+        const app = createApp({
+            delimiters: delimiters,
+            mixins: [globalMixin],
 
-            tab: null,
-            drawer: drawer,
-            sideNav: sideNav,
-            eitem: {
-                ACTIVITIES:{},
-            },
+            data: () => ({
 
-            // nav drawer
-            showRevisions: false,
+                tab: null,
+                drawer: drawer,
+                eitem: {
+                    ACTIVITIES:{},
+                },
 
-            page: 1,
-            totalPages: 0,
+                // nav drawer
+                showRevisions: false,
 
+                page: 1,
+                totalPages: 0,
 
-            configLabels: [],
 
-            // use this to perform diff operations and compare configurations
-            diffPatch: null,
+                configLabels: [],
 
-            //store current config before it is updated
-            exconfig: {},
-            configDiff: '',
+                // use this to perform diff operations and compare configurations
+                diffPatch: null,
 
-            overlay: false,
-            confirmDialog: false,
+                //store current config before it is updated
+                exconfig: {},
+                configDiff: '',
 
-            snackbar: false,
-            snackMessage: '',
-            loading: true,
+                overlay: false,
+                confirmDialog: false,
 
+                loading: true,
 
-            options: {},
-            footerProps: {
-                itemsPerPageOptions: itemsPerPageOptions,
-                itemsPerPageText: "{{ _('Rows per page')}}"
-            },
 
+                options: {},
 
-            alHeaders: [
-                {text: "{{_('ID')}}", value: "id"},
-                {text: "{{_('Code')}}", value: "code"},
-                {text: "{{_('Title')}}", value: "title"},
-                {text: "{{_('Actions')}}", value: "actions"},
 
-            ],
-            alItems: [],
+                alHeaders: [
+                    {text: "{{_('ID')}}", value: "id"},
+                    {text: "{{_('Code')}}", value: "code"},
+                    {text: "{{_('Title')}}", value: "title"},
+                    {text: "{{_('Actions')}}", value: "actions"},
 
+                ],
+                alItems: [],
 
-            ltHeaders: [
-                {text: "{{_('ID')}}", value: "id"},
-                {text: "{{_('Title')}}", value: "title"},
-                {text: "{{_('Actions')}}", value: "actions"},
-            ],
 
-            ltItems: [],
+                ltHeaders: [
+                    {text: "{{_('ID')}}", value: "id"},
+                    {text: "{{_('Title')}}", value: "title"},
+                    {text: "{{_('Actions')}}", value: "actions"},
+                ],
 
-            items: [],
+                ltItems: [],
 
+                items: [],
 
-            alItem: {},
 
-            ltItem: {},
+                alItem: {},
 
+                ltItem: {},
 
-            revisions: [],
-            revisionLoading: null,
 
+                revisions: [],
+                revisionLoading: null,
 
-        }),
 
+            }),
 
-        watch: {
-            page() {
 
-                this.loadRevisions();
-            }
+            watch: {
+                page() {
 
-        },
-
-
-        mounted() {
-
-            //load configuration
-            this.loadConfiguration();
-
-            this.loadRevisions()
-
-        },
-
-        methods: {
-
-            forceGlobalReset() {
-                if (confirm("{{_('Are you sure you want to force a password reset for all users?')}}")) {
-                    this.loading = true;
-                    axios.post('/admin/api/user/force-reset-all').then(
-                        res => {
-
-                            this.showSnack(res.data);
-                        }
-                    ).catch(
-                        err => {
-                            console.error(err?.response?.data);
-                        }
-                    ).finally(
-                        () => {
-                            this.loading = false;
-                        }
-                    )
-
-                }
-            },
-
-            revertVersion(config) {
-                this.eitem = structuredClone(config.config);
-                this.showRevisions = false;
-                this.showConfigDiff();
-
-            },
-
-            friendlyDiff(html) {
-                let output = html.replace(/true/ig, 'On');
-                output = output.replace(/false/ig, 'Off');
-
-                return output;
-
-            },
-            generateConfigDiff(delta) {
-
-
-                // build a customized diff array to display to the user before saving
-                let diff = [];
-                for (const k of Object.keys(delta)) {
-
-
-                    diff.push(
-                        {
-                            label: this.configLabels[k],
-                            diff: this.friendlyDiff(jsondiffpatch.formatters.html.format(delta[k]))
-
-                        }
-                    )
-                }
-
-
-                return diff;
-
-
-            },
-
-
-            showConfigDiff() {
-
-                this.diffPatch = jsondiffpatch.create({});
-                const delta = this.diffPatch.diff(this.exconfig, this.eitem);
-
-                if (delta) {
-                    this.configDiff = this.generateConfigDiff(delta);
-                } else {
-                    this.configDiff = null;
-                }
-
-
-                this.confirmDialog = true;
-
-            },
-
-            adaptResponse(eitem) {
-                // unify types between javascript and python to improve diffs
-                return eitem;
-            },
-            preprocessConfig() {
-                // apply any additional fixes needed
-
-                this.eitem.ITEMS_PER_PAGE_OPTIONS = this.eitem.ITEMS_PER_PAGE_OPTIONS.map(x => Number(x))
-                this.eitem.VIDEO_RATES = this.eitem.VIDEO_RATES.map(x => Number(x))
-                if (this.eitem.FILESYSTEM_LOCAL) {
-
-                    // unset s3 settings
-                    this.eitem.AWS_ACCESS_KEY_ID = '';
-                    this.eitem.AWS_SECRET_ACCESS_KEY = '';
-                    this.eitem.S3_BUCKET = '';
-
+                    this.loadRevisions();
                 }
 
             },
 
 
-            loadConfiguration() {
-                this.loading = true;
-                axios.get('/admin/api/configuration/').then(res => {
-                    this.eitem = res.data.config;
-                    this.configLabels = res.data.labels;
-                    // also store the configuration in a persistent var
-                    this.exconfig = structuredClone(this.eitem);
+            mounted() {
 
+                //load configuration
+                this.loadConfiguration();
 
-                }).catch(e => {
-                    this.showSnack(e.response?.data)
-                    console.log(e)
-                }).finally(() => {
-                    this.loading = false;
-                })
-
+                this.loadRevisions()
 
             },
 
-            waitForRelaod() {
+            methods: {
 
+                forceGlobalReset() {
+                    if (confirm("{{_('Are you sure you want to force a password reset for all users?')}}")) {
+                        this.loading = true;
+                        axios.post('/admin/api/user/force-reset-all').then(
+                            res => {
 
-                setTimeout(() => {
-                    axios.get('/').then(res => {
-                        this.overlay = false;
-                        this.showSnack("{{_('App configurations reloaded successfully.')}}");
-                        this.loadConfiguration();
-                        // reset settings
+                                this.showSnack(res.data);
+                            }
+                        ).catch(
+                            err => {
+                                console.error(err?.response?.data);
+                            }
+                        ).finally(
+                            () => {
+                                this.loading = false;
+                            }
+                        )
 
-
-                    }).catch(err => {
-                        this.waitForRelaod();
-                    });
-                }, 1000)
-
-
-            },
-
-            loadRevisions() {
-                this.revisionLoading = true;
-                const config = {
-                    params: {
-                        page: this.page,
-                        per_page: 4
                     }
-                };
+                },
+
+                revertVersion(config) {
+                    this.eitem = structuredClone(config.config);
+                    this.showRevisions = false;
+                    this.showConfigDiff();
+
+                },
+
+                friendlyDiff(html) {
+                    let output = html.replace(/true/ig, 'On');
+                    output = output.replace(/false/ig, 'Off');
+
+                    return output;
+
+                },
+                generateConfigDiff(delta) {
 
 
-                axios.get('/admin/api/appconfig/', config)
-                    .then(res => {
-                        this.revisions = res.data.items;
+                    // build a customized diff array to display to the user before saving
+                    let diff = [];
+                    for (const k of Object.keys(delta)) {
 
-                        const items_per_page = 5;
-                        this.totalPages = Math.ceil(res.data.total / items_per_page);
+
+                        diff.push(
+                            {
+                                label: this.configLabels[k],
+                                diff: this.friendlyDiff(jsondiffpatch.formatters.html.format(delta[k]))
+
+                            }
+                        )
+                    }
+
+
+                    return diff;
+
+
+                },
+
+
+                showConfigDiff() {
+
+                    this.diffPatch = jsondiffpatch.create({});
+                    const delta = this.diffPatch.diff(this.exconfig, this.eitem);
+
+                    if (delta) {
+                        this.configDiff = this.generateConfigDiff(delta);
+                    } else {
+                        this.configDiff = null;
+                    }
+
+
+                    this.confirmDialog = true;
+
+                },
+
+                adaptResponse(eitem) {
+                    // unify types between javascript and python to improve diffs
+                    return eitem;
+                },
+                preprocessConfig() {
+                    // apply any additional fixes needed
+
+                    this.eitem.ITEMS_PER_PAGE_OPTIONS = this.eitem.ITEMS_PER_PAGE_OPTIONS.map(x => Number(x))
+                    this.eitem.VIDEO_RATES = this.eitem.VIDEO_RATES.map(x => Number(x))
+                    if (this.eitem.FILESYSTEM_LOCAL) {
+
+                        // unset s3 settings
+                        this.eitem.AWS_ACCESS_KEY_ID = '';
+                        this.eitem.AWS_SECRET_ACCESS_KEY = '';
+                        this.eitem.S3_BUCKET = '';
+
+                    }
+
+                },
+
+
+                loadConfiguration() {
+                    this.loading = true;
+                    axios.get('/admin/api/configuration/').then(res => {
+                        this.eitem = res.data.config;
+                        this.configLabels = res.data.labels;
+                        // also store the configuration in a persistent var
+                        this.exconfig = {...this.eitem}
+
+
+                    }).catch(e => {
+
+
+                        this.showSnack(e.response?.data)
+                        console.log(e)
+                    }).finally(() => {
+                        this.loading = false;
+                    })
+
+
+                },
+
+                waitForRelaod() {
+
+
+                    setTimeout(() => {
+                        axios.get('/').then(res => {
+                            this.overlay = false;
+                            this.showSnack("{{_('App configurations reloaded successfully.')}}");
+                            this.loadConfiguration();
+                            // reset settings
+
+
+                        }).catch(err => {
+                            this.waitForRelaod();
+                        });
+                    }, 1000)
+
+
+                },
+
+                loadRevisions() {
+                    this.revisionLoading = true;
+                    const config = {
+                        params: {
+                            page: this.page,
+                            per_page: 4
+                        }
+                    };
+
+
+                    axios.get('/admin/api/appconfig/', config)
+                        .then(res => {
+                            this.revisions = res.data.items;
+
+                            const items_per_page = 5;
+                            this.totalPages = Math.ceil(res.data.total / items_per_page);
+
+                        })
+                        .catch(err => {
+                            this.showSnack(err?.response?.data);
+                            console.error(err.response.data)
+                        }).finally(() => {
+                        this.revisionLoading = false
+                    })
+                },
+
+                saveConfiguration() {
+                    this.overlay = true
+                    this.preprocessConfig();
+                    axios.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
+                        //this.showSnack(res.data);
+                        this.loadRevisions();
+
+
+                    }).catch(e => {
+                        this.showSnack(e.response?.data);
+                        console.error(e);
+                    }).finally(() => {
+                        this.confirmDialog = false;
+
+                        this.waitForRelaod();
+
 
                     })
-                    .catch(err => {
-                        this.showSnack(err?.response?.data);
-                        console.error(err.response.data)
-                    }).finally(() => {
-                    this.revisionLoading = false
-                })
-            },
 
-            saveConfiguration() {
-                this.overlay = true
-                this.preprocessConfig();
-                axios.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
-                    //this.showSnack(res.data);
-                    this.loadRevisions();
+                },
 
 
-                }).catch(e => {
-                    this.showSnack(e.response?.data);
-                    console.error(e);
-                }).finally(() => {
-                    this.confirmDialog = false;
+            }
+        });
+        app.component('geo-map', GeoMap);
 
-                    this.waitForRelaod();
+        app.use(vuetify).mount('#app');
 
-
-                })
-
-            },
-
-            showSnack(message) {
-                this.snackMessage = message;
-                this.snackbar = true;
-            },
-        }
-    });
-</script>
+    </script>
 
 
 {% endblock %}

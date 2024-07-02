@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Any, Literal, Optional
 
 import requests
 from flask import Blueprint, request, session, redirect, g, Response, current_app
@@ -11,8 +12,8 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
-from enferno.user.models import User
-from flask_security.signals import password_changed
+from enferno.user.models import User, Session
+from flask_security.signals import password_changed, user_authenticated
 
 bp_user = Blueprint("users", __name__, static_folder="../static")
 
@@ -20,7 +21,7 @@ client = WebApplicationClient(cfg.GOOGLE_CLIENT_ID)
 
 
 @bp_user.before_app_request
-def before_request():
+def before_request() -> None:
     """
     Attach user object to global context, display custom captcha form after certain failed attempts
     """
@@ -33,7 +34,7 @@ def before_request():
 
 
 @bp_user.after_app_request
-def after_app_request(response):
+def after_app_request(response) -> Response:
     """
     Record failed login attempts into the session
     """
@@ -45,19 +46,25 @@ def after_app_request(response):
     return response
 
 
-def get_google_provider_cfg():
+def get_google_provider_cfg() -> Any:
     """
-    helper method
-    :return: returns openid json configurations
+    helper method.
+
+    Returns:
+        - returns openid json configurations
     """
     return requests.get(cfg.GOOGLE_DISCOVERY_URL).json()
 
 
 @bp_user.route("/auth")
-def auth():
+def auth() -> (
+    tuple[Literal["Google Auth is not enabled or configured properly"], Literal[417]] | Response
+):
     """
-    Endpoint to authorize with Google OpenID
-    if successful a user is loaded/created and logged in. otherwise, returns an error.
+    Endpoint to authorize with Google OpenID.
+
+    Returns:
+        - redirects to Google's authorization endpoint, if Google Auth is enabled and configured properly.
     """
     if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
         return "Google Auth is not enabled or configured properly", 417
@@ -76,12 +83,15 @@ def auth():
 
 
 @bp_user.route("/auth/callback")
-def auth_callback():
+def auth_callback() -> (
+    tuple[Literal["Google Auth is not enabled or configured properly"], Literal[417]]
+    | tuple[Literal["User email not available or not verified by Google…"], Literal[400]]
+    | tuple[Literal["User email rejected!"], Literal[403]]
+    | tuple[Literal["User not found. Ask an administrator to create an …"], Literal[404]]
+    | Response
+):
     """
     Open ID callback endpoint.
-
-
-    :return:
     """
     if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
         return "Google Auth is not enabled or configured properly", 417
@@ -149,7 +159,7 @@ def auth_callback():
 
 @bp_user.route("/dashboard/")
 @auth_required("session")
-def account():
+def account() -> str:
     """
     Main dashboard endpoint.
     """
@@ -158,14 +168,17 @@ def account():
 
 @bp_user.route("/settings/")
 @auth_required("session")
-def settings():
+def settings() -> str:
     """Endpoint for user settings."""
     return render_template("settings.html")
 
 
 @bp_user.route("/settings/save", methods=["PUT"])
 @auth_required("session")
-def save_settings():
+def save_settings() -> (
+    tuple[Literal["Problem loading user"], Literal[417]]
+    | tuple[Literal["Settings Saved"], Literal[200]]
+):
     """API Endpoint to save user settings."""
     json = request.json.get("settings")
     dark = json.get("dark")
@@ -183,7 +196,9 @@ def save_settings():
 
 @bp_user.route("/settings/load", methods=["GET"])
 @auth_required("session")
-def load_settings():
+def load_settings() -> (
+    tuple[Literal["Problem loading user "], Literal[417]] | tuple[Response, Literal[200]]
+):
     """API Endpoint to load user settings, in json format."""
     user_id = current_user.id
 
@@ -198,16 +213,41 @@ def load_settings():
 
 
 @password_changed.connect
-def after_password_change(sender, user):
+def after_password_change(sender, user) -> None:
+    """Reset the security reset key after password change"""
     user.unset_security_reset_key()
 
 
 @bp_user.before_app_request
-def before_app_request():
+def before_app_request() -> Optional[Response]:
     """
-    Global check for forced password reset flag
-    :return: None
+    Global check for forced password reset flag.
+
+    Returns:
+        - redirects to the password change page if the user is authenticated and has a security reset key set.
     """
     if current_user.is_authenticated and current_user.security_reset_key:
         if not any(request.path.startswith(p) for p in ("/change", "/static", "/logout")):
             return redirect("/change")
+
+
+@user_authenticated.connect
+def user_authenticated_handler(app, user, authn_via, **extra_args):
+    session_data = {
+        "user_id": user.id,
+        "session_token": session.sid,
+        "ip_address": request.remote_addr,
+        "meta": {
+            "browser": request.user_agent.browser,
+            "browser_version": request.user_agent.version,
+            "os": request.user_agent.platform,
+            "device": request.user_agent.string,  # Full user-agent string
+        },
+    }
+    # Create a new Session object and add it to the database
+    new_session = Session(**session_data)
+    new_session.save()
+
+    # Check if multiple sessions are disabled
+    if current_app.config.get("DISABLE_MULTIPLE_SESSIONS", False):
+        user.logout_other_sessions()

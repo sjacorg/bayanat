@@ -1,25 +1,30 @@
 <v-navigation-drawer
-      v-model="bulletinDrawer"
-      clipped
-      fixed
-      right
-      temporary
-      width="520"
-      app
-      disable-route-watcher
-
-
-
-    >
-      <v-container v-if="bulletinLoader" fluid fill-height>
+        v-model="bulletinDrawer"
+        clipped
+        fixed
+        location="right"
+        temporary
+        width="520"
+        app
+        disable-route-watcher
+>
+    <v-container v-if="bulletinLoader" fluid fill-height>
         <v-layout justify-center align-center>
-          <v-progress-circular indeterminate size="44"></v-progress-circular>
+            <v-progress-circular indeterminate size="44"></v-progress-circular>
         </v-layout>
-      </v-container>
+    </v-container>
 
-      
-       <bulletin-card :i18n="translations" v-if="bulletinDrawer && bulletin" :show-edit="true" @edit="editItem"  :log="true" :diff="true" @thumb-click="viewImage" @close="bulletinDrawer=false" :bulletin="bulletin"></bulletin-card>
-      <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+
+    <bulletin-card :i18n="translations"
+                   v-if="bulletinDrawer && bulletin"
+                   :show-edit="true" @edit="editItem"
+                   :log="true"
+                   :diff="true"
+                   @thumb-click="viewImage"
+                   close="true"
+                   @close="bulletinDrawer=false"
+                   :bulletin="bulletin"></bulletin-card>
+    <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
     <pdf-viewer ref="pdfViewer"></pdf-viewer>
-    <visualization ref="viz" :i18n="translations"></visualization>
-    </v-navigation-drawer>  
+        <visualization ref="viz" :i18n="translations"></visualization>
+</v-navigation-drawer>

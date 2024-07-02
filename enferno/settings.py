@@ -18,6 +18,8 @@ def uia_username_mapper(identity):
 
 
 class Config(object):
+    """Base configuration."""
+
     BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5000/")
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -25,7 +27,6 @@ class Config(object):
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
     DEBUG_TB_ENABLED = os.environ.get("DEBUG_TB_ENABLED", 0)
     DEBUG_TB_INTERCEPT_REDIRECTS = False
-    CACHE_TYPE = "redis"  # Can be "memcached", "redis", etc.
 
     # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI")
@@ -83,7 +84,7 @@ class Config(object):
     SECURITY_TWO_FACTOR_ENABLED_METHODS = [
         "authenticator"
     ]  # 'sms' also valid but requires an sms provider
-    SECURITY_TWO_FACTOR = os.environ.get("SECURITY_TWO_FACTOR")
+    SECURITY_TWO_FACTOR = os.environ.get("SECURITY_TWO_FACTOR", True)
     SECURITY_TWO_FACTOR_RESCUE_MAIL = os.environ.get("SECURITY_TWO_FACTOR_RESCUE_MAIL")
 
     # Enable only session auth
@@ -114,6 +115,9 @@ class Config(object):
     SECURITY_WAN_ALLOW_AS_MULTI_FACTOR = True
     SECURITY_WAN_ALLOW_AS_VERIFY = ["first", "secondary"]
     SECURITY_WAN_ALLOW_USER_HINTS = True
+
+    DISABLE_MULTIPLE_SESSIONS = manager.get_config("DISABLE_MULTIPLE_SESSIONS")
+    SESSION_RETENTION_PERIOD = manager.get_config("SESSION_RETENTION_PERIOD")
 
     # Recaptcha
     RECAPTCHA_ENABLED = manager.get_config("RECAPTCHA_ENABLED")
@@ -181,7 +185,18 @@ class Config(object):
     AWS_REGION = manager.get_config("AWS_REGION")
 
     # i18n
-    LANGUAGES = ["en", "ar", "uk", "fr", "es", "ru", "fa"]
+    LANGUAGES = {
+        "ar": "العربية",
+        "en": "English",
+        "es": "español",
+        "fa": "فارسی",
+        "fr": "français",
+        "ru": "русский",
+        "uk": "українська",
+        "zh_Hans": "简体中文",
+        "zh_Hant": "繁體中文",
+    }
+
     BABEL_DEFAULT_LOCALE = manager.get_config("BABEL_DEFAULT_LOCALE")
     # extract messages with the following command
     # pybabel extract -F babel.cfg -k _l -o messages.pot .
@@ -193,7 +208,7 @@ class Config(object):
     # pybabel compile -d enferno/translations
 
     MAPS_API_ENDPOINT = manager.get_config("MAPS_API_ENDPOINT")
-    GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+    GOOGLE_MAPS_API_KEY = manager.get_config("GOOGLE_MAPS_API_KEY")
 
     # Deduplication
 
@@ -232,9 +247,25 @@ class Config(object):
         "httponly": False,
         "secure": os.environ.get("SECURE_COOKIES", "True") == "True",
     }
+    # logging
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+    LOG_DIR = os.environ.get("LOG_DIR", "logs")
+    LOG_FILE = os.environ.get("LOG_FILE", "bayanat.log")
+    LOG_BACKUP_COUNT = os.environ.get("LOG_BACKUP_COUNT", 5)
+
+    # backups
+    BACKUPS = os.environ.get("BACKUPS", False)
+    BACKUP_INTERVAL = int(os.environ.get("BACKUP_INTERVAL", 1))
+    BACKUPS_LOCAL_PATH = os.environ.get("BACKUPS_LOCAL_PATH", "backups/")
+    BACKUPS_S3_BUCKET = os.environ.get("BACKUPS_S3_BUCKET")
+    BACKUPS_AWS_ACCESS_KEY_ID = os.environ.get("BACKUPS_AWS_ACCESS_KEY_ID")
+    BACKUPS_AWS_SECRET_ACCESS_KEY = os.environ.get("BACKUPS_AWS_SECRET_ACCESS_KEY")
+    BACKUPS_AWS_REGION = os.environ.get("BACKUPS_AWS_REGION")
 
 
 class TestConfig(Config):
+    """Test configuration."""
+
     POSTGRES_USER = os.environ.get("POSTGRES_USER", "")
     POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
     POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
@@ -254,3 +285,115 @@ class TestConfig(Config):
     celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/14"
     result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/13"
     SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/12")
+
+    # Add missing keys with dummy values
+    ACCESS_CONTROL_RESTRICTIVE = False
+    ACTIVITIES = {
+        "APPROVE": True,
+        "BULK": True,
+        "CREATE": True,
+        "DELETE": True,
+        "DOWNLOAD": True,
+        "LOGIN": True,
+        "LOGOUT": True,
+        "REJECT": True,
+        "REQUEST": True,
+        "REVIEW": True,
+        "SEARCH": True,
+        "SELF-ASSIGN": True,
+        "UPDATE": True,
+        "UPLOAD": True,
+        "VIEW": True,
+    }
+    ACTIVITIES_RETENTION = timedelta(days=90)
+    AC_USERS_CAN_RESTRICT_NEW = False
+    AWS_ACCESS_KEY_ID = "dummy_access_key"
+    AWS_REGION = "dummy_region"
+    AWS_SECRET_ACCESS_KEY = "dummy_secret_key"
+    BABEL_DEFAULT_LOCALE = "en"
+    DEDUP_BATCH_SIZE = 30
+    DEDUP_INTERVAL = 3
+    DEDUP_LOW_DISTANCE = 0.3
+    DEDUP_MAX_DISTANCE = 0.5
+    DEDUP_TOOL = False
+    ETL_PATH_IMPORT = False
+    ETL_TOOL = True
+    ETL_VID_EXT = [
+        "webm",
+        "mkv",
+        "flv",
+        "vob",
+        "ogv",
+        "ogg",
+        "rrc",
+        "gifv",
+        "mng",
+        "mov",
+        "avi",
+        "qt",
+        "wmv",
+        "yuv",
+        "rm",
+        "asf",
+        "amv",
+        "mp4",
+        "m4p",
+        "m4v",
+        "mpg",
+        "mp2",
+        "mpeg",
+        "mpe",
+        "mpv",
+        "m4v",
+        "svi",
+        "3gp",
+        "3g2",
+        "mxf",
+        "roq",
+        "nsv",
+        "flv",
+        "f4v",
+        "f4p",
+        "f4a",
+        "f4b",
+        "mts",
+        "lvr",
+        "m2ts",
+    ]
+    EXPORT_DEFAULT_EXPIRY = timedelta(hours=2)
+    EXPORT_TOOL = False
+    FILESYSTEM_LOCAL = 1
+    GEO_MAP_DEFAULT_CENTER = {"lat": 33.510414, "lng": 36.278336}
+    GOOGLE_CLIENT_ID = "dummy_client_id"
+    GOOGLE_CLIENT_SECRET = "dummy_client_secret"
+    GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+    GOOGLE_MAPS_API_KEY = "dummy_maps_api_key"
+    GOOGLE_OAUTH_ENABLED = False
+    ITEMS_PER_PAGE_OPTIONS = [10, 30, 100]
+    LANGUAGES = {
+        "ar": "العربية",
+        "en": "English",
+        "es": "español",
+        "fa": "فارسی",
+        "fr": "français",
+        "ru": "русский",
+        "uk": "українська",
+    }
+    MAPS_API_ENDPOINT = "https://{s}.tile.osm.org/{z}/{x}/{y}.png"
+    MEDIA_ALLOWED_EXTENSIONS = ["mp4", "webm", "jpg", "gif", "png", "pdf", "doc", "txt"]
+    MEDIA_UPLOAD_MAX_FILE_SIZE = 1000
+    OCR_ENABLED = False
+    OCR_EXT = ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"]
+    RECAPTCHA_ENABLED = False
+    RECAPTCHA_PRIVATE_KEY = "dummy_recaptcha_private_key"
+    RECAPTCHA_PUBLIC_KEY = "dummy_recaptcha_public_key"
+    S3_BUCKET = "dummy_bucket"
+    SECURITY_FRESHNESS = timedelta(minutes=30)
+    SECURITY_FRESHNESS_GRACE_PERIOD = timedelta(minutes=30)
+    SECURITY_PASSWORD_LENGTH_MIN = 10
+    SECURITY_TWO_FACTOR_REQUIRED = False
+    SECURITY_WEBAUTHN = True
+    SECURITY_ZXCVBN_MINIMUM_SCORE = 3
+    SHEETS_ALLOWED_EXTENSIONS = ["csv", "xls", "xlsx"]
+    SHEET_IMPORT = False
+    VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]

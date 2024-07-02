@@ -3,22 +3,13 @@
 
     <v-card v-if="logDialog" class="overflow-hidden">
 
-        <v-app-bar
-                absolute
-                color="pv"
-                dark
-
-                class="card-header"
-
-        >
-            <v-toolbar-title>Log ${eitem.id}</v-toolbar-title>
+        <v-toolbar>
+            <v-toolbar-title>{{ _('Log') }} ${eitem.id}</v-toolbar-title>
             <v-spacer></v-spacer>
 
-            <v-btn @click="close" icon>
-                <v-icon>mdi-close</v-icon>
-            </v-btn>
+            <v-btn icon="mdi-close" @click="close"></v-btn>
 
-        </v-app-bar>
+        </v-toolbar>
 
         <v-sheet
                 id="card-content"
@@ -33,7 +24,7 @@
                 
                   <div v-else>
                     <!-- @ emit events passed to card to approve, reject and set expiry datetime -->
-                      <log-card :i18n="translations" :log="eitem" ></log-card>
+                      <import-log-card :i18n="translations" :log="eitem" ></import-log-card>
                 
                   </div>
 

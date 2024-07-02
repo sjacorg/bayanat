@@ -1,20 +1,21 @@
+from unittest.mock import patch
+
 import pytest
 
 from enferno.admin.models import AppConfig
+from enferno.utils.config_utils import ConfigManager
 from tests.factories import AppConfigFactory
+
+##### PYDANTIC MODELS #####
+from tests.models.admin import AppConfigsResponseModel
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
     get_uid_from_client,
 )
 
-##### PYDANTIC MODELS #####
-
-from tests.models.admin import AppConfigsResponseModel
 
 ##### FIXTURES #####
-
-
 @pytest.fixture(scope="function")
 def create_appconfig(session):
     cfg = AppConfigFactory()
@@ -33,8 +34,6 @@ def clean_slate_appconfigs(session):
 
 
 ##### UTILITIES #####
-
-
 def update_config_user(cid, uid):
     cfg = AppConfig.query.filter(AppConfig.id == cid).first()
     cfg.user_id = uid
@@ -42,7 +41,6 @@ def update_config_user(cid, uid):
 
 
 ##### GET /admin/api/appconfig/ #####
-
 appconfig_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
@@ -64,3 +62,32 @@ def test_appconfig_endpoint(
         conform_to_schema_or_fail(
             convert_empty_strings_to_none(response.json), AppConfigsResponseModel
         )
+
+
+##### GET /admin/api/configuration/ #####
+@pytest.mark.parametrize("client_fixture, expected_status", appconfig_endpoint_roles)
+def test_configuration(request, client_fixture, expected_status):
+    client_ = request.getfixturevalue(client_fixture)
+    with patch.object(ConfigManager, "serialize", return_value={"key": "value"}):
+        response = client_.get(
+            "/admin/api/configuration/", headers={"Content-Type": "application/json"}
+        )
+        assert response.status_code == expected_status
+
+
+##### PUT /admin/api/configuration/ #####
+@pytest.mark.parametrize("client_fixture, expected_status", appconfig_endpoint_roles)
+def test_put_configuration(request, client_fixture, expected_status):
+    client_ = request.getfixturevalue(client_fixture)
+    updated_etl_vid_ext = ["mov", "mp4"]
+    with patch.object(ConfigManager, "serialize", return_value={"ETL_VID_EXT": []}), patch.object(
+        ConfigManager, "write_config", return_value=True
+    ) as mock_write_config:
+        response = client_.put(
+            "/admin/api/configuration/",
+            headers={"Content-Type": "application/json"},
+            json={"conf": {"ETL_VID_EXT": updated_etl_vid_ext}},
+        )
+        assert response.status_code == expected_status
+        if expected_status == 200:
+            mock_write_config.assert_called_once_with({"ETL_VID_EXT": updated_etl_vid_ext})

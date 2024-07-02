@@ -1,9 +1,9 @@
-Vue.component('image-gallery', {
+const ImageGallery = Vue.defineComponent({
   props: {
     medias: Array,
     enableDelete: Boolean
   },
-
+  emits: ['remove-media', 'thumb-click', 'video-click'],
   mounted() {
     this.prepareImagesForPhotoswipe().then(() => {
       this.initLightbox();
@@ -21,7 +21,7 @@ Vue.component('image-gallery', {
 
     updateMediaState() {
        this.mediasReady += 1;
-      if (this.mediasReady == this.medias.length && this.mediasReady > 0) {
+      if (this.mediasReady === this.medias.length && this.mediasReady > 0) {
         this.prepareImagesForPhotoswipe().then((res) => {
           this.initLightbox();
         });
@@ -76,19 +76,27 @@ Vue.component('image-gallery', {
   template: `
     <div>
       <div class="d-flex flex-wrap" id="lightbox">
-        <div class="pa-1" style="width: 50%" v-for="(media,index) in medias" :key="media.id">
+        
+        <v-slide-group show-arrows>
+            <v-slide-group-item v-for="(media,index) in medias" :key="media.id">
+              <v-card width="250" height="300" class="mx-3" variant="flat"> 
+                
+              
           <media-card @ready="updateMediaState" @thumb-click="handleThumb" @video-click="handleVideo" :media="media">
             
               <template v-slot:actions v-if="enableDelete">
               <v-spacer></v-spacer>
-              <v-btn v-if="!media.main" @click="$emit('remove-media', index)" x-small depressed fab outlined color="red lighten-1">
-                <v-icon>mdi-delete-sweep</v-icon>
+              <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red">
+                
               </v-btn>
             </template>
 
             
           </media-card>
-        </div>
+                </v-card>
+            </v-slide-group-item>
+        </v-slide-group>
+        
       </div>
     </div>
   `,

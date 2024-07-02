@@ -34,7 +34,7 @@
                     {% endif %}
                     {{ render_field_errors(wan_signin_form.credential) }}
 
-                        <v-btn class="primary mt-12" type="submit" width="200"> <v-icon left>mdi-usb-flash-drive</v-icon> Authenticate</v-btn>
+                        <v-btn class="primary mt-12" type="submit" width="200"> <v-icon left>mdi-usb-flash-drive</v-icon> {{ _('Authenticate')}}</v-btn>
 
 
                 </form>
@@ -73,7 +73,7 @@
     <v-card-actions class="justify-center mt-4">
 <p>
 
- <a href="/mf-recovery">  Recovery Codes</a> |  <a href="/logout">Logout</a>
+ <a href="/mf-recovery">  {{ _('Recovery Codes')}}</a> |  <a href="/logout">Logout</a>
     </p>
     </v-card-actions>
     </v-card>

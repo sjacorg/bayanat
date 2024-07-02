@@ -5,6 +5,9 @@ var itemsPerPageOptions =  JSON.parse(`{{ config.ITEMS_PER_PAGE_OPTIONS }}`);
 var VIDEO_RATES = JSON.parse(`{{ config.VIDEO_RATES }}`);
 
 var mediaUploadMaxFileSize = JSON.parse(`{{ config.MEDIA_UPLOAD_MAX_FILE_SIZE }}`);
+
+var languages = {{ config.LANGUAGES }};
+
 var translations = {
 
 bulletin_: "{{ _('Bulletin') }}",
@@ -32,7 +35,7 @@ createdDate_: "{{ _('Creation Date') }}",
 updatedDate_: "{{ _('Last Modified Date') }}",
 eventDate_: "{{ _('Event Date') }}",
 singleEvent_: "{{ _('Search in a signle event') }}",
-assignedUser_: "{{ _('Assigned user') }}",
+assignedUser_: "{{ _('Assigned User') }}",
 unassigned_: "{{ _('Unassigned') }}",
 reviewer_: "{{ _('Reviewer') }}",
 workflowStatus_: "{{ _('Workflow Status') }}",
@@ -97,7 +100,7 @@ restricted_: "{{ _('Restricted') }}",
 unrestricted_: "{{ _('Unrestricted') }}",
 and_: "{{ _('And') }}",
 or_: "{{ _('Or') }}",
-accessRoles_: "{{ _('Access Roles') }}",
+accessRoles_: "{{ _('Access Groups') }}",
 noReviewNeeded_: "{{ _('No Review Needed') }}",
 needsReview_: "{{ _('Needs Review') }}",
 loadGeoMap_: "{{ _('Load Geo Map') }}",
@@ -107,15 +110,16 @@ locationType_: "{{ _('Location Type') }}",
 adminLevel_: "{{ _('Admin Level') }}",
 country_: "{{ _('Country') }}",
 estimated_: "{{ _('Estimated') }}",
+confirm_: "{{ _('Are you sure?')}}",
 
 
 searchActivities_: "{{ _('Search Activities') }}",
 
 //bulletin/actor/incident cards
 id_: "{{ _('ID') }}",
+originid_: "{{ _('Origin ID') }}",
 edit_: "{{ _('Edit') }}",
 visualize_: "{{ _('Visualize') }}",
-assignedUser_: "{{ _('Assigned User:') }}",
 description_ : "{{ _('Description') }}",
 title_: "{{ _('Title') }}",
 originalTitle_: "{{ _('Original Title') }}",
@@ -264,6 +268,71 @@ maybe_ : "{{ _('Maybe') }}",
 likely_ : "{{ _('Likely') }}",
 certain_ : "{{ _('Certain') }}",
 
+// System logs
+message_ : "{{ _('Message') }}",
+stacktrace_: "{{ _('Stacktrace') }}",
+endpoint_: "{{ _('Endpoint') }}",
+userid_: "{{ _('User ID') }}",
+lineno_: "{{ _('Line No') }}",
+path_: "{{ _('Path') }}",
+errType_: "{{ _('Error Type') }}",
+level_: "{{ _('Level') }}",
+time_: "{{ _('Time') }}",
+refreshLogs: "{{ _('Refresh available log files and select latest log file') }}",
+noLogs: "{{ _('No log files available') }}",
+
+// Activity Search Box
+user_: "{{ _('User') }}",
+selType_: "{{ _('Select Type') }}",
+selAction_: "{{ _('Select Action') }}",
+activityDate_: "{{ _('Activity Date') }}",
+
+// Actor Search Box
+selEventType_: "{{ _('Select Event Type') }}",
+
+// Bulletin Search Box
+exactMatch_: "{{ _('Exact Match') }}",
+
+// Address
+addrLine1_: "{{ _('Address Line 1') }}",
+addrLine2_: "{{ _('Address Line 2') }}",
+city_: "{{ _('City') }}",
+street_: "{{ _('Street') }}",
+streetNo_: "{{ _('Street No') }}",
+
+// Editable table
+confirmDelete_: "{{ _('Are you sure you want to delete') }}",
+
+//Export card
+includeMedia_: "{{ _('Include Media') }}",
+
+// Export Download
+download_: "{{ _('Download') }}",
+
+// Relate Incidents
+notFound_: "{{ _('Oops! We couldn\'t find this item.') }}",
+
+// User Card
+loggedOut_: "{{ _('You have been logged out. Please log in again.') }}",
+confirmLogout_: "{{ _('Are you sure you want to log out all sessions for this user?') }}",
+userPermissions_: "{{ _('User Permissions') }}",
+canViewUsernames_: "{{ _('Can View Usernames') }}",
+canViewSimpleHistory_: "{{ _('Can View Simple History') }}",
+canViewFullHistory_: "{{ _('Can View Full History') }}",
+canEditLocations_: "{{ _('Can Edit Locations') }}",
+canExport_: "{{ _('Can Export') }}",
+canSelfAssign_: "{{ _('Can Self Assign') }}",
+userSessions_: "{{ _('User Sessions') }}",
+session_: "{{ _('Session') }}",
+ip_: "{{ _('IP') }}",
+userAgent_: "{{ _('User Agent') }}",
+started_: "{{ _('Started') }}",
+logOffDevice_: "{{ _('Log off this device') }}",
+
+// Geomap
+enterFullscreen_: "{{ _('View Fullscreen') }}",
+exitFullscreen_: "{{ _('Exit Fullscreen') }}",
+
 // bulletin location types
 bulletinLocTypes_:
 [
@@ -334,110 +403,120 @@ probs : [
 {"en": "Likely", "tr": "{{ _('Likely') }}"},
 {"en": "Certain", "tr": "{{ _('Certain') }}"}
 ],
+
+
+loggedOut_: "{{ _('You have been logged out. Please log in again.') }}",
+logoutConfirmation_: "{{ _('Are you sure you want to log out all sessions for this user?') }}",
+allSessionsLoggedOut_: "{{ _('All sessions for the user have been logged out successfully.') }}",
+loggedOutSession_: "{{ _('Logged out session') }}",
+errorFetchingSessions_: "{{ _('Error fetching sessions') }}",
+errorLoggingOutSession_: "{{ _('Error logging out session') }}",
+errorLoggingOutAllSessions_: "{{ _('Error logging out all sessions for user ID:') }}",
+userPermissions_: "{{ _('User Permissions') }}",
+canViewUsernames_: "{{ _('Can View Usernames') }}",
+canViewSimpleHistory_: "{{ _('Can View Simple History') }}",
+canViewFullHistory_: "{{ _('Can View Full History') }}",
+canEditLocations_: "{{ _('Can Edit Locations') }}",
+canExport_: "{{ _('Can Export') }}",
+canSelfAssign_: "{{ _('Can Self Assign') }}",
+userSessions_: "{{ _('User Sessions') }}",
+session_: "{{ _('Session') }}",
+ip_: "{{ _('IP') }}",
+userAgent_: "{{ _('User Agent') }}",
+started_: "{{ _('Started') }}",
+logOffThisDevice_: "{{ _('Log off this device') }}",
+active_: "{{ _('Active') }}",
+inactive_: "{{ _('Inactive') }}",
+logoutAllSessions_: "{{ _('Logout All Sessions') }}"
+
+
+
 }
 
     // add localized configurations for lists with static values
 
-    translations['physique'] = [
-    {"en": "Very thin", "tr": "{{ _('Very thin') }}"},
-    {"en": "Thin", "tr": "{{ _('Thin') }}"},
-    {"en": "Average", "tr": "{{ _('Average') }}"},
-    {"en": "Muscular", "tr": "{{ _('Muscular') }}"},
-    {"en": "Overweight", "tr": "{{ _('Overweight') }}"},
-    {"en": "Obese", "tr": "{{ _('Obese') }}"}
-    ];
+translations['physique'] = [
+    {% for opt in config.CONSTANTS.PHYSIQUE_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['pregnant'] = [
-    {"en": "Pregnant", "tr": "{{ _('Pregnant') }}"},
-    {"en": "Not Pregnant", "tr": "{{ _('Not Pregnant') }}"},
-    {"en": "Unknown", "tr": "{{ _('Unknown') }}"},
-    {"en": "Not Applicable", "tr": "{{ _('Not Applicable') }}"},
-    {"en": "The Question Was Not Asked", "tr": "{{ _('The Question Was Not Asked') }}"},
-    ];
+translations['pregnant'] = [
+    {% for opt in config.CONSTANTS.PREGNANT_AT_DISAPPEARANCE_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['glasses'] = [
-    {"en": "Yes", "tr": "{{ _('Yes') }}"},
-    {"en": "No", "tr": "{{ _('No') }}"},
-    {"en": "Unknown", "tr": "{{ _('Unknown') }}"},
-    ];
+translations['glasses'] = [
+    {% for opt in config.CONSTANTS.CLASSIC_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['hairLoss'] = [
-    {"en": "Full", "tr": "{{ _('Full') }}"},
-    {"en": "Bald", "tr": "{{ _('Bald') }}"},
-    {"en": "Partial hair loss", "tr": "{{ _('Partial hair loss') }}"}
-    ];
+translations['hairLoss'] = [
+    {% for opt in config.CONSTANTS.HAIR_LOSS_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['hairType'] = [
-    {"en": "Straight", "tr": "{{ _('Straight') }}"},
-    {"en": "Wavy", "tr": "{{ _('Wavy') }}"},
-    {"en": "Curly", "tr": "{{ _('Curly') }}"},
-    {"en": "Very curly", "tr": "{{ _('Very curly') }}"}
-    ];
+translations['hairType'] = [
+    {% for opt in config.CONSTANTS.HAIR_TYPE_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
+translations['hairLength'] = [
+    {% for opt in config.CONSTANTS.HAIR_LENGTH_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['hairLength'] = [
-    {"en": "Very short", "tr": "{{ _('Very short') }}"},
-    {"en": "Short", "tr": "{{ _('Short') }}"},
-    {"en": "Medium", "tr": "{{ _('Medium') }}"},
-    {"en": "Long", "tr": "{{ _('Long') }}"},
-    {"en": "Very long", "tr": "{{ _('Very long') }}"}
-    ];
+translations['hairColor'] = [
+    {% for opt in config.CONSTANTS.HAIR_COLOR_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['hairColor'] = [
-    {"en": "Black", "tr": "{{ _('Black') }}"},
-    {"en": "Brown", "tr": "{{ _('Brown') }}"},
-    {"en": "Blonde", "tr": "{{ _('Blonde') }}"},
-    {"en": "Grey", "tr": "{{ _('Grey') }}"},
-    {"en": "Turning grey", "tr": "{{ _('Turning grey') }}"},
-    {"en": "Red", "tr": "{{ _('Red') }}"},
-    {"en": "Other", "tr": "{{ _('Other') }}"}
-    ];
-    translations['facialHair']= [
-    {"en": "none", "tr": "{{ _('none') }}"},
-    {"en": "Beard", "tr": "{{ _('Beard') }}"},
-    {"en": "Moustache", "tr": "{{ _('Moustache') }}"},
-    {"en": "Beard and moustache", "tr": "{{ _('Beard and moustache') }}"},
-    {"en": "Goatee", "tr": "{{ _('Goatee') }}"},
-    {"en": "Whiskers", "tr": "{{ _('Whiskers') }}"}
-    ];
+translations['facialHair'] = [
+    {% for opt in config.CONSTANTS.FACIAL_HAIR_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['skinMarkings'] = [
-    {"en": "Scar", "tr": "{{ _('Scar') }}"},
-    {"en": "Tattoo", "tr": "{{ _('Tattoo') }}"},
-    {"en": "piercing", "tr": "{{ _('piercing') }}"},
-    {"en": "Mole", "tr": "{{ _('Mole') }}"},
-    {"en": "Birthmarks", "tr": "{{ _('Birthmarks') }}"},
-    {"en": "Cuts", "tr": "{{ _('Cuts') }}"}
-    ];
+translations['skinMarkings'] = [
+    {% for opt in config.CONSTANTS.SKIN_MARKINGS_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['handness'] = [
-    {"en": "Right", "tr": "{{ _('Right') }}"},
-    {"en": "Left", "tr": "{{ _('Left') }}"},
-    {"en": "Both Hands", "tr": "{{ _('Both Hands') }}"},
-    {"en": "Unknown", "tr": "{{ _('Unknown') }}"}
-    ];
+translations['handness'] = [
+    {% for opt in config.CONSTANTS.HANDEDNESS_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['smoker'] = [
-    {"en": "Yes", "tr": "{{ _('Yes') }}"},
-    {"en": "No", "tr": "{{ _('No') }}"},
-    {"en": "Unknown", "tr": "{{ _('Unknown') }}"},
-    {"en": "Question Not Asked", "tr": "{{ _('Question Not Asked') }}"}
-    ];
+translations['smoker'] = [
+    {% for opt in config.CONSTANTS.SMOKER_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['eyeColor'] = [
-    {"en": "Black", "tr": "{{ _('Black') }}"},
-    {"en": "Brown", "tr": "{{ _('Brown') }}"},
-    {"en": "Green", "tr": "{{ _('Green') }}"},
-    {"en": "Blue", "tr": "{{ _('Blue') }}"},
-    {"en": "Grey", "tr": "{{ _('Grey') }}"}
-    ];
+translations['eyeColor'] = [
+    {% for opt in config.CONSTANTS.HAIR_COLOR_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-    translations['caseStatus'] = [
-    {"en": "Missing", "tr": "{{ _('Missing') }}"},
-    {"en": "Identified", "tr": "{{ _('Identified') }}"}
-    ];
+translations['caseStatus'] = [
+    {% for opt in config.CONSTANTS.CASE_STATUS_OPTS %}
+        {"en": "{{ opt }}", "tr": "{{ _(opt) }}"},
+    {% endfor %}
+];
 
-
-
-
+translations['levels'] = {
+    "error": "{{ _('Error') }}",
+    "warning": "{{ _('Warning') }}",
+    "info": "{{ _('Info') }}",
+    "debug": "{{ _('Debug') }}"
+}
 

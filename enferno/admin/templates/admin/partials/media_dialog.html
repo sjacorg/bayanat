@@ -1,31 +1,32 @@
 <v-dialog v-model="mediaDialog" max-width="500px">
-    <template v-slot:activator="{ on }">
-        <v-card outlined>
-            <v-card-title class="handle">
-                <v-icon left>mdi-folder-multiple-image</v-icon>
-                {{ _('Media') }}
+    <template #activator="{props}">
+        <v-card>
+            <v-toolbar class="handle">
+                <v-toolbar-title>{{ _('Media') }}</v-toolbar-title>
                 <v-spacer></v-spacer>
 
-        <v-btn
-          class="mx-2 white--text"
-          x-small
-          fab
-          dark
-          depressed
-          color="teal lighten-2"
-          @click="addMedia"
-        >
-          <v-icon dark>mdi-plus-circle</v-icon></v-btn
-        >
-      </v-card-title>
+                <v-btn
+                        class="mx-2 white--text"
+
+                        icon="mdi-plus-circle"
+                        color="primary"
+                        @click="addMedia"
+                >
+                    <v-icon dark></v-icon>
+                </v-btn
+                >
+            </v-toolbar>
 
             <!--  Grid of Media Items -->
 
             <v-card-text id="medias">
 
-                 <image-gallery :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage" @video-click="viewPlayer"
-                  @remove-media="removeMedia"
-                 ></image-gallery>
+
+
+                <image-gallery :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
+                               @video-click="viewPlayer"
+                               @remove-media="removeMedia"
+                ></image-gallery>
 
             </v-card-text>
         </v-card>
@@ -51,59 +52,39 @@
                 </v-row>
                 <v-row>
                     <v-col cols="12" md="6">
-                        <v-card class="d-flex" flat>
-                            <v-text-field
-                                    v-if="mediaTitle__"
-                                    v-model="editedMedia.title"
-                                    label="{{ _('Title') }}"
-                            ></v-text-field>
+                        <dual-field
+                                v-model:original="editedMedia.title"
+                                v-model:translation="editedMedia.title_ar"
+                                label-original="{{ _('Title') }}"
+                                label-translation="{{ _('Title (AR)') }}"
+                        >
 
-                            <v-text-field
-                                    v-else
-                                    v-model="editedMedia.title_ar"
-                                    label="{{ _('Title (AR)') }}"
-                                    background-color="lime lighten-5"
-                            ></v-text-field>
+                        </dual-field>
 
-                            <v-btn
-                                    color="grey lighten-2"
-                                    outlined
-                                    x-small
-                                    fab
-                                    class="swh d-inline"
-                                    @click="mediaTitle__=!mediaTitle__"
-                            >
-                                <v-icon>mdi-web</v-icon>
-                            </v-btn
-                            >
-                        </v-card>
+
                     </v-col>
 
                     <v-col cols="12" md="6">
-                        <v-card class="d-flex" flat>
+                        <v-card class="d-flex" variant="text">
                             <!-- category -->
 
                             <search-field
                                     label="{{ _('Media Category') }}"
                                     api="/admin/api/mediacategories"
                                     v-model="editedMedia.category"
-                                    item-text="title"
+                                    item-title="title"
                                     item-value="id"
-                                    :return-object="false"
                             >
 
                             </search-field>
-                           
+
                         </v-card>
                     </v-col>
                 </v-row>
 
-                <v-row>
-                    <v-col cols="12" md="8"></v-col>
-                    <v-col md="4"></v-col>
-                </v-row>
 
-                <v-row></v-row>
+
+
             </v-container>
         </v-card-text>
         <v-card-actions class="pa-5">
@@ -111,13 +92,12 @@
             <v-btn color="grey lighten-1" text @click="closeMedia">{{ _('Cancel') }}</v-btn>
             <v-btn
                     color="primary"
-
+                    variant="elevated"
                     :disabled="!enableAttach"
 
                     @click="attachMedia"
             >{{ _('Attach Media') }}
-            </v-btn
-            >
+            </v-btn>
         </v-card-actions>
     </v-card>
 </v-dialog>

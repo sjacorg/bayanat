@@ -1,12 +1,21 @@
+from typing import Optional
 from flask import render_template
 from weasyprint import HTML, CSS
 
 
 class PDFUtil:
+    """PDF generation utility class."""
+
     def __init__(self, model):
         self.model = model
 
-    def generate_pdf(self, output=None):
+    def generate_pdf(self, output: Optional[str] = None) -> None:
+        """
+        Generate a PDF from the model data.
+
+        Args:
+            - output (str): The path to save the PDF to. If None, the PDF will be returned as a binary string.
+        """
         if self.model.__tablename__ == "bulletin":
             html = render_template("pdf/bulletin.html", bulletin=self.model)
         elif self.model.__tablename__ == "actor":

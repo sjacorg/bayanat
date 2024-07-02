@@ -91,10 +91,13 @@ post_label_endpoint_roles = [
 def test_post_label_endpoint(clean_slate_labels, request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     label = LabelFactory()
+    item = label.to_dict()
+    item.pop("id")
+    item.pop("updated_at")
     response = client_.post(
         "/admin/api/label",
         headers={"Content-Type": "application/json"},
-        json={"item": {"title": label.title}},
+        json={"item": item},
         follow_redirects=True,
     )
     assert response.status_code == expected_status

@@ -86,10 +86,13 @@ post_eventtype_endpoint_roles = [
 def test_post_eventtype_endpoint(clean_slate_eventtypes, request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     evt = EventtypeFactory()
+    item = evt.to_dict()
+    item.pop("id")
+    item.pop("updated_at")
     response = client_.post(
         "/admin/api/eventtype",
         headers={"Content-Type": "application/json"},
-        json={"item": evt.to_dict()},
+        json={"item": item},
         follow_redirects=True,
     )
     assert response.status_code == expected_status

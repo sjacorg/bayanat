@@ -2,73 +2,67 @@
 
 {% block content %}
 
-<v-app id="app" v-cloak>
-    {% include 'nav-drawer.html' %}
-    {% include 'nav-bar.html' %}
-    <v-main>
-        <v-container fluid fill-height>
-            <v-layout align-top justify-center>
-                <v-container grid-list-sm>
-                    <v-container>
-                        <v-row>
-                            <v-col cols="12">
-
-                                <v-card>
-                                    <v-card-text>
-                                        {% include "security/_messages.html" %}
-                                    </v-card-text>
-                                    <v-card-title>
-                                        {{ _('Welcome') }}, {{ g.user.username }}!
-                                    </v-card-title>
-                                    {% if g.user.last_login_at %}
-                                    <v-card-text>
-                                        <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
-                                    {% endif %}
-                                    {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
-                                        <v-icon>mdi-alert</v-icon>
-                                        {{ _('Warning: Media Import\'s path processing is enabled!') }}
-                                    </v-card-text>
-                                    {% endif %}
+    <v-main class="ma-6" style="height: 100lvh">
+        <v-container fluid>
+            <v-card class="pa-2" >
 
 
-                                </v-card>
+                <v-card-title>
+                    {{ _('Welcome') }}, {{ g.user.username }}!
 
+                    <v-spacer></v-spacer>
+                    {% include "security/_messages.html" %}
+                </v-card-title>
 
-                            </v-col>
-                        </v-row>
-                    </v-container>
+                {% if g.user.last_login_at %}
+                <v-card-subtitle>
+                    <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
+                </v-card-subtitle>
+                {% endif %}        
+                
+                {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
+                <v-card-text>
+                    <v-icon>mdi-alert</v-icon>
+                    {{ _('Warning: Media Import\'s path processing is enabled!') }}
+                </v-card-text>
+                {% endif %}
+        <v-spacer style="min-height: 65lvh" ></v-spacer>
+            <v-card-text >
+                <p>&copy; 2024 <a href="https://syriaaccountability.org/" target="_blank">{{ _('Syria Justice &amp;
+                    Accountability Center (SJAC) ') }}</a> {{ _('All rights reserved.') }}</p>
+                <p><a href="https://bayanat.org/" target="_blank">{{ _('Bayanat ') }}</a> {{ _('is an open source project by SJAC released under the GNU Affero General Public License (AGPL).') }}</p>
+            </v-card-text>
 
-                </v-container>
+            </v-card>
 
-
-            </v-layout>
         </v-container>
+
     </v-main>
 
-    {% include 'footer.html' %}
-</v-app>
-{% endblock  %}
+{% endblock %}
 
 {% block js %}
-<script>
-    new Vue({
-        el: '#app',
-        vuetify: vuetify,
-        delimiters: delimiters,
+    <script type="module">
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
 
+        const vuetify = createVuetify(vuetifyConfig);
 
-        methods: {},
+        const app = createApp({
 
+            mixins: [globalMixin],
 
-        data: () => ({
-            search: '',
-            dialog: dialog,
-            drawer: drawer,
-            sideNav: sideNav
+            data() {
+                return {
+                    drawer: drawer,
+                };
+            },
 
-        }),
+            methods: {},
 
-
-    })
-</script>
+            delimiters: delimiters
+        });
+        
+        app.use(vuetify).mount('#app');
+    </script>
 {% endblock %}

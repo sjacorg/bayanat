@@ -1,170 +1,196 @@
-{% extends 'layout.html' %} {% block content %}
+{% extends 'layout.html' %}
+{% block content %}
 
-<div id="app">
-  <v-app id="activity" v-cloak>
-    {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-    {% include 'admin/partials/activity_search_viewer.html' %}
-    {% include 'admin/partials/activity_bulk_viewer.html' %}
-    <v-main>
+{% include 'admin/partials/activity_search_viewer.html' %}
+{% include 'admin/partials/activity_bulk_viewer.html' %}
+<v-main>
+  <v-container fluid>
+    <v-card>
+      <v-card-text>
+          <v-data-table-server
+            height="calc(100vh - 260px)"
+            fixed-header
+            :headers="headers"
+            :items="items"
+            :loading="loading"
+            @update:options="refresh"
+            :items-length="itemsLength"
+            class="elevation-1"
+          >
+            <template v-slot:top>
+              <v-toolbar >
+                <v-toolbar-title>{{ _('System Activity') }}</v-toolbar-title>
+                <v-divider class="mx-4" inset vertical></v-divider>
+                <v-btn @click="toggleAdvSearch" prepend-icon="mdi-ballot">{{ _('Filter Options') }}</v-btn>
+              </v-toolbar>
+            </template>
 
-            <v-container class="container--fluid">
-              <v-row>
-                <v-col cols="12">
-                  <v-card>
-                    <v-card-title>
-                      <div class="flex-grow-1"></div>
-                    </v-card-title>
+            <template v-slot:item.user_id="{ item }">
+              ${ getUsername(item.user_id) }
+            </template>
 
-                    <v-card-text>
-                      <v-data-table
-                          height="calc(100vh - 400px)"
-                          fixed-header
-                        :headers="headers"
-                        :items="items"
-                        :options.sync="options"
-                        :footer-props.sync="footerProps"
-                        :loading="loading"
-                        :server-items-length="itemsLength"
-                        class="elevation-1"
-                      >
-                        <template v-slot:top>
-                          <v-toolbar flat color="white">
-                            <v-toolbar-title>{{ _('System Activity') }}</v-toolbar-title>
+            <template v-slot:item.status="{ item }">
+              <v-tooltip text="{{ _('Success')}}">
+                <template v-slot:activator="{ props }">
+                  <v-icon v-bind="props" class="ml-2"
+                          v-if="item.status == 'SUCCESS'" color="success">mdi-check-circle
+                  </v-icon>
+                </template>
+              </v-tooltip>
 
-                            <v-divider class="mx-4" inset vertical></v-divider>
+              <v-tooltip text="{{ _('Denied') }}">
+                <template v-slot:activator="{ props }">
+                  <v-icon v-bind="props" class="ml-2"
+                  v-if="item.status == 'DENIED'" color="error">mdi-cancel
+                  </v-icon>
+                </template>
+              </v-tooltip>
+            </template>
 
-                             <v-btn  @click="toggleAdvSearch"><v-icon left color="grey darken-2">mdi-ballot</v-icon> Filter Options</v-btn>
-                            <v-spacer></v-spacer>
+            <template v-slot:item.subject="{item}">
+              <!-- search button -->
+              <v-btn v-if="item.action == 'SEARCH'"
+                variant="outlined"
+                 size="small"
+                class="mx-2"
+                @click="showSearch(item)"
+                prepend-icon="mdi-magnify">
+                {{ _('Show Query') }}
+              </v-btn>
+
+              <v-btn
+                v-else-if="item.action == 'BULK'"
+                class="mx-2"
+                variant="outlined"
+                size="small"
+                @click="showBulk(item)"
+                prepend-icon="mdi-expand-all">
+                {{ _('Show Items') }}
+              </v-btn>
+
+              <!-- A/B/I preview button -->
+              <v-btn
+                v-else-if="['bulletin', 'actor', 'incident'].includes(item.subject.class)"
+                size="small"
+                variant="plain"
+                class="mx-2"
+                @click="previewItem('/admin/api/' + item.subject.class + '/' + item.subject.id + '?mode=3')"
+                >
+
+                <v-icon color="grey darken-2" left
+                v-if="item.subject.class == 'bulletin'">
+                  mdi-file-document-multiple
+                </v-icon>
+                <v-icon color="grey darken-2" left x-small
+                v-if="item.subject.class == 'actor'">
+                  mdi-account-multiple
+                </v-icon>
+                <v-icon color="grey darken-2" left x-small
+                v-if="item.subject.class == 'incident'">
+                  mdi-hazard-lights
+                </v-icon>
+
+                ${item.subject.id}
+              </v-btn>
+
+              <v-chip
+                v-else
+                label
+                color="grey lighten-2"
+                elevation="0"
+                class="mx-2"
+                > ${ item.subject.id }
+              </v-chip>
+
+            </template>
+            <template v-slot:no-data> </template>
+          </v-data-table-server>
+
+          {% include 'admin/partials/activity_advsearch.html' %}
 
 
-                          </v-toolbar>
-                          <v-toolbar flat>
+      </v-card-text>
+    </v-card>
 
+    <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
 
+  </v-container>
+</v-main>
 
-                          </v-toolbar>
-                        </template>
+{% endblock %}
 
-                        <template v-slot:item.user_id="{ item }">
-                            ${ getUsername(item.user_id) }
-                        </template>
+{% block outside %}
 
-                        <template v-slot:item.status="{ item }">
-                          <v-icon v-tippy content="Success" class="ml-2"
-                                  v-if="item.status == 'SUCCESS'" color="success">mdi-check-circle
-                          </v-icon>
+  <div class="d-none" data-types='{{ actions_types|tojson }}'></div>
+  <div class="d-none" data-user='{{ current_user.to_dict()|tojson }}'></div>
 
-                          <v-icon v-tippy content="Denied" class="ml-2" 
-                          v-if="item.status == 'DENIED'">mdi-cancel
-                          </v-icon>
-                      </template>
+  <div class="d-none" data-itob='{{ itobInfo|tojson }}'></div>
+  <div class="d-none" data-itoa='{{ itoaInfo|tojson }}'></div>
+  <div class="d-none" data-atob='{{ atobInfo|tojson }}'></div>
+  <div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
+  <div class="d-none" data-btob='{{ btobInfo|tojson }}'></div>
+  <div class="d-none" data-itoi='{{ itoiInfo|tojson }}'></div>
+  <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
 
-                       <template v-slot:item.subject="{item}">
-                          <!-- search button -->
-                          <v-btn v-if="item.action == 'SEARCH'"
-                            color="grey lighten-2" 
-                            elevation="0" 
-                            class="mx-2"
-                            @click="showSearch(item)"
-                            >
+{% endblock %}
 
-                            <v-icon color="grey darken-2" left>
-                            mdi-magnify
-                            </v-icon>
+{% block js %}
 
-                            {{ _('Show Query') }}
-                          </v-btn>
+<script src="/static/js/tinymce-vue.min.js"></script>
 
-                          <v-btn 
-                            v-else-if="item.action == 'BULK'"
-                            color="grey lighten-2" 
-                            elevation="0" 
-                            class="mx-2"
-                            @click="showBulk(item)"
-                            >
+    <script src="/static/js/dropzone.min.js"></script>
+    <script src="/static/js/components/VueDropzone.js"></script>
 
-                            <v-icon color="grey darken-2" left>
-                            mdi-expand-all
-                            </v-icon>
+    <script src="/static/js/mixins/media-mixin.js"></script>
 
-                            {{ _('Show Items') }}
-                          </v-btn>
-                          
-                          <!-- A/B/I preview button -->
-                          <v-btn 
-                            v-else-if="['bulletin', 'actor', 'incident'].includes(item.subject.class)"
-                            color="grey lighten-2" 
-                            elevation="0" 
-                            class="mx-2"
-                            @click="previewItem('/admin/api/' + item.subject.class + '/' + item.subject.id + '?mode=3')"
-                            >
+    <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/GeoLocations.js"></script>
 
-                            <v-icon color="grey darken-2" left
-                            v-if="item.subject.class == 'bulletin'">
-                              mdi-file-document-multiple
-                            </v-icon>
-                            <v-icon color="grey darken-2" left x-small
-                            v-if="item.subject.class == 'actor'">
-                              mdi-account-multiple
-                            </v-icon>
-                            <v-icon color="grey darken-2" left x-small
-                            v-if="item.subject.class == 'incident'">
-                              mdi-hazard-lights
-                            </v-icon>
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/DualField.js"></script>
+    <script src="/static/js/components/SearchField.js"></script>
 
-                            ${item.subject.id}
-                          </v-btn>
+    <script src="/static/js/components/BulletinCard.js"></script>
+    <script src="/static/js/components/ActorProfiles.js"></script>
+    <script src="/static/js/components/ActorCard.js"></script>
+    <script src="/static/js/components/IncidentCard.js"></script>
+    <script src="/static/js/components/EventCard.js"></script>
+    <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/PreviewCard.js"></script>
 
-                          <v-chip
-                            v-else
-                            label
-                            color="grey lighten-2" 
-                            elevation="0" 
-                            class="mx-2"
-                            > ${ item.subject.id }                        
-                          </v-chip>
+    <script src="/static/js/components/BulletinSearchBox.js"></script>
+    <script src="/static/js/components/ActorSearchBox.js"></script>
+    <script src="/static/js/components/IncidentSearchBox.js"></script>
+    <script src="/static/js/components/ActivitySearchBox.js"></script>
 
-                       </template>
+    <script src="/static/js/components/BulletinResult.js"></script>
+    <script src="/static/js/components/ActorResult.js"></script>
+    <script src="/static/js/components/IncidentResult.js"></script>
 
-                        <template v-slot:no-data> </template>
-                      </v-data-table>
+    <script src="/static/js/components/RelatedBulletinsCard.js"></script>
+    <script src="/static/js/components/RelatedActorsCard.js"></script>
+    <script src="/static/js/components/RelatedIncidentsCard.js"></script>
 
-                        {% include 'admin/partials/activity_advsearch.html' %}
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateRangeField.js"></script>
+    <script src="/static/js/components/PopDateTimeField.js"></script>
 
-                      <v-snackbar v-model="snackbar">
-                        ${snackMessage}
-                        <v-btn color="pink" text @click="snackbar = false">
-                          Close
-                        </v-btn>
-                      </v-snackbar>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
-            </v-container>
+    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/PdfViewer.js"></script>
 
-    </v-main>
+    <script src="/static/js/actorConfig.js"></script>
 
-          <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
-      {% include 'footer.html' %}
-  </v-app>
-</div>
+    <script src="/static/js/components/Visualization.js"></script>
+    <script src="/static/js/element-resize-detector.min.js"></script>
+    <script src="/static/js/force-graph.min.js"></script>
 
-    <div class="d-none" data-types='{{ actions_types|tojson }}'></div>
-    <div class="d-none" data-user='{{ current_user.to_dict()|tojson }}'></div>
-{% endblock %} {% block js %}
-<script src="/static/js/mixins/global-mixin.js"></script>
-<script src="/static/js/components/PopDateRangeField.js" ></script>
-<script src="/static/js/components/ActivitySearchBox.js" ></script>
-<script src="/static/js/components/MediaCard.js"></script>
-<script src="/static/js/mixins/media-mixin.js"></script>
-<script src="/static/js/actorConfig.js"></script>
-<script src="/static/js/components/PdfViewer.js"></script>
-<script src="/static/js/components/GeoLocations.js"></script>
-<script src="/static/js/components/GlobalMap.js"></script>
-<script src="/static/js/components/Visualization.js"></script>
-<script src="/static/js/element-resize-detector.min.js"></script>
-<script src="/static/js/force-graph.min.js"></script>
+    <script src="/static/js/components/MPCard.js"></script>
+    <script src="/static/js/components/MPField.js"></script>
+    <script src="/static/js/components/MixI.js"></script>
+    <script src="/static/js/components/MixII.js"></script>
+    <script src="/static/js/components/MixIII.js"></script>
+
 {% if config.GOOGLE_MAPS_API_KEY %}
     {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
 {% endif %}
@@ -175,22 +201,30 @@
 <script>
   window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
-const app =   new Vue({
-    el: "#app",
-    vuetify: vuetify,
-    delimiters: delimiters,
+  const {createApp} = Vue;
+  const {createVuetify} = Vuetify;
+  const vuetify = createVuetify(vuetifyConfig);
 
+  const app = createApp({
+    delimiters: delimiters,
     mixins: [globalMixin],
     data: () => ({
-      currentUser: JSON.parse(document.querySelector('[data-user]').dataset.user),
+      translations: translations,
+
+      itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
+        itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
+        itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
+        atobInfo: JSON.parse(document.querySelector('[data-atob]').dataset.atob),
+        btobInfo: JSON.parse(document.querySelector('[data-btob]').dataset.btob),
+        atoaInfo: JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
+
+      currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
       dialog: dialog,
       preview: false,
       pitem: {},
       advSearchOpen: false,
       imDialog: false,
       drawer: drawer,
-      sideNav: sideNav,
-      parents: [],
       
       // search popup vars
       activitySearchViews: false,
@@ -202,48 +236,31 @@ const app =   new Vue({
       activityBulkViews: false,
       bulkItems: [],
 
-      snackbar: false,
-      snackMessage: '',
       loading: true,
       parentLoading: false,
       models: ['bulletin', 'actor', 'incident', 'user', 'location', 'media'],
       users: JSON.parse(`{{users|tojson}}`),
-      csvFile: null,
       options: {},
-      footerProps: {
-        itemsPerPageOptions: itemsPerPageOptions,
-          itemsPerPageText: "{{ _('Rows per page')}}"
-      },
 
-        q: {},
+      q: {},
 
-        actionTypes : JSON.parse(document.querySelector('[data-types]').dataset.types),
+      actionTypes : JSON.parse(document.querySelector('[data-types]').dataset.types),
 
       headers: [
-        { text: "{{_('Date')}}", value: "created_at",width:200 },
-        { text: "{{_('User')}}", value: "user_id" },
-        { text: "{{_('Action')}}", value: "action" },
-        { text: "{{_('Status')}}", value: "status" },
-        { text: "{{_('Subject')}}", value: "subject" },
-        { text: "{{_('Class')}}", value: "model" },
-        { text: "{{_('Details')}}", value: "details" },
+        { title: "{{_('Date')}}", value: "created_at", width:200, sortable: false },
+        { title: "{{_('User')}}", value: "user_id", width:50, sortable: false },
+        { title: "{{_('Action')}}", value: "action", width:50, sortable: false },
+        { title: "{{_('Status')}}", value: "status", width:50, sortable: false },
+        { title: "{{_('Subject')}}", value: "subject", width:50, sortable: false },
+        { title: "{{_('Class')}}", value: "model", width:100, sortable: false },
+        { title: "{{_('Details')}}", value: "details", width:200, sortable: false },
       ],
 
       items: [],
       itemsLength: 10,
-      editedIndex: -1,
-      editedItem: {
-        title: "",
-        parent: {
-          'id': null
-        }
-      },
-      defaultItem: {
-        title: ""
-      }
     }),
 
-    filters: {
+    computed: {
       formatSubject: function(val){
         if (val.length > 1){
           return val.map(x=> x.class + '-' + x.id)
@@ -260,10 +277,6 @@ const app =   new Vue({
       }
     },
 
-    computed: {
-
-    },
-
     watch: {
       dialog(val) {
         val || this.close();
@@ -274,7 +287,7 @@ const app =   new Vue({
       }
     },
 
-    mounted: function () {
+    mounted () {
       // populate roles for advanced search for admins
       // needed for search popup
       axios.get('/admin/api/roles/').then(res => {
@@ -310,7 +323,7 @@ const app =   new Vue({
 
         resetSearch() {
             this.q = {};
-            this.refresh();
+            this.refresh(this.options);
         },
 
 
@@ -320,13 +333,13 @@ const app =   new Vue({
 
         },
 
-        refresh() {
-              if (this.advSearchOpen){
-                  this.advSearchOpen = false;
-              }
-              if (! this.options.page) {
-                  this.options.page = 1;
-              }
+        refresh(options) {
+          this.options = options || this.options;
+
+          if (this.advSearchOpen){
+              this.advSearchOpen = false;
+          }
+
           this.loading = true;
                 axios.post(`/admin/api/activities/`, {
                     q: this.q,
@@ -341,14 +354,13 @@ const app =   new Vue({
                 }).finally(() => {
                     this.loading = false;
                 });
-
         },
 
         showSearch(item) {
             this.search = item.subject;
             this.searchClass = item.model;
             // incident search has only one query
-            if (this.searchClass != 'incident') {
+            if (this.searchClass !== 'incident') {
               this.searchPanels = Array.from(this.search.keys());
             }
             
@@ -371,17 +383,57 @@ const app =   new Vue({
             this.bulkItems = [];
             this.activityBulkViews = false;
         },
-
-      close() {
-        this.dialog = false;
-        setTimeout(() => {
-          this.editedItem = Object.assign({}, this.defaultItem);
-          this.editedIndex = -1;
-        }, 300);
-      },
-
-
     }
   });
+
+  app.component('ActivitySearchBox', ActivitySearchBox);
+
+  app.component('SearchField', SearchField);
+  app.component('LocationSearchField', LocationSearchField);
+  app.component('UniField', UniField);
+  app.component('DualField', DualField);
+
+  app.component('GeoMap', GeoMap);
+  app.component('GeoLocations', GeoLocations);
+  app.component('GlobalMap', GlobalMap);
+
+  app.component('BulletinSearchBox', BulletinSearchBox);
+  app.component('ActorSearchBox', ActorSearchBox);
+  app.component('IncidentSearchBox', IncidentSearchBox);
+  app.component('ActorResult', ActorResult);
+  app.component('BulletinResult', BulletinResult);
+  app.component('IncidentResult', IncidentResult);
+
+  app.component('BulletinCard', BulletinCard);
+  app.component('ActorProfiles', ActorProfiles);
+  app.component('ActorCard', ActorCard);
+  app.component('IncidentCard', IncidentCard);
+  app.component('EventCard', EventCard);
+  app.component('MediaCard', MediaCard);
+  app.component('PreviewCard', PreviewCard);
+
+  app.component('PopDateField', PopDateField);
+  app.component('PopDateTimeField', PopDateTimeField);
+  app.component('PopDateRangeField', PopDateRangeField);
+
+  app.component('ImageGallery', ImageGallery);
+  app.component('PdfViewer', PdfViewer);
+
+  app.component('RelatedBulletinsCard', RelatedBulletinsCard);
+  app.component('RelatedActorsCard', RelatedActorsCard);
+  app.component('RelatedIncidentsCard', RelatedIncidentsCard);
+
+  app.component('Visualization', Visualization);
+
+  app.component('mix-i', MixI);
+  app.component('mix-ii', MixII);
+  app.component('mix-iii', MixIII);
+  app.component('mp-field', MPField);
+  app.component('mp-card', MPCard);
+  app.component('vue-dropzone', VueDropzone);
+
+  app.use(router);
+  app.use(vuetify).mount('#app');
+
 </script>
 {% endblock %}

@@ -1,4 +1,5 @@
 import os, boto3
+from typing import Any, Literal, Optional
 import pyexifinfo as exiflib
 from docx import Document
 from PyPDF2 import PdfReader
@@ -14,9 +15,11 @@ from enferno.settings import Config as cfg
 import subprocess
 
 from enferno.utils.base import DatabaseException
+import enferno.utils.typing as t
 
 
-def now():
+def now() -> str:
+    """Function to return current time in UTC."""
     return str(arrow.utcnow())
 
 
@@ -33,20 +36,25 @@ if cfg.OCR_ENABLED:
 
 
 class MediaImport:
+    """Class to handle media file imports."""
+
     # file: Filestorage class
-    def __init__(self, batch_id, meta, user_id, data_import_id):
+    def __init__(self, batch_id: t.id, meta: Any, user_id: Any, data_import_id: t.id):
         self.meta = meta
         self.batch_id = batch_id
         self.user_id = user_id
         self.data_import = DataImport.query.get(data_import_id)
 
-    def upload(self, filepath, target):
+    def upload(self, filepath: str, target: str) -> bool:
         """
         Copies file to media folder or S3 bucket.
 
-            Parameters:
-                filepath: filepath file
-                target: file name in media
+        Args:
+            - filepath: Filepath of the file to be copied.
+            - target: File name in media.
+
+        Returns:
+            - True if successful, False otherwise.
         """
 
         if cfg.FILESYSTEM_LOCAL:
@@ -79,15 +87,15 @@ class MediaImport:
             self.data_import.add_to_log("Filesystem is not configured properly")
             return False
 
-    def get_duration(self, filepath):
+    def get_duration(self, filepath: str) -> Optional[str]:
         """
         Returns duration of a video file.
 
-            Parameters:
-                filepath: filepath of video file
+        Args:
+            - filepath: Filepath of the video file.
 
-            Returns:
-                duration: flout duration of video
+        Returns:
+            - Duration of the video file as float string.
         """
         try:
             # get video duration via ffprobe
@@ -110,15 +118,15 @@ class MediaImport:
             self.data_import.add_to_log(str(e))
             return None
 
-    def parse_docx(self, filepath):
+    def parse_docx(self, filepath: str) -> Optional[str]:
         """
         Parses MS Word file.
 
-            Parameters:
-                filepath: filepath of MS Word file
+        Args:
+            - filepath: filepath of MS Word file.
 
-            Returns:
-                str: text content of the MS Word file
+        Returns:
+            - text content of the MS Word file.
         """
         try:
             doc = Document(filepath)
@@ -134,15 +142,15 @@ class MediaImport:
             self.data_import.add_to_log(str(e))
             return None
 
-    def parse_pdf(self, filepath, attempt_ocr=False):
+    def parse_pdf(self, filepath: str, attempt_ocr: bool = False) -> Optional[str]:
         """
         Parses PDF file.
 
-            Parameters:
-                filepath: filepath of PDF file
+        Args:
+            - filepath: filepath of PDF file.
 
-            Returns:
-                str: text content of the PDF file
+        Returns:
+            - text content of the PDF file.
         """
         try:
             pdf = PdfReader(filepath)
@@ -169,16 +177,16 @@ class MediaImport:
             self.data_import.add_to_log(str(e))
             return None
 
-    def parse_pic(self, filepath):
+    def parse_pic(self, filepath: str) -> Optional[Any]:
         """
         Parses image files using Google's
         Tesseract OCR engine for text content.
 
-            Parameters:
-                filepath: filepath of image file
+        Args:
+            - filepath: filepath of image file.
 
-            Returns:
-                str: text content of the image file
+        Returns:
+            - text content of the image file.
         """
         try:
             text_content = image_to_string(filepath, lang=tesseract_langs)
@@ -188,20 +196,21 @@ class MediaImport:
             self.data_import.add_to_log(str(e))
             return None
 
-    def optimize(self, old_filename, old_path):
+    def optimize(
+        self, old_filename: str, old_path: str
+    ) -> tuple[Literal[True], str, str, str] | tuple[Literal[False], None, None, None]:
         """
         Converts a video to H.264 format.
 
-            Parameters:
-                old_filename: unoptimized video filename
-                old_path: video path
+        Args:
+            - old_filename: unoptimized video filename
+            - old_path: video path
 
-            Returns:
-                True/Flase: whether op is successful
-                new_filename: optimized video filename
-                new_filepath: optimized video file path
-                new_etag: optimized video md5 hash
-
+        Returns:
+            - True/Flase: whether op is successful
+            - new_filename: optimized video filename
+            - new_filepath: optimized video file path
+            - new_etag: optimized video md5 hash
         """
         check = ""
         _, ext = os.path.splitext(old_filename)
@@ -261,7 +270,7 @@ class MediaImport:
         else:
             return False, None, None, None
 
-    def process(self, file):
+    def process(self, file: str) -> Optional[Any]:
         # handle file uploads based on mode of ETL
         duration = None
         optimized = False
@@ -398,13 +407,17 @@ class MediaImport:
             info["vduration"] = duration
 
         self.data_import.add_to_log("Metadata parsed successfully.")
-        result = self.create_bulletin(info)
-        return result
+        self.create_bulletin(info)
 
-    def create_bulletin(self, info):
+    def create_bulletin(self, info: dict) -> None:
         """
-        creates bulletin from file and its meta data
-        :return: created bulletin
+        creates bulletin from file and its meta data.
+
+        Args:
+            - info: dictionary containing bulletin info
+
+        Returns:
+            - None
         """
         bulletin = Bulletin()
         # mapping

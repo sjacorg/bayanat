@@ -1,5 +1,5 @@
-Vue.component('export-card', {
-  props: ['exp', 'close', 'i18n', 'adminMode', ''],
+const ExportCard = Vue.defineComponent({
+  props: ['exp', 'close', 'i18n', 'adminMode'],
 
   watch: {
     exp: function (val, old) {},
@@ -79,8 +79,8 @@ Vue.component('export-card', {
 
   template: `
 
-      <v-card color="grey lighten-3" class="mx-auto pa-3">
-      <v-card color="grey lighten-5" outlined class="header-fixed mx-2">
+    <v-card color="grey lighten-3" class="mx-auto pa-3">
+      <v-card color="grey lighten-5"  class="header-fixed mx-2">
         <v-card-text>
 
           <!-- Export ID chip -->
@@ -95,47 +95,51 @@ Vue.component('export-card', {
           </v-chip>
 
           <!-- File format chip -->
-          <v-avatar size="32" color="gv darken-2" small label class="mx-2"
-          v-tippy="{ placement : 'bottom' }" :content="'Export Format: ' + exp.file_format">
+          <v-tooltip location="top" :text="'Export format:' + exp.file_format">
+          <template #activator="{props}">
+          <v-avatar size="32" v-bind="props" color="gv darken-2" label class="mx-2">
 
             <v-icon small center color="white" v-if="exp.file_format === 'json'">mdi-code-json</v-icon>
             <v-icon small center color="white" v-if="exp.file_format === 'pdf'">mdi-file-pdf-box</v-icon>
             <v-icon small center color="white" v-if="exp.file_format === 'csv'">mdi-file-delimited-outline</v-icon>
 
           </v-avatar>
+          </template>
+          </v-tooltip>
 
           <!-- Media chip -->
-          <v-avatar size="32" color="grey darken-3" small label class="mx-2"
-          v-tippy="{ placement : 'bottom' }" :content="'Include Media: ' + exp.include_media">
+          <v-tooltip bottom text="'Include Media:' + exp.include_media">
+          <template #activator="{props}">
+          <v-avatar size="32" v-bind="props" color="grey darken-3" small label class="mx-2">
 
             <v-icon small center color="white" v-if="exp.include_media">mdi-paperclip-check</v-icon>
             <v-icon small center color="white" v-if="!exp.include_media">mdi-paperclip-off</v-icon>
 
           </v-avatar>
-
+          </template>
+          </v-tooltip>
         </v-card-text>
 
         <!-- Requester chip -->
-        <v-chip color="white lighten-3" small label class="pa-2 mx-2 my-2" 
-        v-tippy="{ placement : 'bottom' }" content="Requester">
-          <v-icon left>mdi-account-circle-outline</v-icon>
+        
+        <v-chip prepend-icon="mdi-account-circle-outline"  class="pa-2 mx-2 my-2">
           {{ exp.requester.name }}
         </v-chip>
-
+        
         <!-- Approver chip -->
-        <v-chip color="white lighten-3" small label class="pa-2 mx-2 my-2" v-if="exp.approver"
-        v-tippy="{ placement : 'bottom' }" content="Approver">
-          <v-icon left>mdi-account-circle-outline</v-icon>
+        <v-chip prepend-icon="mdi-account-circle-outline" color="white lighten-3"  class="pa-2 mx-2 my-2" v-if="exp.approver">
           {{ exp.approver.name }}
         </v-chip>
 
         <!-- Status chip -->
-        <v-chip color="white lighten-3" small label class="mx-2 my-2"
-        v-tippy="{ placement : 'bottom' }" content="Status">
+        <v-tooltip bottom text="{{_('Status')}}">
+          <template #activator="{props}">
+        <v-chip color="white lighten-3" small label class="mx-2 my-2">
           <v-icon left>mdi-delta</v-icon>
           {{ exp.status }}
         </v-chip>
-
+        </template>
+        </v-tooltip>
       </v-card>
 
       <!-- Dates fields -->
@@ -145,9 +149,12 @@ Vue.component('export-card', {
       </div>
 
       <!-- Admin actions cards -->
-      <v-card outlined class="mx-2" color="grey lighten-5" v-if="adminMode">
+      <v-card  class="mx-2" color="grey lighten-5" v-if="adminMode">
+        <v-toolbar density="compact">
+          <v-toolbar-title class="text-subtitle-2"> {{ i18n.adminActions_ }}</v-toolbar-title>
+        </v-toolbar>
         <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.adminActions_ }}</div>
+
 
           <!-- Approve button -->
           <v-btn
@@ -155,12 +162,11 @@ Vue.component('export-card', {
               :disabled="exp.complete"
               class="ml-2"
               @click.stop="$emit('approve', exp.id)"
-              small
-              color="primary">
-            <v-icon
-                left>
-              mdi-check
-            </v-icon>
+              size="small"
+              color="primary"
+              prepend-icon="mdi-check"
+          >
+
             {{ i18n.approve_ }}
           </v-btn>
 
@@ -169,15 +175,13 @@ Vue.component('export-card', {
               v-if="showReject(exp)"
               class="ml-2"
               @click.stop="$emit('reject', exp.id)"
-              small
+              size="small"
+              prepend-icon="mdi-close"
               color="error">
-            <v-icon
-                left>
-              mdi-close
-            </v-icon>
+
             <span v-if="exp.status=='Approved'">{{ i18n.expireNow_ }}</span>
             <span v-else>{{ i18n.reject_ }}</span>
-            
+
           </v-btn>
 
           <!-- Change expiry date button -->
@@ -186,12 +190,9 @@ Vue.component('export-card', {
               :disabled="exp.expired"
               class="ml-2"
               @click="changeExpiry"
-              small
+              size="small"
+              prepend-icon="mdi-calendar-edit"
               color="primary">
-            <v-icon
-                left>
-              mdi-calendar-edit
-            </v-icon>
             {{ i18n.changeExpiry_ }}
           </v-btn>
 
@@ -201,70 +202,69 @@ Vue.component('export-card', {
               :disabled="exp.expired"
               class="ml-2"
               @click.stop="$emit('change', exp.id, exp.expires_on)"
-              small
+              size="small"
+              prepend-icon="mdi-calendar-edit"
               color="primary">
-            <v-icon
-                left>
-              mdi-calendar-edit
-            </v-icon>
             {{ i18n.setExpiry_ }}
           </v-btn>
 
         </v-card-text>
 
-        <!-- Expiry date text field -->
-        <v-text-field
-            v-if="!expiryFieldDisabled && showChangeExpiry(exp)"
-            type="datetime-local"
-            label="{{ i18n.exportExpiry_ }}"
-            v-model="exp.expires_on"
-        >
-        </v-text-field>
-
+        <v-card-item>
+          <!-- Expiry date text field -->
+          <v-text-field
+              v-if="!expiryFieldDisabled && showChangeExpiry(exp)"
+              type="datetime-local"
+              label="{{ i18n.exportExpiry_ }}"
+              v-model="exp.expires_on"
+          >
+          </v-text-field>
+        </v-card-item>
       </v-card>
 
       <!-- Refs -->
-      <v-card v-if="exp.ref && exp.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
-      color="grey lighten-5">
-        <div class="caption grey--text mr-2">{{ i18n.ref_ }}</div>
-        <v-chip x-small v-for="r in exp.ref" class="caption black--text mx-1">{{ r }}</v-chip>
+      <v-card v-if="exp.ref && exp.ref.length"  class="ma-2 pa-2 d-flex align-center flex-grow-1"
+              >
+        <div class="text-subtitle-2 mr-2">{{ i18n.ref_ }}</div>
+        <v-chip x-small v-for="r in exp.ref" class="caption  mx-1">{{ r }}</v-chip>
       </v-card>
 
       <!-- Comment -->
       <uni-field :caption="i18n.comment_" :english="exp.comment"></uni-field>
 
       <!-- Related Bulletins -->
-      <v-card outlined color="grey lighten-5" class="ma-2" v-if="items">
+      <v-card  color="grey lighten-5" class="ma-2" v-if="items">
         <v-card-text v-if="exp.table == 'bulletin'">
-          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}</div>
-          <bulletin-result :i18n="translations" class="mt-1" v-for="item in items" :bulletin="item"></bulletin-result>
+          <div class="pa-2 header-sticky text-subtitle-2 ">{{ i18n.relatedBulletins_ }}</div>
+          <bulletin-result :i18n="i18n"  v-for="item in items" :bulletin="item"></bulletin-result>
         </v-card-text>
-        
-         <v-card-text v-if="exp.table == 'actor'">
-          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedActors_ }}</div>
-          <actor-result :i18n="translations" class="mt-1" v-for="item in items" :actor="item"></actor-result>
+
+        <v-card-text v-if="exp.table == 'actor'">
+          <div class="pa-2 header-sticky text-subtitle-2 ">{{ i18n.relatedActors_ }}</div>
+          <actor-result :i18n="i18n"  v-for="item in items" :actor="item"></actor-result>
         </v-card-text>
-        
-        
-         <v-card-text v-if="exp.table == 'incident'">
-          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedIncidents_ }}</div>
-          <incident-result :i18n="translations" class="mt-1" v-for="item in items" :incident="item"></incident-result>
+
+
+        <v-card-text v-if="exp.table == 'incident'">
+          <div class="pa-2 header-sticky text-subtitle-2 ">{{ i18n.relatedIncidents_ }}</div>
+          <incident-result :i18n="i18n"  v-for="item in items" :incident="item"></incident-result>
         </v-card-text>
-        
-        
+
+
         <v-card-actions>
-          <v-btn 
-            class="ma-auto caption" 
-            small 
-            color="grey lighten-4" 
-            elevation="0" 
-            @click="loadExportItems" 
-            v-if="showLoadMore"
-            >{{ i18n.loadMore_ }}
-              <v-icon right>mdi-chevron-down</v-icon></v-btn>
+          <v-btn
+              class="ma-auto caption"
+              small
+              color="grey lighten-4"
+              elevation="0"
+              @click="loadExportItems"
+              v-if="showLoadMore"
+          >{{ i18n.loadMore_ }}
+            <v-icon right>mdi-chevron-down</v-icon>
+          </v-btn>
         </v-card-actions>
       </v-card>
 
-      </v-card>
-    `,
+    </v-card>
+  `,
 });

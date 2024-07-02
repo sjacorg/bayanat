@@ -3,13 +3,14 @@
 {% block navbar %} {% endblock %}
 {% block content %}
 
-    {% include "security/_messages.html" %}
+
     <v-card style="width:min(90%,500px)" class="ma-auto mt-12">
-        <v-toolbar color="primary" dark text>
+        <v-toolbar color="primary" >
             <v-toolbar-title>{{ _("Two-factor Authentication") }}</v-toolbar-title>
-            <v-spacer></v-spacer>
+
         </v-toolbar>
-        <v-card-title>{{ _("Please enter your authentication code") }}</v-card-title>
+    <v-card-text>{% include "security/_messages.html" %}</v-card-text>
+        <v-card-title class="mt-3">{{ _("Please enter your authentication code") }}</v-card-title>
         <form action="{{ url_for_security('two_factor_token_validation') }}" method="POST"
               name="two_factor_verify_code_form">
             {{ two_factor_verify_code_form.hidden_tag() }}
@@ -18,7 +19,7 @@
 
                 <v-text-field name="code" placeholder="Enter code"></v-text-field>
 
-                <a href="/mf-recovery">{{ _("Trouble Accessing Your Account?/Lost Mobile/TFA Device?") }}</a>
+                <v-btn variant="plain" class="text-body-1" href="/mf-recovery">{{ _("Trouble Accessing Your Account/Lost Mobile/TFA Device?") }}</v-btn>
 
             </v-card-text>
 
@@ -35,7 +36,7 @@
                 {% endif %}
 
             <v-card-actions class="justify-end pa-4">
-                <v-btn color="primary" type="submit">{{ _("Submit") }}</v-btn>
+                <v-btn color="primary" variant="elevated" type="submit">{{ _("Submit") }}</v-btn>
             </v-card-actions>
         </form>
     </v-card>
@@ -57,10 +58,7 @@
         </v-card-text>
     </v-card>
 
-    <style>
-
-
-    </style>
+   
 {% endblock %}
 
 

@@ -1,0 +1,90 @@
+const RelatedBulletinsCard = Vue.defineComponent({
+  props: {
+    entity: {
+      type: Object,
+      required: true,
+    },
+    i18n: {
+      type: Object,
+      required: true,
+    },
+    relationInfo: {
+      type: Array,
+      required: true,
+    },
+  },
+  data() {
+    return {
+      bulletinPage: 1,
+      bulletinLM: false,
+      extractValuesById: extractValuesById,
+    };
+  },
+  watch: {
+    entity: {
+      handler(newVal, oldVal) {
+          if (newVal && newVal !== oldVal && newVal.id) {
+          this.bulletinPage = 1; // Reset page
+          this.entity.bulletin_relations = []; // Clear current relations
+          this.loadBulletinRelations();
+        }
+      },
+      immediate: true, // Immediate will call the watcher when the component is mounted
+      deep: true, // Deep watcher to detect changes within the object
+    },
+  },
+  methods: {
+    loadBulletinRelations(page = 1) {
+      axios
+        .get(
+          `/admin/api/${this.entity.class}/relations/${this.entity.id}?class=bulletin&page=${page}`,
+        )
+        .then((res) => {
+          this.entity.bulletin_relations = [...this.entity.bulletin_relations, ...res.data.items];
+          this.bulletinPage += 1;
+          this.bulletinLM = res.data.more;
+        })
+        .catch((err) => {
+          console.error(err.toJSON());
+        });
+    },
+    probability(item) {
+      return this.i18n.probs[item.probability].tr;
+    },
+
+  },
+  template: `
+      <v-card class="ma-2" v-if="entity.bulletin_relations && entity.bulletin_relations.length">
+        <v-toolbar density="compact">
+          <v-toolbar-title class="text-subtitle-1">{{ i18n.relatedBulletins_ }}
+            <v-btn variant="text" size="x-small" icon="mdi-image-filter-center-focus-strong"
+                   :href="'/admin/bulletins/?reltob='+entity.id" target="_self">
+            </v-btn>
+          </v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <bulletin-result :i18n="i18n" v-for="(item,index) in entity.bulletin_relations" :key="index"
+                           :bulletin="item.bulletin">
+            <template v-slot:header>
+              <v-sheet class="pa-2 border-b">
+                <v-list-item-title variant="flat"  class="text-caption my-2">{{ i18n.relationshipInfo_ }}</v-list-item-title>
+                <v-chip v-if="item.probability !== null" size="small" label>{{ probability(item) }}
+                </v-chip>
+                <v-chip class="ma-1" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')"
+                        color="grey" size="small" label>{{ r }}
+                </v-chip>
+                <v-chip v-if="item.comment" color="grey" size="small" label>{{ item.comment }}</v-chip>
+              </v-sheet>
+            </template>
+          </bulletin-result>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn class="ma-auto" append-icon="mdi-chevron-down" size="small" variant="tonal" color="grey" 
+                 @click="loadBulletinRelations(bulletinPage)"
+                 v-if="bulletinLM">{{ i18n.loadMore_ }}
+            
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    `,
+});

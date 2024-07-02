@@ -35,7 +35,8 @@ class DedupRelation(db.Model, BaseMixin):
         4: "Matching data not found",
     }
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Return a dictionary representation of the object."""
         return {
             "id": self.id,
             "query": self.query_video,
@@ -47,11 +48,16 @@ class DedupRelation(db.Model, BaseMixin):
             "result": self.result,
         }
 
-    def process(self, user_id=1):
+    def process(self, user_id: int = 1) -> None:
         """
         this method will go compare video deduplication data against database bulletins and establish relationship
         if it doesn't exist (based on the distance parameter provided by Benetech's video deduplication tool)
-        :return: None
+
+        Args:
+            - user_id: The id of the user who is processing the match
+
+        Returns:
+            None
         """
         print("Processing match {}: {},{}".format(self.id, self.query_video, self.match_video))
 

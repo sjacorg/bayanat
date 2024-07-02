@@ -49,7 +49,7 @@ def create_node(id, title, model):
 
 class GraphUtils:
     @staticmethod
-    def get_graph_json(entity_type, entity_id):
+    def get_graph_json(entity_type, entity_id) -> str:
         entity_class = class_mapping.get(entity_type)
         if not entity_class:
             raise ValueError("Invalid entity type")

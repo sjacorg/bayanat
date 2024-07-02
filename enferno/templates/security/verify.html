@@ -2,10 +2,12 @@
 {% from "security/_macros.html" import render_field_with_errors, render_field %}
 
 {% block content %}
-    <v-card>
-        <v-card-title>
-            Verify Password
-        </v-card-title>
+    <v-main>
+    <v-card max-width="600" class="mx-auto mt-16" >
+    <v-toolbar title="Verify Password">
+
+    </v-toolbar>
+
         <v-card-text>
 
             {% include "security/_messages.html" %}
@@ -29,18 +31,28 @@
             {% endif %}
         </v-card-text>
     </v-card>
+    </v-main>
 
 {% endblock %}
 
 {% block js %}
     <script>
-        const app = new Vue({
-            el: '#app',
-            vuetify: vuetify,
-            data: {
+   const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+
+    const vuetify = createVuetify(vuetifyConfig);
+
+    const app = createApp({
+        data() {
+            return {
                 activeTab: null
-            }
-        })
+            };
+        },
+
+        delimiters: delimiters
+    });
+
+    app.use(vuetify).mount('#app');
     </script>
 {% endblock %}
 

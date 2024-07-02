@@ -1,5 +1,6 @@
-Vue.component('relate-incidents', {
-  props: ['value', 'show', 'exids', 'i18n'],
+const RelateIncidents = Vue.defineComponent({
+  props: ['modelValue', 'show', 'exids', 'i18n'],
+  emits: ['update:modelValue', 'relate'],
   data: () => {
     return {
       q: {},
@@ -15,8 +16,8 @@ Vue.component('relate-incidents', {
     };
   },
   watch: {
-    value: function (val) {
-      this.$emit('input', val);
+    modelValue: function (val) {
+      this.$emit('update:modelValue', val);
     },
   },
 
@@ -31,7 +32,7 @@ Vue.component('relate-incidents', {
         })
         .catch((error) => {
           this.showIncident = false;
-          this.showSnack("Oops! We couldn't find this item.");
+          this.showSnack(i18n.notFound_);
         });
     },
 
@@ -78,13 +79,13 @@ Vue.component('relate-incidents', {
       this.search();
     },
     relateItem(item) {
-      this.results.removeById(item.id);
+      this.results = this.results.filter(result => result.id !== item.id);
       this.$emit('relate', item);
     },
   },
 
   template: `
-      <v-dialog v-model="visible" max-width="1220">
+    <v-dialog v-model="visible" max-width="1220">
       <v-sheet>
 
         <v-container class="fluid fill-height">
@@ -93,9 +94,9 @@ Vue.component('relate-incidents', {
               <v-card outlined>
                 <incident-search-box v-model="q" @search="reSearch" :i18n="$root.translations"></incident-search-box>
               </v-card>
-              <v-card  tile class="text-center  search-toolbar" elevation="0" color="grey lighten-4">
+              <v-card  class="text-center">
                 <v-card-text>
-                  <v-btn color="primary" @click="reSearch">{{ i18n.search_ }}</v-btn>
+                  <v-btn color="primary" variant="elevated" @click="reSearch">{{ i18n.search_ }}</v-btn>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -103,13 +104,11 @@ Vue.component('relate-incidents', {
 
               <v-card :loading="loading">
 
-                <v-card-title class="handle">
-                  {{ i18n.advSearch_ }}
+                <v-toolbar>
+                  <v-toolbar-title>{{ i18n.advSearch_ }}</v-toolbar-title>
                   <v-spacer></v-spacer>
-                  <v-btn @click="visible=false" small text fab>
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
-                </v-card-title>
+                  <v-btn @click="visible=false" icon="mdi-close"></v-btn>
+                </v-toolbar>
 
                 <v-divider></v-divider>
 
@@ -119,12 +118,12 @@ Vue.component('relate-incidents', {
                 </v-card-text>
 
 
-                <v-card class="pa-2" tile color="grey lighten-4">
+                <v-card class="pa-2">
 
                   <incident-result :i18n="i18n" v-for="(item, i) in results" :key="i" :incident="item"
                                    :show-hide="true">
                     <template v-slot:actions>
-                      <v-btn @click="relateItem(item)" small depressed color="primary">{{ i18n.relate_ }}
+                      <v-btn variant="elevated" @click="relateItem(item)"  color="primary">{{ i18n.relate_ }}
                       </v-btn>
                     </template>
                   </incident-result>
@@ -140,7 +139,6 @@ Vue.component('relate-incidents', {
                 </v-card-actions>
               </v-card>
             </v-col>
-
           </v-row>
         </v-container>
 
@@ -148,7 +146,7 @@ Vue.component('relate-incidents', {
         <v-dialog v-model="showIncident" max-width="550">
           <v-sheet>
             <div class="d-flex justify-end">
-              <v-btn @click="showIncident=false" small text fab right="10">
+              <v-btn @click="showIncident=false"  fab right="10">
                 <v-icon>mdi-close</v-icon>
               </v-btn>
             </div>
@@ -159,8 +157,7 @@ Vue.component('relate-incidents', {
 
       </v-sheet>
 
+    </v-dialog>
 
-      </v-dialog>
-
-    `,
+  `,
 });

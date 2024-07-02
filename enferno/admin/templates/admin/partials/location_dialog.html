@@ -1,9 +1,9 @@
-<validation-observer v-slot="{invalid}">
-    <v-dialog persistent v-if="dialog" v-model="dialog" fullscreen>
-
+<v-dialog persistent v-if="dialog" v-model="dialog" fullscreen>
+    <v-form @submit.prevent="save"  ref="form" v-model="valid">
         <v-card v-if="dialog" class="overflow-hidden card-edit">
-            <v-app-bar
-                absolute
+            <v-toolbar
+
+
                 color="pv"
                 dark
                 class="card-header">
@@ -12,19 +12,19 @@
             </v-toolbar-title>
                 <v-spacer></v-spacer>
                 <v-btn 
-                    @click="save" 
-                    :disabled="invalid || !latlngValid" 
-                    dark color="primary darken-1" 
-                    small class="mx-2" 
-                    depressed>
+                    type="button" 
+                    @click="validateForm"
+                    color="primary"
+                    variant="elevated"
+                    class="mx-2"
+                    >
                     {{ _('Save Location') }}
                     </v-btn>
                 <v-btn
-                    icon
+                    icon="mdi-close"
                     @click="confirmClose">
-                    <v-icon>mdi-close</v-icon>
                 </v-btn>
-            </v-app-bar>
+            </v-toolbar>
 
             <v-sheet 
                 id="card-content"
@@ -32,24 +32,18 @@
                 class="overflow-y-auto pt-14">
                 <v-container>
                     <v-row>
-                        <v-col cols="12" md="3">
-                            <validation-provider name="Title" rules="required" v-slot="{ errors }">
-                                <v-text-field
-                                    v-model="editedItem.title"
-                                    label="{{ _('Title') }}">
-                                </v-text-field>
-                                <span class="orange--text"> ${errors[0]}</span>
-                            </validation-provider>
-                        </v-col>
-                        <v-col cols="12" md="3">
-                            <v-text-field
-                                v-model="editedItem.title_ar"
-                                label="{{ _('Title (Ar)') }}">
-                            </v-text-field>
+                        <v-col cols="12" md="6">
+                            <dual-field v-model:original="editedItem.title"
+                                        v-model:translation="editedItem.title_ar"
+                                        label-original="{{ _('Title') }}"
+                                        label-translation="{{ _('Title (Ar)') }}"
+                                        :rules="titleRule">
+                            </dual-field>
                         </v-col>
 
                         <v-col cols="12" md="6">
                             <v-text-field
+                                    variant="solo"
                                 disabled
                                 v-model="editedItem.full_string"
                                 label="{{ _('Full Location') }}">
@@ -59,56 +53,44 @@
 
                     <v-row>
                         <v-col cols="12" md="5">
-                            <validation-provider name="Location Type"
-                            rules="required"
-                            v-slot="{ errors }">
                                 <search-field
                                     v-model="editedItem.location_type"
                                     api="/admin/api/location-types/"
-                                    item-text="title"
+                                    item-title="title"
                                     item-value="id"
                                     @input="checkLevel"
-
+                                    :rules="[rules.required]"
                                     :multiple="false"
                                     label="{{ _('Location Type') }}">
                                 </search-field>
 
-                                <span class="orange--text"> ${errors[0]}</span>
-
-                            </validation-provider>
 
                         </v-col>
                         
                         <v-col cols="12" md="4">
-                            <validation-provider
-                                    name="Administration Level"
-                                    :rules="checkAdminLevel"
-                                    v-slot="{ errors }">
 
                                 <search-field
                                     api="/admin/api/location-admin-levels/"
-                                    item-text="title"
+                                    item-title="title"
                                     item-value="id"
                                     :disabled="editedItem.location_type?.title!=='Administrative Location'"
                                     v-model="editedItem.admin_level"
-                                    @change="restrictSearch"
-                                    :return-object="false"
+                                    @update:model-value="restrictSearch"
                                     :multiple="false"
+                                    :rules="adminLevelRule"
                                     label="{{ _('Admin Level') }}">
                                 </search-field>
 
-                                <span class="orange--text"> ${errors[0]}</span>
-                            </validation-provider>
                         </v-col>
 
                         <v-col cols="12" md="3">
                             <search-field
                                 clearable
                                 api="/admin/api/countries/"
-                                :items="translations.countries"
-                                item-text="title"
+
+                                item-title="title"
                                 item-value="title"
-                                :return-object="false"
+
                                 v-model="editedItem.country"
                                 label="{{ _('Country') }}">
                             </search-field>
@@ -122,7 +104,7 @@
                                 v-model="editedItem.parent"
                                 api="/admin/api/locations/"
                                 :query-params="locQueryParams"
-                                item-text="full_string"
+                                item-title="full_string"
                                 item-value="id"
                                 :return-object="true"
                                 :multiple="false"
@@ -133,6 +115,7 @@
 
                         <v-col cols="12" md="4">
                             <v-text-field
+                                    variant="solo"
                                 v-model="editedItem.postal_code"
                                 label="{{ _('Postal Code') }}">
                             </v-text-field>
@@ -143,10 +126,10 @@
                     <v-row>
                         <v-col cols="12" md="12">
                             <geo-map
-                                    edit-mode="true"
+                                    :edit-mode="true"
                                 class="flex-grow-1"
                                 v-model="editedItem.latlng"
-                                map-height="300">
+                                :map-height="300">
                             </geo-map>
                         </v-col>        
                     </v-row>
@@ -164,7 +147,7 @@
                     <v-row>
                         <v-col cols="12" md="12">
                             <v-combobox
-                                small-chips
+                                chips
                                 multiple
                                 v-model="editedItem.tags"
                                 label="{{ _('Tags') }}">
@@ -175,5 +158,5 @@
                 </v-container>
             </v-sheet>
         </v-card>
-    </v-dialog>
-</validation-observer>
+    </v-form>
+</v-dialog>

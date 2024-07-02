@@ -17,6 +17,8 @@ class ConfigManager:
             "SECURITY_TWO_FACTOR_REQUIRED": False,
             "SECURITY_PASSWORD_LENGTH_MIN": 10,
             "SECURITY_ZXCVBN_MINIMUM_SCORE": 3,
+            "DISABLE_MULTIPLE_SESSIONS": True,
+            "SESSION_RETENTION_PERIOD": 30,
             "SECURITY_WEBAUTHN": False,
             "RECAPTCHA_ENABLED": False,
             "RECAPTCHA_PUBLIC_KEY": "",
@@ -127,13 +129,14 @@ class ConfigManager:
 
     CONFIG_LABELS = MappingProxyType(
         {
-            # timedelta type
             "SECURITY_FRESHNESS": "Security Freshness",
             "SECURITY_FRESHNESS_GRACE_PERIOD": "Security Freshness Grace Period",
             "SECURITY_TWO_FACTOR_REQUIRED": "Enforce 2FA User Enrollment",
             "SECURITY_PASSWORD_LENGTH_MIN": "Minimum Password Length",
             "SECURITY_ZXCVBN_MINIMUM_SCORE": "Password Strength Score",
             "SECURITY_WEBAUTHN": "2FA with Hardware/FIDO Device",
+            "DISABLE_MULTIPLE_SESSIONS": "Disable Multiple Sessions",
+            "SESSION_RETENTION_PERIOD": "Session Retention Period",
             "RECAPTCHA_ENABLED": "Recaptcha Enabled",
             "RECAPTCHA_PUBLIC_KEY": "Recaptcha Public Key",
             "RECAPTCHA_PRIVATE_KEY": "Recaptcha Private Key",
@@ -206,6 +209,8 @@ class ConfigManager:
             "SECURITY_PASSWORD_LENGTH_MIN": cfg.SECURITY_PASSWORD_LENGTH_MIN,
             "SECURITY_ZXCVBN_MINIMUM_SCORE": cfg.SECURITY_ZXCVBN_MINIMUM_SCORE,
             "SECURITY_WEBAUTHN": cfg.SECURITY_WEBAUTHN,
+            "DISABLE_MULTIPLE_SESSIONS": cfg.DISABLE_MULTIPLE_SESSIONS,
+            "SESSION_RETENTION_PERIOD": cfg.SESSION_RETENTION_PERIOD,
             "RECAPTCHA_ENABLED": cfg.RECAPTCHA_ENABLED,
             "RECAPTCHA_PUBLIC_KEY": cfg.RECAPTCHA_PUBLIC_KEY,
             "RECAPTCHA_PRIVATE_KEY": ConfigManager.MASK_STRING if cfg.RECAPTCHA_PRIVATE_KEY else "",

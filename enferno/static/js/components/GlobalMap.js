@@ -1,45 +1,6 @@
-Vue.component('location-popup', {
+const GlobalMap = Vue.defineComponent({
   props: {
-    loc: Object,
-    i18n: Object
-  },
-  computed: {
-    // Computed property to handle the mainStr logic
-    mainStr() {
-
-
-      return this.loc.main ? this.i18n?.mainIncident_ : '';
-    }
-  },
-  template: `
-    <v-card width="200" class="elevation-0">
-      <v-card-title>
-
-        <span>{{ loc.title }}</span>
-        <v-chip x-small class="ml-2">{{ loc.number }}</v-chip>  <v-chip class="ml-2" x-small>{{ loc.parentId }}</v-chip>
-      </v-card-title>
-      
-      <v-card-text>
-        
-        <v-chip small color="white" >{{ loc.lat.toFixed(6) }}, {{ loc.lng.toFixed(6) }}</v-chip>
-        
-        <v-chip v-if="loc.full_string" small >{{ loc.full_string }}</v-chip>
-        <v-chip v-if="mainStr" small>{{mainStr}}</v-chip>
-      </v-card-text>
-      
-      <v-card-actions>
-        <v-chip v-if="loc.type" small>{{loc.type}}</v-chip>
-        <v-chip v-if="loc.eventtype" small>{{loc.eventtype}}</v-chip>
-      </v-card-actions>
-      
-    </v-card>
-  `,
-});
-
-
-Vue.component('global-map', {
-  props: {
-    value: {
+    modelValue: {
       default: [],
     },
 
@@ -51,7 +12,11 @@ Vue.component('global-map', {
 
   data: function () {
     return {
-      locations: this.value.length ? this.value : [],
+
+      mapId: 'map-' + this.$.uid,
+
+      map: null,
+      locations: this.modelValue.length ? this.modelValue : [],
       mapHeight: 300,
       zoom: 10,
       mapKey: 0,
@@ -74,47 +39,79 @@ Vue.component('global-map', {
   },
 
   mounted() {
-    let map = this.$refs.map.mapObject;
 
-    map.addControl(
-      new L.Control.Fullscreen({
-        title: {
-          false: 'View Fullscreen',
-          true: 'Exit Fullscreen',
-        },
-      }),
-    );
-
-    this.satellite = L.gridLayer.googleMutant({
-      type: 'satellite', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
-    });
+    this.initMap();
   },
 
   watch: {
-    value(val, old) {
+    modelValue(val, old) {
       if ((val && val.length) || val !== old) {
         this.locations = val;
         this.fitMarkers();
       }
       if (val.length === 0) {
-        this.$refs.map.mapObject.setView([this.lat, this.lng]);
+        this.map.setView([this.lat, this.lng]);
       }
     },
 
     locations() {
-      this.$emit('input', this.locations);
+      this.$emit('update:modelValue', this.locations);
     },
   },
 
   methods: {
+    generatePopupContent(loc) {
+      // Simple HTML structure for popup content. Adjust as needed.
+      return `<div class="popup-content">
+      <h3 class="text-subtitle-2">${loc.title}</h3>
+      <p>Number: ${loc.number} Parent ID: ${loc.parentId}</p>
+      <p>Coordinates: ${loc.lat?.toFixed(6)}, ${loc.lng?.toFixed(6)}</p>
+      ${loc.full_string ? `<p>${loc.full_string}</p>` : ''}
+      ${loc.main ? `<p>${this.i18n.mainIncident_}</p>` : ''}
+      ${loc.geotype ? `<p>Type: ${loc.geotype.title}</p>` : ''}
+      ${loc.eventtype ? `<p>Event Type: ${loc.eventtype}</p>` : ''}
+    </div>`;
+    },
+
+    initMap() {
+
+      this.map = L.map(this.mapId, {
+        center: [this.lat, this.lng],
+        zoom: this.zoom,
+        scrollWheelZoom: false,
+      });
+
+      // Add the default tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: this.attribution,
+      }).addTo(this.map);
+
+      // Add fullscreen control
+      this.map.addControl(
+        new L.Control.Fullscreen({
+          title: {
+            false: 'View Fullscreen',
+            true: 'Exit Fullscreen',
+          },
+        }),
+      );
+
+      // Initialize the satellite layer if needed
+      // Note: Replace `L.gridLayer.googleMutant` with a suitable alternative for Leaflet if you're not using a plugin for Google Maps tiles
+      this.satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      });
+      this.fitMarkers();
+    },
     toggleSatellite() {
       // use subdomains to identify state
       if (this.defaultTile) {
         this.defaultTile = false;
-        this.satellite.addTo(this.$refs.map.mapObject);
+        this.satellite.addTo(this.map);
       } else {
         this.defaultTile = true;
-        this.$refs.map.mapObject.removeLayer(this.satellite);
+        this.map.removeLayer(this.satellite);
       }
 
       // Working hack : redraw the tile layer component via Vue key
@@ -127,31 +124,31 @@ Vue.component('global-map', {
     },
 
     redraw() {
-      this.$refs.map.mapObject.invalidateSize();
+      this.map.invalidateSize();
     },
 
     fitMarkers() {
       // construct a list of markers to build a feature group
 
-      const map = this.$refs.map.mapObject;
-
       if (this.markerGroup) {
-        map.removeLayer(this.markerGroup);
+        this.map.removeLayer(this.markerGroup);
       }
 
       this.markerGroup = L.markerClusterGroup({
         maxClusterRadius: 20,
       });
-
-      if (this.locations.length) {
+      if (this.locations?.length) {
         let eventLocations = [];
 
-        for (loc of this.locations) {
-          mainStr = false;
+        const locationsWithCoordinates = this.locations.filter(loc => loc.lat && loc.lng);
+
+        for (const loc of locationsWithCoordinates) {
+          let mainStr = false;
           if (loc.main) {
             mainStr = this.i18n.mainIncident_;
             loc.color = '#000000';
           }
+
 
           let marker = L.circleMarker([loc.lat, loc.lng], {
             color: 'white',
@@ -167,19 +164,7 @@ Vue.component('global-map', {
             eventLocations.push(loc);
           }
 
-          const popupContent = document.createElement('div');
-          const PopupComponent = Vue.extend(Vue.component('location-popup'));
-
-          const popupInstance = new PopupComponent({
-            propsData: {
-              loc: loc,
-              i18n: this.i18n,
-            },
-          });
-          popupInstance.$mount();
-          popupContent.appendChild(popupInstance.$el);
-
-          marker.bindPopup(popupContent);
+          marker.bindPopup(this.generatePopupContent(loc));
 
           this.markerGroup.addLayer(marker);
         }
@@ -209,32 +194,33 @@ Vue.component('global-map', {
             showUnitControl: true,
           });
 
-          this.measureControls.addTo(map);
+          this.measureControls.addTo(this.map);
         }
 
         // Fit map of bounds of clusterLayer
         let bounds = this.markerGroup.getBounds();
-        this.markerGroup.addTo(map);
-        map.fitBounds(bounds, { padding: [20, 20] });
+        this.markerGroup.addTo(this.map);
+        if (bounds.isValid()){
+        this.map.fitBounds(bounds, { padding: [20, 20] });
+        }
 
-        if (map.getZoom() > 14) {
+
+        if (this.map.getZoom() > 14) {
           // flyout of center when map is zoomed in too much (single marker or many dense markers)
 
-          map.flyTo(map.getCenter(), 10, { duration: 1 });
+          this.map.flyTo(this.map.getCenter(), 10, { duration: 1 });
         }
       }
 
-      map.invalidateSize();
+      this.map.invalidateSize();
     },
 
     addEventRouteLinks(eventLocations) {
-      const map = this.$refs.map.mapObject;
-
       // Remove existing eventRoute linestrings
       if (this.eventLinks) {
-        map.removeLayer(this.eventLinks);
+        this.map.removeLayer(this.eventLinks);
       }
-      this.eventLinks = L.layerGroup({}).addTo(map);
+      this.eventLinks = L.layerGroup({}).addTo(this.map);
 
       for (let i = 0; i < eventLocations.length - 1; i++) {
         const startCoord = [eventLocations[i].lat, eventLocations[i].lng];
@@ -304,9 +290,15 @@ Vue.component('global-map', {
     },
   },
 
+  beforeUnmount() {
+    if (this.map) {
+      this.map.remove();
+    }
+  },
+
   template: `
       <div>
-        <v-card outlined color="grey lighten-3">
+        <v-card  variant="flat">
 
           <v-card-text>
             <div v-if="legend" class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
@@ -325,21 +317,7 @@ Vue.component('global-map', {
 
             </div>
 
-            <l-map @fullscreenchange="fsHandler" @dragend="redraw" ref="map" @ready="fitMarkers" :zoom="zoom"
-                   :max-zoom="18"
-                   :style=" 'resize:vertical;height:'+ mapHeight + 'px'"
-                   :center="[lat,lng]" :options="{scrollWheelZoom:false}">
-              <l-tile-layer v-if="defaultTile" :attribution="attribution" :key="mapKey" :url="mapsApiEndpoint"
-                            :subdomains="subdomains">
-              </l-tile-layer>
-              <l-control class="example-custom-control">
-                <v-btn v-if="__GOOGLE_MAPS_API_KEY__" @click="toggleSatellite" small fab>
-                  <img src="/static/img/satellite-icon.png" width="18"></img>
-                </v-btn>
-              </l-control>
-
-
-            </l-map>
+            <div :id="mapId" :style="'resize:vertical;height:'+ mapHeight + 'px'"></div>
 
 
           </v-card-text>

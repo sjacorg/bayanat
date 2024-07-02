@@ -1,10 +1,13 @@
+from __future__ import annotations
+from typing import Any, Literal, Optional
+from flask import request, jsonify, abort
+from http.client import HTTPException
 import os
 import shutil
 from datetime import datetime, timedelta
 import unicodedata
 from functools import wraps
 from uuid import uuid4
-
 
 from zxcvbn import zxcvbn
 import bleach
@@ -14,9 +17,10 @@ from flask import request, abort, Response, Blueprint, current_app, json, g, sen
 from flask.templating import render_template
 from flask_babel import gettext
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
+from flask_security import logout_user
 from sqlalchemy import and_, desc, or_
 from werkzeug.utils import safe_join, secure_filename
-from urllib.parse import urlparse
+from flask import request, jsonify, abort, session, redirect
 
 from enferno.admin.models import (
     Bulletin,
@@ -52,20 +56,68 @@ from enferno.admin.models import (
     WorkflowStatus,
     ActorProfile,
 )
+from enferno.admin.validation.models import (
+    ActorQueryRequestModel,
+    ActorRequestModel,
+    ActorReviewRequestModel,
+    ActorSelfAssignRequestModel,
+    AtoaInfoRequestModel,
+    AtobInfoRequestModel,
+    BtobInfoRequestModel,
+    BulkUpdateRequestModel,
+    BulletinBulkUpdateRequestModel,
+    BulletinQueryRequestModel,
+    BulletinRequestModel,
+    BulletinReviewRequestModel,
+    BulletinSelfAssignRequestModel,
+    ClaimedViolationRequestModel,
+    ComponentDataMixinRequestModel,
+    ConfigRequestModel,
+    CountryRequestModel,
+    EventtypeRequestModel,
+    GeoLocationTypeRequestModel,
+    GraphVisualizeRequestModel,
+    IncidentBulkUpdateRequestModel,
+    IncidentQueryRequestModel,
+    IncidentRequestModel,
+    IncidentReviewRequestModel,
+    IncidentSelfAssignRequestModel,
+    ItoaInfoRequestModel,
+    ItobInfoRequestModel,
+    ItoiInfoRequestModel,
+    LabelRequestModel,
+    LocationAdminLevelRequestModel,
+    LocationQueryRequestModel,
+    LocationRequestModel,
+    LocationTypeRequestModel,
+    MediaCategoryRequestModel,
+    MediaRequestModel,
+    PotentialViolationRequestModel,
+    QueryValidationModel,
+    RoleRequestModel,
+    SourceRequestModel,
+    UserForceResetRequestModel,
+    UserNameCheckValidationModel,
+    UserPasswordCheckValidationModel,
+    UserRequestModel,
+)
+from enferno.admin.validation.util import validate_with
 from enferno.extensions import rds
-from enferno.extensions import cache
 from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
     bulk_update_incidents,
     generate_graph,
 )
-from enferno.user.models import User, Role
+from enferno.user.models import User, Role, Session
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.http_response import HTTPResponse
+
+from enferno.utils.logging_utils import get_log_filenames
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.graph_utils import GraphUtils
+import enferno.utils.typing as t
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -81,12 +133,17 @@ PER_PAGE = 30
 REL_PER_PAGE = 5
 
 
-### History access decorators
+# History access decorators
 
 
 def require_view_history(f):
+    """
+    Decorator to ensure the user has the required permissions to view history.
+    """
+
     @wraps(f)
-    @auth_required("session")  # Ensure the user is logged in before checking permissions
+    # Ensure the user is logged in before checking permissions
+    @auth_required("session")
     def decorated_function(*args, **kwargs):
         # Check if user has the required view history permissions
         if not (current_user.view_simple_history or current_user.view_full_history):
@@ -97,6 +154,10 @@ def require_view_history(f):
 
 
 def can_assign_roles(func):
+    """
+    Decorator to ensure the user has the required permissions to assign roles.
+    """
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         roles = request.json["item"].get("roles", [])
@@ -116,7 +177,16 @@ def can_assign_roles(func):
     return decorated_function
 
 
-def has_role_assignment_permission(roles):
+def has_role_assignment_permission(roles: list) -> bool:
+    """
+    Function to check if the current user has the required permissions to assign roles.
+
+    Args:
+        - roles: List of role ids to assign.
+
+    Returns:
+        - True if the user has the required permissions, False otherwise.
+    """
     # admins can assign any roles
     if not current_user.has_role("Admin"):
         # non-admins can only assign their roles
@@ -132,21 +202,22 @@ def has_role_assignment_permission(roles):
 
 @admin.before_request
 @auth_required("session")
-def before_request():
+def before_request() -> None:
     """
     Attaches the user object to all requests
     and a version number that is used to clear the static files cache globally.
-    :return: None
     """
     g.user = current_user
     g.version = "5"
 
 
 @admin.app_context_processor
-def ctx():
+def ctx() -> dict:
     """
     passes all users to the application, based on the current user's permissions.
-    :return: None
+
+    Returns:
+        - dict of users
     """
     users = User.query.order_by(User.username).all()
     if current_user and current_user.is_authenticated:
@@ -158,19 +229,23 @@ def ctx():
 # Labels routes
 @admin.route("/labels/")
 @roles_accepted("Admin", "Mod")
-def labels():
+def labels() -> str:
     """
     Endpoint to render the labels backend page.
-    :return: html template for labels management.
+
+    Returns:
+        - html template of the labels backend page.
     """
     return render_template("admin/labels.html")
 
 
 @admin.route("/api/labels/")
-def api_labels():
+def api_labels() -> tuple[Response, Literal[200]]:
     """
     API endpoint feed and filter labels with paging
-    :return: json response of label objects.
+
+    Returns:
+        - json response of label objects.
     """
     query = []
     q = request.args.get("q", None)
@@ -220,13 +295,21 @@ def api_labels():
 
 @admin.post("/api/label/")
 @roles_accepted("Admin", "Mod")
-def api_label_create():
+@validate_with(LabelRequestModel)
+def api_label_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
     Endpoint to create a label.
-    :return: success/error based on the operation result.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     label = Label()
-    created = label.from_json(request.json["item"])
+    created = label.from_json(validated_data["item"])
     if created.save():
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
@@ -238,15 +321,22 @@ def api_label_create():
 
 @admin.put("/api/label/<int:id>")
 @roles_accepted("Admin", "Mod")
-def api_label_update(id):
+@validate_with(LabelRequestModel)
+def api_label_update(id: t.id, validated_data: dict) -> tuple[str, Literal[200]] | Response:
     """
     Endpoint to update a label.
-    :param id: id of the label
-    :return: success/error based on the operation result.
+
+    Args:
+        - id: id of the label.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+
     """
     label = Label.query.get(id)
     if label is not None:
-        label = label.from_json(request.json["item"])
+        label = label.from_json(validated_data["item"])
         label.save()
         Activity.create(
             current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
@@ -258,11 +348,17 @@ def api_label_update(id):
 
 @admin.delete("/api/label/<int:id>")
 @roles_required("Admin")
-def api_label_delete(id):
+def api_label_delete(
+    id: t.id,
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Error deleting Label"], Literal[417]]:
     """
     Endpoint to delete a label.
-    :param id: id of the label
-    :return: Success/error based on operation's result.
+
+    Args:
+        - id: id of the label.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     label = Label.query.get(id)
     if label is None:
@@ -279,10 +375,12 @@ def api_label_delete(id):
 
 @admin.post("/api/label/import/")
 @roles_required("Admin")
-def api_label_import():
+def api_label_import() -> str:
     """
     Endpoint to import labels via CSV
-    :return: Success/error based on operation's result.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         Label.import_csv(request.files.get("csv"))
@@ -294,19 +392,23 @@ def api_label_import():
 # EventType routes
 @admin.route("/eventtypes/")
 @roles_accepted("Admin", "Mod")
-def eventtypes():
+def eventtypes() -> str:
     """
     Endpoint to render event types backend
-    :return: html template of the event types backend
+
+    Returns:
+        - html template of the event types backend
     """
     return render_template("admin/eventtypes.html")
 
 
 @admin.route("/api/eventtypes/")
-def api_eventtypes():
+def api_eventtypes() -> tuple[Response, Literal[200]]:
     """
     API endpoint to serve json feed of even types with paging support
-    :return: json feed/success or error/404 based on request data
+
+    Returns:
+        - json response of event types
     """
     query = []
     q = request.args.get("q", None)
@@ -334,13 +436,22 @@ def api_eventtypes():
 
 @admin.post("/api/eventtype/")
 @roles_accepted("Admin", "Mod")
-def api_eventtype_create():
+@validate_with(EventtypeRequestModel)
+def api_eventtype_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
     Endpoint to create an Event Type
-    :return: Success/Error based on operation's result
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
+
     eventtype = Eventtype()
-    created = eventtype.from_json(request.json["item"])
+    created = eventtype.from_json(validated_data["item"])
     if created.save():
         Activity.create(
             current_user,
@@ -356,17 +467,25 @@ def api_eventtype_create():
 
 @admin.put("/api/eventtype/<int:id>")
 @roles_accepted("Admin", "Mod")
-def api_eventtype_update(id):
+@validate_with(EventtypeRequestModel)
+def api_eventtype_update(
+    id: t.id, validated_data: dict
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
     Endpoint to update an Event Type
-    :param id: id of the item to be updated
-    :return: success/error based on the operation's result
+
+    Args:
+        - id: id of the event type.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
         return HTTPResponse.NOT_FOUND
 
-    eventtype = eventtype.from_json(request.json["item"])
+    eventtype = eventtype.from_json(validated_data["item"])
     if eventtype.save():
         Activity.create(
             current_user,
@@ -382,11 +501,19 @@ def api_eventtype_update(id):
 
 @admin.delete("/api/eventtype/<int:id>")
 @roles_required("Admin")
-def api_eventtype_delete(id):
+def api_eventtype_delete(
+    id: t.id,
+) -> (
+    Response | tuple[str, Literal[200]] | tuple[Literal["Error deleting Event Type"], Literal[417]]
+):
     """
     Endpoint to delete an event type
-    :param id: id of the item
-    :return: success/error based on the operation's result
+
+    Args:
+        - id: id of the event type.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
@@ -407,10 +534,14 @@ def api_eventtype_delete(id):
 
 @admin.post("/api/eventtype/import/")
 @roles_required("Admin")
-def api_eventtype_import():
+def api_eventtype_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[400]]
+):
     """
     Endpoint to bulk import event types from a CSV file
-    :return: success/error based on the operation's result
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         Eventtype.import_csv(request.files.get("csv"))
@@ -421,11 +552,15 @@ def api_eventtype_import():
 
 @admin.route("/api/potentialviolation/", defaults={"page": 1})
 @admin.route("/api/potentialviolation/<int:page>/")
-def api_potentialviolations(page):
+def api_potentialviolations(page: int) -> tuple[Response, Literal[200]]:
     """
     API endpoint that feeds json data of potential violations with paging and search support
-    :param page: db query offset
-    :return: json feed / success or error based on the operation/request data
+
+    Args:
+        - page: page number to fetch.
+
+    Returns:
+        - json response of potential violations.
     """
     query = []
     q = request.args.get("q", None)
@@ -447,13 +582,21 @@ def api_potentialviolations(page):
 
 @admin.post("/api/potentialviolation/")
 @roles_accepted("Admin", "Mod")
-def api_potentialviolation_create():
+@validate_with(PotentialViolationRequestModel)
+def api_potentialviolation_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
     Endpoint to create a potential violation
-    :return: success/error based on operation's result
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     potentialviolation = PotentialViolation()
-    potentialviolation = potentialviolation.from_json(request.json["item"])
+    potentialviolation = potentialviolation.from_json(validated_data["item"])
     if potentialviolation.save():
         Activity.create(
             current_user,
@@ -469,17 +612,24 @@ def api_potentialviolation_create():
 
 @admin.put("/api/potentialviolation/<int:id>")
 @roles_accepted("Admin", "Mod")
-def api_potentialviolation_update(id):
+@validate_with(PotentialViolationRequestModel)
+def api_potentialviolation_update(
+    id: t.id, validated_data: dict
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
     Endpoint to update a potential violation
-    :param id: id of the item to be updated
-    :return: success/error based on the operation's result
+
+    Args:
+        - id: id of the item to update.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
         return HTTPResponse.NOT_FOUND
 
-    potentialviolation = potentialviolation.from_json(request.json["item"])
+    potentialviolation = potentialviolation.from_json(validated_data["item"])
     if potentialviolation.save():
         Activity.create(
             current_user,
@@ -495,11 +645,21 @@ def api_potentialviolation_update(id):
 
 @admin.delete("/api/potentialviolation/<int:id>")
 @roles_required("Admin")
-def api_potentialviolation_delete(id):
+def api_potentialviolation_delete(
+    id: t.id,
+) -> (
+    Response
+    | tuple[str, Literal[200]]
+    | tuple[Literal["Error deleting Potential Violation"], Literal[417]]
+):
     """
     Endpoint to delete a potential violation
-    :param id: id of the item to delete
-    :return: success/error based on the operation's result
+
+    Args:
+        - id: id of the item to delete.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
@@ -520,10 +680,14 @@ def api_potentialviolation_delete(id):
 
 @admin.post("/api/potentialviolation/import/")
 @roles_required("Admin")
-def api_potentialviolation_import():
+def api_potentialviolation_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[400]]
+):
     """
     Endpoint to import potential violations from csv file
-    :return: success/error based on operation's result
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         PotentialViolation.import_csv(request.files.get("csv"))
@@ -534,11 +698,15 @@ def api_potentialviolation_import():
 
 @admin.route("/api/claimedviolation/", defaults={"page": 1})
 @admin.route("/api/claimedviolation/<int:page>")
-def api_claimedviolations(page):
+def api_claimedviolations(page: int) -> tuple[Response, Literal[200]]:
     """
     API endpoint to feed json items of claimed violations, supports paging and search
-    :param page: db query offset
-    :return: json feed / success or error code
+
+    Args:
+        - page: page number to fetch.
+
+    Returns:
+        - json response of claimed violations.
     """
     query = []
     q = request.args.get("q", None)
@@ -560,13 +728,21 @@ def api_claimedviolations(page):
 
 @admin.post("/api/claimedviolation/")
 @roles_accepted("Admin", "Mod")
-def api_claimedviolation_create():
+@validate_with(ClaimedViolationRequestModel)
+def api_claimedviolation_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
-    Endpoint to create a claimed violation
-    :return: success / error based on operation's result
+    Endpoint to create a claimed violation.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     claimedviolation = ClaimedViolation()
-    claimedviolation = claimedviolation.from_json(request.json["item"])
+    claimedviolation = claimedviolation.from_json(validated_data["item"])
     if claimedviolation.save():
         Activity.create(
             current_user,
@@ -582,17 +758,25 @@ def api_claimedviolation_create():
 
 @admin.put("/api/claimedviolation/<int:id>")
 @roles_accepted("Admin", "Mod")
-def api_claimedviolation_update(id):
+@validate_with(ClaimedViolationRequestModel)
+def api_claimedviolation_update(
+    id: t.id, validated_data: dict
+) -> tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
-    Endpoint to update a claimed violation
-    :param id: id of the item to update
-    :return: success/error based on operation's result
+    Endpoint to update a claimed violation.
+
+    Args:
+        - id: id of the item to update.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     claimedviolation = ClaimedViolation.query.get(id)
     if claimedviolation is None:
         return HTTPResponse.NOT_FOUND
 
-    claimedviolation = claimedviolation.from_json(request.json["item"])
+    claimedviolation = claimedviolation.from_json(validated_data["item"])
     if claimedviolation.save():
         Activity.create(
             current_user,
@@ -608,11 +792,21 @@ def api_claimedviolation_update(id):
 
 @admin.delete("/api/claimedviolation/<int:id>")
 @roles_required("Admin")
-def api_claimedviolation_delete(id):
+def api_claimedviolation_delete(
+    id: t.id,
+) -> (
+    Response
+    | tuple[str, Literal[200]]
+    | tuple[Literal["Error deleting Claimed Violation"], Literal[417]]
+):
     """
     Endpoint to delete a claimed violation
-    :param id: id of the item to delete
-    :return: success/ error based on operation's result
+
+    Args:
+        - id: id of the item to delete.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     claimedviolation = ClaimedViolation.query.get(id)
     if claimedviolation is None:
@@ -633,10 +827,14 @@ def api_claimedviolation_delete(id):
 
 @admin.post("/api/claimedviolation/import/")
 @roles_required("Admin")
-def api_claimedviolation_import():
+def api_claimedviolation_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[400]]
+):
     """
-    Endpoint to import claimed violations from a CSV file
-    :return: success/error based on operation's result
+    Endpoint to import claimed violations from a CSV file.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         ClaimedViolation.import_csv(request.files.get("csv"))
@@ -648,66 +846,69 @@ def api_claimedviolation_import():
 # Sources routes
 @admin.route("/sources/")
 @roles_accepted("Admin", "Mod")
-def sources():
+def sources() -> str:
     """
-    Endpoint to render sources backend page
-    :return: html of the sources page
+    Endpoint to render sources backend page.
+
+    Returns:
+        - html template of the sources backend page.
     """
     return render_template("admin/sources.html")
 
 
 @admin.route("/api/sources/")
-def api_sources():
+def api_sources() -> tuple[Response, Literal[200]]:
     """
-    API Endpoint to feed json data of sources, supports paging and search
-    :return: json feed of sources or error code based on operation's result
-    """
-    query = []
-    q = request.args.get("q", None)
 
+    API Endpoint to feed json data of sources, supports paging and search.
+
+    Returns:
+        - json response of sources.
+    """
+    q = request.args.get("q")
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
-    if q is not None:
-        words = q.split(" ")
-        query.extend([Source.title.ilike(f"%{word}%") for word in words])
+    query = Source.query
 
-    # ignore complex recursion when pulling all sources without filters
     if q:
-        result = Source.query.filter(*query).all()
-        sources = [source for source in result]
-        ids = []
+        words = q.split(" ")
+        for word in words:
+            query = query.filter(Source.title.ilike(f"%{word}%"))
+
+        sources = query.all()
         children = Source.get_children(sources)
-        for source in sources + children:
-            ids.append(source.id)
+        ids = {source.id for source in sources + children}
 
-        # remove dups
-        ids = list(set(ids))
+        query = Source.query.filter(Source.id.in_(ids))
 
-        result = (
-            Source.query.filter(Source.id.in_(ids))
-            .order_by(-Source.id)
-            .paginate(page=page, per_page=per_page, count=True)
-        )
-    else:
-        result = Source.query.filter(*query).paginate(page=page, per_page=per_page, count=True)
+    result = query.order_by(desc(Source.id)).paginate(page=page, per_page=per_page, error_out=False)
+
     response = {
         "items": [item.to_dict() for item in result.items],
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return response
 
 
 @admin.post("/api/source/")
 @roles_accepted("Admin", "Mod")
-def api_source_create():
+@validate_with(SourceRequestModel)
+def api_source_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
-    Endpoint to create a source
-    :return: success/error based on operation's result
+    Endpoint to create a source.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     source = Source()
-    source = source.from_json(request.json["item"])
+    source = source.from_json(validated_data["item"])
     if source.save():
         Activity.create(
             current_user,
@@ -723,17 +924,25 @@ def api_source_create():
 
 @admin.put("/api/source/<int:id>")
 @roles_accepted("Admin", "Mod")
-def api_source_update(id):
+@validate_with(SourceRequestModel)
+def api_source_update(
+    id: t.id, validated_data: dict
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
-    Endpoint to update a source
-    :param id: id of the item to update
-    :return: success/error based on the operation's result
+    Endpoint to update a source.
+
+    Args:
+        - id: id of the item to update.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     source = Source.query.get(id)
     if source is None:
         return HTTPResponse.NOT_FOUND
 
-    source = source.from_json(request.json["item"])
+    source = source.from_json(validated_data["item"])
     if source.save():
         Activity.create(
             current_user,
@@ -749,11 +958,17 @@ def api_source_update(id):
 
 @admin.delete("/api/source/<int:id>")
 @roles_required("Admin")
-def api_source_delete(id):
+def api_source_delete(
+    id: t.id,
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Error deleting Source"], Literal[417]]:
     """
-    Endopint to delete a source item
-    :param id: id of the item to delete
-    :return: success/error based on operation's result
+    Endopint to delete a source item.
+
+    Args:
+        - id: id of the item to delete.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     source = Source.query.get(id)
     if source is None:
@@ -774,10 +989,14 @@ def api_source_delete(id):
 
 @admin.post("/api/source/import/")
 @roles_required("Admin")
-def api_source_import():
+def api_source_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[400]]
+):
     """
-    Endpoint to import sources from CSV data
-    :return: success/error based on operation's result
+    Endpoint to import sources from CSV data.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         Source.import_csv(request.files.get("csv"))
@@ -792,19 +1011,36 @@ def api_source_import():
 @admin.route("/locations/", defaults={"id": None})
 @admin.route("/locations/<int:id>")
 @roles_accepted("Admin", "Mod", "DA")
-def locations(id):
-    """Endpoint for locations management."""
+def locations(id: Optional[t.id]) -> str:
+    """
+    Endpoint for locations management.
+
+    Args:
+        - id: id of the location.
+
+    Returns:
+        - html template of the locations backend page.
+    """
     return render_template("admin/locations.html")
 
 
 @admin.route("/api/locations/", methods=["POST", "GET"])
-def api_locations():
-    """Returns locations in JSON format, allows search and paging."""
+@validate_with(LocationQueryRequestModel)
+def api_locations(validated_data: dict) -> tuple[Response, Literal[200]]:
+    """
+    Returns locations in JSON format, allows search and paging.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - json response of locations.
+    """
     query = []
-    su = SearchUtils(request.json, cls="location")
+    su = SearchUtils(validated_data, cls="location")
     query = su.get_query()
 
-    options = request.json.get("options")
+    options = validated_data.get("options")
     page = options.get("page", 1)
     per_page = options.get("itemsPerPage", PER_PAGE)
 
@@ -824,14 +1060,28 @@ def api_locations():
 
 @admin.post("/api/location/")
 @roles_accepted("Admin", "Mod", "DA")
-def api_location_create():
-    """Endpoint for creating locations."""
+@validate_with(LocationRequestModel)
+def api_location_create(
+    validated_data: dict,
+) -> (
+    tuple[Literal["User not allowed to create Locations"], Literal[400]]
+    | tuple[str, Literal[200]]
+    | None
+):
+    """
+    Endpoint for creating locations.
 
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
         return "User not allowed to create Locations", 400
 
     location = Location()
-    location = location.from_json(request.json["item"])
+    location = location.from_json(validated_data["item"])
 
     if location.save():
         location.full_location = location.get_full_string()
@@ -849,15 +1099,31 @@ def api_location_create():
 
 @admin.put("/api/location/<int:id>")
 @roles_accepted("Admin", "Mod", "DA")
-def api_location_update(id):
-    """Endpoint for updating locations."""
+@validate_with(LocationRequestModel)
+def api_location_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["User not allowed to create Locations"], Literal[400]]
+    | tuple[str, Literal[200]]
+    | tuple[Literal["Save Failed"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint for updating locations.
 
+    Args:
+        - id: id of the location.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
         return "User not allowed to create Locations", 400
 
     location = Location.query.get(id)
     if location is not None:
-        location = location.from_json(request.json.get("item"))
+        location = location.from_json(validated_data["item"])
         # we need to commit this change to db first, to utilize CTE
         if location.save():
             # then update the location full string
@@ -880,8 +1146,17 @@ def api_location_update(id):
 
 @admin.delete("/api/location/<int:id>")
 @roles_required("Admin")
-def api_location_delete(id):
-    """Endpoint for deleting locations."""
+def api_location_delete(
+    id: t.id,
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Error deleting Location"], Literal[417]]:
+    """Endpoint for deleting locations.
+
+    Args:
+        - id: id of the location.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     location = Location.query.get(id)
     if location is None:
         return HTTPResponse.NOT_FOUND
@@ -901,8 +1176,14 @@ def api_location_delete(id):
 
 @admin.post("/api/location/import/")
 @roles_required("Admin")
-def api_location_import():
-    """Endpoint for importing locations."""
+def api_location_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[400]]
+):
+    """Endpoint for importing locations.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     if "csv" in request.files:
         Location.import_csv(request.files.get("csv"))
         return "Success", 200
@@ -912,11 +1193,15 @@ def api_location_import():
 
 # get one location
 @admin.get("/api/location/<int:id>")
-def api_location_get(id):
+def api_location_get(id: t.id) -> Response | tuple[str, Literal[200]]:
     """
     Endpoint to get a single location
-    :param id: id of the location
-    :return: location in json format / success or error
+
+    Args:
+        - id: id of the location.
+
+    Returns:
+        - location in json format / success or error.
     """
     location = Location.query.get(id)
 
@@ -935,14 +1220,14 @@ def api_location_get(id):
 
 @admin.route("/component-data/", defaults={"id": None})
 @roles_required("Admin")
-def locations_config(id):
+def locations_config(id: Optional[t.id]):
     """Endpoint for locations configurations."""
     return render_template("admin/component-data.html")
 
 
 # location admin level endpoints
 @admin.route("/api/location-admin-levels/", methods=["GET", "POST"])
-def api_location_admin_levels():
+def api_location_admin_levels() -> tuple[Response, Literal[200]]:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -962,9 +1247,21 @@ def api_location_admin_levels():
 
 @admin.post("/api/location-admin-level")
 @roles_required("Admin")
-def api_location_admin_level_create():
+@validate_with(LocationAdminLevelRequestModel)
+def api_location_admin_level_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create a location admin level
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     admin_level = LocationAdminLevel()
-    admin_level.from_json(request.json["item"])
+    admin_level.from_json(validated_data["item"])
 
     if admin_level.save():
         Activity.create(
@@ -981,10 +1278,27 @@ def api_location_admin_level_create():
 
 @admin.put("/api/location-admin-level/<int:id>")
 @roles_required("Admin")
-def api_location_admin_level_update(id):
+@validate_with(LocationAdminLevelRequestModel)
+def api_location_admin_level_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update a location admin level
+
+    Args:
+        - id: id of the location admin level.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     admin_level = LocationAdminLevel.query.get(id)
     if admin_level:
-        admin_level.from_json(request.json.get("item"))
+        admin_level.from_json(validated_data["item"])
         if admin_level.save():
             Activity.create(
                 current_user,
@@ -1002,7 +1316,13 @@ def api_location_admin_level_update(id):
 
 # location type endpoints
 @admin.route("/api/location-types/", methods=["GET", "POST"])
-def api_location_types():
+def api_location_types() -> tuple[Response, Literal[200]]:
+    """
+    Endpoint to get location types with paging support
+
+    Returns:
+        - json response of location types.
+    """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1022,9 +1342,21 @@ def api_location_types():
 
 @admin.post("/api/location-type")
 @roles_required("Admin")
-def api_location_type_create():
+@validate_with(LocationTypeRequestModel)
+def api_location_type_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create a location type
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     location_type = LocationType()
-    location_type.from_json(request.json["item"])
+    location_type.from_json(validated_data["item"])
 
     if location_type.save():
         Activity.create(
@@ -1041,11 +1373,28 @@ def api_location_type_create():
 
 @admin.put("/api/location-type/<int:id>")
 @roles_required("Admin")
-def api_location_type_update(id):
+@validate_with(LocationTypeRequestModel)
+def api_location_type_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update a location type
+
+    Args:
+        - id: id of the location type.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     location_type = LocationType.query.get(id)
 
     if location_type:
-        location_type.from_json(request.json.get("item"))
+        location_type.from_json(validated_data.get("item"))
         if location_type.save():
             Activity.create(
                 current_user,
@@ -1063,11 +1412,17 @@ def api_location_type_update(id):
 
 @admin.delete("/api/location-type/<int:id>")
 @roles_required("Admin")
-def api_location_type_delete(id):
+def api_location_type_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting Location Type"], Literal[417]]:
     """
-    Endpoint to delete a location type
-    :param id: id of the location type to be deleted
-    :return: success/error
+    Endpoint to delete a location type.
+
+    Args:
+        - id: id of the location type.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     location_type = LocationType.query.get(id)
     if location_type is None:
@@ -1087,7 +1442,13 @@ def api_location_type_delete(id):
 
 
 @admin.route("/api/countries/", methods=["GET", "POST"])
-def api_countries():
+def api_countries() -> tuple[Response, Literal[200]]:
+    """
+    Endpoint to get countries with paging support.
+
+    Returns:
+        - json response of countries.
+    """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1115,9 +1476,21 @@ def api_countries():
 
 @admin.post("/api/country")
 @roles_required("Admin")
-def api_country_create():
+@validate_with(CountryRequestModel)
+def api_country_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create a country.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     country = Country()
-    country.from_json(request.json["item"])
+    country.from_json(validated_data["item"])
 
     if country.save():
         # Record Activity
@@ -1135,11 +1508,28 @@ def api_country_create():
 
 @admin.put("/api/country/<int:id>")
 @roles_required("Admin")
-def api_country_update(id):
+@validate_with(CountryRequestModel)
+def api_country_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update a country.
+
+    Args:
+        - id: id of the country.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     country = Country.query.get(id)
 
     if country:
-        country.from_json(request.json.get("item"))
+        country.from_json(validated_data.get("item"))
         if country.save():
             Activity.create(
                 current_user,
@@ -1157,11 +1547,17 @@ def api_country_update(id):
 
 @admin.delete("/api/country/<int:id>")
 @roles_required("Admin")
-def api_country_delete(id):
+def api_country_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting Country"], Literal[417]]:
     """
-    Endpoint to delete a country
-    :param id: id of the country to be deleted
-    :return: success/error
+    Endpoint to delete a country.
+
+    Args:
+        - id: id of the country.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     country = Country.query.get(id)
     if country is None:
@@ -1182,7 +1578,13 @@ def api_country_delete(id):
 
 
 @admin.route("/api/ethnographies/", methods=["GET", "POST"])
-def api_ethnographies():
+def api_ethnographies() -> tuple[Response, Literal[200]]:
+    """
+    Endpoint to get ethnographies with paging support.
+
+    Returns:
+        - json response of ethnographies.
+    """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1210,9 +1612,21 @@ def api_ethnographies():
 
 @admin.post("/api/ethnography")
 @roles_required("Admin")
-def api_ethnography_create():
+@validate_with(ComponentDataMixinRequestModel)
+def api_ethnography_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create an ethnography.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     ethnography = Ethnography()
-    ethnography.from_json(request.json["item"])
+    ethnography.from_json(validated_data["item"])
 
     if ethnography.save():
         Activity.create(
@@ -1229,11 +1643,28 @@ def api_ethnography_create():
 
 @admin.put("/api/ethnography/<int:id>")
 @roles_required("Admin")
-def api_ethnography_update(id):
+@validate_with(ComponentDataMixinRequestModel)
+def api_ethnography_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update an ethnography.
+
+    Args:
+        - id: id of the ethnography.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     ethnography = Ethnography.query.get(id)
 
     if ethnography:
-        ethnography.from_json(request.json.get("item"))
+        ethnography.from_json(validated_data.get("item"))
         if ethnography.save():
             Activity.create(
                 current_user,
@@ -1251,11 +1682,17 @@ def api_ethnography_update(id):
 
 @admin.delete("/api/ethnography/<int:id>")
 @roles_required("Admin")
-def api_ethnography_delete(id):
+def api_ethnography_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting Ethnography"], Literal[417]]:
     """
     Endpoint to delete an ethnography
-    :param id: id of the ethnography to be deleted
-    :return: success/error
+
+    Args:
+        - id: id of the ethnography.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     ethnography = Ethnography.query.get(id)
     if ethnography is None:
@@ -1276,7 +1713,7 @@ def api_ethnography_delete(id):
 
 
 @admin.route("/api/dialects/", methods=["GET", "POST"])
-def api_dialects():
+def api_dialects() -> tuple[Response, Literal[200]]:
     """
     Returns Dialects in JSON format, allows search and paging.
     """
@@ -1307,14 +1744,21 @@ def api_dialects():
 
 @admin.post("/api/dialect")
 @roles_required("Admin")
-def api_dialect_create():
+@validate_with(ComponentDataMixinRequestModel)
+def api_dialect_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
     """
-    Endpoint to create a dialect
-    :param id: id of the dialect to be created
-    :return: success/error
+    Endpoint to create a dialect.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     dialect = Dialect()
-    dialect.from_json(request.json["item"])
+    dialect.from_json(validated_data["item"])
 
     if dialect.save():
         Activity.create(
@@ -1331,16 +1775,28 @@ def api_dialect_create():
 
 @admin.put("/api/dialect/<int:id>")
 @roles_required("Admin")
-def api_dialect_update(id):
+@validate_with(ComponentDataMixinRequestModel)
+def api_dialect_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
     """
-    Endpoint to update a dialect
-    :param id: id of the dialect to be updated
-    :return: success/error
+    Endpoint to update a dialect.
+
+    Args:
+        - id: id of the dialect.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     dialect = Dialect.query.get(id)
 
     if dialect:
-        dialect.from_json(request.json.get("item"))
+        dialect.from_json(validated_data.get("item"))
         if dialect.save():
             Activity.create(
                 current_user,
@@ -1358,11 +1814,17 @@ def api_dialect_update(id):
 
 @admin.delete("/api/dialect/<int:id>")
 @roles_required("Admin")
-def api_dialect_delete(id):
+def api_dialect_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting Dialect"], Literal[417]]:
     """
-    Endpoint to delete a dialect
-    :param id: id of the dialect to be deleted
-    :return: success/error
+    Endpoint to delete a dialect.
+
+    Args:
+        - id: id of the dialect.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     dialect = Dialect.query.get(id)
     if dialect is None:
@@ -1383,7 +1845,8 @@ def api_dialect_delete(id):
 
 
 @admin.route("/api/atoainfos/", methods=["GET", "POST"])
-def api_atoainfos():
+def api_atoainfos() -> tuple[Response, Literal[200]]:
+    """Returns AtoaInfos in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1403,9 +1866,21 @@ def api_atoainfos():
 
 @admin.post("/api/atoainfo")
 @roles_required("Admin")
-def api_atoainfo_create():
+@validate_with(AtoaInfoRequestModel)
+def api_atoainfo_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create an AtoaInfo
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     atoainfo = AtoaInfo()
-    atoainfo.from_json(request.json["item"])
+    atoainfo.from_json(validated_data["item"])
 
     if not (atoainfo.title and atoainfo.reverse_title):
         return "Title and Reverse Title are required.", 417
@@ -1425,11 +1900,28 @@ def api_atoainfo_create():
 
 @admin.put("/api/atoainfo/<int:id>")
 @roles_required("Admin")
-def api_atoainfo_update(id):
+@validate_with(AtoaInfoRequestModel)
+def api_atoainfo_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update an AtoaInfo
+
+    Args:
+        - id: id of the AtoaInfo
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     atoainfo = AtoaInfo.query.get(id)
 
     if atoainfo:
-        atoainfo.from_json(request.json.get("item"))
+        atoainfo.from_json(validated_data.get("item"))
         if atoainfo.save():
             Activity.create(
                 current_user,
@@ -1447,11 +1939,17 @@ def api_atoainfo_update(id):
 
 @admin.delete("/api/atoainfo/<int:id>")
 @roles_required("Admin")
-def api_atoainfo_delete(id):
+def api_atoainfo_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting AtoaInfo"], Literal[417]]:
     """
-    Endpoint to delete an AtoaInfo
-    :param id: id of the AtoaInfo to be deleted
-    :return: success/error
+    Endpoint to delete an AtoaInfo.
+
+    Args:
+        - id: id of the AtoaInfo to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     atoainfo = AtoaInfo.query.get(id)
     if atoainfo is None:
@@ -1472,7 +1970,8 @@ def api_atoainfo_delete(id):
 
 
 @admin.route("/api/atobinfos/", methods=["GET", "POST"])
-def api_atobinfos():
+def api_atobinfos() -> tuple[Response, Literal[200]]:
+    """Returns AtobInfos in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1492,9 +1991,21 @@ def api_atobinfos():
 
 @admin.post("/api/atobinfo")
 @roles_required("Admin")
-def api_atobinfo_create():
+@validate_with(AtobInfoRequestModel)
+def api_atobinfo_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create an AtobInfo.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     atobinfo = AtobInfo()
-    atobinfo.from_json(request.json["item"])
+    atobinfo.from_json(validated_data["item"])
 
     if atobinfo.save():
         Activity.create(
@@ -1511,11 +2022,28 @@ def api_atobinfo_create():
 
 @admin.put("/api/atobinfo/<int:id>")
 @roles_required("Admin")
-def api_atobinfo_update(id):
+@validate_with(AtobInfoRequestModel)
+def api_atobinfo_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update an AtobInfo.
+
+    Args:
+        - id: id of the AtobInfo
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     atobinfo = AtobInfo.query.get(id)
 
     if atobinfo:
-        atobinfo.from_json(request.json.get("item"))
+        atobinfo.from_json(validated_data.get("item"))
         if atobinfo.save():
             Activity.create(
                 current_user,
@@ -1533,11 +2061,17 @@ def api_atobinfo_update(id):
 
 @admin.delete("/api/atobinfo/<int:id>")
 @roles_required("Admin")
-def api_atobinfo_delete(id):
+def api_atobinfo_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting AtobInfo"], Literal[417]]:
     """
-    Endpoint to delete an AtobInfo
-    :param id: id of the AtobInfo to be deleted
-    :return: success/error
+    Endpoint to delete an AtobInfo.
+
+    Args:
+        - id: id of the AtobInfo to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     atobinfo = AtobInfo.query.get(id)
     if atobinfo is None:
@@ -1558,7 +2092,8 @@ def api_atobinfo_delete(id):
 
 
 @admin.route("/api/btobinfos/", methods=["GET", "POST"])
-def api_btobinfos():
+def api_btobinfos() -> tuple[Response, Literal[200]]:
+    """Returns BtobInfos in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1578,9 +2113,21 @@ def api_btobinfos():
 
 @admin.post("/api/btobinfo")
 @roles_required("Admin")
-def api_btobinfo_create():
+@validate_with(BtobInfoRequestModel)
+def api_btobinfo_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create a BtobInfo.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     btobinfo = BtobInfo()
-    btobinfo.from_json(request.json["item"])
+    btobinfo.from_json(validated_data["item"])
 
     if btobinfo.save():
         Activity.create(
@@ -1597,11 +2144,24 @@ def api_btobinfo_create():
 
 @admin.put("/api/btobinfo/<int:id>")
 @roles_required("Admin")
-def api_btobinfo_update(id):
+@validate_with(BtobInfoRequestModel)
+def api_btobinfo_update(
+    id: t.id, validated_data: dict
+) -> tuple[str, Literal[200]] | tuple[Literal["Error saving item"], Literal[417]] | Response:
+    """
+    Endpoint to update a BtobInfo.
+
+    Args:
+        - id: id of the BtobInfo
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     btobinfo = BtobInfo.query.get(id)
 
     if btobinfo:
-        btobinfo.from_json(request.json.get("item"))
+        btobinfo.from_json(validated_data.get("item"))
         if btobinfo.save():
             Activity.create(
                 current_user,
@@ -1619,11 +2179,17 @@ def api_btobinfo_update(id):
 
 @admin.delete("/api/btobinfo/<int:id>")
 @roles_required("Admin")
-def api_btobinfo_delete(id):
+def api_btobinfo_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting BtobInfo"], Literal[417]]:
     """
-    Endpoint to delete a BtobInfo
-    :param id: id of the BtobInfo to be deleted
-    :return: success/error
+    Endpoint to delete a BtobInfo.
+
+    Args:
+        - id: id of the BtobInfo to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     btobinfo = BtobInfo.query.get(id)
     if btobinfo is None:
@@ -1644,7 +2210,8 @@ def api_btobinfo_delete(id):
 
 
 @admin.route("/api/itoainfos/", methods=["GET", "POST"])
-def api_itoainfos():
+def api_itoainfos() -> tuple[Response, Literal[200]]:
+    """Returns ItoaInfos in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1664,9 +2231,21 @@ def api_itoainfos():
 
 @admin.post("/api/itoainfo")
 @roles_required("Admin")
-def api_itoainfo_create():
+@validate_with(ItoaInfoRequestModel)
+def api_itoainfo_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create an ItoaInfo.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     itoainfo = ItoaInfo()
-    itoainfo.from_json(request.json["item"])
+    itoainfo.from_json(validated_data["item"])
 
     if itoainfo.save():
         Activity.create(
@@ -1683,11 +2262,28 @@ def api_itoainfo_create():
 
 @admin.put("/api/itoainfo/<int:id>")
 @roles_required("Admin")
-def api_itoainfo_update(id):
+@validate_with(ItoaInfoRequestModel)
+def api_itoainfo_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update an ItoaInfo.
+
+    Args:
+        - id: id of the ItoaInfo
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     itoainfo = ItoaInfo.query.get(id)
 
     if itoainfo:
-        itoainfo.from_json(request.json.get("item"))
+        itoainfo.from_json(validated_data.get("item"))
         if itoainfo.save():
             Activity.create(
                 current_user,
@@ -1705,11 +2301,17 @@ def api_itoainfo_update(id):
 
 @admin.delete("/api/itoainfo/<int:id>")
 @roles_required("Admin")
-def api_itoainfo_delete(id):
+def api_itoainfo_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting ItoaInfo"], Literal[417]]:
     """
-    Endpoint to delete an ItoaInfo
-    :param id: id of the ItoaInfo to be deleted
-    :return: success/error
+    Endpoint to delete an ItoaInfo.
+
+    Args:
+        - id: id of the ItoaInfo to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     itoainfo = ItoaInfo.query.get(id)
     if itoainfo is None:
@@ -1730,7 +2332,8 @@ def api_itoainfo_delete(id):
 
 
 @admin.route("/api/itobinfos/", methods=["GET", "POST"])
-def api_itobinfos():
+def api_itobinfos() -> tuple[Response, Literal[200]]:
+    """Returns ItobInfos in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1750,9 +2353,21 @@ def api_itobinfos():
 
 @admin.post("/api/itobinfo")
 @roles_required("Admin")
-def api_itobinfo_create():
+@validate_with(ItobInfoRequestModel)
+def api_itobinfo_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create an ItobInfo.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     itobinfo = ItobInfo()
-    itobinfo.from_json(request.json["item"])
+    itobinfo.from_json(validated_data["item"])
 
     if itobinfo.save():
         Activity.create(
@@ -1769,11 +2384,28 @@ def api_itobinfo_create():
 
 @admin.put("/api/itobinfo/<int:id>")
 @roles_required("Admin")
-def api_itobinfo_update(id):
+@validate_with(ItobInfoRequestModel)
+def api_itobinfo_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update an ItobInfo.
+
+    Args:
+        - id: id of the ItobInfo
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     itobinfo = ItobInfo.query.get(id)
 
     if itobinfo:
-        itobinfo.from_json(request.json.get("item"))
+        itobinfo.from_json(validated_data.get("item"))
         if itobinfo.save():
             Activity.create(
                 current_user,
@@ -1791,7 +2423,9 @@ def api_itobinfo_update(id):
 
 @admin.delete("/api/itobinfo/<int:id>")
 @roles_required("Admin")
-def api_itobinfo_delete(id):
+def api_itobinfo_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting Itob Info"], Literal[417]]:
     """
     Endpoint to delete an ItobInfo
     :param id: id of the ItobInfo to be deleted
@@ -1816,7 +2450,8 @@ def api_itobinfo_delete(id):
 
 
 @admin.route("/api/itoiinfos/", methods=["GET", "POST"])
-def api_itoiinfos():
+def api_itoiinfos() -> tuple[Response, Literal[200]]:
+    """Returns ItoiInfos in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1836,9 +2471,21 @@ def api_itoiinfos():
 
 @admin.post("/api/itoiinfo")
 @roles_required("Admin")
-def api_itoiinfo_create():
+@validate_with(ItoiInfoRequestModel)
+def api_itoiinfo_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create an ItoiInfo.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     itoiinfo = ItoiInfo()
-    itoiinfo.from_json(request.json["item"])
+    itoiinfo.from_json(validated_data["item"])
 
     if itoiinfo.save():
         Activity.create(
@@ -1855,11 +2502,28 @@ def api_itoiinfo_create():
 
 @admin.put("/api/itoiinfo/<int:id>")
 @roles_required("Admin")
-def api_itoiinfo_update(id):
+@validate_with(ItoiInfoRequestModel)
+def api_itoiinfo_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update an ItoiInfo.
+
+    Args:
+        - id: id of the ItoiInfo
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     itoiinfo = ItoiInfo.query.get(id)
 
     if itoiinfo:
-        itoiinfo.from_json(request.json.get("item"))
+        itoiinfo.from_json(validated_data.get("item"))
         if itoiinfo.save():
             Activity.create(
                 current_user,
@@ -1877,11 +2541,17 @@ def api_itoiinfo_update(id):
 
 @admin.delete("/api/itoiinfo/<int:id>")
 @roles_required("Admin")
-def api_itoiinfo_delete(id):
+def api_itoiinfo_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting Itoi Info"], Literal[417]]:
     """
-    Endpoint to delete an ItoiInfo
-    :param id: id of the ItoiInfo to be deleted
-    :return: success/error
+    Endpoint to delete an ItoiInfo.
+
+    Args:
+        - id: id of the ItoiInfo to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     itoiinfo = ItoiInfo.query.get(id)
     if itoiinfo is None:
@@ -1902,7 +2572,8 @@ def api_itoiinfo_delete(id):
 
 
 @admin.route("/api/mediacategories/", methods=["GET", "POST"])
-def api_mediacategories():
+def api_mediacategories() -> tuple[Response, Literal[200]]:
+    """Returns MediaCategories in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -1922,9 +2593,21 @@ def api_mediacategories():
 
 @admin.post("/api/mediacategory")
 @roles_required("Admin")
-def api_mediacategory_create():
+@validate_with(MediaCategoryRequestModel)
+def api_mediacategory_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create a MediaCategory.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     mediacategory = MediaCategory()
-    mediacategory.from_json(request.json["item"])
+    mediacategory.from_json(validated_data["item"])
 
     if mediacategory.save():
         Activity.create(
@@ -1941,11 +2624,28 @@ def api_mediacategory_create():
 
 @admin.put("/api/mediacategory/<int:id>")
 @roles_required("Admin")
-def api_mediacategory_update(id):
+@validate_with(MediaCategoryRequestModel)
+def api_mediacategory_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update a MediaCategory.
+
+    Args:
+        - id: id of the MediaCategory
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     mediacategory = MediaCategory.query.get(id)
 
     if mediacategory:
-        mediacategory.from_json(request.json.get("item"))
+        mediacategory.from_json(validated_data.get("item"))
         if mediacategory.save():
             Activity.create(
                 current_user,
@@ -1963,11 +2663,17 @@ def api_mediacategory_update(id):
 
 @admin.delete("/api/mediacategory/<int:id>")
 @roles_required("Admin")
-def api_mediacategory_delete(id):
+def api_mediacategory_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting Media Category"], Literal[417]]:
     """
-    Endpoint to delete a MediaCategory
-    :param id: id of the MediaCategory to be deleted
-    :return: success/error
+    Endpoint to delete a MediaCategory.
+
+    Args:
+        - id: id of the MediaCategory to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     mediacategory = MediaCategory.query.get(id)
     if mediacategory is None:
@@ -1988,7 +2694,8 @@ def api_mediacategory_delete(id):
 
 
 @admin.route("/api/geolocationtypes/", methods=["GET", "POST"])
-def api_geolocationtypes():
+def api_geolocationtypes() -> tuple[Response, Literal[200]]:
+    """Returns GeoLocationTypes in JSON format, allows search and paging."""
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
@@ -2008,9 +2715,21 @@ def api_geolocationtypes():
 
 @admin.post("/api/geolocationtype")
 @roles_required("Admin")
-def api_geolocationtype_create():
+@validate_with(GeoLocationTypeRequestModel)
+def api_geolocationtype_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Creation failed."], Literal[417]]:
+    """
+    Endpoint to create a GeoLocationType.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     geolocationtype = GeoLocationType()
-    geolocationtype.from_json(request.json["item"])
+    geolocationtype.from_json(validated_data["item"])
 
     if geolocationtype.save():
         Activity.create(
@@ -2027,11 +2746,28 @@ def api_geolocationtype_create():
 
 @admin.put("/api/geolocationtype/<int:id>")
 @roles_required("Admin")
-def api_geolocationtype_update(id):
+@validate_with(GeoLocationTypeRequestModel)
+def api_geolocationtype_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Updated"], Literal[200]]
+    | tuple[Literal["Error saving item"], Literal[417]]
+    | Response
+):
+    """
+    Endpoint to update a GeoLocationType.
+
+    Args:
+        - id: id of the GeoLocationType
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     geolocationtype = GeoLocationType.query.get(id)
 
     if geolocationtype:
-        geolocationtype.from_json(request.json.get("item"))
+        geolocationtype.from_json(validated_data.get("item"))
         if geolocationtype.save():
             Activity.create(
                 current_user,
@@ -2049,11 +2785,17 @@ def api_geolocationtype_update(id):
 
 @admin.delete("/api/geolocationtype/<int:id>")
 @roles_required("Admin")
-def api_geolocationtype_delete(id):
+def api_geolocationtype_delete(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error deleting GeoLocation Type"], Literal[417]]:
     """
-    Endpoint to delete a GeoLocationType
-    :param id: id of the GeoLocationType to be deleted
-    :return: success/error
+    Endpoint to delete a GeoLocationType.
+
+    Args:
+        - id: id of the GeoLocationType to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     geolocationtype = GeoLocationType.query.get(id)
     if geolocationtype is None:
@@ -2076,7 +2818,7 @@ def api_geolocationtype_delete(id):
 # Bulletin routes
 @admin.route("/bulletins/", defaults={"id": None})
 @admin.route("/bulletins/<int:id>")
-def bulletins(id):
+def bulletins(id: Optional[t.id]) -> str:
     """Endpoint for bulletins management."""
     # Pass relationship information
     atobInfo = [item.to_dict() for item in AtobInfo.query.all()]
@@ -2098,24 +2840,21 @@ def bulletins(id):
     )
 
 
-def make_cache_key(*args, **kwargs):
-    json_key = str(hash(str(request.json)))
-    args_key = (
-        request.args.get("page")
-        + request.args.get("per_page", PER_PAGE)
-        + request.args.get("cache", "")
-    )
-    return json_key + args_key
-
-
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
-@cache.cached(15, make_cache_key)
-def api_bulletins():
+@validate_with(BulletinQueryRequestModel)
+def api_bulletins(validated_data: dict) -> tuple[Response, Literal[200]]:
     """
     Returns bulletins in JSON format, allows search and paging.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - response: Response object
+        - status code: 200
     """
     # log search query
-    q = request.json.get("q", None)
+    q = validated_data.get("q", None)
     if q and q != [{}]:
         Activity.create(
             current_user,
@@ -2125,7 +2864,7 @@ def api_bulletins():
             "bulletin",
         )
 
-    su = SearchUtils(request.json, cls="bulletin")
+    su = SearchUtils(validated_data, cls="bulletin")
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
 
@@ -2157,15 +2896,29 @@ def api_bulletins():
 @admin.post("/api/bulletin/")
 @roles_accepted("Admin", "DA")
 @can_assign_roles
-def api_bulletin_create():
-    """Creates a new bulletin."""
+@validate_with(BulletinRequestModel)
+def api_bulletin_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error creating Bulletin"], Literal[417]]:
+    """
+    Creates a new bulletin.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     bulletin = Bulletin()
-    bulletin.from_json(request.json["item"])
+    bulletin.from_json(validated_data["item"])
+
+    # assign automatically to the creator user
     bulletin.assigned_to_id = current_user.id
 
-    roles = request.json["item"].get("roles", [])
+    roles = validated_data["item"].get("roles", [])
     if roles:
-        new_roles = Role.query.filter(Role.id.in_(roles)).all()
+        role_ids = [x.get("id") for x in roles]
+        new_roles = Role.query.filter(Role.id.in_(role_ids)).all()
         bulletin.roles = new_roles
 
     if bulletin.save():
@@ -2185,8 +2938,20 @@ def api_bulletin_create():
 
 @admin.put("/api/bulletin/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_bulletin_update(id):
-    """Updates a bulletin."""
+@validate_with(BulletinRequestModel)
+def api_bulletin_update(
+    id: t.id, validated_data: dict
+) -> tuple[str, Literal[200]] | tuple[Literal["Restricted Access"], Literal[403]] | Response:
+    """
+    Updates a bulletin.
+
+    Args:
+        - id: id of the bulletin
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
 
     bulletin = Bulletin.query.get(id)
     if bulletin is not None:
@@ -2212,7 +2977,8 @@ def api_bulletin_update(id):
             )
             return "Restricted Access", 403
 
-        bulletin = bulletin.from_json(request.json["item"])
+        bulletin = bulletin.from_json(validated_data["item"])
+
         bulletin.create_revision()
         # Record Activity
         Activity.create(
@@ -2230,11 +2996,24 @@ def api_bulletin_update(id):
 # Add/Update review bulletin endpoint
 @admin.put("/api/bulletin/review/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_bulletin_review_update(id):
+@validate_with(BulletinReviewRequestModel)
+def api_bulletin_review_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[str, Literal[200]]
+    | tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[str, Literal[417]]
+    | Response
+):
     """
-    Endpoint to update a bulletin review
-    :param id: id of the bulletin
-    :return: success/error based on the outcome
+    Endpoint to update a bulletin review.
+
+    Args:
+        - id: id of the bulletin
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     bulletin = Bulletin.query.get(id)
     if bulletin is not None:
@@ -2243,15 +3022,19 @@ def api_bulletin_review_update(id):
                 current_user,
                 Activity.ACTION_REVIEW,
                 Activity.STATUS_DENIED,
-                request.json,
+                validated_data,
                 "bulletin",
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
             return "Restricted Access", 403
 
-        bulletin.review = request.json["item"]["review"] if "review" in request.json["item"] else ""
+        bulletin.review = (
+            validated_data["item"]["review"] if "review" in validated_data["item"] else ""
+        )
         bulletin.review_action = (
-            request.json["item"]["review_action"] if "review_action" in request.json["item"] else ""
+            validated_data["item"]["review_action"]
+            if "review_action" in validated_data["item"]
+            else ""
         )
 
         if bulletin.status == "Peer Review Assigned":
@@ -2262,7 +3045,7 @@ def api_bulletin_review_update(id):
         bulletin.status = "Peer Reviewed"
 
         # append refs
-        refs = request.json.get("item", {}).get("revrefs", [])
+        refs = validated_data.get("item", {}).get("revrefs", [])
 
         if bulletin.ref is None:
             bulletin.ref = []
@@ -2292,14 +3075,24 @@ def api_bulletin_review_update(id):
 # bulk update bulletin endpoint
 @admin.put("/api/bulletin/bulk/")
 @roles_accepted("Admin", "Mod")
-def api_bulletin_bulk_update():
+@validate_with(BulletinBulkUpdateRequestModel)
+def api_bulletin_bulk_update(
+    validated_data: dict,
+) -> (
+    tuple[Literal["Bulk update queued successfully"], Literal[200]]
+    | tuple[Literal["No items selected, or nothing to update"], Literal[417]]
+):
     """
-    Endpoint to bulk update bulletins
-    :return: success / error
-    """
+    Endpoint to bulk update bulletins.
 
-    ids = request.json["items"]
-    bulk = request.json["bulk"]
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    ids = validated_data["items"]
+    bulk = validated_data["bulk"]
 
     # non-intrusive hard validation for access roles based on user
     if not current_user.has_role("Admin"):
@@ -2320,11 +3113,17 @@ def api_bulletin_bulk_update():
 
 # get one bulletin
 @admin.get("/api/bulletin/<int:id>")
-def api_bulletin_get(id):
+def api_bulletin_get(
+    id: t.id,
+) -> tuple[str, Literal[200]] | tuple[Literal["Restricted Access"], Literal[403]] | Response:
     """
-    Endpoint to get a single bulletin
-    :param id: id of the bulletin
-    :return: bulletin in json format / success or error
+    Endpoint to get a single bulletin.
+
+    Args:
+        - id: id of the bulletin
+
+    Returns:
+        - bulletin in json format / success or error
     """
     bulletin = Bulletin.query.get(id)
     mode = request.args.get("mode", None)
@@ -2358,10 +3157,15 @@ def api_bulletin_get(id):
 
 # get bulletin relations
 @admin.get("/api/bulletin/relations/<int:id>")
-def bulletin_relations(id):
+def bulletin_relations(id: t.id) -> tuple[str, Literal[200]] | Response:
     """
-    Endpoint to return related entities of a bulletin
-    :return:
+    Endpoint to return related entities of a bulletin.
+
+    Args:
+        - id: id of the bulletin
+
+    Returns:
+        - related entities in json format / success or error
     """
     cls = request.args.get("class", None)
     page = request.args.get("page", 1, int)
@@ -2396,10 +3200,14 @@ def bulletin_relations(id):
 
 @admin.post("/api/bulletin/import/")
 @roles_required("Admin")
-def api_bulletin_import():
+def api_bulletin_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[400]]
+):
     """
-    Endpoint to import bulletins from csv data
-    :return: success / error
+    Endpoint to import bulletins from csv data.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         Bulletin.import_csv(request.files.get("csv"))
@@ -2413,8 +3221,26 @@ def api_bulletin_import():
 
 @admin.put("/api/bulletin/assign/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_bulletin_self_assign(id):
-    """assign a bulletin to the user"""
+@validate_with(BulletinSelfAssignRequestModel)
+def api_bulletin_self_assign(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[str, Literal[200]]
+    | tuple[Literal["User not allowed to self assign"], Literal[400]]
+    | tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[Literal["Item already assigned to an active user"], Literal[400]]
+    | Response
+):
+    """
+    assign a bulletin to the user.
+
+    Args:
+        - id: id of the bulletin
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
 
     # permission check
     if not current_user.can_self_assign:
@@ -2434,7 +3260,7 @@ def api_bulletin_self_assign(id):
         return "Restricted Access", 403
 
     if bulletin:
-        b = request.json.get("bulletin")
+        b = validated_data.get("bulletin")
         # workflow check
         if bulletin.assigned_to_id and bulletin.assigned_to.active:
             return "Item already assigned to an active user", 400
@@ -2469,8 +3295,26 @@ def api_bulletin_self_assign(id):
 
 @admin.put("/api/actor/assign/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_actor_self_assign(id):
-    """self assign an actor to the user"""
+@validate_with(ActorSelfAssignRequestModel)
+def api_actor_self_assign(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[str, Literal[200]]
+    | tuple[Literal["User not allowed to self assign"], Literal[400]]
+    | tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[Literal["Item already assigned to an active user"], Literal[400]]
+    | Response
+):
+    """
+    self assign an actor to the user.
+
+    Args:
+        - id: id of the actor
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
 
     # permission check
     if not current_user.can_self_assign:
@@ -2483,14 +3327,14 @@ def api_actor_self_assign(id):
             current_user,
             Activity.ACTION_SELF_ASSIGN,
             Activity.STATUS_DENIED,
-            request.json,
+            validated_data,
             "actor",
             details=f"Unauthorized attempt to self-assign restricted Actor {id}.",
         )
         return "Restricted Access", 403
 
     if actor:
-        a = request.json.get("actor")
+        a = validated_data.get("actor")
         # workflow check
         if actor.assigned_to_id and actor.assigned_to.active:
             return "Item already assigned to an active user", 400
@@ -2516,8 +3360,26 @@ def api_actor_self_assign(id):
 
 @admin.put("/api/incident/assign/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_incident_self_assign(id):
-    """self assign an incident to the user"""
+@validate_with(IncidentSelfAssignRequestModel)
+def api_incident_self_assign(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[str, Literal[200]]
+    | tuple[Literal["User not allowed to self assign"], Literal[400]]
+    | tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[Literal["Item already assigned to an active user"], Literal[400]]
+    | Response
+):
+    """
+    self assign an incident to the user.
+
+    Args:
+        - id: id of the incident
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
 
     # permission check
     if not current_user.can_self_assign:
@@ -2530,14 +3392,14 @@ def api_incident_self_assign(id):
             current_user,
             Activity.ACTION_SELF_ASSIGN,
             Activity.STATUS_DENIED,
-            request.json,
+            validated_data,
             "incident",
             details=f"Unauthorized attempt to self-assign restricted Incident {id}.",
         )
         return "Restricted Access", 403
 
     if incident:
-        i = request.json.get("incident")
+        i = validated_data.get("incident")
         # workflow check
         if incident.assigned_to_id and incident.assigned_to.active:
             return "Item already assigned to an active user", 400
@@ -2570,10 +3432,21 @@ def api_incident_self_assign(id):
 
 @admin.post("/api/media/chunk")
 @roles_accepted("Admin", "DA")
-def api_medias_chunk():
+def api_medias_chunk() -> (
+    tuple[Literal["Chunk upload successful"], Literal[200]]
+    | tuple[Literal["Invalid Request"], Literal[425]]
+    | tuple[Literal["Error uploading the file"], Literal[400]]
+    | tuple[Literal["Error, file already exists"], Literal[409]]
+    | tuple[Literal["This file type is not allowed"], Literal[415]]
+    | tuple[Literal["Not all required fields supplied, missing"], Literal[400]]
+    | tuple[Literal["Values provided were not in expected format"], Literal[400]]
+    | Response
+):
     """
-    Endpoint for uploading media files based on file system settings
-    :return: success/error based on operation's result
+    Endpoint for uploading media files based on file system settings.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     file = request.files["file"]
 
@@ -2688,10 +3561,18 @@ def api_medias_chunk():
 
 @admin.post("/api/media/upload/")
 @roles_accepted("Admin", "DA")
-def api_medias_upload():
+def api_medias_upload() -> (
+    tuple[Literal["Invalid request params"], Literal[417]]
+    | tuple[Literal["This file type is not allowed"], Literal[415]]
+    | tuple[Literal["Error: File already exists"], Literal[409]]
+    | tuple[Response, Literal[200]]
+    | tuple[str, Literal[200]]
+):
     """
-    Endpoint to upload screenshots based on file system settings
-    :return: success/error based on operation's result
+    Endpoint to upload screenshots based on file system settings.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     file = request.files.get("file")
     if not file:
@@ -2755,11 +3636,24 @@ S3_URL_EXPIRY = 3600  # 2 hours
 
 # return signed url from s3 valid for some time
 @admin.route("/api/media/<filename>")
-def serve_media(filename):
+def serve_media(
+    filename: str,
+) -> (
+    tuple[str, Literal[200]]
+    | tuple[Literal["Invalid Request"], Literal[425]]
+    | tuple[Any, Literal[200]]
+    | Response
+    | tuple[Literal["Restricted Access"], Literal[403]]
+    | Any
+):
     """
-    Endpoint to generate file urls to be served (based on file system type)
-    :param filename: name of the file
-    :return: temporarily accessible url of the file
+    Endpoint to generate file urls to be served (based on file system type.)
+
+    Args:
+        - filename: name of the file.
+
+    Returns:
+        - temporarily accessible url of the file.
     """
 
     if current_app.config["FILESYSTEM_LOCAL"]:
@@ -2827,9 +3721,17 @@ def serve_media(filename):
 
 
 @admin.route("/api/serve/media/<filename>")
-def api_local_serve_media(filename):
+def api_local_serve_media(
+    filename: str,
+) -> tuple[Literal["Restricted Access"], Literal[403]] | Response:
     """
-    serves file from local file system
+    serves file from local file system.
+
+    Args:
+        - filename: name of the file.
+
+    Returns:
+        - file to be served.
     """
 
     media = Media.query.filter(Media.media_file == filename).first()
@@ -2857,7 +3759,16 @@ def api_local_serve_media(filename):
 
 
 @admin.post("/api/inline/upload")
-def api_inline_medias_upload():
+@roles_accepted("Admin", "DA")
+def api_inline_medias_upload() -> (
+    tuple[Response, Literal[200]] | tuple[Literal["Request Failed"], Literal[417]]
+):
+    """
+    Endpoint to upload inline media files.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     try:
         f = request.files.get("file")
 
@@ -2870,13 +3781,19 @@ def api_inline_medias_upload():
         return Response(json.dumps(response), content_type="application/json"), 200
     except Exception as e:
         print(e)
-        return f"Request Failed", 417
+        return "Request Failed", 417
 
 
 @admin.route("/api/serve/inline/<filename>")
-def api_local_serve_inline_media(filename):
+def api_local_serve_inline_media(filename: str) -> Response:
     """
-    serves inline media files - only for authenticated users
+    serves inline media files - only for authenticated users.
+
+    Args:
+        - filename: name of the file.
+
+    Returns:
+        - file to be served.
     """
     return send_from_directory("media/inline", filename)
 
@@ -2886,11 +3803,24 @@ def api_local_serve_inline_media(filename):
 
 @admin.put("/api/media/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_media_update(id):
+@validate_with(MediaRequestModel)
+def api_media_update(
+    id: t.id, validated_data: dict
+) -> (
+    Response
+    | tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[Literal["Media {id} updated"], Literal[200]]
+    | tuple[Literal["Error updating Media"], Literal[417]]
+):
     """
-    Endpoint to update a media item
-    :param id: id of the item to be updated
-    :return: success / error
+    Endpoint to update a media item.
+
+    Args:
+        - id: id of the media
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     media = Media.query.get(id)
     if media is None:
@@ -2901,19 +3831,19 @@ def api_media_update(id):
             current_user,
             Activity.ACTION_VIEW,
             Activity.STATUS_DENIED,
-            request.json,
+            validated_data,
             "media",
             details="Unauthorized attempt to update restricted media.",
         )
         return "Restricted Access", 403
 
-    media = media.from_json(request.json["item"])
+    media = media.from_json(validated_data["item"])
     if media.save():
         Activity.create(
             current_user,
             Activity.ACTION_VIEW,
             Activity.STATUS_SUCCESS,
-            request.json,
+            validated_data,
             "media",
         )
         return "Media {id} updated", 200
@@ -2924,7 +3854,7 @@ def api_media_update(id):
 # Actor routes
 @admin.route("/actors/", defaults={"id": None})
 @admin.route("/actors/<int:id>")
-def actors(id):
+def actors(id: Optional[t.id]) -> str:
     """Endpoint to render actors page."""
     # Pass relationship information
     atobInfo = [item.to_dict() for item in AtobInfo.query.all()]
@@ -2948,10 +3878,19 @@ def actors(id):
 
 
 @admin.route("/api/actors/", methods=["POST", "GET"])
-def api_actors():
-    """Returns actors in JSON format, allows search and paging."""
+@validate_with(ActorQueryRequestModel)
+def api_actors(validated_data: dict) -> tuple[Response, Literal[200]]:
+    """
+    Returns actors in JSON format, allows search and paging.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - actors in json format / success or error
+    """
     # log search query
-    q = request.json.get("q", None)
+    q = validated_data.get("q", None)
     if q and q != [{}]:
         Activity.create(
             current_user,
@@ -2961,7 +3900,7 @@ def api_actors():
             "actor",
         )
 
-    su = SearchUtils(request.json, cls="actor")
+    su = SearchUtils(validated_data, cls="actor")
     queries, ops = su.get_query()
     result = Actor.query.filter(*queries.pop(0))
 
@@ -2993,20 +3932,30 @@ def api_actors():
 # create actor endpoint
 @admin.post("/api/actor/")
 @roles_accepted("Admin", "DA")
+@validate_with(ActorRequestModel)
 @can_assign_roles
-def api_actor_create():
+def api_actor_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error creating Actor"], Literal[417]]:
     """
-    Endpoint to create an Actor item
-    :return: success/error based on the operation's result
+    Endpoint to create an Actor item.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     actor = Actor()
-    actor.from_json(request.json["item"])
-    # assign actor to creator by default
+    actor.from_json(validated_data["item"])
 
+    # assign actor to creator by default
     actor.assigned_to_id = current_user.id
-    roles = request.json["item"].get("roles", [])
+
+    roles = validated_data["item"].get("roles")
     if roles:
-        new_roles = Role.query.filter(Role.id.in_(roles)).all()
+        role_ids = [x.get("id") for x in roles]
+        new_roles = Role.query.filter(Role.id.in_(role_ids)).all()
         actor.roles = new_roles
 
     if actor.save():
@@ -3024,11 +3973,24 @@ def api_actor_create():
 # update actor endpoint
 @admin.put("/api/actor/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_actor_update(id):
+@validate_with(ActorRequestModel)
+def api_actor_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[str, Literal[200]]
+    | tuple[str, Literal[417]]
+    | Response
+):
     """
-    Endpoint to update an Actor item
-    :param id: id of the actor to be updated
-    :return: success/error
+    Endpoint to update an Actor item.
+
+    Args:
+        - id: id of the actor
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     actor = Actor.query.get(id)
     if actor is not None:
@@ -3054,8 +4016,7 @@ def api_actor_update(id):
                 details=f"Unauthorized attempt to update unassigned Actor {id}.",
             )
             return "Restricted Access", 403
-
-        actor = actor.from_json(request.json["item"])
+        actor = actor.from_json(validated_data["item"])
         # Create a revision using latest values
         # this method automatically commits
         # actor changes (referenced)
@@ -3079,11 +4040,24 @@ def api_actor_update(id):
 # Add/Update review actor endpoint
 @admin.put("/api/actor/review/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_actor_review_update(id):
+@validate_with(ActorReviewRequestModel)
+def api_actor_review_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[str, Literal[200]]
+    | tuple[str, Literal[417]]
+    | Response
+):
     """
-    Endpoint to update an Actor's review item
-    :param id: id of the actor
-    :return: success/error
+    Endpoint to update an Actor's review item.
+
+    Args:
+        - id: id of the actor
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     actor = Actor.query.get(id)
     if actor is not None:
@@ -3092,15 +4066,19 @@ def api_actor_review_update(id):
                 current_user,
                 Activity.ACTION_REVIEW,
                 Activity.STATUS_DENIED,
-                request.json,
+                validated_data,
                 "actor",
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
             return "Restricted Access", 403
 
-        actor.review = request.json["item"]["review"] if "review" in request.json["item"] else ""
+        actor.review = (
+            validated_data["item"]["review"] if "review" in validated_data["item"] else ""
+        )
         actor.review_action = (
-            request.json["item"]["review_action"] if "review_action" in request.json["item"] else ""
+            validated_data["item"]["review_action"]
+            if "review_action" in validated_data["item"]
+            else ""
         )
 
         actor.status = "Peer Reviewed"
@@ -3128,14 +4106,25 @@ def api_actor_review_update(id):
 # bulk update actor endpoint
 @admin.put("/api/actor/bulk/")
 @roles_accepted("Admin", "Mod")
-def api_actor_bulk_update():
+@validate_with(BulkUpdateRequestModel)
+def api_actor_bulk_update(
+    validated_data: dict,
+) -> (
+    tuple[Literal["Bulk update queued successfully."], Literal[200]]
+    | tuple[Literal["No items selected, or nothing to update"], Literal[417]]
+):
     """
-    Endpoint to bulk update actors
-    :return: success/error
+    Endpoint to bulk update actors.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
 
-    ids = request.json["items"]
-    bulk = request.json["bulk"]
+    ids = validated_data["items"]
+    bulk = validated_data["bulk"]
 
     # non-intrusive hard validation for access roles based on user
     if not current_user.has_role("Admin"):
@@ -3158,11 +4147,17 @@ def api_actor_bulk_update():
 
 
 @admin.get("/api/actor/<int:id>")
-def api_actor_get(id):
+def api_actor_get(
+    id: t.id,
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Restricted Access"], Literal[403]]:
     """
-    Endpoint to get a single actor
-    :param id: id of the actor
-    :return: actor data in json format + success or error in case of failure
+    Endpoint to get a single actor.
+
+    Args:
+        - id: id of the actor
+
+    Returns:
+        - actor data in json format / success or error in case of failure.
     """
     actor = Actor.query.get(id)
     if not actor:
@@ -3192,11 +4187,15 @@ def api_actor_get(id):
 
 
 @admin.get("/api/actor/<int:actor_id>/profiles")
-def api_actor_profiles(actor_id):
+def api_actor_profiles(actor_id: t.id) -> Response | tuple[str, Literal[200]]:
     """
-    Endpoint to get all profiles associated with a specific actor
-    :param actor_id: ID of the actor
-    :return: JSON array of actor profiles or an error message
+    Endpoint to get all profiles associated with a specific actor.
+
+    Args:
+        - actor_id: ID of the actor.
+
+    Returns:
+        - JSON array of actor profiles or an error message.
     """
     actor = Actor.query.get(actor_id)
     if not actor:
@@ -3220,10 +4219,15 @@ def api_actor_profiles(actor_id):
 
 # get actor relations
 @admin.get("/api/actor/relations/<int:id>")
-def actor_relations(id):
+def actor_relations(id: t.id) -> Response | tuple[str, Literal[200]]:
     """
-    Endpoint to return related entities of an Actor
-    :return:
+    Endpoint to return related entities of an Actor.
+
+    Args:
+        - id: id of the actor.
+
+    Returns:
+        - related entities in json format.
     """
     cls = request.args.get("class", None)
     page = request.args.get("page", 1, int)
@@ -3259,11 +4263,15 @@ def actor_relations(id):
 
 
 @admin.get("/api/actormp/<int:id>")
-def api_actor_mp_get(id):
+def api_actor_mp_get(id: t.id) -> Response | tuple[str, Literal[200]]:
     """
-    Endpoint to get missing person data for an actor profile
-    :param id: id of the actor profile
-    :return: actor profile data in json format + success or error in case of failure
+    Endpoint to get missing person data for an actor profile.
+
+    Args:
+        - id: id of the actor profile.
+
+    Returns:
+        - actor profile data in json format / success or error in case of failure.
     """
     profile = ActorProfile.query.get(id)
     if not profile:
@@ -3288,11 +4296,15 @@ def api_actor_mp_get(id):
 
 @admin.route("/api/bulletinhistory/<int:bulletinid>")
 @require_view_history
-def api_bulletinhistory(bulletinid):
+def api_bulletinhistory(bulletinid: t.id) -> tuple[Response, Literal[200]]:
     """
-    Endpoint to get revision history of a bulletin
-    :param bulletinid: id of the bulletin item
-    :return: json feed of item's history , or error
+    Endpoint to get revision history of a bulletin.
+
+    Args:
+        - bulletinid: id of the bulletin item.
+
+    Returns:
+        - json feed of item's history / error.
     """
     result = (
         BulletinHistory.query.filter_by(bulletin_id=bulletinid)
@@ -3309,11 +4321,15 @@ def api_bulletinhistory(bulletinid):
 
 @admin.route("/api/actorhistory/<int:actorid>")
 @require_view_history
-def api_actorhistory(actorid):
+def api_actorhistory(actorid: t.id) -> tuple[Response, Literal[200]]:
     """
-    Endpoint to get revision history of an actor
-    :param actorid: id of the actor item
-    :return: json feed of item's history , or error
+    Endpoint to get revision history of an actor.
+
+    Args:
+        - actorid: id of the actor item.
+
+    Returns:
+        - json feed of item's history / error.
     """
     result = (
         ActorHistory.query.filter_by(actor_id=actorid).order_by(desc(ActorHistory.created_at)).all()
@@ -3328,11 +4344,15 @@ def api_actorhistory(actorid):
 
 @admin.route("/api/incidenthistory/<int:incidentid>")
 @require_view_history
-def api_incidenthistory(incidentid):
+def api_incidenthistory(incidentid: t.id) -> tuple[Response, Literal[200]]:
     """
-    Endpoint to get revision history of an incident item
-    :param incidentid: id of the incident item
-    :return: json feed of item's history , or error
+    Endpoint to get revision history of an incident item.
+
+    Args:
+        - incidentid: id of the incident item.
+
+    Returns:
+        - json feed of item's history / error.
     """
     result = (
         IncidentHistory.query.filter_by(incident_id=incidentid)
@@ -3349,11 +4369,15 @@ def api_incidenthistory(incidentid):
 
 @admin.route("/api/locationhistory/<int:locationid>")
 @require_view_history
-def api_locationhistory(locationid):
+def api_locationhistory(locationid: t.id) -> tuple[Response, Literal[200]]:
     """
-    Endpoint to get revision history of a location
-    :param locationid: id of the location item
-    :return: json feed of item's history , or error
+    Endpoint to get revision history of a location.
+
+    Args:
+        - locationid: id of the location item.
+
+    Returns:
+        - json feed of item's history / error.
     """
     result = (
         LocationHistory.query.filter_by(location_id=locationid)
@@ -3370,10 +4394,12 @@ def api_locationhistory(locationid):
 
 @admin.route("/api/users/")
 @roles_accepted("Admin", "Mod")
-def api_users():
+def api_users() -> tuple[Response, Literal[200]]:
     """
-    API endpoint to feed users data in json format , supports paging and search
-    :return: success and json feed of items or error
+    API endpoint to feed users data in json format , supports paging and search.
+
+    Returns:
+        - json feed of users / error.
     """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
@@ -3399,25 +4425,169 @@ def api_users():
     return Response(json.dumps(response), content_type="application/json"), 200
 
 
-@admin.route("/users/")
+@admin.get("/users/", defaults={"id": None})
+@admin.get("/users/<int:id>")
 @roles_required("Admin")
-def users():
+def users(id):
     """
-    Endpoint to render the users backend page
-    :return: html page of the users backend.
+    Endpoint to render the users backend page.
+
+    Returns:
+        - html page of the users backend.
     """
     return render_template("admin/users.html")
 
 
+@admin.get("/api/user/<int:id>")
+@roles_required("Admin")
+def api_user_get(id):
+    """
+    Endpoint to get a user
+    :param id: id of the user
+    :return: user data in json format + success or error in case of failure
+    """
+    user = User.query.get(id)
+    if not user:
+        return HTTPResponse.NOT_FOUND
+    else:
+        return user.to_dict()
+
+
+@admin.get("/api/user/<int:id>/sessions")
+@roles_required("Admin")
+def api_user_sessions(id):
+    session_redis = current_app.config["SESSION_REDIS"]
+    session_interface = current_app.session_interface
+    per_page = request.args.get("per_page", PER_PAGE, int)
+    page = request.args.get("page", 1, int)
+
+    try:
+        # Fetch the user to ensure they exist and to collect their session tokens
+        user = User.query.get(id)
+        if not user:
+            return HTTPResponse.NOT_FOUND
+        sessions_paginated = (
+            Session.query.filter(Session.user_id == id).order_by(Session.created_at.desc())
+        ).paginate(page=page, per_page=per_page, error_out=False)
+
+        # Collect tokens from user's sessions to filter Redis keys
+        user_session_tokens = {s.session_token for s in sessions_paginated.items}
+
+        user_redis_keys = [f"session:{token}" for token in user_session_tokens if token]
+
+        # Retrieve and decode session details from Redis, storing in a dictionary
+        redis_sessions_details = {}
+        for key in user_redis_keys:
+            data = session_redis.get(key)
+            if data:
+                token = key.split(":")[1]
+                redis_sessions_details[token] = session_interface.serializer.decode(data)
+
+        # Prepare the session data for response including the details
+        sessions_data = []
+
+        for s in sessions_paginated.items:
+            session_info = s.to_dict()
+            if s.session_token in redis_sessions_details:
+                session_info["details"] = redis_sessions_details[s.session_token]
+            sessions_data.append(session_info)
+
+        # Determine if there are more items left
+        more = sessions_paginated.has_next
+
+        return {"items": sessions_data, "more": more}
+
+    except Exception as e:
+        return {"error": "Expectation failed", "message": str(e)}, 417
+
+
+@admin.delete("/api/session/logout")
+@roles_required("Admin")
+def logout_session():
+    # Safely get the token from the JSON payload
+    token = request.json.get("token") if request.json else None
+
+    if not token:
+        return "Invalid request. Please provide a session token.", 400
+    if token == session.sid:
+        logout_user()
+        # Use a custom JSON response with a specific field to signal a redirect to the front-end
+        return {"logout": "successful", "redirect": True}
+
+    rds = current_app.config["SESSION_REDIS"]
+    session_key = f"session:{token}"
+
+    try:
+        # Check if the session key exists in Redis
+        if rds.exists(session_key):
+            # Delete the session key from Redis
+            rds.delete(session_key)
+            return f"Session {token} logged out successfully."
+        else:
+            return f"Session {token} not found.", 404
+
+    except Exception as e:
+        return "Error while logging out session", 500
+
+
+@admin.delete("/api/user/<int:user_id>/sessions/logout")
+@roles_required("Admin")
+def logout_all_sessions(user_id):
+    # Fetch the user to ensure they exist
+    user = User.query.get(user_id)
+    if not user:
+        return "User not found", 404
+
+    rds = current_app.config["SESSION_REDIS"]
+    errors = []
+    current_session_logout_needed = False
+
+    # Iterate over user's sessions and delete them from Redis, except the current session
+    for s in user.sessions:
+        if s.session_token == session.sid:
+            current_session_logout_needed = True
+            continue
+
+        try:
+            session_key = f"session:{s.session_token}"
+            if rds.exists(session_key):
+                rds.delete(session_key)
+        except Exception as e:
+            errors.append(f"Failed to delete session {s.session_token}: {str(e)}")
+
+    # Logout current session last if needed
+    if current_session_logout_needed:
+        logout_user()
+
+    # Build response
+    if errors:
+        return {"errors": errors}, 500
+    return f"All sessions for user {user_id} logged out successfully", 200
+
+
 @admin.post("/api/user/")
 @roles_required("Admin")
-def api_user_create():
+@validate_with(UserRequestModel)
+def api_user_create(
+    validated_data: dict,
+) -> (
+    tuple[Literal["Error, username too short"], Literal[417]]
+    | tuple[Literal["Error, username too long"], Literal[417]]
+    | tuple[Literal["Error, username already exists"], Literal[417]]
+    | tuple[str, Literal[200]]
+    | tuple[Literal["Error creating user"], Literal[417]]
+):
     """
-    Endpoint to create a user item
-    :return: success / error baesd on operation's outcome
+    Endpoint to create a user item.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     # validate existing
-    u = request.json.get("item")
+    u = validated_data.get("item")
     username = u.get("username")
 
     exists = User.query.filter(User.username == username).first()
@@ -3443,8 +4613,26 @@ def api_user_create():
 
 @admin.post("/api/checkuser/")
 @roles_required("Admin")
-def api_user_check():
-    data = request.json.get("item")
+@validate_with(UserNameCheckValidationModel)
+def api_user_check(
+    validated_data: dict,
+) -> (
+    tuple[Literal["Please select a username"], Literal[417]]
+    | tuple[Literal["Illegal characters detected"], Literal[417]]
+    | tuple[Literal["Disallowed characters detected"], Literal[417]]
+    | tuple[Literal["Username already exists"], Literal[417]]
+    | tuple[Literal["Username ok"], Literal[200]]
+):
+    """
+    API endpoint to validate a username.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    data = validated_data.get("item")
     if not data:
         return "Please select a username", 417
 
@@ -3465,14 +4653,25 @@ def api_user_check():
         return "Username ok", 200
 
 
-@admin.put("/api/user/<int:uid>")
+@admin.put("/api/user/")
 @roles_required("Admin")
-def api_user_update(uid):
-    """Endpoint to update a user."""
+@validate_with(UserRequestModel)
+def api_user_update(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[str, Literal[417]] | Response:
+    """
+    Endpoint to update a user.
 
-    user = User.query.get(uid)
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    item = validated_data.get("item")
+    user = User.query.get(item.get("id"))
     if user is not None:
-        u = request.json.get("item")
+        u = validated_data.get("item")
         user = user.from_json(u)
         if user.save():
             # Record activity
@@ -3491,14 +4690,25 @@ def api_user_update(uid):
 
 
 @admin.post("/api/password/")
-def api_check_password():
+@validate_with(UserPasswordCheckValidationModel)
+def api_check_password(
+    validated_data: dict,
+) -> (
+    tuple[Literal["No password provided"], Literal[400]]
+    | tuple[Literal["Password is ok"], Literal[200]]
+    | tuple[Literal["Weak Password Score"], Literal[409]]
+):
     """
-    API Endpoint to validate a password and check its strength
+    API Endpoint to validate a password and check its strength.
 
-    :return: successful response if valid, else error response
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     # Retrieve the password from the request's JSON body
-    password = request.json.get("password")
+    password = validated_data.get("password")
 
     # Check if the password is provided
     if not password:
@@ -3514,8 +4724,18 @@ def api_check_password():
 
 @admin.post("/api/user/force-reset")
 @roles_required("Admin")
-def api_user_force_reset():
-    item = request.json.get("item")
+@validate_with(UserForceResetRequestModel)
+def api_user_force_reset(validated_data: dict) -> Response:
+    """
+    Endpoint to force a password reset for a user.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    item = validated_data.get("item")
     if not item:
         abort(400)
     user = User.query.get(item.get("id"))
@@ -3531,10 +4751,14 @@ def api_user_force_reset():
 
 @admin.post("/api/user/force-reset-all")
 @roles_required("Admin")
-def api_user_force_reset_all():
+def api_user_force_reset_all() -> (
+    tuple[Literal["Forced password reset has been set for all users"], Literal[200]]
+):
     """
-    sets a redis flag to force password reset for all users
-    :return: success response after setting all redis flags (if not already set)
+    sets a redis flag to force password reset for all users.
+
+    Returns:
+        - success response after setting all redis flags (if not already set)
     """
     for user in User.query.all():
         # check if user already has a password reset flag
@@ -3545,11 +4769,22 @@ def api_user_force_reset_all():
 
 @admin.delete("/api/user/<int:id>")
 @roles_required("Admin")
-def api_user_delete(id):
+def api_user_delete(
+    id: t.id,
+) -> (
+    Response
+    | tuple[Literal["User is active, make inactive before deleting"], Literal[403]]
+    | tuple[Literal["Deleted"], Literal[200]]
+    | tuple[Literal["Error deleting User"], Literal[417]]
+):
     """
-    Endpoint to delete a user
-    :param id: id of the user to be deleted
-    :return: success/error
+    Endpoint to delete a user.
+
+    Args:
+        - id: id of the user to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     user = User.query.get(id)
     if user is None:
@@ -3571,35 +4806,39 @@ def api_user_delete(id):
 # Roles routes
 @admin.route("/roles/")
 @roles_required("Admin")
-def roles():
+def roles() -> str:
     """
-    Endpoint to redner roles backend page
-    :return: html of the page
+    Endpoint to redner roles backend page.
+
+    Returns:
+        - html page of the roles backend.
     """
     return render_template("admin/roles.html")
 
 
-@admin.route("/api/roles/", defaults={"page": 1})
-@admin.route("/api/roles/<int:page>/")
+@admin.get("/api/roles/")
 @roles_required("Admin")
-def api_roles(page):
+def api_roles() -> tuple[Response, Literal[200]]:
     """
-    API endpoint to feed roles items in josn format - supports paging and search
-    :param page: db query offset
-    :return: successful json feed or error
+    API endpoint to feed roles items in josn format - supports paging and search.
+
+    Returns:
+        - json feed of roles / error.
     """
     query = []
     q = request.args.get("q", None)
+    page = request.args.get("page", 1, int)
+    per_page = request.args.get("per_page", PER_PAGE, int)
     if q is not None:
         query.append(Role.name.ilike("%" + q + "%"))
     result = (
         Role.query.filter(*query)
         .order_by(Role.id)
-        .paginate(page=page, per_page=PER_PAGE, count=True)
+        .paginate(page=page, per_page=per_page, count=True)
     )
     response = {
         "items": [item.to_dict() for item in result.items],
-        "perPage": PER_PAGE,
+        "perPage": per_page,
         "total": result.total,
     }
     return Response(json.dumps(response), content_type="application/json"), 200
@@ -3607,13 +4846,21 @@ def api_roles(page):
 
 @admin.post("/api/role/")
 @roles_required("Admin")
-def api_role_create():
+@validate_with(RoleRequestModel)
+def api_role_create(
+    validated_data: dict,
+) -> tuple[Literal["Created"], Literal[200]] | tuple[Literal["Save Failed"], Literal[417]]:
     """
-    Endpoint to create a role item
-    :return: success/error
+    Endpoint to create a role item.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     role = Role()
-    created = role.from_json(request.json["item"])
+    created = role.from_json(validated_data["item"])
     if created.save():
         # Record activity
         Activity.create(
@@ -3627,11 +4874,19 @@ def api_role_create():
 
 @admin.put("/api/role/<int:id>")
 @roles_required("Admin")
-def api_role_update(id):
+@validate_with(RoleRequestModel)
+def api_role_update(
+    id: t.id, validated_data: dict
+) -> Response | tuple[Literal["Cannot edit System Roles"], Literal[403]] | tuple[str, Literal[200]]:
     """
-    Endpoint to update a role item
-    :param id: id of the role to be updated
-    :return: success / error
+    Endpoint to update a role item.
+
+    Args:
+        - id: id of the role to be updated.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     role = Role.query.get(id)
     if role is None:
@@ -3640,7 +4895,7 @@ def api_role_update(id):
     if role.name in ["Admin", "Mod", "DA"]:
         return "Cannot edit System Roles", 403
 
-    role = role.from_json(request.json["item"])
+    role = role.from_json(validated_data["item"])
     role.save()
     # Record activity
     Activity.create(
@@ -3651,11 +4906,23 @@ def api_role_update(id):
 
 @admin.delete("/api/role/<int:id>")
 @roles_required("Admin")
-def api_role_delete(id):
+def api_role_delete(
+    id: t.id,
+) -> (
+    Response
+    | tuple[Literal["Cannot delete System Roles"], Literal[403]]
+    | tuple[Literal["Role assigned to restricted items"], Literal[403]]
+    | tuple[Literal["Deleted"], Literal[200]]
+    | tuple[Literal["Error deleting Role"], Literal[417]]
+):
     """
-    Endpoint to delete a role item
-    :param id: id of the role to be deleted
-    :return: success / error
+    Endpoint to delete a role item.
+
+    Args:
+        - id: id of the role to be deleted.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     role = Role.query.get(id)
 
@@ -3681,10 +4948,14 @@ def api_role_delete(id):
 
 @admin.post("/api/role/import/")
 @roles_required("Admin")
-def api_role_import():
+def api_role_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[400]]
+):
     """
-    Endpoint to import role items from a CSV file
-    :return: success / error
+    Endpoint to import role items from a CSV file.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         Role.import_csv(request.files.get("csv"))
@@ -3696,10 +4967,15 @@ def api_role_import():
 # Incident routes
 @admin.route("/incidents/", defaults={"id": None})
 @admin.route("/incidents/<int:id>")
-def incidents(id):
+def incidents(id: Optional[t.id]) -> str:
     """
-    Endpoint to render incidents backend page
-    :return: html page of the incidents backend management
+    Endpoint to render incidents backend page.
+
+    Args:
+        - id: id of the incident item.
+
+    Returns:
+        - html page of the incidents backend.
     """
     # Pass relationship information
     atobInfo = [item.to_dict() for item in AtobInfo.query.all()]
@@ -3722,10 +4998,19 @@ def incidents(id):
 
 
 @admin.route("/api/incidents/", methods=["POST", "GET"])
-def api_incidents():
-    """Returns actors in JSON format, allows search and paging."""
+@validate_with(IncidentQueryRequestModel)
+def api_incidents(validated_data: dict) -> tuple[Response, Literal[200]]:
+    """
+    Returns incidents in JSON format, allows search and paging.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - incidents in json format / success or error
+    """
     # log search query
-    q = request.json.get("q", None)
+    q = validated_data.get("q", None)
     if q and q != [{}]:
         Activity.create(
             current_user,
@@ -3737,7 +5022,7 @@ def api_incidents():
 
     query = []
 
-    su = SearchUtils(request.json, cls="incident")
+    su = SearchUtils(validated_data, cls="incident")
 
     query = su.get_query()
 
@@ -3763,16 +5048,29 @@ def api_incidents():
 @admin.post("/api/incident/")
 @roles_accepted("Admin", "DA")
 @can_assign_roles
-def api_incident_create():
-    """API endpoint to create an incident."""
+@validate_with(IncidentRequestModel)
+def api_incident_create(
+    validated_data: dict,
+) -> tuple[str, Literal[200]] | tuple[Literal["Error creating Incident"], Literal[417]]:
+    """
+    API endpoint to create an incident.
 
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     incident = Incident()
-    incident.from_json(request.json["item"])
+    incident.from_json(validated_data["item"])
+
     # assign to creator by default
     incident.assigned_to_id = current_user.id
-    roles = request.json["item"].get("roles", [])
+
+    roles = validated_data["item"].get("roles", [])
     if roles:
-        new_roles = Role.query.filter(Role.id.in_(roles)).all()
+        role_ids = [x.get("id") for x in roles]
+        new_roles = Role.query.filter(Role.id.in_(role_ids)).all()
         incident.roles = new_roles
 
     if incident.save():
@@ -3794,9 +5092,25 @@ def api_incident_create():
 # update incident endpoint
 @admin.put("/api/incident/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_incident_update(id):
-    """API endpoint to update an incident."""
+@validate_with(IncidentRequestModel)
+def api_incident_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[str, Literal[200]]
+    | tuple[str, Literal[417]]
+    | Response
+):
+    """
+    API endpoint to update an incident.
 
+    Args:
+        - id: id of the incident.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
     incident = Incident.query.get(id)
 
     if incident is not None:
@@ -3822,7 +5136,8 @@ def api_incident_update(id):
             )
             return "Restricted Access", 403
 
-        incident = incident.from_json(request.json["item"])
+        incident = incident.from_json(validated_data["item"])
+
         # Create a revision using latest values
         # this method automatically commits
         # incident changes (referenced)
@@ -3846,11 +5161,24 @@ def api_incident_update(id):
 # Add/Update review incident endpoint
 @admin.put("/api/incident/review/<int:id>")
 @roles_accepted("Admin", "DA")
-def api_incident_review_update(id):
+@validate_with(IncidentReviewRequestModel)
+def api_incident_review_update(
+    id: t.id, validated_data: dict
+) -> (
+    tuple[Literal["Restricted Access"], Literal[403]]
+    | tuple[str, Literal[200]]
+    | tuple[str, Literal[417]]
+    | Response
+):
     """
-    Endpoint to update an incident review item
-    :param id: id of the incident
-    :return: success / error
+    Endpoint to update an incident review item.
+
+    Args:
+        - id: id of the incident
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     incident = Incident.query.get(id)
     if incident is not None:
@@ -3859,15 +5187,19 @@ def api_incident_review_update(id):
                 current_user,
                 Activity.ACTION_REVIEW,
                 Activity.STATUS_DENIED,
-                request.json,
+                validated_data,
                 "incident",
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
             return "Restricted Access", 403
 
-        incident.review = request.json["item"]["review"] if "review" in request.json["item"] else ""
+        incident.review = (
+            validated_data["item"]["review"] if "review" in validated_data["item"] else ""
+        )
         incident.review_action = (
-            request.json["item"]["review_action"] if "review_action" in request.json["item"] else ""
+            validated_data["item"]["review_action"]
+            if "review_action" in validated_data["item"]
+            else ""
         )
 
         incident.status = "Peer Reviewed"
@@ -3894,11 +5226,25 @@ def api_incident_review_update(id):
 # bulk update incident endpoint
 @admin.put("/api/incident/bulk/")
 @roles_accepted("Admin", "Mod")
-def api_incident_bulk_update():
-    """endpoint to handle bulk incidents updates."""
+@validate_with(IncidentBulkUpdateRequestModel)
+def api_incident_bulk_update(
+    validated_data: dict,
+) -> (
+    tuple[Literal["Bulk update queued successfully"], Literal[200]]
+    | tuple[Literal["No items selected, or nothing to update"], Literal[417]]
+):
+    """
+    endpoint to handle bulk incidents updates.
 
-    ids = request.json["items"]
-    bulk = request.json["bulk"]
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+
+    ids = validated_data["items"]
+    bulk = validated_data["bulk"]
 
     # non-intrusive hard validation for access roles based on user
     if not current_user.has_role("Admin"):
@@ -3921,11 +5267,17 @@ def api_incident_bulk_update():
 
 # get one incident
 @admin.get("/api/incident/<int:id>")
-def api_incident_get(id):
+def api_incident_get(
+    id: t.id,
+) -> Response | tuple[str, Literal[200]] | tuple[Literal["Restricted Access"], Literal[403]]:
     """
-    Endopint to get a single incident by id
-    :param id: id of the incident item
-    :return: successful incident item in json format or error
+    Endopint to get a single incident by id.
+
+    Args:
+        - id: id of the incident.
+
+    Returns:
+        - incident data in json format / success or error in case of failure.
     """
     incident = Incident.query.get(id)
     if not incident:
@@ -3956,10 +5308,15 @@ def api_incident_get(id):
 
 # get incident relations
 @admin.get("/api/incident/relations/<int:id>")
-def incident_relations(id):
+def incident_relations(id: t.id) -> Response | tuple[str, Literal[200]]:
     """
-    Endpoint to return related entities of an Incident
-    :return:
+    Endpoint to return related entities of an Incident.
+
+    Args:
+        - id: id of the incident.
+
+    Returns:
+        - related entities in json format.
     """
     cls = request.args.get("class", None)
     page = request.args.get("page", 1, int)
@@ -4005,10 +5362,14 @@ def incident_relations(id):
 
 @admin.post("/api/incident/import/")
 @roles_required("Admin")
-def api_incident_import():
+def api_incident_import() -> (
+    tuple[Literal["Success"], Literal[200]] | tuple[Literal["Error"], Literal[417]]
+):
     """
     Endpoint to handle incident imports.
-    :return: successful response or error code in case of failure.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if "csv" in request.files:
         Incident.import_csv(request.files.get("csv"))
@@ -4020,17 +5381,37 @@ def api_incident_import():
 # Activity routes
 @admin.route("/activity/")
 @roles_required("Admin")
-def activity():
+def activity() -> str:
     """
-    Endpoint to render activity backend page
-    :return: html of the page
+    Endpoint to render activity backend page.
+
+    Returns:
+        - html page of the activity backend.
     """
-    return render_template("admin/activity.html", actions_types=Activity.get_action_values())
+    atobInfo = [item.to_dict() for item in AtobInfo.query.all()]
+    btobInfo = [item.to_dict() for item in BtobInfo.query.all()]
+    atoaInfo = [item.to_dict() for item in AtoaInfo.query.all()]
+    itobInfo = [item.to_dict() for item in ItobInfo.query.all()]
+    itoaInfo = [item.to_dict() for item in ItoaInfo.query.all()]
+    itoiInfo = [item.to_dict() for item in ItoiInfo.query.all()]
+    statuses = [item.to_dict() for item in WorkflowStatus.query.all()]
+
+    return render_template(
+        "admin/activity.html",
+        actions_types=Activity.get_action_values(),
+        atoaInfo=atoaInfo,
+        itoaInfo=itoaInfo,
+        itoiInfo=itoiInfo,
+        atobInfo=atobInfo,
+        btobInfo=btobInfo,
+        itobInfo=itobInfo,
+        statuses=statuses,
+    )
 
 
 @admin.route("/api/activities/", methods=["POST", "GET"])
 @roles_required("Admin")
-def api_activities():
+def api_activities() -> tuple[Response, Literal[200]]:
     """Returns activities in JSON format, allows search and paging."""
     su = SearchUtils(request.json, cls="Activity")
     query = su.get_query()
@@ -4055,8 +5436,9 @@ def api_activities():
 
 
 @admin.route("/api/bulk/status/")
-def bulk_status():
-    """Endpoint to get status update about background bulk operations"""
+@roles_accepted("Admin", "Mod")
+def bulk_status() -> Response | str:
+    """Endpoint to get status update about background bulk operations."""
     uid = current_user.id
     cursor, jobs = rds.scan(0, f"user{uid}:*", 1000)
     tasks = []
@@ -4089,10 +5471,12 @@ def bulk_status():
 
 # Saved Searches
 @admin.route("/api/queries/")
-def api_queries():
+def api_queries() -> tuple[Literal["Invalid query type"], Literal[400]] | tuple[str, Literal[200]]:
     """
-    Endpoint to get user saved searches
-    :return: successful json feed of saved searches or error
+    Endpoint to get user saved searches.
+
+    Returns:
+        - successful json feed of saved searches or error.
     """
     user_id = current_user.id
     query_type = request.args.get("type")
@@ -4103,11 +5487,21 @@ def api_queries():
 
 
 @admin.get("/api/query/<string:name>/exists")
-def api_query_check_name_exists(name: str):
+def api_query_check_name_exists(
+    name: str,
+) -> (
+    tuple[Literal["Query name already exists"], Literal[409]]
+    | tuple[Literal["Query name is available"], Literal[200]]
+):
     """
     API Endpoint check if a query with that provided name exists.
     Queries are tied to the current (request) user.
-    :return: true if exists, else false
+
+    Args:
+        - name: name of the query to check.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if Query.query.filter_by(name=name, user_id=current_user.id).first():
         return "Query name already exists", 409
@@ -4116,10 +5510,16 @@ def api_query_check_name_exists(name: str):
 
 
 @admin.post("/api/query/")
-def api_query_create():
+def api_query_create() -> (
+    tuple[Literal["Invalid Request"], Literal[400]]
+    | tuple[Literal["Query successfully saved"], Literal[200]]
+    | tuple[Literal["Error parsing query data"], Literal[417]]
+):
     """
-    API Endpoint save a query search object (advanced search)
-    :return: success if save is successful, error otherwise
+    API Endpoint save a query search object (advanced search.)
+
+    Returns:
+        - success/error string based on the operation result.
     """
     q = request.json.get("q", None)
     name = request.json.get("name", None)
@@ -4139,59 +5539,80 @@ def api_query_create():
         return "Error parsing query data", 417
 
 
-@admin.put("/api/query/<string:name>")
-def api_query_update(name: str):
+@admin.put("/api/query/<int:id>")
+def api_query_update(
+    id: t.id,
+) -> (
+    tuple[Literal["q parameter not provided"], Literal[417]]
+    | tuple[Literal["Query not found"], Literal[404]]
+    | Response
+    | tuple[str, Literal[200]]
+    | tuple[Literal["Query update failed"], Literal[409]]
+):
     """
     API Endpoint update a query search object (advanced search).
     Updated searches are tied to the current (request) user.
-    :return: success if update is successful, error otherwise
+
+    Args:
+        - id: id of the query to update.
+
+    Returns:
+        - success/error string based on the operation result.
     """
     if not (q := request.json.get("q")):
         return "q parameter not provided", 417
 
-    query = Query.query.filter(
-        and_(
-            Query.user_id == current_user.id,
-            Query.name == name,
-        )
-    )
+    query = Query.query.get(id)
 
-    if query_found := query.first():
-        query_found.data = q
-    else:
-        return f"Query {name} not found", 404
+    if not query:
+        return "Query not found", 404
 
-    if query_found.save():
-        return f"Query {name} updated", 200
+    if query.user_id != current_user.id:
+        return HTTPResponse.FORBIDDEN
 
-    return f"Query {name} save failed", 409
+    query.data = q
+    if query.save():
+        return f"Query {query.name} updated", 200
+
+    return "Query update failed", 409
 
 
-@admin.delete("/api/query/<string:name>")
-def api_query_delete(name: str):
+@admin.delete("/api/query/<int:id>")
+def api_query_delete(
+    id: t.id,
+) -> (
+    tuple[Literal["Query not found"], Literal[404]]
+    | Response
+    | tuple[str, Literal[200]]
+    | tuple[Literal["Query delete failed"], Literal[409]]
+):
     """
     API Endpoint delete a query search object (advanced search).
     Deleted searches are tied to the current (request) user.
-    :return: success if deletion is successful, error otherwise
+
+    Args:
+        - id: id of the query to delete.
+
+    Returns:
+        - success/error string based on the operation result.
     """
-    query = Query.query.filter(
-        and_(
-            Query.user_id == current_user.id,
-            Query.name == name,
-        )
-    )
+    query = Query.query.get(id)
 
-    if not (query_found := query.first()):
-        return f"Query: {name} not found", 404
+    if not query:
+        return "Query not found", 404
 
-    if query_found.delete():
-        return f"Query {name} deleted", 200
+    if query.user_id != current_user.id:
+        return HTTPResponse.FORBIDDEN
 
-    return f"Query {name} delete failed", 409
+    if query.delete():
+        return f"Query {query.name} deleted", 200
+
+    return "Query delete failed", 409
 
 
 @admin.get("/api/relation/info")
-def relation_info():
+def relation_info() -> str:
+    """Returns relation info in JSON format."""
     table = request.args.get("type")
 
     # Define a dictionary to map 'type' to query classes
@@ -4213,10 +5634,12 @@ def relation_info():
 
 
 @admin.get("/api/graph/json")
-def graph_json():
+def graph_json() -> Optional[str]:
     """
-    API Endpoint to return graph data in json format
-    :return: json feed of graph data
+    API Endpoint to return graph data in json format.
+
+    Returns:
+        - graph data in json format.
     """
     id = request.args.get("id")
     entity_type = request.args.get("type")
@@ -4227,27 +5650,37 @@ def graph_json():
         return GraphUtils.expanded_graph(entity_type, id)
 
 
-from flask import request, jsonify, abort
-
-
 @admin.post("/api/graph/visualize")
-def graph_visualize():
+@validate_with(GraphVisualizeRequestModel)
+def graph_visualize(validated_data: dict) -> Response:
+    """
+    Endpoint to visualize a graph.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - task_id of the graph visualization task.
+    """
     user_id = current_user.id
-    graph_type = request.args.get("type")  # Get the type from URL query parameter
+    # Get the type from URL query parameter
+    graph_type = request.args.get("type")
 
     # Check if the type is valid
     if graph_type not in ["actor", "bulletin", "incident"]:
         return abort(400, description="Invalid type provided")
 
-    task_id = generate_graph.delay(request.json, graph_type, user_id)
+    task_id = generate_graph.delay(validated_data, graph_type, user_id)
     return jsonify({"task_id": task_id.id})
 
 
 @admin.get("/api/graph/data")
-def get_graph_data():
+def get_graph_data() -> Response:
     """
     Endpoint to retrieve graph data from Redis.
-    :return: Graph data in JSON format or error message if data not found.
+
+    Returns:
+        - graph data in JSON format.
     """
     user_id = current_user.id
 
@@ -4266,7 +5699,8 @@ def get_graph_data():
 
 
 @admin.get("/api/graph/status")
-def check_graph_status():
+def check_graph_status() -> Response:
+    """Returns the status of the graph visualization task."""
     user_id = current_user.id
 
     status_key = f"user{user_id}:graph:status"
@@ -4281,18 +5715,20 @@ def check_graph_status():
 
 @admin.get("/system-administration/")
 @auth_required(within=15, grace=0)
-@roles_accepted("Admin")
-def system_admin():
+@roles_required("Admin")
+def system_admin() -> str:
     """Endpoint for system administration."""
     return render_template("admin/system-administration.html")
 
 
 @admin.get("/api/appconfig/")
-@roles_accepted("Admin")
-def api_app_config():
+@roles_required("Admin")
+def api_app_config() -> tuple[Response, Literal[200]]:
     """
-    Endpoint to get paged results of application configurations
-    :return: list of app_config objects in json
+    Endpoint to get paged results of application configurations.
+
+    Returns:
+        - application configurations in JSON format.
     """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
@@ -4309,22 +5745,31 @@ def api_app_config():
 
 @admin.get("/api/configuration/")
 @roles_required("Admin")
-def api_config():
-    """
-    :return: serialized app configuration
-    """
+def api_config() -> str:
+    """Returns serialized app configurations."""
     response = {"config": ConfigManager.serialize(), "labels": dict(ConfigManager.CONFIG_LABELS)}
     return json.dumps(response)
 
 
 @admin.put("api/configuration/")
 @roles_required("Admin")
-def api_config_write():
+@validate_with(ConfigRequestModel)
+def api_config_write(
+    validated_data: dict,
+) -> (
+    tuple[Literal["Configuration Saved Successfully"], Literal[200]]
+    | tuple[Literal["Unable to Save Configuration"], Literal[417]]
+):
     """
-    writes back app configurations & reloads the app
-    :return: success or error if saving/writing fails
+    writes back app configurations & reloads the app.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
     """
-    conf = request.json.get("conf")
+    conf = validated_data.get("conf")
 
     if ConfigManager.write_config(conf):
         return "Configuration Saved Successfully", 200
@@ -4333,13 +5778,31 @@ def api_config_write():
 
 
 @admin.app_template_filter("to_config")
-def to_config(items):
+def to_config(items: list) -> list[dict[str, Any]]:
+    """
+    Filter to get translated config items.
+
+    Args:
+        - items: list of config items.
+
+    Returns:
+        - translated config items.
+    """
     output = [{"en": item, "tr": gettext(item)} for item in items]
     return output
 
 
 @admin.app_template_filter("get_data")
-def get_data(table):
+def get_data(table: str) -> list[dict[str, Any]] | list[dict[str, dict[str, Any | str]]] | None:
+    """
+    Filter to get data from an info/status table.
+
+    Args:
+        - table: table name. (atob, atoa, itoa, btob, itob, itoi, workflow_status)
+
+    Returns:
+        - data from the table.
+    """
     if table == "atob":
         items = AtobInfo.query.all()
         return [{"en": item.title, "tr": item.title_tr or ""} for item in items]
@@ -4374,3 +5837,57 @@ def get_data(table):
     if table == "workflow_status":
         items = WorkflowStatus.query.all()
         return [{"en": item.title, "tr": item.title_tr or ""} for item in items]
+
+
+# Logging
+
+
+@admin.route("/logs/")
+@roles_required("Admin")
+def logs() -> str:
+    """
+    Endpoint to render the logs backend page.
+
+    Returns:
+        - html page of the logs backend.
+    """
+    return render_template("admin/system-logs.html")
+
+
+@admin.route("/api/logfiles/")
+@roles_required("Admin")
+def api_logfiles() -> str:
+    """Endpoint to return a dict containing list of log file names and
+    the date of the current open log."""
+    files = get_log_filenames()
+    # read the current log file's first line and extract the date
+    log_dir = current_app.config.get("LOG_DIR")
+    log_file = current_app.config.get("LOG_FILE")
+    log_path = os.path.join(log_dir, log_file)
+    date = None
+    if os.path.exists(log_path):
+        with open(log_path, "r") as f:
+            timestamp = json.loads(f.readline().strip())["timestamp"]
+            date = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
+    return json.dumps({"files": files, "date": date})
+
+
+@admin.route("/api/logs/")
+@roles_required("Admin")
+def api_logs() -> (
+    Response
+    | tuple[Literal["Error sending log file"], Literal[417]]
+    | tuple[Literal["Log file not found"], Literal[404]]
+):
+    """Endpoint to return the content of the log file."""
+    filename = request.args.get("filename", current_app.config.get("LOG_FILE"))
+    log_file = secure_filename(filename)
+    log_dir = current_app.config.get("LOG_DIR")
+    if os.path.exists(safe_join(log_dir, log_file)):
+        try:
+            return send_from_directory(os.path.abspath(log_dir), log_file)
+        except Exception as e:
+            current_app.logger.error(f"Error sending log file: {e}", exc_info=True)
+            return "Error sending log file", 417
+    else:
+        return "Log file not found", 404

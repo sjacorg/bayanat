@@ -1,4 +1,4 @@
-Vue.component('visualization', {
+const Visualization = Vue.defineComponent({
   props: ['item', 'i18n'],
 
   data() {
@@ -7,7 +7,6 @@ Vue.component('visualization', {
       loading: false,
       graph: null,
       graphData: { nodes: [], links: [] }, // Initialize with empty arrays
-      switchMode: false,
       initRendered: false, // initial zoom to fit flag
     };
   },
@@ -164,9 +163,6 @@ Vue.component('visualization', {
         .graphData(this.graphData);
     },
 
-    switchMode() {
-      this.drawGraph(this.textMode);
-    },
 
     loadNode(node) {
       const id = node._id;
@@ -260,38 +256,39 @@ Vue.component('visualization', {
 
 
         <v-card>
-          <v-btn icon loading v-show="loading" style="z-index: 900">
-            <v-icon></v-icon>
-          </v-btn>
-          <v-btn style="z-index: 10000" @click="hide" icon absolute right top>
-            <v-icon>mdi-close</v-icon>
+          <v-toolbar density="compact">
+            <v-toolbar-title class="align-center" >
+              <div class="d-flex align-center">
 
-          </v-btn>
-          <div class="graph-wrap">
-            <div class="graph-legend">
-
-              <div class="caption mr-3">
-                <v-icon small color="blue" left> mdi-checkbox-blank-circle</v-icon>
+              <div class="text-caption mr-3">
+                <v-icon size="small" color="blue" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.bulletins_ }}
               </div>
 
-              <div class="caption mr-3">
-                <v-icon small color="green" left> mdi-checkbox-blank-circle</v-icon>
+              <div class="text-caption mr-3">
+                <v-icon size="small" color="green" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.actors_ }}
               </div>
 
-              <div class="caption mr-3">
-                <v-icon small color="yellow" left> mdi-checkbox-blank-circle</v-icon>
+              <div class="text-caption mr-3">
+                <v-icon size="small" color="yellow" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.incidents_ }}
               </div>
 
-              <div class="caption mr-3">
-                <v-icon small color="ff4433" left> mdi-checkbox-blank-circle</v-icon>
+              <div class="text-caption mr-3">
+                <v-icon size="small" color="ff4433" left> mdi-checkbox-blank-circle</v-icon>
                 {{ i18n.locations_ }}
               </div>
-              <div>
-              </div>
+                <v-spacer></v-spacer>
+                 <v-btn size="small" icon="mdi-close" @click="hide" ></v-btn>
+              
             </div>
+              
+            </v-toolbar-title>
+          </v-toolbar>
+          <v-card-text>
+            
+            
 
             <div id="graph"></div>
 
@@ -299,7 +296,11 @@ Vue.component('visualization', {
               <v-icon left>mdi-information-outline</v-icon>
               {{ i18n.visInfo_ }}
             </div>
-          </div>
+          
+            
+          </v-card-text>
+         
+          
         </v-card>
 
       </v-dialog>

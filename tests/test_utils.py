@@ -1,12 +1,25 @@
 import os
 import tempfile
 import json
+from typing import Any, Generator
 import pytest
+import enferno.utils.typing as t
 
 
 # if the content-type: application/json header is missing, use json.loads to parse the
 # plaintext response into json
-def load_data(response):
+def load_data(response: Any) -> dict:
+    """
+    Function to load response data into a dictionary. Some json data
+    might be sent as plaintext, so this function will attempt to parse
+    the response text into a json object.
+
+    Args:
+        - response: The response object to parse.
+
+    Returns:
+        - The parsed json data.
+    """
     if response.json is None and response.text:
         try:
             json_data = json.loads(response.text)
@@ -19,7 +32,16 @@ def load_data(response):
 
 
 # utility function to recursively set empty strings to None
-def convert_empty_strings_to_none(data):
+def convert_empty_strings_to_none(data: Any) -> Any:
+    """
+    Recursively convert empty strings in a data structure to None.
+
+    Args:
+        - data: The data structure to convert.
+
+    Returns:
+        - The data structure with empty strings converted to None.
+    """
     if isinstance(data, dict):
         return {k: convert_empty_strings_to_none(v) for k, v in data.items()}
     elif isinstance(data, list):
@@ -31,7 +53,19 @@ def convert_empty_strings_to_none(data):
 
 
 # utility function to get first record of entity or fail
-def get_first_or_fail(entity):
+def get_first_or_fail(entity: t.Model) -> t.Model:
+    """
+    Get the first record of an entity or raise an exception if no records are found.
+
+    Args:
+        - entity: The entity to query.
+
+    Raises:
+        - Exception: If no records are found in the entity.
+
+    Returns:
+        - The first record of the entity.
+    """
     ent = entity.query.first()
     if not ent:
         raise Exception(f"No {entity.__name__} in db to test against")
@@ -39,7 +73,20 @@ def get_first_or_fail(entity):
 
 
 # utility function to coerce data into schema or fail
-def conform_to_schema_or_fail(data, schema):
+def conform_to_schema_or_fail(data: Any, schema: Any) -> None:
+    """
+    Test if data conforms to a schema or raise an exception if it does not.
+
+    Args:
+        - data: The data to test.
+        - schema: The schema to test against.
+
+    Raises:
+        - AssertionError: If the data does not conform to the schema.
+
+    Returns:
+        None
+    """
     try:
         _ = schema(**data)
     except Exception as e:
@@ -47,7 +94,17 @@ def conform_to_schema_or_fail(data, schema):
 
 
 # utility generator function for CSVs
-def create_csv_for_entities(entities, headers):
+def create_csv_for_entities(entities: list, headers: list) -> Generator[str, Any, None]:
+    """
+    Generator function to create and yield a temporary CSV file with a specified header and entities.
+
+    Args:
+        - entities: A list of entities to write to the CSV.
+        - headers: A list of headers for the CSV.
+
+    Yields:
+        - The path to the temporary CSV file.
+    """
     with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".csv") as tmp:
         tmp.write(",".join(headers) + "\n")
         for entity in entities:
@@ -67,11 +124,11 @@ def create_binary_file(extension, content=b"Test content"):
     Generator function to create and yield a temporary binary file with a specified extension and content.
 
     Args:
-        extension (str): The file extension for the temporary file.
-        content (bytes): Binary content to write to the file. Defaults to b'Test content'.
+        - extension: The file extension for the temporary file.
+        - content: Binary content to write to the file. Defaults to b'Test content'.
 
     Yields:
-        str: The path to the temporary file.
+        - The path to the temporary file.
     """
     with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix="." + extension) as tmp:
         tmp.write(content)
@@ -81,7 +138,17 @@ def create_binary_file(extension, content=b"Test content"):
     os.unlink(tmp.name)  # Cleanup: remove the temporary file after the test
 
 
-def get_uid_from_client(users, client_fixture):
+def get_uid_from_client(users: list, client_fixture: str) -> t.id:
+    """
+    Get the user id of the test user associated with the client fixture.
+
+    Args:
+        - users: A list of users to query.
+        - client_fixture: The client fixture to query.
+
+    Returns:
+        - The user id from the client fixture.
+    """
     admin_user, da_user, mod_user, _ = users
     uid = None
     if client_fixture == "admin_client":

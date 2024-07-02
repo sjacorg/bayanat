@@ -20,3 +20,9 @@ enferno/media/*
 *.xlsx
 .aws
 config.json
+build
+docs/source
+!docs/source/index.rst
+!docs/source/conf.py
+!docs/source/intro.rst
+backups/*

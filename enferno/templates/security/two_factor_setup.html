@@ -1,121 +1,233 @@
-{% extends "login-layout.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_no_label, render_field_errors %}
+{#
+  This template receives different input based on state of tf-setup. In addition
+  to form values the following are available:
+  On GET or unsuccessful POST:
+    choices: Value of SECURITY_TWO_FACTOR_ENABLED_METHODS (with possible addition of 'delete')
+    two_factor_required: Value of SECURITY_TWO_FACTOR_REQUIRED
+    primary_method: the translated name of two-factor method that has already been set up.
+  On successful POST:
+    chosen_method: which 2FA method was chosen (e.g. sms, authenticator)
+    choices: Value of SECURITY_TWO_FACTOR_ENABLED_METHODS
 
-{% block metas %}
-    <link rel="stylesheet" href="/static/css/vuetify.min.css">
+    If chosen_method == 'authenticator':
+      authr_qrcode: the image source for the qrcode
+      authr_key: same key as in qrcode - for possible manual entry
+      authr_username: same username as in qrcode
+      authr_issuer: same issuer as in qrcode
+#}
 
-{% endblock %}
+{% extends "layout.html" %}
 {% block css %}
     <style>
-    .fs-div {
-        display: flex;
-        flex-direction: row-reverse;
-        gap: 10px;
-        justify-content: flex-end;
-        margin-bottom:20px;
+
+    #setup-0{
+        display: none;
     }
+        #setup-2 {
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
     </style>
 {% endblock %}
-
-
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_no_label, render_field_errors, render_form_errors %}
 
 {% block content %}
-    <v-app id="app" v-cloak>
-        <v-main>
-            <v-container class="fill-height" fluid>
-                <v-row class="align-center" justify="center">
-                    <v-col cols="12" sm="8" md="8">
-                        <v-card class="elevation-12 pb-3">
-                            <v-toolbar color="primary" dark text>
-                                <v-toolbar-title>{{ _("Two Factor Auth Setup") }}</v-toolbar-title>
-                                <v-spacer></v-spacer>
-                            </v-toolbar>
-                        <v-card class="ma-4  pa-4" outlined>
-                            <v-card-text>
-                                {% include "security/_messages.html" %}
-                            </v-card-text>
-                            <v-card-title>
-                                {{ _("Two-factor authentication adds an extra layer of security to your account") }}
+    <v-main class=" align-center security overflow-auto">
+    <v-container fluid>
+
+        <v-card  class="ma-auto overflow-auto ">
+            <v-toolbar
+                    title="{{ _fsdomain("Two-factor authentication adds an extra layer of security to your account") }}"></v-toolbar>
+
+        <v-card-text class="text-caption">
+            {% include "security/_messages.html" %}
+        </v-card-text>
+
+            <v-card-text>
+
+
+                <form ref="setup-form" action="{{ url_for_security('two_factor_setup') }}" method="post"
+                      name="two_factor_setup_form">
+                    {{ two_factor_setup_form.hidden_tag() }}
+                    {{ render_form_errors(two_factor_setup_form) }}
+
+
+                    {% if primary_method != 'none' %}
+                        <v-card-title>{{ _fsdomain("Current two-factor methods:") }}</v-card-title>
+                        <v-card width="400" color="primary" class="pa-4 my-6 mx-4 elevation-7">
+
+
+                            <v-card-title class="text-h5 font-weight-bold text-uppercase text-center">
+
+                                {{ primary_method }}
+
+
                             </v-card-title>
-                            <v-card-text>
-                                {{ _("In addition to your username and password, you'll need to use a code that your phone will generate") }}
+                            <v-card-text class="text-center">
+                                <v-icon size="64" class="ma-auto" icon="mdi-key-variant"></v-icon>
                             </v-card-text>
-                            <v-card-text>
-
-
-                                <form action="{{ url_for_security("two_factor_setup") }}" method="POST"
-                                      name="two_factor_setup_form">
-                                    {{ two_factor_setup_form.hidden_tag() }}
-                                    {% for subfield in two_factor_setup_form.setup %}
-                                        {% if subfield.data in choices %}
-                                            {{ render_field_with_errors(subfield) }}
-                                        {% endif %}
-                                    {% endfor %}
-                                    {{ render_field_errors(two_factor_setup_form.setup) }}
-                                <v-btn depressed color="primary" type="submit" class="my-3">{{ _('Submit') }}</v-btn>
-
-                                    {% if chosen_method=="email" and chosen_method in choices %}
-                                        <p>{{ _("To complete logging in, please enter the code sent to your mail") }}</p>
-                                    {% endif %}
-                                    {% if chosen_method=="authenticator" and chosen_method in choices %}
-                                        <hr>
-                                        <div class="center">
-                                            <div>
-                                                {{ _("Open an authenticator app on your device and scan the following QRcode, or enter the code below manually:") }}
-                                            </div>
-                                            <div>
-                                                <img alt="{{ _("Two factor authentication code") }}" id="qrcode"
-                                                     src="{{ authr_qrcode }}">
-                                            </div>
-                                            <div>
-                                                {{ authr_key }}
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                    {% if chosen_method=="sms" and chosen_method in choices %}
-                                        <p>{{ _("To Which Phone Number Should We Send Code To?") }}</p>
-                                        {{ two_factor_setup_form.hidden_tag() }}
-                                        {{ render_field_with_errors(two_factor_setup_form.phone, placeholder="enter phone number") }}
-                                        {{ render_field(two_factor_setup_form.submit) }}
-                                    {% endif %}
-                                </form>
-                            </v-card-text>
-                        </v-card>
-                                <v-card class="ma-4  pa-4" outlined>
-                                    <v-card-text>
-                                <form action="{{ url_for_security("two_factor_token_validation") }}" method="POST"
-                                      name="two_factor_verify_code_form">
-                                    {{ two_factor_verify_code_form.hidden_tag() }}
-                                    <v-text-field dense name="code" label="{{ _('Code') }}" ></v-text-field>
-                                    <v-btn depressed color="primary" type="submit" class="my-3">{{ _("Submit Code") }}</v-btn>
-                                </form>
-                                    </v-card-text>
-                                    </v-card>
-
-
+                            <v-card-actions>
+                                <v-btn class="mx-auto mt-6"   prepend-icon="mdi-close"
+                                       @click="disableTwoFactorAuth" type="button">{{ _fsdomain("Disable Two Factor Authentication") }}
+                                </v-btn>
+                            </v-card-actions>
 
                         </v-card>
-                    </v-col>
-                </v-row>
-            </v-container>
-        </v-main>
-    </v-app>
+                    {% endif %}
+
+                    {% if not chosen_method=="authenticator" and primary_method == 'none' %}
+                    <v-card-text>
+                        {% for subfield in two_factor_setup_form.setup %}
+
+                            {% if subfield.data in choices %}
+                                {{ render_field_with_errors(subfield) }}
+                            {% endif %}
 
 
+                        {% endfor %}
+                    </v-card-text>
+
+                    <v-card-actions class="pa-4">
+                        <v-btn color="primary" type="submit" variant="flat">{{ _fsdomain("Start Setup") }}</v-btn>
+                    </v-card-actions>
+
+                {% endif %}
 
 
-{% endblock %}
-{% block scripts %}
+                    {% if chosen_method=="authenticator" %}
+
+                        <v-card-title>Step 1.</v-card-title>
 
 
+                        <v-card-text>
+                            <div>
+                                {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving codes:") }}
+                            </div>
 
-    <script src="/static/js/vue.min.js"></script>
-    <script src="/static/js/vuetify.min.js"></script>
-    <script src="/static/js/common/config.js"></script>
+
+                                <div class="text-center">
+                                <img class="mx-auto" width="300" alt="{{ _fsdomain('Two factor authentication code') }}" id="qrcode"
+                                     src="{{ authr_qrcode }}">
+                                    </div>
+                                {# TODO: add width and height attrs #}
+
+                            <v-text-field readonly model-value="{{ authr_key }}"></v-text-field>
+                        </v-card-text>
+                    {% endif %}
+                </form>
+                {% if chosen_method %}
+                    {# Hide this when first setting up #}
+                    {# This is the fill in code part #}
+                    <v-divider class="my-4"></v-divider>
+                    <v-card-title>{{ _fsdomain("Step 2. Enter code to complete setup") }}</v-card-title>
+
+                    <form action="{{ url_for_security('two_factor_token_validation') }}" method="post"
+                          name="two_factor_verify_code_form">
+                    <v-card-text>
+                        {{ two_factor_verify_code_form.hidden_tag() }}
+
+                        <v-text-field autocomplete="one-time-code" id="code" inputtype="numeric" name="code" pattern="[0-9]*" placeholder="enter numeric code" required="" type="text">
+                        </v-text-field>
+
+                    </v-card-text>
+                        <v-card-actions class="px-4 text-center">
+                            <v-btn variant="elevated" color="primary" type="submit">Submit Code</v-btn>
+                        </v-card-actions>
+                    </form>
+                {% else %}
+                    {% if security.support_mfa and security.multi_factor_recovery_codes %}
+                        <v-divider class="my-4"></v-divider>
+                        <h3>{{ _fsdomain("Recovery Codes") }}</h3>
+                        <div class="fs-div">
+                            {{ _fsdomain("This application supports setting up recovery codes.") }}
+                            <a href="{{ url_for_security('mf_recovery_codes') }}">{{ _fsdomain("You can set them up here.") }}</a>
+                        </div>
+                    {% endif %}
+                    {% if security.webauthn %}
+                        <v-divider class="my-4"></v-divider>
+                        <h3>{{ _fsdomain("WebAuthn") }}</h3>
+                        <div class="fs-div">
+                            {{ _fsdomain("Bayanat supports WebAuthn security keys.") }}
+                            <v-btn variant="plain" class="text-subtitle-2 px-0"
+                                   href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</v-btn>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+
+            </v-card-text>
+
+
+        </v-card>
+
+    </v-container>
+
+
+    </v-main>
+{% endblock content %}
+
+
+{% block js %}
     <script>
-        const app = new Vue({
-            el: '#app',
-            vuetify: vuetify
-        })
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+            mixins: [globalMixin],
+
+            data() {
+                return {
+                    activeTab: null,
+                    selectedOption: ''
+                }
+
+            },
+            methods: {
+                disableTwoFactorAuth() {
+                    // Create a new FormData object from the form
+                    const form = this.$refs['setup-form'];
+                    const formData = new FormData(form);
+
+                    // Set the value of the "setup" field to "disable"
+                    formData.set('setup', 'disable');
+
+                    // Convert FormData to a plain object
+                    const formDataObj = {};
+                    formData.forEach((value, key) => {
+                        formDataObj[key] = value;
+                    });
+
+                    // Get the URL and method from the form
+                    const url = form.action;
+                    const method = form.method;
+
+                    // Submit the form using axios.post
+                    axios.post(url, formDataObj, {
+                        headers: {
+                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => {
+                            // Handle the response data
+                            console.log(response.data);
+                            window.location.reload();
+
+                            // You can also add additional logic here if needed
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+
+
+
+            }
+        });
+        app.use(vuetify).mount('#app');
     </script>
 {% endblock %}
+
+

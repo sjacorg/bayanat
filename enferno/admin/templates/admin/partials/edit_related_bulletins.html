@@ -1,0 +1,22 @@
+<v-card class="my-5 ">
+    <v-toolbar class="handle d-flex align-center" floating>
+        <v-toolbar-title>
+            {{ _('Related Bulletins') }}
+        </v-toolbar-title>
+        <v-spacer></v-spacer>
+
+        <v-text-field
+                class="mt-6 mr-3"
+                variant="solo"
+                v-model="relateBulletinTerm"
+                label="{{ _('Search & Relate Bulletins') }}"
+                @keydown.enter="searchRelatedBulletins"
+                @click:append-inner="searchRelatedBulletins"
+                append-inner-icon="mdi-magnify"
+        ></v-text-field>
+    </v-toolbar>
+
+
+    {% include 'admin/partials/related_bulletins_grid.html' %}
+
+</v-card>

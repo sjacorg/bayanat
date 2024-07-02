@@ -1,6 +1,6 @@
-Vue.component('activity-search-box', {
+const ActivitySearchBox = Vue.defineComponent({
   props: {
-    value: {
+    modelValue: {
       type: Object,
       required: true,
     },
@@ -9,27 +9,32 @@ Vue.component('activity-search-box', {
     },
   },
 
+  mixins: [globalMixin],
+
+  emits: ['update:modelValue', 'search'],
+
   data: () => {
     return {
+      translations: window.translations,
       q: {},
     };
   },
   watch: {
     q: {
       handler(newVal) {
-        this.$emit('input', newVal);
+        this.$emit('update:modelValue', newVal);
       },
       deep: true,
     },
 
-    value: function (newVal, oldVal) {
+    modelValue: function (newVal, oldVal) {
       if (newVal !== oldVal) {
         this.q = newVal;
       }
     },
   },
   created() {
-    this.q = this.value;
+    this.q = this.modelValue;
   },
 
   template: `
@@ -37,38 +42,34 @@ Vue.component('activity-search-box', {
       <v-card class="pa-8">
         <v-card-title>
           {{ i18n.searchActivities_ }}
-          <v-spacer></v-spacer>
-          <v-btn fab text @click="$emit('close')">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
+          <v-btn icon="mdi-close" variant="plain" class="float-right" @click="$emit('close')"></v-btn>
         </v-card-title>
         
-        
         <v-card-text>
-        <span class="caption">User</span>
+        <span class="caption">{{i18n.user_}}</span>
 
             <v-chip-group
                                 column
                                 v-model="q.user"
                                 
                         >
-                            <v-chip :value="user.id" small label v-if="user.name != ''" v-for="user in $root.users" filter
+                            <v-chip :value="user.id" small label v-for="user in $root.users" filter
                                     >{{user.name}}</v-chip>
                         </v-chip-group>
         </v-card-text>
         <v-card-text>
         
-          <span class="caption">Select Type</span>
+          <span class="caption">{{ i18n.selType_ }}</span>
 
           <v-chip-group active-class="primary--text" column v-model="q.model">
-            <v-chip small :value="item" v-for="item in $root.models" filter>{{item}}</v-chip>
+            <v-chip small v-for="item in $root.models" :value="item" filter>{{item}}</v-chip>
           </v-chip-group>
         </v-card-text>
 
         <v-card-text>
 
 
-          <span class="caption">Select Action</span>
+          <span class="caption">{{ i18n.selAction_ }}</span>
 
           <v-chip-group active-class="primary--text" column v-model="q.action">
             <v-chip small class="ma-1" v-for="action in $root.actionTypes"  :value="action" filter> {{ action }}</v-chip>
@@ -81,7 +82,7 @@ Vue.component('activity-search-box', {
           
           <pop-date-range-field
               :i18n="i18n"               
-                                label="Activity Date"
+                                :label="i18n.activityDate_"
                                 v-model="q.created"
           ></pop-date-range-field>
           

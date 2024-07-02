@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from multiprocessing import Pool, cpu_count
+from typing import Any, Generator, Literal
 
 import click
 import pandas as pd
@@ -28,29 +29,34 @@ def dedup_before_request():
 
 
 @deduplication.app_context_processor
-def deduplication_app_context():
+def deduplication_app_context() -> dict:
     """
     pass a global flag to indicate that the deduplication plugin(Blueprint) is enabled.
     used to display/hide deduplication menu item inside templates
-    :return: True if this blueprint is registered
+
+    Returns:
+        - A dictionary with deduplication flag set to True if Blueprint is registered.
     """
     return {"deduplication": True}
 
 
 @deduplication.route("/deduplication/dashboard/")
 @roles_accepted("Admin", "Mod")
-def deduplication_dash():
+def deduplication_dash() -> str:
     """
-    Endpoint for rendering deduplication dashboard page
+    Endpoint for rendering deduplication dashboard page.
+
+    Returns:
+        - The html content of the deduplication dashboard page.
     """
     return render_template("deduplication.html")
 
 
 @deduplication.route("/api/deduplication/")
 @roles_required("Admin")
-def api_deduplication():
+def api_deduplication() -> Response:
     """
-    Provides APIs for imported deduplication CSV data, supports paging
+    Provides APIs for imported deduplication CSV data, supports paging.
     """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", 1000, int)
@@ -67,9 +73,9 @@ def api_deduplication():
 
 @deduplication.route("/api/deduplication/process", methods=["POST"])
 @roles_required("Admin")
-def api_process():
+def api_process() -> tuple[Literal["Data queued successfully"], Literal[200]]:
     """
-    Endpoint used to process all deduplication data
+    Endpoint used to process all deduplication data.
     """
     items = DedupRelation.query.filter_by(status=0)
 
@@ -83,9 +89,9 @@ def api_process():
 
 @deduplication.route("/api/deduplication/stop", methods=["POST"])
 @roles_required("Admin")
-def api_process_stop():
+def api_process_stop() -> tuple[Literal["Success, processing will stop shortly."], Literal[200]]:
     """
-    Endpoint used to stop processing dedup data
+    Endpoint used to stop processing dedup data.
     """
     # just remove the redis flag
     rds.delete("dedup")
@@ -117,8 +123,18 @@ def api_clear():
 )
 @click.option("-d", "--distance", type=float, default=0.7)
 @with_appcontext
-def dedup_import(file, remove, distance):
-    """Imports data from deduplication compatible file, with an option to clear existing data."""
+def dedup_import(file: str, remove: bool, distance: float) -> None:
+    """
+    Imports data from deduplication compatible file, with an option to clear existing data.
+
+    Args:
+        - file: The file to import.
+        - remove: A flag to remove existing data.
+        - distance: The distance to use for deduplication.
+
+    Returns:
+        None
+    """
     if remove:
         DedupRelation.query.delete()
         db.session.commit()
@@ -160,8 +176,16 @@ def dedup_import(file, remove, distance):
 @deduplication.cli.command()
 @click.option("-p", "--no-of-processes", type=int, default=int(cpu_count() / 2))
 @with_appcontext
-def fast_process(no_of_processes):
-    """Process deduplication matches in a faster way"""
+def fast_process(no_of_processes: int) -> None:
+    """
+    Process deduplication matches in a faster way.
+
+    Args:
+        - no_of_processes: The number of processes to use.
+
+    Returns:
+        None
+    """
     pool = Pool(processes=no_of_processes)
     items = DedupRelation.query.filter_by(status=0)
     if items:
@@ -171,7 +195,8 @@ def fast_process(no_of_processes):
 # statistics endpoints
 
 
-def process_stream():
+def process_stream() -> Generator[str, Any, Literal[""]]:
+    """Stream deduplication process messages."""
     pubsub = rds.pubsub()
     pubsub.subscribe("dedprocess")
     # avoid sending first subscription message
@@ -182,5 +207,6 @@ def process_stream():
 
 
 @deduplication.route("/stream")
-def stream():
+def stream() -> Response:
+    """Endpoint to stream deduplication process messages."""
     return Response(process_stream(), mimetype="text/event-stream")

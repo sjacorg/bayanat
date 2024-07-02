@@ -1,18 +1,19 @@
-Vue.component('drop-field', {
+const DropField = Vue.defineComponent({
   props: {
     caption: String,
     samples: [],
-    value: [],
+    modelValue: [],
   },
+  emits: ['modelValue'],
   data: function () {
     return {
-      colmap: this.value || [],
+      colmap: this.modelValue || [],
       disabled: false,
     };
   },
 
   watch: {
-    value(val) {
+    modelValue(val) {
       this.colmap = val || [];
     },
     colmap: {
@@ -37,7 +38,7 @@ Vue.component('drop-field', {
     },
 
     broadcast() {
-      this.$emit('input', this.colmap);
+      this.$emit('modelValue', this.colmap);
     },
     removeMe(i) {
       let item = this.colmap.splice(i, 1);
@@ -46,33 +47,29 @@ Vue.component('drop-field', {
   },
   template: `
 
-      <v-sheet class="d-flex stripe-1 align-center  ma-2 pa-2" elevation="0">
-      <h5 class="d-caption">{{ caption }}</h5>
-      <div class="drop">
+    <v-sheet class="d-flex stripe-1 align-center  ma-2 pa-2" elevation="0">
+      <h5 class="text-caption mr-1">{{ caption }}</h5>
+      <v-card   variant="outlined">
         <draggable
             :disabled="disabled"
-            tag="div"
+            tag="v-layout"
             v-model="colmap"
-
+            item-key="id"
             @change="refresh"
-            class="drag-area list-group "
+            class="drag-area list-group"
             :group="{ name: 'columns', pull: false, put: true, ghostClass: 'ghost', animation: 100 }"
         >
-
-          <v-chip small v-for="(item,i) in colmap"
-                  
-                  @click:close="removeMe(i)"
-
-                  class="ma-1 list-group-item" dark :key="i" close color="primary">
-            
-              {{item }}
-          </v-chip>
-
-
+          <template #item="{ element, index }">
+            <v-chip size="small" closable
+                    @click:close="removeMe(index)"
+                    class="ma-1 list-group-item" dark :key="element.id"  color="primary">
+              {{ element }}
+            </v-chip>
+          </template>
         </draggable>
-      </div>
- <slot name="extra"></slot>
-      </v-sheet>
+      </v-card>
+      <slot name="extra"></slot>
+    </v-sheet>
 
-    `,
+  `,
 });

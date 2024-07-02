@@ -1,30 +1,30 @@
-Vue.component('incident-result', {
+const IncidentResult = Vue.defineComponent({
   props: ['incident', 'hidden', 'showHide', 'i18n'],
+
+  data: () => {
+    return {
+      hide: this.hidden || false,
+    }
+  },
+
   template: `
-      <template v-if="!hidden">
-        <v-card outlined class="ma-2" v-if="!incident.restricted">
-
-          <v-card-title class="d-flex">
-            <v-chip label small color="gv darken-2" dark>{{ i18n.id_ }} {{ incident.id }}</v-chip>
-            <v-spacer></v-spacer>
-          </v-card-title>
+      <template v-if="!hide">
+        <v-card  hover class="ma-2" v-if="!incident.restricted">
+          <v-toolbar density="compact" class="d-flex px-2">
+            <v-chip size="small" variant="flat" color="primary">{{ i18n.id_ }} {{ incident.id }}</v-chip>
+            
+          </v-toolbar>
+          
+          <v-card-title class="text-subtitle-2">{{incident.title}}</v-card-title>
+            <v-divider></v-divider>
           <slot name="header"></slot>
-          <v-card-text>
-
-            <div class="subtitle-2 black--text mb-1 mt-2">
-              {{ incident.title }}
-            </div>
-            <div v-html="incident.description" class="caption">
-            </div>
-
-
-          </v-card-text>
-          <v-card-actions>
+            
+            
+          <v-card-actions class="justify-end">
             <slot name="actions"></slot>
-            <v-btn v-if="showHide" @click="hidden=true" small depressed color="grey lighten-4"> {{ i18n.hide_ }}</v-btn>
-            <v-btn text small icon color="gv darken-1"
+            <v-btn v-if="showHide" @click="hide=true" size="small" > {{ i18n.hide_ }}</v-btn>
+            <v-btn icon="mdi-eye" size="small" color="primary"
                    @click.capture="$root.previewItem('/admin/api/incident/'+incident.id+'?mode=3')">
-              <v-icon>mdi-eye</v-icon>
             </v-btn>
           </v-card-actions>
         </v-card>

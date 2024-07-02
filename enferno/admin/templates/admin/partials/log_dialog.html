@@ -1,0 +1,40 @@
+<v-dialog :retain-focus="false" no-click-animation persistent v-model="logDialog" fullscreen>
+
+    <v-card v-if="logDialog" class="overflow-hidden">
+
+        <v-toolbar color="primary">
+            <v-toolbar-title>{{ _('Log Details ') }}
+                <v-tooltip location="bottom" text="Copy log details to clipboard">
+                    <template v-slot:activator=" { props }">
+                        <v-btn 
+                            :disabled="!isSecure"
+                            icon="mdi-content-copy" 
+                            @click="copyToClipboard(selectedItem)"
+                            v-bind="props"></v-btn>
+                    </template>
+                </v-tooltip>
+            </v-toolbar-title>
+            
+            <v-spacer></v-spacer>
+
+            <v-btn icon="mdi-close" @click="close"></v-btn>
+
+        </v-toolbar>
+
+        <v-sheet
+                id="card-content"
+                max-height="100vh"
+                class="overflow-y-auto">
+                   
+                    <system-log-card 
+                    :log="selectedItem"
+                    :close="close"
+                    :i18n="translations"
+                ></system-log-card>
+                
+
+        </v-sheet>
+    </v-card>
+
+</v-dialog>
+

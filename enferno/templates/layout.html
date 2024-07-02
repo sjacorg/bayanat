@@ -9,8 +9,6 @@
 
     <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
 
-    <link rel="stylesheet" href="/static/js/videojs/video-js.min.css"/>
-    <link rel="stylesheet" href="/static/js/videojs/video.css"/>
     <link rel="stylesheet" href="/static/js/jsondiffpatch/formatters-styles/html.css">
     <link rel="stylesheet" href="/static/css/app.css"/>
     <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css"/>
@@ -23,7 +21,7 @@
     <link rel="stylesheet" href="/static/js/photoswipe/photoswipe.css"/>
 
 
-<!-- favicon -->
+    <!-- favicon -->
 
     <link rel="apple-touch-icon" sizes="57x57" href="/static/img/favicon/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="/static/img/favicon/apple-icon-60x60.png">
@@ -41,39 +39,77 @@
     <link rel="manifest" crossorigin="use-credentials" href="/static/img/favicon/manifest.json">
     <meta name="msapplication-TileImage" content="/static/img/favicon/ms-icon-144x144.png">
 
-
+    {% block head_js %} {% endblock %}
     {% block css %}{% endblock %}
 </head>
 
 <body>
 
-{% block content %} {% endblock %}
+<div id="app" class="justify-center full-height align-center min-vh-100 d-flex">
+    <v-app v-cloak class="h-screen">
+        <v-layout>
+            {% block nav %}
+                {% include 'nav-bar.html' %}
+                {% include 'nav-drawer.html' %}
+                {% include 'settings_drawer.html' %}
+            {% endblock %}
+            {% block content %}
+            {% endblock %}
+
+        </v-layout>
+
+        <v-snackbar v-model="snackbar" multi-line>
+
+                <span v-html="snackMessage"></span>
+
+            <template #actions>
+                <v-btn icon="mdi-close" variant="text" @click="snackbar = false"></v-btn>
+
+            </template>
+        </v-snackbar>
+    </v-app>
+
+</div>
+
+{% block outside %}
+
+{% endblock %}
 {% set messages = get_flashed_messages() %}
 {% if current_user.is_authenticated %}
-<div class="d-none" data-settings='{{ current_user.settings|tojson if current_user.settings else '{}' }}'></div>
-    {% else %}
+    <div class="d-none" data-settings='{{ current_user.settings|tojson if current_user.settings else '{}' }}'></div>
+{% else %}
     <div class="d-none" data-settings='{}'></div>
 {% endif %}
+<div class="d-none" data-lang='{{ session.get('lang','en') }}'></div>
 <div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
 <script>
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
-    window.__MAPS_API_ENDPOINT__ =  document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
+    window.__lang__ = document.querySelector('[data-lang]').dataset.lang;
+    window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
 </script>
 
 
+{% if config.DEBUG %}
+<script src="/static/js/vue.global.js"></script>
+{% else  %}
+<script src="/static/js/vue.global.prod.js"></script>
+{% endif  %}
+<script src="/static/js/vuetify.min.js"></script>
+<script src="/static/js/vue-router.global.js"></script>
+<script src="/static/js/mixins/global-mixin.js"></script>
+<script src="/static/js/axios.min.js"></script>
+<script src="/static/js/dayjs.min.js"></script>
+<script src="/static/js/photoswipe/photoswipe.umd.min.js"></script>
+<script src="/static/js/photoswipe/photoswipe-lightbox.umd.min.js"></script>
+<script src="/static/js/leaflet.js"></script>
+<script src="/static/js/vue2-leaflet.min.js"></script>
+<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
+<script src="/static/js/leaflet.markercluster.js"></script>
+<script src="/static/js/leaflet.curve.min.js"></script>
+<script src="/static/js/Leaflet.PolylineMeasure.js"></script>
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
+<script src="/static/js/date_fns.min.js"></script>
 
-
-    <script src="/static/js/vue.min.js"></script>
-    <script src="/static/js/vuetify.min.js"></script>
-    <script src="/static/js/vue-router.min.js"></script>
-    <script src="/static/js/axios.min.js"></script>
-    <script src="/static/js/vee-validate.full.min.js"></script>
-    <script src="/static/js/photoswipe/photoswipe.umd.min.js"></script>
-    <script src="/static/js/photoswipe/photoswipe-lightbox.umd.min.js"></script>
-    <script src="/static/js/leaflet.js"></script>
-    <script src="/static/js/vue2-leaflet.min.js"></script>
-    <script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
-    <script src="/static/js/vue-tippy.min.js"></script>
 <script>
     {%  include 'admin/jsapi.jinja2' %}
 
@@ -81,44 +117,8 @@
 
 <script src="/static/js/common/config.js"></script>
 
-{% if current_user.is_authenticated %}
-
-
-
-    <script src="/static/js/videojs/video.min.js"></script>
-    <script src="/static/js/croppr/croppr.min.js"></script>
-    <script src="/static/js/date_fns.min.js"></script>
-    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
-    <script src="/static/js/components/SearchField.js"></script>
-    <script src="/static/js/components/SearchFieldSingle.js"></script>
-    <script src="/static/js/components/PopDateField.js"></script>
-    <script src="/static/js/components/PopDateRangeField.js"></script>
-    <script src="/static/js/components/PopDateTimeField.js"></script>
-    <script src="/static/js/components/EventCard.js"></script>
-    <script src="/static/js/components/ImageGallery.js"></script>
-    <script src="/static/js/components/ActorCard.js"></script>
-    <script src="/static/js/components/BulletinCard.js"></script>
-    <script src="/static/js/components/IncidentCard.js"></script>
-    <script src="/static/js/components/RelateBulletins.js"></script>
-    <script src="/static/js/components/RelateActors.js"></script>
-    <script src="/static/js/components/RelateIncidents.js"></script>
-    <script src="/static/js/components/BulletinSearchBox.js"></script>
-    <script src="/static/js/components/ActorSearchBox.js"></script>
-    <script src="/static/js/components/IncidentSearchBox.js"></script>
-    <script src="/static/js/components/PreviewCard.js"></script>
-    <script src="/static/js/components/GeoMap.js"></script>
-    <script src="/static/js/leaflet.geometryutil.js"></script>
-    <script src="/static/js/leaflet.markercluster.js"></script>
-    <script src="/static/js/leaflet.curve.min.js"></script>
-    <script src="/static/js/leaflet.rotatedmarker.min.js"></script>
-    <script src="/static/js/Leaflet.PolylineMeasure.js"></script>
-
-{% endif %}
 
 {% block js %}{% endblock %}
-
-
-<script type="text/javascript" src="/static/js/app.js"></script>
 
 </body>
 </html>

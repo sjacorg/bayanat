@@ -1,6 +1,6 @@
-Vue.component('actor-search-box', {
+const ActorSearchBox = Vue.defineComponent({
   props: {
-    value: {
+    modelValue: {
       type: Object,
       required: true,
     },
@@ -27,10 +27,11 @@ Vue.component('actor-search-box', {
       default: false,
     },
   },
+  emits: ['update:modelValue', 'search'],
 
   data: () => {
     return {
-      translations: translations,
+      translations: window.translations,
       searches: [],
       repr: '',
       q: {},
@@ -40,18 +41,18 @@ Vue.component('actor-search-box', {
   watch: {
     q: {
       handler(newVal) {
-        this.$emit('input', newVal);
+        this.$emit('update:modelValue', newVal);
       },
       deep: true,
     },
-    value: function (newVal, oldVal) {
+    modelValue: function (newVal, oldVal) {
       if (newVal !== oldVal) {
         this.q = newVal;
       }
     },
   },
   created() {
-    this.q = this.value;
+    this.q = this.modelValue;
   },
 
   mounted() {
@@ -63,8 +64,6 @@ Vue.component('actor-search-box', {
       return this.q.locTypes?.length > 0;
     },
   },
-
-  methods: {},
 
   template: `
       <v-card outlined class="pa-6">
@@ -101,7 +100,7 @@ Vue.component('actor-search-box', {
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations"
+                    :i18n="i18n"
                     :label="i18n.publishDate_"
                     v-model="q.pubdate"
                 ></pop-date-range-field>
@@ -111,7 +110,7 @@ Vue.component('actor-search-box', {
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations" 
+                    :i18n="i18n" 
                     :label="i18n.documentationDate_"
                     v-model="q.docdate"
                 ></pop-date-range-field>
@@ -123,7 +122,7 @@ Vue.component('actor-search-box', {
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations" 
+                    :i18n="i18n" 
                     :label="i18n.createdDate_"
                     v-model="q.created"
                 ></pop-date-range-field>
@@ -133,7 +132,7 @@ Vue.component('actor-search-box', {
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations"
+                    :i18n="i18n"
                     :label="i18n.updatedDate_"
                     v-model="q.updated"
                 ></pop-date-range-field>
@@ -147,7 +146,7 @@ Vue.component('actor-search-box', {
                 <div class="d-flex align-baseline justify-lg-space-between">
 
 
-                  <span class="black--text font-weight-bold text-h6">Events</span>
+                  <span class="black--text font-weight-bold text-h6">{{ i18n.events_ }}</span>
                   <v-checkbox :label="i18n.singleEvent_" dense v-model="q.singleEvent" color="primary" small
                               class="ma-3"></v-checkbox>
                 </div>
@@ -155,21 +154,21 @@ Vue.component('actor-search-box', {
 
                 <div class="d-flex align-baseline">
                   <pop-date-range-field
-                      :i18n="translations"
+                      :i18n="i18n"
                       :label="i18n.eventDate_"
                       v-model="q.edate" 
-                      class="mt-2"
+                      
                   ></pop-date-range-field>
 
 
                   <search-field
                       class="ml-6 mb-3"
                       persistent-hint
-                      hint="select event type"
+                      :hint="i18n.selEventType_"
                       v-model="q.etype"
                       api="/admin/api/eventtypes/"
                       :query-params="{ typ: 'for_actor' }"
-                      item-text="title"
+                      item-title="title"
                       item-value="id"
                       :multiple="false"
                       :label="i18n.eventType_"
@@ -182,7 +181,7 @@ Vue.component('actor-search-box', {
                 <location-search-field
                   v-model="q.elocation"
                   api="/admin/api/locations/"
-                  item-text="full_string"
+                  item-title="full_string"
                   item-value="id"
                   :multiple="false"
                   :label="i18n.includeEventLocations_"
@@ -198,7 +197,7 @@ Vue.component('actor-search-box', {
           <v-col md="12">
             <v-text-field
                 v-model="q.first_name"
-                label="First Name"
+                :label="i18n.firstName_"
                 clearable
             ></v-text-field>
           </v-col>
@@ -208,7 +207,7 @@ Vue.component('actor-search-box', {
           <v-col md="12">
             <v-text-field
                 v-model="q.middle_name"
-                label="Middle Name"
+                :label="i18n.middleName_"
                 clearable
             ></v-text-field>
           </v-col>
@@ -218,7 +217,7 @@ Vue.component('actor-search-box', {
           <v-col md="12">
             <v-text-field
                 v-model="q.last_name"
-                label="Last Name"
+                :label="i18n.lastName_"
                 clearable
             ></v-text-field>
           </v-col>
@@ -228,7 +227,7 @@ Vue.component('actor-search-box', {
           <v-col md="12">
             <v-text-field
                 v-model="q.nickname"
-                label="Nickname"
+                :label="i18n.nickName_"
                 clearable
             ></v-text-field>
           </v-col>
@@ -238,7 +237,7 @@ Vue.component('actor-search-box', {
           <v-col md="12">
             <v-text-field
                 v-model="q.father_name"
-                label="Father Name"
+                :label="i18n.fatherName_"
                 clearable
             ></v-text-field>
           </v-col>
@@ -248,7 +247,7 @@ Vue.component('actor-search-box', {
           <v-col md="12">
             <v-text-field
                 v-model="q.mother_name"
-                label="Mother Name"
+                :label="i18n.motherName_"
                 clearable
             ></v-text-field>
           </v-col>
@@ -256,7 +255,7 @@ Vue.component('actor-search-box', {
 
         <v-row v-if="isAdmin">
           <v-col md="9">
-            <span class="caption">Access Roles</span>
+            <span class="caption">{{ i18n.accessRoles_ }}</span>
             <v-chip-group
                 column
                 multiple
@@ -268,7 +267,7 @@ Vue.component('actor-search-box', {
             </v-chip-group>
           </v-col>
           <v-col md="3">
-            <span class="caption">Unrestricted</span>
+            <span class="caption">{{i18n.unrestricted_}}</span>
             <v-switch v-model="q.norole"></v-switch>
           </v-col>
         </v-row>
@@ -330,8 +329,8 @@ Vue.component('actor-search-box', {
           <v-col cols="12">
             <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
             <v-chip-group column v-model="q.reviewAction">
-              <v-chip value="No Review Needed" label small filter outlined>No Review Needed</v-chip>
-              <v-chip value="Needs Review" label small filter outlined>Needs Review</v-chip>
+              <v-chip :value="i18n.noReviewNeeded_" label small filter outlined>{{i18n.noReviewNeeded_}}</v-chip>
+              <v-chip :value="i18n.needsReview_" label small filter outlined>{{i18n.needsReview_}}</v-chip>
 
             </v-chip-group>
 
@@ -346,7 +345,7 @@ Vue.component('actor-search-box', {
 
                     v-model="q.sources"
                     api="/admin/api/sources/"
-                    item-text="title"
+                    item-title="title"
                     item-value="id"
                     :multiple="true"
                     :label="i18n.includeSources_"
@@ -359,7 +358,7 @@ Vue.component('actor-search-box', {
               <search-field
                   v-model="q.exsources"
                   api="/admin/api/sources/"
-                  item-text="title"
+                  item-title="title"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.excludeSources_"
@@ -377,7 +376,7 @@ Vue.component('actor-search-box', {
                     v-model="q.labels"
                     api="/admin/api/labels/"
                     :query-params="{ typ: 'for_actor' }"
-                    item-text="title"
+                    item-title="title"
                     item-value="id"
                     :multiple="true"
                     :label="i18n.includeLabels_"
@@ -390,7 +389,7 @@ Vue.component('actor-search-box', {
                   v-model="q.exlabels"
                   api="/admin/api/labels/"
                   :query-params="{ typ: 'for_actor' }"
-                  item-text="title"
+                  item-title="title"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.excludeLabels_"
@@ -406,7 +405,7 @@ Vue.component('actor-search-box', {
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
                     :query-params="{ fltr: 'verified', typ: 'for_actor' }"
-                    item-text="title"
+                    item-title="title"
                     item-value="id"
                     :multiple="true"
                     :label="i18n.includeVerLabels_"
@@ -419,7 +418,7 @@ Vue.component('actor-search-box', {
                   v-model="q.exvlabels"
                   api="/admin/api/labels/"
                   :query-params="{ fltr: 'verified', typ: 'for_actor' }"
-                  item-text="title"
+                  item-title="title"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.excludeVerLabels_"
@@ -433,7 +432,7 @@ Vue.component('actor-search-box', {
               <location-search-field
                   v-model="q.originLocations"
                   api="/admin/api/locations/"
-                  item-text="full_string"
+                  item-title="full_string"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.includeOriginLocations_"
@@ -442,7 +441,7 @@ Vue.component('actor-search-box', {
               <location-search-field
                   v-model="q.exOriginLocations"
                   api="/admin/api/locations/"
-                  item-text="full_string"
+                  item-title="full_string"
                   item-value="id"
                   :multiple="true"
                   :label="i18n.excludeOriginLocations_"
@@ -478,15 +477,15 @@ Vue.component('actor-search-box', {
             <geo-map v-if="showGeoMap"
                      class="flex-grow-1"
                      v-model="q.latlng"
-                     map-height="200"
-                     radius-controls="true"/>
+                     :map-height="200"
+                     :radius-controls="true"/>
           </v-sheet>
 
           <v-row>
             <v-col cols="12" md="3">
               <v-select
-                  :items="translations.actorSex"
-                  item-text="tr"
+                  :items="i18n.actorSex"
+                  item-title="tr"
                   item-value="en"
                   clearable
                   v-model="q.sex"
@@ -496,8 +495,8 @@ Vue.component('actor-search-box', {
 
             <v-col cols="12" md="3">
               <v-select
-                  :items="translations.actorAge"
-                  item-text="tr"
+                  :items="i18n.actorAge"
+                  item-title="tr"
                   item-value="en"
                   clearable
                   v-model="q.age"
@@ -507,8 +506,8 @@ Vue.component('actor-search-box', {
 
             <v-col cols="12" md="3">
               <v-select
-                  :items="translations.actorCivilian"
-                  item-text="tr"
+                  :items="i18n.actorCivilian"
+                  item-title="tr"
                   item-value="en"
                   clearable
                   v-model="q.civilian"
@@ -518,10 +517,10 @@ Vue.component('actor-search-box', {
 
             <v-col md="3">
               <v-select
-                  item-text="tr"
+                  item-title="tr"
                   item-value="en"
                   clearable
-                  :items="translations.actorTypes"
+                  :items="i18n.actorTypes"
                   v-model="q.type"
                   :label="i18n.actorType_"
               ></v-select>
@@ -547,10 +546,10 @@ Vue.component('actor-search-box', {
             
             <v-col cols="12" md="3">
               <v-select
-                    item-text="tr"
+                    item-title="tr"
                     item-value="en"
                     clearable
-                    :items="translations.actorFamilyStatuses"
+                    :items="i18n.actorFamilyStatuses"
                     v-model="q.family_status"
                     :label="i18n.familyStatus_"
                 ></v-select>
@@ -565,8 +564,7 @@ Vue.component('actor-search-box', {
                     api="/admin/api/dialects/"
                     :multiple="true"
                     clearable
-                    :return-object="false"
-                    item-text="title"
+                    item-title="title"
                     item-value="title"
                     v-model="q.dialects"
                     :label="i18n.spokenDialects_"
@@ -587,11 +585,10 @@ Vue.component('actor-search-box', {
                     api="/admin/api/ethnographies/"
                     :multiple="true"
                     clearable
-                    :return-object="false"
-                    item-text="title"
+                    item-title="title"
                     item-value="title"
                     v-model="q.ethnography"
-                    label="Ethnography"
+                    :label="i18n.ethnography_"
                 ></search-field>
              
                 <v-checkbox :label="i18n.any_" dense v-model="q.opEthno" color="primary" small
@@ -608,12 +605,11 @@ Vue.component('actor-search-box', {
                 <search-field
                                         v-model="q.nationality"
                                         api="/admin/api/countries/"
-                                        item-text="title"
+                                        item-title="title"
                                         item-value="title"
                                         :multiple="true"
-                                        :return-object="false"
                                         clearable
-                                        label="Nationality"
+                                        :label="i18n.nationality_"
                                 ></search-field>
                 <v-checkbox :label="i18n.any_" dense v-model="q.opNat" color="primary" small
                             class="mx-3"></v-checkbox>
@@ -632,4 +628,6 @@ Vue.component('actor-search-box', {
       </v-card>
 
     `,
+
+  methods: {},
 });

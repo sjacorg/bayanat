@@ -1,5 +1,6 @@
 from datetime import datetime as dt
 import json
+from typing import Any, Optional
 
 import arrow
 from flask import current_app, has_app_context
@@ -34,7 +35,7 @@ class DataImport(db.Model, BaseMixin):
         super().__init__(*args, **kwargs)
         self.log = ""
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Import Log Serializer.
         """
@@ -62,47 +63,88 @@ class DataImport(db.Model, BaseMixin):
             else None,
         }
 
-    def add_item(self, item_id):
+    def add_item(self, item_id: int) -> None:
+        """
+        Add item id to import log.
+
+        Args:
+            - item_id: Item id to be added to import log.
+
+        Returns:
+            None
+        """
         self.item_id = item_id
         self.save()
 
-    def get_item(self):
+    def get_item(self) -> dict:
+        """Return the item associated with the import log."""
         if self.table == "bulletin":
             return Bulletin.query.get(self.item_id).to_compact()
         if self.table == "actor":
             return Actor.query.get(self.item_id).to_compact()
 
-    def add_file(self, file):
+    def add_file(self, file: str) -> None:
+        """
+        Add file to import log.
+
+        Args:
+            - file: File to be added to import log.
+
+        Returns:
+            None
+        """
         self.file = file
         self.save()
 
-    def add_format(self, file_format):
+    def add_format(self, file_format: str) -> None:
+        """
+        Add file format to import log.
+
+        Args:
+            - file_format: File format to be added to import log.
+
+        Returns:
+            None
+        """
         self.file_format = file_format
         self.save()
 
-    def add_to_log(self, line):
+    def add_to_log(self, line: str) -> None:
+        """
+        Add line to import log.
+
+        Args:
+            - line: Line to be added to import log.
+
+        Returns:
+            None
+        """
         current_time = arrow.utcnow().format("YYYY-MM-DD HH:mm:ss ZZ")
         if self.log is None:
             self.log = ""
         self.log += f"{current_time}: {line}\n"
         self.save()
 
-    def processing(self):
+    def processing(self) -> None:
+        """Update the status of the import log to processing."""
         self.status = "Processing"
         self.save()
 
-    def sucess(self):
+    def sucess(self) -> None:
+        """Update the status of the import log to sucess."""
         self.status = "Ready"
         self.imported_at = dt.utcnow()
         self.save()
 
-    def fail(self, exception=None):
+    def fail(self, exception: Optional[Any] = None) -> None:
+        """Update the status of the import log to fail."""
         self.status = "Failed"
         if exception:
             self.add_to_log(str(exception))
         self.save()
 
-    def save(self):
+    def save(self) -> None:
+        """Save the import log to the database."""
         try:
             super().save()
         except DatabaseException as e:
@@ -124,12 +166,14 @@ class Mapping(db.Model, BaseMixin):
     data = db.Column(JSON)
 
     # serialize data
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Return the mapping as a dictionary."""
         return {
             "id": self.id,
             "name": self.name,
             "data": self.data,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return the mapping as a JSON string."""
         return json.dumps(self.to_dict())

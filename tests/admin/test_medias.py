@@ -3,10 +3,15 @@ import os
 import pytest
 import random
 from werkzeug.datastructures import FileStorage
+from unittest.mock import patch
+from flask import current_app
 
+from enferno.utils.config_utils import ConfigManager
 from tests.test_utils import (
     create_binary_file,
 )
+
+ALLOWED_EXTS = ["jpg", "mp4", "doc"]
 
 
 ##### FIXTURES #####
@@ -15,8 +20,7 @@ from tests.test_utils import (
 @pytest.fixture(scope="function")
 def create_media_file(request, app):
     app = request.getfixturevalue("app")
-    allowed_ext = app.config["MEDIA_ALLOWED_EXTENSIONS"]
-    ext = random.choice(allowed_ext)
+    ext = random.choice(ALLOWED_EXTS)
     yield from create_binary_file(ext)
 
 
@@ -45,26 +49,27 @@ def test_post_media_chunk_endpoint(create_media_file, request, client_fixture, e
             "dztotalchunkcount": str(1),
             "dztotalfilesize": str(file_size),
         }
-        response = client_.post(
-            "/admin/api/media/chunk",
-            content_type="multipart/form-data",
-            data=data,
-            headers={"Referer": ""},
-        )
-        assert response.status_code == expected_status
-        if expected_status == 200:
-            # Check if the file was created
-            media_directory = "enferno/media"
-            file_exists = any(f.endswith(f"test{ext}") for f in os.listdir(media_directory))
-            assert file_exists, "File not found in the media directory"
+        with patch.dict(current_app.config, {"MEDIA_ALLOWED_EXTENSIONS": ALLOWED_EXTS}):
+            response = client_.post(
+                "/admin/api/media/chunk",
+                content_type="multipart/form-data",
+                data=data,
+                headers={"Referer": ""},
+            )
+            assert response.status_code == expected_status
+            if expected_status == 200:
+                # Check if the file was created
+                media_directory = "enferno/media"
+                file_exists = any(f.endswith(f"test{ext}") for f in os.listdir(media_directory))
+                assert file_exists, "File not found in the media directory"
 
-            # Delete the file after the assertion
-            for filename in os.listdir(media_directory):
-                if filename.endswith(f"test{ext}"):
-                    os.remove(os.path.join(media_directory, filename))
-                    break
-        elif expected_status == 302:
-            assert "/login" in response.headers["Location"]
+                # Delete the file after the assertion
+                for filename in os.listdir(media_directory):
+                    if filename.endswith(f"test{ext}"):
+                        os.remove(os.path.join(media_directory, filename))
+                        break
+            elif expected_status == 302:
+                assert "/login" in response.headers["Location"]
 
 
 ##### POST /admin/api/media/chunk FOR CHUNKED UPLOAD #####
@@ -103,34 +108,37 @@ def test_post_media_chunk_endpoint_chunked_upload(
             "dztotalchunkcount": str(total_chunks),
             "dztotalfilesize": str(file_size),
         }
-        response = client_.post(
-            "/admin/api/media/chunk",
-            content_type="multipart/form-data",
-            data=data,
-            headers={"Referer": ""},
-        )
-        assert response.status_code == expected_status
+        with patch.dict(current_app.config, {"MEDIA_ALLOWED_EXTENSIONS": ALLOWED_EXTS}):
+            response = client_.post(
+                "/admin/api/media/chunk",
+                content_type="multipart/form-data",
+                data=data,
+                headers={"Referer": ""},
+            )
+            assert response.status_code == expected_status
 
-        # Only perform the following checks after the last chunk
-        if chunk_index == total_chunks - 1 and expected_status == 200:
-            # Check if the final file was created and its size matches the original file
-            media_directory = "enferno/media"
-            file_exists = any(f.endswith(f"test-chunk{ext}") for f in os.listdir(media_directory))
-            assert file_exists, "Final file not found in the media directory"
+            # Only perform the following checks after the last chunk
+            if chunk_index == total_chunks - 1 and expected_status == 200:
+                # Check if the final file was created and its size matches the original file
+                media_directory = "enferno/media"
+                file_exists = any(
+                    f.endswith(f"test-chunk{ext}") for f in os.listdir(media_directory)
+                )
+                assert file_exists, "Final file not found in the media directory"
 
-            # Check the size of the uploaded file
-            for filename in os.listdir(media_directory):
-                if filename.endswith(f"test-chunk{ext}"):
-                    final_path = os.path.join(media_directory, filename)
-                    assert (
-                        os.path.getsize(final_path) == file_size
-                    ), "Final file size does not match the original file size"
-                    # Cleanup: Delete the file after the assertion
-                    os.remove(final_path)
-                    break
+                # Check the size of the uploaded file
+                for filename in os.listdir(media_directory):
+                    if filename.endswith(f"test-chunk{ext}"):
+                        final_path = os.path.join(media_directory, filename)
+                        assert (
+                            os.path.getsize(final_path) == file_size
+                        ), "Final file size does not match the original file size"
+                        # Cleanup: Delete the file after the assertion
+                        os.remove(final_path)
+                        break
 
-        elif expected_status == 302:
-            assert "/login" in response.headers["Location"]
+            elif expected_status == 302:
+                assert "/login" in response.headers["Location"]
 
 
 ##### POST /admin/api/media/upload #####
@@ -148,23 +156,24 @@ def test_post_media_upload_endpoint(create_media_file, request, client_fixture, 
     client_ = request.getfixturevalue(client_fixture)
     _, ext = os.path.splitext(create_media_file)
     with open(create_media_file, "rb") as f:
-        data = {"file": (f, f"test{ext}")}
-        response = client_.post(
-            "/admin/api/media/upload/",
-            content_type="multipart/form-data",
-            data=data,
-        )
-        assert response.status_code == expected_status
-        if expected_status == 200:
-            # Check if the file was created
-            media_directory = "enferno/media"
-            file_exists = any(f.endswith(f"test{ext}") for f in os.listdir(media_directory))
-            assert file_exists, "File not found in the media directory"
+        with patch.dict(current_app.config, {"MEDIA_ALLOWED_EXTENSIONS": ALLOWED_EXTS}):
+            data = {"file": (f, f"test{ext}")}
+            response = client_.post(
+                "/admin/api/media/upload/",
+                content_type="multipart/form-data",
+                data=data,
+            )
+            assert response.status_code == expected_status
+            if expected_status == 200:
+                # Check if the file was created
+                media_directory = "enferno/media"
+                file_exists = any(f.endswith(f"test{ext}") for f in os.listdir(media_directory))
+                assert file_exists, "File not found in the media directory"
 
-            # Delete the file after the assertion
-            for filename in os.listdir(media_directory):
-                if filename.endswith(f"test{ext}"):
-                    os.remove(os.path.join(media_directory, filename))
-                    break
-        elif expected_status == 302:
-            assert "/login" in response.headers["Location"]
+                # Delete the file after the assertion
+                for filename in os.listdir(media_directory):
+                    if filename.endswith(f"test{ext}"):
+                        os.remove(os.path.join(media_directory, filename))
+                        break
+            elif expected_status == 302:
+                assert "/login" in response.headers["Location"]

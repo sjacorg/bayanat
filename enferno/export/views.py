@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal, Optional
 
 from flask import request, Response, Blueprint, json, send_from_directory
 from flask.templating import render_template
@@ -7,6 +8,7 @@ from enferno.admin.models import Activity
 from enferno.export.models import Export
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
+import enferno.utils.typing as t
 
 export = Blueprint(
     "export",
@@ -22,7 +24,8 @@ PER_PAGE = 30
 
 @export.before_request
 @auth_required("session")
-def export_before_request():
+def export_before_request() -> Optional[Response]:
+    """Check user's permissions."""
     # check user's permissions
     if not (current_user.has_role("Admin") or current_user.can_export):
         return HTTPResponse.FORBIDDEN
@@ -30,19 +33,28 @@ def export_before_request():
 
 @export.route("/dashboard/")
 @export.get("/dashboard/<int:id>")
-def exports_dashboard(id=None):
+def exports_dashboard(id: Optional[t.id] = None) -> str:
     """
-    Endpoint to render the exports dashboard
-    :return: html page of the exports dashbaord
+    Endpoint to render the exports dashboard.
+
+    Args:
+        - id: Optional export id.
+
+    Returns:
+        - The html page of the exports dashboard.
     """
     return render_template("export-dashboard.html")
 
 
 @export.post("/api/bulletin/export")
-def export_bulletins():
+def export_bulletins() -> (
+    tuple[str, Literal[200]] | tuple[Literal["Error creating export request"], Literal[417]]
+):
     """
-    just creates an export request
-    :return: success code / failure if something goes wrong
+    just creates an export request.
+
+    Returns:
+        - success code / failure if something goes wrong.
     """
     # create an export request
     export_request = Export()
@@ -62,10 +74,14 @@ def export_bulletins():
 
 
 @export.post("/api/actor/export")
-def export_actors():
+def export_actors() -> (
+    tuple[str, Literal[200]] | tuple[Literal["Error creating export request"], Literal[417]]
+):
     """
-    just creates an export request
-    :return: success code / failure if something goes wrong
+    just creates an export request.
+
+    Returns:
+        - success code / failure if something goes wrong.
     """
     # create an export request
     export_request = Export()
@@ -84,10 +100,14 @@ def export_actors():
 
 
 @export.post("/api/incident/export")
-def export_incidents():
+def export_incidents() -> (
+    tuple[str, Literal[200]] | tuple[Literal["Error creating export request"], Literal[417]]
+):
     """
-    just creates an export request
-    :return: success code / failure if something goes wrong
+    just creates an export request.
+
+    Returns:
+        - success code / failure if something goes wrong.
     """
     # create an export request
     export_request = Export()
@@ -106,11 +126,15 @@ def export_incidents():
 
 
 @export.get("/api/export/<int:id>")
-def api_export_get(id):
+def api_export_get(id: t.id) -> Response | tuple[str, Literal[200]]:
     """
-    Endpoint to get a single export
-    :param id: id of the export
-    :return: export in json format / success or error
+    Endpoint to get a single export.
+
+    Args:
+        - id: The id of the export.
+
+    Returns:
+        - The export in json format / success or error.
     """
     export = Export.query.get(id)
 
@@ -121,12 +145,13 @@ def api_export_get(id):
 
 
 @export.post("/api/exports/")
-def api_exports():
+def api_exports() -> Response:
     """
     API endpoint to feed export request items in josn format - supports paging
-    and generated based on user role
-    :param page: db query offset
-    :return: successful json feed or error
+    and generated based on user role.
+
+    Returns:
+        - successful json feed or error
     """
     page = request.json.get("page", 1)
     per_page = request.json.get("per_page", PER_PAGE)
@@ -155,10 +180,19 @@ def api_exports():
 
 @export.put("/api/exports/status")
 @roles_required("Admin")
-def change_export_status():
+def change_export_status() -> (
+    tuple[Literal["Please check request action"], Literal[417]]
+    | tuple[Literal["Invalid export request id"], Literal[417]]
+    | tuple[Literal["Export request does not exist"], Literal[404]]
+    | tuple[Literal["Export request approval will be processed shortly."], Literal[200]]
+    | tuple[Literal["Export request rejected."], Literal[200]]
+    | None
+):
     """
-    endpoint to approve or reject an export request
-    :return: success / error based on the operation outcome
+    endpoint to approve or reject an export request.
+
+    Returns:
+        - success / error based on the operation outcome.
     """
     action = request.json.get("action")
     if not action or action not in ["approve", "reject"]:
@@ -209,10 +243,17 @@ def change_export_status():
 
 @export.put("/api/exports/expiry")
 @roles_required("Admin")
-def update_expiry():
+def update_expiry() -> (
+    Response
+    | tuple[Literal["Invalid expiry date"], Literal[417]]
+    | tuple[str, Literal[200]]
+    | tuple[Literal["Save failed"], Literal[417]]
+):
     """
-    endpoint to set expiry date of an approved export
-    :return: success / error based on the operation outcome
+    endpoint to set expiry date of an approved export.
+
+    Returns:
+        - success / error based on the operation outcome
     """
     export_id = request.json.get("exportId")
     new_date = request.json.get("expiry")
@@ -233,11 +274,12 @@ def update_expiry():
 
 
 @export.get("/api/exports/download")
-def download_export_file():
+def download_export_file() -> Response:
     """
-    Endpoint to Download an export file
-    :param export id identifier
-    :return: url to download the file or access denied response if the export has expired
+    Endpoint to Download an export file. Expects the export id as a query parameter.
+
+    Returns:
+        - The file to download or access denied response if the export has expired.
     """
     uid = request.args.get("exportId")
 

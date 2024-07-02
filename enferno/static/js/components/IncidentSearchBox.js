@@ -1,6 +1,6 @@
-Vue.component('incident-search-box', {
+const IncidentSearchBox = Vue.defineComponent({
   props: {
-    value: {
+    modelValue: {
       type: Object,
       required: true,
     },
@@ -22,9 +22,13 @@ Vue.component('incident-search-box', {
     },
   },
 
+  emits: ['update:modelValue', 'search'],
   data: () => {
     return {
+          translations: window.translations,
+
       q: {},
+
       potentialViolationsCategories: [],
       claimedViolationsCategories: [],
     };
@@ -32,18 +36,18 @@ Vue.component('incident-search-box', {
   watch: {
     q: {
       handler(newVal) {
-        this.$emit('input', newVal);
+        this.$emit('update:modelValue', newVal);
       },
       deep: true,
     },
-    value: function (newVal, oldVal) {
+    modelValue: function (newVal, oldVal) {
       if (newVal !== oldVal) {
         this.q = newVal;
       }
     },
   },
   created() {
-    this.q = this.value;
+    this.q = this.modelValue;
     this.fetchViolationCategories('potentialviolation', 'potentialViolationsCategories');
     this.fetchViolationCategories('claimedviolation', 'claimedViolationsCategories');
   },
@@ -62,300 +66,292 @@ Vue.component('incident-search-box', {
 
   template: `
       <v-sheet>
-      <v-card class="pa-4">
-        
+        <v-card class="pa-4">
 
 
-        <v-container class="fluid">
-          <v-row>
-            <v-col>
+          <v-container class="fluid">
+            <v-row>
+              <v-col>
 
-              <v-text-field
+                <v-text-field
 
-                  v-model="q.tsv"
-                  :label="i18n.contains_"
-                  clearable
-                  @keydown.enter="$emit('search',q)"
-              ></v-text-field>
+                    v-model="q.tsv"
+                    :label="i18n.contains_"
+                    clearable
+                    @keydown.enter="$emit('search',q)"
+                ></v-text-field>
 
-              <v-text-field
+                <v-text-field
 
-                  v-model="q.extsv"
-                  :label="i18n.notContains_"
-                  clearable
-              ></v-text-field>
-            </v-col>
-          </v-row>
-
-          <v-row>
-              <v-col md="6">
-                  <div class="d-flex flex-wrap">
-                      <pop-date-range-field
-                          :i18n="translations" 
-                          :label="i18n.createdDate_"
-                          v-model="q.created"
-                      />
-                  </div>
+                    v-model="q.extsv"
+                    :label="i18n.notContains_"
+                    clearable
+                ></v-text-field>
               </v-col>
-      
+            </v-row>
+
+            <v-row>
               <v-col md="6">
-                  <div class="d-flex flex-wrap">
-                      <pop-date-range-field
-                          :i18n="translations" 
-                          :label="i18n.updatedDate_"
-                          v-model="q.updated"
-                      />
-                  </div>
+                <div class="d-flex flex-wrap">
+                  <pop-date-field
+                      :i18n="translations"
+                      :label="i18n.createdDate_"
+                      v-model="q.created"
+                  />
+                </div>
               </v-col>
-          </v-row>
-        
-          <v-row>
-          <v-col md="12">
-            <v-alert text color="grey lighten-1" class="pa-5 my-3">
-              <div class="d-flex align-baseline justify-lg-space-between" >
-                
-                
-                <span class="black--text font-weight-bold text-h6">{{ i18n.events_ }}</span>
-                <v-checkbox :label="i18n.singleEvent_" dense v-model="q.singleEvent" color="primary" small
-                          class="ma-3"></v-checkbox>
-              </div>
-              
-              
-              
-              <div class="d-flex align-baseline"  > 
-                    <pop-date-range-field
-                        :i18n="translations" 
+
+              <v-col md="6">
+                <div class="d-flex flex-wrap">
+                  <pop-date-field
+                      :i18n="translations"
+                      :label="i18n.updatedDate_"
+                      v-model="q.updated"
+                  />
+                </div>
+              </v-col>
+            </v-row>
+
+            <v-row>
+              <v-col md="12">
+                <v-alert  class="pa-5 my-3">
+                  <div class="d-flex align-baseline justify-lg-space-between">
+
+
+                    <span class="black--text font-weight-bold text-h6">{{ i18n.events_ }}</span>
+                    <v-checkbox :label="i18n.singleEvent_"  v-model="q.singleEvent" color="primary" 
+                                class="ma-3"></v-checkbox>
+                  </div>
+
+
+                  <div class="d-flex align-baseline">
+                    <pop-date-field
+                        :i18n="translations"
                         :label="i18n.eventDate_"
                         v-model="q.edate"
-                        
+
                         class="mt-2"
-                        
+
                     />
 
-              
+
+                    <search-field
+                        class="ml-6 mb-3"
+                        v-model="q.etype"
+                        api="/admin/api/eventtypes/"
+                        :query-params="{ typ: 'for_bulletin' }"
+                        item-title="title"
+                        item-value="id"
+                        :multiple="false"
+                        :label="i18n.eventType_"
+                    ></search-field>
 
 
-                  <search-field
-                      class="ml-6 mb-3"
-                      v-model="q.etype"
-                      api="/admin/api/eventtypes/"
-                      :query-params="{ typ: 'for_bulletin' }"
-                      item-text="title"
-                      item-value="id"
-                      :multiple="false"
-                      :label="i18n.eventType_"
-                  ></search-field>
+                  </div>
 
-              
-                </div>
 
-              
-              
-                
                   <location-search-field
                       v-model="q.elocation"
                       api="/admin/api/locations/"
-                      item-text="full_string"
+                      item-title="full_string"
                       item-value="id"
                       :multiple="false"
                       :label="i18n.includeEventLocations_"
                   ></location-search-field>
 
-                
+
+                </v-alert>
+
+              </v-col>
+            </v-row>
 
 
-            </v-alert>
-
-          </v-col>
-        </v-row>
-
-
-          <v-row v-if="isAdmin">
-            <v-col md="9">
-              <span class="caption">{{ i18n.accessRoles_ }}</span>
-              <v-chip-group
-                  column
-                  multiple
-                  v-model="q.roles">
-                <v-chip v-if="roles" :value="role.id" small v-for="role in roles" filter
-                        outlined>{{ role.name }}
-                </v-chip>
-              </v-chip-group>
-            </v-col>
-            <v-col md="3">
-              <span class="caption">{{ i18n.unrestricted_ }}</span>
-              <v-switch v-model="q.norole"></v-switch>
-            </v-col>
-          </v-row>
+            <v-row v-if="isAdmin">
+              <v-col md="9">
+                <span class="caption">{{ i18n.accessRoles_ }}</span>
+                <v-chip-group
+                    column
+                    multiple
+                    v-model="q.roles">
+                  <v-chip v-if="roles" :value="role.id" small v-for="role in roles" filter
+                          outlined>{{ role.name }}
+                  </v-chip>
+                </v-chip-group>
+              </v-col>
+              <v-col md="3">
+                <span class="caption">{{ i18n.unrestricted_ }}</span>
+                <v-switch v-model="q.norole"></v-switch>
+              </v-col>
+            </v-row>
 
 
-          <v-row v-if="extraFilters">
-            <v-col>
-              <span class="caption">{{ i18n.assignedUser_ }}</span>
+            <v-row v-if="extraFilters">
+              <v-col>
+                <span class="caption">{{ i18n.assignedUser_ }}</span>
 
 
-              <v-chip-group
-                  column
-                  multiple
-                  v-model="q.assigned"
-              >
-                <v-chip :value="user.id" small label v-for="user in users" filter outlined>{{ user.name }}</v-chip>
-              </v-chip-group>
-            </v-col>
-          </v-row>
+                <v-chip-group
+                    column
+                    multiple
+                    v-model="q.assigned"
+                >
+                  <v-chip :value="user.id" small label v-for="user in users" filter outlined>{{ user.name }}</v-chip>
+                </v-chip-group>
+              </v-col>
+            </v-row>
 
-          <v-row v-if="extraFilters">
-            <v-col cols="12">
-              <span class="caption">{{ i18n.reviewer_ }}</span>
+            <v-row v-if="extraFilters">
+              <v-col cols="12">
+                <span class="caption">{{ i18n.reviewer_ }}</span>
 
-              <v-chip-group
-                  column
-                  multiple
-                  v-model="q.reviewer"
-              >
-                <v-chip label :value="user.id" small v-for="user in users" filter outlined>{{ user.name }}</v-chip>
-              </v-chip-group>
-            </v-col>
-          </v-row>
-
-
-          <v-row v-if="extraFilters">
-            <v-col cols="12">
-              <span class="caption pt-2">{{ i18n.workflowStatus_ }}</span>
+                <v-chip-group
+                    column
+                    multiple
+                    v-model="q.reviewer"
+                >
+                  <v-chip label :value="user.id" small v-for="user in users" filter outlined>{{ user.name }}</v-chip>
+                </v-chip-group>
+              </v-col>
+            </v-row>
 
 
-              <v-chip-group
-                  column
-                  multiple
-                  v-model="q.statuses"
-              >
-                <v-chip :value="status.en" label small v-for="status in translations.statuses" :key="status.en"
-                        filter outlined>{{ status.tr }}
-                </v-chip>
-              </v-chip-group>
+            <v-row v-if="extraFilters">
+              <v-col cols="12">
+                <span class="caption pt-2">{{ i18n.workflowStatus_ }}</span>
 
-            </v-col>
-          </v-row>
 
-          <v-row>
-            <v-col cols="12">
-              <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
-              <v-chip-group column v-model="q.reviewAction">
-                <v-chip value="No Review Needed" label small filter outlined>{{ i18n.noReviewNeeded_ }}</v-chip>
-                <v-chip value="Needs Review" label small filter outlined>{{ i18n.needsReview_ }}</v-chip>
+                <v-chip-group
+                    column
+                    multiple
+                    v-model="q.statuses"
+                >
+                  <v-chip :value="status.en" label small v-for="status in translations.statuses" :key="status.en"
+                          filter outlined>{{ status.tr }}
+                  </v-chip>
+                </v-chip-group>
 
-              </v-chip-group>
+              </v-col>
+            </v-row>
 
-            </v-col>
-          </v-row>
+            <v-row>
+              <v-col cols="12">
+                <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
+                <v-chip-group column v-model="q.reviewAction">
+                  <v-chip :value="i18n.noReviewNeeded_" label small filter outlined>{{ i18n.noReviewNeeded_ }}</v-chip>
+                  <v-chip :value="i18n.needsReview_" label small filter outlined>{{ i18n.needsReview_ }}</v-chip>
 
-          <v-row v-if="extraFilters">
-            <v-col cols="12">
-              <span class="caption pt-2">{{ i18n.potentialViolationsCategories_ }}</span>
-              <v-chip-group
-                  column
-                  multiple
-                  v-model="q.potentialVCats"
-              >
-                <v-chip
-                    v-for="category in potentialViolationsCategories"
-                    :key="category.id"
-                    :value="category.id"
-                    label
-                    small
-                    filter
-                    outlined>{{ category.title }}
-                </v-chip>
-              </v-chip-group>
-            </v-col>
-          </v-row>
+                </v-chip-group>
 
-          <v-row v-if="extraFilters">
-            <v-col cols="12">
-              <span class="caption pt-2">{{ i18n.claimedViolationsCategories_ }}</span>
-              <v-chip-group
-                  column
-                  multiple
-                  v-model="q.claimedVCats"
-              >
-                <v-chip
-                    v-for="category in claimedViolationsCategories"
-                    :key="category.id"
-                    :value="category.id"
-                    label
-                    small
-                    filter
-                    outlined>{{ category.title }}
-                </v-chip>
-              </v-chip-group>
-            </v-col>
-          </v-row>
+              </v-col>
+            </v-row>
 
-          <v-row>
-            <v-col>
-              <div class="d-flex">
+            <v-row v-if="extraFilters">
+              <v-col cols="12">
+                <span class="caption pt-2">{{ i18n.potentialViolationsCategories_ }}</span>
+                <v-chip-group
+                    column
+                    multiple
+                    v-model="q.potentialVCats"
+                >
+                  <v-chip
+                      v-for="category in potentialViolationsCategories"
+                      :key="category.id"
+                      :value="category.id"
+                      label
+                      small
+                      filter
+                      outlined>{{ category.title }}
+                  </v-chip>
+                </v-chip-group>
+              </v-col>
+            </v-row>
+
+            <v-row v-if="extraFilters">
+              <v-col cols="12">
+                <span class="caption pt-2">{{ i18n.claimedViolationsCategories_ }}</span>
+                <v-chip-group
+                    column
+                    multiple
+                    v-model="q.claimedVCats"
+                >
+                  <v-chip
+                      v-for="category in claimedViolationsCategories"
+                      :key="category.id"
+                      :value="category.id"
+                      label
+                      small
+                      filter
+                      outlined>{{ category.title }}
+                  </v-chip>
+                </v-chip-group>
+              </v-col>
+            </v-row>
+
+            <v-row>
+              <v-col>
+                <div class="d-flex">
+                  <search-field
+                      v-model="q.labels"
+                      api="/admin/api/labels/"
+                      :query-params="{}"
+                      item-title="title"
+                      item-value="id"
+                      :multiple="true"
+                      :label="i18n.includeLabels_"
+                  ></search-field>
+                  <v-checkbox :label="i18n.any_" dense v-model="q.oplabels" color="primary" small
+                              class="mx-3"></v-checkbox>
+                </div>
+
                 <search-field
-                    v-model="q.labels"
+                    v-model="q.exlabels"
                     api="/admin/api/labels/"
                     :query-params="{}"
-                    item-text="title"
+                    item-title="title"
                     item-value="id"
                     :multiple="true"
-                    :label="i18n.includeLabels_"
+                    :label="i18n.excludeLabels_"
                 ></search-field>
-                <v-checkbox :label="i18n.any_" dense v-model="q.oplabels" color="primary" small
-                            class="mx-3"></v-checkbox>
-              </div>
-
-              <search-field
-                  v-model="q.exlabels"
-                  api="/admin/api/labels/"
-                  :query-params="{}"
-                  item-text="title"
-                  item-value="id"
-                  :multiple="true"
-                  :label="i18n.excludeLabels_"
-              ></search-field>
 
 
-            </v-col>
-          </v-row>
+              </v-col>
+            </v-row>
 
 
-                <v-row>
-                    <v-col>
-                        <div class="d-flex">
-                            <location-search-field
-                                    v-model="q.locations"
-                                    api="/admin/api/locations/"
-                                    item-text="full_string"
-                                    item-value="id"
-                                    :multiple="true"
-                                    :label="i18n.includeLocations_"
-                                    :post-request="true"
-                            ></location-search-field>
-                            <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
-                                        class="mx-3"></v-checkbox>
-                        </div>
-                        <location-search-field
-                                v-model="q.exlocations"
-                                api="/admin/api/locations/"
-                                item-text="full_string"
-                                item-value="id"
-                                :multiple="true"
-                                :label="i18n.excludeLocations_"
-                                :post-request="true"
-                        ></location-search-field>
+            <v-row>
+              <v-col>
+                <div class="d-flex">
+                  <location-search-field
+                      v-model="q.locations"
+                      api="/admin/api/locations/"
+                      item-title="full_string"
+                      item-value="id"
+                      :multiple="true"
+                      :label="i18n.includeLocations_"
+                      :post-request="true"
+                  ></location-search-field>
+                  <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
+                              class="mx-3"></v-checkbox>
+                </div>
+                <location-search-field
+                    v-model="q.exlocations"
+                    api="/admin/api/locations/"
+                    item-title="full_string"
+                    item-value="id"
+                    :multiple="true"
+                    :label="i18n.excludeLocations_"
+                    :post-request="true"
+                ></location-search-field>
 
 
-                    </v-col>
-                </v-row>
+              </v-col>
+            </v-row>
 
-        </v-container>
+          </v-container>
 
 
-      </v-card>
-      
+        </v-card>
+
 
       </v-sheet>
     `,

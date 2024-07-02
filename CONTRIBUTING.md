@@ -105,3 +105,16 @@ pytest
 ```
 
 Tests define `pydantic` models to ensure the backend responses and frontend requests conform to expected database schema.
+
+# Auto-Docs
+
+Bayanat backend code is documented in ReStructured Text format (loosely following Google's guidelines).
+
+To generate automatic documentation in html format, you can follow the following steps:
+
+1. Make sure `sphinx` is installed on your system
+2. Navigate to bayanat directory on terminal
+3. Run `sphinx-apidoc -f -o docs/source enferno && sphinx-apidoc -f -o docs/source tests`
+4. Run `sphinx-build -M html docs/source/ docs/build/`, you will see multiple warning messages on your terminal. Ignore them.
+
+Following these steps, the html files generated will be available under `docs/build/html`

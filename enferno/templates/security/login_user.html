@@ -1,133 +1,119 @@
-{% extends 'layout.html' %} {% block content %}
-    <v-app id="app" v-cloak>
-        <v-main>
-            <validation-observer mode="eager" ref="form" v-slot="{ invalid} ">
-                <v-container class="fill-height" fluid>
-                    <v-row class="align-center" justify="center">
-                        <v-col cols="12" sm="8" md="4">
-                            <v-card class="elevation-12">
-                                <v-toolbar color="primary" dark text>
-                                    <v-toolbar-title>{{ _('Account Login')}}</v-toolbar-title>
-                                    <v-spacer></v-spacer>
-                                </v-toolbar>
-                                <v-card-text>
+{% extends 'login-layout.html' %}
+{% block nav %}{% endblock %}
+{% block content %}
+
+    <v-main class="d-flex align-center justify-center">
+
+    <v-card class="mx-auto mb-5 elevation-23  w-33 ">
+        <v-toolbar title="{{ _('Account Login') }}" color="primary">
+        </v-toolbar>
+        <v-card-text>
+
+           <v-form
+
+                    action="{{ url_for_security('login') }}"
+                    method="post"
+                    id="loginForm"
+                    ref="form"
+                    @submit.prevent
+            >
+                {{ login_user_form.hidden_tag() }}
+
+                <v-text-field
+
+                        autocomplete="chrome-off"
+                        label="{{ _('Login') }}"
+                        name="username"
+                        prepend-icon="mdi-account"
+                        type="text"
+                        :rules="[rules.required]"
+                        variant="underlined"
 
 
-                                    <v-form
+                >
+                </v-text-field>
 
-                                            action="{{ url_for_security('login') }}"
-                                            method="post"
-                                            id="loginForm"
-                                            ref="form"
-                                    >
-                                        {{ login_user_form.hidden_tag() }}
+                <v-text-field
+                        class="mt-2"
+                        variant="underlined"
+                        id="password"
+                        autocomplete="chrome-off"
 
-                                        <validation-provider name="Username" vid="username" rules="required"
-                                                             v-slot="{ errors }">
+                        label="{{ _('Password') }}"
+                        name="password"
+                        prepend-icon="mdi-lock-question"
+                        type="password"
+                        @keyup.enter="!invalid && submit()"
+                        :rules="[rules.required, rules.min]"
 
-                                            <v-text-field
-                                                    v-model="username"
-                                                    autocomplete="chrome-off"
-                                                    label="{{ _('Login') }}"
-                                                    name="username"
-                                                    prepend-icon="mdi-account"
-                                                    type="text"
-
-                                            >
-                                            </v-text-field>
-                                            <span class="orange--text"> ${errors[0]}</span>
-                                        </validation-provider>
-
-                <validation-provider name="Password"  rules="required|min:6"
-                                                             v-slot="{ errors }">
-
-                                        <v-text-field
-                                                id="password"
-                                                autocomplete="chrome-off"
-                                                v-model="password"
-                                                label="{{ _('Password') }}"
-                                                name="password"
-                                                prepend-icon="mdi-lock-question"
-                                                type="password"
-                                                @keyup.enter="!invalid && submit()"
-                                        ></v-text-field>
-                <span class="orange--text"> ${errors[0]}</span>
-                </validation-provider>
+                ></v-text-field>
 
 
 
-                                        {% if login_user_form.recaptcha %}
-                                            {{ login_user_form.recaptcha }}
-                                        {% endif %}
+                {% if login_user_form.recaptcha %}
+                    {{ login_user_form.recaptcha }}
+                {% endif %}
 
-                                    </v-form>
-                                </v-card-text>
-
-
-                                {% if login_user_form.username.errors or login_user_form.password.errors %}
-
-                                    <v-card-text>
+            </v-form>
+        </v-card-text>
 
 
-                                        <v-alert type="error" dnese dismissible> {{ _('Invalid username or password!') }}
-                                        </v-alert>
+        {% if login_user_form.username.errors or login_user_form.password.errors %}
+            <v-card-text>
+                <v-alert type="error" dense dismissible> {{ _('Invalid username or password!') }}
+                </v-alert>
+            </v-card-text>
+        {% endif %}
+        
+        <v-card-actions class="px-4 pb-6">
+
+            <v-btn variant="elevated" class="mx-auto my-3" block :disabled="invalid" size="large" @click.once="submit"
+                   color="primary">
+                {{ _('Login') }}</v-btn>
+        </v-card-actions>
+    </v-card>
+    <v-card>
+        {% if config.GOOGLE_OAUTH_ENABLED %}
 
 
-                                    </v-card-text>
-                                {% endif %}
-                                <v-card-actions>
-                                    <v-spacer></v-spacer>
+            <v-card-text class="text-center">
+                <a href="/auth"><img width="191"
+                                     src="/static/img/google-login/2x/btn_google_signin_light_normal_web@2x.png"
+                                     alt=""></a>
+            </v-card-text>
+        {% endif %}
 
-                                    <v-btn :disabled="invalid || lock" block @click.prevent="submit" color="primary">
-                                        {{ _('Login') }}</v-btn>
-                                </v-card-actions>
-                            </v-card>
-                            <v-card>
-                                {% if config.GOOGLE_OAUTH_ENABLED %}
-
-
-                                <v-card-text class="text-center">
-                                    <a href="/auth"><img width="191"
-                                                         src="/static/img/google-login/2x/btn_google_signin_light_normal_web@2x.png"
-                                                         alt=""></a>
-                                </v-card-text>
-                                {% endif %}
-
-                            </v-card>
-                            <v-snackbar absolute button
-                                        v-model="snackBar"
-                            >
-                                ${snackMessage}
-                                <v-btn text color="primary" @click.native="value = false">{{ _('Close') }}</v-btn>
-                            </v-snackbar>
-                        </v-col>
-                    </v-row>
-
-                </v-container>
-            </validation-observer>
-        </v-main>
-    </v-app>
+    </v-card>
+    <v-snackbar absolute button
+                v-model="snackBar"
+    >
+        ${snackMessage}
+        <v-btn variant="text" color="primary" @click.native="value = false">{{ _('Close') }}</v-btn>
+    </v-snackbar>
+</v-main>
 
 {% endblock %} {% block js %}
+
+
     <script>
-        const app = new Vue({
-            el: "#app",
-            vuetify: vuetify,
-            delimiters: delimiters,
-            data: () => ({
-                errors: '',
-                drawer: drawer,
-                snackBar: false,
-                snackMessage: '',
-                email: "",
-                password: "",
-                username: "",
-                lock: false
-            }),
-            mounted() {
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
 
-                //this.showSnack(this.errors);
+        const vuetify = createVuetify(vuetifyConfig);
 
+        const app = createApp({
+
+            data() {
+                return {
+                    menu: null,
+                    errors: '',
+                    snackBar: false,
+                    snackMessage: '',
+                    email: "",
+                    password: "",
+                    rules: validationRules
+
+                };
             },
             methods: {
                 showSnack(message) {
@@ -135,10 +121,19 @@
                     this.snackBar = true;
                 },
                 submit() {
-                    this.lock = true;
-                    loginForm.submit();
+                    document.getElementById('loginForm').submit();
                 }
-            }
+            },
+            mounted() {
+                // Your mounted logic here
+            },
+            delimiters: delimiters
         });
+
+
+        app.use(vuetify).mount('#app');
+
+
     </script>
+
 {% endblock %}

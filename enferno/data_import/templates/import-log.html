@@ -1,32 +1,26 @@
 {% extends 'layout.html' %}
-{% block css %}
-{% endblock %}
+
 {% block content %}
-    <div id="app">
-        <v-app id="inspire" v-cloak>
-            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
 
             {% include 'log_dialog.html' %}
 
             <v-main>
-                <v-container class="container--fluid">
-                    <v-row>
-                        <v-col cols="12">
+                <v-container fluid>
                             <v-card>
                                 <v-card-text>
 
-                                    <v-data-table
+                                    <v-data-table-server
                                             fixed-header
-                                            height="calc(100vh - 291px)"
+                                            height="calc(100vh - 260px)"
                                             id="log-dt"
                                             v-model="selected"
                                             :headers="headers"
                                             @click:row="rowClick"
                                             :items="items"
-                                            :options.sync="options"
-                                            :footer-props.sync="footerProps"
+                                            v-model:options="options"
                                             :loading="loading"
-                                            :server-items-length="itemsLength"
+                                            :items-length="itemsLength"
+                                            @update:options="refresh"
                                             class="elevation-1"
                                     >
 
@@ -38,25 +32,25 @@
                                         </template>
 
                                         <template v-slot:item.expires_on="{item}">
-                                            ${item.expires_on|localDate}
+                                            ${localDate(item.expires_on)}
                                         </template>
 
                                         <template v-slot:item.created_at="{item}">
-                                            ${item.created_at|localDate}
+                                            ${localDate(item.created_at)}
                                         </template>
 
                                         <template v-slot:item.status="{item}">
-                                          <log-status :item="item"></log-status>
+                                          <import-log-status :item="item"></import-log-status>
                                         </template>
 
                                         <template v-slot:item.preview="{item}">
-                                            <v-btn 
+                                            <v-btn
                                                 @click.stop=""
                                                 v-if="item.table=='bulletin' && item.item_id > 0"
                                                 @click="previewItem('/admin/api/bulletin/'+item.item_id)"
-                                                color="grey lighten-2" 
-                                                elevation="0" 
-                                                class="mx-2" 
+                                                color="grey lighten-2"
+                                                elevation="0"
+                                                class="mx-2"
                                             >
                                                 <v-icon color="grey darken-2" left>
                                                     mdi-file-document-multiple
@@ -68,7 +62,7 @@
                                                 @click.stop=""
                                                 v-if="item.table=='actor' && item.item_id > 0"
                                                 @click="previewItem('/admin/api/actor/'+item.item_id)"
-                                                color="grey lighten-2" 
+                                                color="grey lighten-2"
                                                 elevation="0"
                                                 class="mx-2"
                                             >
@@ -79,54 +73,55 @@
                                             </v-btn>
                                         </template>
 
-                                    </v-data-table>
+                                    </v-data-table-server>
 
                                 </v-card-text>
                             </v-card>
 
                             <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
 
-                            <v-snackbar v-model="snackbar" class="">
-                                <div class="d-flex justify-space-between align-center">
-                                    ${snackMessage}
-
-                                    <v-btn icon fab small color="white" text @click="snackbar = false">
-                                        <v-icon>mdi-close</v-icon>
-                                    </v-btn>
-                                </div>
-                            </v-snackbar>
 
 
-                        </v-col>
-                    </v-row>
                 </v-container>
             </v-main>
 
-            {% include 'footer.html' %}
+
 
             <v-overlay v-model="loading">
             </v-overlay>
-        </v-app>
-    </div>
+
 
 {% endblock %}
 
 {% block js %}
 
+<script src="/static/js/components/BulletinCard.js"></script>
+<script src="/static/js/components/ActorProfiles.js"></script>
+<script src="/static/js/components/ActorCard.js"></script>
+<script src="/static/js/components/IncidentCard.js"></script>
+<script src="/static/js/components/EventCard.js"></script>
 
 <script src="/static/js/components/MediaCard.js"></script>
 <script src="/static/js/components/BulletinResult.js"></script>
 <script src="/static/js/components/ActorResult.js"></script>
 <script src="/static/js/components/IncidentResult.js"></script>
 <script src="/static/js/components/UniField.js"></script>
+
+<script src="/static/js/components/RelatedBulletinsCard.js"></script>
+<script src="/static/js/components/RelatedActorsCard.js"></script>
+<script src="/static/js/components/RelatedIncidentsCard.js"></script>
+
 <script src="/static/js/mixins/media-mixin.js"></script>
 <script src="/static/js/components/PdfViewer.js"></script>
 <script src="/static/js/components/GlobalMap.js"></script>
 <script src="/static/js/components/Visualization.js"></script>
 <script src="/static/js/element-resize-detector.min.js"></script>
 <script src="/static/js/force-graph.min.js"></script>
-<script src="/static/js/components/LogStatus.js"></script>
-<script src="/static/js/components/LogCard.js"></script>
+<script src="/static/js/components/PreviewCard.js"></script>
+<script src="/static/js/components/ImportLogStatus.js"></script>
+<script src="/static/js/components/ImportLogCard.js"></script>
+<script src="/static/js/components/MPCard.js"></script>
+<script src="/static/js/components/ImageGallery.js"></script>
 
 {% if config.GOOGLE_MAPS_API_KEY %}
     {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
@@ -136,12 +131,13 @@
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
-        const app = new Vue({
-            el: "#app",
-            vuetify: vuetify,
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
             delimiters: delimiters,
-            router,
-            mixins: [mediaMixin],
+            mixins: [globalMixin, mediaMixin],
             data: () => ({
 
                 translations: translations,
@@ -155,33 +151,24 @@
                 pitem: null,
                 eitem: {},
                 mode: null,
-                sideNav: sideNav,
-                snackbar: false,
-                snackMessage: '',
                 loading: false,
                 status: '',
                 items: [],
                 itemsLength: 10,
                 selected: [],
-                options: {
-                    page: 1,
+                options: {},
 
-                },
-                footerProps: {
-                    itemsPerPageOptions: itemsPerPageOptions,
-                    itemsPerPageText: "{{ _('Rows per page')}}"
-                },
                 headers: [
-                    {text: "{{_('ID')}}", value: 'id', sortable: false},
-                    {text: "{{_('User')}}", value: 'user.name', sortable: false},
-                    {text: "{{_('Table')}}", value: 'table', sortable: false},
-                    {text: "{{_('Item')}}", value: 'preview', sortable: false},
-                    {text: "{{_('Status')}}", value: 'status', sortable: false},
-                    {text: "{{_('File')}}", value: 'file', sortable: false},
-                    {text: "{{_('Format')}}", value: 'file_format', sortable: false},
-                    {text: "{{_('Batch ID')}}", value: 'batch_id', sortable: false},
-                    {text: "{{_('Requested Time')}}", value: 'created_at', sortable: false},
-                    {text: "{{_('Import Time')}}", value: 'imported_at', sortable: false},
+                    {title: "{{_('ID')}}", value: 'id', sortable: false},
+                    {title: "{{_('User')}}", value: 'user.name', sortable: false},
+                    {title: "{{_('Table')}}", value: 'table', sortable: false},
+                    {title: "{{_('Item')}}", value: 'preview', sortable: false},
+                    {title: "{{_('Status')}}", value: 'status', sortable: false},
+                    {title: "{{_('File')}}", value: 'file', sortable: false},
+                    {title: "{{_('Format')}}", value: 'file_format', sortable: false},
+                    {title: "{{_('Batch ID')}}", value: 'batch_id', sortable: false},
+                    {title: "{{_('Requested Time')}}", value: 'created_at', sortable: false},
+                    {title: "{{_('Import Time')}}", value: 'imported_at', sortable: false},
                 ],
 
             }),
@@ -195,23 +182,9 @@
                 }
             },
 
-            options: {
-                handler: "refresh",
-            }
+
         },
 
-        filters : {
-
-            localDate: function (dt) {
-                if (dt === null || dt === '') {
-                    return '';
-                }
-                // Z tells it's a UTC time
-                const utcDate = new Date(`${dt}Z`);
-                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                return utcDate.toLocaleString('en-US', {timeZone: userTimezone});
-            }
-        },
 
         mounted () {
             if (this.$route.params.id) {
@@ -238,12 +211,10 @@
 
         methods: {
 
-            showSnack(message) {
-                this.snackbar = true;
-                this.snackMessage = message
-            },
 
-            searchLogs() {
+
+            refresh(options) {
+                this.options = options || this.options;
                 this.loading = true;
                 let url = `/import/api/imports/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
 
@@ -263,11 +234,12 @@
 
             filterBatch(batch_id) {
                 this.q = {batch_id: batch_id};
-                this.searchLogs()
+                this.refresh()
             },
 
-            rowClick(item) {
-                path = `/import/log/${item.id}`;
+            rowClick(e,row) {
+                const item = row.item;
+                const path = `/import/log/${item.id}`;
                 if (this.$route.path !== path)
                     this.$router.push(path);
 
@@ -317,10 +289,38 @@
 
             },
 
-            refresh() {
-                this.searchLogs();
-            }
+
         }
     });
+
+
+        app.component('import-log-status', ImportLogStatus);
+        app.component('media-card', MediaCard);
+        app.component('bulletin-result', BulletinResult);
+        app.component('actor-result', ActorResult);
+        app.component('incident-result', IncidentResult);
+        app.component('uni-field', UniField);
+        app.component('pdf-viewer', PdfViewer);
+        app.component('global-map', GlobalMap);
+        app.component('visualization', Visualization);
+        app.component('preview-card', PreviewCard);
+        app.component('import-log-card', ImportLogCard);
+        app.component('bulletin-card', BulletinCard);
+        app.component('actor-profiles', ActorProfiles);
+        app.component('actor-card', ActorCard);
+        app.component('incident-card', IncidentCard);
+        app.component('EventCard', EventCard);
+        app.component('ImageGallery', ImageGallery);
+
+        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
+        app.component('RelatedActorsCard', RelatedActorsCard);
+        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
+
+        app.component('mp-card', MPCard);
+
+        app.use(router);
+        app.use(vuetify).mount('#app');
+
+
     </script>
 {% endblock %}

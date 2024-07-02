@@ -1,4 +1,4 @@
-Vue.component('uni-field', {
+const UniField = Vue.defineComponent({
   props: {
     caption: String,
     english: String,
@@ -14,26 +14,22 @@ Vue.component('uni-field', {
 
   methods: {},
   template: `
-     
-     <v-card  v-if="english||arabic" outlined class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey lighten-5 " > 
-     <div v-if="caption" class="caption grey--text mr-2">{{caption}}</div>
-      <div class="caption black--text" v-if="sw">{{english}}</div>
-        <div class="caption black--text" v-else>{{arabic}} </div>
-      <v-btn v-if="arabic"
-                      color="grey lighten-2"
-                      outlined
-                      x-small
-                      fab
-                      absolute
-                      right
-                      
-                      @click="sw= !sw "
-                      class="d-inline swh"
-                      
-                      
-                      ><v-icon>mdi-web</v-icon>
-        </v-btn>
+
+    <v-list v-if="english || arabic"  variant="plain" class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1">
+      
+      <v-list-item lines="one" :title="caption" :subtitle="english" v-if="sw">
+        <template #append v-if="english && arabic">
+            <v-btn variant="text" size="x-small" icon="mdi-web" @click="sw= !sw"></v-btn>
+        </template>
+      </v-list-item>
+      <v-list-item lines="one" :title="caption" :subtitle="arabic" v-else>
         
-    </v-card>
-    `,
+        <template #append v-if="english && arabic">
+            <v-btn variant="text" size="x-small" icon="mdi-web" @click="sw= !sw"></v-btn>
+        </template>
+      
+      </v-list-item>
+
+    </v-list>
+  `,
 });

@@ -1,6 +1,7 @@
 import pytest
 
-from enferno.admin.models import Actor, Atoa
+
+from enferno.admin.models import Actor, ActorProfile, Atoa
 from enferno.user.models import User
 from tests.factories import (
     ActorFactory,
@@ -141,10 +142,12 @@ post_actor_endpoint_roles = [
 def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     actor = ActorFactory()
+    actor_dict = actor.to_dict()
+    actor_dict["actor_profiles"] = [{"mode": 1}]
     response = client_.post(
         "/admin/api/actor",
         headers={"content-type": "application/json"},
-        json={"item": {"name": actor.name, "type": "Entity"}},
+        json={"item": actor_dict},
         follow_redirects=True,
     )
     assert response.status_code == expected_status
@@ -174,11 +177,23 @@ def test_put_actor_endpoint(
     client_ = request.getfixturevalue(client_fixture)
     actor = get_first_actor_or_fail()
     actor_id = actor.id
-    new_name = ActorFactory().name
+    new_actor = ActorFactory()
+    new_name = new_actor.name
+    new_first_name = new_actor.first_name
+    new_last_name = new_actor.last_name
+    new_middle_name = new_actor.middle_name
+    new_type = new_actor.type
+    actor_dict = actor.to_dict()
+    actor_dict["name"] = new_name
+    actor_dict["type"] = new_type
+    actor_dict["first_name"] = new_first_name
+    actor_dict["last_name"] = new_last_name
+    actor_dict["middle_name"] = new_middle_name
+    actor_dict["actor_profiles"] = [{"mode": 1}]
     response = client_.put(
         f"/admin/api/actor/{actor_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"name": new_name, "type": "Entity"}},
+        json={"item": actor_dict},
     )
     assert response.status_code == expected_status
     found_actor = Actor.query.filter(Actor.id == actor_id).first()
@@ -206,11 +221,22 @@ def test_put_actor_assigned_endpoint(
     actor.assigned_to = User.query.filter(User.id == uid).first()
     actor.save()
     actor_id = actor.id
-    new_name = ActorFactory().name
+    new_actor = ActorFactory()
+    new_name = new_actor.name
+    new_first_name = new_actor.first_name
+    new_last_name = new_actor.last_name
+    new_middle_name = new_actor.middle_name
+    new_type = new_actor.type
+    actor_dict = actor.to_dict()
+    actor_dict["name"] = new_name
+    actor_dict["type"] = new_type
+    actor_dict["first_name"] = new_first_name
+    actor_dict["last_name"] = new_last_name
+    actor_dict["middle_name"] = new_middle_name
     response = client_.put(
         f"/admin/api/actor/{actor_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"name": new_name, "type": "Entity"}},
+        json={"item": actor_dict},
     )
     assert response.status_code == expected_status
     found_actor = Actor.query.filter(Actor.id == actor_id).first()
@@ -243,7 +269,7 @@ def test_put_actor_assign_endpoint(
     response = client_.put(
         f"/admin/api/actor/assign/{actor_id}",
         headers={"content-type": "application/json"},
-        json={"actor": {"comments": ""}},
+        json={"actor": {"comments": "mandatory"}},
     )
     assert response.status_code == expected_status
     if expected_status == 200:

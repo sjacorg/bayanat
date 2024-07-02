@@ -1,97 +1,93 @@
 {% extends 'layout.html' %}
 {% block css %}
-    <link rel="stylesheet" href="/static/js/dropzone/vue2Dropzone.min.css"/>
-    <link rel="stylesheet" href="/static/js/dropzone/basic.css"/>
+<link rel="stylesheet" href="/static/css/dropzone.min.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+
 
 {% endblock %}
 {% block content %}
-    <div id="app">
-        <v-app v-cloak>
-            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-            <v-main class="align-start ma-3">
-                <v-container fluid fill-height>
-                    <v-row>
-                        <v-col cols="12">
 
-                            <v-stepper v-model="step">
+            <v-main class="align-start ma-4">
+                            <v-stepper v-model="step" >
                                 <v-stepper-header>
-                                    <v-stepper-step step="1">{{ _('Upload or Select') }}</v-stepper-step>
+                                    <v-stepper-item title="{{ _('Upload or Select') }}" value="1"></v-stepper-item>
                                     <v-divider></v-divider>
 
-                                    <v-stepper-step step="2">{{ _('Add Data') }}</v-stepper-step>
+                                    <v-stepper-item title="{{ _('Add Data') }}" value="2"></v-stepper-item>
                                     <v-divider></v-divider>
-                                    <v-stepper-step step="3">{{ _('Finish') }}</v-stepper-step>
+                                    <v-stepper-item title="{{ _('Finish') }}" value="3"></v-stepper-item>
                                 </v-stepper-header>
 
-                                <v-stepper-items>
-                                    <v-stepper-content step="1">
-
+                                <v-stepper-window>
+                                    <v-stepper-window-item value="1">
                                         <v-data-table
                                                 fixed-header
-                                                height="calc(100vh - 420px)"
+                                                height="calc(100vh - 290px)"
                                                 :headers="headers"
                                                 :items="items"
                                                 :options.sync="options"
-                                                :footer-props.sync="footerProps"
                                                 :loading="loading"
                                                 class="elevation-1"
                                                 show-select
                                                 v-model="selectedItems"
-
+                                                return-object
 
                                         >
                                             <template v-slot:top="{item}">
-                                                <v-toolbar color="grey lighten-4" flat>
+                                                <v-toolbar>
 
-                                                    <v-btn :disabled="selAllDisabled" @click="selectAll" x-small
-                                                           elevation="1" color="white" fab>
-                                                        <v-icon>mdi-check-all</v-icon>
+                                                    <v-btn 
+                                                        icon="mdi-check-all" 
+                                                        :disabled="selAllDisabled" 
+                                                        @click="selectAll" 
+                                                        size="small">
                                                     </v-btn>
-                                                    <v-btn :disabled="!selectedItems.length" @click="clearAll" x-small
-                                                           elevation="1" class="mx-3" color="white" fab>
-                                                        <v-icon>mdi-checkbox-blank-outline</v-icon>
+                                                    <v-btn 
+                                                        :disabled="!selectedItems.length" 
+                                                        @click="clearAll" 
+                                                        size="small"
+                                                        icon="mdi-checkbox-blank-outline"
+                                                        class="mx-3">
                                                     </v-btn>
 
                                                     <v-divider vertical></v-divider>
 
-
-                                                    <v-btn :disabled="mode==2" x-small fab
+                                                    <v-btn :disabled="mode==2" variant="elevated" size="small"
                                                            class="mx-3 hidden-md-and-up"
                                                            @click="uploadFiles"
                                                            color="primary"
-                                                           elevation="1"
+                                                           icon="mdi-upload"
                                                     >
-                                                        <v-icon>mdi-upload</v-icon>
-
                                                     </v-btn>
 
-
-                                                    <v-btn :disabled="mode==1" @click="selectPath" x-small fab
+                                                    <v-btn :disabled="mode==1" @click="selectPath"
+                                                           size="small"
                                                            color="primary"
-                                                           elevation="1"
+                                                           icon="mdi-folder-open"
                                                            class="hidden-md-and-up">
-                                                        <v-icon> mdi-folder-open</v-icon>
                                                     </v-btn>
 
-
-                                                    <v-tooltip top>
-                                                        <template v-slot:activator="{on, attrs}">
-                                                            <v-btn :disabled="mode==2" small v-on="on"
+                                                    <v-tooltip location="top">
+                                                        <template v-slot:activator="{props}">
+                                                            <v-btn :disabled="mode==2" size="small" :="props"
                                                                    class="mx-3 hidden-sm-and-down"
                                                                    @click="uploadFiles"
                                                                    color="primary"
+                                                                   variant="elevated"
+                                                                   size="small"
+                                                                   prepend-icon="mdi-upload"
                                                             >
-                                                                <v-icon left>mdi-upload</v-icon>
                                                                 {{ _('Upload files') }}
                                                             </v-btn>
                                                         </template>
                                                         <span>{{ _('Manual web upload') }}</span>
                                                     </v-tooltip>
-                                                    <v-tooltip top>
-                                                        <template v-slot:activator="{on}">
+
+                                                    <v-tooltip location="top">
+                                                        <template v-slot:activator="{props}">
                                                             <v-btn :disabled="mode==1 || !__ETL_PATH_IMPORT__"
-                                                                   @click="selectPath" small
-                                                                   v-on="on" color="primary" class="hidden-sm-and-down">
+                                                                   @click="selectPath" size="small"
+                                                                   :="props" color="primary" class="hidden-sm-and-down">
                                                                 <v-icon left> mdi-folder-open</v-icon>
                                                                 {{ _('Process path') }}
                                                             </v-btn>
@@ -101,26 +97,19 @@
                                                     </span>
                                                     </v-tooltip>
 
-
                                                     <v-spacer></v-spacer>
 
-                                                    <v-btn small class="mx-2 hidden-sm-and-down" @click="stepTwo"
+                                                    <v-btn size="small" class="mx-2 hidden-sm-and-down"
+                                                           @click="toStepTwo"
                                                            :disabled="!selectedItems.length"
-                                                           :dark="selectedItems.length?true:false" color="green"
-                                                           elevation="1">
-                                                        <v-icon left color="white">mdi-play-circle</v-icon>
+                                                           append-icon="mdi-chevron-right"
+                                                           :dark="selectedItems.length?true:false"
+                                                           color="primary"
+                                                           variant="elevated"
+                                                           >
                                                         {{ _('Next') }}
                                                     </v-btn>
-
-                                                    <v-btn x-small class="mx-2 hidden-md-and-up" @click="stepTwo"
-                                                           fab
-                                                           :disabled="!selectedItems.length"
-                                                           :dark="selectedItems.length?true:false" color="green"
-                                                           elevation="1">
-                                                        <v-icon color="white">mdi-play-circle</v-icon>
-                                                    </v-btn>
-
-
+                                                    
                                                 </v-toolbar>
 
                                             </template>
@@ -130,18 +119,18 @@
                                         </v-data-table>
 
 
-                                    </v-stepper-content>
+                                    </v-stepper-window-item>
 
 
-                                    <v-stepper-content step="2">
-                                        <v-toolbar>
-                                            <v-btn small class="mx-2" @click="step=1"
-
+                                    <v-stepper-window-item value="2">
+                                        <v-toolbar color="white">
+                                            <v-btn size="small" class="mx-2" @click="toStepOne"
+                                                        prepend-icon="mdi-chevron-left"
                                                    elevation="1">
-                                                < {{ _('Back') }}
+                                                  {{ _('Back') }}
                                             </v-btn>
                                             <v-spacer></v-spacer>
-                                            <v-btn small class="mx-2" @click="processFiles"
+                                            <v-btn size="small" class="mx-2" @click="processFiles"
 
                                                    color="success"
                                                    elevation="1">
@@ -160,7 +149,7 @@
 
                                                         <search-field
                                                                 api="/admin/api/roles/"
-                                                                item-text="name"
+                                                                item-title="name"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 label="{{ _('Access Roles') }}"
@@ -173,7 +162,7 @@
                                                         <search-field
                                                                 api="/admin/api/labels/"
                                                                 :query-params="{ typ: 'for_bulletin' }"
-                                                                item-text="title"
+                                                                item-title="title"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 label="{{ _('Labels') }}"
@@ -184,7 +173,7 @@
                                                         <search-field
                                                                 api="/admin/api/labels/"
                                                                 :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
-                                                                item-text="title"
+                                                                item-title="title"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 label="{{ _('Verified Labels') }} "
@@ -196,7 +185,7 @@
                                                     <v-col cols="12" md="4">
                                                         <location-search-field
                                                                 api="/admin/api/locations/"
-                                                                item-text="full_string"
+                                                                item-title="full_string"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 label="{{ _('Locations') }}"
@@ -207,7 +196,7 @@
                                                     <v-col cols="12" md="4">
                                                         <search-field
                                                                 api="/admin/api/sources/"
-                                                                item-text="title"
+                                                                item-title="title"
                                                                 item-value="id"
                                                                 :multiple="true"
                                                                 label="{{ _('Sources') }}"
@@ -249,9 +238,9 @@
 
                                         </v-card>
 
-                                    </v-stepper-content>
+                                    </v-stepper-window-item>
 
-                                    <v-stepper-content step="3">
+                                    <v-stepper-window-item value="3">
                                         <v-card class="pa-5">
                                             <v-card-text>
                                                 ${ status }
@@ -266,8 +255,8 @@
                                                     {{ _('Check Import Progress') }}
                                             </v-btn>
                                         </v-card>
-                                    </v-stepper-content>
-                                </v-stepper-items>
+                                    </v-stepper-window-item>
+                                </v-stepper-window>
                             </v-stepper>
 
                             <v-dialog persistent v-model="selectDlg" max-width="900">
@@ -300,12 +289,10 @@
 
                             <v-dialog persistent v-model="uploadDlg" max-width="900">
                                 <v-card class="" v-if="uploadDlg">
-                                    <v-card-title>
+                                    <v-toolbar>
                                         <v-spacer></v-spacer>
-                                        <v-btn fab text @click="cancelAppend">
-                                            <v-icon>mdi-close</v-icon>
-                                        </v-btn>
-                                    </v-card-title>
+                                        <v-btn icon="mdi-close" @click="cancelAppend"></v-btn>
+                                    </v-toolbar>
                                     <v-card-text class="align-center">
 
 
@@ -316,61 +303,56 @@
 
 
                                     </v-card-text>
-                                    <v-card-actions>
+                                    <v-card-actions class="pa-4">
                                         <v-spacer></v-spacer>
                                         <v-btn @click="cancelAppend" text>{{ _('Cancel') }}</v-btn>
-                                        <v-btn @click="appendFiles" color="primary">{{ _('Add') }}</v-btn>
+                                        <v-btn @click="appendFiles" variant="elevated" color="primary">{{ _('Add') }}</v-btn>
                                         <v-spacer></v-spacer>
                                     </v-card-actions>
                                 </v-card>
 
                             </v-dialog>
-                            <v-snackbar v-model="snackbar" class="">
-                                <div class="d-flex justify-space-between align-center">
-                                    ${snackMessage}
-
-                                    <v-btn icon fab small color="white" text @click="snackbar = false">
-                                        <v-icon>mdi-close</v-icon>
-                                    </v-btn>
-                                </div>
-                            </v-snackbar>
-
-
-                        </v-col>
-                    </v-row>
-                </v-container>
             </v-main>
-            {% include 'footer.html' %}
-
-            <v-overlay v-model="loading">
 
 
-            </v-overlay>
-        </v-app>
-    </div>
+            <v-overlay v-model="loading">     </v-overlay>
 
-    <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.ETL_VID_EXT) }}'></div>
+
 
 {% endblock %}
+{% block outside %}
+    <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.ETL_VID_EXT) }}'></div>
+{% endblock %}
 {% block js %}
+    <script src="/static/js/videojs/video.min.js"></script>
 
-    <script src="/static/js/dropzone/vue2Dropzone.js"></script>
+
+    <script src="/static/js/dropzone.min.js"></script>
+    <script src="/static/js/components/VueDropzone.js"></script>
+
+    <script src="/static/js/components/SearchField.js" ></script>
+
+
+
+
+
 
 
     <script>
         window.__OCR_ENABLED__ = ('{{ config.OCR_ENABLED }}' === 'True');
         window.__ETL_PATH_IMPORT__ = ('{{ config.ETL_PATH_IMPORT }}' === 'True');
 
-        const app = new Vue({
-            el: "#app",
-            vuetify: vuetify,
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
             delimiters: delimiters,
+            mixins: [globalMixin],
+            
             data: () => ({
                 drawer: drawer,
                 mode: null,
-                sideNav: sideNav,
-                snackbar: false,
-                snackMessage: '',
                 loading: false,
                 status: '',
                 batch_id: '',
@@ -393,7 +375,7 @@
                 selAllDisabled: true,
 
                 ploader: true,
-                step: 1,
+                step: 0,
                 uploadDlg: null,
                 selectDlg: null,
                 selectedPath: '',
@@ -403,10 +385,7 @@
                     page: 1,
                     itemsPerPage: 100
                 },
-                footerProps: {
-                    itemsPerPageOptions: itemsPerPageOptions,
-                    itemsPerPageText: "{{ _('Rows per page')}}"
-                },
+
 
                 headers: [
                     {text: "{{_('Name')}}", value: 'filename', sortable: false},
@@ -436,7 +415,7 @@
                 }
             }),
             components: {
-                vueDropzone: vue2Dropzone
+                vueDropzone: VueDropzone,
             },
 
             computed: {},
@@ -476,7 +455,7 @@
                 uploadSuccess(dzfile) {
 
                     // pick file from dropzone files list
-                    const needle = this.$refs.dropzone.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
+                    const needle = this.$refs.dropzone.dz.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
 
 
                     const file = parseResponse(needle);
@@ -532,8 +511,7 @@
 
                     }).catch(error => {
                         if (error.response) {
-                            this.showSnack(error.response.data)
-                            this.snackbar = true;
+                            this.showSnack(error.response.data);
                         }
                     }).finally(() => {
                         this.selectDlg = false;
@@ -546,10 +524,6 @@
                     //pass for now
                 },
 
-                showSnack(message) {
-                    this.snackbar = true;
-                    this.snackMessage = message
-                },
                 refresh() {
 
                 },
@@ -566,12 +540,17 @@
 
                 },
 
-                stepTwo() {
-                    this.step = 2;
+                toStepOne() {
+                    this.step = "1";
                 },
+
+                toStepTwo() {
+                    this.step = "2";
+                },
+
                 processFiles() {
 
-                    this.step = 3;
+                    this.step = "3";
 
                     let files;
                     if (this.mode == 1) {
@@ -622,5 +601,13 @@
                 }
             }
         });
+
+        app.component('search-field', SearchField);
+        app.component('location-search-field', LocationSearchField);
+
+        app.use(vuetify).mount('#app');
+
+
+        window.app = app;
     </script>
 {% endblock %}

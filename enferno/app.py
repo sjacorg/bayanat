@@ -2,10 +2,11 @@
 
 import pandas as pd
 from flask import Flask, render_template, current_app
-from flask_security import current_user
 from flask_login import user_logged_in, user_logged_out
 from flask_security import Security, SQLAlchemyUserDatastore
+from flask_security import current_user
 
+from enferno.admin.constants import Constants
 import enferno.commands as commands
 from enferno.admin.models import (
     Bulletin,
@@ -28,21 +29,23 @@ from enferno.admin.models import (
     Settings,
     GeoLocation,
 )
-from enferno.user.models import WebAuthn
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import cache, db, session, babel, rds, debug_toolbar
+from enferno.extensions import db, session, babel, rds, debug_toolbar
 from enferno.public.views import bp_public
 from enferno.settings import Config
 from enferno.user.forms import ExtendedRegisterForm, ExtendedLoginForm
 from enferno.user.models import User, Role
+from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
 
 
 def get_locale():
     """
     Sets the system global language.
-    :return: system language from the current session.
+
+    Returns:
+        System language from the current session.
     """
     default = current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
 
@@ -53,12 +56,21 @@ def get_locale():
 
 
 def create_app(config_object=Config):
+    """
+    Create a Flask application using the app factory pattern.
+
+    Args:
+        config_object: Configuration object to use.
+
+    Returns:
+        Flask application instance.
+    """
     app = Flask(__name__)
+    register_errorhandlers(app)
     app.config.from_object(config_object)
+    register_constants(app)
     register_blueprints(app)
     register_extensions(app)
-
-    register_errorhandlers(app)
     register_shellcontext(app)
     register_commands(app)
     register_signals(app)
@@ -66,7 +78,12 @@ def create_app(config_object=Config):
 
 
 def register_extensions(app):
-    cache.init_app(app)
+    """
+    Register Flask extensions.
+
+    Args:
+        app: Flask application instance
+    """
     db.init_app(app)
     debug_toolbar.init_app(app)
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, webauthn_model=WebAuthn)
@@ -87,10 +104,15 @@ def register_extensions(app):
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
 
-    return None
-
 
 def register_signals(app):
+    """
+    Register signals for the application.
+
+    Args:
+        app: Flask application instance
+    """
+
     @user_logged_in.connect_via(app)
     def _after_login_hook(sender, user, **extra):
         # clear login counter
@@ -112,6 +134,12 @@ def register_signals(app):
 
 
 def register_blueprints(app):
+    """
+    Register Flask blueprints.
+
+    Args:
+        app: Flask application instance
+    """
     app.register_blueprint(bp_public)
     app.register_blueprint(bp_user)
     app.register_blueprint(admin)
@@ -133,21 +161,14 @@ def register_blueprints(app):
         except ImportError as e:
             print(e)
 
-    return None
-
-
-def register_errorhandlers(app):
-    def render_error(error):
-        error_code = getattr(error, "code", 500)
-        return render_template("{0}.html".format(error_code)), error_code
-
-    for errcode in [401, 404, 500]:
-        app.errorhandler(errcode)(render_error)
-    return None
-
 
 def register_shellcontext(app):
-    """Register shell context objects."""
+    """
+    Register shell context objects.
+
+    Args:
+        app: Flask application instance
+    """
 
     def shell_context():
         """Shell context objects."""
@@ -182,8 +203,12 @@ def register_shellcontext(app):
 
 
 def register_commands(app):
-    """Register Click commands."""
+    """
+    Register Click commands.
 
+    Args:
+        app: Flask application instance
+    """
     app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create_db)
     app.cli.add_command(commands.import_data)
@@ -193,3 +218,49 @@ def register_commands(app):
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
+
+
+def register_errorhandlers(app):
+    """
+    Register error handlers for the application.
+
+    Args:
+        app: Flask application instance
+    """
+
+    def render_error(error):
+        error_code = getattr(error, "code", 500)
+        return render_template(f"{error_code}.html"), error_code
+
+    for errcode in [401, 404, 500]:
+        app.errorhandler(errcode)(render_error)
+
+    app.errorhandler(Exception)(handle_uncaught_exception)
+
+
+def handle_uncaught_exception(e):
+    """
+    Global uncaught error handler for the application.
+
+    Args:
+        e: exception object
+
+    Returns:
+        error message
+    """
+    from werkzeug.exceptions import HTTPException
+    from flask import request, current_app
+    from flask_security.decorators import current_user
+
+    if isinstance(e, HTTPException) and e.code < 500:
+        return e.get_response()
+
+    current_app.logger.error(
+        f"user_id: {current_user.id if hasattr(current_user, 'id') else None} endpoint: {request.path if request else None}",
+        exc_info=True,
+    )
+    return "Internal Server Error", 500
+
+
+def register_constants(app):
+    app.config["CONSTANTS"] = Constants

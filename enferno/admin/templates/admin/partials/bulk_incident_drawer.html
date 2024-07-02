@@ -1,29 +1,21 @@
 <v-navigation-drawer
         v-model="bulkIncidentDrawer"
-        clipped
-        right
+       clipped
+        location="right"
         temporary
         width="440"
-        app
 >
-    <validation-observer v-slot="{invalid}">
-        <v-card flat color="grey lighten-3" class="mx-auto pa-3">
-            <v-card-title>
-                {{ _('Bulk Update') }}
-            </v-card-title>
-            <v-btn
-                    @click="bulkIncidentDrawer=false"
-                    fab
-                    absolute
-                    top
-                    right
-                    x-small
-                    text
-                    class="mt-6"
+    <v-card>
+       <v-toolbar>
+            <v-toolbar-title>{{ _('Bulk Update') }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+                <v-btn
+                    @click="bulkIncidentDrawer = false"
+                    variant="text"
+                    icon="mdi-close"
             >
-                <v-icon>mdi-close</v-icon>
-            </v-btn
-            >
+            </v-btn>
+            </v-toolbar>
             <v-card-text>
                 <v-autocomplete
                         v-model="bulk.assigned_to_id"
@@ -31,8 +23,8 @@
                         :items="users"
                         @input.native="searchUsers"
                         @focus="searchUsers"
-                        outline
-                        item-text="name"
+                        variant="outlined"
+                        item-title="name"
                         item-value="id"
                         clearable
                 >
@@ -46,8 +38,8 @@
                         :items="users"
                         @input.native="searchUsers"
                         @focus="searchUsers"
-                        outline
-                        item-text="name"
+                        variant="outlined"
+                        item-title="name"
                         item-value="id"
                         clearable
                 >
@@ -57,7 +49,7 @@
 
                 <v-select
                         :items="statuses"
-                        item-text="tr"
+                        item-title="tr"
                         v-model="bulk.status"
                         item-value="en"
                         label="{{ _('Status') }}"
@@ -69,10 +61,10 @@
                 <div class="d-flex">
                     <search-field
                             api="/admin/api/roles/"
-                            item-text="name"
+                            item-title="name"
                             item-value="id"
                             :multiple="true"
-                            label="{{ _('Access Roles') }}"
+                            label="{{ _('Access Groups') }}"
                             v-model="bulk.roles"
                     ></search-field>
                     <v-checkbox small v-model="bulk.rolesReplace" label="{{ _('Replace') }}"></v-checkbox>
@@ -85,8 +77,6 @@
             </v-card-text>
             
             <v-card-text>
-                <validation-provider name="Comments" rules="required" v-slot="{ errors }">
-
                     <v-textarea
                             v-model="bulk.comments"
                             label="{{ _('Comments') }}"
@@ -94,15 +84,12 @@
                     >
 
                     </v-textarea>
-                    <span class="orange--text"> ${errors[0]}</span>
-                </validation-provider>
             </v-card-text>
 
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn :disabled="invalid" @click="bulk_update" color="primary">{{ _('Bulk Update Incidents') }}</v-btn>
+                <v-btn @click="bulk_update" color="primary" variant="elevated">{{ _('Bulk Update Incidents') }}</v-btn>
                 <v-spacer></v-spacer>
             </v-card-actions>
         </v-card>
-    </validation-observer>
 </v-navigation-drawer>

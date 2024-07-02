@@ -1,4 +1,4 @@
-Vue.component('export-download', {
+const ExportDownload = Vue.defineComponent({
   props: {
     item: {},
     i18n: {},
@@ -17,6 +17,7 @@ Vue.component('export-download', {
 
   mounted: function () {
     this.setupInterval();
+    console.log(this.i18n)
   },
 
   methods: {
@@ -48,6 +49,7 @@ Vue.component('export-download', {
     },
   },
   template: `
+
           <div>
             <v-progress-circular v-if="item.status === 'Processing'"
                                  indeterminate
@@ -55,29 +57,41 @@ Vue.component('export-download', {
                                  width="2"
                                  color="primary"
             ></v-progress-circular>
+            <v-tooltip :text="item.status">
+            <template #activator="{props}">
+            <v-icon 
+                    v-if="item.status==='Pending'">mdi-clock-time-eleven-outline v-bind="props"
+            </v-icon>
 
-            <v-icon v-tippy content="Pending"
-                    v-if="item.status==='Pending'">mdi-clock-time-eleven-outline
+            <v-icon 
+                    v-if="item.status==='Rejected'" color="error">mdi-cancel v-bind="props"
             </v-icon>
-            <v-icon v-tippy content="Not Approved"
-                    v-if="item.status==='Rejected'" color="error">mdi-cancel
+            <v-icon 
+                    v-if="item.status==='Failed'" color="error">mdi-alert-circle v-bind="props"
             </v-icon>
-            <v-icon v-tippy content="Failed"
-                    v-if="item.status==='Failed'" color="error">mdi-alert-circle
-            </v-icon>
-            <v-icon v-tippy content="Expired"
+            <v-icon 
                     v-if="item.status==='Expired'"
                     color="grey">mdi-close-circle
+                    v-bind="props"
             </v-icon>
+            </template>
+            </v-tooltip>
+            <v-tooltip location="top" :text="i18n.download_">
+            <template #activator="{props}">
+            <v-btn @click.stop="" 
+                  v-bind="props"
+                   variant="text"
+                   download 
+                   :href="'/export/api/exports/download?exportId=' + encodeURIComponent(this.item.uid)"
+                   v-if="item.status === 'Ready'" icon="mdi-download-circle" color="success">
 
-            <v-btn @click.stop="" v-tippy content="Download"
-                   download :href="'/export/api/exports/download?exportId=' + encodeURIComponent(this.item.uid)"
-                   v-if="item.status === 'Ready'" icon color="success">
-
-              <v-icon>mdi-download-circle</v-icon>
+              
             </v-btn>
+            </template>
+            </v-tooltip>
 
-          </div>
 
-        `,
+      </div>
+
+    `,
 });

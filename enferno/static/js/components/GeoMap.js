@@ -1,12 +1,14 @@
-Vue.component('geo-map', {
+const GeoMap = Vue.defineComponent({
+  mixins: [globalMixin],
   props: {
     title: String,
-    value: {},
-
+    modelValue: Object,
     mapHeight: {
+      type: Number,
       default: 300,
     },
     mapZoom: {
+      type: Number,
       default: 10,
     },
     editMode: {
@@ -17,38 +19,52 @@ Vue.component('geo-map', {
       type: Boolean,
       default: false,
     },
-    others: [],
+    others: {
+      type: Array,
+      default: () => [],
+    },
   },
+  emits: ['update:modelValue'],
 
   computed: {
-    map() {
-      return this.$refs.map.mapObject;
+    mapStyle() {
+      return {
+        height: this.mapHeight + 'px',
+        width: '100%',
+      };
     },
 
-    mapCenter() {
-      if (this.lat && this.lng) {
-        return [this.lat, this.lng];
-      }
-      return geoMapDefaultCenter;
+    mapCenter: {
+      get() {
+        if (this.lat && this.lng) {
+          return [this.lat, this.lng];
+        }
+        return geoMapDefaultCenter;
+      },
+      set(value) {
+        [this.lat, this.lng] = value;
+        this.emitValue();
+      },
     },
 
-    extra() {
-      // computed property to display other markers, it should exclude the main marker
-      if (this.others && this.value) {
-        // console.log(this.others.filter(x=> x.lat!=this.value.lat && x.lng != this.value.lng));
-        return this.others.filter((x) => x.lat != this.value.lat && x.lng != this.value.lng);
-      }
-      return [];
+    additionalMarkers() {
+      return this.others && this.modelValue
+        ? this.others.filter(
+            ({ lat, lng }) => lat !== this.modelValue.lat || lng !== this.modelValue.lng,
+          )
+        : [];
     },
   },
 
   data: function () {
     return {
+      mapId: 'map-' + this.$.uid,
+      map: null,
       mapKey: 0,
-      lat: this.value && this.value.lat,
-      lng: this.value && this.value.lng,
-      radius: this.value && this.value.radius ? this.value.radius : 1000, // Default to 1000
-
+      lat: this.modelValue?.lat,
+      lng: this.modelValue?.lng,
+      radius: this.modelValue?.radius || 1000,
+      marker: null,
       subdomains: null,
       mapsApiEndpoint: mapsApiEndpoint,
 
@@ -66,101 +82,245 @@ Vue.component('geo-map', {
   },
 
   watch: {
-    value(val) {
-      if (!val) {
-        this.lat = undefined;
-        this.lng = undefined;
-        this.radius = 100; // reset
-        return;
-      }
-      // Prevent string or negative radius on backend
-      if (typeof val.radius !== 'string' && val.radius >= 0) {
-        this.radius = val.radius;
-        this.clearAddRadiusCircle();
-      }
-
-      // Only send coordinate pairs to backend
-      if (val.lat && val.lng) {
-        this.lat = val.lat;
-        this.lng = val.lng;
+    lat(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.updateMap();
+        this.emitValue();
       }
     },
-
-    lat: {
-      handler: 'broadcast',
+    lng(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.updateMap();
+        this.emitValue();
+      }
     },
-
-    lng: {
-      handler: 'broadcast',
+    radius(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.updateRadiusCircle();
+        this.emitValue();
+      }
     },
+      modelValue: {
+        deep: true,
+        immediate: true,
+        handler(newVal, oldVal) {
+          if (!newVal) {
+            this.lat = undefined;
+            this.lng = undefined;
+            this.radius = 1000; // reset
+            return;
+          }
 
-    radius: {
-      handler: 'broadcast',
-    },
+          // Update lat if different
+          if (newVal.lat !== this.lat) {
+            this.lat = newVal.lat;
+          }
+
+          // Update lng if different
+          if (newVal.lng !== this.lng) {
+            this.lng = newVal.lng;
+          }
+
+          // Prevent string or negative radius on backend and update radius if different
+          if (typeof newVal.radius !== 'string' && newVal.radius >= 0 && newVal.radius !== this.radius) {
+            this.radius = newVal.radius;
+            this.clearAddRadiusCircle();
+          }
+        },
+      }
+
   },
 
   mounted() {
-    window.addEventListener('resize', this.fixMap);
-
-    this.fixMap();
-    this.broadcast();
-    this.map.addControl(
-      new L.Control.Fullscreen({
-        title: {
-          false: 'View Fullscreen',
-          true: 'Exit Fullscreen',
-        },
-      }),
-    );
-    this.satellite = L.gridLayer.googleMutant({
-      type: 'satellite', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
-    });
+    this.initMap();
+    const { lat, lng, radius = 1000 } = this.modelValue || {};
+    if (lat && lng) {
+      this.lat = lat;
+      this.lng = lng;
+      this.radius = radius;
+      this.setOrUpdateMarker(lat, lng);
+      this.updateRadiusCircle();
+      // add additional markers
+      this.addAdditionalMarkers();
+    } else {
+      // Set default center if lat and lng are not provided
+      this.map.setView(geoMapDefaultCenter, 13);
+    }
   },
 
   // clean up resize event listener
-  beforeDestroy() {
-    window.removeEventListener('resize', this.fixMap);
-  },
 
   methods: {
+    initMap() {
+      // Create the map instance
+      this.map = L.map(this.mapId, {
+        center: this.mapCenter,
+        zoom: 13,
+        scrollWheelZoom: false,
+      });
+
+      // Add the OpenStreetMap tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(this.map);
+
+      // Add the fullscreen control with improved readability
+      this.map.addControl(
+        new L.Control.Fullscreen({
+          title: {
+            false: this.$root.translations.enterFullscreen_,
+            true: this.$root.translations.exitFullscreen_,
+          },
+        }),
+      );
+
+      // Initialize the satellite layer (optional: specify options if needed)
+      this.satellite = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+
+      // Add a click event listener to the map for marker setting
+      this.map.on('click', this.setMarker);
+
+      // Update the map with initial lat, lng, and radius
+      this.updateMap();
+
+      // Ensure the map size adjusts to window resizing for responsive behavior
+      const resizeListener = () => this.fixMap();
+      window.addEventListener('resize', resizeListener);
+
+      // Immediately adjust map size to fit container
+      this.fixMap();
+    },
+    addAdditionalMarkers() {
+      this.additionalMarkers.forEach((marker) => {
+        L.marker([marker.lat, marker.lng], {
+          draggable: false,
+          opacity: 0.4,
+        }).addTo(this.map);
+      });
+    },
+
+    updateMap() {
+      if (this.lat && this.lng && this.map) {
+        this.map.setView([this.lat, this.lng]);
+        this.setMarker({ latlng: { lat: this.lat, lng: this.lng } });
+      } else {
+        this.clearMarker();
+      }
+    },
+
+    updateRadiusCircle() {
+      if (this.radiusControls && this.lat && this.lng) {
+        if (this.radiusCircle) {
+          this.map.removeLayer(this.radiusCircle);
+        }
+        this.radiusCircle = L.circle([this.lat, this.lng], {
+          radius: this.radius,
+        });
+        this.map.addLayer(this.radiusCircle); // Add this line
+        debounce(() => {
+          if (this.radiusCircle) {
+            const bounds = this.radiusCircle.getBounds();
+            this.map.fitBounds(bounds);
+          }
+        }, 250)();
+      } else {
+        this.clearRadiusCircle();
+      }
+    },
+
     fixMap() {
       this.$nextTick(() => {
         if (this.map) {
           this.map.invalidateSize();
         }
 
-        // Add error handling for the tile layer
-        L.tileLayer(this.mapsApiEndpoint)
-          .on('error', function (error) {
+        if (!this.tileLayer) {
+          this.tileLayer = L.tileLayer(this.mapsApiEndpoint, {
+            attribution: this.attribution,
+          }).addTo(this.map);
+
+          this.tileLayer.on('error', function (error) {
             console.error('Tile layer error:', error);
-          })
-          .addTo(this.map);
+          });
+        }
       });
     },
 
     toggleSatellite() {
-      if (this.defaultTile) {
-        this.satellite.addTo(this.map);
-        this.defaultTile = false;
-      } else {
-        this.defaultTile = true;
-        this.map.removeLayer(this.satellite);
+      if (!this.satellite) {
+        // Initialize the satellite layer once and reuse it
+        this.satellite = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        });
       }
 
-      // Working hack : redraw the tile layer component via Vue key
-      this.mapKey += 1;
+      if (this.defaultTile) {
+        this.map.addLayer(this.satellite);
+        this.defaultTile = false;
+      } else {
+        this.map.removeLayer(this.satellite);
+        this.defaultTile = true;
+      }
     },
 
-    clearMarker(evt) {
-      this.lat = this.lng = null;
-      this.map.removeLayer(this.radiusCircle);
+    clearMarker() {
+      if (this.marker) {
+        this.map.removeLayer(this.marker);
+        this.marker = null; // Clear the reference
+      }
+      if (this.radiusCircle) {
+        this.map.removeLayer(this.radiusCircle);
+        this.radiusCircle = null;
+      }
+      // Reset lat, lng
+      this.lat = null;
+      this.lng = null;
     },
 
     setMarker(evt) {
       if (this.editMode) {
-        this.lat = evt.latlng.lat;
-        this.lng = evt.latlng.lng;
+        // Clear existing marker
+        if (this.marker) {
+          this.clearMarker();
+        }
+
+        // Set new marker
+        const { lat, lng } = evt.latlng;
+        this.setOrUpdateMarker(lat, lng);
+        this.updateRadiusCircle(); // Add this line
+
+        this.broadcast();
       }
+    },
+
+    setOrUpdateMarker(lat, lng) {
+      // Clear existing marker
+      if (this.marker) {
+        this.map.removeLayer(this.marker);
+      }
+
+      // Update lat and lng
+      this.lat = lat;
+      this.lng = lng;
+      // Set new marker
+      this.marker = L.marker([lat, lng]).addTo(this.map);
+    },
+
+    clearRadiusCircle() {
+      if (this.radiusCircle) {
+        this.map.removeLayer(this.radiusCircle);
+        this.radiusCircle = null;
+      }
+    },
+
+    emitValue() {
+      const newValue =
+        this.lat !== null && this.lng !== null
+          ? { lat: this.lat, lng: this.lng, radius: this.radius }
+          : null;
+      this.$emit('update:modelValue', newValue);
     },
 
     updateLocation(point) {
@@ -188,8 +348,7 @@ Vue.component('geo-map', {
       }
       this.radiusCircle = L.circle([this.lat, this.lng], {
         radius: this.radius,
-      });
-      this.radiusCircle.addTo(this.map);
+      }).addTo(this.map);
 
       debounce(() => {
         const bounds = this.radiusCircle.getBounds();
@@ -198,89 +357,64 @@ Vue.component('geo-map', {
     },
 
     broadcast() {
-      // Only return obj if both lat,lng values present
-      if (this.lat && this.lng) {
-        const obj = { lat: this.lat, lng: this.lng };
-        if (this.radiusControls && this.radius) {
-          obj.radius = this.radius;
-        }
-        this.$emit('input', obj);
-        return;
-      }
-
-      this.$emit('input', undefined);
+      const newValue =
+        this.lat !== null && this.lng !== null
+          ? { lat: this.lat, lng: this.lng, radius: this.radius }
+          : null;
+      this.$emit('update:modelValue', newValue);
     },
   },
   template: `
-          <v-card class="pa-1" elevation="0">
+      <v-card class="pa-1" elevation="0">
+        <v-card-text>
+          <h3 v-if="title" class="mb-5">{{ title }}</h3>
+          <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
+            <v-text-field  type="number" min="-90" max="90" label="Latitude"
+                          :rules="[rules.required]"
+                          v-model.number="lat"></v-text-field>
+            <v-text-field  type="number" min="-180" max="180" label="Longitude"
+                          :rules="[rules.required]"
+                          v-model.number="lng"></v-text-field>
+            <v-btn icon variant="flat" v-if="lat && lng" @click="clearMarker">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </div>
 
-          <v-card-text>
-            <h3 v-if="title" class=" mb-5">{{ title }}</h3>
-            <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
-              <v-text-field dense type="number" min="-90" max="90" :label="translations.latitude_"
-                            v-model.number="lat"></v-text-field>
-              <v-text-field dense type="number" min="-180" max="180" :label="translations.longitude_"
-                            v-model.number="lng"></v-text-field>
-              <v-btn v-if="lat&&lng" small @click="clearMarker" text fab>
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
-            </div>
-
-            <div v-if="editMode && radiusControls">
-                 
-            
-                <v-slider
-                    v-if="editMode && radiusControls"
-                    class="mt-1 align-center"
-                    :min="100"
-                    :max="100000"
-                    :step="100"
-                    thumb-label
-                    track-color="gray lighten-2"
+          <div v-if="editMode && radiusControls" class="mt-1 align-center">
+            <v-slider
+                :min="100"
+                :max="100000"
+                :step="100"
+                color="primary"
+                thumb-label
+                track-color="gray lighten-2"
+                v-model.number="radius"
+                label="Radius (meters)">
+              <template v-slot:append>
+                <v-text-field
+                    readonly
+                    variant="solo-filled"
+                    style="width: 150px;"
                     v-model.number="radius"
-                    :label="translations.radius_"
-                >
-                    <template v-slot:append>  
-                        <v-text-field 
-                            readonly
-                            style="max-width:200px" 
-                            v-model.number="radius"
-                            :suffix="translations.meters_" 
-                            outlined 
-                            dense 
-                        >
-                        </v-text-field>
-                    </template>
-                  
-                </v-slider>
-              </div>
+                    suffix="meters"
+                    type="number"
+                    :rules="[rules.required]"
+                    outlined
+                    dense>
+                </v-text-field>
+              </template>
+            </v-slider>
+          </div>
 
-            <l-map @click="setMarker" class="mt-2" ref="map" :zoom="mapZoom"
-                   :style="'border-radius: 8px;resize: vertical;height:'+ mapHeight + 'px'"
-                   :center="mapCenter"
-                   :options="{scrollWheelZoom:false}">
-              <l-tile-layer :key="mapKey" v-if="defaultTile" :attribution="attribution" :url="mapsApiEndpoint"
-                            :subdomains="subdomains"></l-tile-layer>
-              <l-control class="example-custom-control">
-                <v-btn v-if="__GOOGLE_MAPS_API_KEY__" @click="toggleSatellite" small fab>
-                  <img src="/static/img/satellite-icon.png" width="18">
-                </v-btn>
-              </l-control>
-              <l-marker
-                  v-if="lat && lng"
-                  @update:latLng="updateLocation"
-                  :lat-lng="[lat,lng]"
-                  :draggable="editMode"/>
-              <l-marker
-                  :draggable="false"
-                  opacity="0.4"
-                  v-for="marker in extra"
-                  :lat-lng="[marker.lat,marker.lng]"/>
-            </l-map>
+          <!-- Leaflet Map Container -->
+          <div ref="mapContainer"
+               :id="mapId"
+               class="leaflet-map"
+               :style="mapStyle"></div>
 
-          </v-card-text>
+        </v-card-text>
+      </v-card>
 
-          </v-card>
 
-        `,
+    `,
 });

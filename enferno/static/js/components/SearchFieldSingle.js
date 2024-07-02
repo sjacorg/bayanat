@@ -1,4 +1,4 @@
-Vue.component('search-field-single', {
+const SearchFieldSingle = Vue.defineComponent({
   props: [
     'value',
     'label',
@@ -44,7 +44,7 @@ Vue.component('search-field-single', {
                     :label="label"
                     v-model="model"
                     :items="items"
-                    :item-text="itemText"
+                    :item-title="itemText"
                     :item-value="itemValue"
                     prepend-inner-icon="mdi-magnify"
                     :disabled="disabled"

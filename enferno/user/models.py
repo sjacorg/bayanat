@@ -1,6 +1,9 @@
 import json
+from typing import Any
+from datetime import datetime
 from uuid import uuid4
 
+from flask import current_app, session
 from flask_security import UserMixin, RoleMixin
 from flask_security import current_user
 from flask_security.utils import hash_password
@@ -8,29 +11,56 @@ from sqlalchemy import JSON, ARRAY
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import Mutable
 
-from datetime import datetime
-from enferno.utils.base import BaseMixin
 from enferno.extensions import db, rds
 from enferno.settings import Config as cfg
-
-from sqlalchemy.ext.mutable import Mutable
+from enferno.utils.base import BaseMixin
 
 # Redis key namespace to set flag for forcing password reset
 SECURITY_KEY_NAMESPACE = "security:user"
 
 
 class MutableList(Mutable, list):
-    def append(self, value):
+    """Custom Mutable List class to track changes in the list."""
+
+    def append(self, value: Any) -> None:
+        """
+        Append a value to the list and mark the list as changed.
+
+        Args:
+            - value: The value to append to the list.
+
+        Returns:
+            None
+        """
         list.append(self, value)
         self.changed()
 
-    def pop(self, index=0):
+    def pop(self, index: int = 0) -> Any:
+        """
+        Pop a value from the list and mark the list as changed.
+
+        Args:
+            - index: The index of the value to pop.
+
+        Returns:
+            - The value that was popped from the list.
+        """
         value = list.pop(self, index)
         self.changed()
         return value
 
     @classmethod
-    def coerce(cls, key, value):
+    def coerce(cls, key: Any, value: Any) -> Any:
+        """
+        Coerce a value into a Mutable List.
+
+        Args:
+            - key: The key of the value.
+            - value: The value to coerce.
+
+        Returns:
+            - The coerced value as a Mutable List.
+        """
         if not isinstance(value, MutableList):
             if isinstance(value, list):
                 return MutableList(value)
@@ -47,10 +77,12 @@ roles_users = db.Table(
 
 
 class Role(db.Model, RoleMixin, BaseMixin):
+    """Role model"""
+
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(80), unique=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
     color = db.Column(db.String(10))
     description = db.Column(db.String(255))
 
@@ -66,7 +98,8 @@ class Role(db.Model, RoleMixin, BaseMixin):
 
     settings = db.Column(JSON)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Return a dictionary representation of the Role object."""
         return {
             "id": self.id,
             "name": self.name,
@@ -74,11 +107,21 @@ class Role(db.Model, RoleMixin, BaseMixin):
             "color": self.color or "",
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the Role object."""
         return json.dumps(self.to_dict())
 
-    def from_json(self, jsn):
-        self.name = jsn.get("name", "")
+    def from_json(self, jsn: dict) -> "Role":
+        """
+        Populate the Role object from a JSON dictionary.
+
+        Args:
+            - jsn: The JSON dictionary to populate the Role object from.
+
+        Returns:
+            - The Role object.
+        """
+        self.name = jsn.get("name")
         self.description = jsn.get("description", "")
         self.color = jsn.get("color")
         return self
@@ -88,6 +131,8 @@ class Role(db.Model, RoleMixin, BaseMixin):
 
 
 class WebAuthn(db.Model):
+    """WebAuthn model for user authentication"""
+
     id = db.Column(db.Integer, primary_key=True)
     credential_id = db.Column(db.LargeBinary(1024), index=True, nullable=False, unique=True)
     public_key = db.Column(db.LargeBinary(1024), nullable=False)
@@ -108,14 +153,16 @@ class WebAuthn(db.Model):
             nullable=False,
         )
 
-    def get_user_mapping(self):
+    def get_user_mapping(self) -> dict:
         """
-        Return the mapping from webauthn back to User
+        Return the mapping from webauthn back to User.
         """
         return dict(id=self.user_id)
 
 
 class User(UserMixin, db.Model, BaseMixin):
+    """User model"""
+
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
@@ -171,18 +218,18 @@ class User(UserMixin, db.Model, BaseMixin):
         value = rds.get(f"{SECURITY_KEY_NAMESPACE}:{self.id}")
         return value.decode() if value else None
 
-    def set_security_reset_key(self):
+    def set_security_reset_key(self) -> None:
         """Set the security reset key with a timestamp value"""
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         timestamp = int(datetime.utcnow().timestamp())
         rds.set(key, timestamp)
 
-    def unset_security_reset_key(self):
+    def unset_security_reset_key(self) -> None:
         """unSet the security reset key"""
         key = f"{SECURITY_KEY_NAMESPACE}:{self.id}"
         rds.delete(key)
 
-    def roles_in(self, roles):
+    def roles_in(self, roles: list) -> bool:
         chk = [self.has_role(r) for r in roles]
         return any(chk)
 
@@ -191,6 +238,23 @@ class User(UserMixin, db.Model, BaseMixin):
 
     def __repr__(self):
         return "%s %s %s" % (self.name, self.id, self.email)
+
+    def logout_other_sessions(self):
+        rds = current_app.config["SESSION_REDIS"]
+        current_session_id = session.sid
+        errors = []
+
+        for s in self.sessions:
+            if s.session_token == current_session_id:
+                continue  # Skip current session
+            try:
+                session_key = f"session:{s.session_token}"
+                if rds.exists(session_key):
+                    rds.delete(session_key)
+            except Exception as e:
+                errors.append(f"Failed to delete session {s.session_token}: {str(e)}")
+        if errors:
+            current_app.logger.error("Failed to delete some sessions: %s", errors)
 
     @property
     def secure_email(self):
@@ -231,12 +295,15 @@ class User(UserMixin, db.Model, BaseMixin):
             pass
         return f"user-{self.id}"
 
-    def can_access(self, obj):
+    def can_access(self, obj: Any) -> bool:
         """
-        check if user can access a specific entity
-        :param user: user to check
-        :param obj: entity (Bulletin, Actor etc ..)
-        :return: True or False based on access roles
+        check if user can access a specific entity.
+
+        Args:
+            - obj: The entity to check access for. Bulletin, Actor, Incident, etc.
+
+        Returns:
+            - bool: True if the user can access the entity, False otherwise.
         """
         # grant admin access always to restricted items
         if self.has_role("Admin"):
@@ -266,7 +333,16 @@ class User(UserMixin, db.Model, BaseMixin):
 
         return False
 
-    def from_json(self, item):
+    def from_json(self, item: dict) -> "User":
+        """
+        Populate the User object from a JSON dictionary.
+
+        Args:
+            - item: The JSON dictionary to populate the User object from.
+
+        Returns:
+            - The User object.
+        """
         self.email = item.get("email")
         self.username = item.get("username")
 
@@ -298,7 +374,7 @@ class User(UserMixin, db.Model, BaseMixin):
         self.active = item.get("active")
         return self
 
-    def to_compact(self):
+    def to_compact(self) -> dict:
         """
         Compact serializer for User class.
         Hides user data from users without
@@ -311,7 +387,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "active": self.active,
         }
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Main serializer for User class.
         """
@@ -332,7 +408,8 @@ class User(UserMixin, db.Model, BaseMixin):
             "force_reset": self.security_reset_key,
         }
 
-    def to_json(self):
+    def to_json(self) -> str:
+        """Return a JSON representation of the User object."""
         return json.dumps(self.to_dict())
 
     meta = {
@@ -340,3 +417,35 @@ class User(UserMixin, db.Model, BaseMixin):
         "indexes": ["-created_at", "email", "username"],
         "ordering": ["-created_at"],
     }
+
+
+class Session(db.Model, BaseMixin):
+    __tablename__ = "sessions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user = db.relationship("User", backref=db.backref("sessions", lazy=True))
+
+    session_token = db.Column(db.String(255), unique=True, nullable=False)
+    last_active = db.Column(db.DateTime)
+    expires_at = db.Column(db.DateTime)
+    ip_address = db.Column(db.String(255))
+
+    # Combined metadata field for location, browser, and operating system details
+    meta = db.Column(JSON)
+
+    is_active = db.Column(db.Boolean, default=True)  # To track if the session is currently active
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "session_token": self.session_token,
+            "last_active": self.last_active,
+            "expires_at": self.expires_at,
+            "ip_address": self.ip_address,
+            "meta": self.meta,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }

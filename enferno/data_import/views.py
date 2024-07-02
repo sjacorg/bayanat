@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import os
+from typing import Any, Literal, Optional
 
 import shortuuid
 from flask import request, Response, Blueprint, current_app, json
@@ -15,6 +16,7 @@ from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.tasks import etl_process_file, process_row
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.http_response import HTTPResponse
+import enferno.utils.typing as t
 
 imports = Blueprint(
     "imports",
@@ -30,7 +32,8 @@ PER_PAGE = 50
 
 @imports.before_request
 @auth_required("session")
-def data_import_before_request():
+def data_import_before_request() -> Optional[Response]:
+    """Function to check if user is authenticated before accessing the data import routes."""
     # only admins allowed to interact with these routes
     if not (current_user.has_role("Admin")):
         return HTTPResponse.FORBIDDEN
@@ -38,20 +41,29 @@ def data_import_before_request():
 
 @imports.route("/log/")
 @imports.get("/log/<int:id>")
-def data_import_dashboard(id=None):
+def data_import_dashboard(id: Optional[t.id] = None) -> str:
     """
-    Endpoint to render the log dashboard
-    :return: html page of the log dashbaord
+    Endpoint to render the log dashboard.
+
+    Args:
+        - id: id of the log.
+
+    Returns:
+        - html page of the log dashboard.
     """
     return render_template("import-log.html")
 
 
 @imports.get("/api/imports/<int:id>")
-def api_import_get(id):
+def api_import_get(id: t.id) -> Response | tuple[str, Literal[200]]:
     """
-    Endpoint to get a single log item
-    :param id: id of the log
-    :return: log in json format / success or error
+    Endpoint to get a single log item.
+
+    Args:
+        - id: id of the log.
+
+    Returns:
+        - log in json format / success or error.
     """
     data_import = DataImport.query.get(id)
 
@@ -62,11 +74,12 @@ def api_import_get(id):
 
 
 @imports.post("/api/imports/")
-def api_imports():
+def api_imports() -> Response:
     """
-    API endpoint to feed log request items in JSON format with paging
-    :param page: db query offset
-    :return: successful json feed or error
+    API endpoint to feed log request items in JSON format with paging.
+
+    Returns:
+        - successful json feed or error.
     """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
@@ -95,10 +108,12 @@ def api_imports():
 # Data Import Backend API
 @imports.route("/media/")
 @roles_required("Admin")
-def media_import():
+def media_import() -> Response | str:
     """
-    Endpoint to render the etl backend
-    :return: html page of the users backend.
+    Endpoint to render the etl backend.
+
+    Returns:
+        - html page of the etl backend.
     """
     if not current_app.config["ETL_TOOL"]:
         return HTTPResponse.NOT_FOUND
@@ -107,7 +122,13 @@ def media_import():
 
 @imports.post("/media/path/")
 @roles_required("Admin")
-def path_process():
+def path_process() -> (
+    Response
+    | tuple[Literal["Allowed import path is not configured correctly"], Literal[417]]
+    | tuple[Literal["Invalid path specified"], Literal[417]]
+    | tuple[str, Literal[200]]
+):
+    """API endpoint to process a path for media import."""
     # Check if path import is enabled and allowed path is set
     if (
         not current_app.config.get("ETL_PATH_IMPORT")
@@ -149,10 +170,12 @@ def path_process():
 
 @imports.post("/media/process")
 @roles_required("Admin")
-def etl_process():
+def etl_process() -> tuple[str, Literal[200]]:
     """
-    process a single file
-    :return: response contains the processing result
+    process a single file.
+
+    Returns:
+        - response contains the processing result
     """
 
     files = request.json.pop("files")
@@ -199,10 +222,12 @@ def etl_process():
 # CSV Tool
 @imports.route("/sheets/")
 @roles_required("Admin")
-def csv_dashboard():
+def csv_dashboard() -> Response | str:
     """
-    Endpoint to render the csv backend
-    :return: html page of the csv backend.
+    Endpoint to render the csv backend.
+
+    Returns:
+        - html page of the csv backend.
     """
     if not current_app.config.get("SHEET_IMPORT"):
         return HTTPResponse.NOT_FOUND
@@ -211,7 +236,12 @@ def csv_dashboard():
 
 @imports.post("/api/csv/upload")
 @roles_required("Admin")
-def api_local_csv_upload():
+def api_local_csv_upload() -> (
+    tuple[Literal["This file type is not allowed"], Literal[415]]
+    | tuple[Response, Literal[200]]
+    | tuple[str, Literal[417]]
+):
+    """API endpoint to upload a file for csv import."""
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
     # file pond sends multiple requests for multiple files (handle each request as a separate file )
     try:
@@ -237,18 +267,20 @@ def api_local_csv_upload():
 
 @imports.delete("/api/csv/upload/")
 @roles_required("Admin")
-def api_local_csv_delete():
+def api_local_csv_delete() -> str:
     """
-    API endpoint for removing files ::
-    :return:  success if file is removed
-    keeping uploaded sheets for now, used as a handler for http calls from filepond for now.
+    API endpoint for removing files
+
+    Returns:
+        - success if file is removed / keeping uploaded sheets for now, used as a handler for http calls from filepond for now.
     """
     return ""
 
 
 @imports.post("/api/csv/analyze")
 @roles_required("Admin")
-def api_csv_analyze():
+def api_csv_analyze() -> str | tuple[Literal["Problem parsing sheet file"], Literal[417]]:
+    """API endpoint to analyze a csv file."""
     # locate file
     filename = request.json.get("file").get("filename")
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
@@ -265,7 +297,8 @@ def api_csv_analyze():
 # Excel sheet selector
 @imports.post("/api/xls/sheets")
 @roles_required("Admin")
-def api_xls_sheet():
+def api_xls_sheet() -> str:
+    """API endpoint to get sheets from an excel file."""
     filename = request.json.get("file").get("filename")
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
 
@@ -277,7 +310,10 @@ def api_xls_sheet():
 
 @imports.post("/api/xls/analyze")
 @roles_required("Admin")
-def api_xls_analyze():
+def api_xls_analyze() -> (
+    tuple[Response, Literal[200]] | tuple[Literal["Problem parsing sheet file"], Literal[417]]
+):
+    """API endpoint to analyze an excel file."""
     # locate file
     filename = request.json.get("file").get("filename")
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
@@ -295,10 +331,12 @@ def api_xls_analyze():
 
 # Saved Searches
 @imports.route("/api/mappings/")
-def api_mappings():
+def api_mappings() -> tuple[str, Literal[200]]:
     """
-    Endpoint to get sheet mappings
-    :return: successful json feed of mappings or error
+    Endpoint to get sheet mappings.
+
+    Returns:
+        - successful json feed of mappings or error.
     """
     mappings = Mapping.query.all()
     return json.dumps([map.to_dict() for map in mappings]), 200
@@ -306,10 +344,16 @@ def api_mappings():
 
 @imports.post("/api/mapping/")
 @roles_accepted("Admin")
-def api_mapping_create():
+def api_mapping_create() -> (
+    tuple[dict[str, Any], Literal[200]]
+    | tuple[Literal["Error creating Mapping"], Literal[417]]
+    | tuple[Literal["Update request missing parameters data"], Literal[417]]
+):
     """
-    API Endpoint save a mapping object
-    :return: success if save is successful, error otherwise
+    API Endpoint save a mapping object.
+
+    Returns:
+        - success if save is successful, error otherwise.
     """
     d = request.json.get("data", None)
 
@@ -325,17 +369,29 @@ def api_mapping_create():
         if map.save():
             return {"message": f"Mapping #{map.id} created successfully", "id": map.id}, 200
         else:
-            return f"Error creating Mapping", 417
+            return "Error creating Mapping", 417
     else:
         return "Update request missing parameters data", 417
 
 
 @imports.put("/api/mapping/<int:id>")
 @roles_accepted("Admin")
-def api_mapping_update(id):
+def api_mapping_update(
+    id: t.id,
+) -> (
+    tuple[dict[str, Any], Literal[200]]
+    | tuple[Literal["Error updating Mapping"], Literal[417]]
+    | tuple[Literal["Update request missing parameters data"], Literal[417]]
+    | Response
+):
     """
-    API Endpoint update a mapping object
-    :return: success if save is successful, error otherwise
+    API Endpoint update a mapping object.
+
+    Args:
+        - id: id of the mapping object to update.
+
+    Returns:
+        - success if save is successful, error otherwise.
     """
     map = Mapping.query.get(id)
     if map:
@@ -349,7 +405,7 @@ def api_mapping_update(id):
             if map.save():
                 return {"message": f"Mapping #{map.id} updated successfully", "id": map.id}, 200
             else:
-                return f"Error updating Mapping", 417
+                return "Error updating Mapping", 417
         else:
             return "Update request missing parameters data", 417
 
@@ -359,10 +415,12 @@ def api_mapping_update(id):
 
 @imports.post("/api/process-sheet")
 @roles_accepted("Admin")
-def api_process_sheet():
+def api_process_sheet() -> tuple[str, Literal[200]]:
     """
-    API Endpoint invoke sheet import into target model via a CSV mapping
-    :return: success if save is successful, error otherwise
+    API Endpoint invoke sheet import into target model via a CSV mapping.
+
+    Returns:
+        - success if save is successful, error otherwise.
     """
     files = request.json.get("files")
     import_dir = Path(current_app.config.get("IMPORT_DIR"))

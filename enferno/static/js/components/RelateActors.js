@@ -1,5 +1,6 @@
-Vue.component('relate-actors', {
-  props: ['value', 'show', 'exids', 'i18n'],
+const RelateActors = Vue.defineComponent({
+  props: ['modelValue', 'show', 'exids', 'i18n'],
+  emits: ['update:modelValue', 'relate'],
   data: () => {
     return {
       q: {},
@@ -22,8 +23,8 @@ Vue.component('relate-actors', {
       deep: true,
     },
 
-    value: function (val) {
-      this.$emit('input', val);
+    modelValue: function (val) {
+      this.$emit('update:modelValue', val);
     },
   },
 
@@ -37,7 +38,7 @@ Vue.component('relate-actors', {
         })
         .catch((error) => {
           this.showActor = false;
-          this.showSnack("Oops! We couldn't find this item.");
+          this.showSnack(this.i18n.notFound_);
         });
     },
 
@@ -84,7 +85,7 @@ Vue.component('relate-actors', {
       this.search();
     },
     relateItem(item) {
-      this.results.removeById(item.id);
+      this.results = this.results.filter(result => result.id !== item.id);
       this.$emit('relate', item);
     },
   },
@@ -112,13 +113,11 @@ Vue.component('relate-actors', {
 
               <v-card :loading="loading">
 
-                <v-card-title class="handle">
-                  {{ i18n.advSearch_ }}
+                <v-toolbar class="handle">
+                    <v-toolbar-title>{{ i18n.advSearch_ }}</v-toolbar-title>
                   <v-spacer></v-spacer>
-                  <v-btn @click="visible=false" small text fab>
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
-                </v-card-title>
+                  <v-btn @click="visible=false" icon="mdi-close"></v-btn>
+                </v-toolbar>
 
                 <v-divider></v-divider>
 
@@ -132,7 +131,7 @@ Vue.component('relate-actors', {
 
                   <actor-result :i18n="i18n" v-for="(item, i) in results" :key="i" :actor="item" :show-hide="true">
                     <template v-slot:actions>
-                      <v-btn @click="relateItem(item)" small depressed color="primary">{{ i18n.relate_ }}
+                      <v-btn @click="relateItem(item)" variant="elevated" color="primary">{{ i18n.relate_ }}
                       </v-btn>
                     </template>
                   </actor-result>

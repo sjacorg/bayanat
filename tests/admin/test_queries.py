@@ -152,7 +152,7 @@ def test_put_query_endpoint(
     uid = get_uid_from_client(users, client_fixture)
     update_query_user(create_query.id, uid)
     response = client_.put(
-        f"/admin/api/query/{create_query.name}",
+        f"/admin/api/query/{create_query.id}",
         headers={"Content-Type": "application/json"},
         json={"q": {"new_key": "new_val"}},
     )
@@ -182,7 +182,7 @@ def test_delete_query_endpoint(
     uid = get_uid_from_client(users, client_fixture)
     update_query_user(create_query.id, uid)
     response = client_.delete(
-        f"/admin/api/query/{create_query.name}",
+        f"/admin/api/query/{create_query.id}",
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == expected_status

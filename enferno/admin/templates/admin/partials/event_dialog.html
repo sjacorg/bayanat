@@ -1,100 +1,98 @@
-<v-dialog v-model="eventDialog" max-width="780px">
-  <template v-slot:activator="{ on }">
-    <v-card outlined color="grey lighten-3">
-      <v-card-title>
-        <v-icon left>mdi-calendar</v-icon>
-        {{_('Events')}}
-        <v-spacer></v-spacer>
+<v-card >
+    <v-toolbar>
+        <v-toolbar-title>{{_('Events')}}</v-toolbar-title>
+       <v-spacer></v-spacer>
         <v-btn
-          class="mx-2"
-          depressed
-          x-small
-          fab
-          right
-          top
-          color="teal lighten-2"
-          dark
-          v-on="on"
-          ><v-icon>mdi-plus-circle</v-icon></v-btn
-        >
-      </v-card-title>
+                color="primary"
+            @click="eventDialog=true"
+            icon="mdi-plus-circle"
+        ></v-btn>
+
+    </v-toolbar>
+
 
       <v-card-text>
-        <v-layout wrap>
-          <v-flex
-            class="pa-2"
-            md6
+        <v-container  fluid>
+            <v-row>
+
+
+          <v-col
+            class="pa-2 d-flex"
+            md="6"
             v-for="(item,index) in editedItem.events"
             :key="index"
           >
            <event-card :i18n="translations" :number="index+1" :event="item">
 
               <template v-slot:actions>
-                <v-card-actions>
+                <v-card-actions class="justify-end">
+
                 <v-btn
                 @click="editEvent($event,item,index)"
-                x-small
-                fab
-                outlined
-                color="grey"
-                ><v-icon>mdi-pencil</v-icon></v-btn
-              >
+                size="small"
+                icon="mdi-pencil"
+                ></v-btn>
               <v-btn
                 @click="removeEvent($event,index)"
-                x-small
-                fab
-                outlined
-                color="red lighten-3"
-                ><v-icon>mdi-delete-sweep</v-icon></v-btn
+                size="small"
+                color="red"
+                icon="mdi-delete-sweep"
+
+                ></v-btn
               >
             </v-card-actions>
               </template>
            </event-card>
-          </v-flex>
-        </v-layout>
+          </v-col>
+                </v-row>
+        </v-container>
       </v-card-text>
     </v-card>
-  </template>
-  <v-card>
-    <v-card-title>
-      <span class="headline">{{_('Event')}}</span>
-    </v-card-title>
+
+
+<v-dialog v-model="eventDialog" max-width="880px">
+  <v-card >
+      <v-toolbar title="{{_('Event')}}">
+
+
+      </v-toolbar>
+
     <v-card-text>
       <v-container>
         <v-row>
           <v-col cols="12" md="6">
-            <v-card class="d-flex" flat>
+            <v-sheet class="d-flex">
               <v-text-field
                 v-if="eventTitle__"
                 v-model="editedEvent.title"
                 label="{{_('Title')}}"
+                variant="solo"
+                append-inner-icon="mdi-web"
+                @click:append-inner="eventTitle__=!eventTitle__"
               ></v-text-field>
 
               <v-text-field
                 v-else
                 v-model="editedEvent.title_ar"
                 label="{{_('Title (AR)')}}"
-                background-color="lime lighten-5"
+                variant="solo"
+                append-inner-icon="mdi-web"
+                @click:append-inner="eventTitle__=!eventTitle__"
               ></v-text-field>
 
-              <v-btn
-                color="grey lighten-2"
-                outlined
-                x-small
-                fab
-                class="swh d-inline"
-                @click="eventTitle__=!eventTitle__"
-                ><v-icon>mdi-web</v-icon></v-btn
-              >
-            </v-card>
+
+            </v-sheet>
           </v-col>
 
           <v-col cols="12" md="6">
-            <v-card class="d-flex" flat>
+            <v-sheet class="d-flex">
               <v-text-field
                 v-if="eventComments__"
                 v-model="editedEvent.comments"
                 label="{{_('Comments')}}"
+                variant="solo"
+                append-inner-icon="mdi-web"
+                @click:append-inner="eventComments__=!eventComments__"
               ></v-text-field>
 
               <v-text-field
@@ -102,18 +100,13 @@
                 v-model="editedEvent.comments_ar"
                 label="{{_('Comments (AR)')}}"
                 background-color="lime lighten-5"
+                variant="solo"
+                append-inner-icon="mdi-web"
+                @click:append-inner="eventComments__=!eventComments__"
               ></v-text-field>
 
-              <v-btn
-                color="grey lighten-2"
-                outlined
-                x-small
-                fab
-                class="swh d-inline"
-                @click="eventComments__=!eventComments__"
-                ><v-icon>mdi-web</v-icon></v-btn
-              >
-            </v-card>
+
+            </v-sheet>
           </v-col>
         </v-row>
 
@@ -122,7 +115,7 @@
                     <location-search-field
                     v-model="editedEvent.location"
                     api="/admin/api/locations/"
-                    item-text="full_string"
+                    item-title="full_string"
                     item-value="id"
                     :multiple="false"
                     label="{{_('Location')}}"
@@ -136,7 +129,7 @@
                     v-model="editedEvent.eventtype"
                     api="/admin/api/eventtypes/"
                     :query-params="eventParams"
-                    item-text="title"
+                    item-title="title"
                     item-value="id"
                     :multiple="false"
                     label="{{_('Event Type')}}"
@@ -147,27 +140,31 @@
         </v-row>
 
         <v-row>
-          <v-col cols="12" md="5" class="text-center">
+          <v-col cols="12" md="6" class="text-center">
            <pop-date-time-field time-label="{{ _('Time') }}" label="{{_('From')}}" v-model="editedEvent.from_date"></pop-date-time-field>
           </v-col>
-          <v-col cols="12" md="5">
+          <v-col cols="12" md="6">
             <pop-date-time-field time-label="{{ _('Time') }}" label="{{_('To')}}" v-model="editedEvent.to_date" ></pop-date-time-field>
           </v-col>
-          <v-col md="2">
+
+        </v-row>
+          <v-row>
+              <v-col md="4">
             <v-switch
+                    color="primary"
               label="{{_('Estimated Time')}}"
               v-model="editedEvent.estimated"
             ></v-switch>
           </v-col>
-        </v-row>
+          </v-row>
 
-         
+
       </v-container>
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" text @click="closeEvent">{{_('Close')}}</v-btn>
-      <v-btn color="blue darken-1" text @click="saveEvent">{{_('Save')}}</v-btn>
+      <v-btn variant="plain"  @click="closeEvent">{{_('Close')}}</v-btn>
+      <v-btn color="primary" variant="elevated"  @click="saveEvent">{{_('Save')}}</v-btn>
     </v-card-actions>
   </v-card>
 </v-dialog>

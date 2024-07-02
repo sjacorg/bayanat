@@ -22,9 +22,15 @@ from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 @click.command()
 @click.option("--create-exts", is_flag=True)
 @with_appcontext
-def create_db(create_exts):
+def create_db(create_exts: bool) -> None:
     """
     Creates db tables - import your models within commands.py to create the models.
+
+    Args:
+        - create_exts: bool - create db extensions
+
+    Returns:
+        None
     """
     # create db exts if required, needs superuser db permissions
     if create_exts:
@@ -45,7 +51,7 @@ def create_db(create_exts):
 
 @click.command()
 @with_appcontext
-def import_data():
+def import_data() -> None:
     """
     Imports default Bayanat data for lists and relationship types.
     """
@@ -58,7 +64,7 @@ def import_data():
 
 @click.command()
 @with_appcontext
-def install():
+def install() -> None:
     """Install a default Admin user and add an Admin role to it."""
     admin_role = Role.query.filter(Role.name == "Admin").first()
 
@@ -91,8 +97,17 @@ def install():
 @click.option("-u", "--username", prompt=True, default=None)
 @click.option("-p", "--password", prompt=True, default=None, hide_input=True)
 @with_appcontext
-def create(username, password):
-    """Creates a user."""
+def create(username: str, password: str) -> None:
+    """
+    Creates a user.
+
+    Args:
+        - username: str - username
+        - password: str - password
+
+    Returns:
+        None
+    """
     if len(username) < 4:
         click.echo("Username must be at least 4 characters long")
         return
@@ -100,7 +115,7 @@ def create(username, password):
     if user:
         click.echo("User already exists!")
         return
-    if len(password < 8):
+    if len(password) < 8:
         click.echo("Password should be at least 8 characters long!")
         return
     user = User(username=username, password=hash_password(password), active=1)
@@ -114,8 +129,17 @@ def create(username, password):
 @click.option("-u", "--username", prompt=True, default=None)
 @click.option("-r", "--role", prompt=True, default="Admin")
 @with_appcontext
-def add_role(username, role):
-    """Adds a role to the specified user."""
+def add_role(username: str, role: str) -> None:
+    """
+    Adds a role to the specified user.
+
+    Args:
+        - username: str - username
+        - role: str - role
+
+    Returns:
+        None
+    """
     from enferno.user.models import Role
 
     user = User.query.filter(User.username == username).first()
@@ -140,8 +164,17 @@ def add_role(username, role):
     "-p", "--password", hide_input=True, confirmation_prompt=True, prompt=True, default=None
 )
 @with_appcontext
-def reset(username, password):
-    """Reset a user password"""
+def reset(username: str, password: str) -> None:
+    """
+    Reset a user password.
+
+    Args:
+        - username: str - username
+        - password: str - password
+
+    Returns:
+        None
+    """
     user = User.query.filter(User.username == username).first()
     if not user:
         click.echo("Specified user does not exist!")
@@ -157,7 +190,7 @@ def reset(username, password):
 
 
 @click.command()
-def clean():
+def clean() -> None:
     """Remove *.pyc and *.pyo files recursively starting at current directory.
     Borrowed from Flask-Script, converted to use Click.
     """
@@ -174,19 +207,46 @@ i18n_cli = AppGroup("translate", short_help="commands to help with translation m
 
 
 @i18n_cli.command()
-def extract():
+def extract() -> None:
+    """
+    Extracts all translatable strings from the project.
+
+    Raises:
+        - RuntimeError: Extract command failed
+
+    Returns:
+        None
+    """
     if os.system("pybabel extract -F babel.cfg -k _l -o messages.pot ."):
         raise RuntimeError("Extract command failed")
 
 
 @i18n_cli.command()
-def update():
+def update() -> None:
+    """
+    Updates the translations.
+
+    Raises:
+        - RuntimeError: Update command failed
+
+    Returns:
+        None
+    """
     if os.system("pybabel update -i messages.pot -d enferno/translations"):
         raise RuntimeError("Update command failed")
 
 
 @i18n_cli.command()
-def compile():
+def compile() -> None:
+    """
+    Compiles the translations.
+
+    Raises:
+        - RuntimeError: Compile command failed
+
+    Returns:
+        None
+    """
     if os.system("pybabel compile -d enferno/translations"):
         raise RuntimeError("Compile command failed")
 
@@ -194,6 +254,7 @@ def compile():
 # Database Schema Alignment
 @click.command()
 @with_appcontext
-def check_db_alignment():
+def check_db_alignment() -> None:
+    """Check the alignment of the database schema with the models."""
     checker = DBAlignmentChecker()
     checker.check_db_alignment()

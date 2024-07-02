@@ -1,130 +1,129 @@
 {% extends 'layout.html' %}
-{% block css %}
-{% endblock %}
 {% block content %}
-    <div id="app">
-        <v-app id="inspire" v-cloak>
-            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
 
-            {% include 'export_drawer.html' %}
-            <v-main>
-                <v-container class="container--fluid">
-                    <v-row>
-                        <v-col cols="12">
-                            <v-card>
-                                <v-card-text>
+    <v-main>
+        <v-container fluid>
+            <v-card>
+                <v-card-text>
 
-                                    <v-data-table
-                                            fixed-header
-                                            height="calc(100vh - 291px)"
-                                            id="export-dt"
-                                            v-model="selected"
-                                            :headers="headers"
-                                            @click:row="rowClick"
-                                            show-select
-                                            :items="items"
-                                            :options.sync="options"
-                                            :footer-props.sync="footerProps"
-                                            :loading="loading"
-                                            :server-items-length="itemsLength"
-                                            class="elevation-1"
-                                    >
+                    <v-data-table-server
+                            fixed-header
+                            height="calc(100vh - 260px)"
+                            id="export-dt"
+                            v-model="selected"
+                            :headers="headers"
+                            @click:row="rowClick"
+                            show-select
+                            :items="items"
+                            v-model:options="options"
+                            @update:options="refresh"
+                            :loading="loading"
+                            :items-length="itemsLength"
+                            class="elevation-1"
+                    >
 
-                                        <template v-slot:top>
-                                            <v-toolbar flat color="white">
-                                                <v-toolbar-title>{{ _('Exports') }}</v-toolbar-title>
-                                                <v-spacer></v-spacer>
+                        <template v-slot:top>
+                            <v-toolbar flat color="white">
+                                <v-toolbar-title>{{ _('Exports') }}</v-toolbar-title>
+                                <v-spacer></v-spacer>
 
-                                            </v-toolbar>
-                                        </template>
+                            </v-toolbar>
+                        </template>
 
-                                        <template v-slot:item.expires_on="{item}">
-                                            ${item.expires_on|localDate}
-                                        </template>
+                        <template v-slot:item.expires_on="{item}">
+                            ${ localDate(item.expires_on) }
 
-                                        <template v-slot:item.created_at="{item}">
-                                            ${item.created_at|localDate}
-                                        </template>
+                        </template>
 
-                                        <template v-slot:item.download="{item}">
+                        <template v-slot:item.created_at="{item}">
+                            ${ localDate(item.created_at) }
 
-                                          <export-download :item="item" />
+                        </template>
 
-                                        </template>
+                        <template v-slot:item.download="{item}">
 
-                                        <template v-slot:item.format="{item}">
+                            <export-download :item="item" :i18n="translations"></export-download>
 
-                                            <v-icon v-tippy content="JSON" class="ml-2" v-if="item.file_format === 'json'">mdi-code-json</v-icon>
+                        </template>
 
-                                            <v-icon v-tippy content="PDF" class="ml-2" v-if="item.file_format === 'pdf'">mdi-file-pdf-box</v-icon>
-                                            
-                                            <v-icon v-tippy content="CSV" class="ml-2" v-if="item.file_format === 'csv'">mdi-file-delimited-outline</v-icon>
+                                    <template v-slot:item.format="{item}">
+                                        <v-tooltip location="top" :text="item.file_format.toUpperCase()">
+                                            <template #activator="{ props }">
+                                        <v-icon v-bind="props" class="ml-2" v-if="item.file_format === 'json'">mdi-code-json</v-icon>
 
-                                        </template>
+                                        <v-icon v-bind="props" class="ml-2" v-if="item.file_format === 'pdf'">mdi-file-pdf-box</v-icon>
 
-                                        <template v-slot:item.media="{item}">
+                                        <v-icon v-bind="props" class="ml-2" v-if="item.file_format === 'csv'">
+                                            mdi-file-delimited-outline
+                                        </v-icon>
+                                            </template>
+                                        </v-tooltip>
 
-                                            <v-icon v-tippy content="Include Media" class="ml-2"
-                                                    v-if="item.include_media" color="success">mdi-check-circle
-                                            </v-icon>
+                        </template>
 
-                                            <v-icon v-tippy content="Don't Include Media" class="ml-2" 
-                                            v-if="!item.include_media">mdi-close-circle
-                                            </v-icon>
+                                    <template v-slot:item.media="{item}">
+                                        <v-tooltip location="top" text="{{ _('Include Media') }}">
+                                            <template #activator="{ props }">
+                                        <v-icon class="ml-2"
+                                                v-if="item.include_media" color="success">mdi-check-circle
+                                        </v-icon>
+                                            </template>
+                                        </v-tooltip>
+                                        <v-tooltip location="top" text="{{ _('Do not include Media') }}">
+                                            <template #activator="{ props }">
 
-                                        </template>
+                                        <v-icon :="props" class="ml-2"
+                                                v-if="!item.include_media">mdi-close-circle
+                                        </v-icon>
+                                            </template>
+                                        </v-tooltip>
 
-                                    </v-data-table>
+                        </template>
 
-                                </v-card-text>
-                            </v-card>
+                    </v-data-table-server>
 
-                            <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+                </v-card-text>
+            </v-card>
 
-                            <v-snackbar v-model="snackbar" class="">
-                                <div class="d-flex justify-space-between align-center">
-                                    ${snackMessage}
-
-                                    <v-btn icon fab small color="white" text @click="snackbar = false">
-                                        <v-icon>mdi-close</v-icon>
-                                    </v-btn>
-                                </div>
-                            </v-snackbar>
+            <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
 
 
-                        </v-col>
-                    </v-row>
-                </v-container>
-            </v-main>
+        </v-container>
+    </v-main>
 
-            {% include 'footer.html' %}
-
-            <v-overlay v-model="loading">
-            </v-overlay>
-        </v-app>
-    </div>
+{% include 'export_drawer.html' %}
+    <v-overlay v-model="loading">
+    </v-overlay>
 
 {% endblock %}
 
 {% block js %}
-<script src="/static/js/components/ExportCard.js" ></script>
-<script src="/static/js/components/BulletinResult.js"></script>
-<script src="/static/js/components/ActorResult.js"></script>
-<script src="/static/js/components/IncidentResult.js"></script>
-<script src="/static/js/components/ExportDownload.js"></script>
-<script src="/static/js/components/UniField.js"></script>
-<script src="/static/js/mixins/global-mixin.js" ></script>
+    <script src="/static/js/components/ExportCard.js"></script>
+    <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/BulletinCard.js"></script>
+    <script src="/static/js/components/ActorProfiles.js"></script>
+    <script src="/static/js/components/ActorCard.js"></script>
+    <script src="/static/js/components/IncidentCard.js"></script>
+
+    <script src="/static/js/components/BulletinResult.js"></script>
+    <script src="/static/js/components/ActorResult.js"></script>
+    <script src="/static/js/components/IncidentResult.js"></script>
+    <script src="/static/js/components/ExportDownload.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
     <script>
 
-        const app = new Vue({
-            el: "#app",
-            vuetify: vuetify,
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
             delimiters: delimiters,
-            router,
+
             mixins: [globalMixin],
+
             data: () => ({
 
-                translations: translations,
+                translations: window.translations,
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
@@ -134,39 +133,29 @@
                 pitem: null,
                 eitem: {},
                 mode: null,
-                sideNav: sideNav,
-                snackbar: false,
-                snackMessage: '',
                 loading: false,
                 status: '',
                 items: [],
                 itemsLength: 10,
                 selected: [],
-                options: {
-                    page: 1,
-
-                },
-                footerProps: {
-                    itemsPerPageOptions: itemsPerPageOptions,
-                    itemsPerPageText: "{{ _('Rows per page')}}"
-                },
+                options: {},
                 headers: [
-                    {text: "{{_('ID')}}", value: 'id', sortable: false},
-                    {text: "{{_('Requester')}}", value: 'requester.name', sortable: false},
-                    {text: "{{_('Table')}}", value: 'table', sortable: false},
-                    {text: "{{_('# of items')}}", value: 'items.length', sortable: false},
-                    {text: "{{_('Format')}}", value: 'format', sortable: false},
-                    {text: "{{_('Include Media')}}", value: 'media', sortable: false},
-                    {text: "{{_('Requested time')}}", value: 'created_at', sortable: false},
-                    {text: "{{_('Expiry time')}}", value: 'expires_on', sortable: false},
-                    {text: "{{_('Status')}}", value: 'status', sortable: false},
-                    {text: "{{_('Download')}}", value: 'download', sortable: false},
+                    {title: "{{_('ID')}}", value: 'id', sortable: false},
+                    {title: "{{_('Requester')}}", value: 'requester.name', sortable: false},
+                    {title: "{{_('Table')}}", value: 'table', sortable: false},
+                    {title: "{{_('# of items')}}", value: 'items.length', sortable: false},
+                    {title: "{{_('Format')}}", value: 'format', sortable: false},
+                    {title: "{{_('Include Media')}}", value: 'media', sortable: false},
+                    {title: "{{_('Requested time')}}", value: 'created_at', sortable: false},
+                    {title: "{{_('Expiry time')}}", value: 'expires_on', sortable: false},
+                    {title: "{{_('Status')}}", value: 'status', sortable: false},
+                    {title: "{{_('Download')}}", value: 'download', sortable: false},
                 ],
 
             }),
 
             watch: {
-                 exportDrawer: function (val) {
+                exportDrawer: function (val) {
                     if (val === false) {
 
                         if (this.$route.path !== '/export/dashboard/')
@@ -174,43 +163,40 @@
                     }
                 },
 
-                options: {
-                    handler: "refresh",
-                }
+
             },
 
-        filters : {
 
-            localDate: function (dt) {
-                if (dt === null || dt === '') {
-                    return '';
-                }
-                // Z tells it's a UTC time
-                const utcDate = new Date(`${dt}Z`);
-                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                return utcDate.toLocaleString('en-US', {timeZone: userTimezone});
-            }
-        },
-
-        mounted () {
-            if (this.$route.params.id) {
-                this.showExport(this.$route.params.id);
-            }
-
-            this.$router.afterEach((to, from, next) => {
-
+            mounted() {
                 if (this.$route.params.id) {
                     this.showExport(this.$route.params.id);
-                } else {
-                    this.exportDrawer = false;
                 }
-            })
-        },
+
+                this.$router.afterEach((to, from, next) => {
+
+                    if (this.$route.params.id) {
+                        this.showExport(this.$route.params.id);
+                    } else {
+                        this.exportDrawer = false;
+                    }
+                })
+            },
 
             methods: {
 
-                rowClick(item) {
-                    path = `/export/dashboard/${item.id}`;
+                localDate: function (dt) {
+                    if (dt === null || dt === '') {
+                        return '';
+                    }
+                    // Z tells it's a UTC time
+                    const utcDate = new Date(`${dt}Z`);
+                    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    return utcDate.toLocaleString('en-US', {timeZone: userTimezone});
+                },
+
+                rowClick(e, row) {
+                    const item = row.item;
+                    const path = `/export/dashboard/${item.id}`;
                     if (this.$route.path !== path)
                         this.$router.push(path);
 
@@ -223,8 +209,8 @@
                         this.eitem = response.data;
                     }).catch(error => {
                         this.exportDrawer = false;
-                        this.showSnack('Oops! We couldn\'t find this item.')
-                    }).finally(()=>{
+                        this.showSnack("{{ _('Oops! We couldn\'t find this item.')}}")
+                    }).finally(() => {
                         this.exportLoader = false;
                     });
                 },
@@ -305,27 +291,43 @@
                     return false;
                 },
 
-                refresh() {
+                refresh(options) {
+                    this.options = options || this.options;
                     this.loading = true;
-                    
-                        axios.post('/export/api/exports/', {
-                            page: this.options.page,
-                            per_page : this.options.itemsPerPage
-                        }).then(res => {
+
+                    axios.post('/export/api/exports/', {
+                        page: this.options.page,
+                        per_page: this.options.itemsPerPage
+                    }).then(res => {
 
 
-                            this.items = res.data.items;
-                            this.itemsLength = res.data.total;
+                        this.items = res.data.items;
+                        this.itemsLength = res.data.total;
 
 
-                        }).catch(error => {
-                            console.error(error.response?.data);
-                        }).finally(() => {
-                            this.loading = false;
-                        });
+                    }).catch(error => {
+                        console.error(error.response?.data);
+                    }).finally(() => {
+                        this.loading = false;
+                    });
 
                 }
             }
         });
+
+        app.component('export-download', ExportDownload);
+        app.component('preview-card', PreviewCard);
+        app.component('export-card', ExportCard);
+        app.component('bulletin-card', BulletinCard);
+        app.component('actor-profiles', ActorProfiles);
+        app.component('actor-card', ActorCard);
+        app.component('incident-card', IncidentCard);
+        app.component('bulletin-result', BulletinResult);
+        app.component('actor-result', ActorResult);
+        app.component('incident-result', IncidentResult);
+        app.component('uni-field', UniField);
+        app.use(router);
+        app.use(vuetify).mount('#app');
+        window.app = app;
     </script>
 {% endblock %}

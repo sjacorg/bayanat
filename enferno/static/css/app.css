@@ -4,8 +4,9 @@
     font-style: normal;
     font-weight: 400;
     src: local("Tajawal"), local("Tajawal-Regular"),
-    url("../font/tajawal-v3-latin_arabic-regular.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/tajawal-v3-latin_arabic-regular.woff") format("woff");
+        url("../font/tajawal-v3-latin_arabic-regular.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */
+        url("../font/tajawal-v3-latin_arabic-regular.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -15,8 +16,9 @@
     font-style: normal;
     font-weight: 700;
     src: local("Tajawal Bold"), local("Tajawal-Bold"),
-    url("../font/tajawal-v3-latin_arabic-700.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/tajawal-v3-latin_arabic-700.woff") format("woff");
+        url("../font/tajawal-v3-latin_arabic-700.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */
+        url("../font/tajawal-v3-latin_arabic-700.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -26,8 +28,9 @@
     font-style: normal;
     font-weight: 400;
     src: local("Roboto"), local("Roboto-Regular"),
-    url("../font/roboto-v20-latin-regular.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/roboto-v20-latin-regular.woff") format("woff");
+        url("../font/roboto-v20-latin-regular.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */
+        url("../font/roboto-v20-latin-regular.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -37,8 +40,9 @@
     font-style: normal;
     font-weight: 700;
     src: local("Roboto Bold"), local("Roboto-Bold"),
-    url("../font/roboto-v20-latin-700.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/roboto-v20-latin-700.woff") format("woff");
+        url("../font/roboto-v20-latin-700.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */
+        url("../font/roboto-v20-latin-700.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -82,6 +86,7 @@ button.swh {
     font-family: "Tajawal", sans-serif !important;
     font-size: 14px;
 }
+
 .rich-description img {
     max-width: 99%;
     margin: 2px;
@@ -89,7 +94,7 @@ button.swh {
     object-fit: cover;
 }
 
-#bulletins-dt tr, #export-dt tr, #log-dt tr {
+#bulletins-dt tr, #export-dt tr, #log-dt tr , #users-dt tr{
     cursor: pointer;
 }
 
@@ -230,7 +235,8 @@ button.swh {
 
 .vue-query-builder select {
     height: 32px;
-    padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+    padding: 6px 10px;
+    /* The 6px vertically centers text on FF, ignored by Webkit */
     background-color: #fff;
     border: 1px solid #d1d1d1;
     border-radius: 4px;
@@ -271,7 +277,8 @@ button.swh {
 
 .vue-query-builder input[type=text] {
     height: 38px;
-    padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+    padding: 6px 10px;
+    /* The 6px vertically centers text on FF, ignored by Webkit */
     background-color: #fff;
     border: 1px solid #D1D1D1;
     border-radius: 4px;
@@ -355,13 +362,15 @@ input[type="date"]::-webkit-input-placeholder {
 }
 
 .leaflet-container {
-    min-height: 300px; /* Adjust as needed */
+    min-height: 300px;
+    /* Adjust as needed */
 }
 
 
 /* quick initial dark mode support for leaflet map */
 
-.theme--dark .vue2leaflet-map, .theme--dark .map-legend .caption i {
+.theme--dark .vue2leaflet-map,
+.theme--dark .map-legend .caption i {
     filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
 }
 
@@ -376,7 +385,8 @@ input[type="date"]::-webkit-input-placeholder {
 
 }
 
-.ghost, .sortable-ghost {
+.ghost,
+.sortable-ghost {
     opacity: 0.3;
     background: #c8ebfb;
 }
@@ -391,7 +401,7 @@ input[type="date"]::-webkit-input-placeholder {
 
 
 .list-group {
-    min-height: 20px;
+    min-height: 26px;
 }
 
 .list-group-item {
@@ -556,7 +566,8 @@ input[type="date"]::-webkit-input-placeholder {
 
 /* better styles for inline tables (rich text) in preview cards */
 
-.rich-description table td, .rich-description table th {
+.rich-description table td,
+.rich-description table th {
     padding: 4px;
 }
 
@@ -572,11 +583,8 @@ span.map-bid:empty {
     display: none;
 }
 
-/* tippy */
 
-.tippy-tooltip {
-    font-family: "Roboto", sans-serif;
-}
+
 
 /* access roles styles */
 .restricted {
@@ -607,12 +615,14 @@ span.map-bid:empty {
 
 /* config diff */
 
-.system-admin div.jsondiffpatch-child-node-type-object:before, .system-admin div.jsondiffpatch-child-node-type-object:after {
+.system-admin div.jsondiffpatch-child-node-type-object:before,
+.system-admin div.jsondiffpatch-child-node-type-object:after {
     content: '';
 
 }
 
-.system-admin div.jsondiffpatch-child-node-type-array:before, div.jsondiffpatch-child-node-type-array:after {
+.system-admin div.jsondiffpatch-child-node-type-array:before,
+div.jsondiffpatch-child-node-type-array:after {
     content: '';
 }
 
@@ -705,6 +715,7 @@ span.map-bid:empty {
 .hardware-device {
     transition: all 0.25s ease-in-out;
 }
+
 .hardware-device:hover {
     scale: 1.01;
     cursor: pointer;
@@ -726,4 +737,56 @@ span.map-bid:empty {
 .pswp img {
     max-width: none;
     object-fit: contain;
+}
+
+.tox-tinymce-aux {
+    z-index: 10000 !important;
+}
+
+.scrollable-nav {
+    overflow-y: auto !important;
+    max-height: calc(100vh - 80px - 0.75rem);
+}
+
+
+/* steppers enhancements */
+.v-stepper > .v-window {
+    margin: 0;
+}
+
+/* darkmode leaflet hack */
+.v-theme--dark .leaflet-container {
+  filter: invert(90%) brightness(1.2) contrast(1.2)
+}
+
+
+
+/* sticky bottom bars */
+
+.sticky-bottom-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* improved flask security styles */
+.security form ul {
+    list-style: none;
+    margin: 12px 0;
+    line-height: 2.1;
+}
+
+
+.security form  *:has(input[type="radio"])  {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px
+
+}
+
+.security form ul *:has(input[type="radio"]) input {
+    scale: 1.3;
 }

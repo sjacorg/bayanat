@@ -1,5 +1,5 @@
 import pytest
-from enferno.admin.models import Bulletin, Btob
+from enferno.admin.models import Bulletin, Btob, GeoLocation
 from enferno.user.models import User
 from tests.factories import (
     BulletinFactory,
@@ -9,6 +9,7 @@ from tests.factories import (
     create_ver_label_for,
     create_eventtype_for,
     create_event_for,
+    create_geolocation,
 )
 from tests.admin.data.generators import (
     create_simple_bulletin,
@@ -43,6 +44,7 @@ def clean_slate_bulletins(session):
 
     session.query(Btob).delete(synchronize_session=False)
     session.query(BulletinHistory).delete(synchronize_session=False)
+    session.query(GeoLocation).delete(synchronize_session=False)
     session.query(Bulletin).delete(synchronize_session=False)
     session.commit()
     yield
@@ -64,7 +66,7 @@ def test_bulletins_endpoint(
 ):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get(
-        "/admin/api/bulletins?page=1&per_page=10&cache=1",
+        "/admin/api/bulletins?page=1&per_page=10",
         json={"q": [{}]},
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
@@ -130,10 +132,12 @@ post_bulletin_endpoint_roles = [
 def test_post_bulletin_endpoint(clean_slate_bulletins, request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = BulletinFactory()
+    bdict = bulletin.to_dict()
+    bdict.pop("roles")
     response = client_.post(
         "/admin/api/bulletin",
         headers={"content-type": "application/json"},
-        json={"item": {"title": bulletin.title}},
+        json={"item": bdict},
         follow_redirects=True,
     )
     assert response.status_code == expected_status
@@ -161,18 +165,21 @@ def test_put_bulletin_endpoint(
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
     bulletin_id = bulletin.id
-    new_title = BulletinFactory().title
+    bdict = bulletin.to_dict()
+    bdict["title"] = BulletinFactory().title
+    assert bdict["title"] != bulletin.title
+    bdict.pop("roles")
     response = client_.put(
         f"/admin/api/bulletin/{bulletin_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"title": new_title}},
+        json={"item": bdict},
     )
     assert response.status_code == expected_status
     found_bulletin = Bulletin.query.filter(Bulletin.id == bulletin_id).first()
     if expected_status == 200:
-        assert found_bulletin.title == new_title
+        assert found_bulletin.title == bdict["title"]
     else:
-        assert found_bulletin.title != new_title
+        assert found_bulletin.title != bdict["title"]
 
 
 put_bulletin_endpoint_roles2 = [
@@ -184,8 +191,8 @@ put_bulletin_endpoint_roles2 = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_bulletin_endpoint_roles2)
-def test_put_bulletin_endpoint(
-    users, create_full_bulletin, request, client_fixture, expected_status
+def test_put_bulletin_assigned_endpoint(
+    users, clean_slate_bulletins, create_full_bulletin, request, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
@@ -193,18 +200,20 @@ def test_put_bulletin_endpoint(
     bulletin.assigned_to = User.query.filter(User.id == uid).first()
     bulletin.save()
     bulletin_id = bulletin.id
-    new_title = BulletinFactory().title
+    bdict = bulletin.to_dict()
+    bdict.pop("roles")
+    bdict["title"] = BulletinFactory().title
     response = client_.put(
         f"/admin/api/bulletin/{bulletin_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"title": new_title}},
+        json={"item": bdict},
     )
     assert response.status_code == expected_status
     found_bulletin = Bulletin.query.filter(Bulletin.id == bulletin_id).first()
     if expected_status == 200:
-        assert found_bulletin.title == new_title
+        assert found_bulletin.title == bdict["title"]
     else:
-        assert found_bulletin.title != new_title
+        assert found_bulletin.title != bdict["title"]
 
 
 ##### PUT /admin/api/bulletin/review/<int:id> #####
@@ -315,7 +324,7 @@ def test_put_bulletin_assign_endpoint(
     response = client_.put(
         f"/admin/api/bulletin/assign/{bulletin_id}",
         headers={"content-type": "application/json"},
-        json={"bulletin": {"comments": ""}},
+        json={"bulletin": {"comments": "are now mandatory"}},
     )
     assert response.status_code == expected_status
     if expected_status == 200:

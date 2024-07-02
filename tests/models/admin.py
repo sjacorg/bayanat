@@ -397,7 +397,7 @@ class GeoLocationItemModel(BaseModel):
     id: int
     title: Optional[str]
     type_id: Optional[int]
-    type_: Optional[GeoLocationTypeItemModel] = Field(..., alias="type")
+    geotype: Optional[GeoLocationTypeItemModel]
     main: Optional[bool]
     lat: Optional[float]
     lng: Optional[float]
@@ -416,7 +416,7 @@ class BulletinItemMode3Model(StrictModel):
     assigned_to: Optional[UserCompactModel]
     first_peer_reviewer: Optional[UserCompactModel]
     locations: Optional[List[LocationItemCompactModel]]
-    geoLocations: Optional[List[GeoLocationItemModel]]
+    geoLocations: List[GeoLocationItemModel] = Field(default_factory=list)
     labels: Optional[List[LabelsJSONModel]]
     verLabels: Optional[List[LabelsJSONModel]]
     sources: Optional[List[SourcesJSONModel]]

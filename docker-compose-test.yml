@@ -55,6 +55,7 @@ services:
       - '${PWD}/${ENV_FILE:-.env.test}:/app/.env:ro'
       - 'bayanat_test_media:/app/enferno/media:rw'
       - 'bayanat_test_imports:/app/enferno/imports:rw'
+      - 'bayanat_test_logs:/app/logs:rw'
     command: [ "pytest" ]
 
 volumes:
@@ -62,3 +63,4 @@ volumes:
   postgres_test_data:
   bayanat_test_media:
   bayanat_test_imports:
+  bayanat_test_logs:

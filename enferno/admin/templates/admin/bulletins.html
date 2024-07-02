@@ -1,337 +1,315 @@
-{% extends 'layout.html' %} {% block css %}
+{% extends 'layout.html' %}
 
-    <link rel="stylesheet" href="/static/js/dropzone/vue2Dropzone.min.css"/>
-    <link rel="stylesheet" href="/static/js/dropzone/basic.css"/>
+{% block css %}
+    <link rel="stylesheet" href="/static/css/dropzone.min.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
 
-{% endblock %} {% block content %}
+{% endblock %}
 
-    <div id="app">
-        <v-app id="bulletins" v-cloak>
-            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %} {% include
-    'admin/partials/bulletin_drawer.html' %} {% include
-    'admin/partials/bulk_bulletin_drawer.html' %}
+{% block content %}
 
-            {% include
-    'admin/partials/export_drawer.html' %}
-            <v-main>
-                {% include 'admin/partials/bulletin_advsearch.html' %}
-                <v-container class="container--fluid">
 
+    <v-main>
+        {% include 'admin/partials/bulletin_advsearch.html' %}
+        {% include 'admin/partials/bulletin_drawer.html' %}
+        {% include 'admin/partials/bulk_bulletin_drawer.html' %}
+
+
+        {% include'admin/partials/export_drawer.html' %}
+        <v-container fluid>
+            <v-tooltip text="{{ _('Visualize Results') }}">
+                <template #activator="{props}">
                     <v-btn
                             elevation="16"
                             color="primary"
                             outlined
-                            v-tippy
+                            icon="mdi-graph"
                             @click.stop="visualizeResults"
-                            content="Visualize Results"
+                            v-bind="props"
                             v-if="showVisualize"
                             :loading="visualizeLoading"
-                            fab
-                            absolute
-                            class="mb-5 mr-5"
-                            bottom right
+                            variant="elevated"
+
+
+                            class="mb-5 mr-5 position-absolute "
+                            style="right: 20px; bottom: 20px; z-index: 1000;"
                     >
-                        <v-icon>mdi-graph</v-icon>
+
 
                     </v-btn>
+                </template>
+            </v-tooltip>
+
+            <v-card>
+
+                <v-card-text>
 
 
-                    <v-card>
-                        <v-card-title>
-                            <div class="flex-grow-1"></div>
-                        </v-card-title>
-                        <v-card-text>
+                    <v-data-table-server
+                            fixed-header
+                            height="calc(100vh - 328px)"
+                            id="bulletins-dt"
+                            v-model="selected"
+                            hover
+                            :headers="headers"
+                            @click:row="rowClick"
+                            show-select
+                            :items="items"
+                            @update:options="refresh"
+                            :loading="loading"
+                            :items-length="itemsLength"
+                            :row-props="rowClass"
+                            select-strategy="page"
+                            return-object
+                            class="elevation-1"
+                    >
+
+                        <template #item.data-table-select="{ item }">
+
+                            <v-checkbox-btn
+                                    color="primary"
+                                    :model-value="selected.includes(item)"
+                                    @click.stop="toggleSelect(item)"
+
+                            ></v-checkbox-btn>
+
+                        </template>
+                        <template #top>
+                            <v-sheet class="ma-3 d-flex align-center ">
+
+                                <v-btn variant="text" class="hidden-sm-and-down" size="small" @click="allBulletins"
+                                >{{ _('All Bulletins') }}</v-btn
+                                >
+                                <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
+                                <v-btn variant="text" class="hidden-sm-and-down" size="small" @click="myAssigned"
+                                >{{ _('Assigned to me') }}</v-btn
+                                >
+                                <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
+                                <v-btn variant="text" size="small" @click="myReview" class="mr-2 hidden-sm-and-down"
+                                >{{ _('My Review List') }}</v-btn
+                                >
+
+                                <v-text-field
+                                        class="mx-1"
+                                        density="compact"
+                                        variant="outlined"
+                                        v-model.trim="search[0].tsv"
+                                        @keydown.enter="doSearch"
+                                        hide-details
+                                        @click:clear="resetSearch"
+                                        append-icon="mdi-ballot"
+                                        :append-inner-icon="searchEmpty ? '' : 'mdi-close'"
+                                        @click:append-inner="resetSearch"
+                                        @click:append="toggleAdvSearch"
+                                        prepend-inner-icon="mdi-magnify"
+                                        label="{{ _('Search') }}"
+                                        :bg-color="searchBg"
+                                ></v-text-field>
 
 
-                            <v-data-table
-                                    fixed-header
-                                    height="calc(100vh - 355px)"
-                                    id="bulletins-dt"
-                                    v-model="selected"
-                                    :headers="headers"
-                                    @click:row="rowClick"
-                                    show-select
-                                    :items="items"
-                                    :options.sync="options"
-                                    :footer-props.sync="footerProps"
-                                    :loading="loading"
-                                    :server-items-length="itemsLength"
-                                    class="elevation-1"
-                                    :item-class="rowClass"
-                                    @toggle-select-all="selectAllRestrict"
-                            >
-
-                                <template v-slot:item.data-table-select="{ item, isSelected, select }">
-                                    <v-simple-checkbox
-                                            :value="isSelected"
-                                            :readonly="item.restricted"
-                                            v-if="!item.restricted"
-
-                                            @input="select($event)"
-                                    ></v-simple-checkbox>
-                                </template>
-                                <template v-slot:top>
-                                    <v-toolbar flat color="white">
-
-                                        <v-btn class="hidden-sm-and-down" small @click="allBulletins" text
-                                        >{{ _('All Bulletins') }}</v-btn
-                                        >
-                                        <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                        <v-btn class="hidden-sm-and-down" small @click="myAssigned" text
-                                        >{{ _('Assigned to me') }}</v-btn
-                                        >
-                                        <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                        <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down" text
-                                        >{{ _('My Review List') }}</v-btn
-                                        >
-
-                                        <v-text-field
-                                                flat
-                                                dense
-                                                outlined
-                                                small
-                                                v-model.trim="search[0].tsv"
-                                                @keydown.enter="doSearch()"
-                                                hide-details
-                                                append-outer-icon="mdi-ballot"
-                                                append-icon="mdi-close"
-                                                @click:append="resetSearch"
-                                                @click:append-outer="toggleAdvSearch"
-                                                prepend-inner-icon="mdi-magnify"
-                                                label="{{ _('Search') }}"
-                                                :background-color="searchBg"
-                                        ></v-text-field>
-
-
-                                        <v-spacer></v-spacer>
-                                        {% if current_user.roles_in(['Admin','DA']) %}
-                                            <v-btn
-                                                    @click="editItem"
-                                                    color="primary"
-                                                    dark
-                                                    class="ma-2"
-                                            >{{ _('New Bulletin') }}</v-btn
-                                            >
-                                        {% endif %} {% include
-                            'admin/partials/bulletin_dialog.html' %} {% include
-                            'admin/partials/review_dialog.html' %}
-                                    </v-toolbar>
-
-                                    <v-toolbar v-if="bulkAllowed() || exportAllowed()" dense color="white" flat>
-                                        <template v-if="bulkIcons">
-
-                                            <v-btn @click="selected=[]" x-small fab
-                                                   class="mr-3" elevation="0" color="white">
-                                                <v-icon>mdi-checkbox-blank-outline</v-icon>
-                                            </v-btn>
-
-                                            <v-btn
-                                                    @click="bulkBulletinDrawer=true"
-                                                    small
-                                                    color="primary"
-                                                    class="mx-2"
-                                                    depressed
-                                                    v-if="bulkAllowed()"
-                                            >
-                                                <v-icon small left
-                                                >mdi-circle-edit-outline
-                                                </v-icon>
-                                                {{ _('Bulk update') }}
-                                            </v-btn>
-                                            {% if config.EXPORT_TOOL %}
-                                                <v-btn
-                                                        @click="exportDrawer=true"
-                                                        small
-                                                        color="primary"
-                                                        class="mx-2"
-                                                        depressed
-                                                        v-if="exportAllowed()"
-                                                >
-                                                    <v-icon small left
-                                                    >mdi-file-export-outline
-                                                    </v-icon>
-                                                    {{ _('Export') }}
-                                                </v-btn>
-                                            {% endif %}
-                                        </template>
-                                        <template>
-                                            <v-progress-circular v-for="job in jobs"
-                                                                 size="20" small
-                                                                 :indeterminate="job.status!='SUCCESS'"
-
-                                                                 :color="job.status=='SUCCESS' ? 'success': 'amber'"
-                                                                 :value="job.status=='SUCCESS'?100:null"
-                                                                 class="mx-1"
-                                                                 stroke="1"
-                                            ></v-progress-circular>
-                                        </template>
-                                        <v-spacer></v-spacer>
-
-                                        <div>
-
-                                            <v-tooltip top>
-                                                <template v-slot:activator="{ on, attrs }">
-                                                    <v-chip v-on="on" label small close color="yellow lighten-4"
-                                                            class="grey--text text--darken-2"
-                                                            @click:close="allBulletins"
-                                                    >{{ _('About') }} ${itemsLength} {{ _('results') }}
-                                                        (${searchTime} {{ _('seconds') }})
-                                                    </v-chip>
-                                                </template>
-                                                <span>${search}</span>
-                                            </v-tooltip>
-                                        </div>
-
-
-                                        <v-spacer></v-spacer>
-                                        <v-chip small color="accent" v-if="selected.length"
-                                        >${selected.length} {{ _('Selected items') }}</v-chip
-                                        >
-                                    </v-toolbar>
-
-                                </template>
-
-                                <template v-slot:item.roles="{item}">
-                                    <v-chip
-                                            small
-                                            v-for="role in item.roles"
-                                            :color="role.color"
-                                            style="scale:0.7"
-                                            v-tippy
-                                            :content="role.name"
+                                <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','DA']) %}
+                                    <v-btn
+                                            @click="editItem"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="ma-2"
+                                    >{{ _('New Bulletin') }}</v-btn
                                     >
+                                {% endif %}
+                                {% include'admin/partials/bulletin_dialog.html' %}
+                                {% include'admin/partials/review_dialog.html' %}
+                            </v-sheet>
 
-                                    </v-chip>
-                                </template>
+                            <v-toolbar class="px-3" color="grey-lighten-4" v-if="bulkAllowed() || exportAllowed()">
+                                <template v-if="bulkIcons">
 
-                                <template v-slot:item.status="{ item }">
-                                    ${item.status}
-                                    <v-chip
-                                            x-small
-                                            v-if="item.review_action"
-                                            color="grey lighten-4"
-                                            class="secondary--text"
-                                    >${item.review_action}
-                                    </v-chip
-                                    >
-                                </template>
-                                <template v-slot:item.action="{ item }">
-                                    <v-tooltip top>
-                                        <template v-slot:activator="{ on }">
-                                            <v-icon
-                                                    v-on="on"
-                                                    color="ov darken-1"
-                                                    class="mr-2"
-                                                    @click.stop="editItem(item)"
-                                                    v-if="editAllowed(item)"
-                                            >
-                                                mdi-pencil
-                                            </v-icon>
-
-
-                                        </template>
-                                        <span>{{ _('Edit') }}</span>
-                                    </v-tooltip>
-
-                                    <v-tooltip top>
-                                        <template v-slot:activator="{ on }">
-                                            <v-icon
-                                                    v-on="on"
-                                                    color="primary lighten-1"
-                                                    class="mr-2"
-
-                                                    @click.stop="openSelfAssign(item)"
-                                                    v-if="selfAssignAllowed(item)"
-                                            >
-                                                mdi-arrow-left-thin-circle-outline
-                                            </v-icon>
-
-
-                                        </template>
-                                        <span>{{ _('Assign to self') }}</span>
-                                    </v-tooltip>
-
-
-                                    <v-tooltip top>
-                                        <template v-slot:activator="{ on }">
-                                            <v-icon v-on="on"
-                                                    v-if="reviewAllowed(item)"
-                                                    @click.stop="addReview(item)"
-                                                    color="gv darken-1"
-                                                    class="mr-2"
-                                            >mdi-message-draw
-                                            </v-icon>
-                                        </template>
-                                        <span>{{ _('Add Review') }}</span>
-                                    </v-tooltip>
-
-                                </template>
-
-
-                                <template v-slot:no-data></template>
-                            </v-data-table>
-
-                            <v-overlay :value="loading">
-                                <v-progress-circular
-                                        indeterminate
-                                        size="64"
-                                ></v-progress-circular>
-                            </v-overlay>
-                            <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
-                                              ref="relateBulletins"></relate-bulletins>
-                            <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
-                                           ref="relateActors"></relate-actors>
-                            <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
-                                              ref="relateIncidents"></relate-incidents>
-
-
-                            {% include 'admin/partials/video_player_dialog.html' %}
-
-
-                            <v-dialog width="600" v-model="selfAssignDialog">
-                                <v-card class="pa-3">
-                                    <v-card-title>{{ _('Self Assign Bulletin') }} #${assignBulletin.id}</v-card-title>
-                                    <v-card-text>
-                                        <v-combobox
-
-                                                small-chips
-                                                multiple
-                                                v-model="assignBulletin.ref"
-                                                label="{{ _('Ref') }}"
-                                                class="mr-2"
-                                        ></v-combobox>
-                                        <v-textarea v-model="assignBulletin.comments"
-                                                    label="{{ _('Comments') }}"></v-textarea>
-                                    </v-card-text>
-                                    <v-card-actions>
-                                        <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign"
-                                               color="primary">{{ _('Assign to self') }}
-                                        </v-btn>
-                                    </v-card-actions>
-                                </v-card>
-
-                            </v-dialog>
-
-
-                            <v-snackbar v-model="snackbar">
-                                <div class="d-flex justify-space-between align-center">
-                                    <span class="text-subtitle-1">${snackMessage}</span>
-                                    <v-btn fab small color="secondary" text @click="snackbar = false">
-                                        <v-icon small>mdi-close</v-icon>
+                                    <v-btn icon="mdi-checkbox-blank-outline"
+                                           @click="selected=[]"
+                                           class="mr-3">
                                     </v-btn>
+
+                                    <v-btn
+                                            @click="bulkBulletinDrawer=true"
+                                            prepend-icon="mdi-circle-edit-outline"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="mx-2"
+                                            v-if="bulkAllowed()"
+                                    >
+
+                                        {{ _('Bulk update') }}
+                                    </v-btn>
+                                    {% if config.EXPORT_TOOL %}
+                                        <v-btn
+                                                @click="exportDrawer=true"
+                                                color="primary"
+                                                class="mx-2"
+                                                variant="elevated"
+                                                v-if="exportAllowed()"
+                                        >
+                                            <v-icon small left
+                                            >mdi-file-export-outline
+                                            </v-icon>
+                                            {{ _('Export') }}
+                                        </v-btn>
+                                    {% endif %}
+                                </template>
+                                <template>
+                                    <v-progress-circular v-for="job in jobs"
+                                                         size="20" small
+                                                         :indeterminate="job.status!='SUCCESS'"
+
+                                                         :color="job.status=='SUCCESS' ? 'success': 'amber'"
+                                                         :value="job.status=='SUCCESS'?100:null"
+                                                         class="mx-1"
+                                                         stroke="1"
+                                    ></v-progress-circular>
+                                </template>
+                                <v-spacer></v-spacer>
+
+                                <div>
+
+                                    <v-chip label size="small" closable color="yellow"
+                                            @click:close="allBulletins"
+                                    >{{ _('About') }} ${itemsLength} {{ _('results') }}
+                                        (${searchTime} {{ _('seconds') }})
+                                    </v-chip>
                                 </div>
 
-                            </v-snackbar>
-                        </v-card-text>
-                    </v-card>
+
+                                <v-spacer></v-spacer>
+                                <v-chip v-if="selected.length"
+                                >${selected.length} {{ _('Selected items') }}</v-chip
+                                >
+                            </v-toolbar>
+
+                        </template>
+
+                        <template #item.roles="{item}">
+                            <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
+
+                                <template #activator="{props}">
+                                    <v-icon
+                                            :="props"
+                                            size="small"
+                                            :color="role.color || 'grey-lighten-1'"
+                                            icon="mdi-shield-lock"
+                                    >
+                                    </v-icon>
+
+                                </template>
+
+                            </v-tooltip>
+
+                        </template>
+
+                        <template #item.status="{ item }">
+                            ${item.status}
+                            <v-chip
+                                    x-small
+                                    v-if="item.review_action"
+                                    color="grey lighten-4"
+                                    class="secondary--text"
+                            >${item.review_action}
+                            </v-chip
+                            >
+                        </template>
+                        <template #item.action="{ item }">
+
+                            <v-btn size="small"
+                                   variant="plain"
+                                   class="mr-2"
+                                   @click.stop="editItem(item)"
+                                   v-if="editAllowed(item)"
+                                   icon="mdi-pencil"
+                            >
+
+                            </v-btn>
 
 
-                </v-container>
-            </v-main>
-            {% include 'footer.html' %}
-        </v-app>
-    </div>
+                            <v-icon
 
+                                    color="primary lighten-1"
+                                    class="mr-2"
+
+                                    @click.stop="openSelfAssign(item)"
+                                    v-if="selfAssignAllowed(item)"
+                            >
+                                mdi-arrow-left-thin-circle-outline
+                            </v-icon>
+
+
+                            <v-btn
+                                    v-if="reviewAllowed(item)"
+                                    @click.stop="addReview(item)"
+                                    color="gv"
+                                    size="small"
+                                    variant="plain"
+                                    class="mr-2"
+                                    icon="mdi-comment-plus"
+                            >
+                            </v-btn>
+
+                        </template>
+
+
+                        <template v-slot:no-data></template>
+                    </v-data-table-server>
+
+                    <v-overlay :value="loading">
+                        <v-progress-circular
+                                indeterminate
+                                size="64"
+                        ></v-progress-circular>
+                    </v-overlay>
+                    <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
+                                      ref="relateBulletins"></relate-bulletins>
+                    <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
+                                   ref="relateActors"></relate-actors>
+                    <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
+                                      ref="relateIncidents"></relate-incidents>
+
+
+                    {% include 'admin/partials/video_player_dialog.html' %}
+
+
+                    <v-dialog width="600" v-model="selfAssignDialog">
+                        <v-card class="pa-3">
+                            <v-card-title>{{ _('Self Assign Bulletin') }} #${assignBulletin.id}</v-card-title>
+                            <v-card-text>
+                                <v-combobox
+
+                                        small-chips
+                                        multiple
+                                        v-model="assignBulletin.ref"
+                                        label="{{ _('Ref') }}"
+                                        class="mr-2"
+                                ></v-combobox>
+                                <v-textarea v-model="assignBulletin.comments"
+                                            label="{{ _('Comments') }}"></v-textarea>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign"
+                                       color="primary">{{ _('Assign to self') }}
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+
+                    </v-dialog>
+
+
+                </v-card-text>
+            </v-card>
+        </v-container>
+    </v-main>
+
+
+
+{% endblock %}
+
+{% block outside %}
     <div class="d-none" data-itob='{{ itobInfo|tojson }}'></div>
     <div class="d-none" data-itoa='{{ itoaInfo|tojson }}'></div>
     <div class="d-none" data-atob='{{ atobInfo|tojson }}'></div>
@@ -341,32 +319,80 @@
     <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
     <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
 
-{% endblock %} {% block js %}
+{% endblock %}
+
+{% block js %}
     <script
             src="/static/js/tinymce/js/tinymce/tinymce.min.js"
             referrerpolicy="origin"
     ></script>
+
     <script src="/static/js/tinymce-vue.min.js"></script>
 
-    <script src="/static/js/dropzone/vue2Dropzone.js"></script>
-    <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/DualField.js"></script>
+    <script src="/static/js/components/SearchField.js"></script>
+
+    <script src="/static/js/components/RelatedBulletinsCard.js"></script>
+    <script src="/static/js/components/RelatedActorsCard.js"></script>
+    <script src="/static/js/components/RelatedIncidentsCard.js"></script>
+
+    <script src="/static/js/components/BulletinCard.js"></script>
+    <script src="/static/js/components/ActorProfiles.js"></script>
+    <script src="/static/js/components/ActorCard.js"></script>
+    <script src="/static/js/components/IncidentCard.js"></script>
+
+    <script src="/static/js/components/BulletinSearchBox.js"></script>
+    <script src="/static/js/components/ActorSearchBox.js"></script>
+    <script src="/static/js/components/IncidentSearchBox.js"></script>
+
+
+
     <script src="/static/js/components/BulletinResult.js"></script>
     <script src="/static/js/components/ActorResult.js"></script>
     <script src="/static/js/components/IncidentResult.js"></script>
-    <script src="/static/js/components/UniField.js"></script>
-    <script src="/static/js/mixins/media-mixin.js"></script>
+
+    <script src="/static/js/components/RelateBulletins.js"></script>
+    <script src="/static/js/components/RelateActors.js"></script>
+    <script src="/static/js/components/RelateIncidents.js"></script>
+
+    <script src="/static/js/components/EventCard.js"></script>
+    <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateTimeField.js"></script>
+    <script src="/static/js/components/PopDateRangeField.js"></script>
+    <script src="/static/js/components/GeoLocations.js"></script>
+    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/PreviewCard.js"></script>
+
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
-    <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/GlobalMap.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
+    <script src="/static/js/dropzone.min.js"></script>
+    <script src="/static/js/components/VueDropzone.js"></script>
+
+
+    <script src="/static/js/components/MPCard.js"></script>
+    <script src="/static/js/components/MPField.js"></script>
+    <script src="/static/js/components/MixI.js"></script>
+    <script src="/static/js/components/MixII.js"></script>
+    <script src="/static/js/components/MixIII.js"></script>
+
+    <script src="/static/js/videojs/video.min.js"></script>
+    <script src="/static/js/croppr/croppr.min.js"></script>
+
+    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
+
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
     {% endif %}
-    <script src="/static/js/Leaflet.GoogleMutant.js"></script>
+
 
 
 
@@ -377,426 +403,433 @@
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
 
 
-        VeeValidate.extend("uniqueQueryName", {
-            validate: async (str) => {
-                try {
-                    await axios.get(`/admin/api/query/${str}/exists`);
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+                delimiters: delimiters,
+
+
+                mixins: [mediaMixin, globalMixin],
+
+
+                components: {
+
+                    "tinymce-editor": Editor, // <- Important part,
+                },
+
+
+                data: () => ({
+
+                    helper: {}, // helper object for review items
+
+                    valid: false,
+
+                    translations: translations,
+
+                    itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
+                    itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
+                    itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
+                    atobInfo: JSON.parse(document.querySelector('[data-atob]').dataset.atob),
+                    btobInfo: JSON.parse(document.querySelector('[data-btob]').dataset.btob),
+                    atoaInfo: JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
+
+
+                    dzOpts: {
+                        url: '/admin/api/media/chunk',
+                        acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
+                        addRemoveLinks: true,
+                        chunking: true,
+                        forceChunking: true,
+                        chunkSize: 500000, // Bytes
+                        thumbnailWidth: 80, // px
+                        thumbnailHeight: 80,
+                        parallelUploads: 1,
+                        maxFilesize: mediaUploadMaxFileSize,
+
+
+                    },
+
+
+                    assignBulletin: {},
+                    selfAssignDialog: false,
+
+                    //global preview dialog
+                    preview: false,
+                    pitem: null,
+                    search: [{}],
+                    queryName: null,
+                    saveQueryDialog: false,
+                    searchPanels: 0,
+                    searches: [],
+                    searchTime: null,
+                    savedSearchSelection: null,
+
+
+                    currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+                    users: JSON.parse(`{{users|tojson}}`),
+
+                    roles: [],
+                    // advanced search
+                    q: {},
+
+                    advSearchExpand: false,
+                    advSearchMenu: false,
+
+                    showVisualize: false,
+                    visualizeLoading: false,
+                    graphTimer: null,
+
+
+                    fsloading: true,
+
+
+                    dialog: dialog,
+                    eventDialog: false,
+                    eventParams: {typ: 'for_bulletin'},
+                    reviewDialog: false,
+                    reviewKey: 0,
+                    descKey: 0,
+
+
+                    // search and relate bulletin dialog vars
+
+
+                    relateBulletinTerm: "",
+                    relateBulletinResults: [],
+                    selectedRelatedBulletins: [],
+
+                    // search and relate actor dialog vars
+                    relateActorTerm: "",
+                    relateActorResults: [],
+                    selectedRelatedActors: [],
+
+
+                    // search and relate incident dialog vars
+                    relateIncidentDialog: false,
+                    relateIncidentLoader: true,
+                    relateIncidentTerm: "",
+                    relateIncidentResults: [],
+                    selectedRelatedIncidents: [],
+
+
+                    drawer: drawer,
+                    bulletinDrawer: false,
+                    bulkBulletinDrawer: false,
+
+                    exportDrawer: false,
+                    exportConfig: {},
+                    sources: [],
+                    locations: [],
+                    labels: [],
+                    verLabels: [],
+                    eventtypes: [],
+
+
+                    statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                        .map(s => ({en: s.title, tr: s.title_tr})),
+
+                    statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                        .map(s => ({en: s.title, tr: s.title_tr})),
+                    statusDisabled: false,
+
+
+                    //field language switchers
+                    title__: true,
+                    sjac_title__: true,
+                    //events fields
+                    eventTitle__: true,
+                    eventComments__: true,
+
+
+                    //source link extras
+                    source_alt: null,
+                    source_disabled: false,
+
+                    //rich text config
+                    tinyConfig: tinyConfig,
+
+
+                    loading: true,
+                    parentLoading: false,
+                    csvFile: null,
+                    options: {},
+                    searchLoading: {
+                        assigned: false,
+                        first: false,
+                        second: false,
+                        third: false
+                    },
+
+
+                    //event dates popups
+                    eventFromMenu: false,
+                    eventToMenu: false,
+
+                    //bulletin dates popups
+                    publishDateMenu: false,
+                    documentationDateMenu: false,
+
+
+                    headers: [
+                        {title: "{{_('ID')}}", value: "id", width: 12, sortable: true},
+                        {title: "{{_('Title')}}", value: "title", width: 300, sortable: false},
+
+                        {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
+                            {title: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
+                            {title: "{{_('Access Groups')}}", value: "roles", width: 130, sortable: false},
+                        {% endif %}
+                        {title: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
+
+
+                        {title: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
+
+                    ],
+
+
+                    items: [],
+                    selected: [],
+                    itemsLength: 10,
+
+                    editedIndex: -1,
+                    editedItem: {
+                        title: "",
+                        events: [],
+                        medias: [],
+                        bulletin_relations: [],
+                        actor_relations: [],
+                        incident_relations: []
+                    },
+                    defaultItem: {
+                        title: "",
+                        description: "",
+
+                        // related events
+                        events: [],
+                        // related media
+                        medias: [],
+                        // related bulletins
+                        bulletin_relations: [],
+
+                        // related actors
+                        actor_relations: [],
+
+                        // related incidents
+                        incident_relations: [],
+                        publish_date: '',
+                        documentation_date: '',
+                        roles: []
+                    },
+
+                    reviewItem: {},
+
+                    unrestricted: false,
+
+                    // bulk actions
+                    bulk: {},
+                    bulkIcons: false,
+                    jobs: [],
+                    bulkTimer: 0,
+
+
+                    //events
+                    editedEventIndex: -1,
+                    editedEvent: {
+                        title: ""
+                    },
+                    defaultEvent: {
+                        title: "",
+                        from_date: '',
+                        to_date: ''
+                    },
+
+
+                    bulletin: {},
+                    bulletinLoader: false
+                }),
+
+                computed: {
+                    searchEmpty() {
+                        return this.search.every(search =>
+                            Object.values(search).every(value => !value)
+                        );
+
+                    },
+                    titleRule() {
+                        return [this.editedItem.title ? v => true : v => "{{ _('Original Title is required.')}}"]
+                    },
+                    accessRule() {
+                        return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
+                    },
+                    linkRule() {
+                        return [this.source_alt || this.editedItem.source_link ? v => true : v => "{{ _('Source link is required unless unavailable.')}}"]
+                    },
+                    bulletinRelationTypes() {
+                        return this.btobInfo;
+                    },
+                    actorRelationTypes() {
+                        return this.atobInfo;
+                    },
+                    incidentRelationTypes() {
+                        return this.itobInfo;
+                    },
+                    bulletinRelationMultiple() {
                     return true;
-                } catch (error) {
-                    return error?.response?.data ?? 'An error occurred.';
-                }
-            },
-        });
-
-        let app = new Vue({
-            el: "#app",
-            vuetify: vuetify,
-            delimiters: delimiters,
-            router,
-
-            mixins: [mediaMixin],
-
-
-            components: {
-
-                "tinymce-editor": Editor, // <- Important part,
-                vueDropzone: vue2Dropzone
-
-            },
-
-
-            data: () => ({
-
-
-                translations: translations,
-
-                itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
-                itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
-                itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
-                atobInfo: JSON.parse(document.querySelector('[data-atob]').dataset.atob),
-                btobInfo: JSON.parse(document.querySelector('[data-btob]').dataset.btob),
-                atoaInfo: JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
-
-
-                dzOpts: {
-                    url: '/admin/api/media/chunk',
-                    acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
-                    addRemoveLinks: true,
-                    chunking: true,
-                    forceChunking: true,
-                    chunkSize: 500000, // Bytes
-                    thumbnailWidth: 80, // px
-                    thumbnailHeight: 80,
-                    parallelUploads: 1,
-                    maxFilesize: mediaUploadMaxFileSize,
-
-
-                },
-
-
-                assignBulletin: {},
-                selfAssignDialog: false,
-
-                //global preview dialog
-                preview: false,
-                pitem: null,
-                search: [{}],
-                queryName: null,
-                saveQueryDialog: false,
-                searchPanels: 0,
-                searches: [],
-                searchTime: null,
-                savedSearchSelection: null,
-
-
-                currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
-                users: JSON.parse(`{{users|tojson}}`),
-
-                roles: [],
-                // advanced search
-                q: {},
-
-                advSearchExpand: false,
-                advSearchMenu: false,
-
-                showVisualize: false,
-                visualizeLoading: false,
-                graphTimer: null,
-
-
-                fsloading: true,
-
-
-                dialog: dialog,
-                eventDialog: false,
-                eventParams: {typ: 'for_bulletin'},
-                reviewDialog: false,
-                reviewKey: 0,
-                descKey: 0,
-
-
-                // search and relate bulletin dialog vars
-
-
-                relateBulletinTerm: "",
-                relateBulletinResults: [],
-                selectedRelatedBulletins: [],
-
-                // search and relate actor dialog vars
-                relateActorTerm: "",
-                relateActorResults: [],
-                selectedRelatedActors: [],
-
-
-                // search and relate incident dialog vars
-                relateIncidentDialog: false,
-                relateIncidentLoader: true,
-                relateIncidentTerm: "",
-                relateIncidentResults: [],
-                selectedRelatedIncidents: [],
-
-
-                drawer: drawer,
-                sideNav: sideNav,
-                bulletinDrawer: false,
-                bulkBulletinDrawer: false,
-
-                exportDrawer: false,
-                exportConfig: {},
-                sources: [],
-                locations: [],
-                labels: [],
-                verLabels: [],
-                eventtypes: [],
-
-
-                statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
-                    .map(s => ({en: s.title, tr: s.title_tr})),
-
-                statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
-                    .map(s => ({en: s.title, tr: s.title_tr})),
-                statusDisabled: false,
-
-
-                //field language switchers
-                title__: true,
-                sjac_title__: true,
-                //events fields
-                eventTitle__: true,
-                eventComments__: true,
-
-
-                //source link extras
-                source_alt: null,
-                source_disabled: false,
-
-                //rich text config
-                tinyConfig: tinyConfig,
-
-                snackbar: false,
-                snackMessage: "",
-                loading: true,
-                parentLoading: false,
-                csvFile: null,
-                options: {},
-                searchLoading: {
-                    assigned: false,
-                    first: false,
-                    second: false,
-                    third: false
-                },
-
-
-                //event dates popups
-                eventFromMenu: false,
-                eventToMenu: false,
-
-                //bulletin dates popups
-                publishDateMenu: false,
-                documentationDateMenu: false,
-
-                footerProps: {
-                    itemsPerPageOptions: itemsPerPageOptions,
-                    itemsPerPageText: "{{ _('Rows per page')}}"
-                },
-
-                headers: [
-                    {text: "{{_('ID')}}", value: "id", width: 12, sortable: true},
-                    {text: "{{_('Title')}}", value: "title", width: 300, sortable: false},
-
-                    {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
-                        {text: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
-                        {text: "{{_('Roles')}}", value: "roles", width: 130, sortable: false},
-                    {% endif %}
-                    {text: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
-
-
-                    {text: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
-
-                ],
-
-
-                items: [],
-                selected: [],
-                itemsLength: 10,
-
-                editedIndex: -1,
-                editedItem: {
-                    title: "",
-                    events: [],
-                    medias: [],
-                    bulletin_relations: [],
-                    actor_relations: [],
-                    incident_relations: []
-                },
-                defaultItem: {
-                    title: "",
-                    description: "",
-
-                    // related events
-                    events: [],
-                    // related media
-                    medias: [],
-                    // related bulletins
-                    bulletin_relations: [],
-
-                    // related actors
-                    actor_relations: [],
-
-                    // related incidents
-                    incident_relations: [],
-                    publish_date: '',
-                    documentation_date: '',
-                    roles: []
-                },
-
-                reviewItem: {},
-
-                unrestricted: false,
-
-                // bulk actions
-                bulk: {},
-                bulkIcons: false,
-                jobs: [],
-                bulkTimer: 0,
-
-
-                //events
-                editedEventIndex: -1,
-                editedEvent: {
-                    title: ""
-                },
-                defaultEvent: {
-                    title: "",
-                    from_date: '',
-                    to_date: ''
-                },
-
-
-                bulletin: {},
-                bulletinLoader: false
-            }),
-
-            computed: {
-                compLocations() {
-                    return aggregateBulletinLocations(this.editedItem);
-                },
-
-
-                exBulletins() {
-                    let ids = [];
-
-                    if (this.editedItem?.id) {
-                        ids.push(this.editedItem.id);
-                        if (this.editedItem.bulletin_relations) {
-                            ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
+                    },
+                    actorRelationMultiple() {
+                        return true;
+                    },
+                    incidentRelationMultiple() {
+                        return false;
+                    },
+
+                    compLocations() {
+                        return aggregateBulletinLocations(this.editedItem);
+                    },
+
+
+                    exBulletins() {
+                        let ids = [];
+
+                        if (this.editedItem?.id) {
+                            ids.push(this.editedItem.id);
+                            if (this.editedItem.bulletin_relations) {
+                                ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
+                            }
+                        } else if (this.reviewItem?.id) {
+                            ids.push(this.reviewItem.id);
+                            if (this.reviewItem.bulletin_relations) {
+                                ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
+                            }
                         }
-                    } else if (this.reviewItem?.id) {
-                        ids.push(this.reviewItem.id);
-                        if (this.reviewItem.bulletin_relations) {
-                            ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
+
+                        return ids;
+                    },
+
+                    exActors() {
+                        let ids = [];
+
+                        if (this.editedItem?.id) {
+                            if (this.editedItem.actor_relations) {
+                                ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
+                            }
+                        } else if (this.reviewItem?.id) {
+                            if (this.reviewItem.actor_relations) {
+                                ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
+                            }
                         }
-                    }
 
-                    return ids;
-                },
+                        return ids;
+                    },
 
-                exActors() {
-                    let ids = [];
+                    exIncidents() {
+                        let ids = [];
 
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.actor_relations) {
-                            ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
+                        if (this.editedItem?.id) {
+                            if (this.editedItem.incident_relations) {
+                                ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
+                            }
+                        } else if (this.reviewItem?.id) {
+                            if (this.reviewItem.incident_relations) {
+                                ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
+                            }
                         }
-                    } else if (this.reviewItem?.id) {
-                        if (this.reviewItem.actor_relations) {
-                            ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
+
+                        return ids;
+                    },
+
+
+                    searchBg() {
+                        return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow-lighten-5' : '';
+
+                    },
+
+
+                    formTitle() {
+
+                        return this.editedItem.id ? this.translations.editBulletin_ : this.translations.newBulletin_;
+                    },
+
+                },
+
+
+                watch: {
+
+                    bulletinDrawer: function (val) {
+                        if (val === false) {
+
+                            if (this.$route.path !== '/admin/bulletins/')
+                                this.$router.push('/admin/bulletins/')
                         }
-                    }
+                    },
 
-                    return ids;
-                },
 
-                exIncidents() {
-                    let ids = [];
+                    selected: {
+                        handler(val) {
+                            this.bulkIcons = !!val.length;
+                        },
+                        deep: true, // Enable deep watching
+                        //  immediate: true
+                    },
 
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.incident_relations) {
-                            ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
+
+                    source_alt: function (val) {
+
+                        if (val) {
+                            this.editedItem.source_link = 'NA';
+                            this.source_disabled = true;
+                        } else {
+                            //this.editedItem.source_link = '';
+                            this.source_disabled = false;
                         }
-                    } else if (this.reviewItem?.id) {
-                        if (this.reviewItem.incident_relations) {
-                            ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
+                    },
+
+
+                    eventDialog(val) {
+                        val || this.closeEvent();
+                    },
+
+                    mediaDialog(val) {
+                        val || this.closeMedia();
+                    },
+
+
+                },
+                mounted: function () {
+
+
+                    // populate roles for advanced search for admins
+                    {% if current_user.has_role('Admin') %}
+                        axios.get('/admin/api/roles/').then(res => {
+                            this.roles = res.data.items;
+                        }).catch(e => {
+                            this.roles = [];
+                            console.error(e.message);
+                        });
+                    {% endif  %}
+
+
+
+                    // display confirmation alert if edit dialog is open.
+                    let self = this;
+                    window.addEventListener("beforeunload", function (e) {
+                        if (self.dialog) {
+                            const confirmationMessage = "{{ _('It looks like you have been editing something. ')}}"
+                                + "{{ _('If you leave before saving, your changes will be lost.')}}";
+                            (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+                            return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
                         }
-                    }
-
-                    return ids;
-                },
-
-
-                searchBg() {
-                    return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow lighten-5' : '';
-
-                },
-
-
-                formTitle() {
-
-                    return this.editedItem.id ? this.translations.editBulletin_ : this.translations.newBulletin_;
-                },
-
-            },
-
-
-            watch: {
-
-                bulletinDrawer: function (val) {
-                    if (val == false) {
-
-                        if (this.$route.path != '/admin/bulletins/')
-                            this.$router.push('/admin/bulletins/')
-                    }
-                },
-
-
-                selected: function (val) {
-                    this.bulkIcons = val.length ? true : false;
-
-                },
-
-                source_alt: function (val) {
-
-                    if (val) {
-                        this.editedItem.source_link = 'NA';
-                        this.source_disabled = true;
-                    } else {
-                        //this.editedItem.source_link = '';
-                        this.source_disabled = false;
-                    }
-                },
-
-
-                eventDialog(val) {
-                    val || this.closeEvent();
-                },
-
-                mediaDialog(val) {
-                    val || this.closeMedia();
-                },
-
-                options: {
-                    handler: "refresh"
-                }
-            },
-            mounted: function () {
-
-
-                // populate roles for advanced search for admins
-                {% if current_user.has_role('Admin') %}
-                    axios.get('/admin/api/roles/').then(res => {
-                        this.roles = res.data.items;
-                    }).catch(e => {
-                        this.roles = [];
-                        console.error(e.message);
                     });
-                {% endif  %}
 
 
-
-                // display confirmation alert if edit dialog is open.
-                let self = this;
-                window.addEventListener("beforeunload", function (e) {
-                    if (self.dialog) {
-                        var confirmationMessage = 'It looks like you have been editing something. '
-                            + 'If you leave before saving, your changes will be lost.';
-                        (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-                        return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+                    if (this.$route.params.id) {
+                        this.showBulletin(this.$route.params.id);
                     }
-                });
-
-
-                if (this.$route.params.id) {
-                    this.showBulletin(this.$route.params.id);
-                }
-
-                if (this.$route.query.reltob) {
-                    this.filter_related_to_bulletin(this.$route.query.reltob);
-
-                }
-
-                if (this.$route.query.reltoa) {
-                    this.filter_related_to_actor(this.$route.query.reltoa);
-                }
-
-                if (this.$route.query.reltoi) {
-                    this.filter_related_to_incident(this.$route.query.reltoi);
-                }
-
-
-                this.$router.afterEach((to, from, next) => {
 
                     if (this.$route.query.reltob) {
                         this.filter_related_to_bulletin(this.$route.query.reltob);
+
                     }
 
                     if (this.$route.query.reltoa) {
@@ -808,864 +841,945 @@
                     }
 
 
-                    if (this.$route.params.id) {
-                        this.showBulletin(this.$route.params.id);
-                    } else {
-                        this.bulletinDrawer = false;
-                    }
-
-                })
+                    this.$router.afterEach((to, from) => {
 
 
-            },
-
-            methods: {
-
-
-                checkGraphStatus: function () {
-                    axios.get('/admin/api/graph/status', {
-                        params: {
-                            type: 'bulletin'
+                        if (this.$route.query.reltob) {
+                            this.filter_related_to_bulletin(this.$route.query.reltob);
                         }
-                    })
-                        .then(res => {
-                            if (res.data.status == 'done') {
-                                clearInterval(this.graphTimer);
-                                this.visualizeLoading = false;
-                                this.$refs.viz.visualizeQuery();
 
-
-                            }
-
-                        })
-                        .catch(error => {
-                            console.error('API check failed:', error);
-                        });
-                }
-                ,
-
-                visualizeResults() {
-                    this.visualizeLoading = true;
-                    axios.post('/admin/api/graph/visualize', {q: this.search}, {
-                        params: {
-                            type: 'bulletin'
+                        if (this.$route.query.reltoa) {
+                            this.filter_related_to_actor(this.$route.query.reltoa);
                         }
-                    }).then(res => {
-                        this.showSnack('Graph is being generated.');
-                        this.graphTimer = setInterval(this.checkGraphStatus, 3000);
-                    }).catch(e => {
-                        console.error(e.message);
-                    }).finally(() => {
-                    });
-                }
-                ,
+
+                        if (this.$route.query.reltoi) {
+                            this.filter_related_to_incident(this.$route.query.reltoi);
+                        }
 
 
-                exportRequest() {
+                        if (this.$route.params.id) {
 
-                    let ids = this.selected.map(x => x.id);
-                    this.loading = true;
-                    axios.post(`/export/api/bulletin/export`, {
-                        items: ids,
-                        config: this.exportConfig
-                    })
-                        .then(response => {
-                            this.showSnack(response.data);
-                        }).catch(error => {
-                        console.error(error.response?.data);
-                        this.showSnack(error.response?.data)
-                    }).finally(() => {
-                        this.loading = false;
-                        this.exportDrawer = false;
-                        this.selected = [];
-                        this.exportConfig = {};
-
-                    });
-                },
-
-
-                selectAllRestrict(props) {
-                    if (props.value === false) {
-                        // untoggle on next tick
-                        this.$nextTick(() => {
-                            this.selected = [];
-                        })
-                    }
-
-
-                    this.selected = this.selected.concat(props.items.filter(x => !x.restricted))
-                },
-
-                rowClass(item) {
-                    if (item.restricted) {
-                        return 'restricted'
-                    }
-                    return ''
-                },
-
-                openSelfAssign(bulletin) {
-                    this.assignBulletin = {id: bulletin.id};
-                    this.selfAssignDialog = true;
-
-                },
-
-                selfAssign() {
-
-
-                    axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
-                        this.showSnack('Bulletin assigned successfully.')
-                        this.searchBulletins(true)
-
-                    }).catch(err => {
-                        this.showSnack(err.response.data);
-                    }).finally(() => {
-                        this.selfAssignDialog = false;
-                        this.assignBulletin = {};
-
-                    });
-
-                },
-
-                filter_related_to_bulletin(id) {
-                    this.bulletinDrawer = false;
-                    this.search = [{rel_to_bulletin: id}];
-                    this.searchBulletins();
-                },
-
-                filter_related_to_actor(id) {
-                    this.bulletinDrawer = false;
-                    this.search = [{rel_to_actor: id}];
-                    this.searchBulletins();
-                },
-
-                filter_related_to_incident(id) {
-                    this.bulletinDrawer = false;
-                    this.search = [{rel_to_incident: id}];
-                    this.searchBulletins();
-                },
-
-                previewItem(endpoint) {
-
-                    axios.get(endpoint).then(res => {
-                        this.pitem = res.data;
-                        this.preview = true;
-
-                    })
-
-
-                },
-
-                geoLocationsUpdated() {
-                    if (this.editedItem.geoLocations.length > 0) {
-                        this.editedItem.geoLocations.push(this.editedItem.geoLocations.pop())
-                    }
-
-
-                },
-
-
-                bulkStatus() {
-
-                    axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
-                        this.jobs = res.data;
-
-                        if (!this.jobs.length) {
-                            clearInterval(this.bulkTimer);
-                            // default refresh to first page
-                            this.options.page = 1;
-
-                            this.refresh(true);
-                            this.showSnack('Bulk Update is finished!')
+                            this.showBulletin(this.$route.params.id);
                         } else {
-                            //console.log(this.jobs)
-                            for (job of this.jobs) {
-                                // console.log(job.status)
+                            this.bulletinDrawer = false;
+                        }
+
+                    })
+
+
+                },
+
+                methods: {
+
+                    validateForm() {
+                        this.$refs.form.validate().then(valid => {
+                            if (valid) {
+                                this.save();
                             }
-                        }
-                    });
-
-                },
-
-
-                // bulk updates
-
-                bulk_update() {
-                    let ids = this.selected.map(x => x.id);
-                    this.loading = true;
-                    axios.put(`/admin/api/bulletin/bulk/`, {
-                        items: ids,
-                        bulk: this.bulk
-                    })
-                        .then(response => {
-                            this.loading = false;
-                            this.showSnack(response.data);
-                            this.refresh(this.options);
-                            //reset bulk drawer, and bulk data
-                            this.bulkBulletinDrawer = false;
-                            this.selected = [];
-                            this.bulk = {};
-                            clearInterval(this.bulkTimer);
-                            // if (!this.bulkProcInterval)
-                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
-
                         });
-                },
+                    },
 
 
-                // - ------------------ bulletins search methods  ---------------------------------
-
-                toggleAdvSearch() {
-                    this.advSearchExpand = !this.advSearchExpand
-                    this.advSearchMenu = !this.advSearchMenu;
-
-
-                },
-                doSearch() {
-                    this.options.page = 1;
-                    this.advSearchExpand = this.advSearchExpand && false;
-
-
-                    this.searchBulletins();
-                }
-                ,
-                searchBulletins(cached) {
-
-                    this.loading = true;
-                    const startTime = new Date()
-                    let url = `/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
-                    if (cached) {
-                        url += '&cache=' + new Date().getTime();
-                    }
-                    axios.post(url, {
-                        q: this.search,
-                        options: this.options
-                    }).then(response => {
-                        const endTime = new Date()
-                        this.searchTime = (endTime - startTime) / 1000;
-                        this.loading = false;
-                        this.itemsLength = response.data.total;
-                        this.items = response.data.items;
-                        this.showVisualize = !(
-                            this.search.length === 1 &&
-                            Object.keys(this.search[0]).length === 0
-                        );
-
-                    });
-
-
-                },
-                removeQueryAt(i) {
-
-                    this.search.splice(i, 1);
-
-                },
-
-                addQuery() {
-                    this.search.push({})
-                    this.searchPanels = this.search.length - 1;
-                },
-
-
-                resetSearch() {
-                    this.savedSearchSelection = null;
-                    this.search = [{}];
-                    this.doSearch();
-                },
-
-                openSaveQueryDialog() {
-                    // Separate method to include auto-focus on input
-
-                    this.saveQueryDialog = true;
-                    this.$nextTick(() => {
-                        setTimeout(() => {
-                            this.$refs.saveQueryInput.focus();
-                        }, 0);
-                    })
-                },
-
-                loadSearch(item) {
-
-                    if (item) {
-                        this.savedSearchSelection = Object.assign([], item);
-                        this.search = Object.assign([], item.data);
-                    }
-                    this.$refs.savedSearchDropdown.blur()
-                },
-
-
-                loadSearchesFromAPI(selectLast = false) {
-                    axios.get('/admin/api/queries/', {
-                        params: {
-                            type: 'bulletin'
-                        }
-                    }).then(res => {
-                        this.searches = res.data;
-                        if (selectLast === true) {
-                            this.savedSearchSelection = this.searches.at(-1);
-                        }
-                    }).catch(error => {
-                        this.showSnack(handleRequestError(error))
-                    });
-
-                },
-
-                saveSearch() {
-                    const newSearch = {q: this.search, name: this.queryName, type: 'bulletin'};
-
-                    axios.post('/admin/api/query/', newSearch)
-                        .then(res => {
-                            this.showSnack(res.data);
-                            this.saveQueryDialog = false;
-
-
-                            this.queryName = null;
-                            // just reload searches and select the last one
-                            this.loadSearchesFromAPI(true);
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
-                        });
-                },
-
-
-                updateSearch() {
-                    axios.put('/admin/api/query/' + this.savedSearchSelection.name, {q: this.search})
-                        .then(res => {
-                            this.showSnack(res.data);
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
-                        });
-                },
-
-
-                deleteSearch(searchName) {
-                    axios.delete('/admin/api/query/' + searchName)
-                        .then(res => {
-                            this.showSnack(res.data);
-                            this.searches = this.searches.filter(item => item.name !== searchName);
-                            this.resetSearch();
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
-                        });
-                }
-
-                ,
-                // - ------------------ end bulletins search methods  ---------------------------------
-
-
-                /* Bulletins Custom Lists */
-
-                allBulletins() {
-                    this.search = [{}];
-                    this.doSearch();
-
-                },
-                myAssigned() {
-                    q = {};
-                    this.options.page = 1;
-                    q.assigned = [this.currentUser.id];
-                    q.statuses = ["Assigned"];
-                    this.search = [q];
-                    this.searchBulletins();
-                },
-
-                myReview() {
-                    q = {};
-                    this.options.page = 1;
-                    q.reviewer = [this.currentUser.id];
-                    q.statuses = ["Peer Review Assigned"];
-                    this.search = [q]
-                    this.searchBulletins();
-                },
-
-
-                removeEvent: function (evt, index) {
-                    if (confirm('Confirm deleting this event?')) {
-                        this.editedItem.events.splice(index, 1);
-                    }
-
-                },
-
-
-                //reset initial visible fields to english language
-
-                resetSwitchers: function () {
-                    this.title__ = true;
-                    this.sjac_title__ = true;
-                },
-
-                refresh(cached = false) {
-
-                    this.searchBulletins(this.search, cached = cached)
-
-                },
-
-                rowClick(item) {
-                    if (item.restricted) {
-                        this.showSnack('This item is restricted.')
-                        return
-                    }
-                    path = `/admin/bulletins/${item.id}`;
-                    if (this.$route.path !== path)
-                        this.$router.push(path);
-
-                },
-
-                showBulletin(id) {
-                    this.bulletinLoader = true
-                    this.bulletinDrawer = true;
-                    axios.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
-                        this.bulletin = response.data;
-                    }).catch(error => {
-                        this.bulletinDrawer = false;
-                        if (error.response) {
-                            this.showSnack(error.response.data)
-                            this.snackbar = true;
-                        }
-                    }).finally(() => {
-                        this.bulletinLoader = false;
-                    });
-                },
-
-
-                searchEventtypes: debounce(function (evt) {
-                    axios
-                        .get(`/admin/api/eventtypes/?q=${evt.target.value}&typ=for_bulletin`)
-                        .then(response => {
-                            this.eventtypes = response.data.items;
-                        });
-                }, 350),
-
-
-                handleStatus(bulletin) {
-
-                    if (this.editedItem.id) {
-                        // edit existing bulletin mode
-                        if (this.has_role(this.currentUser, 'Admin')) {
-
-                            this.statusDisabled = false;
-                            return;
-                        }
-
-                        // else is a standard user
-                        this.statusItems = this.statuses;
-
-                        if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created') {
-                            this.editedItem.status = this.statusItems[2].en;
-                        }
-
-                        if (this.editedItem.status == 'Peer Reviewed') {
-                            this.editedItem.status = this.statusItems[9].en;
-                        }
-
-                        this.statusDisabled = true;
-                    } else {
-                        // new bulletin mode
-
-                        this.editedItem.status = this.statusItems[1].en;
-                        this.statusDisabled = true;
-
-                    }
-
-                },
-
-                showSnack(message) {
-                    this.snackMessage = message;
-                    this.snackbar = true;
-                },
-
-                has_role(user, role) {
-                    for (const r of user.roles) {
-                        if (r.name === role) {
-                            return true
-                        }
-                    }
-                    return false;
-                },
-
-                bulkAllowed() {
-                    if (this.has_role(this.currentUser, 'Admin')) {
-                        return true;
-                    }
-                    if (this.has_role(this.currentUser, 'Mod')) {
-                        return true;
-                    }
-                    return false;
-                },
-
-                exportAllowed() {
-                    if (__EXPORT_TOOL__) {
-                        if (this.has_role(this.currentUser, 'Admin')) {
-                            return true;
-                        }
-                        if (this.currentUser.can_export) {
-                            return true;
-                        }
-                    }
-                    return false;
-                },
-
-                editAllowed(bulletin) {
-
-                    if (bulletin.restricted) {
-                        return false;
-                    }
-
-                    if (this.has_role(this.currentUser, 'Admin')) {
-                        return true;
-                    }
-                    if (!this.has_role(this.currentUser, 'DA')) {
-                        return false;
-                    }
-                    const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
-                    if (bulletin.assigned_to && bulletin.assigned_to.id == this.currentUser.id && statuses.includes(bulletin.status)) {
-                        return true
-                    }
-                    return false;
-                },
-
-                reviewAllowed(bulletin) {
-
-                    if (bulletin.restricted) {
-                        return false;
-                    }
-
-                    if (!this.currentUser.roles.length) {
-                        return false;
-                    }
-
-                    const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
-                    if (bulletin.first_peer_reviewer && bulletin.first_peer_reviewer.id == this.currentUser.id && statuses.includes(bulletin.status)) {
-                        return true
-                    }
-                    return false;
-                },
-
-                selfAssignAllowed(bulletin) {
-
-                    if (bulletin.restricted) {
-                        return false;
-                    }
-
-                    if (this.currentUser.can_self_assign) {
-                        if ((!bulletin.assigned_to) || (bulletin.assigned_to && !bulletin.assigned_to.active)) {
-                            return true
-                        }
-
-                    }
-
-                    return false;
-
-                },
-
-                allowedRoles() {
-                    if (this.has_role(this.currentUser, 'Admin')) {
-                        return this.roles;
-                    }
-                    return this.currentUser.roles;
-                },
-
-                addReview(item) {
-
-                    this.loading = true;
-                    this.reviewDialog = true;
-
-
-                    axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
-                        this.loading = false;
-                        this.$nextTick(() => {
-                            this.reviewItem = response.data;
-                            this.reviewKey += 1;
-                            // fix bug in vue reactivity with nested object attribs
-
-                            if (!response.data.review) {
-                                this.reviewItem.review = '';
+                    checkGraphStatus: function () {
+                        axios.get('/admin/api/graph/status', {
+                            params: {
+                                type: 'bulletin'
                             }
-
-
                         })
+                            .then(res => {
+                                if (res.data.status == 'done') {
+                                    clearInterval(this.graphTimer);
+                                    this.visualizeLoading = false;
+                                    this.$refs.viz.visualizeQuery();
 
 
-                    })
-
-
-                }
-                ,
-
-                saveReview() {
-
-                    axios.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
-                        item: this.reviewItem
-                    })
-                        .then(response => {
-                            this.reviewDialog = false;
-                            this.showSnack(response.data);
-                            this.searchBulletins();
-                        });
-
-                },
-
-                adjustDates() {
-
-
-                    if (this.editedItem.publish_date) {
-                        this.editedItem.publish_time = dateFns.format(this.editedItem.publish_date, 'HH:mm');
-                        this.editedItem.publish_date = dateFns.format(this.editedItem.publish_date, 'YYYY-MM-DD')
-                    }
-
-                    if (this.editedItem.documentation_date) {
-                        this.editedItem.documentation_time = dateFns.format(this.editedItem.documentation_date, 'HH:mm');
-                        this.editedItem.documentation_date = dateFns.format(this.editedItem.documentation_date, 'YYYY-MM-DD');
-                    }
-                },
-
-
-                editItem(item) {
-
-                    this.bulletinDrawer = false;
-
-
-                    if (!item.id) {
-                        // hack to invoke deep copy and avoid passing attributes by reference
-                        // (resolves data the persists across dialogs)
-                        this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
-                        this.source_alt = null;
-                        this.dialog = true;
-                        this.handleStatus(item);
-                    } else {
-                        // load item from db
-                        this.loading = true;
-                        axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
-                            this.dialog = true;
-
-                            this.$nextTick(() => {
-                                this.loading = false
-                                this.editedItem = response.data;
-                                //reload tinymce component hack
-                                this.descKey += 1;
-                                if (this.editedItem.source_link == 'NA') {
-                                    this.source_alt = true;
-                                } else {
-                                    this.source_alt = false;
                                 }
-                                this.editedItem.comments = '';
 
-                                this.resetSwitchers();
-                                this.handleStatus(item);
+                            })
+                            .catch(error => {
+                                console.error('API check failed:', error);
+                            });
+                    }
+                    ,
+
+                    visualizeResults() {
+                        this.visualizeLoading = true;
+                        axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                            params: {
+                                type: 'bulletin'
+                            }
+                        }).then(res => {
+                            this.showSnack("{{ _('Graph is being generated.')}}");
+                            this.graphTimer = setInterval(this.checkGraphStatus, 3000);
+                        }).catch(e => {
+                            console.error(e.message);
+                        }).finally(() => {
+                        });
+                    }
+                    ,
+
+
+                    exportRequest() {
+
+                        let ids = this.selected.map(x => x.id);
+                        this.loading = true;
+                        axios.post(`/export/api/bulletin/export`, {
+                            items: ids,
+                            config: this.exportConfig
+                        })
+                            .then(response => {
+                                this.showSnack(response.data);
+                            }).catch(error => {
+                            console.error(error.response?.data);
+                            this.showSnack(error.response?.data)
+                        }).finally(() => {
+                            this.loading = false;
+                            this.exportDrawer = false;
+                            this.selected = [];
+                            this.exportConfig = {};
+
+                        });
+                    },
+
+
+                    selectAllRestrict(props) {
+                        if (props.value === false) {
+                            // untoggle on next tick
+                            this.$nextTick(() => {
+                                this.selected = [];
+                            })
+                        }
+
+
+                        this.selected = this.selected.concat(props.items.filter(x => !x.restricted))
+                    },
+
+                    rowClass(row) {
+
+
+                        if (row.item.restricted) {
+                            return {class: 'restricted'}
+                        }
+                        return {class: ''}
+                    },
+
+                    openSelfAssign(bulletin) {
+                        this.assignBulletin = {id: bulletin.id};
+                        this.selfAssignDialog = true;
+
+                    },
+
+                    selfAssign() {
+
+
+                        axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
+                            this.showSnack("{{ _('Bulletin assigned successfully.')}}")
+                            this.refresh();
+
+                        }).catch(err => {
+                            this.showSnack(err.response.data);
+                        }).finally(() => {
+                            this.selfAssignDialog = false;
+                            this.assignBulletin = {};
+
+                        });
+
+                    },
+
+                    filter_related_to_bulletin(id) {
+                        this.bulletinDrawer = false;
+                        this.search = [{rel_to_bulletin: id}];
+                        this.refresh();
+                    },
+
+                    filter_related_to_actor(id) {
+                        this.bulletinDrawer = false;
+                        this.search = [{rel_to_actor: id}];
+                        this.refresh();
+                    },
+
+                    filter_related_to_incident(id) {
+                        this.bulletinDrawer = false;
+                        this.search = [{rel_to_incident: id}];
+                        this.refresh();
+                    },
+
+                    previewItem(endpoint) {
+
+                        axios.get(endpoint).then(res => {
+                            this.pitem = res.data;
+                            this.preview = true;
+
+                        })
+
+
+                    },
+
+                    geoLocationsUpdated() {
+                        if (this.editedItem.geoLocations.length > 0) {
+                            this.editedItem.geoLocations.push(this.editedItem.geoLocations.pop())
+                        }
+
+
+                    },
+
+
+                    bulkStatus() {
+
+                        axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
+                            this.jobs = res.data;
+
+                            if (!this.jobs.length) {
+                                clearInterval(this.bulkTimer);
+                                // default refresh to first page
+                                this.options.page = 1;
+
+                                this.refresh(true);
+                                this.showSnack("{{ _('Bulk Update is finished!')}}")
+                            } else {
+                                //console.log(this.jobs)
+                                for (job of this.jobs) {
+                                    // console.log(job.status)
+                                }
+                            }
+                        });
+
+                    },
+
+
+                    // bulk updates
+
+                    bulk_update() {
+                        let ids = this.selected.map(x => x.id);
+                        this.loading = true;
+                        axios.put(`/admin/api/bulletin/bulk/`, {
+                            items: ids,
+                            bulk: this.bulk
+                        })
+                            .then(response => {
+                                this.loading = false;
+                                this.showSnack(response.data);
+                                this.refresh(this.options);
+                                //reset bulk drawer, and bulk data
+                                this.bulkBulletinDrawer = false;
+                                this.selected = [];
+                                this.bulk = {};
+                                clearInterval(this.bulkTimer);
+                                // if (!this.bulkProcInterval)
+                                this.bulkTimer = setInterval(this.bulkStatus, 3000);
+
+                            });
+                    },
+
+
+                    // - ------------------ bulletins search methods  ---------------------------------
+
+                    toggleAdvSearch() {
+
+                        this.advSearchExpand = !this.advSearchExpand
+                        this.advSearchMenu = !this.advSearchMenu;
+
+
+                    },
+                    doSearch() {
+                        this.options.page = 1;
+                        this.advSearchExpand = this.advSearchExpand && false;
+
+
+                        this.refresh();
+                    }
+                    ,
+                    refresh(options) {
+
+                        this.options = options || this.options;
+                        this.loading = true;
+                        const startTime = new Date()
+
+                        let url = `/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
+
+                        axios.post(url, {
+                            q: this.search,
+                            options: this.options
+                        }).then(response => {
+                            const endTime = new Date()
+                            this.searchTime = (endTime - startTime) / 1000;
+                            this.loading = false;
+                            this.itemsLength = response.data.total;
+                            this.items = response.data.items;
+                            this.showVisualize = !(
+                                this.search.length === 1 &&
+                                Object.keys(this.search[0]).length === 0
+                            );
+
+                        });
+
+
+                    },
+                    removeQueryAt(i) {
+
+                        this.search.splice(i, 1);
+
+                    },
+
+                    addQuery() {
+                        this.search.push({})
+                        this.searchPanels = this.search.length - 1;
+                    },
+
+                    resetQuery() {
+                        this.savedSearchSelection = null;
+                        this.search = [{}];
+                    },
+
+
+                    resetSearch() {
+                        this.resetQuery();
+                        this.doSearch();
+                    },
+
+                    openSaveQueryDialog() {
+                        // Separate method to include auto-focus on input
+
+                        this.saveQueryDialog = true;
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                this.$refs.saveQueryInput.focus();
+                            }, 0);
+                        })
+                    },
+
+                    loadSearch(item) {
+
+                        if (item && item.data && Array.isArray(item.data)) {
+                            // Spread item.data if it's an array
+                            this.savedSearchSelection = {...item};
+                            this.search = [...item.data];
+                        } else {
+                            console.error('Invalid item or item.data is not an array');
+                        }
+                        this.$refs.savedSearchDropdown.blur();
+
+                    },
+
+
+                    loadSearchesFromAPI(selectLast = false) {
+                        axios.get('/admin/api/queries/', {
+                            params: {
+                                type: 'bulletin'
+                            }
+                        }).then(res => {
+                            this.searches = res.data;
+                            if (selectLast === true) {
+                                this.savedSearchSelection = this.searches.at(-1);
+                            }
+                        }).catch(error => {
+                            this.showSnack(handleRequestError(error))
+                        });
+
+                    },
+
+                    saveSearch() {
+                        const newSearch = {q: this.search, name: this.queryName, type: 'bulletin'};
+
+                        axios.post('/admin/api/query/', newSearch)
+                            .then(res => {
+                                this.showSnack(res.data);
+                                this.saveQueryDialog = false;
+
+
+                                this.queryName = null;
+                                // just reload searches and select the last one
+                                this.loadSearchesFromAPI(true);
+                            })
+                            .catch(error => {
+                                this.showSnack(handleRequestError(error));
+                            });
+                    },
+
+
+                    updateSearch() {
+                        axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
+                            .then(res => {
+                                this.showSnack(res.data);
+                            })
+                            .catch(error => {
+                                this.showSnack(handleRequestError(error));
+                            });
+                    },
+
+                    deleteSearch(id) {
+                        axios.delete('/admin/api/query/' + id)
+                            .then(res => {
+                                this.showSnack(res.data);
+                                this.searches = this.searches.filter(item => item.id !== id);
+                                if (this.savedSearchSelection.id == id) {
+                                    this.savedSearchSelection = null;
+                                    this.search = [{}];
+                                }
+                            })
+                            .catch(error => {
+                                this.showSnack(handleRequestError(error));
+                            });
+                    },
+
+                    // - ------------------ end bulletins search methods  ---------------------------------
+
+
+                    /* Bulletins Custom Lists */
+
+                    allBulletins() {
+                        this.search = [{}];
+                        this.doSearch();
+
+                    },
+                    myAssigned() {
+                        q = {};
+                        this.options.page = 1;
+                        q.assigned = [this.currentUser.id];
+                        q.statuses = ["Assigned"];
+                        this.search = [q];
+                        this.refresh();
+                    },
+
+                    myReview() {
+                        q = {};
+                        this.options.page = 1;
+                        q.reviewer = [this.currentUser.id];
+                        q.statuses = ["Peer Review Assigned"];
+                        this.search = [q]
+                        this.refresh();
+                    },
+
+
+                    removeEvent: function (evt, index) {
+                        if (confirm("{{ _('Confirm deleting this event?')}}")) {
+                            this.editedItem.events.splice(index, 1);
+                        }
+
+                    },
+
+
+                    //reset initial visible fields to english language
+
+                    resetSwitchers: function () {
+                        this.title__ = true;
+                        this.sjac_title__ = true;
+                    },
+
+
+                    rowClick(e, row) {
+                        const item = row.item;
+
+                        if (item.restricted) {
+                            this.showSnack("{{ _('This item is restricted.')}}")
+                            return
+                        }
+                        const path = `/admin/bulletins/${item.id}`;
+                        if (this.$route.path !== path)
+                            this.$router.push(path);
+
+                    },
+
+                    showBulletin(id) {
+                        this.bulletinLoader = true
+                        this.bulletinDrawer = true;
+                        axios.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
+                            this.bulletin = response.data;
+                        }).catch(error => {
+                            this.bulletinDrawer = false;
+                            if (error.response) {
+                                this.showSnack(error.response.data)
+                            }
+                        }).finally(() => {
+                            this.bulletinLoader = false;
+                        });
+                    },
+
+
+                    searchEventtypes: debounce(function (evt) {
+                        axios
+                            .get(`/admin/api/eventtypes/?q=${evt.target.value}&typ=for_bulletin`)
+                            .then(response => {
+                                this.eventtypes = response.data.items;
+                            });
+                    }, 350),
+
+
+                    handleStatus(bulletin) {
+
+                        if (this.editedItem.id) {
+                            // edit existing bulletin mode
+                            if (this.has_role(this.currentUser, 'Admin')) {
+
+                                this.statusDisabled = false;
+                                return;
+                            }
+
+                            // else is a standard user
+                            this.statusItems = this.statuses;
+
+                            if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created') {
+                                this.editedItem.status = this.statusItems[2].en;
+                            }
+
+                            if (this.editedItem.status == 'Peer Reviewed') {
+                                this.editedItem.status = this.statusItems[9].en;
+                            }
+
+                            this.statusDisabled = true;
+                        } else {
+                            // new bulletin mode
+
+                            this.editedItem.status = this.statusItems[1].en;
+                            this.statusDisabled = true;
+
+                        }
+
+                    },
+
+
+                    has_role(user, role) {
+                        for (const r of user.roles) {
+                            if (r.name === role) {
+                                return true
+                            }
+                        }
+                        return false;
+                    },
+
+                    bulkAllowed() {
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (this.has_role(this.currentUser, 'Mod')) {
+                            return true;
+                        }
+                        return false;
+                    },
+
+                    exportAllowed() {
+                        if (__EXPORT_TOOL__) {
+                            if (this.has_role(this.currentUser, 'Admin')) {
+                                return true;
+                            }
+                            if (this.currentUser.can_export) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+
+                    editAllowed(bulletin) {
+
+                        if (bulletin.restricted) {
+                            return false;
+                        }
+
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (!this.has_role(this.currentUser, 'DA')) {
+                            return false;
+                        }
+                        const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
+                        if (bulletin.assigned_to && bulletin.assigned_to.id == this.currentUser.id && statuses.includes(bulletin.status)) {
+                            return true
+                        }
+                        return false;
+                    },
+
+                    reviewAllowed(bulletin) {
+
+                        if (bulletin.restricted) {
+                            return false;
+                        }
+
+                        if (!this.currentUser.roles.length) {
+                            return false;
+                        }
+
+                        const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
+                        if (bulletin.first_peer_reviewer && bulletin.first_peer_reviewer.id == this.currentUser.id && statuses.includes(bulletin.status)) {
+                            return true
+                        }
+                        return false;
+                    },
+
+                    selfAssignAllowed(bulletin) {
+
+                        if (bulletin.restricted) {
+                            return false;
+                        }
+
+                        if (this.currentUser.can_self_assign) {
+                            if ((!bulletin.assigned_to) || (bulletin.assigned_to && !bulletin.assigned_to.active)) {
+                                return true
+                            }
+
+                        }
+
+                        return false;
+
+                    },
+
+                    allowedRoles() {
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return this.roles;
+                        }
+                        return this.currentUser.roles;
+                    },
+
+                    addReview(item) {
+
+                        this.loading = true;
+                        this.reviewDialog = true;
+
+
+                        axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                            this.loading = false;
+                            this.$nextTick(() => {
+                                this.reviewItem = response.data;
+                                this.reviewKey += 1;
+                                // fix bug in vue reactivity with nested object attribs
+
+                                if (!response.data.review) {
+                                    this.reviewItem.review = '';
+                                }
+
+
                             })
 
 
-                        }).catch(error => {
-                            this.showSnack('Oops! We couldn\'t find this item.')
-
-                        });
+                        })
 
 
                     }
+                    ,
 
+                    saveReview() {
 
-                },
-
-                deleteItem(item) {
-                    const index = this.items.indexOf(item);
-                    const cfm =
-                        confirm("Are you sure you want to delete this item?") &&
-                        this.items.splice(index, 1);
-                    if (cfm) {
-                        axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
-                            this.showSnack(response.data);
-                            this.refresh();
-                        });
-                    }
-                },
-
-                close() {
-                    this.dialog = false;
-                    setTimeout(() => {
-                        this.editedItem = Object.assign({}, this.defaultItem);
-
-                        this.unrestricted = false;
-                        this.editedIndex = -1;
-                    }, 300);
-                },
-
-                confirmClose() {
-                    if (confirm('Are you sure?')) {
-                        this.close();
-                    }
-                },
-
-                save() {
-                    if (this.editedItem.id) {
-                        axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
-                            item: this.editedItem
+                        axios.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
+                            item: this.reviewItem
                         })
                             .then(response => {
+                                this.reviewDialog = false;
                                 this.showSnack(response.data);
-                                this.refresh(this.options);
-                            }).catch(err => {
-                            this.showSnack(err.response.data);
-                        }).then(() => {
+                                this.refresh();
+                            });
+
+                    },
+
+                    adjustDates() {
+
+
+                        if (this.editedItem.publish_date) {
+                            this.editedItem.publish_time = dateFns.format(this.editedItem.publish_date, 'HH:mm');
+                            this.editedItem.publish_date = dateFns.format(this.editedItem.publish_date, 'YYYY-MM-DD')
+                        }
+
+                        if (this.editedItem.documentation_date) {
+                            this.editedItem.documentation_time = dateFns.format(this.editedItem.documentation_date, 'HH:mm');
+                            this.editedItem.documentation_date = dateFns.format(this.editedItem.documentation_date, 'YYYY-MM-DD');
+                        }
+                    },
+
+
+                    editItem(item) {
+
+                        this.bulletinDrawer = false;
+
+
+                        if (!item.id) {
+                            // hack to invoke deep copy and avoid passing attributes by reference
+                            // (resolves data the persists across dialogs)
+                            this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                            this.source_alt = null;
+                            this.dialog = true;
+                            this.handleStatus(item);
+                        } else {
+                            // load item from db
+                            this.loading = true;
+                            axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                                this.dialog = true;
+
+                                this.$nextTick(() => {
+                                    this.loading = false
+                                    this.editedItem = response.data;
+                                    //reload tinymce component hack
+                                    this.descKey += 1;
+                                    if (this.editedItem.source_link == 'NA') {
+                                        this.source_alt = true;
+                                    } else {
+                                        this.source_alt = false;
+                                    }
+                                    this.editedItem.comments = '';
+
+                                    this.resetSwitchers();
+                                    this.handleStatus(item);
+                                })
+
+
+                            }).catch(error => {
+                                this.showSnack("{{ _('Oops! We couldn\'t find this item.')}}")
+
+                            });
+
+
+                        }
+
+
+                    },
+
+                    deleteItem(item) {
+                        const index = this.items.indexOf(item);
+                        const cfm =
+                            confirm("{{ _('Are you sure you want to delete this item?')}}") &&
+                            this.items.splice(index, 1);
+                        if (cfm) {
+                            axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
+                                this.showSnack(response.data);
+                                this.refresh();
+                            });
+                        }
+                    },
+
+                    close() {
+                        this.dialog = false;
+                        setTimeout(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem);
+
+                            this.unrestricted = false;
+                            this.editedIndex = -1;
+                        }, 300);
+                    },
+
+                    confirmClose() {
+                        if (confirm(translations.confirm_)) {
                             this.close();
-                        });
-                    } else {
-                        this.items.push(this.editedItem);
-                        //create new record
-                        axios.post("/admin/api/bulletin/", {
-                            item: this.editedItem,
+                        }
+                    },
+
+                    save() {
+                        if (!this.valid) {
+                            this.showSnack("{{ _('Please review the form for errors.')}}");
+                            return;
+                        }
+
+                        if (this.editedItem.id) {
+                            axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
+                                item: this.editedItem
+                            })
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh(this.options);
+                                    this.close();
+                                }).catch(err => {
+                                this.showSnack(this.parseValidationError(err.response?.data));
+                            });
+                        } else {
+                            this.items.push(this.editedItem);
+                            //create new record
+                            axios.post("/admin/api/bulletin/", {item: this.editedItem})
+                                .then(response => {
+                                    this.showSnack(response.data);
+                                    this.refresh(this.options);
+                                    this.close();
+                                }).catch(err => {
+                                this.showSnack(this.parseValidationError(err.response?.data));
+                            })
+                        }
+
+                    },
+
+                    editEvent(evt, item, index) {
+                        this.eventDialog = true;
+
+                        this.$nextTick(() => {
+                            this.editedEvent = Object.assign({}, item);
+
+                            this.editedEventIndex = index;
+
+                            //reset dual fields display to english
+                            this.eventTitle__ = true;
+                            this.eventComments__ = true;
+
                         })
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh(this.options);
-                            }).catch(err => {
-                            this.showSnack(err.response.data);
-                        }).then(() => {
-                            this.close();
+
+                        //this.locations = this.editedItem.locations;
+                    },
+
+                    closeEvent() {
+                        this.eventDialog = false;
+                        setTimeout(() => {
+                            this.editedEvent = Object.assign({}, this.defaultEvent);
+                            this.editedEventIndex = -1;
+                        }, 300);
+                    },
+
+                    saveEvent() {
+
+                        if (this.editedEventIndex > -1) {
+                            Object.assign(
+                                this.editedItem.events[this.editedEventIndex],
+                                this.editedEvent
+                            );
+                            //update record
+                        } else {
+                            this.editedItem.events.push(this.editedEvent);
+                            //create new record
+                        }
+                        this.closeEvent();
+                    },
+
+                    // related bulletins functions --------------------
+
+                    searchRelatedBulletins() {
+
+                        this.$refs.relateBulletins.open();
+                        this.$nextTick(() => {
+                            this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
+                            this.$refs.relateBulletins.reSearch();
                         });
-                    }
-                },
 
-                editEvent(evt, item, index) {
-                    this.eventDialog = true;
+                    },
 
-                    this.$nextTick(() => {
-                        this.editedEvent = Object.assign({}, item);
-
-                        this.editedEventIndex = index;
-
-                        //reset dual fields display to english
-                        this.eventTitle__ = true;
-                        this.eventComments__ = true;
-
-                    })
-
-                    //this.locations = this.editedItem.locations;
-                },
-
-                closeEvent() {
-                    this.eventDialog = false;
-                    setTimeout(() => {
-                        this.editedEvent = Object.assign({}, this.defaultEvent);
-                        this.editedEventIndex = -1;
-                    }, 300);
-                },
-
-                saveEvent() {
-
-                    if (this.editedEventIndex > -1) {
-                        Object.assign(
-                            this.editedItem.events[this.editedEventIndex],
-                            this.editedEvent
-                        );
-                        //update record
-                    } else {
-                        this.editedItem.events.push(this.editedEvent);
-                        //create new record
-                    }
-                    this.closeEvent();
-                },
-
-                // related bulletins functions --------------------
-
-                searchRelatedBulletins() {
-
-                    this.$refs.relateBulletins.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-                        this.$refs.relateBulletins.reSearch();
-                    });
-
-                },
-
-                relateBulletin(bulletin) {
+                    relateBulletin(bulletin) {
 
 
-                    // get list of existing attached bulletins
-                    let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
+                        // get list of existing attached bulletins
+                        let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
 
-                    if (!ex.includes(bulletin.id)) {
-                        relation = {
-                            bulletin: bulletin
-                        };
-                        this.editedItem.bulletin_relations.push(relation);
-                    }
-                },
+                        if (!ex.includes(bulletin.id)) {
+                            relation = {
+                                bulletin: bulletin
+                            };
+                            this.editedItem.bulletin_relations.push(relation);
+                        }
+                    },
 
-                removeBulletin: function (evt, index) {
-                    if (confirm("Are you sure?")) {
-                        this.editedItem.bulletin_relations.splice(index, 1);
-                    }
-                },
-
-
-                // -------------------------------------------------
+                    removeBulletin: function (evt, index) {
+                        if (confirm(translations.confirm_)) {
+                            this.editedItem.bulletin_relations.splice(index, 1);
+                        }
+                    },
 
 
-                // related actors functions ------------------------
-
-                searchRelatedActors() {
-                    this.$refs.relateActors.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-                        this.$refs.relateActors.reSearch();
-                    });
-
-                },
-                relateActor(actor) {
-                    // get list of existing attached actors
-                    let ex = this.editedItem.actor_relations.map(x => x.actor.id);
-
-                    if (!ex.includes(actor.id)) {
-                        relation = {
-                            actor: actor
-                        };
-                        this.editedItem.actor_relations.push(relation);
-                        this.relateActorResults.removeById(actor.id);
-                    }
-                },
-
-                removeActor: function (evt, index) {
-                    if (confirm("Are you sure?")) {
-                        this.editedItem.actor_relations.splice(index, 1);
-                    }
-                },
+                    // -------------------------------------------------
 
 
-                // related incidents functions ------------------------
+                    // related actors functions ------------------------
 
-                searchRelatedIncidents() {
+                    searchRelatedActors() {
+                        this.$refs.relateActors.open();
+                        this.$nextTick(() => {
+                            this.$refs.relateActors.q = {tsv: this.relateActorTerm};
+                            this.$refs.relateActors.reSearch();
+                        });
 
-                    this.$refs.relateIncidents.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-                        this.$refs.relateIncidents.reSearch();
-                    });
+                    },
+                    relateActor(actor) {
+                        // get list of existing attached actors
+                        let ex = this.editedItem.actor_relations.map(x => x.actor.id);
 
-                },
-                relateIncident(incident) {
+                        if (!ex.includes(actor.id)) {
+                            relation = {
+                                actor: actor
+                            };
+                            this.editedItem.actor_relations.push(relation);
+                            this.relateActorResults.removeById(actor.id);
+                        }
+                    },
 
-                    // get list of existing attached actors
-                    let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-                    if (!ex.includes(incident.id)) {
-                        relation = {
-                            incident: incident
-                        };
-                        this.editedItem.incident_relations.push(relation);
-                        this.relateIncidentResults.removeById(incident.id);
-                    }
-                },
-
-                removeIncident: function (evt, index) {
-                    if (confirm("Are you sure?")) {
-                        this.editedItem.incident_relations.splice(index, 1);
-                    }
-                },
+                    removeActor: function (evt, index) {
+                        if (confirm(translations.confirm_)) {
+                            this.editedItem.actor_relations.splice(index, 1);
+                        }
+                    },
 
 
-            }
-        });
+                    // related incidents functions ------------------------
+
+                    searchRelatedIncidents() {
+
+                        this.$refs.relateIncidents.open();
+                        this.$nextTick(() => {
+                            this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
+                            this.$refs.relateIncidents.reSearch();
+                        });
+
+                    },
+                    relateIncident(incident) {
+
+                        // get list of existing attached actors
+                        let ex = this.editedItem.incident_relations.map(x => x.incident.id);
+
+                        if (!ex.includes(incident.id)) {
+                            relation = {
+                                incident: incident
+                            };
+                            this.editedItem.incident_relations.push(relation);
+                            this.relateIncidentResults.removeById(incident.id);
+                        }
+                    },
+
+                    removeIncident: function (evt, index) {
+                        if (confirm(translations.confirm_)) {
+                            this.editedItem.incident_relations.splice(index, 1);
+                        }
+                    },
+
+
+                }
+            })
+        ;
+
+
+        app.component('SearchField', SearchField);
+        app.component('UniField', UniField);
+        app.component('DualField', DualField);
+        app.component('LocationSearchField', LocationSearchField);
+        app.component('GeoMap', GeoMap);
+        app.component('RelateBulletins', RelateBulletins);
+        app.component('RelateActors', RelateActors);
+        app.component('RelateIncidents', RelateIncidents);
+        app.component('BulletinResult', BulletinResult);
+        app.component('BulletinSearchBox', BulletinSearchBox);
+        app.component('ActorSearchBox', ActorSearchBox);
+        app.component('IncidentSearchBox', IncidentSearchBox);
+        app.component('ActorResult', ActorResult);
+        app.component('IncidentResult', IncidentResult);
+
+        app.component('VueDropzone', VueDropzone);
+
+        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
+        app.component('RelatedActorsCard', RelatedActorsCard);
+        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
+
+        app.component('BulletinCard', BulletinCard);
+        app.component('ActorCard', ActorCard);
+        app.component('IncidentCard', IncidentCard);
+        app.component('EventCard', EventCard);
+        app.component('PopDateField', PopDateField);
+        app.component('PopDateRangeField', PopDateRangeField);
+        app.component('PopDateTimeField', PopDateTimeField);
+        app.component('GeoLocations', GeoLocations);
+        app.component('GlobalMap', GlobalMap);
+        app.component('ImageGallery', ImageGallery);
+        app.component('MediaCard', MediaCard);
+        app.component('Visualization', Visualization);
+        app.component('PdfViewer', PdfViewer);
+        app.component('PreviewCard', PreviewCard);
+        app.component('mix-i', MixI);
+        app.component('mix-ii', MixII);
+        app.component('mix-iii', MixIII);
+        app.component('mp-field', MPField);
+        app.component('mp-card', MPCard);
+        app.component('ActorProfiles', ActorProfiles);
+
+
+        app.use(router);
+        app.use(vuetify).mount('#app');
+
+        window.app = app;
     </script>
 {% endblock %}

@@ -131,7 +131,7 @@ def test_post_incident_endpoint(clean_slate_incidents, request, client_fixture, 
     response = client_.post(
         "/admin/api/incident",
         headers={"content-type": "application/json"},
-        json={"item": {"title": incident.title}},
+        json={"item": incident.to_dict()},
         follow_redirects=True,
     )
     assert response.status_code == expected_status
@@ -160,10 +160,12 @@ def test_put_incident_endpoint(
     incident = get_first_or_fail(Incident)
     incident_id = incident.id
     new_title = IncidentFactory().title
+    incident_dict = incident.to_dict()
+    incident_dict["title"] = new_title
     response = client_.put(
         f"/admin/api/incident/{incident_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"title": new_title}},
+        json={"item": incident_dict},
     )
     assert response.status_code == expected_status
     found_incident = Incident.query.filter(Incident.id == incident_id).first()
@@ -192,10 +194,12 @@ def test_put_incident_assigned_endpoint(
     incident.save()
     incident_id = incident.id
     new_title = IncidentFactory().title
+    incident_dict = incident.to_dict()
+    incident_dict["title"] = new_title
     response = client_.put(
         f"/admin/api/incident/{incident_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"title": new_title}},
+        json={"item": incident_dict},
     )
     assert response.status_code == expected_status
     found_incident = Incident.query.filter(Incident.id == incident_id).first()
@@ -228,7 +232,7 @@ def test_put_incident_assign_endpoint(
     response = client_.put(
         f"/admin/api/incident/assign/{incident_id}",
         headers={"content-type": "application/json"},
-        json={"incident": {"comments": ""}},
+        json={"incident": {"comments": "must exist"}},
     )
     assert response.status_code == expected_status
     if expected_status == 200:

@@ -1,10 +1,11 @@
-Vue.component('address-field', {
+const AddressField = Vue.defineComponent({
   props: {
     value: {},
   },
   data: function () {
     return {
       address: {},
+      translations: window.translations
     };
   },
 
@@ -28,16 +29,16 @@ Vue.component('address-field', {
   },
   template: `
       <div>
-      <v-text-field label="Address Line 1" v-model="address.line1"></v-text-field>
-      <v-text-field label="Address Line 2" v-model="address.line2"></v-text-field>
+      <v-text-field :label="translations.addrLine1" v-model="address.line1"></v-text-field>
+      <v-text-field :label="translations.addrLine2" v-model="address.line2"></v-text-field>
       <div class="d-flex">
-        <v-text-field label="Street" v-model="address.street"></v-text-field>
-        <v-text-field label="Street No" v-model="address.streetno"></v-text-field>
+        <v-text-field :label="translations.street_" v-model="address.street"></v-text-field>
+        <v-text-field :label="translations.streetNo_" v-model="address.streetno"></v-text-field>
 
       </div>
       <div class="d-flex">
-        <v-text-field label="City" v-model="address.city"></v-text-field>
-        <v-text-field label="Country" v-model="address.country"></v-text-field>
+        <v-text-field :label="translations.city_" v-model="address.city"></v-text-field>
+        <v-text-field :label="translations.country_" v-model="address.country"></v-text-field>
       </div>
       </div>
 

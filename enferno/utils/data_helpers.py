@@ -1,3 +1,4 @@
+from typing import Optional
 import pandas as pd
 from hashlib import md5
 
@@ -30,14 +31,20 @@ from enferno.admin.models import (
 )
 from enferno.data_import.models import DataImport
 from enferno.user.models import Role
+import enferno.utils.typing as t
 
 from sqlalchemy import and_, or_
 
 
-def get_file_hash(filepath):
+def get_file_hash(filepath: str) -> str:
     """
     Returns a file md5 hash.
-    :param  filepath
+
+    Args:
+        - filepath: The path to the file to hash.
+
+    Returns:
+        - The md5 hash of the file.
     """
     with open(filepath, "rb") as file_check:
         file_read = file_check.read()
@@ -45,7 +52,17 @@ def get_file_hash(filepath):
     return etag
 
 
-def media_check_duplicates(etag, data_import_id=None):
+def media_check_duplicates(etag: str, data_import_id: Optional[t.id] = None) -> bool:
+    """
+    Checks for duplicate media files.
+
+    Args:
+        - etag: The md5 hash of the file.
+        - data_import_id: The id of the data import.
+
+    Returns:
+        - bool: True if the media file exists, False otherwise.
+    """
     exists = False
     # checking for existing media or pending or processing imports
     exists = (
@@ -61,7 +78,7 @@ def media_check_duplicates(etag, data_import_id=None):
     return exists
 
 
-def generate_user_roles():
+def generate_user_roles() -> None:
     """
     Generates standard user roles.
     """
@@ -90,7 +107,7 @@ def generate_user_roles():
         role.save()
 
 
-def generate_workflow_statues():
+def generate_workflow_statues() -> None:
     """
     Generates system workflow statues.
     """
@@ -115,7 +132,7 @@ def generate_workflow_statues():
         db.session.commit()
 
 
-def import_default_data():
+def import_default_data() -> None:
     """
     Imports SJAC data from data dir.
     """
@@ -139,7 +156,7 @@ def import_default_data():
         import_csv_to_table(model, path)
 
 
-def create_default_location_data():
+def create_default_location_data() -> None:
     """
     Generates default required location data.
     """
@@ -157,9 +174,13 @@ def create_default_location_data():
         db.session.commit()
 
 
-def import_csv_to_table(model, csv_file_path):
+def import_csv_to_table(model: t.Model, csv_file_path: str) -> None:
     """
     Imports CSV data into a database model.
+
+    Args:
+        - model: The SQLAlchemy model to import data into.
+        - csv_file_path: The path to the CSV file to import.
     """
     df = pd.read_csv(csv_file_path, parse_dates=True, na_filter=False)
 

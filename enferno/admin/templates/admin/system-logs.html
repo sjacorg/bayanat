@@ -1,0 +1,342 @@
+{% extends 'layout.html' %} {% block content %}
+    <v-main>
+        {% include 'admin/partials/log_dialog.html' %}
+        <v-container fluid>
+            <v-row>
+                <v-col cols="12">
+                    <v-card>
+                        <v-card-text>
+
+                            <v-data-table
+                                    height="calc(100vh - 335px)"
+                                    id="logs-dt"
+                                    fixed-header
+                                    v-model:items-per-page="options.itemsPerPage"
+                                    v-model:page="options.page"
+                                    :headers="headers"
+                                    @click:row.stop="rowClick"
+                                    :items="items"
+                                    :loading="loading"
+                                    :items-per-page-options="itemsPerPageOptions"
+                                    @update:options="refresh"
+                                    :items-length="itemsLength"
+                                    select-strategy="page"
+                                    class="elevation-1"
+                            >
+                                <template v-slot:top>
+                                    <v-card variant="flat" class="border-b-thin">
+                                        <v-card-text class="d-flex align-center">
+                                            <h3 class="text-h6">{{ _('Logs') }}</h3>
+                                            <v-spacer></v-spacer>
+
+                                            <v-menu
+                                                    v-model="menu"
+                                                    :close-on-content-click="false"
+                                            >
+                                                <template v-slot:activator="{ props }">
+                                                    <v-btn
+                                                            v-bind="props"
+                                                            variant="text"
+                                                            size="small"
+                                                            icon>
+                                                        <v-icon>mdi-calendar</v-icon>
+                                                    </v-btn>
+                                                    <span class="mx-2"><strong>{{ _('Log Date') }}: </strong> ${ date ? date.toLocaleDateString() : translations.noLogs}</span>
+                                                </template>
+                                                <v-date-picker
+                                                        scrollable
+                                                        no-title
+                                                        min="1900-01-01"
+                                                        max="2040-01-01"
+                                                        hide-header
+                                                        hide-actions
+                                                        v-model="date"
+                                                        :allowed-dates="allowedDates"
+                                                        @update:model-value="selectDate"
+                                                >
+                                                </v-date-picker>
+                                            </v-menu>
+                                            <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
+                                            <v-tooltip :text="translations.refreshLogs"
+                                                       location="top">
+                                                <template v-slot:activator="{ props }">
+                                                    <v-btn icon="mdi-refresh" size="small" v-bind="props" variant="text"
+                                                           @click="fetchAndRefresh">
+
+                                                    </v-btn>
+                                                </template>
+                                            </v-tooltip>
+                                        </v-card-text>
+                                    </v-card>
+                                </template>
+                                <template v-slot:item.level="{ item }">
+                                    <v-tooltip :text="getLevelString(item.level)" location="top">
+                                        <template v-slot:activator="{ props }">
+                                            <v-icon :color="getColor(item)" v-bind="props">${getLevelIcon(item.level)}
+                                            </v-icon>
+                                        </template>
+                                    </v-tooltip>
+                                </template>
+                            </v-data-table>
+
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+
+        </v-container>
+    </v-main>
+
+
+
+
+{% endblock %} {% block js %}
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/SystemLogCard.js"></script>
+
+
+
+    <script>
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+
+
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+            delimiters: delimiters,
+            mixins: [globalMixin],
+
+            data: () => ({
+                translations: window.translations,
+                loading: true,
+                options: {
+                    itemsPerPage: 10
+                },
+                itemsPerPageOptions: window.itemsPerPageOptions,
+                items: [],
+                itemsLength: 10,
+                logCount: 0,
+                logDialog: false,
+                selectedItem: {},
+                
+                logFiles: [],
+                currentLogFile: null,
+                availableDates: [],
+                menu: false,
+                date: null,
+
+            }),
+
+            computed: {
+                isSecure() {
+                    return window.isSecureContext;
+                },
+                headers() {
+                    return [
+                        {title: "{{_('Timestamp')}}", value: "timestampFmt", width: 50},
+                        {title: "{{_('Level')}}", value: "level", width: 50},
+                        {title: "{{_('Type')}}", value: "exception.type", width: 100},
+                        {title: "{{_('Endpoint')}}", value: "endpoint", width: 100},
+                        {title: "{{_('Message')}}", value: "messageTrunc", width: 200},
+                    ];
+                },
+            },
+
+            mounted: function () {
+                this.fetchAndRefresh();
+            },
+
+            methods: {
+                getLevelString(level){
+                    return this.translations.levels[level.toLowerCase()];
+                },
+                fetchAndRefresh() {
+                    this.fetchFiles().then(() => {
+                        if (this.logFiles.length > 0) {
+                            this.currentLogFile = this.logFiles[0].filename;
+                            this.date = new Date(this.logFiles[0].label);
+                            this.refresh();
+                        } else {
+                            this.currentLogFile = null;
+                            this.items = [];
+                            this.showSnack("{{ _('No log files found')}}");
+                        }
+                    }).catch(err => {
+                        this.showSnack(err.response?.data);
+                    });
+                },
+                getColor(item) {
+                    switch (item?.level?.toLowerCase()) {
+                        case 'error':
+                            return 'red';
+                        case 'warning':
+                            return 'orange';
+                        case 'info':
+                            return 'primary';
+                        case 'debug':
+                            return 'secondary';
+                        default:
+                            return 'grey'; // default color if no match
+                    }
+                },
+                getBgColor(logFile) {
+                    return logFile.filename === this.currentLogFile ? 'primary' : 'grey';
+                },
+                hasExceptionDetails(item) {
+                    return item.exception && Object.keys(item.exception).length > 0;
+                },
+                hasTraceback(item) {
+                    return item.exception?.traceback && item.exception?.traceback.length > 0;
+                },
+                rowClick(e, row) {
+
+                    this.selectedItem = row.item
+                    this.showLog()
+
+                },
+                showLog() {
+                    this.logDialog = true;
+                },
+
+                async fetchFiles() {
+                    return axios.get('/admin/api/logfiles/').then(response => {
+                        this.logFiles = this.parseFiles(response?.data);
+                        this.logCount = this.logFiles.length;
+                        this.availableDates = this.logFiles.map(file => file.label); // Extract available dates
+                    }).catch(err => {
+                        this.showSnack(err.response?.data);
+                    });
+                },
+
+                parseFiles(items) {
+                    return items.files.map(file => {
+                        return {
+                            label: file !== 'bayanat.log' ? this.getDate(file) : new Date(items.date + 'T00:00'),
+                            filename: file
+                        }
+                    });
+                },
+
+                getDate(file) {
+                    if (file === 'bayanat.log') return "{{ _('Latest') }}";
+                    const fileParts = file.split('.');
+                    const fdate = fileParts[fileParts.length - 1];
+                    return new Date(fdate + 'T00:00');
+                },
+
+                selectDate() {
+                    this.menu = false;
+                    this.currentLogFile = this.logFiles.find(file => file.label.toISOString().split('T')[0] === this.date.toISOString().split('T')[0])?.filename;
+                    this.refresh();
+                },
+
+                selectLogFile(logFile) {
+                    this.currentLogFile = logFile.filename;
+                    this.refreshFile();
+                },
+
+
+                refresh() {
+                    const options = this.options;
+                    this.loading = true;
+                    if (!!!this.currentLogFile) {
+                        this.items = [];
+                        this.loading = false;
+                        return;
+                    }
+                    axios.get(`/admin/api/logs/`,
+                        {
+                            params: {
+                                filename: this.currentLogFile
+                            }
+                        }).then(response => {
+                        this.items = this.preprocess(response?.data);
+                        this.itemsLength = this.items.length;
+                    }).catch(err => {
+                        console.log(err);
+                        this.showSnack(err.response?.data);
+                    })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+                preprocess(items, cutoff = 100) {
+                    if (typeof items !== 'string'){
+                        items = JSON.stringify(items);
+                    }
+                    return items.split('\n').map(item => {
+                        if (!item) return null;
+
+                        item = JSON.parse(item);
+                        item.timestampFmt = dayjs(item.timestamp * 1000).format('MM/DD/YYYY HH:mm:ss');
+
+                        if (item.message.includes("endpoint:")) {
+                            const parts = item.message.split(" ");
+                            item.user_id = parts[1];
+                            item.endpoint = parts[3];
+                            item.message = item.exception?.message || '';
+                        }
+
+                        item.messageTrunc = item.message.length > cutoff
+                            ? item.message.substring(0, cutoff) + '...'
+                            : item.message;
+
+                        return item;
+                    }).filter(Boolean);
+                },
+
+                close() {
+                    this.logDialog = false;
+                },
+
+                getLevelIcon(level) {
+                    const icons = {
+                        error: 'mdi-alert-circle',
+                        warning: 'mdi-alert',
+                        info: 'mdi-information-outline',
+                        debug: 'mdi-bug'
+                    };
+                    return icons[level.toLowerCase()] || 'mdi-message-bulleted';
+                },
+                refreshFile() {
+                    this.options.page = 1;
+                    this.refresh();
+                },
+                copyToClipboard(item) {
+                    let formatted_item = `time: ${item.timestampFmt} \nlevel: ${item.level} \nmessage: ${item.message} \npathname: ${item.pathname} \nline: ${item.lineno}`;
+
+                    if (item.exception && Object.keys(item.exception).length > 0) {
+                        formatted_item += `\nendpoint: ${item.endpoint || 'n/a'}\n`;
+                        for (const [key, value] of Object.entries(item.exception)) {
+                            formatted_item += `${key}: ${value}\n`;
+                        }
+                    }
+                    try
+                    {
+                        navigator.clipboard.writeText(formatted_item).then(() => {
+                        this.showSnack("{{ _('Copied to clipboard') }}");
+                        }).catch(err => {
+                            console.error('Failed to copy:', err);
+                            this.showSnack("{{ _('Failed to copy to clipboard.') }}");
+                        });
+                    }catch{
+                        console.error('Failed to copy:');
+                        this.showSnack("{{ _('Failed to copy to clipboard.') }}");
+                    }
+
+                },
+
+                allowedDates(val) {
+                    return this.availableDates.map(date => date.toISOString().split('T')[0])
+                        .includes(val.toISOString().split('T')[0]);
+                },
+
+            }
+        });
+        app.component('system-log-card', SystemLogCard);
+        app.component('uni-field', UniField);
+        app.use(vuetify).mount('#app');
+    </script>
+{% endblock %}

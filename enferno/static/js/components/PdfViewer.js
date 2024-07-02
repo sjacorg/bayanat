@@ -1,4 +1,4 @@
-Vue.component('pdf-viewer', {
+const PdfViewer = Vue.defineComponent({
   data: () => {
     return {
       viewer: false,

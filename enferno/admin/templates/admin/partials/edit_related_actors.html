@@ -1,0 +1,20 @@
+<v-card class="my-5">
+    <v-toolbar class="handle">
+        <v-toolbar-title>{{ _('Related Actors') }}</v-toolbar-title>
+        <v-spacer></v-spacer>
+
+        <v-text-field
+                class="mt-6 mr-3"
+                variant="solo"
+                v-model="relateActorTerm"
+                label="{{ _('Search & Relate Actors') }}"
+                @keydown.enter="searchRelatedActors"
+                @click:append-inner="searchRelatedActors"
+                append-inner-icon="mdi-magnify"
+        ></v-text-field>
+    </v-toolbar>
+
+
+    {% include 'admin/partials/related_actors_grid.html' %}
+
+</v-card>

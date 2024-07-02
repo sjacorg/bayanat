@@ -1,4 +1,4 @@
-Vue.component('EditableTable', {
+const EditableTable = Vue.defineComponent({
   props: {
     loadEndpoint: {
       type: String,
@@ -36,31 +36,33 @@ Vue.component('EditableTable', {
   },
   template: `
       <div>
-        <v-card-title>
-          {{ title }}
-          <v-spacer></v-spacer>
-          <v-btn v-if="allowAdd" @click="itemAdd" class="mx-3" elevation="0" color="primary" fab x-small>
-            <v-icon>mdi-plus</v-icon>
-          </v-btn>
-        </v-card-title>
-        <v-data-table :headers="itemHeaders" :items="itemList" class="elevation-1">
+        <v-data-table :headers="itemHeaders" :items="itemList" :items-per-page-options="$root.itemsPerPageOptions" class="elevation-1">
+        
+          <template v-slot:top>
+            <v-toolbar :title="title" class="d-flex justify-space-between align-center" color="white">
+
+              <v-btn icon="mdi-plus" v-if="allowAdd" @click="itemAdd" class="mx-3" variant="elevated" color="primary" size="x-small" >
+              </v-btn>
+            </v-toolbar>
+          </template>
+
           <template v-slot:item.title="{ item }">
             <v-text-field v-model="editableItem.title" :hide-details="true"
-                          dense single-line :autofocus="true"
+                          density="compact" single-line :autofocus="true"
                           v-if="item.id === editableItem.id && editableColumns.includes('title')"></v-text-field>
             <span v-else>{{ item.title }}</span>
           </template>
 
           <template v-slot:item.title_tr="{ item }">
             <v-text-field v-model="editableItem.title_tr" :hide-details="true"
-                          dense single-line
+                          density="compact" single-line
                           v-if="item.id === editableItem.id && editableColumns.includes('title_tr')"></v-text-field>
             <span v-else>{{ item.title_tr }}</span>
           </template>
 
           <template v-slot:item.reverse_title_tr="{ item }">
             <v-text-field v-model="editableItem.reverse_title_tr" :hide-details="true"
-                          dense single-line
+                          density="compact" single-line
                           v-if="item.id === editableItem.id && editableColumns.includes('reverse_title_tr')"></v-text-field>
             <span v-else>{{ item.reverse_title_tr }}</span>
           </template>
@@ -68,7 +70,7 @@ Vue.component('EditableTable', {
 
           <template v-slot:item.reverse_title="{ item }">
             <v-text-field v-model="editableItem.reverse_title" :hide-details="true"
-                          dense single-line
+                          density="compact" single-line
                           v-if="item.id === editableItem.id && editableColumns.includes('reverse_title')"></v-text-field>
             <span v-else>{{ item.reverse_title }}</span>
           </template>
@@ -78,40 +80,34 @@ Vue.component('EditableTable', {
             <div v-if="!noActionIds.includes(item.id)">
 
               <div v-if="item.id === editableItem.id">
-                <v-icon small class="mr-3" @click="itemCancel">
+                <v-icon size="small" class="mr-3" @click="itemCancel">
                   mdi-window-close
                 </v-icon>
-                <v-icon small @click="itemSave(item)">mdi-content-save
+                <v-icon size="small" @click="itemSave(item)">mdi-content-save
                 </v-icon>
               </div>
               <div v-else>
-                <v-icon small class="mr-3" @click="itemEdit(item)">
+                <v-icon size="small" class="mr-3" @click="itemEdit(item)">
                   mdi-pencil
                 </v-icon>
-                <v-icon v-if="deleteEndpoint" small @click="itemDelete(item)">mdi-delete
+                <v-icon v-if="deleteEndpoint" size="small" @click="itemDelete(item)">mdi-delete
                 </v-icon>
 
               </div>
             </div>
           </template>
         </v-data-table>
-        <v-snackbar v-model="snackbar" class="d-flex">
-          {{ snackMessage }}
-          <v-btn color="grey lighten-4" text @click.stop="snackbar = false">
-            Close
-          </v-btn>
-        </v-snackbar>
       </div>
     `,
   data: function () {
     return {
       itemList: [],
       editableItem: {},
-      snackMessage: '',
-      snackbar: false,
+      translations: window.translations,
     };
   },
   mounted() {
+
     this.loadItems();
   },
   methods: {
@@ -140,7 +136,7 @@ Vue.component('EditableTable', {
           this.showSnack(res.data);
         })
         .catch((err) => {
-          this.showSnack(err.response.data);
+          this.showSnack(this.parseValidationError(err.response.data));
         })
         .finally(() => {
           this.editableItem = {};
@@ -156,7 +152,7 @@ Vue.component('EditableTable', {
     },
 
     itemDelete(item) {
-      if (confirm(`Are you sure you want to delete: "${item.title}"`)) {
+      if (confirm(`${translations.confirmDelete_}: "${item.title}"`)) {
         axios
           .delete(`${this.deleteEndpoint}/${item.id}`)
           .then((res) => {
@@ -165,14 +161,9 @@ Vue.component('EditableTable', {
           })
           .catch((err) => {
             console.log(err.response.data);
-            this.showSnack(err.response.data);
+            this.showSnack(this.parseValidationError(err.response.data));
           });
       }
-    },
-
-    showSnack(message) {
-      this.snackMessage = message;
-      this.snackbar = true;
     },
   },
 });

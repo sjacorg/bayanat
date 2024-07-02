@@ -1,0 +1,19 @@
+<v-card class="my-5">
+    <v-toolbar class="handle d-flex align-center">
+        <v-toolbar-title>{{ _('Related Incidents') }}</v-toolbar-title>
+
+        <v-spacer></v-spacer>
+
+        <v-text-field
+                class="mt-6 mr-3"
+                variant="solo"
+                v-model="relateIncidentTerm"
+                label="{{ _('Search & Relate Incidents') }}"
+                @keydown.enter="searchRelatedIncidents"
+                @click:append-inner="searchRelatedIncidents"
+                append-inner-icon="mdi-magnify"
+        ></v-text-field>
+    </v-toolbar>
+
+    {% include 'admin/partials/related_incidents_grid.html' %}
+</v-card>

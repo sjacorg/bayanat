@@ -1,7 +1,11 @@
+from enum import Enum
 import pytest
 
-from enferno.admin.models import Location
-from tests.factories import LocationFactory, create_location
+
+from enferno.admin.models import Location, LocationType
+
+from tests.factories import LocationFactory, create_location, LocationTypeFactory
+
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
@@ -24,6 +28,24 @@ def clean_slate_locations(session):
     session.query(Location).delete(synchronize_session=False)
     session.commit()
     yield
+
+
+class LocationTypeEnum(Enum):
+    ADMINISTRATIVE_LOCATION = "Administrative Location"
+    POINT_OF_INTEREST = "Point of Interest"
+
+
+@pytest.fixture(scope="function")
+def create_location_type(request, session):
+    def _create_location_type(location_type_enum):
+        location_type = LocationTypeFactory()
+        location_type.title = location_type_enum.value
+        session.add(location_type)
+        session.commit()
+        request.addfinalizer(lambda: session.delete(location_type))
+        return location_type
+
+    return _create_location_type
 
 
 ##### GET /admin/api/locations #####
@@ -85,13 +107,18 @@ post_location_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", post_location_endpoint_roles)
-def test_post_location_endpoint(clean_slate_locations, request, client_fixture, expected_status):
+def test_post_location_endpoint(
+    create_location_type, clean_slate_locations, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     location = LocationFactory()
+    location_type = create_location_type(LocationTypeEnum.POINT_OF_INTEREST)
+    location.location_type = location_type
+    item = location.to_dict()
     response = client_.post(
         "/admin/api/location",
         headers={"content-type": "application/json"},
-        json={"item": {"title": location.title}},
+        json={"item": item},
         follow_redirects=True,
     )
     assert response.status_code == expected_status
@@ -113,15 +140,21 @@ put_location_endpoint_roles = [
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", put_location_endpoint_roles)
-def test_put_location_endpoint(create_location, request, client_fixture, expected_status):
+def test_put_location_endpoint(
+    create_location_type, create_location, request, client_fixture, expected_status
+):
     client_ = request.getfixturevalue(client_fixture)
     location = get_first_or_fail(Location)
+    location_type = create_location_type(LocationTypeEnum.POINT_OF_INTEREST)
     location_id = location.id
     new_title = LocationFactory().title
+    item = location.to_dict()
+    item["location_type"] = location_type.to_dict()
+    item["title"] = new_title
     response = client_.put(
         f"/admin/api/location/{location_id}",
         headers={"content-type": "application/json"},
-        json={"item": {"title": new_title}},
+        json={"item": item},
     )
     assert response.status_code == expected_status
     found_location = Location.query.filter(Location.id == location_id).first()

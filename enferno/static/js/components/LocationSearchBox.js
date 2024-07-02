@@ -1,6 +1,6 @@
-Vue.component('location-search-box', {
+const LocationSearchBox = Vue.defineComponent({
   props: {
-    value: {
+    modelValue: {
       type: Object,
       required: true,
     },
@@ -17,31 +17,34 @@ Vue.component('location-search-box', {
   watch: {
     q: {
       handler(newVal) {
-        this.$emit('input', newVal);
+        this.$emit("update:modelValue", newVal);
       },
       deep: true,
     },
 
-    value: function (newVal, oldVal) {
+    modelValue : function (newVal, oldVal) {
       if (newVal !== oldVal) {
         this.q = newVal;
       }
     },
   },
   created() {
-    this.q = this.value;
+    this.q = this.modelValue;
   },
 
   template: `
       <v-sheet>
-      <v-card class="pa-4">
-        <v-card-title>
-          {{ i18n.searchLocations_ }}
-          <v-spacer></v-spacer>
-          <v-btn fab text @click="$emit('close')">
-            <v-icon>mdi-close</v-icon>
+      <v-card>
+        <v-toolbar :title="i18n.searchLocations_" > 
+          
+          
+          <template #append>
+            <v-btn icon="mdi-close" @click="$emit('close')">
+            
           </v-btn>
-        </v-card-title>
+            
+          </template>
+        </v-toolbar>
 
 
         <v-container class="fluid">
@@ -51,7 +54,7 @@ Vue.component('location-search-box', {
 
               <v-text-field
                   v-model="q.title"
-                  label="Title"
+                  :label="i18n.title_"
                   clearable
                   @keydown.enter="$emit('search',q)"
               ></v-text-field>
@@ -67,15 +70,15 @@ Vue.component('location-search-box', {
                 <geo-map
                     class="flex-grow-1"
                     v-model="q.latlng"
-                    map-height="200"
-                    radius-controls="true" />
+                    :map-height="200"
+                    :radius-controls="true" />
               </v-sheet>
 
 
               <search-field
                   v-model="q.location_type"
                   api="/admin/api/location-types/"
-                  item-text="title"
+                  item-title="title"
                   item-value="id"
 
                   :return-object="false"
@@ -86,21 +89,21 @@ Vue.component('location-search-box', {
 
               <search-field
                   api="/admin/api/location-admin-levels/"
-                  item-text="title"
+                  item-title="title"
                   item-value="id"
 
                   v-model="q.admin_level"
 
                   :return-object="false"
                   :multiple="false"
-                  label="i18n.adminLevel_">
+                  :label="i18n.adminLevel_">
               </search-field>
 
 
               <search-field
                   v-model="q.country"
                   api="/admin/api/countries/"
-                  item-text="title"
+                  item-title="title"
                   item-value="title"
                   :multiple="false"
                   :return-object="false"

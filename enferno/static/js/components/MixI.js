@@ -1,9 +1,10 @@
-Vue.component('mix-i', {
+const MixI = Vue.defineComponent({
   props: {
     title: String,
-    value: {},
-    i18n: {},
+    modelValue: Object,
+    i18n: Object,
   },
+    emits: ['update:modelValue'],
   data: function () {
     return {
       mix: {},
@@ -11,10 +12,10 @@ Vue.component('mix-i', {
   },
 
   watch: {
-    value: {
+    modelValue: {
       handler(val) {
         if (val) {
-          Vue.set(this, 'mix', val);
+            this.mix = val;
         }
       },
       immediate: true,
@@ -30,12 +31,12 @@ Vue.component('mix-i', {
 
   methods: {
     refresh() {
-      this.$emit('input', this.mix);
+      this.$emit('update:modelValue', this.mix);
     },
   },
   template: `
-<v-card class="pa-3 elevation-1" color="yellow lighten-4">
-    <v-card-title class="subtitle-2">{{title}}</v-card-title> 
+<v-card :title="title" class="pa-3">
+     
 
       <v-card-text>
       <div>

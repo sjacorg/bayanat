@@ -1,122 +1,145 @@
 <v-dialog :retain-focus="false" no-click-animation persistent v-model="reviewDialog" fullscreen>
     <v-card v-if="reviewDialog" class="overflow-hidden">
 
-        <v-app-bar
-            absolute
-            color="pv"
-            dark
-            class="card-header"
-            style="z-index: 1000000;"
-        >
+        <v-toolbar>
             <v-toolbar-title>{{ _('Add Review') }}</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn :disabled="!reviewItem.review_action" @click="saveReview" dark color="primary darken-1" small class="mx-2" depressed>{{ _('Save Review') }}</v-btn>
-            <v-btn @click="reviewDialog=false" icon>
-                <v-icon>mdi-close</v-icon>
-            </v-btn>
-        </v-app-bar>
+            <v-btn :disabled="!reviewItem.review_action" @click="saveReview" class="mx-2"
+                   variant="elevated">{{ _('Save Review') }}</v-btn>
+            <v-btn icon="mdi-close" @click="reviewDialog=false"></v-btn>
+        </v-toolbar>
 
 
         <v-sheet
-            id="card-content"
-            max-height="100vh"
-            class="overflow-y-auto pt-16">
 
-            <bulletin-card :i18n="translations" v-if="reviewItem && reviewItem.class=='bulletin'" @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
-            <actor-card :i18n="translations" v-if="reviewItem.class=='actor'" @thumb-click="viewImage" :close="false" :actor="reviewItem"></actor-card>
-            <incident-card :i18n="translations" v-if="reviewItem.class=='incident'" :close="false" :incident="reviewItem"></incident-card>
-
-
-            <v-card-text class="mt-5">
-
-                <tinymce-editor :key="reviewKey"  :init="tinyConfig" v-model="reviewItem.review"> </tinymce-editor>
-
-            <v-card class="elevation-0 mt-6 mx-auto" max-width="500" v-if="reviewItem.class=='bulletin'">
-                <v-combobox
-                chips
-                multiple
-                v-model="reviewItem.revrefs"
-                label="{{ _('Ref') }}"
-                hint="{{ _('Appends the reference to the bulletin (does not remove existing refs)') }}"
-                ></v-combobox>
+                max-height="100vh"
+                class="overflow-y-auto pa-7">
+            <v-card variant="outlined" max-width="900" class="mx-auto">
+                <bulletin-card :i18n="translations" v-if="reviewItem && reviewItem.class=='bulletin'"
+                               @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
+                <actor-card :i18n="translations" v-if="reviewItem.class=='actor'" @thumb-click="viewImage"
+                            :close="false"
+                            :actor="reviewItem"></actor-card>
+                <incident-card :i18n="translations" v-if="reviewItem.class=='incident'" :close="false"
+                               :incident="reviewItem"></incident-card>
             </v-card>
+            <v-divider class="my-9"></v-divider>
 
-            </v-card-text>
+            <v-card color="grey-lighten-5">
+                <v-toolbar density="compact" color="primary" title="Review">
 
-            <v-card outline elevation="0" color="ma-3">
-                <v-card-text>
-                    <h3 class="title black--text">Data Assistant</h3>
-
-                    <div class="d-flex align-center">
-                        <div class="pa-4">
-
-                            <location-search-field
-                                    api="/admin/api/locations/"
-                                    item-text="full_string"
-                                    item-value="id"
-                                    :multiple="true"
-                                    label="{{ _('Locations') }}"
-                            ></location-search-field>
-
-                        </div>
-                        <div class="pa-4">
-
-                            <search-field
-                                    api="/admin/api/labels/"
-                                    item-text="title"
-                                    item-value="id"
-                                    :multiple="true"
-                                    label="{{ _('Labels') }}"
-                            ></search-field>
+                </v-toolbar>
 
 
-                        </div>
-                        <div class="pa-4">
+                <v-card-item class="mt-3">
+                    <tinymce-editor :key="reviewKey" :init="tinyConfig" v-model="reviewItem.review"></tinymce-editor>
+                </v-card-item>
 
-                            <search-field
-                                    api="/admin/api/labels/"
-                                    :query-params="{ fltr: 'verified' }"
-                                    item-text="title"
-                                    item-value="id"
-                                    :multiple="true"
-                                    label="{{ _('Verified Labels') }}"
-                            ></search-field>
+                <v-card-item v-if="reviewItem.class=='bulletin'">
+                    <v-combobox
+                            chips
+                            multiple
+                            v-model="reviewItem.revrefs"
+                            label="{{ _('Ref') }}"
+                            hint="{{ _('Appends the reference to the bulletin (does not remove existing refs)') }}"
+                    ></v-combobox>
+                </v-card-item>
 
 
-                        </div>
-                        <div class="pa-4">
+                <v-card-item>
+                    <v-card-subtitle>{{ _('Data Assistant') }}</v-card-subtitle>
 
-                            <search-field
-                                    api="/admin/api/sources/"
-                                    item-text="title"
-                                    item-value="id"
-                                    :multiple="true"
-                                    label="{{ _('Sources') }}"
-                            ></search-field>
+                    <v-container class="d-flex align-center" fluid>
+                        <v-row>
+                            <v-col>
 
-                        </div>
-                    </div>
+                                <location-search-field
+                                        api="/admin/api/locations/"
+                                        item-title="full_string"
+                                        item-value="id"
+                                        v-model="helper.locations"
+                                        :multiple="true"
+                                        label="{{ _('Locations') }}"
+                                ></location-search-field>
+
+                            </v-col>
+                            <v-col>
+
+                                <search-field
+                                        v-model="helper.labels"
+                                        api="/admin/api/labels/"
+                                        item-title="title"
+                                        item-value="id"
+                                        :multiple="true"
+                                        label="{{ _('Labels') }}"
+                                ></search-field>
+
+
+                            </v-col>
+                            <v-col>
+                                <search-field
+                                        v-model="helper.verified_labels"
+                                        api="/admin/api/labels/"
+                                        :query-params="{ fltr: 'verified' }"
+                                        item-title="title"
+                                        item-value="id"
+                                        :multiple="true"
+                                        label="{{ _('Verified Labels') }}"
+                                ></search-field>
+                            </v-col>
+                            <v-col>
+
+                                <search-field
+                                        v-model="helper.sources"
+                                        api="/admin/api/sources/"
+                                        item-title="title"
+                                        item-value="id"
+                                        :multiple="true"
+                                        label="{{ _('Sources') }}"
+                                ></search-field>
+
+                            </v-col>
+                        </v-row>
+                    </v-container>
+
+                </v-card-item>
+                <v-card-item>
+                    <v-container fluid>
+                        <v-row justify="center">
+                            <v-col class="text-center">
+                                <v-btn prepend-icon="mdi-magnify" class="mx-3"
+                                       @click="searchRelatedBulletins">
+                                    {{ _('Related Bulletins') }}
+                                </v-btn>
+
+                            </v-col>
+                            <v-col class="text-center">
+                                <v-btn prepend-icon="mdi-magnify" class="mx-3"
+                                       @click="searchRelatedActors">
+                                    {{ _('Related Actors') }}
+                                </v-btn>
+                            </v-col>
+                            <v-col class="text-center">
+                                <v-btn prepend-icon="mdi-magnify" prepend-icon="mdi-magnify" class="mx-3"
+                                       @click="searchRelatedIncidents">
+                                    {{ _('Related Incidents') }}
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-card-item>
+
+
+                <v-card-text class="text-center">
+
+                    <v-btn-toggle borderless v-model="reviewItem.review_action">
+                        <v-btn color="error" value="Needs Review">{{ _('Needs Review') }}</v-btn>
+                        <v-btn color="grey-lighten-4"
+                               value="No Review Needed">{{ _('No Review Needed') }}</v-btn>
+                    </v-btn-toggle>
 
                 </v-card-text>
-                <v-card-text>
-                    <div class="d-flex justify-space-around">
-                        <v-btn class="mx-3" depressed @click="searchRelatedBulletins" > <v-icon left>mdi-magnify</v-icon> {{ _('Related Bulletins') }} </v-btn>
-                        <v-btn class="mx-3" depressed @click="searchRelatedActors" > <v-icon left>mdi-magnify</v-icon> {{ _('Related Actors') }} </v-btn>
-                        <v-btn class="mx-3" depressed @click="searchRelatedIncidents" > <v-icon left>mdi-magnify</v-icon> {{ _('Related Incidents') }} </v-btn>
-
-                    </div>
-                </v-card-text>
             </v-card>
-
-
-            <v-card-text class="text-center">
-
-                <v-btn-toggle  borderless v-model="reviewItem.review_action">
-                    <v-btn small outlined color="red darken-2 " value="Needs Review">{{ _('Needs Review')}}</v-btn>
-                    <v-btn small outlined color="lime darken-2 " value="No Review Needed">{{ _('No Review Needed')}}</v-btn>
-                </v-btn-toggle>
-
-            </v-card-text>
         </v-sheet>
     </v-card>
 </v-dialog>

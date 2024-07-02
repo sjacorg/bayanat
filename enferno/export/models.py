@@ -2,6 +2,7 @@ import os
 
 from datetime import datetime as dt
 from pathlib import Path
+from typing import Any, Union
 
 import arrow
 from sqlalchemy import ARRAY
@@ -20,7 +21,7 @@ class Export(db.Model, BaseMixin):
     export_file_name = "export"
     signer = URLSafeSerializer(cfg.SECRET_KEY)
     """
-    SQL Alchemy model for export table
+    SQL Alchemy model for export table.
     """
     id = db.Column(db.Integer, primary_key=True)
     requester_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -42,10 +43,15 @@ class Export(db.Model, BaseMixin):
         return Export.signer.dumps(self.id)
 
     @staticmethod
-    def decrypt_unique_id(key):
+    def decrypt_unique_id(key: Union[str, bytes]) -> Any:
         """
-        :param key: unique
-        :return: export request id
+        Static method to decrypt unique id.
+
+        Args:
+            - key: unique id.
+
+        Returns:
+            - export request id.
         """
         return Export.signer.loads(key)
 
@@ -56,13 +62,17 @@ class Export(db.Model, BaseMixin):
         else:
             return True
 
-    def from_json(self, table, json):
+    def from_json(self, table: str, json: dict) -> "Export":
         """
         Export Deserializer.
-        :param table: str for the table the export is for
-        :param json: json request data
-        """
 
+        Args:
+            - table: str for the table the export is for
+            - json: json request data
+
+        Returns:
+            - Export object
+        """
         cfg = json.get("config")
         items = json.get("items")
 
@@ -76,7 +86,7 @@ class Export(db.Model, BaseMixin):
 
         return self
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Export Serializer.
         """
@@ -106,7 +116,7 @@ class Export(db.Model, BaseMixin):
             "items": self.items,
         }
 
-    def approve(self):
+    def approve(self) -> "Export":
         """
         Method to approve Export requests.
         """
@@ -117,7 +127,7 @@ class Export(db.Model, BaseMixin):
 
         return self
 
-    def reject(self):
+    def reject(self) -> "Export":
         """
         Method to reject Export requests.
         """
@@ -125,7 +135,7 @@ class Export(db.Model, BaseMixin):
 
         return self
 
-    def set_expiry(self, date):
+    def set_expiry(self, date) -> "Export":
         """
         Method to change expiry date/time
         """
@@ -140,20 +150,24 @@ class Export(db.Model, BaseMixin):
         return self
 
     @staticmethod
-    def generate_export_dir():
+    def generate_export_dir() -> str:
         """
-        Static method to generate export directory
-        :return: export directory
+        Static method to generate export directory.
+
+        Returns:
+            - export directory
         """
         dir_id = f'export_{dt.utcnow().strftime("%Y%m%d-%H%M%S")}'
         Path(Export.export_dir / dir_id).mkdir(parents=True, exist_ok=True)
         return dir_id
 
     @staticmethod
-    def generate_export_file():
+    def generate_export_file() -> tuple[Path, str]:
         """
-        static method to generate export file
-        :return: export file path, export directory
+        static method to generate export file.
+
+        Returns:
+            - export file path, export directory
         """
         # Create unique directory
         dir_id = Export.generate_export_dir()

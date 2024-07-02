@@ -1,11 +1,15 @@
-Vue.component('geo-locations', {
+const GeoLocations = Vue.defineComponent({
   props: {
-    value: {
+    modelValue: {
       default: [],
     },
     i18n: {},
-    others: [],
+    others: {
+      type: Array,
+      default: () => [],
+    },
   },
+  emits: ['update:modelValue', 'locations-updated'],
 
   data: function () {
     return {
@@ -13,12 +17,12 @@ Vue.component('geo-locations', {
       e: {},
       addDlg: false,
       eindex: null,
-      locations: this.value.length ? this.value : [],
+      locations: this.modelValue.length ? this.modelValue : [],
     };
   },
 
   mounted() {
-    // this.geoTypes = translations.geoLocationTypes_.map(t=>t.tr)
+    
   },
   computed: {
     eformValid() {
@@ -32,18 +36,16 @@ Vue.component('geo-locations', {
   },
 
   watch: {
-    value(val) {
+    modelValue(val) {
       if (val && val.length) {
         this.locations = val;
       }
     },
-
-
   },
 
   methods: {
     newLocation() {
-      this.e = {};
+      this.e = { latlng: { lat: geoMapDefaultCenter.lat, lng: geoMapDefaultCenter.lng } };
 
       this.addDlg = true;
     },
@@ -53,8 +55,7 @@ Vue.component('geo-locations', {
       } else {
         this.addLocation();
       }
-        this.$emit('input', this.locations);
-
+      this.$emit('update:modelValue', this.locations);
     },
 
     modifyLocation() {
@@ -77,7 +78,7 @@ Vue.component('geo-locations', {
     },
     editLocation(item, index) {
       item.latlng = { lat: item.lat, lng: item.lng };
-      this.e = {...item, mode: 'edit' };
+      this.e = { ...item, mode: 'edit' };
 
       this.eindex = index;
       this.addDlg = true;
@@ -89,125 +90,125 @@ Vue.component('geo-locations', {
     },
 
     removeLocation(i) {
-      if (confirm('Are you sure?')) {
+      if (confirm(this.i18n.confirm_)) {
         this.locations.splice(i, 1);
-        this.$emit('input', this.locations);
+        this.$emit('update:modelValue', this.locations);
       }
     },
   },
 
   template: `
       <div>
-      <v-card outlined color="grey lighten-3">
-        <v-toolbar elevation="0">
-          <v-toolbar-title>
-            {{ i18n.geoMarkers_}}
-          </v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn @click="newLocation" fab x-small elevation="0" color="teal lighten-2">
-            <v-icon color="white" dark>mdi-plus-circle</v-icon>
-          </v-btn>
-        </v-toolbar>
+        <v-card>
+          <v-toolbar elevation="0">
+            <v-toolbar-title>
+              {{ i18n.geoMarkers_ }}
+            </v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn icon="mdi-plus-circle" color="primary" @click="newLocation" variant="text"></v-btn>
+          </v-toolbar>
 
 
-        <v-card-text>
-          <v-container fluid>
-            <v-row>
-              <v-col v-for="(loc,i) in locations" :key="i" cols="12" md="4">
-                <v-card elevation="0">
-                  <v-card-text>
-                    
-                  <v-chip small class="primary">{{i+1}}</v-chip>
-                    <v-chip small v-if="loc.type" class="grey lighten-3">{{ loc.type.title }}</v-chip>
-                    <v-chip small v-if="loc.main" class="grey lighten-3">{{translations.mainIncident_}}</v-chip>
-                    <h4 class="pa-3 mb-2caption black--text">{{ loc.title }}</h4>
-                    <div class="heading black--text"> <v-icon small left >mdi-map-marker</v-icon>
-                      {{loc.lat.toFixed(4)}} , {{loc.lng.toFixed(4)}}</div>
-                    
-                    <div v-if="loc.comment" class="comments pa-3 mt-2" v-html="loc.comment">
+          <v-card-text>
+            <v-container fluid>
+              <v-row>
+                <v-col v-for="(loc,i) in locations" :key="i" cols="12" md="4">
+                  <v-card>
+                    <v-card-text>
 
-                    </div>
-                    
-                    
-                  </v-card-text>
-                  
-                  <v-card-actions>
-                    <v-btn
-                        @click="editLocation(loc,i)"
-                        x-small
-                        fab
-                        outlined
-                        color="grey"
-                    >
-                      <v-icon>mdi-pencil</v-icon>
-                    </v-btn
-                    >
-                    <v-btn
-                        @click="removeLocation(i)"
-                        x-small
-                        fab
-                        outlined
-                        color="red lighten-3"
-                    >
-                      <v-icon>mdi-delete-sweep</v-icon>
-                    </v-btn
-                    >
-                  </v-card-actions>
+                      <v-chip size="small" class="primary">{{ i + 1 }}</v-chip>
+                      <v-chip size="small" v-if="loc.geotype" class="grey lighten-3">{{ loc.geotype.title }}</v-chip>
+                      <v-chip size="small" v-if="loc.main" class="grey lighten-3">{{ i18n.mainIncident_ }}</v-chip>
+                      <h4 class="pa-3 mb-2 text-caption">{{ loc.title }}</h4>
+                      <div class="text-subtitle-1 ">
+                        <v-icon size="small" left>mdi-map-marker</v-icon>
+                        {{ loc.lat.toFixed(4) }} , {{ loc.lng.toFixed(4) }}
+                      </div>
 
-                </v-card>
+                      <div v-if="loc.comment" class="comments pa-3 mt-2" v-html="loc.comment">
 
-              </v-col>
-            </v-row>
-          </v-container>
+                      </div>
 
 
+                    </v-card-text>
+
+                    <v-card-actions class="justify-end">
+                      <v-btn
+                          @click="editLocation(loc,i)"
+                          size="small"
+                          icon="mdi-pencil"
+                      >
+
+                      </v-btn
+                      >
+                      <v-btn
+                          @click="removeLocation(i)"
+                          icon="mdi-delete-sweep"
+                          size="small"
+                          color="red"
+                      >
+
+                      </v-btn
+                      >
+                    </v-card-actions>
+
+                  </v-card>
+
+                </v-col>
+              </v-row>
+            </v-container>
+
+
+            <v-card>
+
+            </v-card>
+
+
+          </v-card-text>
+        </v-card>
+        <v-dialog v-if="addDlg" max-width="770" v-model="addDlg">
           <v-card>
+            <v-toolbar :title="i18n.addGeoMarker_">
+              <template #append>
+                <v-btn @click="addDlg=false" icon="mdi-close"></v-btn>
+              </template>
 
+            </v-toolbar>
+
+
+            <v-card-text>
+              <div class="d-flex px-5 ga-3">
+                <v-text-field v-model="e.title" :label="i18n.title_"></v-text-field>
+
+                <search-field
+                    :label="i18n.type_"
+                    api="/admin/api/geolocationtypes/"
+                    v-model="e.geotype"
+                    item-title="title"
+                    item-value="id"
+                    :multiple="false"
+                >
+                </search-field>
+              </div>
+              <div class="d-flex px-5 ga-2">
+                <v-text-field v-model="e.comment" :label="i18n.comment_"></v-text-field>
+                <v-checkbox :label="i18n.mainIncident_" v-model="e.main"></v-checkbox>
+              </div>
+
+            </v-card-text>
+            <v-card-text>
+              <geo-map :radius-controls="false" :others="others" v-model="e.latlng" :map-height="300"></geo-map>
+            </v-card-text>
+            <v-card-actions class="pa-4">
+              <v-spacer></v-spacer>
+              <v-btn :disabled="!eformValid" @click="saveLocation" variant="elevated" width="220" color="primary">
+                {{ i18n.save_ }}
+              </v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
           </v-card>
 
-
-        </v-card-text>
-      </v-card>
-      <v-dialog v-if="addDlg" max-width="770" v-model="addDlg">
-        <v-card elevation="0">
-          <v-card-title> {{ i18n.addGeoMarker_ }}
-            <v-spacer></v-spacer>
-            <v-btn @click="addDlg=false" icon>
-              <v-icon>mdi-close</v-icon>
-            </v-btn>
-          </v-card-title>
-
-
-          <v-card-text >
-            <div  class="d-flex px-5" style="column-gap: 20px">
-            <v-text-field v-model="e.title" :label="translations.title_"></v-text-field>
-            
-              <search-field
-              :label="translations.type_"
-              api="/admin/api/geolocationtypes"
-              v-model="e.type"
-              item-text="title"
-              
-              >
-              </search-field>
-                </div>
-            <div  class="d-flex px-5" style="column-gap: 20px">
-              <v-text-field v-model="e.comment" :label="translations.comment_"></v-text-field>
-              <v-checkbox :label="translations.mainIncident_" v-model="e.main"></v-checkbox>
-            </div>
-
-          </v-card-text>
-          <v-card-text>
-            <geo-map :radius-controls="false" :others="others" v-model="e.latlng" map-height="300"></geo-map>
-          </v-card-text>
-          <v-card-actions class="pb-3">
-            <v-spacer></v-spacer>
-            <v-btn :disabled="!eformValid"  @click="saveLocation" width="220" color="primary">{{translations.save_}}</v-btn>
-            <v-spacer></v-spacer>
-          </v-card-actions>
-        </v-card>
-
-      </v-dialog>
+        </v-dialog>
       </div>
     `,
 });

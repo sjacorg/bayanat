@@ -57,6 +57,7 @@ def user_to_dict(user):
         "username": user.username,
         "active": user.active,
         "password": user.password,
+        "email": user.email,
     }
 
 
@@ -157,10 +158,14 @@ def test_put_user_endpoint(
     client_ = request.getfixturevalue(client_fixture)
     user_id = create_user.id
     u = UserFactory()
+
+    user_json = user_to_dict(u)
+    user_json["id"] = user_id
+
     response = client_.put(
-        f"/admin/api/user/{user_id}",
+        f"/admin/api/user/",
         headers={"Content-Type": "application/json"},
-        json={"item": user_to_dict(u)},
+        json={"item": user_json},
     )
     assert response.status_code == expected_status
     found_user = User.query.filter(User.id == user_id).first()
@@ -243,6 +248,7 @@ def test_post_force_reset_all_endpoint(
     response = client_.post(
         "/admin/api/user/force-reset-all",
         headers={"Content-Type": "application/json"},
+        follow_redirects=True,
     )
     assert response.status_code == expected_status
 

@@ -8,8 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
 
-
-
     <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
     <link rel="stylesheet" href="/static/css/app.css"/>
     <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css"/>
@@ -40,42 +38,33 @@
 <body>
 
 
-<v-app id="app" v-cloak>
-{% block navbar %}
-    {% include 'nav-bar.html' %}
-{% endblock %}
-    <v-main>
-        <v-container
-                class="fill-height"
-                fluid
-                align-start
-        >
-            <v-row>
-                <v-col class="pa-10">
-                    {% block content %} {% endblock %}
-                </v-col>
-            </v-row>
-        </v-container>
+<div id="app" class="h-screen security">
+    <v-app v-cloak class="h-screen">
+        <v-layout>
+            {% block content %} {% endblock %}
+        </v-layout>
+    </v-app>
+</div>
 
-
-    </v-main>
-</v-app>
 {% if current_user.is_authenticated %}
-<div class="d-none" data-settings='{{ current_user.settings|tojson if current_user.settings else '{}' }}'></div>
-    {% else %}
+    <div class="d-none" data-settings='{{ current_user.settings|tojson if current_user.settings else '{}' }}'></div>
+{% else %}
     <div class="d-none" data-settings='{}'></div>
 {% endif %}
 <script>
     window.__settings__ = JSON.parse(document.querySelector('[data-settings]').dataset.settings);
 </script>
 
+{% if config.DEBUG %}
+<script src="/static/js/vue.global.js"></script>
+{% else  %}
+<script src="/static/js/vue.global.prod.js"></script>
+{% endif  %}
 
-<script src="/static/js/vue.min.js"></script>
 <script src="/static/js/vuetify.min.js"></script>
-<script src="/static/js/vue-router.min.js"></script>
 <script src="/static/js/axios.min.js"></script>
-<script src="/static/js/vue-tippy.min.js"></script>
-<script src="/static/js/vee-validate.full.min.js"></script>
+
+<script src="/static/js/vue-router.global.js"></script>
 <script>
     {%  include 'admin/jsapi.jinja2' %}
 </script>
@@ -85,18 +74,26 @@
 
 {% block js %}
     <script>
-        const app = new Vue({
-            vuetify: vuetify,
-            el: '#app',
-            data: {
-                activeTab: null
-            }
-        })
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+            data() {
+                return {
+                    activeTab: null
+                };
+            },
+
+            delimiters: delimiters
+        });
+
+        app.use(vuetify).mount('#app');
+
     </script>
 {% endblock %}
 
-
-<script type="text/javascript" src="/static/js/app.js"></script>
 
 </body>
 </html>

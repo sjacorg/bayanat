@@ -75,18 +75,10 @@
 
                         <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
 
-
-                        <v-snackbar v-model="snackbar">
-                            ${snackMessage}
-                            <v-btn color="secondary" text @click="snackbar = false">
-                                Close
-                            </v-btn>
-                        </v-snackbar>
                     </v-col>
                 </v-row>
             </v-container>
         </v-main>
-        {% include 'footer.html' %}
     </v-app>
 </div>
 
@@ -105,6 +97,8 @@
         el: "#app",
         vuetify: vuetify,
         delimiters: delimiters,
+        mixins: [globalMixin],
+        
         data: () => ({
 
             translations: translations,
@@ -117,9 +111,6 @@
             pending: null,
             drawer: drawer,
             mode: null,
-            sideNav: sideNav,
-            snackbar: false,
-            snackMessage: '',
             loading: false,
             itemsLength: 0,
             headers: [
@@ -139,16 +130,7 @@
 
 
             items: [],
-            options: {
-                page: 1,
-                itemsPerPage: 1000
-            },
-            footerProps: {
-                itemsPerPageOptions: [1000, 5000, 10000],
-                itemsPerPageText: "{{ _('Rows per page')}}"
-            },
-
-
+            options: {},
         }),
         filters: {
             formatDistance: function (n) {
@@ -215,13 +197,6 @@
             editAllowed() {
                 return false;
             },
-
-
-            showSnack(message) {
-                this.snackMessage = message;
-                this.snackbar = true;
-            },
-
 
             clearData() {
                 this.loading = true;

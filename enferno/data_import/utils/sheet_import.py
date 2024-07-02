@@ -1,5 +1,6 @@
 import re
 import time
+from typing import Any, Iterable, Optional, Union
 
 import pandas as pd
 import gettext
@@ -23,7 +24,7 @@ from enferno.data_import.models import DataImport
 from enferno.utils.base import DatabaseException
 from enferno.utils.date_helper import DateHelper
 from enferno.user.models import Role, User
-
+import enferno.utils.typing as t
 
 # configurations
 
@@ -74,18 +75,20 @@ date_list = ["documentation_date", "publish_date"]
 
 
 class SheetImport:
+    """Class to import data from a CSV or XLSX file into the database."""
+
     def __init__(
         self,
-        filepath,
-        sheet,
-        row_id,
-        data_import_id,
-        map,
-        batch_id,
-        vmap=None,
-        roles=[],
-        config=None,
-        lang="en",
+        filepath: str,
+        sheet: Any,
+        row_id: Any,
+        data_import_id: t.id,
+        map: Any,
+        batch_id: Any,
+        vmap: Any = None,
+        roles: list = [],
+        config: Any = None,
+        lang: str = "en",
     ):
         self.row = SheetImport.sheet_to_df(filepath, sheet).iloc[row_id]
         self.data_import = DataImport.query.get(data_import_id)
@@ -114,7 +117,16 @@ class SheetImport:
             self.translator = None
 
     @staticmethod
-    def parse_csv(filepath):
+    def parse_csv(filepath: str) -> dict:
+        """
+        Parses a CSV file and returns the columns and the head of the file.
+
+        Args:
+            - filepath: The path to the CSV file.
+
+        Returns:
+            - A dictionary containing the columns and the head of the file.
+        """
         # read the file partially only for parsing purposes
         df = pd.read_csv(filepath, keep_default_na=False)
         df.dropna(how="all", axis=1, inplace=True)
@@ -126,7 +138,17 @@ class SheetImport:
         return {"columns": columns, "head": head}
 
     @staticmethod
-    def parse_excel(filepath, sheet):
+    def parse_excel(filepath: str, sheet: Any) -> dict:
+        """
+        Parses an Excel file and returns the columns and the head of the file.
+
+        Args:
+            - filepath: The path to the Excel file.
+            - sheet: The sheet name to parse.
+
+        Returns:
+            - A dictionary containing the columns and the head of the file.
+        """
         df = pd.read_excel(filepath, sheet_name=sheet)
         df.dropna(how="all", axis=1, inplace=True)
         df = df.astype(str)
@@ -139,16 +161,30 @@ class SheetImport:
         return {"columns": columns, "head": head}
 
     @staticmethod
-    def get_sheets(filepath):
+    def get_sheets(filepath: str) -> list:
+        """
+        Returns the sheets in an Excel file.
+
+        Args:
+            - filepath: The path to the Excel file.
+
+        Returns:
+            - A list of the sheet names in the Excel file.
+        """
         xls = pd.ExcelFile(filepath)
         return xls.sheet_names
 
     @staticmethod
-    def sheet_to_df(filepath, sheet=None):
+    def sheet_to_df(filepath: str, sheet: Optional[list] = None) -> pd.DataFrame:
         """
         Parses CSV or XLSX file.
-        :param filepath: path to sheets file
-        :param sheet: sheet name for XLSX files (optional)
+
+        Args:
+            - filepath: The path to the file.
+            - sheet: The sheet name for XLSX files (optional).
+
+        Returns:
+            - A DataFrame containing the parsed data.
         """
         if sheet:
             df = pd.read_excel(filepath, sheet_name=sheet, keep_default_na=False)
@@ -161,11 +197,15 @@ class SheetImport:
         return df
 
     @staticmethod
-    def parse_array_field(val):
+    def parse_array_field(val: str) -> list:
         """
-        static method to handle parsing of array csv columns
-        :param val:column to parse
-        :return: list of values
+        Static method to handle parsing of array csv columns.
+
+        Args:
+            - val: The column to parse.
+
+        Returns:
+            - A list of values.
         """
         if "," not in val:
             return [val.strip('"“” ')]
@@ -175,24 +215,29 @@ class SheetImport:
         return matches
 
     @staticmethod
-    def closest_match(txt, lst):
+    def closest_match(txt: str, lst: list[str]) -> Optional[str]:
         """
-        :param txt: string to search for
-        :param lst: list of values to pick from
-        :return: matching list item in correct exact case
+        Static method to find the closest match in a list.
+
+        Args:
+            - txt: The string to search for.
+            - lst: The list of values to pick from.
+
+        Returns:
+            - The matching list item in the correct exact case.
         """
         for item in lst:
             if item.lower().strip() == str(txt).lower().strip():
                 return item
         return None
 
-    def set_actor_or_profile_attr(self, field, value):
+    def set_actor_or_profile_attr(self, field: str, value: Any) -> None:
         """
         Method to set actor or actor profile attributes.
 
         Args:
-            field (str): The name of the attribute to set.
-            value: The value to set for the attribute.
+            - field: The name of the attribute to set.
+            - value: The value to set for the attribute.
 
         """
         if field in ActorProfile.__table__.columns:
@@ -200,14 +245,14 @@ class SheetImport:
         else:
             setattr(self.actor, field, value)
 
-    def set_skin_markings(self, value, markings, trans):
+    def set_skin_markings(self, value: str, markings: list, trans: list) -> None:
         """
         Sets the skin markings for the actor profile based on the provided field, value, list, and trans parameters.
 
         Args:
-            value (str): The value of the field.
-            markings (list): The list of available skin markings.
-            trans (list): The list of translations for the skin markings.
+            - value: The value of the field.
+            - markings: The list of available skin markings.
+            - trans: The list of translations for the skin markings.
 
         Returns:
             None
@@ -220,15 +265,15 @@ class SheetImport:
         self.actor_profile.skin_markings["opts"] = [markings[trans.index(x)] for x in results]
         flag_modified(self.actor_profile, "skin_markings")
 
-    def generate_translations(self, field):
+    def generate_translations(self, field: str) -> tuple[list[Any], list[str] | list[Any]]:
         """
         Generate translations for a given list field.
 
         Args:
-            field (str): The list field for which translations need to be generated.
+            - field: The list field for which translations need to be generated.
 
         Returns:
-            tuple: A tuple containing two lists - restrict and trans.
+            - tuple: A tuple containing two lists - restrict and trans.
                 - restrict: A list of entries in the configuration dictionary for the given field.
                 - trans: A list of translated strings for the entries in the restrict list, if a translator is available.
                          Otherwise, it points to the restrict list itself.
@@ -241,9 +286,16 @@ class SheetImport:
 
         return restrict, trans
 
-    def set_from_list(self, field, value):
+    def set_from_list(self, field: str, value: str) -> None:
         """
         Method to set single and multi list columns.
+
+        Args:
+            - field: The field to set the value for.
+            - value: The value to set for the field.
+
+        Returns:
+            None
         """
         restrict, trans = self.generate_translations(field)
 
@@ -261,9 +313,16 @@ class SheetImport:
         else:
             self.handle_mismatch(field, value)
 
-    def set_opts(self, opts, value):
+    def set_opts(self, opts: str, value: str) -> None:
         """
         Method to set option columns.
+
+        Args:
+            - opts: The option field to set.
+            - value: The value to set for the field.
+
+        Returns:
+            None
         """
         field = opts.replace("_opts", "")
         if not str(value).lower().strip() in ["yes", "no", "unknown"]:
@@ -276,9 +335,16 @@ class SheetImport:
         flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")
 
-    def set_details(self, details, value):
+    def set_details(self, details: str, value: Any) -> None:
         """
         Method to set details fields.
+
+        Args:
+            - details: The details field to set.
+            - value: The value to set for the field.
+
+        Returns:
+            None
         """
         field = details.replace("_details", "")
         attr = getattr(self.actor_profile, field)
@@ -288,9 +354,16 @@ class SheetImport:
         flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")
 
-    def set_location(self, field, value):
+    def set_location(self, field: str, value: Any) -> None:
         """
         Method to set location columns.
+
+        Args:
+            - field: The location field to set.
+            - value: The value to set for the field.
+
+        Returns:
+            None
         """
         location = Location.find_by_title(str(value))
         if location:
@@ -299,9 +372,16 @@ class SheetImport:
         else:
             self.handle_mismatch(field, value)
 
-    def set_secondaries(self, field, value):
+    def set_secondaries(self, field: str, value: Any) -> None:
         """
         Method to set Labels and Sources.
+
+        Args:
+            - field: The field to set the value for.
+            - value: The value to set for the field.
+
+        Returns:
+            None
         """
         model = sec_dict[field]["model"]
         attr = sec_dict[field]["attr"]
@@ -324,9 +404,16 @@ class SheetImport:
             except:
                 self.handle_mismatch(field, value)
 
-    def set_date(self, field, value):
+    def set_date(self, field: str, value: str) -> None:
         """
         Method to set date columns.
+
+        Args:
+            - field: The date field to set.
+            - value: The value to set for the field.
+
+        Returns:
+            None
         """
         try:
             setattr(self.actor_profile, field, DateHelper.parse_date(value))
@@ -334,9 +421,16 @@ class SheetImport:
         except:
             self.handle_mismatch(field, value)
 
-    def set_bool(self, field, value):
+    def set_bool(self, field: str, value: Any) -> None:
         """
         Method to set boolean columns.
+
+        Args:
+            - field: The boolean field to set.
+            - value: The value to set for the field.
+
+        Returns:
+            None
         """
         try:
             if value.__class__ == str and value.lower() in boolean_positive or value == 1:
@@ -347,13 +441,13 @@ class SheetImport:
         except:
             self.handle_mismatch(field, value)
 
-    def set_actor_type(self, field, map_item):
+    def set_actor_type(self, field: str, map_item: Union[str, tuple]) -> None:
         """
         Sets the actor type based on the given map_item.
 
         Args:
-            field (str): The field to set the actor type for: "type" for fixed actor type, "dtype" for dynamic actor type.
-            map_item (str or tuple): The map item to determine the actor type.
+            - field: The field to set the actor type for: "type" for fixed actor type, "dtype" for dynamic actor type.
+            - map_item: The map item to determine the actor type.
 
         Returns:
             None
@@ -380,9 +474,15 @@ class SheetImport:
         else:
             self.handle_mismatch("type", value)
 
-    def set_description(self, map_item):
+    def set_description(self, map_item: Any) -> None:
         """
         Method to set description.
+
+        Args:
+            - map_item: The map item to set the description.
+
+        Returns:
+            None
         """
         # return a string based on all different joined fields
         description = ""
@@ -412,9 +512,15 @@ class SheetImport:
                 self.actor_profile.description += old_description
         self.data_import.add_to_log(f"Processed description")
 
-    def set_events(self, map_item):
+    def set_events(self, map_item: Any) -> None:
         """
         Method to set events.
+
+        Args:
+            - map_item: The map item to set the events.
+
+        Returns:
+            None
         """
         events = []
         for event in map_item:
@@ -469,9 +575,15 @@ class SheetImport:
                     self.data_import.add_to_log(f"Event: {event}")
                     self.handle_mismatch("event", event)
 
-    def set_reporters(self, map_item):
+    def set_reporters(self, map_item: Any) -> None:
         """
         Method to set location columns.
+
+        Args:
+            - map_item: The map item to set the reporters.
+
+        Returns:
+            None
         """
         reporters = []
         for reporter in map_item:
@@ -482,16 +594,23 @@ class SheetImport:
         if reporters:
             self.actor.reporters = reporters
 
-    def handle_mismatch(self, field, value):
+    def handle_mismatch(self, field: str, value: Any) -> None:
         """
         Method to handle mismatched columns and
         data by logging the mismatch and appending
         data to the end of the Actor's description.
+
+        Args:
+            - field: The field that has a mismatch.
+            - value: The value that caused the mismatch.
+
+        Returns:
+            None
         """
         self.data_import.add_to_log(f"Field value mismatch {field}.\n Appending to description.")
         self.actor_profile.description += f"</p>\n<p>{field}: {str(value)}"
 
-    def gen_value(self, field):
+    def gen_value(self, field: str) -> None:
         """
         Generate the value of a field mapping for a single row.
 
@@ -585,7 +704,8 @@ class SheetImport:
             except:
                 self.handle_mismatch(field, value)
 
-    def import_row(self):
+    def import_row(self) -> None:
+        """Function to import a single row from a CSV or XLSX file into the database."""
         time.sleep(0.01)
 
         self.data_import.processing()

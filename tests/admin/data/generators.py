@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from enferno.admin.models import GeoLocationType
 from tests.factories import (
     ActorFactory,
     BulletinFactory,
@@ -11,6 +12,7 @@ from tests.factories import (
     create_ver_label_for,
     create_source,
     create_profile_for,
+    create_geolocation,
 )
 
 
@@ -115,7 +117,14 @@ def create_simple_bulletin(session):
 
 @pytest.fixture(scope="function")
 def create_full_bulletin(
-    session, users, create_label_for, create_ver_label_for, create_source, create_event_for
+    request,
+    session,
+    users,
+    create_label_for,
+    create_ver_label_for,
+    create_source,
+    create_event_for,
+    create_geolocation,
 ):
     bulletin = BulletinFactory()
     user, _, _, _ = users
@@ -128,6 +137,8 @@ def create_full_bulletin(
     bulletin.sources.append(create_source)
     bulletin.ver_labels.append(ver_label)
     bulletin.events.append(event)
+    geoloc = create_geolocation(bulletin.id)
+    bulletin.geo_locations.append(geoloc)
     session.add(bulletin)
     session.commit()
     yield bulletin

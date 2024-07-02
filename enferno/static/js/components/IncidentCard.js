@@ -1,15 +1,18 @@
-Vue.component('incident-card', {
+const IncidentCard = Vue.defineComponent({
   props: ['incident', 'close', 'log', 'diff', 'showEdit', 'i18n'],
-
-  watch: {
-    incident: function (b, n) {
-      this.loadBulletinRelations();
-      this.loadActorRelations();
-      this.loadIncidentRelations();
-    },
-  },
+  emits: ['edit', 'close'],
 
   methods: {
+
+     extractValuesById(dataList, idList, valueKey) {
+      // handle null related_as case
+      if (idList === null) {
+        return [];
+      }
+
+      return dataList.filter((item) => idList.includes(item.id)).map((item) => item[valueKey]);
+    },
+
     loadGeoMap() {
       this.geoMapLoading = true;
       //load again all bulletin relations without paging (soft limit is 1000 bulletin)
@@ -33,8 +36,6 @@ Vue.component('incident-card', {
             this.geoMapOn = true;
           }
         })
-        .catch((err) => {})
-        .catch((err) => {})
         .catch((err) => {
           console.log(err.toJSON());
         });
@@ -42,69 +43,6 @@ Vue.component('incident-card', {
 
     translate_status(status) {
       return translate_status(status);
-    },
-
-    loadBulletinRelations(page = 1) {
-      axios
-        .get(`/admin/api/incident/relations/${this.incident.id}?class=bulletin&page=${page}`)
-        .then((res) => {
-          this.incident.bulletin_relations.push.apply(
-            this.incident.bulletin_relations,
-            res.data.items,
-          );
-          this.bulletinPage += 1;
-          this.bulletinLM = res.data.more;
-        })
-        .catch((err) => {
-          console.log(err.toJSON());
-        });
-    },
-
-    loadActorRelations(page = 1) {
-      axios
-        .get(`/admin/api/incident/relations/${this.incident.id}?class=actor&page=${page}`)
-        .then((res) => {
-          //console.log(this.bulletin.actor_relations, res.data.items);
-          this.incident.actor_relations.push.apply(this.incident.actor_relations, res.data.items);
-          this.actorPage += 1;
-          this.actorLM = res.data.more;
-        })
-        .catch((err) => {
-          console.log(err.toJSON());
-        });
-    },
-
-    loadIncidentRelations(page = 1) {
-      // b2i
-      axios
-        .get(`/admin/api/incident/relations/${this.incident.id}?class=incident&page=${page}`)
-        .then((res) => {
-          this.incident.incident_relations.push.apply(
-            this.incident.incident_relations,
-            res.data.items,
-          );
-          this.incidentPage += 1;
-          this.incidentLM = res.data.more;
-        })
-        .catch((err) => {
-          console.log(err.toJSON());
-        });
-    },
-
-    probability(item) {
-      return translations.probs[item.probability].tr;
-    },
-
-    actor_related_as(rid) {
-      return translations.itoaRelateAs[rid].tr;
-    },
-
-    bulletin_related_as(item) {
-      return translations.itobRelateAs[item.related_as].tr;
-    },
-
-    incident_related_as(item) {
-      return translations.itoiRelateAs[item.related_as].tr;
     },
 
     logAllowed() {
@@ -167,277 +105,223 @@ Vue.component('incident-card', {
       //global map
       mapLocations: [],
 
-      // pagers for related entities
-      bulletinPage: 1,
-      actorPage: 1,
-      incidentPage: 1,
 
-      // load more buttons
-      bulletinLM: false,
-      actorLM: false,
-      incidentLM: false,
     };
   },
 
   template: `
-      <v-card color="grey lighten-3" class="mx-auto pa-3">
-      <v-sheet color="grey lighten-5" class="header-fixed mx-2">
-      <v-btn v-if="close" @click="$emit('close',$event.target.value)" fab absolute top right x-small text
-             class="mt-6">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-      <v-card-text class="d-flex align-center">
-        <v-chip small pill label color="gv darken-2" class="white--text">
-          {{ i18n.id_ }} {{ incident.id }}</v-chip>
-        <v-btn v-if="editAllowed()" class="ml-2" @click="$emit('edit',incident)" small outlined><v-icon color="primary" left>mdi-pencil</v-icon> {{ i18n.edit_ }}</v-btn>
-        <v-btn @click.stop="$root.$refs.viz.visualize(incident)" class="ml-2" outlined small elevation="0"><v-icon color="primary" left>mdi-graph-outline</v-icon> {{ i18n.visualize_ }}</v-btn>
+      <v-card class="mx-auto">
+        <v-toolbar class="d-flex px-2 ga-2">
+          <v-chip size="small">
+            {{ i18n.id_ }} {{ incident.id }}
+          </v-chip>
 
-      </v-card-text>
-      
-      <v-chip color="white lighten-3" small label class="pa-2 mx-2 my-2" v-if="incident.assigned_to" ><v-icon left>mdi-account-circle-outline</v-icon>
-          {{ i18n.assignedUser_ }} {{incident.assigned_to['name']}}</v-chip>
-        <v-chip color="white lighten-3" small label class="mx-2 my-2" v-if="incident.status" > <v-icon left>mdi-delta</v-icon> {{ incident.status }}</v-chip>
-        
-      </v-sheet>
-      
-      <v-card v-if="incident.roles?.length" color="blue" class="ma-2 pa-2 d-flex align-center flex-grow-1" elevation="0">
-          <v-icon content="Access Roles" v-tippy color="blue lighten-5">mdi-lock</v-icon>
-        <v-chip label color="gray darken-3" small v-for="role in incident.roles" :color="role.color" class="caption mx-1">{{ role.name }}</v-chip>
-          
-        </v-card>
-      
-      
-      <uni-field :caption="i18n.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
+          <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"
+                 @click="$emit('edit',incident)">
+            {{ i18n.edit_ }}
+          </v-btn>
 
-      <v-card outlined v-if="incident.description" class="ma-2 pa-2" color="grey lighten-5">
-        <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
-        <div class="rich-description" v-html="incident.description"></div>
-      </v-card>
+          <v-btn size="small" class="ml-2" variant="tonal" prepend-icon="mdi-graph-outline"
+                 @click.stop="$root.$refs.viz.visualize(incident)">
+            {{ i18n.visualize_ }}
+          </v-btn>
 
-      <!-- Map -->
-      <v-card :loading="geoMapLoading" outlined class="ma-2 pa-2" color="grey lighten-5">
-        <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0" color="primary lighten-2"> <v-icon left>mdi-map</v-icon> {{ i18n.loadGeoMap_ }}</v-btn>
-        <v-card-text v-if="geoMapOn">
-        <global-map :i18n="i18n" :value="mapLocations"></global-map>
-          </v-card-text>
-      </v-card>
-
-      <v-card outlined class="ma-2" color="grey lighten-5"
-              v-if="incident.potential_violations && incident.potential_violations.length">
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.potentialViolationsCategories_ }}</div>
-          <v-chip-group column>
-            <v-chip small color="blue-grey lighten-5" v-for="item in incident.potential_violations"
-                    :key="item.id">{{ item.title }}</v-chip>
-          </v-chip-group>
-        </v-card-text>
-      </v-card>
-
-      <v-card outlined class="ma-2" color="grey lighten-5"
-              v-if="incident.claimed_violations && incident.claimed_violations.length">
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.claimedViolationsCategories_ }}</div>
-          <v-chip-group column>
-            <v-chip small color="blue-grey lighten-5" v-for="item in incident.claimed_violations"
-                    :key="item.id">{{ item.title }}</v-chip>
-          </v-chip-group>
-        </v-card-text>
-      </v-card>
-
-
-      <v-card outlined class="ma-2" color="grey lighten-5" v-if="incident.labels && incident.labels.length">
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
-          <v-chip-group column>
-            <v-chip small color="blue-grey lighten-5" v-for="label in incident.labels"
-                    :key="label.id">{{ label.title }}</v-chip>
-          </v-chip-group>
-        </v-card-text>
-      </v-card>
-
-      <v-card outlined class="ma-2" color="grey lighten-5" v-if="incident.locations && incident.locations.length">
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.locations_ }}</div>
-          <v-chip-group column>
-            <v-chip small color="blue-grey lighten-5" v-for="item in incident.locations"
-                    :key="item.id">{{ item.title }}</v-chip>
-          </v-chip-group>
-        </v-card-text>
-      </v-card>
-
-
-      <!-- Events -->
-      <v-card outlined class="ma-2" color="grey lighten-5" v-if="incident.events && incident.events.length">
-        <v-card-text class="pa-2">
-          <div class="px-1 title black--text">{{ i18n.events_ }}</div>
-          <event-card v-for="event in incident.events" :key="event.id" :i18n="translations" :event="event"></event-card>
-        </v-card-text>
-      </v-card>
-
-
-      <v-card outlined color="grey lighten-5" class="ma-2" v-if="incident.incident_relations && incident.incident_relations.length">
-        <v-card-text>
-          <div  class="pa-2 title header-sticky black--text">{{ i18n.relatedIncidents_ }}
-          <v-tooltip top>
-              <template v-slot:activator="{on,attrs}">
-                <a :href="'/admin/incidents/?reltoi='+incident.id" target="_self">
-                  <v-icon v-on="on" small color="grey" class="mb-1">
-                    mdi-image-filter-center-focus-strong
-                  </v-icon>
-                </a>
-              </template>
-              <span>{{ i18n.filterRelatedItems_ }}</span>
-            </v-tooltip>
-          </div>
-          <incident-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.incident_relations" :key="index"
-                           :incident="item.incident">
-            <template v-slot:header>
-
-              <v-sheet color="yellow lighten-5" class="pa-2">
-
-                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability!=null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!=null" v-for="rel in extractValuesById($root.itoiInfo, [item.related_as], 'title')" color="grey lighten-4" small label>{{ rel }}</v-chip>
-                <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
-
-              </v-sheet>
-
-            </template>
-          </incident-result>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
-        </v-card-actions>
-      </v-card>
-
-      <v-card outlined color="grey lighten-5" class="ma-2" v-if="incident.bulletin_relations && incident.bulletin_relations.length">
-
-        <v-card-text>
-          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedBulletins_ }}
-          <v-tooltip top>
-              <template v-slot:activator="{on,attrs}">
-                <a :href="'/admin/bulletins/?reltoi='+incident.id" target="_self">
-                  <v-icon v-on="on" small color="grey" class="mb-1">
-                    mdi-image-filter-center-focus-strong
-                  </v-icon>
-                </a>
-              </template>
-              <span>{{ i18n.filterRelatedItems_ }}</span>
-            </v-tooltip>
-          </div>
-          <bulletin-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.bulletin_relations" :key="index"
-                           :bulletin="item.bulletin">
-            <template v-slot:header>
-
-              <v-sheet color="yellow lighten-5" class="pa-2">
-
-                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability!=null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                <v-chip v-if="item.related_as!=null" v-for="rel in extractValuesById($root.itobInfo, [item.related_as], 'title')" color="grey lighten-4" small label>{{ rel }}</v-chip>
-
-                <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
-
-              </v-sheet>
-
-            </template>
-          </bulletin-result>
-        </v-card-text>
-        
-        <v-card-actions>
-          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadBulletinRelations(bulletinPage)" v-if="bulletinLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
-        </v-card-actions>
-      </v-card>
-
-      
-      <v-card outlined color="grey lighten-5" class="ma-2" v-if="incident.actor_relations && incident.actor_relations.length">
-        <v-card-text>
-          <div class="pa-2 header-sticky title black--text">{{ i18n.relatedActors_ }}
-          <v-tooltip top>
-              <template v-slot:activator="{on,attrs}">
-                <a :href="'/admin/actors/?reltoi='+incident.id" target="_self">
-                  <v-icon v-on="on" small color="grey" class="mb-1">
-                    mdi-image-filter-center-focus-strong
-                  </v-icon>
-                </a>
-              </template>
-              <span>{{ i18n.filterRelatedItems_ }}</span>
-            </v-tooltip>
-          </div>
-          <actor-result :i18n="i18n" class="mt-1" v-for="(item,index) in incident.actor_relations" :key="index"
-                        :actor="item.actor">
-            <template v-slot:header>
-
-              <v-sheet color="yellow lighten-5" class="pa-2">
-
-                <div class="caption ma-2">{{ i18n.relationshipInfo_ }}</div>
-                <v-chip v-if="item.probability!=null" color="grey lighten-4" small label>{{ probability(item) }}</v-chip>
-                
-                <v-chip class="ma-1" v-for="rel in extractValuesById($root.itoaInfo, item.related_as, 'title') " color="blue-grey lighten-5" small label>{{ rel }}</v-chip>
-                <v-chip v-if="item.comment" color="grey lighten-4" small label>{{ item.comment }}</v-chip>
-
-              </v-sheet>
-
-            </template>
-          </actor-result>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn class="ma-auto caption" small color="grey lighten-4" elevation="0" @click="loadActorRelations(actorPage)" v-if="actorLM">{{ i18n.loadMore_ }}<v-icon right>mdi-chevron-down</v-icon> </v-btn>
-        </v-card-actions>
-      </v-card>
-
-      <v-card v-if="incident.status==='Peer Reviewed'" outline elevation="0" class="ma-3" color="light-green lighten-5">
-        <v-card-text>
-          <div class="px-1 title black--text">{{ i18n.review_ }}</div>
-          <div v-html="incident.review" class="pa-1 my-2 grey--text text--darken-2">
-
-          </div>
-          <v-chip small label color="lime">{{ incident.review_action }}</v-chip>
-        </v-card-text>
-      </v-card>
-
-
-      <v-card v-if="logAllowed()" outline elevation="0" color="grey lighten-5" class="ma-2">
-        <v-card-text>
-          <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
-            <v-btn fab  :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
-              <v-icon>mdi-history</v-icon>
-            </v-btn>
-          </h3>
-
-          <template v-for="(revision,index) in revisions">
-            <v-card color="grey lighten-4" dense flat class="my-1 pa-2 d-flex align-center">
-                            <span class="caption">{{ revision.data['comments'] }} - <v-chip x-small label
-                                                                                            color="gv lighten-3">{{ translate_status(revision.data.status) }}</v-chip> - {{ revision.created_at }}
-                              - By {{ revision.user.username }}</span>
-              <v-spacer></v-spacer>
-
-              <v-btn v-if="diffAllowed()" v-show="index!==revisions.length-1" @click="showDiff($event,index)"
-                     class="mx-1" color="grey" icon small>
-                <v-icon>mdi-compare</v-icon>
-              </v-btn>
-          </v-card>
-            
-
+          <template #append>
+            <v-btn variant="text" icon="mdi-close" v-if="close" @click="$emit('close',$event.target.value)">
+          </v-btn>
           </template>
-        </v-card-text>
+        </v-toolbar>
 
-      </v-card>
-      <v-dialog
-          v-model="diffDialog"
-          max-width="770px"
-      >
-        <v-card class="pa-5">
+        <v-sheet v-if="incident.assigned_to || incident.status" variant="flat" class="d-flex pa-0   ga-2">
+          <div class="pa-2" v-if="incident.assigned_to">
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-chip 
+                    
+                    variant="text"
+                  v-bind="props"
+                  prepend-icon="mdi-account-circle-outline">
+                  {{ incident.assigned_to['name'] }}
+                </v-chip>
+              </template>
+              {{ i18n.assignedUser_ }}
+            </v-tooltip>
+          </div>
+
+          <v-divider v-if="incident.assigned_to" vertical ></v-divider>
+          
+          <div class="pa-2" v-if="incident.status">
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-chip 
+                    variant="text"
+                  v-bind="props"
+                  prepend-icon="mdi-delta" class="mx-1">
+                  {{ incident.status }}
+                </v-chip>
+              </template>
+              {{ i18n.workflowStatus_ }}
+            </v-tooltip>
+          </div>
+        </v-sheet> 
+
+        <v-divider></v-divider>
+        <v-card v-if="incident.roles?.length" variant="flat" class="ma-2 d-flex align-center pa-2 flex-grow-1">
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-icon color="blue-darken-3" class="mx-2" size="small" v-bind="props">mdi-lock</v-icon>
+            </template>
+            {{ i18n.accessRoles_ }}
+          </v-tooltip>
+          <v-chip label small v-for="role in incident.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
+        </v-card>  
+        <v-divider v-if="incident.roles?.length" ></v-divider>
+
+        <uni-field :caption="i18n.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
+
+        <v-card  v-if="incident.description" class="ma-2 pa-2">
+          <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
+          <div class="rich-description" v-html="incident.description"></div>
+        </v-card>
+
+        <!-- Map -->
+        <v-card :loading="geoMapLoading"  class="ma-2 pa-2">
+          <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0"
+                 color="primary lighten-2">
+            <v-icon left>mdi-map</v-icon>
+            {{ i18n.loadGeoMap_ }}
+          </v-btn>
+          <v-card-text v-if="geoMapOn">
+            <global-map :i18n="i18n" :value="mapLocations"></global-map>
+          </v-card-text>
+        </v-card>
+
+        <v-card  class="ma-2"
+                v-if="incident.potential_violations && incident.potential_violations.length">
           <v-card-text>
-            <div v-html="diffResult">
+            <div class="px-1 title black--text">{{ i18n.potentialViolationsCategories_ }}</div>
+            <v-chip-group column>
+              <v-chip color="blue-grey lighten-5" v-for="item in incident.potential_violations"
+                      :key="item.id">{{ item.title }}
+              </v-chip>
+            </v-chip-group>
+          </v-card-text>
+        </v-card>
+
+        <v-card  class="ma-2"
+                v-if="incident.claimed_violations && incident.claimed_violations.length">
+          <v-card-text>
+            <div class="px-1 title black--text">{{ i18n.claimedViolationsCategories_ }}</div>
+            <v-chip-group column>
+              <v-chip color="blue-grey lighten-5" v-for="item in incident.claimed_violations"
+                      :key="item.id">{{ item.title }}
+              </v-chip>
+            </v-chip-group>
+          </v-card-text>
+        </v-card>
+
+
+        <v-card  class="ma-2" v-if="incident.labels && incident.labels.length">
+          <v-card-text>
+            <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
+            <v-chip-group column>
+              <v-chip color="blue-grey lighten-5" v-for="label in incident.labels"
+                      :key="label.id">{{ label.title }}
+              </v-chip>
+            </v-chip-group>
+          </v-card-text>
+        </v-card>
+
+        <v-card  class="ma-2" v-if="incident.locations && incident.locations.length">
+          <v-card-text>
+            <div class="px-1 title black--text">{{ i18n.locations_ }}</div>
+            <v-chip-group column>
+              <v-chip color="blue-grey lighten-5" v-for="item in incident.locations"
+                      :key="item.id">{{ item.title }}
+              </v-chip>
+            </v-chip-group>
+          </v-card-text>
+        </v-card>
+
+
+        <!-- Events -->
+        <v-card  class="ma-2" v-if="incident.events && incident.events.length">
+          <v-card-text class="pa-2">
+            <div class="px-1 title black--text">{{ i18n.events_ }}</div>
+            <event-card v-for="event in incident.events" :key="event.id" :i18n="translations"
+                        :event="event"></event-card>
+          </v-card-text>
+        </v-card>
+
+        <!-- Related Bulletins -->
+        <related-bulletins-card v-if="incident" :entity="incident"
+                                :relationInfo="$root.itobInfo"
+                                :i18n="i18n"></related-bulletins-card>
+
+        <!-- Related Actors  -->
+        <related-actors-card v-if="incident" :entity="incident"
+                             :relationInfo="$root.itoaInfo"
+                             :i18n="i18n"></related-actors-card>
+
+        <!-- Related Incidents -->
+        <related-incidents-card v-if="incident" :entity="incident"
+                                :relationInfo="$root.itoiInfo"
+                                :i18n="i18n"></related-incidents-card>
+
+        <v-card v-if="incident.status==='Peer Reviewed'" variant="" elevation="0" class="ma-3"
+                color="teal-lighten-2">
+          <v-card-text>
+            <div class="px-1 title black--text">{{ i18n.review_ }}</div>
+            <div v-html="incident.review" class="pa-1 my-2 grey--text text--darken-2">
 
             </div>
+            <v-chip label color="lime">{{ incident.review_action }}</v-chip>
           </v-card-text>
         </v-card>
 
-      </v-dialog>
+
+        <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
+          <v-card-text>
+            <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
+              <v-btn fab :loading="hloading" @click="loadRevisions" class="elevation-0 align-content-center">
+                <v-icon>mdi-history</v-icon>
+              </v-btn>
+            </h3>
+
+            <template v-for="(revision,index) in revisions">
+              <v-card color="grey lighten-4" flat class="my-1 pa-2 d-flex align-center">
+                            <span class="caption">{{ revision.data['comments'] }} - <v-chip label
+                            >{{ translate_status(revision.data.status) }}</v-chip> - {{ revision.created_at }}
+                              - By {{ revision.user.username }}</span>
+                <v-spacer></v-spacer>
+
+                <v-btn v-if="diffAllowed()" v-show="index!==revisions.length-1" @click="showDiff($event,index)"
+                       class="mx-1">
+                  <v-icon>mdi-compare</v-icon>
+                </v-btn>
+              </v-card>
 
 
-      <!-- Root Card   -->
+            </template>
+          </v-card-text>
+
+        </v-card>
+        <v-dialog
+            v-model="diffDialog"
+            max-width="770px"
+        >
+          <v-card class="pa-5">
+            <v-card-text>
+              <div v-html="diffResult">
+
+              </div>
+            </v-card-text>
+          </v-card>
+
+        </v-dialog>
+
+
+        <!-- Root Card   -->
       </v-card>
     `,
 });

@@ -1,4 +1,4 @@
-Vue.component('mp-card', {
+const MPCard = Vue.defineComponent({
   props: {
     profileId: Number,
     i18n: Object,
@@ -44,13 +44,15 @@ Vue.component('mp-card', {
     },
   },
   template: `
-          <v-card class="pa-1 ma-2 elevation-1" color="yellow lighten-4">
-          <v-card-title class="subtitle-2">
-            <v-btn :loading="loading" @click="loadData" small color="yellow lighten-3 black--text" elevation="0">
-              <v-icon color="deep-orange" left>mdi-chart-donut</v-icon>
+          <v-card class=" ma-2" >
+          <v-toolbar density="compact">
+            <v-toolbar-title>
+            <v-btn variant="text" prepend-icon="mdi-chart-donut" :loading="loading" @click="loadData"  >
+              
               {{ i18n.missingPerson_ }}
             </v-btn>
-          </v-card-title>
+              </v-toolbar-title>
+          </v-toolbar>
           <template v-if="mp">
             <v-card-text>
 
@@ -110,7 +112,7 @@ Vue.component('mp-card', {
               <mp-field :field="this.mp.dental_treatments" :title="i18n.dentalTreatmetns_"></mp-field>
               <mp-field :field="this.mp.dental_habits" :title="i18n.dentalHabits_"></mp-field>
               <mp-field :field="this.mp._case_status" :title="i18n.caseStatus_"></mp-field>
-              <mp-field :i18n="i18n" type="2" :field="this.mp.reporters" :title="i18n.reporters_"></mp-field>
+              <mp-field :i18n="i18n" :type="2" :field="this.mp.reporters" :title="i18n.reporters_"></mp-field>
               <mp-field :field="this.mp.identified_by" :title="i18n.identifiedBy"></mp-field>
               <mp-field :field="this.mp.family_notified" :title="i18n.familyNotified_"></mp-field>
               <mp-field :field="this.mp.reburial_location" :title="i18n.reburialLocation_"></mp-field>

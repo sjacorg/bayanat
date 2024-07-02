@@ -1,66 +1,76 @@
 <v-navigation-drawer
         v-model="exportDrawer"
-        clipped
-        right
+        fixed
+        location="right"
         temporary
         width="440"
-        app>
+        app
+        disable-route-watcher
+>
 
-    <validation-observer v-slot="{invalid}">
-        <v-card flat color=" lighten-3" class="mx-auto pa-3">
-            <v-card-title>
-                {{ _('Export Data') }}
-            </v-card-title>
+    <v-card>
+        <v-toolbar class="d-flex px-2">
+
+            {{ _('Export Data') }}
+            <v-spacer></v-spacer>
             <v-btn
-                @click="exportDrawer=false"
-                fab
-                absolute
-                top
-                right
-                x-small
-                text
-                class="mt-6">
-                <v-icon>mdi-close</v-icon>
-            </v-btn>
-            <v-card-text>
-
-                <div class="caption mb-2">{{ _('Export format') }}</div>
-
-                <v-btn-toggle color="primary" mandatory v-model="exportConfig.format">
-                            <v-btn small value="json"><v-icon left>mdi-code-json</v-icon> json</v-btn>
-                            <v-btn small value="pdf"><v-icon left>mdi-file-pdf-box</v-icon> pdf</v-btn>
-
-                            <v-btn v-if="!exportConfig.hideCSV" small value="csv"><v-icon left>mdi-file-delimited</v-icon> csv</v-btn>
+                    class="float-right"
+                    @click="exportDrawer=false"
+                    icon="mdi-close"
+            ></v-btn>
 
 
-                </v-btn-toggle>
-            </v-card-text>
+        </v-toolbar>
 
-            <v-card-text>
-                <v-switch v-if="!exportConfig.hideMedia" v-model="exportConfig.includeMedia" label="{{ _('Include media')}}"></v-switch>
+        <v-card-text>
 
-                <v-combobox
-                    small-chips
+            <div class="caption mb-2">{{ _('Export format') }}</div>
+
+            <v-btn-toggle color="primary" mandatory v-model="exportConfig.format">
+                <v-btn  value="json">
+                    <v-icon left>mdi-code-json</v-icon>
+                    json
+                </v-btn>
+                <v-btn  value="pdf">
+                    <v-icon left>mdi-file-pdf-box</v-icon>
+                    pdf
+                </v-btn>
+
+                <v-btn v-if="!exportConfig.hideCSV"  value="csv">
+                    <v-icon left>mdi-file-delimited</v-icon>
+                    csv
+                </v-btn>
+
+
+            </v-btn-toggle>
+        </v-card-text>
+
+        <v-card-text>
+            <v-switch v-if="!exportConfig.hideMedia" v-model="exportConfig.includeMedia"
+                      label="{{ _('Include media') }}"></v-switch>
+
+            <v-combobox
+                    chips
                     multiple
                     v-model="exportConfig.ref"
                     label="{{ _('Refs') }}"
                     class="mr-2"
-                ></v-combobox>
+            ></v-combobox>
 
-            </v-card-text>
+        </v-card-text>
 
-            <v-card-text>
+        <v-card-text>
 
-                    <v-textarea outlined
-                                v-model="exportConfig.comment"
-                                label="{{ _('Comments') }}">
+            <v-textarea variant="outlined" rows="3"
+                        v-model="exportConfig.comment"
+                        label="{{ _('Comments') }}">
 
-                    </v-textarea>
-            </v-card-text>
-            <v-card-actions>
-                <v-btn @click.stop="exportRequest" style="width:min(300px,90%)" class="primary mx-auto">{{ _('Create Export Request') }}</v-btn>
-            </v-card-actions>
-        </v-card>
-    </validation-observer>
+            </v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+            <v-btn @click.stop="exportRequest" color="primary" variant="elevated"
+                   class="primary mx-auto">{{ _('Create Export Request') }}</v-btn>
+        </v-card-actions>
+    </v-card>
 
 </v-navigation-drawer>

@@ -1,0 +1,78 @@
+<div class="wrapper overflow-hidden">
+        <div class="d-flex overflow-auto">
+            <v-sheet min-width="390" v-for="(item,index) in editedItem.actor_relations" :key="index">
+                <actor-result :i18n="translations" :actor="item.actor">
+                    <!--  attach relationship form -->
+                    <template #header>
+                        <v-card variant="text">
+                            <v-card-text>
+
+
+                                <v-list-item title="{{ _('Probability') }}">
+                                    <v-list-item-subtitle>
+                                        <v-chip-group
+                                                v-model="editedItem.actor_relations[index].probability"
+                                                column
+                                                selected-class="bg-primary">
+                                            <v-chip filter v-for="item in translations.probs"
+                                                    size="small">${item.tr}
+                                            </v-chip>
+                                        </v-chip-group>
+                                    </v-list-item-subtitle>
+
+                                </v-list-item>
+
+                                <v-list-item title="{{ _('Related As') }}">
+                                    <v-list-item-subtitle>
+                                        <v-chip-group
+                                                v-model="editedItem.actor_relations[index].related_as"
+                                                column
+                                                filter
+                                                selected-class="bg-primary"
+                                                :multiple="actorRelationMultiple"
+                                        >
+                                            <v-chip v-for="rel in actorRelationTypes"
+                                                    :value="rel.id"
+                                                    :key="rel.id" size="small"> ${rel.title}
+                                            </v-chip>
+                                        </v-chip-group>
+                                    </v-list-item-subtitle>
+                                </v-list-item>
+
+
+                                <v-list-item title="{{ _('Comments') }}">
+                                    <v-list-item-subtitle>
+                                        <v-text-field class="mt-2"
+                                                      v-model="editedItem.actor_relations[index].comment"
+                                                      variant="outlined"
+                                                      rows="1"
+                                                      clearable
+                                        ></v-text-field>
+                                    </v-list-item-subtitle>
+                                </v-list-item>
+
+                            </v-card-text>
+
+                        </v-card>
+                    </template>
+
+                    <template #actions>
+                        <v-btn
+                                @click="removeActor($event,index)"
+                                size="small"
+                                icon="mdi-delete-sweep"
+                                variant="plain"
+                                color="red"
+                        >
+                        </v-btn
+                        >
+                    </template>
+
+                </actor-result>
+
+            </v-sheet>
+
+        </div>
+
+
+    </div>

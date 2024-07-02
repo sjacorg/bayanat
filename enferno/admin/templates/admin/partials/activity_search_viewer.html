@@ -1,5 +1,5 @@
 <v-dialog v-model="activitySearchViews" width="770">
-    <v-card>
+    <v-sheet>
         <v-toolbar class="header-fixed">
             <v-spacer></v-spacer>
             <v-btn fab text @click="closeSearch()">
@@ -7,12 +7,12 @@
             </v-btn>
         </v-toolbar>
         <v-card>
-            <v-overlay absolute contained opacity="0"></v-overlay>
-            <v-expansion-panels v-if="searchClass!='incident'" multiple accordion v-model="searchPanels" disabled>
+            <v-overlay v-model="activitySearchViews" absolute contained persistent opacity="0"></v-overlay>
+            <v-expansion-panels v-if="searchClass!='incident'" multiple accordion v-model="searchPanels">
                 <v-expansion-panel v-for="(q,i) in search">
-                    <v-expansion-panel-header>${translations.query_} ${i+1} 
-                    </v-expansion-panel-header>
-                    <v-expansion-panel-content>
+                    <v-expansion-panel-title>${translations.query_} ${i+1} 
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
 
                         {{ i }}
 
@@ -39,7 +39,7 @@
                             :is-admin="has_role(currentUser,'Admin')"
                         >
                         </actor-search-box>
-                    </v-expansion-panel-content>
+                    </v-expansion-panel-text>
                 </v-expansion-panel>
             </v-expansion-panels>
 
@@ -54,5 +54,5 @@
             >
             </incident-search-box>
         </v-card>
-    </v-card>
+    </v-sheet>
 </v-dialog>

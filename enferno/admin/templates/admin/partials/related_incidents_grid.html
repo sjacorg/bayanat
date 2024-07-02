@@ -1,0 +1,75 @@
+<!--  Grid of Incidents Items -->
+<div class="wrapper overflow-hidden">
+    <div class="d-flex overflow-auto">
+
+        <v-sheet min-width="390" v-for="(item,index) in editedItem.incident_relations" :key="index">
+
+
+            <incident-result :i18n="translations" :incident="item.incident">
+
+                <template #header>
+                    <v-card class="text">
+
+                        <v-list-item lines="two" title=" {{ _('Probability') }}">
+                            <v-list-item-subtitle>
+                                <v-chip-group
+                                        v-model="editedItem.incident_relations[index].probability"
+                                        column
+                                        selected-class="bg-primary"
+                                >
+                                    <v-chip  filter size="small" v-for="item in translations.probs"
+                                            small>
+                                        ${item.tr}
+                                    </v-chip>
+                                </v-chip-group>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item title=" {{ _('Related As') }}">
+                            <v-list-item-subtitle>
+                                <v-chip-group
+                                        v-model="editedItem.incident_relations[index].related_as"
+                                        column
+                                        filter
+                                        selected-class="bg-primary"
+                                        :multiple="incidentRelationMultiple"
+                                >
+                                    <v-chip
+                                        v-for="rel in incidentRelationTypes"
+                                        :value="rel.id"
+                                        :key="rel.id"
+                                        size="small"
+                                    > ${rel.title}
+                                    </v-chip>
+                                </v-chip-group>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+
+                        <v-list-item title=" {{ _('Comments') }}">
+                            <v-list-item-subtitle>
+                                <v-text-field
+                                        v-model="editedItem.incident_relations[index].comment"
+                                        variant="outlined"
+                                ></v-text-field>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+
+                    </v-card>
+                </template>
+
+                <template #actions>
+                    <v-btn
+                            @click="removeIncident($event,index)"
+                            size="small"
+                            icon="mdi-delete-sweep"
+                            color="red">
+                    </v-btn>
+                </template>
+
+            </incident-result>
+
+        </v-sheet>
+    </div>
+</div>

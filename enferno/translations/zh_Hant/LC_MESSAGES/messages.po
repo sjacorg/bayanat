@@ -1,0 +1,4290 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: POEditor.com\n"
+"Project-Id-Version: Bayanat\n"
+"Language: zh-Hant\n"
+
+#: enferno/admin/templates/nav-bar.html:39
+msgid "Account Settings"
+msgstr "帳號設定"
+
+#: enferno/admin/templates/nav-bar.html:72
+msgid "Logout"
+msgstr "登出"
+
+#: enferno/admin/templates/admin/activity.html:94
+#: enferno/admin/templates/admin/actors.html:534
+#: enferno/admin/templates/admin/bulletins.html:537
+#: enferno/admin/templates/admin/eventtypes.html:211
+#: enferno/admin/templates/admin/incidents.html:495
+#: enferno/admin/templates/admin/labels.html:286
+#: enferno/admin/templates/admin/locations.html:209
+#: enferno/admin/templates/admin/roles.html:231
+#: enferno/admin/templates/admin/sources.html:233
+#: enferno/admin/templates/admin/system-administration.html:686
+#: enferno/admin/templates/admin/users.html:306
+#: enferno/data_import/templates/import-log.html:172
+#: enferno/data_import/templates/media-import.html:408
+#: enferno/data_import/templates/sheets-import.html:908
+#: enferno/deduplication/templates/deduplication.html:148
+#: enferno/export/templates/export-dashboard.html:151
+msgid "Rows per page"
+msgstr "每頁列數"
+
+#: enferno/admin/templates/admin/actors.html:72
+msgid "All Actors"
+msgstr "所有行動者"
+
+#: enferno/admin/templates/admin/actors.html:75
+#: enferno/admin/templates/admin/bulletins.html:86
+#: enferno/admin/templates/admin/incidents.html:72
+msgid "Assigned to me"
+msgstr "指派給我的"
+
+#: enferno/admin/templates/admin/actors.html:78
+#: enferno/admin/templates/admin/bulletins.html:90
+#: enferno/admin/templates/admin/incidents.html:75
+msgid "My Review List"
+msgstr "我的審查清單"
+
+#: enferno/admin/templates/admin/actors.html:91
+#: enferno/admin/templates/admin/bulletins.html:106
+#: enferno/admin/templates/admin/incidents.html:94
+#: enferno/admin/templates/admin/jsapi.jinja2:64
+#: enferno/admin/templates/admin/labels.html:37
+#: enferno/admin/templates/admin/locations.html:41
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:86
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:93
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:71
+#: enferno/admin/templates/admin/sources.html:35
+msgid "Search"
+msgstr "搜尋"
+
+#: enferno/admin/templates/admin/actors.html:98
+#: enferno/admin/templates/admin/jsapi.jinja2:19
+msgid "New Actor"
+msgstr "新的行動者"
+
+#: enferno/admin/templates/admin/actors.html:121
+#: enferno/admin/templates/admin/bulletins.html:142
+#: enferno/admin/templates/admin/incidents.html:129
+msgid "Bulk update"
+msgstr "批次更新"
+
+#: enferno/admin/templates/admin/actors.html:156
+#: enferno/admin/templates/admin/bulletins.html:176
+#: enferno/admin/templates/admin/incidents.html:166
+msgid "About"
+msgstr "關於"
+
+#: enferno/admin/templates/admin/actors.html:156
+#: enferno/admin/templates/admin/bulletins.html:176
+#: enferno/admin/templates/admin/incidents.html:166
+msgid "results"
+msgstr "結果"
+
+#: enferno/admin/templates/admin/actors.html:157
+#: enferno/admin/templates/admin/bulletins.html:177
+#: enferno/admin/templates/admin/incidents.html:167
+msgid "seconds"
+msgstr "秒"
+
+#: enferno/admin/templates/admin/actors.html:163
+#: enferno/admin/templates/admin/bulletins.html:184
+#: enferno/admin/templates/admin/incidents.html:174
+msgid "Selected items"
+msgstr "選擇的物件"
+
+#: enferno/admin/templates/admin/actors.html:554
+#: enferno/admin/templates/admin/bulletins.html:576
+#: enferno/admin/templates/admin/component-data.html:277
+#: enferno/admin/templates/admin/component-data.html:285
+#: enferno/admin/templates/admin/component-data.html:291
+#: enferno/admin/templates/admin/component-data.html:298
+#: enferno/admin/templates/admin/component-data.html:305
+#: enferno/admin/templates/admin/component-data.html:312
+#: enferno/admin/templates/admin/component-data.html:318
+#: enferno/admin/templates/admin/component-data.html:327
+#: enferno/admin/templates/admin/component-data.html:333
+#: enferno/admin/templates/admin/eventtypes.html:203
+#: enferno/admin/templates/admin/incidents.html:529
+#: enferno/admin/templates/admin/jsapi.jinja2:119
+#: enferno/admin/templates/admin/labels.html:269
+#: enferno/admin/templates/admin/locations.html:203
+#: enferno/admin/templates/admin/partials/actor_dialog.html:13
+#: enferno/admin/templates/admin/roles.html:216
+#: enferno/admin/templates/admin/system-administration.html:724
+#: enferno/admin/templates/admin/system-administration.html:734
+#: enferno/admin/templates/admin/users.html:262
+#: enferno/data_import/templates/import-log.html:162
+#: enferno/deduplication/templates/deduplication.html:117
+#: enferno/export/templates/export-dashboard.html:143
+msgid "ID"
+msgstr "ID"
+
+#: enferno/admin/templates/admin/actors.html:556
+#: enferno/admin/templates/admin/jsapi.jinja2:86
+#: enferno/admin/templates/admin/jsapi.jinja2:188
+#: enferno/admin/templates/admin/partials/actor_dialog.html:63
+#: enferno/admin/templates/admin/partials/actor_dialog.html:522
+#: enferno/admin/templates/admin/roles.html:217
+#: enferno/admin/templates/admin/users.html:265
+#: enferno/data_import/templates/media-import.html:391
+#: enferno/data_import/templates/sheets-import.html:250
+#: enferno/data_import/templates/sheets-import.html:463
+#: enferno/data_import/templates/sheets-import.html:910
+msgid "Name"
+msgstr "名稱"
+
+#: enferno/admin/templates/admin/actors.html:558
+#: enferno/admin/templates/admin/bulletins.html:580
+#: enferno/admin/templates/admin/incidents.html:532
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:24
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:31
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:22
+msgid "Assigned To"
+msgstr "指派給"
+
+#: enferno/admin/templates/admin/actors.html:542
+#: enferno/admin/templates/admin/bulletins.html:546
+#: enferno/admin/templates/admin/incidents.html:503
+#: enferno/admin/templates/admin/users.html:193
+#: enferno/admin/templates/admin/users.html:315
+msgid "Roles"
+msgstr "角色"
+
+#: enferno/admin/templates/admin/activity.html:253
+#: enferno/admin/templates/admin/actors.html:561
+#: enferno/admin/templates/admin/bulletins.html:583
+#: enferno/admin/templates/admin/incidents.html:535
+#: enferno/admin/templates/admin/jsapi.jinja2:242
+#: enferno/admin/templates/admin/partials/actor_dialog.html:904
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:57
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:56
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:55
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:271
+#: enferno/admin/templates/admin/partials/incident_dialog.html:243
+#: enferno/data_import/templates/import-log.html:166
+#: enferno/data_import/templates/sheets-import.html:18
+#: enferno/deduplication/templates/deduplication.html:123
+#: enferno/export/templates/export-dashboard.html:151
+msgid "Status"
+msgstr "狀態"
+
+#: enferno/admin/templates/admin/actors.html:562
+#: enferno/admin/templates/admin/bulletins.html:586
+#: enferno/admin/templates/admin/component-data.html:280
+#: enferno/admin/templates/admin/component-data.html:287
+#: enferno/admin/templates/admin/component-data.html:294
+#: enferno/admin/templates/admin/component-data.html:301
+#: enferno/admin/templates/admin/component-data.html:308
+#: enferno/admin/templates/admin/component-data.html:315
+#: enferno/admin/templates/admin/component-data.html:323
+#: enferno/admin/templates/admin/component-data.html:330
+#: enferno/admin/templates/admin/component-data.html:336
+#: enferno/admin/templates/admin/eventtypes.html:210
+#: enferno/admin/templates/admin/incidents.html:536
+#: enferno/admin/templates/admin/labels.html:279
+#: enferno/admin/templates/admin/locations.html:211
+#: enferno/admin/templates/admin/roles.html:222
+#: enferno/admin/templates/admin/sources.html:223
+#: enferno/admin/templates/admin/system-administration.html:727
+#: enferno/admin/templates/admin/system-administration.html:736
+#: enferno/admin/templates/admin/users.html:268
+msgid "Actions"
+msgstr "動作"
+
+#: enferno/admin/templates/admin/bulletins.html:82
+msgid "All Bulletins"
+msgstr "所有簡報"
+
+#: enferno/admin/templates/admin/bulletins.html:118
+#: enferno/admin/templates/admin/jsapi.jinja2:17
+msgid "New Bulletin"
+msgstr "新的簡報"
+
+#: enferno/admin/templates/admin/bulletins.html:287
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:67
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:90
+#: enferno/admin/templates/admin/partials/review_dialog.html:43
+msgid "Ref"
+msgstr "編碼"
+
+#: enferno/admin/templates/admin/bulletins.html:577
+#: enferno/admin/templates/admin/component-data.html:279
+#: enferno/admin/templates/admin/component-data.html:286
+#: enferno/admin/templates/admin/component-data.html:292
+#: enferno/admin/templates/admin/component-data.html:299
+#: enferno/admin/templates/admin/component-data.html:306
+#: enferno/admin/templates/admin/component-data.html:313
+#: enferno/admin/templates/admin/component-data.html:319
+#: enferno/admin/templates/admin/component-data.html:328
+#: enferno/admin/templates/admin/component-data.html:334
+#: enferno/admin/templates/admin/eventtypes.html:55
+#: enferno/admin/templates/admin/eventtypes.html:204
+#: enferno/admin/templates/admin/incidents.html:530
+#: enferno/admin/templates/admin/jsapi.jinja2:124
+#: enferno/admin/templates/admin/labels.html:59
+#: enferno/admin/templates/admin/labels.html:270
+#: enferno/admin/templates/admin/locations.html:204
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:81
+#: enferno/admin/templates/admin/partials/event_dialog.html:68
+#: enferno/admin/templates/admin/partials/incident_dialog.html:39
+#: enferno/admin/templates/admin/partials/location_dialog.html:38
+#: enferno/admin/templates/admin/partials/media_dialog.html:58
+#: enferno/admin/templates/admin/partials/video_player_dialog.html:58
+#: enferno/admin/templates/admin/sources.html:59
+#: enferno/admin/templates/admin/sources.html:216
+#: enferno/admin/templates/admin/system-administration.html:726
+#: enferno/admin/templates/admin/system-administration.html:735
+#: enferno/data_import/templates/sheets-import.html:648
+msgid "Title"
+msgstr "標題"
+
+#: enferno/data_import/templates/sheets-import.html:11
+msgid "Upload Sheet / Select Map"
+msgstr "上傳試算表／選擇映射"
+
+#: enferno/data_import/templates/sheets-import.html:14
+msgid "Fields Map"
+msgstr "欄位映射"
+
+#: enferno/data_import/templates/sheets-import.html:26
+msgid "Bulk Upload & Import"
+msgstr "批次上傳與匯入"
+
+#: enferno/data_import/templates/sheets-import.html:28
+#: enferno/data_import/templates/sheets-import.html:202
+msgid "Create a new map"
+msgstr "建立新的映射"
+
+#: enferno/data_import/templates/sheets-import.html:29
+msgid "Select an existing map"
+msgstr "選擇現有映射"
+
+#: enferno/data_import/templates/sheets-import.html:60
+msgid "Select Sheet to continue"
+msgstr "選擇試算表來繼續"
+
+#: enferno/data_import/templates/sheets-import.html:72
+#: enferno/data_import/templates/sheets-import.html:111
+msgid "Load existing map"
+msgstr "載入現有映射"
+
+#: enferno/data_import/templates/sheets-import.html:86
+msgid "Continue"
+msgstr "繼續"
+
+#: enferno/data_import/templates/media-import.html:130
+#: enferno/data_import/templates/sheets-import.html:105
+msgid "Back"
+msgstr "上一步"
+
+#: enferno/data_import/templates/media-import.html:110
+#: enferno/data_import/templates/sheets-import.html:126
+msgid "Next"
+msgstr "下一步"
+
+#: enferno/data_import/templates/sheets-import.html:138
+msgid "Sheet Fields"
+msgstr "試算表欄位"
+
+#: enferno/data_import/templates/sheets-import.html:143
+msgid "Reset"
+msgstr "重設"
+
+#: enferno/data_import/templates/sheets-import.html:150
+msgid "Search Fields"
+msgstr "搜尋欄位"
+
+#: enferno/data_import/templates/sheets-import.html:170
+msgid "Sample Data"
+msgstr "樣本資料"
+
+#: enferno/data_import/templates/sheets-import.html:187
+msgid "Actor Fields"
+msgstr "行動者欄位"
+
+#: enferno/data_import/templates/sheets-import.html:192
+msgid "Map Name"
+msgstr "映射名稱"
+
+#: enferno/data_import/templates/sheets-import.html:200
+msgid "Update map"
+msgstr "更新映射"
+
+#: enferno/data_import/templates/sheets-import.html:205
+#: enferno/templates/security/wan_register.html:162
+msgid "Delete"
+msgstr "刪除"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:120
+#: enferno/admin/templates/admin/partials/actor_dialog.html:376
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:26
+#: enferno/admin/templates/admin/sources.html:78
+#: enferno/admin/templates/admin/sources.html:217
+#: enferno/data_import/templates/sheets-import.html:230
+msgid "Origin ID"
+msgstr "來源 ID"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:64
+#: enferno/data_import/templates/sheets-import.html:265
+msgid "Name (AR)"
+msgstr "名字（阿拉伯文）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:74
+#: enferno/admin/templates/admin/partials/actor_dialog.html:118
+#: enferno/data_import/templates/sheets-import.html:268
+#: enferno/templates/security/wan_register.html:161
+msgid "Nickname"
+msgstr "暱稱"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:75
+#: enferno/admin/templates/admin/partials/actor_dialog.html:119
+#: enferno/data_import/templates/sheets-import.html:271
+msgid "Nickname (AR)"
+msgstr "暱稱（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:146
+#: enferno/admin/templates/admin/partials/actor_dialog.html:87
+#: enferno/data_import/templates/sheets-import.html:276
+msgid "First Name"
+msgstr "名字"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:88
+#: enferno/data_import/templates/sheets-import.html:279
+msgid "First Name (AR)"
+msgstr "名字（阿拉伯文）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:152
+#: enferno/data_import/templates/sheets-import.html:289
+msgid "Middle/Father's Name"
+msgstr "中間／父親名"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:158
+#: enferno/data_import/templates/sheets-import.html:292
+msgid "Middle/Father's Name (AR)"
+msgstr "中間／父親名（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:148
+#: enferno/admin/templates/admin/partials/actor_dialog.html:105
+#: enferno/data_import/templates/sheets-import.html:290
+msgid "Last Name"
+msgstr "姓氏"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:106
+#: enferno/data_import/templates/sheets-import.html:293
+msgid "Last Name (AR)"
+msgstr "姓氏（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:150
+#: enferno/admin/templates/admin/partials/actor_dialog.html:141
+#: enferno/data_import/templates/sheets-import.html:302
+msgid "Mother's Name"
+msgstr "母親名"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:142
+#: enferno/data_import/templates/sheets-import.html:305
+msgid "Mother's Name (AR)"
+msgstr "母親名（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:123
+#: enferno/admin/templates/admin/partials/actor_dialog.html:400
+#: enferno/admin/templates/admin/partials/incident_dialog.html:49
+#: enferno/admin/templates/admin/roles.html:85
+#: enferno/admin/templates/admin/roles.html:219
+#: enferno/data_import/templates/sheets-import.html:385
+msgid "Description"
+msgstr "描述"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:126
+#: enferno/admin/templates/admin/partials/actor_dialog.html:416
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:106
+#: enferno/admin/templates/admin/partials/review_dialog.html:98
+#: enferno/admin/templates/admin/sources.html:26
+#: enferno/data_import/templates/media-import.html:202
+#: enferno/data_import/templates/sheets-import.html:364
+#: enferno/templates/nav-drawer.html:19
+msgid "Sources"
+msgstr "來源"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:127
+#: enferno/admin/templates/admin/labels.html:27
+#: enferno/admin/templates/admin/labels.html:97
+#: enferno/admin/templates/admin/partials/actor_dialog.html:429
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:127
+#: enferno/admin/templates/admin/partials/incident_dialog.html:97
+#: enferno/admin/templates/admin/partials/review_dialog.html:74
+#: enferno/data_import/templates/media-import.html:168
+#: enferno/data_import/templates/sheets-import.html:366
+#: enferno/templates/nav-drawer.html:22
+msgid "Labels"
+msgstr "標籤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:128
+#: enferno/admin/templates/admin/labels.html:112
+#: enferno/admin/templates/admin/partials/actor_dialog.html:441
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:140
+#: enferno/admin/templates/admin/partials/review_dialog.html:87
+#: enferno/data_import/templates/media-import.html:179
+#: enferno/data_import/templates/sheets-import.html:368
+msgid "Verified Labels"
+msgstr "已驗證之標籤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:76
+#: enferno/admin/templates/admin/jsapi.jinja2:151
+#: enferno/admin/templates/admin/partials/actor_dialog.html:158
+#: enferno/data_import/templates/sheets-import.html:311
+msgid "Sex"
+msgstr "性別"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:77
+#: enferno/admin/templates/admin/partials/actor_dialog.html:169
+#: enferno/data_import/templates/sheets-import.html:313
+msgid "Minor/Adult"
+msgstr "未成年／成年"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:78
+#: enferno/admin/templates/admin/partials/actor_dialog.html:180
+#: enferno/data_import/templates/sheets-import.html:315
+msgid "Civilian/Non Civilian"
+msgstr "平民／非平民"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:79
+#: enferno/admin/templates/admin/jsapi.jinja2:154
+#: enferno/data_import/templates/sheets-import.html:213
+#: enferno/data_import/templates/sheets-import.html:221
+msgid "Actor Type"
+msgstr "行動者類型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:154
+#: enferno/admin/templates/admin/partials/actor_dialog.html:342
+#: enferno/data_import/templates/sheets-import.html:354
+msgid "Date of Birth"
+msgstr "出生日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:155
+#: enferno/admin/templates/admin/partials/actor_dialog.html:358
+#: enferno/data_import/templates/sheets-import.html:360
+msgid "Place of Birth"
+msgstr "出生地"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:157
+#: enferno/admin/templates/admin/partials/actor_dialog.html:371
+#: enferno/data_import/templates/sheets-import.html:362
+msgid "Place of Residence"
+msgstr "居住地"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:156
+#: enferno/admin/templates/admin/partials/actor_dialog.html:191
+#: enferno/data_import/templates/sheets-import.html:319
+msgid "Place of Origin"
+msgstr "原籍地"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:129
+#: enferno/admin/templates/admin/jsapi.jinja2:341
+#: enferno/admin/templates/admin/jsapi.jinja2:348
+#: enferno/admin/templates/admin/partials/event_dialog.html:3
+#: enferno/data_import/templates/sheets-import.html:642
+msgid "Events"
+msgstr "事件"
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:135
+#: enferno/data_import/templates/sheets-import.html:654
+#: enferno/data_import/templates/sheets-import.html:660
+msgid "Event Type"
+msgstr "事件類型"
+
+#: enferno/admin/templates/admin/actors.html:269
+#: enferno/admin/templates/admin/bulletins.html:291
+#: enferno/admin/templates/admin/eventtypes.html:83
+#: enferno/admin/templates/admin/eventtypes.html:208
+#: enferno/admin/templates/admin/incidents.html:271
+#: enferno/admin/templates/admin/jsapi.jinja2:139
+#: enferno/admin/templates/admin/labels.html:75
+#: enferno/admin/templates/admin/labels.html:271
+#: enferno/admin/templates/admin/partials/actor_dialog.html:891
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:86
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:98
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:82
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:256
+#: enferno/admin/templates/admin/partials/event_dialog.html:92
+#: enferno/admin/templates/admin/partials/export_drawer.html:66
+#: enferno/admin/templates/admin/partials/incident_dialog.html:228
+#: enferno/admin/templates/admin/partials/related_actors_grid.html:42
+#: enferno/admin/templates/admin/partials/related_bulletins_grid.html:46
+#: enferno/admin/templates/admin/partials/related_incidents_grid.html:43
+#: enferno/admin/templates/admin/sources.html:90
+#: enferno/admin/templates/admin/sources.html:219
+#: enferno/data_import/templates/sheets-import.html:669
+msgid "Comments"
+msgstr "附註"
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:121
+#: enferno/data_import/templates/sheets-import.html:671
+msgid "Location"
+msgstr "地點"
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:144
+#: enferno/data_import/templates/sheets-import.html:675
+msgid "From"
+msgstr "從"
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:147
+#: enferno/data_import/templates/sheets-import.html:677
+msgid "To"
+msgstr "到"
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:155
+#: enferno/data_import/templates/sheets-import.html:679
+msgid "Estimated Time"
+msgstr "預估時間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:71
+#: enferno/admin/templates/admin/jsapi.jinja2:72
+#: enferno/admin/templates/admin/jsapi.jinja2:160
+#: enferno/admin/templates/admin/partials/actor_dialog.html:203
+#: enferno/data_import/templates/sheets-import.html:324
+msgid "Occupation"
+msgstr "職業"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:204
+#: enferno/data_import/templates/sheets-import.html:327
+msgid "Occupation (AR)"
+msgstr "職業（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:73
+#: enferno/admin/templates/admin/jsapi.jinja2:161
+#: enferno/admin/templates/admin/partials/actor_dialog.html:215
+#: enferno/data_import/templates/sheets-import.html:331
+msgid "Position"
+msgstr "職位"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:216
+#: enferno/data_import/templates/sheets-import.html:333
+msgid "Position (AR)"
+msgstr "職位（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:162
+#: enferno/data_import/templates/sheets-import.html:349
+msgid "Spoken Dialects"
+msgstr "使用之方言"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:481
+#: enferno/data_import/templates/sheets-import.html:441
+msgid "Spoken Dialects (AR)"
+msgstr "使用之方言（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:75
+#: enferno/admin/templates/admin/jsapi.jinja2:163
+#: enferno/admin/templates/admin/partials/actor_dialog.html:232
+#: enferno/data_import/templates/sheets-import.html:337
+msgid "Family Status"
+msgstr "家庭狀態"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:510
+#: enferno/data_import/templates/sheets-import.html:447
+msgid "Family Status (AR)"
+msgstr "家庭狀態（阿拉伯文）"
+
+#: enferno/admin/templates/admin/component-data.html:25
+#: enferno/admin/templates/admin/component-data.html:102
+#: enferno/admin/templates/admin/partials/actor_dialog.html:251
+#: enferno/data_import/templates/sheets-import.html:345
+msgid "Ethnographic Information"
+msgstr "族裔資訊"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:81
+msgid "Nationality"
+msgstr "國籍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:167
+msgid "National ID Card"
+msgstr "身分證"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:138
+#: enferno/admin/templates/admin/partials/actor_dialog.html:384
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:43
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:213
+#: enferno/data_import/templates/sheets-import.html:410
+msgid "Source Link"
+msgstr "來源連結"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:389
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:221
+#: enferno/data_import/templates/sheets-import.html:425
+msgid "Private"
+msgstr "私人"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:32
+#: enferno/admin/templates/admin/jsapi.jinja2:136
+#: enferno/admin/templates/admin/partials/actor_dialog.html:452
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:231
+#: enferno/data_import/templates/sheets-import.html:427
+msgid "Publish Date"
+msgstr "發佈日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:33
+#: enferno/admin/templates/admin/jsapi.jinja2:137
+#: enferno/admin/templates/admin/partials/actor_dialog.html:460
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:235
+#: enferno/data_import/templates/sheets-import.html:429
+msgid "Documentation Date"
+msgstr "文件日期"
+
+#: enferno/data_import/templates/sheets-import.html:707
+msgid "Sheet file:"
+msgstr "試算表檔案："
+
+#: enferno/data_import/templates/sheets-import.html:709
+#: enferno/data_import/templates/sheets-import.html:717
+msgid "Selected"
+msgstr "已選擇"
+
+#: enferno/data_import/templates/sheets-import.html:713
+msgid "Map:"
+msgstr "映射："
+
+#: enferno/data_import/templates/sheets-import.html:737
+msgid "Optional: Upload more sheets to process"
+msgstr "非必要：上傳更多要處理的試算表"
+
+#: enferno/data_import/templates/media-import.html:155
+#: enferno/data_import/templates/sheets-import.html:753
+msgid "Access Roles"
+msgstr "存取角色"
+
+#: enferno/data_import/templates/sheets-import.html:759
+msgid "Process File(s)"
+msgstr "處理檔案"
+
+#: enferno/data_import/templates/media-import.html:13
+msgid "Upload or Select"
+msgstr "上傳或選擇"
+
+#: enferno/data_import/templates/media-import.html:16
+msgid "Add Data"
+msgstr "新增資料"
+
+#: enferno/data_import/templates/media-import.html:18
+msgid "Finish"
+msgstr "完成"
+
+#: enferno/data_import/templates/media-import.html:80
+msgid "Upload files"
+msgstr "上傳檔案"
+
+#: enferno/data_import/templates/media-import.html:83
+msgid "Manual web upload"
+msgstr "手動上傳至網路"
+
+#: enferno/data_import/templates/media-import.html:92
+msgid "Process path"
+msgstr "處理路徑"
+
+#: enferno/data_import/templates/media-import.html:138
+msgid "Process"
+msgstr "處理"
+
+#: enferno/data_import/templates/media-import.html:144
+msgid "Attach data to files"
+msgstr "附加資料到檔案"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:131
+#: enferno/admin/templates/admin/jsapi.jinja2:339
+#: enferno/admin/templates/admin/locations.html:29
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:155
+#: enferno/admin/templates/admin/partials/incident_dialog.html:108
+#: enferno/admin/templates/admin/partials/review_dialog.html:62
+#: enferno/data_import/templates/media-import.html:191
+#: enferno/templates/nav-drawer.html:14
+msgid "Locations"
+msgstr "地點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:29
+#: enferno/admin/templates/admin/partials/export_drawer.html:56
+#: enferno/data_import/templates/media-import.html:210
+msgid "Refs"
+msgstr "編碼"
+
+#: enferno/data_import/templates/media-import.html:221
+msgid "Optimize videos"
+msgstr "最佳化影像"
+
+#: enferno/data_import/templates/media-import.html:225
+msgid "Parse PDF & MS Word files"
+msgstr "解析 PDF 與 MS Word 檔案"
+
+#: enferno/data_import/templates/media-import.html:230
+msgid "Scan images for text"
+msgstr "掃描圖像中的文字"
+
+#: enferno/admin/templates/admin/eventtypes.html:98
+#: enferno/admin/templates/admin/eventtypes.html:148
+#: enferno/admin/templates/admin/labels.html:158
+#: enferno/admin/templates/admin/labels.html:209
+#: enferno/admin/templates/admin/locations.html:97
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:104
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:110
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:89
+#: enferno/admin/templates/admin/partials/media_dialog.html:92
+#: enferno/admin/templates/admin/roles.html:98
+#: enferno/admin/templates/admin/roles.html:151
+#: enferno/admin/templates/admin/sources.html:104
+#: enferno/admin/templates/admin/sources.html:156
+#: enferno/admin/templates/admin/system-administration.html:647
+#: enferno/data_import/templates/media-import.html:282
+#: enferno/data_import/templates/media-import.html:308
+msgid "Cancel"
+msgstr "取消"
+
+#: enferno/data_import/templates/media-import.html:283
+msgid "Scan"
+msgstr "掃描"
+
+#: enferno/admin/templates/admin/eventtypes.html:27
+#: enferno/templates/nav-drawer.html:25
+msgid "Event Types"
+msgstr "事件類型"
+
+#: enferno/admin/templates/admin/eventtypes.html:36
+#: enferno/admin/templates/admin/eventtypes.html:227
+#: enferno/admin/templates/admin/labels.html:47
+#: enferno/admin/templates/admin/labels.html:299
+#: enferno/admin/templates/admin/sources.html:46
+#: enferno/admin/templates/admin/sources.html:245
+#: enferno/admin/templates/admin/users.html:291
+msgid "New Item"
+msgstr "新的物件"
+
+#: enferno/admin/templates/admin/eventtypes.html:62
+#: enferno/admin/templates/admin/labels.html:66
+#: enferno/admin/templates/admin/partials/event_dialog.html:77
+#: enferno/admin/templates/admin/partials/media_dialog.html:59
+#: enferno/admin/templates/admin/partials/video_player_dialog.html:65
+msgid "Title (AR)"
+msgstr "標題（阿拉伯文）"
+
+#: enferno/admin/templates/admin/eventtypes.html:68
+#: enferno/admin/templates/admin/eventtypes.html:206
+msgid "For Actors"
+msgstr "給行動者"
+
+#: enferno/admin/templates/admin/eventtypes.html:74
+#: enferno/admin/templates/admin/eventtypes.html:207
+msgid "For Bulletins"
+msgstr "給簡報"
+
+#: enferno/admin/templates/admin/eventtypes.html:104
+#: enferno/admin/templates/admin/jsapi.jinja2:90
+#: enferno/admin/templates/admin/labels.html:165
+#: enferno/admin/templates/admin/labels.html:215
+#: enferno/admin/templates/admin/locations.html:101
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:105
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:111
+#: enferno/admin/templates/admin/partials/event_dialog.html:167
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:90
+#: enferno/admin/templates/admin/roles.html:106
+#: enferno/admin/templates/admin/roles.html:157
+#: enferno/admin/templates/admin/sources.html:111
+#: enferno/admin/templates/admin/sources.html:163
+#: enferno/admin/templates/admin/system-administration.html:533
+#: enferno/admin/templates/admin/users.html:226
+#: enferno/templates/change-password.html:23
+msgid "Save"
+msgstr "儲存"
+
+#: enferno/admin/templates/admin/eventtypes.html:119
+#: enferno/admin/templates/admin/eventtypes.html:126
+#: enferno/admin/templates/admin/labels.html:180
+#: enferno/admin/templates/admin/labels.html:187
+#: enferno/admin/templates/admin/locations.html:62
+#: enferno/admin/templates/admin/locations.html:76
+#: enferno/admin/templates/admin/roles.html:123
+#: enferno/admin/templates/admin/roles.html:129
+#: enferno/admin/templates/admin/sources.html:127
+#: enferno/admin/templates/admin/sources.html:134
+msgid "Import CSV"
+msgstr "匯入 CSV"
+
+#: enferno/admin/templates/admin/eventtypes.html:135
+#: enferno/admin/templates/admin/labels.html:196
+#: enferno/admin/templates/admin/locations.html:86
+#: enferno/admin/templates/admin/roles.html:138
+#: enferno/admin/templates/admin/sources.html:143
+msgid "Select CSV File"
+msgstr "選擇 CSV 檔案"
+
+#: enferno/admin/templates/admin/eventtypes.html:205
+msgid "Title (ar)"
+msgstr "標題（阿拉伯文）"
+
+#: enferno/admin/templates/admin/eventtypes.html:227
+#: enferno/admin/templates/admin/labels.html:299
+#: enferno/admin/templates/admin/sources.html:245
+#: enferno/admin/templates/admin/users.html:291
+msgid "Edit Item"
+msgstr "編輯物件"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:18
+msgid "Edit Bulletin"
+msgstr "編輯簡報"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:20
+msgid "Edit Actor"
+msgstr "編輯行動者"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:22
+#: enferno/deduplication/templates/deduplication.html:118
+msgid "Query"
+msgstr "查詢"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:23
+msgid "Advanced Search"
+msgstr "進階搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:24
+msgid "No (more) items found."
+msgstr "找不到（更多）物件。"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:25
+msgid "Hide"
+msgstr "隱藏"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:26
+msgid "Relate"
+msgstr "建立關聯"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:28
+msgid "Does not contain"
+msgstr "不包含"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:30
+msgid "Include Refs"
+msgstr "包含編碼"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:31
+msgid "Exclude Refs"
+msgstr "排除編碼"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:35
+msgid "Assigned user"
+msgstr "指派的用戶"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:39
+msgid "Unassigned"
+msgstr "取消指派"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:40
+msgid "Reviewer"
+msgstr "審查者"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:41
+msgid "Workflow Status"
+msgstr "工作流程狀態"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:42
+msgid "Review Action"
+msgstr "審查動作"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:43
+msgid "Include sources"
+msgstr "包含來源"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:44
+msgid "Exclude sources (All)"
+msgstr "排除來源（所有）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:45
+msgid "Also include child sources"
+msgstr "也包含子來源"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:46
+msgid "Any"
+msgstr "任何"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:47
+msgid "All"
+msgstr "所有"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:48
+msgid "Include labels"
+msgstr "包含標籤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:49
+msgid "Exclude labels (All)"
+msgstr "排除標籤（所有）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:50
+msgid "Also include child labels"
+msgstr "也包含子標籤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:51
+msgid "Include verified labels"
+msgstr "包含已驗證之標籤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:52
+msgid "Exclude verified labels (All)"
+msgstr "排除已驗證之標籤（所有）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:53
+msgid "Also include verified child labels"
+msgstr "也包含已驗證之子標籤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:54
+msgid "Include locations"
+msgstr "包含地點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:57
+msgid "Exclude locations (All)"
+msgstr "排除地點（所有）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:55
+msgid "Include residence locations (Any)"
+msgstr "包含居住地（任何）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:56
+msgid "Exclude residence locations (All)"
+msgstr "排除居住地（所有）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:58
+msgid "Include origin locations (Any)"
+msgstr "包含原籍地（任何）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:59
+msgid "Exclude origin locations (All)"
+msgstr "排除原籍地（所有）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:60
+msgid "Include event locations"
+msgstr "包含事件地點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:61
+msgid "Event type"
+msgstr "事件類型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:63
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:71
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:78
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:57
+msgid "Clear Search"
+msgstr "清除搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:65
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:73
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:80
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:58
+msgid "Save Search"
+msgstr "儲存搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:69
+msgid "Refine/Extend Search"
+msgstr "縮小／擴大搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:70
+msgid "Load existing search"
+msgstr "載入現有搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:74
+msgid "Spoken dialects"
+msgstr "使用的方言"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:80
+msgid "Ethnography"
+msgstr "族裔"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:81
+msgid "Place of birth"
+msgstr "出生地"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:82
+msgid "Date of birth"
+msgstr "出生日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:82
+msgid "Yes"
+msgstr "是"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:83
+msgid "No"
+msgstr "否"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:84
+#: enferno/admin/templates/admin/jsapi.jinja2:368
+#: enferno/admin/templates/admin/jsapi.jinja2:372
+msgid "Unknown"
+msgstr "未知"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:85
+msgid "details"
+msgstr "細節"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:87
+msgid "Reporting Persons"
+msgstr "報告人"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:88
+msgid "Contact info ( phone, email, address)"
+msgstr "聯絡資訊（電話號碼、電子郵件、地址）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:89
+msgid "Relationship"
+msgstr "關係"
+
+#: enferno/admin/templates/admin/actors.html:555
+#: enferno/admin/templates/admin/jsapi.jinja2:91
+#: enferno/admin/templates/admin/system-logs.html:140
+msgid "Type"
+msgstr "類型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:92
+msgid "Latitude"
+msgstr "緯度"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:93
+msgid "Longitude"
+msgstr "經度"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:94
+#: enferno/admin/templates/admin/labels.html:93
+#: enferno/admin/templates/admin/labels.html:272
+#: enferno/admin/templates/admin/locations.html:206
+#: enferno/admin/templates/admin/sources.html:72
+#: enferno/admin/templates/admin/sources.html:220
+msgid "Parent"
+msgstr "父層"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:95
+#: enferno/admin/templates/admin/partials/location_dialog.html:120
+msgid "Postal Code"
+msgstr "郵遞區號"
+
+#: enferno/admin/templates/admin/incidents.html:204
+#: enferno/admin/templates/admin/jsapi.jinja2:121
+msgid "Edit"
+msgstr "編輯"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:122
+msgid "Visualize"
+msgstr "視覺化"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:121
+msgid "Assigned User:"
+msgstr "指派的用戶："
+
+#: enferno/admin/templates/admin/jsapi.jinja2:125
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:72
+msgid "Original Title"
+msgstr "原始標題"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:130
+#: enferno/admin/templates/admin/partials/media_dialog.html:5
+msgid "Media"
+msgstr "媒體"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:132
+#: enferno/admin/templates/admin/partials/edit_related_bulletins.html:4
+#: enferno/admin/templates/admin/partials/incident_dialog.html:171
+#: enferno/admin/templates/admin/partials/review_dialog.html:112
+msgid "Related Bulletins"
+msgstr "相關的簡報"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:133
+#: enferno/admin/templates/admin/partials/edit_related_actors.html:3
+#: enferno/admin/templates/admin/partials/incident_dialog.html:141
+#: enferno/admin/templates/admin/partials/review_dialog.html:119
+msgid "Related Actors"
+msgstr "相關的行動者"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:134
+#: enferno/admin/templates/admin/partials/edit_related_incidents.html:3
+#: enferno/admin/templates/admin/partials/incident_dialog.html:200
+#: enferno/admin/templates/admin/partials/review_dialog.html:125
+msgid "Related Incidents"
+msgstr "相關的事端"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:135
+msgid "Relationship Info"
+msgstr "關係資訊"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:140
+msgid "Log History"
+msgstr "紀錄歷史"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:144
+#: enferno/admin/templates/admin/users.html:92
+msgid "Full Name"
+msgstr "全名"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:144
+msgid "Nick Name"
+msgstr "暱稱"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:97
+msgid "Middle Name"
+msgstr "中間名"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:152
+msgid "Age"
+msgstr "年齡"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:153
+#: enferno/admin/templates/admin/jsapi.jinja2:373
+msgid "Civilian"
+msgstr "平民"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:165
+msgid "Ethnographic Info"
+msgstr "族裔資訊"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:166
+#: enferno/admin/templates/admin/partials/actor_dialog.html:268
+#: enferno/data_import/templates/sheets-import.html:347
+msgid "Nationalities"
+msgstr "國籍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:169
+msgid "Overview"
+msgstr "總覽"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:172
+#: enferno/admin/templates/admin/partials/incident_dialog.html:81
+msgid "Claimed Violations Categories"
+msgstr "指控侵犯類別"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:173
+#: enferno/admin/templates/admin/partials/incident_dialog.html:67
+msgid "Potential violation categories"
+msgstr "潛在侵犯類別"
+
+#: enferno/admin/templates/admin/actors.html:414
+#: enferno/admin/templates/admin/jsapi.jinja2:180
+msgid "Missing Person"
+msgstr "失蹤人士"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:182
+#: enferno/admin/templates/admin/partials/actor_dialog.html:479
+#: enferno/data_import/templates/sheets-import.html:441
+msgid "Last Address"
+msgstr "最後的地址"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:183
+#: enferno/admin/templates/admin/partials/actor_dialog.html:483
+#: enferno/data_import/templates/sheets-import.html:443
+msgid "Marriage History"
+msgstr "婚姻歷史"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:184
+msgid "Bio Children"
+msgstr "親生子女"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:185
+#: enferno/admin/templates/admin/partials/actor_dialog.html:490
+#: enferno/data_import/templates/sheets-import.html:448
+msgid "Pregnant at Disappearance"
+msgstr "懷孕時失蹤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:186
+msgid "Months Pregnant at Disappearance"
+msgstr "失蹤時懷孕月數"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:187
+#: enferno/admin/templates/admin/partials/actor_dialog.html:507
+#: enferno/data_import/templates/sheets-import.html:452
+msgid "Missing Relatives"
+msgstr "失蹤親戚"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:189
+#: enferno/admin/templates/admin/partials/actor_dialog.html:525
+#: enferno/data_import/templates/sheets-import.html:465
+msgid "Address"
+msgstr "地址"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:190
+#: enferno/admin/templates/admin/partials/actor_dialog.html:527
+#: enferno/data_import/templates/sheets-import.html:467
+msgid "Phone"
+msgstr "電話號碼"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:191
+#: enferno/admin/templates/admin/partials/actor_dialog.html:531
+#: enferno/admin/templates/admin/users.html:103
+#: enferno/admin/templates/admin/users.html:264
+#: enferno/data_import/templates/sheets-import.html:469
+msgid "Email"
+msgstr "電子郵件"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:192
+#: enferno/admin/templates/admin/partials/actor_dialog.html:538
+msgid "Seen in a detention center?"
+msgstr "出現在拘留中心？"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:193
+#: enferno/admin/templates/admin/partials/actor_dialog.html:545
+msgid "Injured around time of disappearance?"
+msgstr "失蹤時有受傷？"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:194
+#: enferno/admin/templates/admin/partials/actor_dialog.html:553
+msgid "Known to be dead?"
+msgstr "已知死亡？"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:195
+#: enferno/admin/templates/admin/partials/actor_dialog.html:559
+msgid "Details about circumstances of death"
+msgstr "死亡狀況細節"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:196
+#: enferno/admin/templates/admin/partials/actor_dialog.html:565
+msgid "Personal Items (watch,ring,chains etc)"
+msgstr "個人物品（手錶、戒指、項鍊等等）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:197
+#: enferno/admin/templates/admin/partials/actor_dialog.html:573
+#: enferno/data_import/templates/sheets-import.html:497
+msgid "Height"
+msgstr "身高"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:198
+#: enferno/admin/templates/admin/partials/actor_dialog.html:581
+#: enferno/data_import/templates/sheets-import.html:499
+msgid "Weight"
+msgstr "體重"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:199
+#: enferno/admin/templates/admin/partials/actor_dialog.html:588
+#: enferno/data_import/templates/sheets-import.html:501
+msgid "Physique"
+msgstr "體格"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:200
+#: enferno/data_import/templates/sheets-import.html:503
+msgid "Hair Loss"
+msgstr "掉髮"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:201
+#: enferno/data_import/templates/sheets-import.html:508
+msgid "Hair Type"
+msgstr "髮型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:202
+#: enferno/data_import/templates/sheets-import.html:510
+msgid "Hair Length"
+msgstr "髮長"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:203
+#: enferno/data_import/templates/sheets-import.html:512
+msgid "Hair Color"
+msgstr "髮色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:204
+#: enferno/data_import/templates/sheets-import.html:514
+msgid "Facial Hair"
+msgstr "鬍子"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:205
+#: enferno/admin/templates/admin/partials/actor_dialog.html:653
+msgid "Notes on posture and walking style"
+msgstr "姿態與走路方式備註"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:206
+#: enferno/admin/templates/admin/partials/actor_dialog.html:675
+msgid "Skin Markings"
+msgstr "皮膚印記"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:207
+#: enferno/admin/templates/admin/partials/actor_dialog.html:655
+msgid "Handness"
+msgstr "慣用手"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:208
+#: enferno/admin/templates/admin/partials/actor_dialog.html:661
+#: enferno/data_import/templates/sheets-import.html:522
+msgid "Glasses"
+msgstr "眼鏡"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:209
+#: enferno/data_import/templates/sheets-import.html:524
+msgid "Eye Color"
+msgstr "眼睛顏色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:210
+#: enferno/admin/templates/admin/partials/actor_dialog.html:690
+#: enferno/data_import/templates/sheets-import.html:536
+msgid "Distinctive characteristics (congenital)"
+msgstr "顯著特徵（先天）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:211
+#: enferno/admin/templates/admin/partials/actor_dialog.html:695
+#: enferno/data_import/templates/sheets-import.html:538
+msgid "Distinctive characteristics (acquired)"
+msgstr "顯著特徵（後天）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:212
+#: enferno/admin/templates/admin/partials/actor_dialog.html:702
+msgid "Physical habits"
+msgstr "身體習慣"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:213
+#: enferno/admin/templates/admin/partials/actor_dialog.html:707
+#: enferno/data_import/templates/sheets-import.html:544
+msgid "Other comments"
+msgstr "其他附註"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:213
+#: enferno/data_import/templates/sheets-import.html:595
+msgid "Physician\\u2019s name and contact"
+msgstr "醫師的姓名與聯絡方式"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:215
+#: enferno/data_import/templates/sheets-import.html:550
+msgid "Fractures / Injuries"
+msgstr "骨折／受傷"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:216
+msgid "Implants "
+msgstr "植入物"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:217
+#: enferno/data_import/templates/sheets-import.html:557
+msgid "Congenital malformations"
+msgstr "先天性畸形"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:218
+msgid "Pain and / or ailments"
+msgstr "疼痛與／或疾病"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:219
+#: enferno/data_import/templates/sheets-import.html:564
+msgid "Other medical conditions"
+msgstr "其他疾病"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:220
+#: enferno/data_import/templates/sheets-import.html:569
+msgid "Accidents"
+msgstr "意外"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:221
+#: enferno/data_import/templates/sheets-import.html:571
+msgid "Prescription drugs taken"
+msgstr "服用的處方藥"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:222
+#: enferno/admin/templates/admin/partials/actor_dialog.html:771
+#: enferno/data_import/templates/sheets-import.html:576
+msgid "Smoker"
+msgstr "抽菸者"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:223
+msgid "Is there a Dental Record"
+msgstr "有牙科紀錄嗎"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:223
+#: enferno/admin/templates/admin/partials/actor_dialog.html:1235
+msgid "Dentist’s name and contact"
+msgstr "牙醫的姓名與聯絡方式"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:225
+#: enferno/data_import/templates/sheets-import.html:584
+msgid "Teeth features"
+msgstr "牙齒特徵"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:226
+#: enferno/data_import/templates/sheets-import.html:589
+msgid "Dental problems"
+msgstr "牙科問題"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:227
+#: enferno/data_import/templates/sheets-import.html:591
+msgid "Dental treatments"
+msgstr "牙科治療"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:228
+msgid "Dental habits"
+msgstr "口腔衛生習慣"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:229
+#: enferno/admin/templates/admin/partials/actor_dialog.html:811
+msgid "Case status"
+msgstr "個案狀態"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:230
+msgid "Reporters"
+msgstr "報告者"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:231
+#: enferno/admin/templates/admin/partials/actor_dialog.html:832
+msgid "Identified by (responsible institution)"
+msgstr "已由（負責機構）確認身份"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:232
+#: enferno/admin/templates/admin/partials/actor_dialog.html:838
+msgid "Was the family notified?"
+msgstr "有通知家人嗎？"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:233
+#: enferno/data_import/templates/sheets-import.html:634
+msgid "Location of reburial"
+msgstr "重新埋葬地點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:234
+#: enferno/admin/templates/admin/partials/actor_dialog.html:519
+#: enferno/data_import/templates/sheets-import.html:457
+msgid "Details of the person who saw them last"
+msgstr "最後目擊者細節"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:236
+msgid "Contact"
+msgstr "聯絡方式"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:241
+#: enferno/admin/templates/admin/jsapi.jinja2:280
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:231
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:235
+#: enferno/admin/templates/admin/partials/event_dialog.html:144
+#: enferno/admin/templates/admin/partials/event_dialog.html:147
+msgid "Time"
+msgstr "時間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:245
+#: enferno/templates/nav-drawer.html:6
+msgid "Actors"
+msgstr "行動者"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:246
+#: enferno/templates/nav-drawer.html:3
+msgid "Bulletins"
+msgstr "簡報"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:247
+#: enferno/templates/nav-drawer.html:9
+msgid "Incidents"
+msgstr "事端"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:248
+msgid "Double click on a node to expand graph, click and hold CTRL to view"
+msgstr "點擊一個節點來展開圖表，點擊並按住 CTRL 來觀看"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:267
+#: enferno/admin/templates/admin/jsapi.jinja2:402
+msgid "Maybe"
+msgstr "也許"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:268
+#: enferno/admin/templates/admin/jsapi.jinja2:403
+msgid "Likely"
+msgstr "可能"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:269
+#: enferno/admin/templates/admin/jsapi.jinja2:404
+msgid "Certain"
+msgstr "確定"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:391
+msgid "Other"
+msgstr "其他"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:356
+msgid "Person"
+msgstr "人"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:357
+msgid "Entity"
+msgstr "實體"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:361
+msgid "Male"
+msgstr "男性"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:362
+msgid "Female"
+msgstr "女性"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:366
+msgid "Minor"
+msgstr "未成年人"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:367
+msgid "Adult"
+msgstr "成年人"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:374
+msgid "Non-Civilian"
+msgstr "非平民"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:375
+msgid "Police"
+msgstr "警察"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:376
+msgid "Other Security Forces"
+msgstr "其他維安部隊"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:176
+#: enferno/admin/templates/admin/jsapi.jinja2:340
+msgid "Geo Markers"
+msgstr "地理標記"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:177
+msgid "Add Geo Marker"
+msgstr "新增地理標記"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:340
+msgid "Very thin"
+msgstr "非常瘦"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:341
+msgid "Thin"
+msgstr "瘦"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:342
+msgid "Average"
+msgstr "一般"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:343
+msgid "Muscular"
+msgstr "肌肉發達"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:344
+msgid "Overweight"
+msgstr "過重"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:345
+msgid "Obese"
+msgstr "肥胖"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:349
+msgid "Pregnant"
+msgstr "懷孕"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:350
+msgid "Not Pregnant"
+msgstr "未懷孕"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:352
+msgid "Not Applicable"
+msgstr "不適用"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:353
+msgid "The Question Was Not Asked"
+msgstr "未詢問此問題"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:363
+msgid "Full"
+msgstr "無掉髮"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:364
+msgid "Bald"
+msgstr "禿頭"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:365
+msgid "Partial hair loss"
+msgstr "部分掉髮"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:369
+msgid "Straight"
+msgstr "直"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:370
+msgid "Wavy"
+msgstr "微捲"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:371
+msgid "Curly"
+msgstr "捲"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:372
+msgid "Very curly"
+msgstr "非常捲"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:377
+msgid "Very short"
+msgstr "非常短"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:378
+msgid "Short"
+msgstr "短"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:379
+msgid "Medium"
+msgstr "中"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:380
+msgid "Long"
+msgstr "長"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:381
+msgid "Very long"
+msgstr "非常長"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:385
+#: enferno/admin/templates/admin/jsapi.jinja2:426
+msgid "Black"
+msgstr "黑色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:386
+#: enferno/admin/templates/admin/jsapi.jinja2:427
+msgid "Brown"
+msgstr "棕色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:387
+msgid "Blonde"
+msgstr "金黃色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:388
+#: enferno/admin/templates/admin/jsapi.jinja2:430
+msgid "Grey"
+msgstr "灰白色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:389
+msgid "Turning grey"
+msgstr "些許灰白色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:390
+msgid "Red"
+msgstr "紅色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:394
+msgid "none"
+msgstr "無"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:395
+msgid "Beard"
+msgstr "下巴鬍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:396
+msgid "Moustache"
+msgstr "唇上鬍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:397
+msgid "Beard and moustache"
+msgstr "下巴與唇上鬍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:398
+msgid "Goatee"
+msgstr "山羊鬍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:399
+msgid "Whiskers"
+msgstr "絡腮鬍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:403
+msgid "Scar"
+msgstr "疤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:404
+msgid "Tattoo"
+msgstr "刺青"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:405
+msgid "piercing"
+msgstr "穿環"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:406
+msgid "Mole"
+msgstr "痣"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:407
+msgid "Birthmarks"
+msgstr "胎記"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:408
+msgid "Cuts"
+msgstr "割傷"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:412
+msgid "Right"
+msgstr "右撇子"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:413
+msgid "Left"
+msgstr "左撇子"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:414
+msgid "Both Hands"
+msgstr "兩手皆可"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:422
+msgid "Question Not Asked"
+msgstr "未詢問此問題"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:428
+msgid "Green"
+msgstr "綠色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:429
+msgid "Blue"
+msgstr "藍色"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:434
+msgid "Missing"
+msgstr "失蹤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:435
+msgid "Identified"
+msgstr "已確認身份"
+
+#: enferno/admin/templates/admin/incidents.html:69
+msgid "All Incidents"
+msgstr "所有事端"
+
+#: enferno/admin/templates/admin/incidents.html:101
+#: enferno/admin/templates/admin/incidents.html:670
+msgid "New Incident"
+msgstr "新的事端"
+
+#: enferno/admin/templates/admin/incidents.html:670
+msgid "Edit Incident"
+msgstr "編輯事端"
+
+#: enferno/admin/templates/admin/labels.html:82
+#: enferno/admin/templates/admin/partials/event_dialog.html:101
+msgid "Comments (AR)"
+msgstr "附註（阿拉伯文）"
+
+#: enferno/admin/templates/admin/labels.html:273
+msgid "Verified"
+msgstr "已驗證"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:13
+#: enferno/admin/templates/admin/labels.html:119
+#: enferno/admin/templates/admin/labels.html:274
+msgid "Bulletin"
+msgstr "簡報"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:14
+#: enferno/admin/templates/admin/labels.html:127
+#: enferno/admin/templates/admin/labels.html:275
+msgid "Actor"
+msgstr "行動者"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:15
+#: enferno/admin/templates/admin/labels.html:135
+#: enferno/admin/templates/admin/labels.html:276
+msgid "Incident"
+msgstr "事端"
+
+#: enferno/admin/templates/admin/labels.html:143
+#: enferno/admin/templates/admin/labels.html:277
+msgid "Offline"
+msgstr "離線"
+
+#: enferno/admin/templates/admin/locations.html:52
+#: enferno/admin/templates/admin/locations.html:255
+msgid "New Location"
+msgstr "新的地點"
+
+#: enferno/admin/templates/admin/locations.html:205
+#: enferno/admin/templates/admin/partials/location_dialog.html:49
+msgid "Full Location"
+msgstr "完整地點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:109
+#: enferno/admin/templates/admin/locations.html:207
+#: enferno/admin/templates/admin/partials/location_dialog.html:64
+msgid "Location Type"
+msgstr "地點類型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:110
+#: enferno/admin/templates/admin/locations.html:208
+#: enferno/admin/templates/admin/partials/location_dialog.html:81
+msgid "Admin Level"
+msgstr "管理者層級"
+
+#: enferno/admin/templates/admin/locations.html:255
+msgid "Edit Location"
+msgstr "編輯地點"
+
+#: enferno/admin/templates/admin/roles.html:31
+msgid "Role Groups"
+msgstr "角色群組"
+
+#: enferno/admin/templates/admin/roles.html:34
+#: enferno/admin/templates/admin/roles.html:253
+msgid "New Group"
+msgstr "新的群組"
+
+#: enferno/admin/templates/admin/roles.html:48
+msgid "Group Name"
+msgstr "群組名稱"
+
+#: enferno/admin/templates/admin/roles.html:218
+msgid "Color"
+msgstr "顏色"
+
+#: enferno/admin/templates/admin/roles.html:253
+msgid "Edit Group"
+msgstr "編輯群組"
+
+#: enferno/admin/templates/admin/sources.html:84
+#: enferno/admin/templates/admin/sources.html:239
+msgid "ETL ID"
+msgstr "ETL ID"
+
+#: enferno/admin/templates/admin/component-data.html:278
+#: enferno/admin/templates/admin/system-administration.html:725
+msgid "Code"
+msgstr "代碼"
+
+#: enferno/admin/templates/admin/users.html:22
+msgid "System Users"
+msgstr "系統用戶"
+
+#: enferno/admin/templates/admin/users.html:27
+msgid "New User"
+msgstr "新的用戶"
+
+#: enferno/admin/templates/admin/users.html:122
+#: enferno/templates/security/login_user.html:42
+#: enferno/templates/security/two_factor_verify_password.html:15
+#: enferno/templates/security/verify.html:20
+msgid "Password"
+msgstr "密碼"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:428
+#: enferno/admin/templates/admin/users.html:180
+msgid "Active"
+msgstr "活躍"
+
+#: enferno/admin/templates/admin/users.html:186
+msgid "Can view usernames"
+msgstr "可以觀看使用戶名稱"
+
+#: enferno/admin/templates/admin/users.html:190
+msgid "Can view simple history"
+msgstr "可以觀看精簡版歷史"
+
+#: enferno/admin/templates/admin/users.html:194
+msgid "Can view Full History"
+msgstr "可以觀看完整版歷史"
+
+#: enferno/admin/templates/admin/users.html:198
+msgid "Can self assign"
+msgstr "可以指派給自己"
+
+#: enferno/admin/templates/admin/users.html:203
+msgid "Can edit Locations"
+msgstr "可以編輯地點"
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:166
+#: enferno/admin/templates/admin/users.html:224
+#: enferno/templates/security/login_user.html:91
+msgid "Close"
+msgstr "關閉"
+
+#: enferno/admin/templates/admin/users.html:151
+#: enferno/admin/templates/admin/users.html:263
+#: enferno/templates/security/forgot_password.html:10
+msgid "Username"
+msgstr "用戶名稱"
+
+#: enferno/admin/templates/admin/users.html:266
+msgid "Google ID"
+msgstr "Google ID"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:24
+msgid "Save Actor"
+msgstr "儲存行動者"
+
+#: enferno/admin/templates/admin/partials/edit_related_actors.html:10
+#: enferno/admin/templates/admin/partials/incident_dialog.html:150
+msgid "Search & Relate Actors"
+msgstr "搜尋行動者並建立關聯"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:618
+#: enferno/admin/templates/admin/partials/actor_dialog.html:729
+#: enferno/admin/templates/admin/partials/actor_dialog.html:833
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:256
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:362
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:468
+#: enferno/admin/templates/admin/partials/incident_dialog.html:208
+#: enferno/admin/templates/admin/partials/incident_dialog.html:314
+#: enferno/admin/templates/admin/partials/incident_dialog.html:419
+msgid "Relationship Information"
+msgstr "關係資訊"
+
+#: enferno/admin/templates/admin/partials/related_actors_grid.html:11
+#: enferno/admin/templates/admin/partials/related_bulletins_grid.html:14
+#: enferno/admin/templates/admin/partials/related_incidents_grid.html:13
+msgid "Probability"
+msgstr "概率"
+
+#: enferno/admin/templates/admin/partials/related_actors_grid.html:25
+#: enferno/admin/templates/admin/partials/related_bulletins_grid.html:29
+#: enferno/admin/templates/admin/partials/related_incidents_grid.html:26
+msgid "Related As"
+msgstr "關聯為"
+
+#: enferno/admin/templates/admin/partials/edit_related_bulletins.html:12
+#: enferno/admin/templates/admin/partials/incident_dialog.html:179
+msgid "Search & Relate Bulletins"
+msgstr "搜尋簡報並建立關聯"
+
+#: enferno/admin/templates/admin/partials/edit_related_incidents.html:11
+#: enferno/admin/templates/admin/partials/incident_dialog.html:208
+msgid "Search & Relate Incidents"
+msgstr "搜尋事端並建立關聯"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:472
+msgid "Missing Person Profile"
+msgstr "失蹤人士簡介檔案"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:502
+msgid "Months Pregnant at time of disappearance"
+msgstr "失蹤時懷孕月數"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:598
+msgid "Hair loss"
+msgstr "掉髮"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:611
+msgid "Hair type"
+msgstr "髮型"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:620
+msgid "Hair length"
+msgstr "髮長"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:629
+msgid "Hair color"
+msgstr "髮色"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:638
+msgid "Facial hair"
+msgstr "鬍鬚"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:667
+msgid "Eye color"
+msgstr "眼睛顏色"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:715
+msgid "Physician’s name and contact"
+msgstr "醫師的姓名與聯絡方式"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:720
+msgid "Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)"
+msgstr "骨折／受傷（請註明受傷時的部位、哪一側、狀況、年齡，並說明治療方式）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:728
+msgid "Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age"
+msgstr "植入物（心律調整器、義肢、骨釘或金屬骨板等等），請註明植入日期或年齡"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:733
+msgid "Congenital malformations (indicate type and whether there is more than one relative with the same pathology)"
+msgstr "先天畸形（請註明類型及是否有一個以上的親戚有此病變）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:741
+#: enferno/data_import/templates/sheets-import.html:562
+msgid "Pain and/or ailments"
+msgstr "疼痛與／或疾病"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:746
+msgid "Other medical conditions (specify type and age of occurrence)"
+msgstr "其他疾病（請註明類型以及發病之年齡）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:754
+msgid "Accidents (indicate age of occurrence)"
+msgstr "意外（請註明發生之年齡）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:759
+msgid "Prescription drugs taken (indicate at what age and reason)"
+msgstr "服用的處方藥（請註明開始服用之年齡與原因）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:778
+msgid "Is there a Dental Record?"
+msgstr "有牙科紀錄嗎？"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:788
+msgid "Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)"
+msgstr "牙齒特徵（間距、額外的牙齒、缺少的牙齒、過度咬合等等）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:797
+msgid "Dental problems (absences, infections, bleeding, etc...)"
+msgstr "牙科問題（缺損、感染、流血等等）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:802
+msgid "Dental treatments (extractions, fillings, etc...) with dates"
+msgstr "牙科治療（脫牙、補牙等等）請註明日期"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:807
+msgid "Dental habits (toothpicks, smoking, etc...)"
+msgstr "口腔衛生習慣（使用牙籤、抽菸等等）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:844
+msgid "Location of reburial (full address)"
+msgstr "重新埋葬地點（完整地址）"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:218
+msgid "Not Available"
+msgstr "無法取得"
+
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:10
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:11
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:10
+msgid "Bulk Update"
+msgstr "批次更新"
+
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:39
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:45
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:37
+msgid "Peer Reviewer"
+msgstr "同儕審查者"
+
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:75
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:71
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:88
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:70
+msgid "Replace"
+msgstr "取代"
+
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:95
+msgid "Bulk Update Actors"
+msgstr "批次更新行動者"
+
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:105
+msgid "Bulk Update Bulletins"
+msgstr "批次更新簡報"
+
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:75
+msgid "Assign Related Items"
+msgstr "指派相關的物件"
+
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:76
+msgid "Restrict Related Items"
+msgstr "限制相關的物件"
+
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:91
+msgid "Bulk Update Incidents"
+msgstr "批次更新事端"
+
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:97
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:103
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:83
+msgid "Name this search"
+msgstr "命名此搜尋"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:51
+msgid "Save Bulletin"
+msgstr "儲存簡報"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:56
+msgid "Original Title (AR)"
+msgstr "原始標題（阿拉伯文）"
+
+#: enferno/admin/templates/admin/partials/event_dialog.html:55
+msgid "Event"
+msgstr "事件"
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:13
+msgid "Save Incident"
+msgstr "儲存事端"
+
+#: enferno/admin/templates/admin/partials/location_dialog.html:21
+msgid "Save Location"
+msgstr "儲存地點"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:82
+#: enferno/admin/templates/admin/partials/location_dialog.html:39
+msgid "Title (Ar)"
+msgstr "標題（阿拉伯文）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:111
+#: enferno/admin/templates/admin/partials/location_dialog.html:95
+msgid "Country"
+msgstr "國家"
+
+#: enferno/admin/templates/admin/partials/location_dialog.html:111
+msgid "Parent Location"
+msgstr "上級地點"
+
+#: enferno/admin/templates/admin/partials/location_dialog.html:153
+msgid "Tags"
+msgstr "標記"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:105
+#: enferno/admin/templates/admin/partials/review_dialog.html:136
+msgid "Needs Review"
+msgstr "需要審查"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:104
+#: enferno/admin/templates/admin/partials/review_dialog.html:138
+msgid "No Review Needed"
+msgstr "不需要審查"
+
+#: enferno/deduplication/templates/deduplication.html:15
+msgid "Start"
+msgstr "開始"
+
+#: enferno/deduplication/templates/deduplication.html:20
+msgid "Stop"
+msgstr "停止"
+
+#: enferno/deduplication/templates/deduplication.html:119
+msgid "Match"
+msgstr "配對"
+
+#: enferno/deduplication/templates/deduplication.html:120
+msgid "Distance"
+msgstr "距離"
+
+#: enferno/deduplication/templates/deduplication.html:122
+msgid "Data"
+msgstr "資料"
+
+#: enferno/templates/change-password.html:13
+msgid "Old Password"
+msgstr "舊密碼"
+
+#: enferno/templates/change-password.html:16
+#: enferno/templates/security/change_password.html:19
+msgid "New Password"
+msgstr "新密碼"
+
+#: enferno/templates/change-password.html:20
+msgid "Confirm Password"
+msgstr "確認密碼"
+
+#: enferno/templates/dashboard.html:11
+msgid "Welcome"
+msgstr "歡迎"
+
+#: enferno/templates/dashboard.html:19
+msgid "Last login"
+msgstr "上次登入"
+
+#: enferno/templates/dashboard.html:32
+msgid "All rights reserved."
+msgstr "保留所有權利。"
+
+#: enferno/templates/nav-drawer.html:72
+msgid "Activity"
+msgstr "活動"
+
+#: enferno/templates/nav-drawer.html:44
+msgid "Media Import"
+msgstr "媒體匯入"
+
+#: enferno/templates/nav-drawer.html:50
+msgid "Sheets Import"
+msgstr "試算表匯入"
+
+#: enferno/templates/nav-drawer.html:219
+msgid "Deduplication Dashbaord"
+msgstr "重複資料刪除控制台"
+
+#: enferno/templates/settings.html:16
+msgid "Settings"
+msgstr "設定"
+
+#: enferno/templates/settings.html:21
+msgid "User Interface"
+msgstr "用戶介面"
+
+#: enferno/templates/settings.html:24
+msgid "Dark Mode"
+msgstr "深色模式"
+
+#: enferno/admin/templates/nav-bar.html:43
+msgid "Interface Language"
+msgstr "界面語言"
+
+#: enferno/templates/settings.html:38
+msgid "Profile Settings"
+msgstr "簡介檔案設定"
+
+#: enferno/templates/change-password.html:6
+#: enferno/templates/security/change_password.html:25
+#: enferno/templates/settings_drawer.html:61
+msgid "Change Password"
+msgstr "變更密碼"
+
+#: enferno/admin/templates/admin/system-administration.html:21
+#: enferno/templates/settings_drawer.html:56
+msgid "Security"
+msgstr "安全性"
+
+#: enferno/templates/settings_drawer.html:62
+msgid "Setup Two-Factor Auth"
+msgstr "設置雙重驗證"
+
+#: enferno/templates/security/two_factor_setup.html:38
+msgid "Two-factor authentication adds an extra layer of security to your account"
+msgstr "雙重驗證可為您的帳戶增添另一層防護"
+
+#: enferno/templates/security/two_factor_setup.html:41
+msgid "In addition to your username and password, you'll need to use a code that your phone will generate"
+msgstr "除了用戶名稱與密碼外，您還需要使用您的手機生成之代碼"
+
+#: enferno/templates/security/two_factor_setup.html:58
+msgid "To complete logging in, please enter the code sent to your mail"
+msgstr "如要完成登入，請輸入傳送到您信箱的代碼"
+
+#: enferno/templates/security/two_factor_setup.html:64
+msgid "Open an authenticator app on your device and scan the following QRcode, or enter the code below manually:"
+msgstr "開啟您裝置上的驗證應用程式掃描以下 QR 碼，或手動輸入以下代碼："
+
+#: enferno/templates/security/two_factor_setup.html:67
+msgid "Two factor authentication code"
+msgstr "雙重驗證代碼"
+
+#: enferno/templates/security/two_factor_setup.html:76
+msgid "To Which Phone Number Should We Send Code To?"
+msgstr "我們該將代碼傳送到哪個手機號碼？"
+
+#: enferno/templates/security/two_factor_verify_code.html:9
+msgid "Two-factor Authentication"
+msgstr "雙重驗證"
+
+#: enferno/templates/security/two_factor_verify_code.html:13
+msgid "Please enter your authentication code"
+msgstr "請輸入您的驗證代碼"
+
+#: enferno/templates/security/two_factor_verify_code.html:51
+msgid "The code for authentication was sent to your email address"
+msgstr "驗證代碼已傳送到您的郵件信箱"
+
+#: enferno/templates/security/two_factor_verify_code.html:54
+msgid "A mail was sent to us in order to reset your application account"
+msgstr "我們傳送了一封郵件讓您重設應用程式的帳號"
+
+#: enferno/templates/security/two_factor_verify_password.html:7
+#: enferno/templates/security/verify.html:14
+msgid "Please Enter Your Password"
+msgstr "請輸入您的密碼"
+
+#: enferno/templates/security/us_setup.html:6
+msgid "Setup Unified Sign In options"
+msgstr "設置統一登入選項"
+
+#: enferno/templates/security/us_setup.html:28
+msgid "Open your authenticator app on your device and scan the following qrcode to start receiving codes:"
+msgstr "開啟您裝置上的驗證應用程式掃描以下 QR 碼，以收到代碼："
+
+#: enferno/templates/security/us_setup.html:29
+msgid "Passwordless QRCode"
+msgstr "無密碼 QR 碼"
+
+#: enferno/templates/security/us_setup.html:32
+#: enferno/templates/security/us_signin.html:23
+#: enferno/templates/security/us_verify.html:22
+msgid "Code has been sent"
+msgstr "已傳送代碼"
+
+#: enferno/templates/security/us_setup.html:36
+msgid "No methods have been enabled - nothing to setup"
+msgstr "沒有啟用任何方式—無需設置"
+
+#: enferno/templates/security/us_signin.html:6
+msgid "Sign In"
+msgstr "登入"
+
+#: enferno/templates/security/us_signin.html:15
+#: enferno/templates/security/us_verify.html:14
+msgid "Request one-time code be sent"
+msgstr "要求傳送一次性代碼"
+
+#: enferno/templates/security/us_verify.html:7
+msgid "Please re-authenticate"
+msgstr "請重新驗證"
+
+#: enferno/admin/templates/admin/activity.html:22
+msgid "System Activity"
+msgstr "系統活動"
+
+#: enferno/admin/templates/admin/activity.html:250
+msgid "Date"
+msgstr "日期"
+
+#: enferno/admin/templates/admin/activity.html:251
+#: enferno/admin/templates/admin/jsapi.jinja2:285
+#: enferno/data_import/templates/import-log.html:163
+msgid "User"
+msgstr "用戶"
+
+#: enferno/admin/templates/admin/activity.html:252
+msgid "Action"
+msgstr "動作"
+
+#: enferno/admin/templates/admin/activity.html:254
+msgid "Subject"
+msgstr "主題"
+
+#: enferno/admin/templates/admin/activity.html:102
+msgid "Tag"
+msgstr "標記"
+
+#: enferno/admin/templates/admin/actors.html:134
+#: enferno/admin/templates/admin/bulletins.html:155
+#: enferno/admin/templates/admin/incidents.html:143
+msgid "Export"
+msgstr "輸出"
+
+#: enferno/admin/templates/admin/actors.html:273
+#: enferno/admin/templates/admin/bulletins.html:295
+#: enferno/admin/templates/admin/incidents.html:218
+#: enferno/admin/templates/admin/incidents.html:276
+msgid "Assign to self"
+msgstr "指派給自己"
+
+#: enferno/admin/templates/admin/incidents.html:234
+#: enferno/admin/templates/admin/partials/review_dialog.html:5
+msgid "Add Review"
+msgstr "新增審查"
+
+#: enferno/admin/templates/admin/actors.html:266
+msgid "Self Assign Actor"
+msgstr "指派行動者給自己"
+
+#: enferno/admin/templates/admin/bulletins.html:280
+msgid "Self Assign Bulletin"
+msgstr "指派簡報給自己"
+
+#: enferno/data_import/templates/sheets-import.html:35
+msgid "Select Sheet Language"
+msgstr "選擇試算表語言"
+
+#: enferno/data_import/templates/sheets-import.html:235
+#: enferno/data_import/templates/sheets-import.html:252
+#: enferno/data_import/templates/sheets-import.html:412
+msgid "Make it Unique!"
+msgstr "刪除重複資料！"
+
+#: enferno/data_import/templates/sheets-import.html:450
+msgid "Months Pregnant"
+msgstr "懷孕月數"
+
+#: enferno/data_import/templates/sheets-import.html:475
+msgid "Seen in a detention center"
+msgstr "出現在拘留中心"
+
+#: enferno/admin/templates/admin/activity.html:256
+#: enferno/data_import/templates/sheets-import.html:477
+#: enferno/data_import/templates/sheets-import.html:482
+#: enferno/data_import/templates/sheets-import.html:490
+msgid "Details"
+msgstr "細節"
+
+#: enferno/data_import/templates/sheets-import.html:480
+msgid "Injured around time of disappearance"
+msgstr "失蹤時有受傷"
+
+#: enferno/data_import/templates/sheets-import.html:488
+msgid "Known to be dead"
+msgstr "已知死亡"
+
+#: enferno/data_import/templates/sheets-import.html:492
+msgid "Personal Items"
+msgstr "個人物品"
+
+#: enferno/data_import/templates/sheets-import.html:518
+msgid "Notes on posture"
+msgstr "姿態備註"
+
+#: enferno/data_import/templates/sheets-import.html:520
+msgid "Handedness"
+msgstr "慣用手"
+
+#: enferno/data_import/templates/sheets-import.html:528
+msgid "Skin Markings Options"
+msgstr "皮膚印記選項"
+
+#: enferno/data_import/templates/sheets-import.html:530
+msgid "Skin Markings Details"
+msgstr "皮膚印記細節"
+
+#: enferno/data_import/templates/sheets-import.html:542
+msgid "Physical Habits"
+msgstr "身體習慣"
+
+#: enferno/data_import/templates/sheets-import.html:555
+msgid "Implants"
+msgstr "植入物"
+
+#: enferno/data_import/templates/sheets-import.html:578
+msgid "Dental Record"
+msgstr "牙科紀錄"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:783
+msgid "Dentist\\u2019s name and contact"
+msgstr "牙醫的姓名與聯絡方式"
+
+#: enferno/data_import/templates/sheets-import.html:593
+msgid "Dental Habits"
+msgstr "口腔衛生習慣"
+
+#: enferno/data_import/templates/sheets-import.html:595
+msgid "Case Status"
+msgstr "個案狀態"
+
+#: enferno/data_import/templates/sheets-import.html:606
+msgid "Reporter name"
+msgstr "報告者名字"
+
+#: enferno/data_import/templates/sheets-import.html:608
+msgid "Reporter contact"
+msgstr "報告者聯絡方式"
+
+#: enferno/data_import/templates/sheets-import.html:610
+msgid "Reporter relationship"
+msgstr "報告者關係"
+
+#: enferno/data_import/templates/sheets-import.html:630
+msgid "Identified by"
+msgstr "確認身份者"
+
+#: enferno/data_import/templates/sheets-import.html:632
+msgid "Family Notified"
+msgstr "已通知家人"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:27
+msgid "Contains"
+msgstr "包含"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:37
+msgid "Search in a signle event"
+msgstr "在單一事件中搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:55
+msgid "Radius"
+msgstr "半徑範圍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:62
+msgid "Geospatial"
+msgstr "地理空間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:66
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:85
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:92
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:70
+msgid "Save As New"
+msgstr "儲存為新的"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:67
+msgid "Delete Search"
+msgstr "刪除搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:68
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:79
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:86
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:64
+msgid "Update Search"
+msgstr "更新搜尋"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:96
+msgid "Main Incident"
+msgstr "主要事端"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:281
+msgid "Birth Place"
+msgstr "出生地"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:282
+msgid "Residence Place"
+msgstr "居住地"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:347
+msgid "Origin Place"
+msgstr "原籍地"
+
+#: enferno/admin/templates/admin/incidents.html:268
+msgid "Self Assign Incident"
+msgstr "指派事端給自己"
+
+#: enferno/admin/templates/admin/actors.html:776
+#: enferno/admin/templates/admin/bulletins.html:812
+#: enferno/admin/templates/admin/incidents.html:722
+msgid "It looks like you have been editing something. "
+msgstr "您似乎在進行編輯。"
+
+#: enferno/admin/templates/admin/actors.html:777
+#: enferno/admin/templates/admin/bulletins.html:813
+#: enferno/admin/templates/admin/incidents.html:723
+msgid "If you leave before saving, your changes will be lost."
+msgstr "如果儲存前就離開，您的變更就會被捨棄。"
+
+#: enferno/admin/templates/admin/incidents.html:863
+msgid "Incident assigned successfully."
+msgstr "成功指派事端。"
+
+#: enferno/admin/templates/admin/actors.html:1044
+#: enferno/admin/templates/admin/bulletins.html:1032
+#: enferno/admin/templates/admin/incidents.html:913
+msgid "Bulk Update is finished!"
+msgstr "完成批次更新！"
+
+#: enferno/admin/templates/admin/actors.html:1290
+#: enferno/admin/templates/admin/bulletins.html:1268
+#: enferno/admin/templates/admin/incidents.html:1134
+msgid "This item is restricted."
+msgstr "此物件受到限制。"
+
+#: enferno/admin/templates/admin/actors.html:1522
+#: enferno/admin/templates/admin/bulletins.html:1517
+#: enferno/admin/templates/admin/incidents.html:1418
+#: enferno/admin/templates/admin/jsapi.jinja2:313
+#: enferno/admin/templates/admin/locations.html:378
+#: enferno/data_import/templates/import-log.html:252
+#: enferno/data_import/templates/import-log.html:266
+#: enferno/export/templates/export-dashboard.html:212
+msgid "Oops! We couldn't find this item."
+msgstr "哎呀，我們找不到此物件。"
+
+#: enferno/admin/templates/admin/actors.html:1537
+#: enferno/admin/templates/admin/bulletins.html:1530
+#: enferno/admin/templates/admin/eventtypes.html:270
+#: enferno/admin/templates/admin/incidents.html:1432
+#: enferno/admin/templates/admin/labels.html:354
+#: enferno/admin/templates/admin/locations.html:480
+#: enferno/admin/templates/admin/roles.html:301
+#: enferno/admin/templates/admin/sources.html:303
+msgid "Are you sure you want to delete this item?"
+msgstr "您確定要刪除此物件嗎？"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:113
+msgid "Are you sure?"
+msgstr "您確定嗎？"
+
+#: enferno/admin/templates/admin/component-data.html:16
+#: enferno/admin/templates/admin/component-data.html:63
+msgid "Location Administrative Levels"
+msgstr "地點管理層級"
+
+#: enferno/admin/templates/admin/component-data.html:19
+#: enferno/admin/templates/admin/component-data.html:76
+msgid "Location Types"
+msgstr "地點類型"
+
+#: enferno/admin/templates/admin/users.html:67
+msgid "View Only"
+msgstr "僅能觀看"
+
+#: enferno/admin/templates/admin/users.html:209
+msgid "Can Request Exports"
+msgstr "可以要求匯出"
+
+#: enferno/admin/templates/admin/partials/export_drawer.html:14
+msgid "Export Data"
+msgstr "匯出資料"
+
+#: enferno/admin/templates/admin/partials/export_drawer.html:27
+msgid "Export format"
+msgstr "匯出格式"
+
+#: enferno/admin/templates/admin/partials/export_drawer.html:72
+msgid "Create Export Request"
+msgstr "建立匯出要求"
+
+#: enferno/admin/templates/admin/partials/media_dialog.html:36
+msgid "Media File"
+msgstr "媒體檔案"
+
+#: enferno/admin/templates/admin/partials/media_dialog.html:72
+#: enferno/admin/templates/admin/partials/video_player_dialog.html:87
+msgid "Media Category"
+msgstr "媒體類型"
+
+#: enferno/admin/templates/admin/partials/media_dialog.html:99
+#: enferno/admin/templates/admin/partials/video_player_dialog.html:124
+msgid "Attach Media"
+msgstr "附加媒體"
+
+#: enferno/admin/templates/admin/partials/relate_actor_dialog.html:7
+msgid "Search Actors"
+msgstr "搜尋行動者"
+
+#: enferno/admin/templates/admin/partials/relate_incident_dialog.html:8
+msgid "Search Incidents"
+msgstr "搜尋事端"
+
+#: enferno/admin/templates/admin/partials/relate_actor_dialog.html:42
+#: enferno/admin/templates/admin/partials/relate_incident_dialog.html:41
+msgid "Done"
+msgstr "完成"
+
+#: enferno/admin/templates/admin/partials/review_dialog.html:8
+msgid "Save Review"
+msgstr "儲存審查"
+
+#: enferno/admin/templates/admin/partials/review_dialog.html:44
+msgid "Appends the reference to the bulletin (does not remove existing refs)"
+msgstr "將編碼添加到簡報中（不會移除現有編碼）"
+
+#: enferno/admin/templates/admin/partials/video_player_dialog.html:26
+msgid "Take Snapshot"
+msgstr "執行快照"
+
+#: enferno/admin/templates/admin/partials/video_player_dialog.html:35
+msgid "Crop Image"
+msgstr "裁剪圖像"
+
+#: enferno/export/templates/export-dashboard.html:27
+#: enferno/templates/nav-drawer.html:65
+msgid "Exports"
+msgstr "匯出"
+
+#: enferno/export/templates/export-dashboard.html:144
+msgid "Requester"
+msgstr "要求者"
+
+#: enferno/data_import/templates/import-log.html:164
+#: enferno/export/templates/export-dashboard.html:145
+msgid "Table"
+msgstr "資料表"
+
+#: enferno/export/templates/export-dashboard.html:146
+msgid "# of items"
+msgstr "物件中的 #"
+
+#: enferno/data_import/templates/import-log.html:168
+#: enferno/export/templates/export-dashboard.html:147
+msgid "Format"
+msgstr "格式"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:307
+#: enferno/export/templates/export-dashboard.html:65
+#: enferno/export/templates/export-dashboard.html:148
+msgid "Include Media"
+msgstr "包含媒體"
+
+#: enferno/export/templates/export-dashboard.html:149
+msgid "Requested time"
+msgstr "要求的時間"
+
+#: enferno/export/templates/export-dashboard.html:150
+msgid "Expiry time"
+msgstr "到期時間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:310
+#: enferno/export/templates/export-dashboard.html:152
+msgid "Download"
+msgstr "下載"
+
+#: enferno/templates/dashboard.html:26
+msgid "Warning: Media Import's path processing is enabled!"
+msgstr "警告：媒體匯入的路徑處理已啟用"
+
+#: enferno/templates/layout.html:5 enferno/templates/login-layout.html:5
+msgid "Bayanat"
+msgstr "Bayanat"
+
+#: enferno/templates/layout.html:6 enferno/templates/login-layout.html:6
+msgid "Bayanat | A Data Management Solution by SJAC"
+msgstr "Bayanat | SJAC 的資料管理方案"
+
+#: enferno/templates/layout.html:7 enferno/templates/login-layout.html:7
+msgid "Syria Justice and Accountability Center"
+msgstr "敘利亞司法與問責中心"
+
+#: enferno/templates/security/wan_signin.html:76
+#: enferno/templates/settings_drawer.html:63
+msgid "Recovery Codes"
+msgstr "復原碼"
+
+#: enferno/templates/security/two_factor_setup.html:30
+msgid "Two Factor Auth Setup"
+msgstr "雙重驗證設置"
+
+#: enferno/templates/security/two_factor_setup.html:90
+msgid "Submit Code"
+msgstr "提交代碼"
+
+#: enferno/templates/security/two_factor_verify_code.html:21
+msgid "Trouble Accessing Your Account?/Lost Mobile/TFA Device?"
+msgstr "存取帳號時出現問題嗎？／行動或 TFA 裝置遺失？"
+
+#: enferno/templates/security/mf_recovery.html:20
+#: enferno/templates/security/two_factor_verify_code.html:39
+#: enferno/templates/security/two_factor_verify_code.html:56
+#: enferno/templates/security/two_factor_verify_password.html:16
+#: enferno/templates/security/verify.html:21
+msgid "Submit"
+msgstr "提交"
+
+#: enferno/data_import/templates/media-import.html:96
+msgid "Process existing files in a path on the server."
+msgstr "在伺服器上的路徑處理現有檔案"
+
+#: enferno/data_import/templates/media-import.html:212
+msgid "Type and enter free tags"
+msgstr "鍵入無限制標記"
+
+#: enferno/data_import/templates/media-import.html:233
+msgid "Tesseract OCR is disabled."
+msgstr "Tesseract OCR 已停用。"
+
+#: enferno/data_import/templates/media-import.html:272
+msgid "Input a sub-path to scan, leave empty to scan the entire allowed path."
+msgstr "輸入要掃描的子路徑，如未輸入則會掃描整個允許路徑。"
+
+#: enferno/data_import/templates/media-import.html:275
+msgid "To scan a sub-path of the allowed path, enter the sub-path only without any parents (e.g. 'videos')."
+msgstr "如要掃描允許路徑的子路徑，請輸入子路徑就好，不要輸入任何父層路徑（如「影片」）。"
+
+#: enferno/data_import/templates/media-import.html:277
+msgid "Search recursively"
+msgstr "遞迴搜尋"
+
+#: enferno/data_import/templates/media-import.html:309
+msgid "Add"
+msgstr "新增"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:97
+msgid "Filter and display related items in main table"
+msgstr "在主資料表篩選與顯示相關物件"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:98
+msgid "Load More"
+msgstr "載入更多"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:99
+msgid "Restricted"
+msgstr "受限"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:100
+msgid "Unrestricted"
+msgstr "不受限"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:101
+msgid "And"
+msgstr "與"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:102
+msgid "Or"
+msgstr "或"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:106
+msgid "Load Geo Map"
+msgstr "載入地理地圖"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:107
+msgid "By"
+msgstr "由"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:108
+msgid "Search Locations"
+msgstr "搜尋地點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:112
+msgid "Estimated"
+msgstr "預估的"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:141
+msgid "Select a single date or a range"
+msgstr "選擇單一日期或一個範圍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:256
+msgid "Requested On"
+msgstr "要求時間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:257
+msgid "Expires On"
+msgstr "到期時間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:258
+msgid "Admin Actions"
+msgstr "管理者動作"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:259
+msgid "Approve"
+msgstr "批准"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:260
+msgid "Expire Now"
+msgstr "現已到期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:261
+msgid "Reject"
+msgstr "拒絕"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:262
+msgid "Change Expiry"
+msgstr "變更到期時間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:263
+msgid "Set Expiry"
+msgstr "設定到期時間"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:264
+msgid "Export Expiry"
+msgstr "匯出到期時間"
+
+#: enferno/admin/templates/admin/component-data.html:7
+msgid "Component Data Management"
+msgstr "元件資料管理"
+
+#: enferno/admin/templates/admin/component-data.html:22
+#: enferno/admin/templates/admin/component-data.html:89
+msgid "Countries"
+msgstr "國家"
+
+#: enferno/admin/templates/admin/component-data.html:31
+#: enferno/admin/templates/admin/component-data.html:130
+msgid "Actor to Actor Relations"
+msgstr "行動者間的關係"
+
+#: enferno/admin/templates/admin/component-data.html:34
+#: enferno/admin/templates/admin/component-data.html:144
+msgid "Actor to Bulletin Relations"
+msgstr "行動者與簡報間的關係"
+
+#: enferno/admin/templates/admin/component-data.html:37
+#: enferno/admin/templates/admin/component-data.html:158
+msgid "Bulletin to Bulletin Relations"
+msgstr "簡報間的關係"
+
+#: enferno/admin/templates/admin/component-data.html:40
+#: enferno/admin/templates/admin/component-data.html:172
+msgid "Incident to Bulletin Relations"
+msgstr "事端與簡報間的關係"
+
+#: enferno/admin/templates/admin/component-data.html:43
+#: enferno/admin/templates/admin/component-data.html:186
+msgid "Incident to Actor Relations"
+msgstr "事端與行動者間的關係"
+
+#: enferno/admin/templates/admin/component-data.html:46
+#: enferno/admin/templates/admin/component-data.html:200
+msgid "Incident to Incident Relations"
+msgstr "事端間的關係"
+
+#: enferno/admin/templates/admin/component-data.html:49
+#: enferno/admin/templates/admin/component-data.html:214
+msgid "Media Categories"
+msgstr "媒體類別"
+
+#: enferno/admin/templates/admin/component-data.html:52
+#: enferno/admin/templates/admin/component-data.html:227
+msgid "Geo Location Types"
+msgstr "地理定位類型"
+
+#: enferno/admin/templates/admin/component-data.html:293
+#: enferno/admin/templates/admin/component-data.html:300
+#: enferno/admin/templates/admin/component-data.html:307
+#: enferno/admin/templates/admin/component-data.html:314
+#: enferno/admin/templates/admin/component-data.html:320
+#: enferno/admin/templates/admin/component-data.html:329
+#: enferno/admin/templates/admin/component-data.html:335
+msgid "Title (tr)"
+msgstr "標題（翻譯）"
+
+#: enferno/admin/templates/admin/component-data.html:321
+msgid "Reverse Title"
+msgstr "反向標題"
+
+#: enferno/admin/templates/admin/component-data.html:322
+msgid "Reverse Title (tr)"
+msgstr "反向標題（翻譯）"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:56
+msgid "Meters"
+msgstr "公尺"
+
+#: enferno/admin/templates/admin/system-administration.html:19
+msgid "General"
+msgstr "一般"
+
+#: enferno/admin/templates/admin/system-administration.html:20
+msgid "Storage"
+msgstr "儲存"
+
+#: enferno/admin/templates/admin/system-administration.html:24
+msgid "Import Tools"
+msgstr "匯入工具"
+
+#: enferno/admin/templates/admin/system-administration.html:25
+msgid "Export Tool"
+msgstr "匯出工具"
+
+#: enferno/admin/templates/admin/system-administration.html:26
+msgid "Maps"
+msgstr "地圖"
+
+#: enferno/admin/templates/admin/system-administration.html:39
+msgid "Allows to load different set of items in pages that has data tables"
+msgstr "允許在含有資料表的頁面載入不同的物件組"
+
+#: enferno/admin/templates/admin/system-administration.html:41
+msgid "Items Per Page Options"
+msgstr "每頁物件選項"
+
+#: enferno/admin/templates/admin/system-administration.html:47
+msgid "Allows to play videos at different speed rates"
+msgstr "允許用不同速度播放影片"
+
+#: enferno/admin/templates/admin/system-administration.html:48
+msgid "Video Player Playback Rates"
+msgstr "影片播放速度"
+
+#: enferno/admin/templates/admin/system-administration.html:56
+msgid "System Interface Languages"
+msgstr "系統介面語言"
+
+#: enferno/admin/templates/admin/system-administration.html:57
+msgid "LANGUAGES"
+msgstr "語言"
+
+#: enferno/admin/templates/admin/system-administration.html:51
+msgid "Default Language"
+msgstr "預設語言"
+
+#: enferno/admin/templates/admin/system-administration.html:59
+msgid "Changes default interface language for all users. Users can still choose their own interface language."
+msgstr "變更所有用戶的預設語言。用戶還是可以選擇自己的介面語言。"
+
+#: enferno/admin/templates/admin/system-administration.html:73
+msgid "Missing Persons Extension"
+msgstr "失蹤人口擴充功能"
+
+#: enferno/admin/templates/admin/system-administration.html:74
+msgid "Enables the Missing Persons extension to Actor component. Ideally this setting should be enabled when first setting up the system and not afterwards. Enabling this setting later involves database migrations. This feature can be disabled after being enabled without deleting the data."
+msgstr "啟用行動者元件的失蹤人口擴充功能。理想狀況下，應在首次設置系統時就啟用此設定。如在之後啟用此設定，即會牽涉到資料庫遷移。啟用後如果停用此功能，也不會刪除資料。"
+
+#: enferno/admin/templates/admin/system-administration.html:62
+msgid "Deduplication Tool"
+msgstr "重複資料刪除工具"
+
+#: enferno/admin/templates/admin/system-administration.html:65
+msgid "Enables integration with Benetech's Deduplication tool."
+msgstr "啟用整合 Benetech 的重複資料刪除工具。"
+
+#: enferno/admin/templates/admin/system-administration.html:72
+msgid "Lowest value of distance to process."
+msgstr "要處理的最低差距值。"
+
+#: enferno/admin/templates/admin/system-administration.html:73
+msgid "Deduplication Low Distance"
+msgstr "重複資料刪除低差距"
+
+#: enferno/admin/templates/admin/system-administration.html:79
+msgid "Highest value of distance to process."
+msgstr "要處理的最高差距值。"
+
+#: enferno/admin/templates/admin/system-administration.html:80
+msgid "Deduplication Max Distance"
+msgstr "重複資料刪除最高差距"
+
+#: enferno/admin/templates/admin/system-administration.html:85
+msgid "Number of matches to send for processing in every batch. Affects speed of processing and performance of the server."
+msgstr "每批次要處理的配對數。此設定會影響伺服器的處理速度與效能。"
+
+#: enferno/admin/templates/admin/system-administration.html:86
+msgid "Deduplication Batch Size"
+msgstr "重複資料刪除批次大小"
+
+#: enferno/admin/templates/admin/system-administration.html:90
+msgid "Interval of batches sent for processing. Affects speed of processing and performance of the server."
+msgstr "批次處理的間隔。此設定會影響伺服器的處理速度與效能。"
+
+#: enferno/admin/templates/admin/system-administration.html:91
+msgid "Deduplication Interval"
+msgstr "重複資料刪除間隔"
+
+#: enferno/admin/templates/admin/system-administration.html:104
+msgid "Media Storage"
+msgstr "媒體儲存"
+
+#: enferno/admin/templates/admin/system-administration.html:105
+msgid "Storage options for media files uploaded to Bayanat. It's possible to store these files locally on the host or in S3 bucket."
+msgstr "上傳到 Bayanat 的媒體檔案儲藏選項。可以將其儲存在本地主機或在S3 儲存貯體中"
+
+#: enferno/admin/templates/admin/system-administration.html:108
+msgid "Local Filesystem"
+msgstr "本地檔案系統"
+
+#: enferno/admin/templates/admin/system-administration.html:109
+msgid "S3 Storage"
+msgstr "S3 儲存貯體"
+
+#: enferno/admin/templates/admin/system-administration.html:116
+msgid "AWS Access Key ID"
+msgstr "AWS 存取金鑰 ID"
+
+#: enferno/admin/templates/admin/system-administration.html:119
+msgid "AWS Access Key Secret"
+msgstr "AWS 存取密鑰"
+
+#: enferno/admin/templates/admin/system-administration.html:122
+msgid "S3 Bucket Name"
+msgstr "S3 儲存貯體名稱"
+
+#: enferno/admin/templates/admin/system-administration.html:125
+msgid "S3 Region"
+msgstr "S3 區域"
+
+#: enferno/admin/templates/admin/system-administration.html:134
+msgid "Allowed Media Extensions"
+msgstr "允許的媒體副檔名"
+
+#: enferno/admin/templates/admin/system-administration.html:136
+msgid "The system will only allow files uploaded whose extensions are included in this list and reject all other extensions."
+msgstr "系統只會允許上傳此清單中的檔案格式，並拒絕其他格式。"
+
+#: enferno/admin/templates/admin/system-administration.html:139
+msgid "Media Max Upload Size"
+msgstr "媒體最大上傳大小"
+
+#: enferno/admin/templates/admin/system-administration.html:141
+msgid "Sets the maximum allowed file size for media uploads."
+msgstr "設定媒體上傳的最大檔案大小。"
+
+#: enferno/admin/templates/admin/system-administration.html:153
+msgid "Security Freshness"
+msgstr "安全性更新"
+
+#: enferno/admin/templates/admin/system-administration.html:155
+msgid "Secure pages will require re-authentication after this time expires."
+msgstr "過了設定時間後，安全頁面將要求重新驗證"
+
+#: enferno/admin/templates/admin/system-administration.html:159
+msgid "Security Freshness Grace Period"
+msgstr "安全性更新寬限期"
+
+#: enferno/admin/templates/admin/system-administration.html:161
+msgid "Re-authentication will require a second factor after this period."
+msgstr "過了此期間後，重新驗證將需要雙重驗證。"
+
+#: enferno/admin/templates/admin/system-administration.html:165
+msgid "Recaptcha Enabled"
+msgstr "已啟用人機驗證"
+
+#: enferno/admin/templates/admin/system-administration.html:167
+msgid "Require Google Recaptcha on the login form."
+msgstr "在登入表單需要進行 Google 人機驗證"
+
+#: enferno/admin/templates/admin/system-administration.html:173
+msgid "Recaptcha Public Key"
+msgstr "人機驗證公鑰"
+
+#: enferno/admin/templates/admin/system-administration.html:176
+msgid "Recaptcha Private Key"
+msgstr "人機驗證私鑰"
+
+#: enferno/admin/templates/admin/system-administration.html:181
+msgid "Enable Google OAuth"
+msgstr "啟用 Google OAuth"
+
+#: enferno/admin/templates/admin/system-administration.html:183
+msgid "Allow users to login using their Google account."
+msgstr "允許用戶使用 Google 帳號登入。"
+
+#: enferno/admin/templates/admin/system-administration.html:189
+msgid "Google Client ID"
+msgstr "Google 用戶端 ID"
+
+#: enferno/admin/templates/admin/system-administration.html:192
+msgid "Google Client Secret"
+msgstr "Google 用戶端密鑰"
+
+#: enferno/admin/templates/admin/system-administration.html:195
+msgid "Google Discovery URL"
+msgstr "Google 探索 URL"
+
+#: enferno/admin/templates/admin/system-administration.html:413
+msgid "Media Import Tool"
+msgstr "媒體匯入工具"
+
+#: enferno/admin/templates/admin/system-administration.html:415
+msgid "Enable importing and parsing media items in bulk directly into bulletins."
+msgstr "可直接在簡報中批次匯入與解析媒體物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:422
+msgid "Media Import Path Scanning"
+msgstr "媒體匯入路徑掃描"
+
+#: enferno/admin/templates/admin/system-administration.html:424
+msgid "Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilise this feature. It should be turned on only when it's needed."
+msgstr "允許掃描媒體匯入工具中檔案的匯入路徑。需要在 .env 檔中設置路徑，此設定才會生效。此舉是為了安全起見。警告：此設定很「危險」，僅能在可使用此功能的安裝中啟用，且只在需要時開啟。"
+
+#: enferno/admin/templates/admin/system-administration.html:429
+msgid "Allowed file extensions for the Media Import Tool."
+msgstr "媒體匯入工具允許的副檔名。"
+
+#: enferno/admin/templates/admin/system-administration.html:431
+msgid "ETL Video Extensions"
+msgstr "ETL 影片副檔名"
+
+#: enferno/admin/templates/admin/system-administration.html:377
+msgid "Enable parsing and extracting text from images and scanned PDF files (requires and external Tesseract library)."
+msgstr "可從圖像與掃描的 PDF 文件中解析與提取文字（需要外部 Tesseract 處理庫）。"
+
+#: enferno/admin/templates/admin/system-administration.html:437
+msgid "Enable OCR"
+msgstr "啟用 OCR"
+
+#: enferno/admin/templates/admin/system-administration.html:446
+msgid "File extensions which will be scanned using Tesseract OCR."
+msgstr "將使用 Tesseract OCR 掃描的副檔名。"
+
+#: enferno/admin/templates/admin/system-administration.html:448
+msgid "OCR Extensions"
+msgstr "OCR 副檔名"
+
+#: enferno/admin/templates/admin/system-administration.html:401
+msgid "Path to Tesseract executable."
+msgstr "Tesseract 執行檔的路徑。"
+
+#: enferno/admin/templates/admin/system-administration.html:456
+msgid "Sheet Import"
+msgstr "資料表匯入"
+
+#: enferno/admin/templates/admin/system-administration.html:458
+msgid "Enable importing spreadsheets and mapping them to Actors."
+msgstr "允許匯入試算表並將其映射到行動者。"
+
+#: enferno/admin/templates/admin/system-administration.html:467
+msgid "Allowed spreadsheet extensions for Sheets Import Tool."
+msgstr "試算表匯入工具允許的試算表副檔名。"
+
+#: enferno/admin/templates/admin/system-administration.html:468
+msgid "Allowed Sheets Extensions"
+msgstr "允許的試算表副檔名"
+
+#: enferno/admin/templates/admin/system-administration.html:484
+msgid "Export System"
+msgstr "匯出系統"
+
+#: enferno/admin/templates/admin/system-administration.html:487
+msgid "Enables Export System."
+msgstr "啟用匯出系統。"
+
+#: enferno/admin/templates/admin/system-administration.html:507
+msgid "Maps API Endpoint"
+msgstr "地圖 API 端點"
+
+#: enferno/admin/templates/admin/system-administration.html:458
+msgid "API provider for Open Street Maps tiles."
+msgstr "開放街圖圖磚 API 供應商。"
+
+#: enferno/admin/templates/admin/system-administration.html:512
+msgid "Google Maps API Key"
+msgstr "Google 地圖 API 金鑰"
+
+#: enferno/admin/templates/admin/system-administration.html:514
+msgid "API key for Google Maps. Adding a key enables satalite imagery in Bayanat's maps."
+msgstr "Google 地圖的 API 金鑰。新增金鑰後，Bayanat 即可顯示衛星圖。"
+
+#: enferno/admin/templates/admin/system-administration.html:517
+msgid "Default Map Position"
+msgstr "預設地圖位置"
+
+#: enferno/admin/templates/admin/system-administration.html:518
+msgid "Changes default position for all maps in all components."
+msgstr "變更所有元件內所有地圖的預設位置。"
+
+#: enferno/admin/templates/admin/system-administration.html:12
+#: enferno/admin/templates/admin/system-administration.html:549
+msgid "Revision History"
+msgstr "修訂歷史"
+
+#: enferno/admin/templates/admin/system-administration.html:557
+msgid "Version"
+msgstr "版本"
+
+#: enferno/admin/templates/admin/system-administration.html:565
+msgid "by"
+msgstr "來自"
+
+#: enferno/admin/templates/admin/system-administration.html:569
+msgid "Revert to this version"
+msgstr "恢復到此版本"
+
+#: enferno/admin/templates/admin/system-administration.html:583
+msgid "Current"
+msgstr "目前"
+
+#: enferno/admin/templates/admin/system-administration.html:606
+msgid "Review and Confirm Changes"
+msgstr "審查並確認變更"
+
+#: enferno/admin/templates/admin/system-administration.html:620
+msgid "Removed"
+msgstr "已移除"
+
+#: enferno/admin/templates/admin/system-administration.html:625
+msgid "Added"
+msgstr "已新增"
+
+#: enferno/admin/templates/admin/system-administration.html:641
+msgid "No changes detected"
+msgstr "沒有偵測到變更"
+
+#: enferno/admin/templates/admin/system-administration.html:650
+msgid "Confirm"
+msgstr "確認"
+
+#: enferno/admin/templates/admin/system-administration.html:669
+msgid "Restarting Bayanat, please wait..."
+msgstr "正在重新啟動 Bayanat，請稍候⋯⋯"
+
+#: enferno/templates/nav-drawer.html:31
+msgid "Component Data"
+msgstr "元件資料"
+
+#: enferno/templates/nav-drawer.html:78
+msgid "Users & Groups"
+msgstr "用戶與群組"
+
+#: enferno/templates/nav-drawer.html:82
+msgid "Users"
+msgstr "用戶"
+
+#: enferno/admin/templates/admin/users.html:173
+#: enferno/admin/templates/admin/users.html:267
+#: enferno/templates/nav-drawer.html:86
+msgid "Groups"
+msgstr "群組"
+
+#: enferno/templates/nav-drawer.html:96
+msgid "System Settings"
+msgstr "系統設定"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:34
+msgid "Creation Date"
+msgstr "建立日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:35
+msgid "Last Modified Date"
+msgstr "上次修改日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:36
+msgid "Event Date"
+msgstr "事件日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:251
+msgid "Import Date"
+msgstr "匯入日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:252
+#: enferno/data_import/templates/import-log.html:167
+msgid "File"
+msgstr "檔案"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:253
+#: enferno/data_import/templates/import-log.html:29
+#: enferno/templates/nav-drawer.html:41
+msgid "Import Log"
+msgstr "匯入紀錄"
+
+#: enferno/admin/templates/admin/system-administration.html:241
+msgid "Password Policies"
+msgstr "密碼政策"
+
+#: enferno/admin/templates/admin/system-administration.html:253
+msgid "Password Strength"
+msgstr "密碼強度"
+
+#: enferno/admin/templates/admin/system-administration.html:274
+msgid "Force Global Password Reset"
+msgstr "強制全面重設密碼"
+
+#: enferno/admin/templates/admin/system-administration.html:777
+msgid "Are you sure you want to force a password reset for all users?"
+msgstr "您確定要強制所有用戶重設密碼嗎？"
+
+#: enferno/admin/templates/admin/system-administration.html:899
+msgid "App configurations reloaded successfully."
+msgstr "成功重新載入應用程式配置。"
+
+#: enferno/admin/templates/admin/users.html:54
+msgid "Password eeset already requested."
+msgstr "已要求重設密碼。"
+
+#: enferno/admin/templates/admin/users.html:39
+msgid "Force password reset."
+msgstr "強制重設密碼。"
+
+#: enferno/admin/templates/admin/users.html:51
+msgid "Password reset requested."
+msgstr "已要求重設密碼。"
+
+#: enferno/admin/templates/admin/users.html:131
+msgid "Strong Password"
+msgstr "高強度密碼"
+
+#: enferno/data_import/templates/import-log.html:165
+msgid "Item"
+msgstr "物件"
+
+#: enferno/data_import/templates/import-log.html:169
+msgid "Batch ID"
+msgstr "批次 ID"
+
+#: enferno/data_import/templates/import-log.html:170
+msgid "Requested Time"
+msgstr "要求時間"
+
+#: enferno/data_import/templates/import-log.html:171
+msgid "Import Time"
+msgstr "匯入時間"
+
+#: enferno/data_import/templates/media-import.html:255
+#: enferno/data_import/templates/sheets-import.html:778
+msgid "Check Import Progress"
+msgstr "查看匯入進度"
+
+#: enferno/data_import/templates/media-import.html:580
+msgid "Files were added to queue successfully and will be imported in turn."
+msgstr "檔案已成功新增到佇列，將依序匯入。"
+
+#: enferno/data_import/templates/media-import.html:584
+#: enferno/data_import/templates/sheets-import.html:1146
+msgid "Error importing rows. Check logs for more information."
+msgstr "匯入列出現錯誤。請查看紀錄中的更多資訊。"
+
+#: enferno/data_import/templates/sheets-import.html:1141
+msgid "Rows from file were added to queue successfully and will be imported in turn."
+msgstr "檔案中的列已成功新增到佇列，將依序匯入。"
+
+#: enferno/templates/nav-drawer.html:37
+msgid "Data Import"
+msgstr "資料匯入"
+
+#: enferno/templates/settings_drawer.html:66
+msgid "Setup a Security Key"
+msgstr "設置安全金鑰"
+
+#: enferno/templates/security/two_factor_select.html:30
+msgid "Available Second Factor Methods:"
+msgstr "可用的第二要素方式："
+
+#: enferno/templates/security/wan_signin.html:21
+msgid "Sign In Using your Security Key"
+msgstr "使用您的安全金鑰登入"
+
+#: enferno/admin/templates/admin/system-administration.html:202
+msgid "Force 2FA Enrollment"
+msgstr "強制使用 2FA"
+
+#: enferno/admin/templates/admin/system-administration.html:204
+msgid "Force users to enroll in two factor authentication"
+msgstr "強制用戶使用雙重驗證"
+
+#: enferno/admin/templates/admin/system-administration.html:211
+msgid "Hardware-Enhanced 2FA via WebAuthn & FIDO"
+msgstr "透過 WebAuthn 與 FIDO 硬體強化的 2FA"
+
+#: enferno/admin/templates/admin/system-administration.html:213
+msgid "Secure your account with FIDO hardware for robust WebAuthn-based 2FA"
+msgstr "使用 FIDO 確保您的帳號安全，實現強大的 WebAuthn 2FA"
+
+#: enferno/admin/templates/admin/system-administration.html:245
+msgid "Password Minimum Length"
+msgstr "密碼最短長度"
+
+#: enferno/admin/templates/admin/system-administration.html:247
+msgid "Minimum required length for passwords"
+msgstr "密碼所需的最短長度"
+
+#: enferno/admin/templates/admin/system-administration.html:260
+msgid "0 is weekest, 4 is strongest"
+msgstr "0 為最弱、4 為最強"
+
+#: enferno/admin/templates/admin/users.html:39
+msgid "Password reset already requested."
+msgstr "已要求重設密碼。"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:308
+msgid "Review"
+msgstr "審查"
+
+#: enferno/admin/templates/admin/partials/export_drawer.html:50
+msgid "Include media"
+msgstr "包含媒體"
+
+#: enferno/templates/security/change_password.html:13
+msgid "Current Password"
+msgstr "目前密碼"
+
+#: enferno/templates/security/change_password.html:21
+msgid "Retype Password"
+msgstr "重新輸入密碼"
+
+#: enferno/templates/security/forgot_password.html:6
+msgid "Send password reset instructions"
+msgstr "傳送密碼重設指南"
+
+#: enferno/templates/security/forgot_password.html:11
+msgid "Send Recovery Instructions"
+msgstr "傳送復原指南"
+
+#: enferno/templates/security/login_user.html:8
+msgid "Account Login"
+msgstr "帳號登入"
+
+#: enferno/templates/security/login_user.html:25
+#: enferno/templates/security/login_user.html:72
+msgid "Login"
+msgstr "登入"
+
+#: enferno/templates/security/mf_recovery.html:8
+#: enferno/templates/security/mf_recovery.html:16
+msgid "Recovery Code"
+msgstr "復原碼"
+
+#: enferno/templates/security/mf_recovery.html:34
+msgid "Back to Login"
+msgstr "回到登入頁面"
+
+#: enferno/templates/security/two_factor_select.html:38
+msgid "Authenticator"
+msgstr "驗證器"
+
+#: enferno/templates/security/two_factor_select.html:39
+msgid "Security/Biometric Device"
+msgstr "安全／生物辨識裝置"
+
+#: enferno/templates/security/wan_register.html:45
+msgid "Device Name"
+msgstr "裝置名稱"
+
+#: enferno/templates/security/wan_register.html:53
+msgid "Add Device"
+msgstr "新增裝置"
+
+#: enferno/admin/templates/admin/system-administration.html:22
+msgid "Access Control"
+msgstr "存取控制"
+
+#: enferno/admin/templates/admin/system-administration.html:286
+msgid "Restrictive Access Control"
+msgstr "限制性存取控制"
+
+#: enferno/admin/templates/admin/system-administration.html:288
+msgid "All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access."
+msgstr "預設狀態下，資料庫中的所有物件皆限制所有非管理者存取，除非有特別授權。"
+
+#: enferno/admin/templates/admin/system-administration.html:436
+msgid "Bayanat's Media Import tool can utilize Google's Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package)."
+msgstr "Bayanat 的媒體匯入工具可使用 Google 的 Tesseract OCR 引擎，從圖像與掃描的 PDF 文件中解析與提取文字（需要 Tesseract 系統包）。"
+
+#: enferno/admin/templates/admin/system-administration.html:491
+msgid "Export Expiry Time"
+msgstr "匯出到期時間"
+
+#: enferno/admin/templates/admin/system-administration.html:493
+msgid "Time after which exports will expired and be deleted"
+msgstr "過了此時間後，匯出將失效並被刪除"
+
+#: enferno/admin/templates/admin/system-administration.html:509
+msgid "API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM."
+msgstr "開放街圖圖磚 API 供應商。Bayanat 預設使用 OpenStreetMaps 圖磚伺服器。在此可變更設定，例如使用 OSM 的離線執行個體"
+
+#: enferno/admin/templates/nav-bar.html:22
+msgid "User Guides"
+msgstr "用戶指南"
+
+#: enferno/admin/templates/nav-bar.html:29
+msgid "Support"
+msgstr "支援"
+
+#: enferno/admin/templates/nav-bar.html:36
+msgid "Report a Bug"
+msgstr "回報錯誤"
+
+#: enferno/admin/templates/nav-bar.html:48
+msgid "Translations"
+msgstr "翻譯"
+
+#: enferno/admin/templates/nav-bar.html:65
+#: enferno/templates/settings_drawer.html:11
+msgid "User Settings"
+msgstr "用戶設定"
+
+#: enferno/admin/templates/admin/activity.html:24
+msgid "Filter Options"
+msgstr "篩選選項"
+
+#: enferno/admin/templates/admin/activity.html:33
+msgid "Success"
+msgstr "成功"
+
+#: enferno/admin/templates/admin/activity.html:41
+msgid "Denied"
+msgstr "已拒絕"
+
+#: enferno/admin/templates/admin/activity.html:58
+msgid "Show Query"
+msgstr "顯示查詢"
+
+#: enferno/admin/templates/admin/activity.html:68
+msgid "Show Items"
+msgstr "顯示物件"
+
+#: enferno/admin/templates/admin/activity.html:255
+msgid "Class"
+msgstr "級別"
+
+#: enferno/admin/templates/admin/actors.html:16
+#: enferno/admin/templates/admin/bulletins.html:21
+#: enferno/admin/templates/admin/incidents.html:11
+msgid "Visualize Results"
+msgstr "視覺化結果"
+
+#: enferno/admin/templates/admin/actors.html:412
+msgid "Normal"
+msgstr "正常"
+
+#: enferno/admin/templates/admin/actors.html:413
+msgid "Main"
+msgstr "主要"
+
+#: enferno/admin/templates/admin/actors.html:559
+#: enferno/admin/templates/admin/bulletins.html:581
+#: enferno/admin/templates/admin/incidents.html:533
+#: enferno/admin/templates/admin/jsapi.jinja2:103
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:72
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:83
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:67
+msgid "Access Groups"
+msgstr "存取群組"
+
+#: enferno/admin/templates/admin/actors.html:645
+#: enferno/admin/templates/admin/bulletins.html:663
+#: enferno/admin/templates/admin/incidents.html:605
+msgid "Access Group(s) are required unless unresticted."
+msgstr "存取群組為必要，除非不受限制。"
+
+#: enferno/admin/templates/admin/actors.html:839
+msgid "Are you sure you want to delete this profile?"
+msgstr "您確定要刪除此簡介檔案嗎？"
+
+#: enferno/admin/templates/admin/actors.html:857
+msgid "Main profile already exists."
+msgstr "主要簡介檔案已存在。"
+
+#: enferno/admin/templates/admin/actors.html:886
+msgid "A main profile already exists. Cannot duplicate another main profile."
+msgstr "已有一個主要的簡介檔案。無法複製另一個主要簡介檔案。"
+
+#: enferno/admin/templates/admin/actors.html:933
+#: enferno/admin/templates/admin/bulletins.html:906
+#: enferno/admin/templates/admin/incidents.html:803
+msgid "Graph is being generated."
+msgstr "正在生成圖表。"
+
+#: enferno/admin/templates/admin/actors.html:992
+msgid "Actor assigned successfully."
+msgstr "已成功指派行動者。"
+
+#: enferno/admin/templates/admin/actors.html:1267
+#: enferno/admin/templates/admin/bulletins.html:1249
+msgid "Confirm deleting this event?"
+msgstr "確認要刪除此事件嗎？"
+
+#: enferno/admin/templates/admin/actors.html:1567
+#: enferno/admin/templates/admin/bulletins.html:1558
+#: enferno/admin/templates/admin/incidents.html:1463
+#: enferno/admin/templates/admin/locations.html:511
+msgid "Please review the form for errors."
+msgstr "請檢查表單是否有錯誤。"
+
+#: enferno/admin/templates/admin/bulletins.html:660
+#: enferno/admin/templates/admin/incidents.html:601
+msgid "Original Title is required."
+msgstr "需要原始標題。"
+
+#: enferno/admin/templates/admin/bulletins.html:666
+msgid "Source link is required unless unavailable."
+msgstr "需要來源連結，除非無法取得。"
+
+#: enferno/admin/templates/admin/bulletins.html:970
+msgid "Bulletin assigned successfully."
+msgstr "已成功指派簡報。"
+
+#: enferno/admin/templates/admin/component-data.html:28
+#: enferno/admin/templates/admin/component-data.html:116
+#: enferno/admin/templates/admin/partials/actor_dialog.html:281
+msgid "Dialects"
+msgstr "方言"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:38
+msgid "Assigned User"
+msgstr "指派的用戶"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:116
+msgid "Search Activities"
+msgstr "搜尋活動"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:145
+msgid "Nickname(s)"
+msgstr "暱稱"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:147
+#: enferno/data_import/templates/sheets-import.html:283
+msgid "Middle Name(s)"
+msgstr "中間名"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:149
+#: enferno/admin/templates/admin/partials/actor_dialog.html:130
+#: enferno/data_import/templates/sheets-import.html:296
+msgid "Father's Name"
+msgstr "父親名"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:158
+#: enferno/admin/templates/admin/partials/actor_dialog.html:288
+#: enferno/data_import/templates/sheets-import.html:351
+msgid "ID Number"
+msgstr "ID 號碼"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:214
+#: enferno/data_import/templates/sheets-import.html:548
+msgid "Physician's name and contact"
+msgstr "醫師的姓名與聯絡方式"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:224
+#: enferno/data_import/templates/sheets-import.html:582
+msgid "Dentist's name and contact"
+msgstr "牙醫的姓名與聯絡方式"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:272
+#: enferno/admin/templates/admin/system-logs.html:142
+msgid "Message"
+msgstr "訊息"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:273
+msgid "Stacktrace"
+msgstr "堆疊追蹤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:274
+#: enferno/admin/templates/admin/system-logs.html:141
+msgid "Endpoint"
+msgstr "端點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:275
+msgid "User ID"
+msgstr "用戶 ID"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:276
+msgid "Line No"
+msgstr "行號"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:277
+msgid "Path"
+msgstr "路徑"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:278
+msgid "Error Type"
+msgstr "錯誤類型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:279
+#: enferno/admin/templates/admin/system-logs.html:139
+msgid "Level"
+msgstr "層級"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:281
+msgid "Refresh available log files and select latest log file"
+msgstr "重新整理可用的紀錄檔，並選擇最新的紀錄檔"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:282
+msgid "No log files available"
+msgstr "沒有可用的紀錄檔"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:286
+msgid "Select Type"
+msgstr "選擇類型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:287
+msgid "Select Action"
+msgstr "選擇動作"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:288
+msgid "Activity Date"
+msgstr "活動日期"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:291
+msgid "Select Event Type"
+msgstr "選擇事件類型"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:294
+msgid "Exact Match"
+msgstr "完全配對"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:297
+msgid "Address Line 1"
+msgstr "地址行 1"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:298
+msgid "Address Line 2"
+msgstr "地址行 2"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:299
+msgid "City"
+msgstr "城市"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:300
+msgid "Street"
+msgstr "街道"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:301
+msgid "Street No"
+msgstr "門牌號碼"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:304
+msgid "Are you sure you want to delete"
+msgstr "您確定要刪除"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:316
+#: enferno/admin/templates/admin/jsapi.jinja2:408
+msgid "You have been logged out. Please log in again."
+msgstr "您已登出。請再登入一次。"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:317
+#: enferno/admin/templates/admin/jsapi.jinja2:409
+msgid "Are you sure you want to log out all sessions for this user?"
+msgstr "您確定要登出此用戶的所有工作階段嗎？"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:318
+#: enferno/admin/templates/admin/jsapi.jinja2:415
+msgid "User Permissions"
+msgstr "用戶權限"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:319
+#: enferno/admin/templates/admin/jsapi.jinja2:416
+msgid "Can View Usernames"
+msgstr "可以觀看用戶名稱"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:320
+#: enferno/admin/templates/admin/jsapi.jinja2:417
+msgid "Can View Simple History"
+msgstr "可以觀看精簡版歷史"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:321
+#: enferno/admin/templates/admin/jsapi.jinja2:418
+msgid "Can View Full History"
+msgstr "可以觀看完整版歷史"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:322
+#: enferno/admin/templates/admin/jsapi.jinja2:419
+msgid "Can Edit Locations"
+msgstr "可以編輯地點"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:323
+#: enferno/admin/templates/admin/jsapi.jinja2:420
+msgid "Can Export"
+msgstr "可以匯出"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:324
+#: enferno/admin/templates/admin/jsapi.jinja2:421
+msgid "Can Self Assign"
+msgstr "可以指派給自己"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:325
+#: enferno/admin/templates/admin/jsapi.jinja2:422
+msgid "User Sessions"
+msgstr "用戶工作階段"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:326
+#: enferno/admin/templates/admin/jsapi.jinja2:423
+msgid "Session"
+msgstr "工作階段"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:327
+#: enferno/admin/templates/admin/jsapi.jinja2:424
+msgid "IP"
+msgstr "IP"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:328
+#: enferno/admin/templates/admin/jsapi.jinja2:425
+msgid "User Agent"
+msgstr "用戶代理"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:329
+#: enferno/admin/templates/admin/jsapi.jinja2:426
+msgid "Started"
+msgstr "已開始"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:330
+#: enferno/admin/templates/admin/jsapi.jinja2:427
+msgid "Log off this device"
+msgstr "登出此裝置"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:333
+msgid "View Fullscreen"
+msgstr "觀看全螢幕"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:334
+msgid "Exit Fullscreen"
+msgstr "離開全螢幕"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:380
+msgid "Single"
+msgstr "單身"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:381
+msgid "Married"
+msgstr "已婚"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:382
+msgid "Seperated"
+msgstr "已分居"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:383
+msgid "Divorced"
+msgstr "已離婚"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:384
+msgid "Widowed"
+msgstr "已喪偶"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:410
+msgid "All sessions for the user have been logged out successfully."
+msgstr "已成功登出此用戶的所有工作階段。"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:411
+msgid "Logged out session"
+msgstr "已登出的工作階段"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:412
+msgid "Error fetching sessions"
+msgstr "取得工作階段時出現錯誤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:413
+msgid "Error logging out session"
+msgstr "登出工作階段時出現錯誤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:414
+msgid "Error logging out all sessions for user ID:"
+msgstr "登出用戶的所有工作階段時出現錯誤，ID 為："
+
+#: enferno/admin/templates/admin/jsapi.jinja2:429
+msgid "Inactive"
+msgstr "不活躍"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:430
+#: enferno/admin/templates/admin/users.html:218
+msgid "Logout All Sessions"
+msgstr "登出所有工作階段"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:517
+msgid "Error"
+msgstr "錯誤"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:518
+msgid "Warning"
+msgstr "警告"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:519
+msgid "Info"
+msgstr "資訊"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:520
+msgid "Debug"
+msgstr "除錯"
+
+#: enferno/admin/templates/admin/locations.html:243
+msgid "Title or Title (Ar) is required"
+msgstr "需要標題或標題（阿拉伯文）"
+
+#: enferno/admin/templates/admin/roles.html:24
+msgid "User Groups"
+msgstr "用戶群組"
+
+#: enferno/admin/templates/admin/roles.html:53
+msgid "Group Color"
+msgstr "群組顏色"
+
+#: enferno/admin/templates/admin/roles.html:56
+msgid "Useful to easily identify groups in data tables."
+msgstr "可用來輕易辨識資料表中的群組。"
+
+#: enferno/admin/templates/admin/system-administration.html:8
+msgid "Administration Dashboard"
+msgstr "管理主控台"
+
+#: enferno/admin/templates/admin/system-administration.html:23
+#: enferno/admin/templates/admin/system-administration.html:302
+msgid "Activity Monitor"
+msgstr "活動監控器"
+
+#: enferno/admin/templates/admin/system-administration.html:220
+msgid "Disallow Multiple Concurrent Sessions"
+msgstr "禁止多個並行的工作階段"
+
+#: enferno/admin/templates/admin/system-administration.html:222
+msgid "Prevents users from logging in to multiple devices simultaneously"
+msgstr "防止用戶同時登入多個裝置"
+
+#: enferno/admin/templates/admin/system-administration.html:226
+msgid "Session Data Retention Period"
+msgstr "工作階段資料保存期"
+
+#: enferno/admin/templates/admin/system-administration.html:230
+msgid "7 DAYS"
+msgstr "7 天"
+
+#: enferno/admin/templates/admin/system-administration.html:231
+msgid "30 DAYS"
+msgstr "30 天"
+
+#: enferno/admin/templates/admin/system-administration.html:232
+msgid "90 DAYS"
+msgstr "90 天"
+
+#: enferno/admin/templates/admin/system-administration.html:233
+msgid "180 DAYS"
+msgstr "180 天"
+
+#: enferno/admin/templates/admin/system-administration.html:234
+msgid "365 DAYS"
+msgstr "365 天"
+
+#: enferno/admin/templates/admin/system-administration.html:235
+msgid "INFINITE"
+msgstr "永久"
+
+#: enferno/admin/templates/admin/system-administration.html:290
+msgid "Allow Non-Admin Users to Restrict New Items"
+msgstr "允許非管理者用戶限制新物件"
+
+#: enferno/admin/templates/admin/system-administration.html:292
+msgid "Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups."
+msgstr "沒有管理權限的用戶將得以限制他們建立的物件。他們只能將物件限制在自己的一個或多個存取群組中。"
+
+#: enferno/admin/templates/admin/system-administration.html:304
+msgid "Set users' actions to be logged in the Activity Monitor."
+msgstr "設定將用戶的動作記錄到活動監控器中。"
+
+#: enferno/admin/templates/admin/system-administration.html:307
+msgid "Items created by users."
+msgstr "用戶建立的物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:309
+msgid "This setting will log Actors, Bulletins, Incidents and all other secondary items created by users."
+msgstr "此設定將紀錄用戶建立的行動者、簡報、事端和所有其他次級物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:313
+msgid "Items viewed by users."
+msgstr "用戶瀏覽的物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:315
+msgid "This setting will log all Actors, Bulletins and Incidents viewed by users."
+msgstr "此設定將紀錄用戶瀏覽的所有行動者、簡報和事端。"
+
+#: enferno/admin/templates/admin/system-administration.html:319
+msgid "Items edited by users."
+msgstr "用戶編輯的物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:321
+msgid "This setting will log Actors, Bulletins, Incidents and all other secondary items edited by users."
+msgstr "此設定將紀錄用戶編輯的行動者、簡報、事端和所有其他次級物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:325
+msgid "Items deleted by users."
+msgstr "用戶刪除的物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:327
+msgid "This setting will enable logging all secondary items deleted by authorized users. Note: Actors, Bulletins and Incidents cannot be deleted."
+msgstr "此設定將紀錄授權用戶刪除的所有次級物件。注意：無法刪除行動者、簡報與事端。"
+
+#: enferno/admin/templates/admin/system-administration.html:331
+msgid "Items reviewer by users."
+msgstr "用戶審查的物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:333
+msgid "This setting will enable logging all items peer-viewed by authorized users."
+msgstr "此設定將紀錄授權用戶同儕審查的所有物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:337
+msgid "Files uploaded by users."
+msgstr "用戶上傳的檔案。"
+
+#: enferno/admin/templates/admin/system-administration.html:339
+msgid "This setting will enable logging all files uploaded users to media storage."
+msgstr "此設定將紀錄用戶上傳至媒體儲存處的所有檔案。"
+
+#: enferno/admin/templates/admin/system-administration.html:343
+msgid "Bulk operations queued by users."
+msgstr "用戶排入佇列的批次操作。"
+
+#: enferno/admin/templates/admin/system-administration.html:345
+msgid "This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents."
+msgstr "此設定將紀錄授權用戶針對行為人、簡報與事端啟動的所有批次操作。"
+
+#: enferno/admin/templates/admin/system-administration.html:349
+msgid "Export requests made by users."
+msgstr "用戶提出的匯出要求。"
+
+#: enferno/admin/templates/admin/system-administration.html:351
+msgid "This setting will enable logging all export requests submitted by authorized users."
+msgstr "此設定將紀錄授權用戶提交的所有匯出要求。"
+
+#: enferno/admin/templates/admin/system-administration.html:355
+msgid "Export requests approved by users."
+msgstr "用戶批准的匯出要求。"
+
+#: enferno/admin/templates/admin/system-administration.html:357
+msgid "This setting will enable logging all export requests approvals by administrators."
+msgstr "此設定將紀錄管理者批准的所有匯出要求。"
+
+#: enferno/admin/templates/admin/system-administration.html:361
+msgid "Export requests rejected by users."
+msgstr "用戶拒絕的匯出要求"
+
+#: enferno/admin/templates/admin/system-administration.html:363
+msgid "This setting will enable logging all export requests rejections by administrators."
+msgstr "此設定將紀錄管理者拒絕的所有匯出要求。"
+
+#: enferno/admin/templates/admin/system-administration.html:367
+msgid "Export requests downloaded by  users."
+msgstr "用戶下載的匯出要求。"
+
+#: enferno/admin/templates/admin/system-administration.html:369
+msgid "This setting will enable logging all export requests downloads by authorized users."
+msgstr "此設定將紀錄授權用戶下載的所有匯出要求。"
+
+#: enferno/admin/templates/admin/system-administration.html:373
+msgid "Search queries made by users."
+msgstr "用戶的搜尋查詢。"
+
+#: enferno/admin/templates/admin/system-administration.html:375
+msgid "This setting will enable logging all searches conducted by users on Actors, Bulletins and Incidents."
+msgstr "此設定將紀錄用戶針對行為人、簡報與事端做出的所有搜尋動作。"
+
+#: enferno/admin/templates/admin/system-administration.html:379
+msgid "Items self-assigned by users"
+msgstr "用戶指派給自己的物件"
+
+#: enferno/admin/templates/admin/system-administration.html:381
+msgid "This setting will enable logging all items self-assigned by users."
+msgstr "此設定將紀錄用戶指派給自己的所有物件。"
+
+#: enferno/admin/templates/admin/system-administration.html:385
+msgid "Logins by users."
+msgstr "用戶的登入。"
+
+#: enferno/admin/templates/admin/system-administration.html:387
+msgid "This setting will enable logging all user login activities."
+msgstr "此設定將紀錄所有用戶登入活動。"
+
+#: enferno/admin/templates/admin/system-administration.html:391
+msgid "Logouts by users."
+msgstr "用戶的登出。"
+
+#: enferno/admin/templates/admin/system-administration.html:393
+msgid "This setting will enable logging all user logout activities. Note: only explicit logout will be logged, users closing their browsers without logging out will not for example."
+msgstr "此設定將紀錄所有用戶登出活動。注意：僅會記錄明確的登出，舉例來說，用戶未登出即關閉瀏覽器就不會被記錄。"
+
+#: enferno/admin/templates/admin/system-administration.html:398
+msgid "Activity Retention Period"
+msgstr "活動保存期"
+
+#: enferno/admin/templates/admin/system-administration.html:400
+msgid "Period after which activities will be deleted."
+msgstr "過了這段期間後，活動將被刪除。"
+
+#: enferno/admin/templates/admin/system-logs.html:29
+msgid "Logs"
+msgstr "紀錄"
+
+#: enferno/admin/templates/admin/system-logs.html:44
+msgid "Log Date"
+msgstr "紀錄日期"
+
+#: enferno/admin/templates/admin/system-logs.html:138
+msgid "Timestamp"
+msgstr "時間戳記"
+
+#: enferno/admin/templates/admin/system-logs.html:164
+msgid "No log files found"
+msgstr "找不到紀錄檔"
+
+#: enferno/admin/templates/admin/system-logs.html:223
+msgid "Latest"
+msgstr "最新"
+
+#: enferno/admin/templates/admin/system-logs.html:319
+msgid "Copied to clipboard"
+msgstr "已複製到剪貼簿"
+
+#: enferno/admin/templates/admin/system-logs.html:322
+#: enferno/admin/templates/admin/system-logs.html:326
+msgid "Failed to copy to clipboard."
+msgstr "複製到剪貼簿失敗。"
+
+#: enferno/admin/templates/admin/users.html:352
+msgid "Are you sure you want to force password reset for user "
+msgstr "您確定要強制下列用戶重設密碼"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:98
+msgid "Middle Name (AR)"
+msgstr "中間名（阿拉伯文）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:131
+#: enferno/data_import/templates/sheets-import.html:299
+msgid "Father's Name (AR)"
+msgstr "父親名（阿拉伯文）"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:237
+#: enferno/data_import/templates/sheets-import.html:340
+msgid "No of Children"
+msgstr "子女數"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:336
+msgid "Profile"
+msgstr "簡介檔案"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:337
+msgid "Duplicate Profile"
+msgstr "重複的簡介檔案"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:346
+msgid "Delete Profile"
+msgstr "刪除簡介檔案"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:920
+msgid "Restrict Actor to Access Group(s)"
+msgstr "限制行動者的存取群組"
+
+#: enferno/admin/templates/admin/partials/actor_dialog.html:928
+msgid "No Access Access Groups"
+msgstr "沒有存取群組"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:73
+msgid "Original Title (Ar)"
+msgstr "原始標題（阿拉伯文）"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:287
+msgid "Restrict Bulletin to Access Group(s)"
+msgstr "限制簡報的存取群組"
+
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:295
+msgid "No Access Groups"
+msgstr "沒有存取群組"
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:259
+msgid "Restrict Incident to Access Group(s)"
+msgstr "限制事端的存取群組"
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:267
+msgid "No Access Group"
+msgstr "沒有存取群組"
+
+#: enferno/admin/templates/admin/partials/log_dialog.html:6
+msgid "Log Details "
+msgstr "紀錄細節"
+
+#: enferno/admin/templates/admin/partials/review_dialog.html:50
+msgid "Data Assistant"
+msgstr "資料助理"
+
+#: enferno/data_import/templates/log_dialog.html:7
+msgid "Log"
+msgstr "紀錄"
+
+#: enferno/data_import/templates/sheets-import.html:16
+msgid "Bulk Upload \\& Import"
+msgstr "批次上傳與匯入"
+
+#: enferno/data_import/templates/sheets-import.html:286
+msgid "Middle Name(s) (AR)"
+msgstr "中間名（阿拉伯文）"
+
+#: enferno/data_import/templates/sheets-import.html:359
+msgid "Actor Profile"
+msgstr "行動者簡介檔案"
+
+#: enferno/data_import/templates/sheets-import.html:436
+msgid "Missing Person Details"
+msgstr "失蹤人士細節"
+
+#: enferno/data_import/templates/sheets-import.html:599
+msgid "Details of the person(s) who reported them missing"
+msgstr "失蹤報告者的細節"
+
+#: enferno/data_import/templates/sheets-import.html:890
+#: enferno/data_import/templates/sheets-import.html:1103
+msgid "New Map"
+msgstr "新映射"
+
+#: enferno/export/templates/export-dashboard.html:72
+msgid "Do not include Media"
+msgstr "不要包含媒體"
+
+#: enferno/templates/dashboard.html:31
+msgid "Syria Justice &amp;\n"
+"                    Accountability Center (SJAC) "
+msgstr "敘利亞司法與問責中心 (SJAC)"
+
+#: enferno/templates/dashboard.html:33
+msgid "Bayanat "
+msgstr "Bayanat"
+
+#: enferno/templates/dashboard.html:33
+msgid "is an open source project by SJAC released under the GNU Affero General Public License (AGPL)."
+msgstr "是由 SJAC 根據 GNU Affero 通用公眾授權條款 (AGPL) 發佈的開源專案。"
+
+#: enferno/templates/nav-drawer.html:58
+msgid "Deduplication Dashboard"
+msgstr "重複資料刪除主控台"
+
+#: enferno/templates/nav-drawer.html:93
+msgid "System Administration"
+msgstr "系統管理"
+
+#: enferno/templates/nav-drawer.html:98
+msgid "System Logs"
+msgstr "系統紀錄"
+
+#: enferno/templates/settings_drawer.html:22
+msgid "Theme"
+msgstr "主題色"
+
+#: enferno/templates/settings_drawer.html:36
+msgid "Light"
+msgstr "淺色"
+
+#: enferno/templates/settings_drawer.html:47
+msgid "Dark"
+msgstr "深色"
+
+#: enferno/templates/security/login_user.html:63
+msgid "Invalid username or password!"
+msgstr "無效的用戶名稱或密碼！"
+
+#: enferno/templates/security/two_factor_verify_code.html:22
+msgid "Trouble Accessing Your Account/Lost Mobile/TFA Device?"
+msgstr "存取帳號時出現問題嗎？／行動或 TFA 裝置遺失？"
+
+#: enferno/templates/security/wan_register.html:109
+msgid "Usage"
+msgstr "用法"
+
+#: enferno/templates/security/wan_register.html:111
+msgid "Transports"
+msgstr "傳輸"
+
+#: enferno/templates/security/wan_register.html:115
+msgid "Backed Up"
+msgstr "已備份"
+
+#: enferno/templates/security/wan_register.html:117
+msgid "Device Type"
+msgstr "裝置類型"
+
+#: enferno/templates/security/wan_register.html:119
+msgid "Discoverable"
+msgstr "可搜尋"
+
+#: enferno/templates/security/wan_register.html:121
+msgid "Last Used"
+msgstr "上次使用的"
+
+#: enferno/templates/security/wan_register.html:138
+msgid "Delete Key"
+msgstr "刪除金鑰"
+
+#: enferno/templates/security/wan_register.html:208
+msgid "Are you sure you want to delete this device?"
+msgstr "您確定要刪除此裝置嗎？"
+
+#: enferno/templates/security/wan_register.html:216
+msgid "Device Removed Successfully"
+msgstr "成功移除裝置"
+
+#: enferno/templates/security/wan_signin.html:37
+msgid "Authenticate"
+msgstr "驗證"
+

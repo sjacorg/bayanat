@@ -1,61 +1,54 @@
 {% extends 'layout.html' %} {% block content %}
 
-    <div id="app">
-        <v-app id="sources" v-cloak>
-            {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
+
             <v-main>
-                <v-container class="container--fluid">
-                    <v-row>
-                        <v-col cols="12">
+                <v-container  fluid>
+
                             <v-card>
                                 <v-card-title>
                                     <div class="flex-grow-1"></div>
                                 </v-card-title>
 
                                 <v-card-text>
-                                    <v-data-table
-                                            height="calc(100vh - 335px)"
+                                    <v-data-table-server
+                                            height="calc(100vh - 260px)"
                                             fixed-header
                                             :headers="headers"
                                             :items="items"
-                                            :options.sync="options"
-                                            :footer-props.sync="footerProps"
+                                            v-model:options="options"
+                                            @update:options="refresh"
                                             :loading="loading"
-                                            :server-items-length="itemsLength"
+                                            :items-length="itemsLength"
                                             class="elevation-1"
                                     >
                                         <template v-slot:top>
                                             <v-toolbar flat color="white">
                                                 <v-toolbar-title>{{ _('Sources') }}</v-toolbar-title>
 
-                                                <v-divider class="mx-4" inset vertical></v-divider>
                                             <v-text-field
-                                            dense
-                                            outlined
+                                            variant="outlined"
                                             class="mt-6"
+                                            density="compact"
+                                            clearable
+                                            @click:clear="resetSearch"
                                             v-model="q"
                                             label="{{ _('Search') }}"
                                             @keydown.enter="refresh"
                                             ></v-text-field>
 
                                                 <v-spacer></v-spacer>
+
+                                                <v-btn
+                                                    color="primary"
+                                                    variant="elevated"
+                                                    class="ma-2"
+                                                    @click="newItem"
+                                                    >{{ _('New Item') }}
+                                                </v-btn>
+
                                                 <v-dialog v-model="dialog" max-width="770px">
-                                                    {% if current_user.roles_in(['Admin','Mod']) %}
-                                                        <template v-slot:activator="{ on }">
-                                                            <v-btn
-                                                                    color="primary"
-                                                                    dark
-                                                                    @click="newItem"
-                                                                    class="ma-2"
-                                                                    v-on="on"
-                                                            >{{ _('New Item') }}</v-btn
-                                                            >
-                                                        </template>
-                                                    {% endif %}
-                                                    <v-card>
-                                                        <v-card-title>
-                                                            <span class="headline">${ formTitle }</span>
-                                                        </v-card-title>
+
+                                                    <v-card :title="formTitle">
 
                                                         <v-card-text>
                                                             <v-container>
@@ -72,16 +65,17 @@
                                                                         <search-field
                                                                                 v-model="editedItem.parent"
                                                                                 api="/admin/api/sources/"
-                                                                                item-text="title"
+                                                                                item-title="title"
                                                                                 item-value="id"
                                                                                 :multiple="false"
+                                                                                :return-object="true"
                                                                                 label="{{ _('Parent') }}"
                                                                         ></search-field>
                                                                     </v-col>
                                                                     <v-col cols="12" md="2">
                                                                         <v-text-field
                                                                                 v-model="editedItem.etl_id"
-                                                                                label="{{ _('ETL ID') }}"
+                                                                                label="{{ _('Origin ID') }}"
                                                                                 disabled
                                                                         ></v-text-field>
 
@@ -121,20 +115,18 @@
                                                     </v-card>
                                                 </v-dialog>
 
-                                                <v-dialog
-                                                        v-model="imDialog"
-                                                        width="500"
-                                                >
-                                                    {% if current_user.has_role('Admin') %}
-                                                        <template v-slot:activator="{ on }">
-                                                            <v-btn
-                                                                    color="secondary"
-                                                                    dark
-                                                                    class="ma-2"
-                                                                    v-on="on"
-                                                            >{{ _('Import CSV') }}</v-btn
-                                                            >
-                                                        </template>
+                                                <v-dialog v-model="imDialog" width="500">
+
+                                                    {% if current_user.roles_in(['Admin']) %}
+                                                    <template v-slot:activator="{ props }">
+                                                        <v-btn
+                                                            color="secondary"
+                                                            variant="elevated"
+                                                            class="ma-2"
+                                                            v-bind="props">
+                                                            {{ _('Import CSV') }}
+                                                        </v-btn>
+                                                    </template>
                                                     {% endif %}
 
                                                     <v-card>
@@ -187,62 +179,48 @@
                                             </v-icon>
                                         </template>
                                         <template v-slot:no-data></template>
-                                    </v-data-table>
+                                    </v-data-table-server>
 
-                                    <v-snackbar v-model="snackbar">
-                                        ${snackMessage}
-                                        <v-btn color="pink" text @click="snackbar = false">
-                                            {{ _('Close') }}
-                                        </v-btn>
-                                    </v-snackbar>
                                 </v-card-text>
                             </v-card>
-                        </v-col>
-                    </v-row>
+
                 </v-container>
-                </v-container>
-                </v-layout>
-                </v-container>
+
             </v-main>
-            {% include 'footer.html' %}
-        </v-app>
-    </div>
 
 {% endblock %} {% block js %}
+    <script src="/static/js/components/SearchField.js"></script>
     <script>
 
 
-        let app = new Vue({
-            el: "#app",
-            vuetify: vuetify,
+       const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
             delimiters: delimiters,
+            mixins: [globalMixin],
+            
             data: () => ({
                 dialog: dialog,
                 imDialog: false,
                 drawer: drawer,
-                sideNav: sideNav,
                 parents: [],
-                snackbar: false,
-                snackMessage: '',
                 loading: true,
                 parentLoading: false,
                 csvFile: null,
                 options: {},
-                footerProps: {
-                    itemsPerPageOptions: itemsPerPageOptions,
-                    itemsPerPageText: "{{ _('Rows per page')}}"
-                },
 
                 headers: [
-                    {text: "{{('ID')}}", value: "id"},
-                    {text: "{{_('Title')}}", value: "title"},
-                    {text: "{{_('ETL ID')}}", value: "etl_id"},
+                    {title: "{{('ID')}}", value: "id"},
+                    {title: "{{_('Title')}}", value: "title"},
+                    {title: "{{_('Origin ID')}}", value: "etl_id"},
 
-                    {text: "{{_('Comments')}}", value: "comments"},
-                    {text: "{{_('Parent')}}", value: "parent.title"},
+                    {title: "{{_('Comments')}}", value: "comments"},
+                    {title: "{{_('Parent')}}", value: "parent.title"},
 
                     {% if current_user.roles_in(['Admin','Mod']) %}
-                        {text: "{{_('Actions')}}", value: "action", sortable: false}
+                        {title: "{{_('Actions')}}", value: "action", sortable: false}
                     {% endif %}
                 ],
 
@@ -273,13 +251,12 @@
                     val || this.close();
                 },
 
-                options: {
-                    handler: "refresh"
-                }
+
             },
 
             methods: {
-                refresh() {
+                refresh(options) {
+                    this.options = options || this.options;
 
                     axios.get(`/admin/api/sources/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&q=${this.q}`).then(response => {
                         this.loading = false;
@@ -289,6 +266,11 @@
                     });
                 },
 
+                resetSearch() {
+                    this.q = '';
+                    this.refresh()
+                },
+
                 importCSV() {
                     const reqData = new FormData();
                     reqData.append('csv', this.csvFile)
@@ -296,14 +278,16 @@
 
                         this.imDialog = false;
                         this.refresh();
-                        this.snackMessage = response.data;
-                        this.snackbar = true;
+                        this.showSnack(response.data);
                     })
 
                 },
 
                 newItem() {
+
                     this.editedItem = Object.assign({}, this.defaultItem);
+                    this.dialog = true;
+
                 },
 
                 editItem(item) {
@@ -321,8 +305,7 @@
                     if (cfm) {
                         axios.delete(`/admin/api/source/${item.id}`)
                             .then(response => {
-                                this.snackMessage = response.data;
-                                this.snackbar = true;
+                                this.showSnack(response.data);
                                 this.refresh()
                             })
                     }
@@ -342,9 +325,11 @@
                         //update record
                         axios.put(`/admin/api/source/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
-                                this.snackMessage = response.data;
-                                this.snackbar = true;
+                                this.showSnack(response.data);
                                 this.refresh()
+                                this.close();
+                            }).catch(error => {
+                                this.showSnack(this.parseValidationError(error.response?.data));
                             })
                     } else {
                         this.items.push(this.editedItem);
@@ -352,15 +337,21 @@
                         axios
                             .post("/admin/api/source/", {item: this.editedItem})
                             .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh();
+                                this.close();
 
-                                this.snackMessage = response.data;
-                                this.snackbar = true;
-                                this.refresh()
-                            });
+                            }).catch(error => {
+                            this.showSnack(this.parseValidationError(error.response?.data));
+                        })
                     }
-                    this.close();
+
                 }
             }
         });
+
+        app.component('search-field', SearchField)
+
+        app.use(vuetify).mount("#app")
     </script>
 {% endblock %}
