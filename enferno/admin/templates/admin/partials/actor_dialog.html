@@ -9,23 +9,22 @@
 
             <v-toolbar color="primary">
                 <v-toolbar-title>${formTitle}
-                    <v-chip v-if="editedItem.id" pill label class="mx-1">
+                    <v-chip v-if="editedItem.id"  label class="mx-1">
                         {{ _('ID') }} ${editedItem.id}
                     </v-chip>
-
-
-                    <span class="gv--text" v-if="editedItem.name"> ${editedItem.name}</span>
-                    <span class="gv--text" v-if="editedItem.name_ar"> ${editedItem.name_ar}</span>
+                    <span class="ml-6" v-if="editedItem.name"> ${editedItem.name} </span>
+                    <span class="ml-6" v-if="editedItem.name_ar"> ${editedItem.name_ar}</span>
                 </v-toolbar-title>
                 <v-spacer></v-spacer>
 
-
-                <v-btn type="button" @click="validateForm" variant="outlined" class="mx-2" depressed>
+                <template #append>
+                     <v-btn type="button" @click="validateForm" variant="outlined" class="mx-2" >
                     {{ _('Save Actor') }}
                 </v-btn>
                 <v-btn icon="mdi-close" @click="confirmClose">
 
                 </v-btn>
+                    </template>
 
 
             </v-toolbar
@@ -33,11 +32,11 @@
 
             <v-sheet
                     id="card-content"
-
+                    max-height="100vh"
                     class="overflow-y-auto pt-11">
 
                 <v-card-text>
-                    <v-container>
+                    <v-container fluid>
 
                         <v-row>
                             <v-col md="2">
@@ -52,8 +51,7 @@
 
                             </v-col>
                         </v-row>
-                    </v-container>
-                    <v-container>
+
                         <template v-if="editedItem.type === 'Entity'">
                             <v-row>
                                 <v-col cols="12" md="6">
@@ -293,10 +291,6 @@
                             </v-row>
 
                         </template>
-                    </v-container>
-
-                    <v-container>
-
 
                         <v-row v-if="editedItem.actor_profiles?.length" class="position-relative">
                             <v-menu offset-y>
@@ -536,12 +530,10 @@
                                                                 </v-col>
                                                                 <v-col md="6">
                                                                     <mix-i title="{{ _('Seen in a detention center?') }}"
-                                                                           :i18n="translations"
                                                                            v-model="profile.seen_in_detention"></mix-i>
                                                                 </v-col>
                                                                 <v-col md="6">
                                                                     <mix-i v-model="profile.injured"
-                                                                           :i18n="translations"
                                                                            title="{{ _('Injured around time of disappearance?') }}"
                                                                     ></mix-i>
                                                                 </v-col>
@@ -549,7 +541,6 @@
 
                                                                 <v-col md="6">
                                                                     <mix-i v-model="profile.known_dead"
-                                                                           :i18n="translations"
                                                                            title="{{ _('Known to be dead?') }}"></mix-i>
                                                                 </v-col>
                                                             </v-row>
@@ -673,7 +664,6 @@
                                                                 </v-col>
                                                                 <v-col md="6">
                                                                     <mix-ii title="{{ _('Skin Markings') }}"
-                                                                            :i18n="translations"
                                                                             :items="translations.skinMarkings"
                                                                             item-title="tr"
                                                                             item-value="en"
@@ -821,7 +811,6 @@
                                                                 <v-col>
 
                                                                     <mix-iii
-                                                                            :i18n="translations"
                                                                             v-model="profile.reporters"></mix-iii>
 
                                                                 </v-col>
@@ -914,7 +903,7 @@
                                                 :disabled="unrestricted"
                                                 item-title="name"
                                                 return-object
-                                                :items="allowedRoles()"
+                                                :items="allowedRoles"
                                                 multiple
                                                 v-model="editedItem.roles"
                                                 label="{{ _('Restrict Actor to Access Group(s)') }}"

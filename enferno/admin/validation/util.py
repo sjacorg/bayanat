@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import List, Type
 from flask import request
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic import BaseModel, Field, ValidationError, root_validator
 import bleach
 import enferno.utils.typing as t
 from bleach.css_sanitizer import CSSSanitizer, ALLOWED_CSS_PROPERTIES
@@ -64,6 +64,10 @@ def sanitize_string(value: str) -> str:
         ),
     )
     return value
+
+
+def sanitize():
+    return Field(default=None, sa_field_validate=sanitize_string)
 
 
 def get_model_aliases(model: t.Model) -> dict:

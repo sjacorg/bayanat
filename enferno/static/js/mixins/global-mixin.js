@@ -1,4 +1,20 @@
 const globalMixin = {
+  computed: {
+    allowedDateFrom() {
+      if (this.editedEvent?.to_date){
+        // ensure date is not after the to_date
+        return (current) => current <= dayjs(this.editedEvent.to_date).toDate();
+      }
+      return () => true;
+    },
+    allowedDateTo() {
+      if (this.editedEvent?.from_date){
+        // ensure date is not before the from_date
+        return (current) => current >= dayjs(this.editedEvent.from_date).toDate();
+      }
+      return () => true;
+    },
+  },
   data: () => ({
     snackbar: false,
     snackMessage: '',
@@ -80,7 +96,7 @@ const globalMixin = {
                     if (fieldName.startsWith('item.')){
                         fieldName = fieldName.substring(5);
                     }
-                    message += `<strong style="color:#b71c1c;">[${fieldName!=="__root__" ? fieldName : 'Validation Error'}]:</strong> ${response.errors[field]}<br/>`;
+                    message += `<strong style="color:#b71c1c;">[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]:</strong> ${response.errors[field]}<br/>`;
                 }
                 return message;
             }
@@ -90,15 +106,6 @@ const globalMixin = {
             this.snackbar = false;
             this.snackMessage = '';
         },
-
-    toggleSelect(item) {
-      const index = this.selected.findIndex((selectedItem) => selectedItem.id === item.id);
-      if (index > -1) {
-        this.selected.splice(index, 1);
-      } else {
-        this.selected.push({ id: item.id }); // or push(item) if you want to store the whole object
-      }
-    },
 
     saveSettings() {
         axios.put('/settings/save', { settings: this.settings }).then(res => {

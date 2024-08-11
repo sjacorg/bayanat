@@ -1,8 +1,9 @@
 const BulletinResult = Vue.defineComponent({
-  props: ['bulletin', 'hidden', 'showHide', 'i18n'],
+  props: ['bulletin', 'hidden', 'showHide'],
 
   data: () => {
     return {
+      translations: window.translations,
       hide: this.hidden || false,
     }
   },
@@ -11,7 +12,7 @@ const BulletinResult = Vue.defineComponent({
     <template v-if="!hide">
       <v-card v-if="!bulletin.restricted" hover class="ma-2">
         <v-toolbar density="compact" class="d-flex px-2">
-          <v-chip color="primary" variant="flat" size="small">{{ i18n.id_ }} {{ bulletin.id }}</v-chip>
+          <v-chip color="primary" variant="flat" size="small">{{ translations.id_ }} {{ bulletin.id }}</v-chip>
           <v-chip variant="text" :href="bulletin.source_link" target="_blank" class="white--text ml-1" label
                   size="small"># {{ bulletin.originid }}
           </v-chip>
@@ -29,7 +30,7 @@ const BulletinResult = Vue.defineComponent({
 
 
 
-              <v-list-item v-if="bulletin.locations?.length" :title="i18n.locations_">
+              <v-list-item v-if="bulletin.locations?.length" :title="translations.locations_">
                 <v-list-item-subtitle>
                   <v-chip-group column>
                     <v-chip size="small" v-for="location in bulletin.locations" :key="location">
@@ -40,7 +41,7 @@ const BulletinResult = Vue.defineComponent({
               </v-list-item>
 
 
-              <v-list-item v-if="bulletin.sources?.length" :title="i18n.sources_">
+              <v-list-item v-if="bulletin.sources?.length" :title="translations.sources_">
                 <v-list-item-subtitle>
                   <v-chip-group
                       column
@@ -58,7 +59,7 @@ const BulletinResult = Vue.defineComponent({
         
         <v-card-actions class="justify-end">
           <slot name="actions"></slot>
-          <v-btn size="small" v-if="showHide" @click="hide=true" variant="plain"> {{ i18n.hide_ }}</v-btn>
+          <v-btn size="small" v-if="showHide" @click="hide=true" variant="plain"> {{ translations.hide_ }}</v-btn>
           <v-btn size="small" icon="mdi-eye"
                  @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')"
                  color="primary">
@@ -69,7 +70,7 @@ const BulletinResult = Vue.defineComponent({
 
       <v-card disabled elevation="0" v-else class="restricted">
 
-        <v-card-text>{{ bulletin.id }} - {{ i18n.restricted_ }}</v-card-text>
+        <v-card-text>{{ bulletin.id }} - {{ translations.restricted_ }}</v-card-text>
 
       </v-card>
     </template>

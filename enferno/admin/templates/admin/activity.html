@@ -1,4 +1,9 @@
 {% extends 'layout.html' %}
+
+{% block css %}
+    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+{% endblock %}
+
 {% block content %}
 
 {% include 'admin/partials/activity_search_viewer.html' %}
@@ -112,7 +117,7 @@
       </v-card-text>
     </v-card>
 
-    <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+    <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
 
   </v-container>
 </v-main>
@@ -191,6 +196,8 @@
     <script src="/static/js/components/MixII.js"></script>
     <script src="/static/js/components/MixIII.js"></script>
 
+    <script src="/static/js/videojs/video.min.js"></script>
+
 {% if config.GOOGLE_MAPS_API_KEY %}
     {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
 {% endif %}
@@ -209,7 +216,7 @@
     delimiters: delimiters,
     mixins: [globalMixin],
     data: () => ({
-      translations: translations,
+      translations: window.translations,
 
       itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
         itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),

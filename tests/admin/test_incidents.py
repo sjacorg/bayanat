@@ -212,8 +212,8 @@ def test_put_incident_assigned_endpoint(
 ##### PUT /admin/api/incident/assign/<int:id> #####
 
 put_incident_assign_endpoint_roles = [
-    ("admin_client", 400),
-    ("da_client", 400),
+    ("admin_client", 200),
+    ("da_client", 403),
     ("mod_client", 403),
     ("client", 401),
     ("admin_sa_client", 200),

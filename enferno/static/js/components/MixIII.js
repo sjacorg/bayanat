@@ -9,14 +9,11 @@ const MixIII = Vue.defineComponent({
       type: Array,
       default: () => ([]),
     },
-    i18n: {
-      type: Object,
-      default: () => ({}),
-    },
   },
   emits: ['update:modelValue'],
   data() {
     return {
+      translations: window.translations,
       reporters: this.modelValue,
     };
   },
@@ -49,7 +46,7 @@ const MixIII = Vue.defineComponent({
     <v-card class="pa-3">
       <v-toolbar>
         <v-toolbar-title class="d-flex">
-        {{ i18n.reportingPersons_ }}
+        {{ translations.reportingPersons_ }}
         </v-toolbar-title>
         <template #append>
           <v-btn icon="mdi-plus-circle" @click="addReporter" color="primary"></v-btn>
@@ -67,9 +64,9 @@ const MixIII = Vue.defineComponent({
             
           </v-toolbar>
           <v-card-text>
-            <v-text-field :label="i18n.name_" v-model="reporter.name"></v-text-field>
-            <v-textarea rows="1" :label="i18n.contactInfo_" v-model="reporter.contact"></v-textarea>
-            <v-textarea rows="1" :label="i18n.relationship_" v-model="reporter.relationship"></v-textarea>
+            <v-text-field :label="translations.name_" v-model="reporter.name"></v-text-field>
+            <v-textarea rows="1" :label="translations.contactInfo_" v-model="reporter.contact"></v-textarea>
+            <v-textarea rows="1" :label="translations.relationship_" v-model="reporter.relationship"></v-textarea>
           </v-card-text>
         </v-card>
       </v-card-text>

@@ -2,7 +2,7 @@ import os, boto3
 from typing import Any, Literal, Optional
 import pyexifinfo as exiflib
 from docx import Document
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from pdf2image import convert_from_path
 
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity

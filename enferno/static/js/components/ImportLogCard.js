@@ -1,5 +1,5 @@
 const ImportLogCard = Vue.defineComponent({
-  props: ['log', 'i18n'],
+  props: ['log'],
 
   watch: {
     log: function (val, old) {},
@@ -36,6 +36,7 @@ const ImportLogCard = Vue.defineComponent({
 
   data: function () {
     return {
+      translations: window.translations,
       item: {},
     };
   },
@@ -75,35 +76,35 @@ const ImportLogCard = Vue.defineComponent({
 
       <!-- Dates fields -->
       <div class="d-flex">
-        <uni-field :caption="i18n.file_" :english="log.file"></uni-field>
-        <uni-field :caption="i18n.createdDate_" :english="localDate(log.created_at)"></uni-field>
-        <uni-field :caption="i18n.importDate_" :english="localDate(log.imported_at)"></uni-field>
+        <uni-field :caption="translations.file_" :english="log.file"></uni-field>
+        <uni-field :caption="translations.createdDate_" :english="localDate(log.created_at)"></uni-field>
+        <uni-field :caption="translations.importDate_" :english="localDate(log.imported_at)"></uni-field>
       </div>
 
       <!-- Refs -->
       <v-card v-if="log.data.ref && log.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
       color="grey lighten-5">
-        <div class="caption grey--text mr-2">{{ i18n.ref_ }}</div>
+        <div class="caption grey--text mr-2">{{ translations.ref_ }}</div>
         <v-chip x-small v-for="r in log.ref" class="caption black--text mx-1">{{ r }}</v-chip>
       </v-card>
 
       <!-- Imported Item -->
       <v-card outlined color="grey lighten-5" class="ma-2" v-if="item?.id">
         <v-card-text v-if="log.table == 'bulletin'">
-          <div class="pa-2 header-sticky title black--text">{{ i18n.bulletin_ }}</div>
-          <bulletin-result :i18n="i18n" class="mt-1" :bulletin="item"></bulletin-result>
+          <div class="pa-2 header-sticky title black--text">{{ translations.bulletin_ }}</div>
+          <bulletin-result class="mt-1" :bulletin="item"></bulletin-result>
         </v-card-text>
         
          <v-card-text v-if="log.table == 'actor'">
-          <div class="pa-2 header-sticky title black--text">{{ i18n.actor_ }}</div>
-          <actor-result :i18n="i18n" class="mt-1" :actor="item"></actor-result>
+          <div class="pa-2 header-sticky title black--text">{{ translations.actor_ }}</div>
+          <actor-result class="mt-1" :actor="item"></actor-result>
         </v-card-text>
         
       </v-card>
       
 
        <v-card class="mx-2" elevation="0">
-            <v-card-title class="body-2"> {{ i18n.importLog_ }} </v-card-title>
+            <v-card-title class="body-2"> {{ translations.importLog_ }} </v-card-title>
         <v-card-text>
           <div style="white-space: pre-wrap" class="actor-description" > {{ log.log }} </div>
         </v-card-text>

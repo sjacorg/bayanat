@@ -1,5 +1,5 @@
 const ExportCard = Vue.defineComponent({
-  props: ['exp', 'close', 'i18n', 'adminMode'],
+  props: ['exp', 'close', 'adminMode'],
 
   watch: {
     exp: function (val, old) {},
@@ -69,6 +69,7 @@ const ExportCard = Vue.defineComponent({
 
   data: function () {
     return {
+      translations: window.translations,
       expiryFieldDisabled: true,
       showLoadMore: false,
       per_page: 5,
@@ -85,7 +86,7 @@ const ExportCard = Vue.defineComponent({
 
           <!-- Export ID chip -->
           <v-chip pill small label color="gv darken-2" class="white--text">
-            {{ i18n.id_ }} #{{ exp.id }}
+            {{ translations.id_ }} #{{ exp.id }}
           </v-chip>
 
           <!-- Table chip -->
@@ -144,14 +145,14 @@ const ExportCard = Vue.defineComponent({
 
       <!-- Dates fields -->
       <div class="d-flex">
-        <uni-field :caption="i18n.requestedOn_" :english="localDate(exp.created_at)"></uni-field>
-        <uni-field :caption="i18n.expiresOn_" :english="localDate(exp.expires_on)"></uni-field>
+        <uni-field :caption="translations.requestedOn_" :english="localDate(exp.created_at)"></uni-field>
+        <uni-field :caption="translations.expiresOn_" :english="localDate(exp.expires_on)"></uni-field>
       </div>
 
       <!-- Admin actions cards -->
       <v-card  class="mx-2" color="grey lighten-5" v-if="adminMode">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-2"> {{ i18n.adminActions_ }}</v-toolbar-title>
+          <v-toolbar-title class="text-subtitle-2"> {{ translations.adminActions_ }}</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
 
@@ -167,7 +168,7 @@ const ExportCard = Vue.defineComponent({
               prepend-icon="mdi-check"
           >
 
-            {{ i18n.approve_ }}
+            {{ translations.approve_ }}
           </v-btn>
 
           <!-- Reject button -->
@@ -179,8 +180,8 @@ const ExportCard = Vue.defineComponent({
               prepend-icon="mdi-close"
               color="error">
 
-            <span v-if="exp.status=='Approved'">{{ i18n.expireNow_ }}</span>
-            <span v-else>{{ i18n.reject_ }}</span>
+            <span v-if="exp.status=='Approved'">{{ translations.expireNow_ }}</span>
+            <span v-else>{{ translations.reject_ }}</span>
 
           </v-btn>
 
@@ -193,7 +194,7 @@ const ExportCard = Vue.defineComponent({
               size="small"
               prepend-icon="mdi-calendar-edit"
               color="primary">
-            {{ i18n.changeExpiry_ }}
+            {{ translations.changeExpiry_ }}
           </v-btn>
 
           <!-- Set expiry date button -->
@@ -205,7 +206,7 @@ const ExportCard = Vue.defineComponent({
               size="small"
               prepend-icon="mdi-calendar-edit"
               color="primary">
-            {{ i18n.setExpiry_ }}
+            {{ translations.setExpiry_ }}
           </v-btn>
 
         </v-card-text>
@@ -215,7 +216,7 @@ const ExportCard = Vue.defineComponent({
           <v-text-field
               v-if="!expiryFieldDisabled && showChangeExpiry(exp)"
               type="datetime-local"
-              label="{{ i18n.exportExpiry_ }}"
+              label="{{ translations.exportExpiry_ }}"
               v-model="exp.expires_on"
           >
           </v-text-field>
@@ -225,29 +226,29 @@ const ExportCard = Vue.defineComponent({
       <!-- Refs -->
       <v-card v-if="exp.ref && exp.ref.length"  class="ma-2 pa-2 d-flex align-center flex-grow-1"
               >
-        <div class="text-subtitle-2 mr-2">{{ i18n.ref_ }}</div>
+        <div class="text-subtitle-2 mr-2">{{ translations.ref_ }}</div>
         <v-chip x-small v-for="r in exp.ref" class="caption  mx-1">{{ r }}</v-chip>
       </v-card>
 
       <!-- Comment -->
-      <uni-field :caption="i18n.comment_" :english="exp.comment"></uni-field>
+      <uni-field :caption="translations.comment_" :english="exp.comment"></uni-field>
 
       <!-- Related Bulletins -->
       <v-card  color="grey lighten-5" class="ma-2" v-if="items">
         <v-card-text v-if="exp.table == 'bulletin'">
-          <div class="pa-2 header-sticky text-subtitle-2 ">{{ i18n.relatedBulletins_ }}</div>
-          <bulletin-result :i18n="i18n"  v-for="item in items" :bulletin="item"></bulletin-result>
+          <div class="pa-2 header-sticky text-subtitle-2 ">{{ translations.relatedBulletins_ }}</div>
+          <bulletin-result  v-for="item in items" :bulletin="item"></bulletin-result>
         </v-card-text>
 
         <v-card-text v-if="exp.table == 'actor'">
-          <div class="pa-2 header-sticky text-subtitle-2 ">{{ i18n.relatedActors_ }}</div>
-          <actor-result :i18n="i18n"  v-for="item in items" :actor="item"></actor-result>
+          <div class="pa-2 header-sticky text-subtitle-2 ">{{ translations.relatedActors_ }}</div>
+          <actor-result  v-for="item in items" :actor="item"></actor-result>
         </v-card-text>
 
 
         <v-card-text v-if="exp.table == 'incident'">
-          <div class="pa-2 header-sticky text-subtitle-2 ">{{ i18n.relatedIncidents_ }}</div>
-          <incident-result :i18n="i18n"  v-for="item in items" :incident="item"></incident-result>
+          <div class="pa-2 header-sticky text-subtitle-2 ">{{ translations.relatedIncidents_ }}</div>
+          <incident-result  v-for="item in items" :incident="item"></incident-result>
         </v-card-text>
 
 
@@ -259,7 +260,7 @@ const ExportCard = Vue.defineComponent({
               elevation="0"
               @click="loadExportItems"
               v-if="showLoadMore"
-          >{{ i18n.loadMore_ }}
+          >{{ translations.loadMore_ }}
             <v-icon right>mdi-chevron-down</v-icon>
           </v-btn>
         </v-card-actions>

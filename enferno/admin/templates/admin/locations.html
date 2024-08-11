@@ -52,7 +52,7 @@
                                                     {{ _('New Location') }}
                                                 </v-btn>
 
-                                                {% if current_user.roles_in(['Admin']) %}
+                                                {% if current_user.has_role('Admin') %}
                                                         <v-btn
                                                             @click="imDialog=true"
                                                             variant="elevated"
@@ -121,9 +121,11 @@
                                                     v-if="editAllowed()">
                                                 mdi-pencil
                                             </v-icon>
+                                            {% if current_user.has_role('Admin') %}
                                             <v-icon small @click="deleteItem(item)">
                                                 mdi-delete-sweep
                                             </v-icon>
+                                            {% endif %}
                                         </template>
                                         <template v-slot:no-data></template>
                                     </v-data-table-server>
@@ -144,7 +146,7 @@
 
 {% endblock %} {% block js %}
     <script
-            src="/static/tinymce/tinymce.min.js"
+           src="/static/js/tinymce/js/tinymce/tinymce.min.js"
             referrerpolicy="origin">
     </script>
     <script src="/static/js/tinymce-vue.min.js"></script>
@@ -152,6 +154,7 @@
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/components/GlobalMap.js"></script>
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/LocationSearchBox.js"></script>
 
@@ -179,13 +182,13 @@
 
             },
             data: () => ({
+                translations: window.translations,
                 adminValid: false,
                 valid: false,
                 search: '',
                 users: [],
                 roles: [],
                 advSearchOpen: false,
-                translations: translations,
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 dialog: dialog,
                 imDialog: false,
@@ -279,7 +282,7 @@
 
                 locationDrawer: function (val) {
                     if (val === false) {
-
+                        this.location = {};
                         if (this.$route.path !== '/admin/locations/')
                             this.$router.push('/admin/locations/')
                     }
@@ -557,6 +560,7 @@
         app.component('location-search-field', LocationSearchField);
         app.component('dual-field', DualField);
         app.component('geo-map', GeoMap);
+        app.component('GlobalMap', GlobalMap);
         app.use(router).use(vuetify).mount('#app');
     </script>
 {% endblock %}

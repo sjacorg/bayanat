@@ -1,10 +1,10 @@
 const ImportLogStatus = Vue.defineComponent({
   props: {
     item: {},
-    i18n: {},
   },
   data: function () {
     return {
+      translations: window.translations,
       timer: null,
     };
   },

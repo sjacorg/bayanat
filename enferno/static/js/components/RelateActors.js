@@ -1,8 +1,9 @@
 const RelateActors = Vue.defineComponent({
-  props: ['modelValue', 'show', 'exids', 'i18n'],
+  props: ['modelValue', 'show', 'exids'],
   emits: ['update:modelValue', 'relate'],
   data: () => {
     return {
+      translations: window.translations,
       q: {},
       loading: true,
       results: [],
@@ -38,7 +39,7 @@ const RelateActors = Vue.defineComponent({
         })
         .catch((error) => {
           this.showActor = false;
-          this.showSnack(this.i18n.notFound_);
+          this.showSnack(this.translations.notFound_);
         });
     },
 
@@ -61,12 +62,13 @@ const RelateActors = Vue.defineComponent({
           q: [this.q],
         })
         .then((response) => {
-          this.exids = this.exids || [];
           this.loading = false;
           this.total = response.data.total;
 
+          // exclude ids of item and related items
+          const ex_arr = this.exids || [];
           this.results = this.results.concat(
-            response.data.items.filter((x) => !this.exids.includes(x.id)),
+            response.data.items.filter((x) => !ex_arr.includes(x.id)),
           );
 
           if (this.page * this.perPage >= this.total) {
@@ -91,21 +93,25 @@ const RelateActors = Vue.defineComponent({
   },
 
   template: `
-      <v-dialog v-model="visible" max-width="1220">
+      <v-dialog v-model="visible" class="w-sm-100 w-md-75">
       <v-sheet>
 
         <v-container class="fluid fill-height">
           <v-row>
             <v-col cols="12" md="4">
-              <v-card outlined>
-                <actor-search-box @search="reSearch" :i18n="$root.translations" v-model="q"
-                                  :show-op="false"></actor-search-box>
 
-
+              <v-card variant="outlined">
+                <actor-search-box 
+                  @search="reSearch" 
+                  v-model="q"
+                  :show-op="false"
+                  :extra-filters="false">
+                </actor-search-box>
               </v-card>
+
               <v-card tile class="text-center  search-toolbar" elevation="0" color="grey lighten-4">
                <v-card-text>
-                  <v-btn color="primary" @click="reSearch">{{ i18n.search_ }}</v-btn>
+                  <v-btn color="primary" @click="reSearch">{{ translations.search_ }}</v-btn>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -114,7 +120,7 @@ const RelateActors = Vue.defineComponent({
               <v-card :loading="loading">
 
                 <v-toolbar class="handle">
-                    <v-toolbar-title>{{ i18n.advSearch_ }}</v-toolbar-title>
+                    <v-toolbar-title>{{ translations.advSearch_ }}</v-toolbar-title>
                   <v-spacer></v-spacer>
                   <v-btn @click="visible=false" icon="mdi-close"></v-btn>
                 </v-toolbar>
@@ -129,9 +135,9 @@ const RelateActors = Vue.defineComponent({
 
                 <v-card class="pa-2" tile color="grey lighten-4">
 
-                  <actor-result :i18n="i18n" v-for="(item, i) in results" :key="i" :actor="item" :show-hide="true">
+                  <actor-result v-for="(item, i) in results" :key="i" :actor="item" :show-hide="true">
                     <template v-slot:actions>
-                      <v-btn @click="relateItem(item)" variant="elevated" color="primary">{{ i18n.relate_ }}
+                      <v-btn @click="relateItem(item)" variant="elevated" color="primary">{{ translations.relate_ }}
                       </v-btn>
                     </template>
                   </actor-result>
@@ -142,7 +148,7 @@ const RelateActors = Vue.defineComponent({
                   <v-btn icon @click="loadMore" v-if="moreItems" color="third">
                     <v-icon>mdi-dots-horizontal</v-icon>
                   </v-btn>
-                  <v-sheet small v-else class="heading" color=" grey--text"> {{ i18n.noResults_ }} </v-sheet>
+                  <v-sheet small v-else class="heading" color=" grey--text"> {{ translations.noResults_ }} </v-sheet>
                   <v-spacer></v-spacer>
                 </v-card-actions>
               </v-card>

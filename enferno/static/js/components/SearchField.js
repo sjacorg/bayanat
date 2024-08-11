@@ -16,11 +16,15 @@ const SearchField = Vue.defineComponent({
     disabled: Boolean,
     returnObject: {
       type: Boolean,
-      default: true, // Default value set to true
+      default: true,
     },
     rules: {
       type: Array,
       default: () => [(v) => true],
+    },
+    showCopyIcon: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['update:model-value'],
@@ -113,40 +117,60 @@ const SearchField = Vue.defineComponent({
           this.loading = false;
         });
     }, 350),
+    copyValue() {
+      let textToCopy = '';
+      if (this.multiple && Array.isArray(this.modelValue)) {
+        textToCopy = this.modelValue.map(item => this.returnObject ? item[this.itemTitle] : item).join(', ');
+      } else if (this.returnObject && typeof this.modelValue === 'object') {
+        textToCopy = this.modelValue[this.itemTitle] || '';
+      } else {
+        textToCopy = this.modelValue || '';
+      }
+
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        // You might want to show a notification here that the text was copied
+        console.log('Copied to clipboard');
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    },
   },
   template: `
-      <v-combobox
-          variant="outlined"
-          ref="fld"
-          :disabled="disabled"
-          :menu-props="{ offsetY: true }"
-          :auto-select-first="true"
-          :model-value="checkValue"
-          @update:model-value="updateValue"
-          :hide-no-data="true"
-          :no-filter="true"
-          :item-color="'secondary'"
-          :label="label"
-          :items="items"
-          :item-title="itemTitle"
-          :item-value="itemValue"
-          :prepend-inner-icon="'mdi-magnify'"
-          :multiple="multiple"
-          :chips="true"
-          :closable-chips="true"
-          :clearable="true"
-          @click:input="search"
-          @update:focused="search"
-          :return-object="returnObject"
-          @click:clear="search"
-          v-model:search="searchInput"
-          @update:search="search"
-          v-bind="$attrs"
-          :loading="loading"
-          :rules="rules"
-      >
-      </v-combobox>
-    `,
+    <v-combobox
+      variant="outlined"
+      ref="fld"
+      :disabled="disabled"
+      :menu-props="{ offsetY: true }"
+      :auto-select-first="true"
+      :model-value="checkValue"
+      @update:model-value="updateValue"
+      :hide-no-data="true"
+      :no-filter="true"
+      :item-color="'secondary'"
+      :label="label"
+      :items="items"
+      :item-title="itemTitle"
+      :item-value="itemValue"
+      :prepend-inner-icon="'mdi-magnify'"
+      :multiple="multiple"
+      :chips="true"
+      :closable-chips="true"
+      :clearable="true"
+      @click:input="search"
+      @update:focused="search"
+      :return-object="returnObject"
+      @click:clear="search"
+      v-model:search="searchInput"
+      @update:search="search"
+      v-bind="$attrs"
+      :loading="loading"
+      :rules="rules"
+      :append-icon="showCopyIcon ? 'mdi-content-copy' : ''"
+      @click:append="showCopyIcon ? copyValue() : ''"
+    >
+    </v-combobox>
+  `,
 });
 
 const LocationSearchField = Vue.defineComponent({

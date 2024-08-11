@@ -4,7 +4,8 @@ from uuid import uuid4
 
 from geoalchemy2.shape import WKTElement
 
-
+import datetime
+from datetime import datetime as dt
 import pytest
 
 from enferno.admin.models import (
@@ -40,7 +41,7 @@ from enferno.admin.models import (
     Query,
     Source,
 )
-from enferno.user.models import Role, User
+from enferno.user.models import Role, User, WebAuthn
 
 # region: factory models
 
@@ -202,7 +203,9 @@ class EventFactory(factory.Factory):
     comments = factory.Faker("text", max_nb_chars=255)
     comments_ar = factory.LazyAttribute(lambda obj: f"{obj.comments} (Ar)"[:255])
     from_date = factory.Faker("date")
-    to_date = factory.Faker("date")
+    to_date = factory.LazyAttribute(
+        lambda obj: datetime.datetime.fromisoformat(obj.from_date) + datetime.timedelta(days=1)
+    )
     estimated = random.choice([True, False])
 
 
@@ -325,6 +328,24 @@ class GeoLocationTypeFactory(factory.Factory):
     title_tr = factory.Sequence(lambda n: f"GeoLocationType Tr {n}")
 
 
+class WebAuthnFactory(factory.Factory):
+    class Meta:
+        model = WebAuthn
+
+    credential_id = factory.Faker("binary", length=64)
+    public_key = factory.Faker("binary", length=64)
+    sign_count = factory.Faker("random_int", min=0, max=1000)
+    transports = factory.Faker("random_choices", elements=("usb", "nfc", "ble", "internal"))
+    extensions = factory.Faker("random_choices", elements=("credProps", "largeBlob", "uvm"))
+    lastuse_datetime = factory.Faker("date_time_this_month")
+    name = factory.Faker("word")
+    usage = factory.Faker(
+        "random_element", elements=("first_factor", "multi_factor", "passwordless")
+    )
+    backup_state = factory.Faker("boolean")
+    device_type = factory.Faker("random_element", elements=("platform", "cross-platform"))
+
+
 class UserFactory(factory.Factory):
     class Meta:
         model = User
@@ -335,6 +356,9 @@ class UserFactory(factory.Factory):
     active = True
     name = factory.Sequence(lambda n: f"Name {n}")
     fs_uniquifier = uuid4().hex
+    tf_totp_secret = uuid4().hex
+    tf_phone_number = factory.Faker("phone_number")
+    tf_primary_method = factory.Faker("random_element", elements=["sms", "authenticator", "email"])
 
 
 class RoleFactory(factory.Factory):
@@ -386,6 +410,22 @@ class GeoLocationFactory(factory.Factory):
 
 # endregion: factory models
 # region: factory fixtures
+##### USERS #####
+
+
+@pytest.fixture
+def create_webauthn_for(request, session):
+    def _create_webauthn(user):
+        webauthn = WebAuthnFactory()
+        webauthn.user_id = user.id
+        session.add(webauthn)
+        session.commit()
+        request.addfinalizer(lambda: session.delete(webauthn))
+        return webauthn
+
+    return _create_webauthn
+
+
 ##### LABELS #####
 
 

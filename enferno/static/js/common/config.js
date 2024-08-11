@@ -53,14 +53,11 @@ const vuetifyConfig = {
                 dark: true, // Explicitly set the dark theme as dark
                 colors: {
                     white: '#333', // Adapted to the more complex structure of your dark theme
-                    'grey-lighten-4': '#222', // Only one shade represented for simplicity
-                    'grey-lighten-5': '#111', // Base color, assuming primary shade
                     // Adapted to the more complex structure of your dark theme
                     primary: '#09a7a6',
                     grey: '#999', // Only one shade represented for simplicity
                     'blue-grey': '#222', // Base color, assuming primary shade
                     black: '#ddd', // Base color
-                    yellow: '#989842',
                     gv: '#019985', // Darken2 shade assumed for simplicity
                     lime: '#303030',
                     teal: '#008080',
@@ -194,10 +191,6 @@ if (__settings__.dark) {
     tinyConfig.content_css = 'dark';
 }
 
-// define static data contants for different fields
-
-let i = translations;
-
 // helper prototype functions
 
 // removes an item from the array based on its id
@@ -312,7 +305,7 @@ const aggregateBulletinLocations = function (bulletin) {
     return locations;
 };
 
-var aggregateActorLocations = function (actor) {
+const aggregateActorLocations = function (actor) {
     let locations = [];
 
     const addLocation = (place, type) => {
@@ -332,15 +325,20 @@ var aggregateActorLocations = function (actor) {
 
     // Event locations
     if (actor.events?.length) {
+
+
         const eventLocations = prepareEventLocations(actor.id, actor.events);
+
         locations = locations.concat(eventLocations);
     }
+    
 
     return locations;
 };
 
 function prepareEventLocations(parentId, events) {
     let output = events.filter((x) => x.location && x.location.latlng);
+
     // sort events by from/to date and leave null date events at the end
     output.sort((a, b) => {
         const aDate = a.from_date || a.to_date;
@@ -356,6 +354,7 @@ function prepareEventLocations(parentId, events) {
             return -1;
         }
     });
+
     return output.map((x, i) => {
         //attach serial number to events for map reference
         x.location.number = i + 1;

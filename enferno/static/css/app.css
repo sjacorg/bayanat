@@ -4,9 +4,8 @@
     font-style: normal;
     font-weight: 400;
     src: local("Tajawal"), local("Tajawal-Regular"),
-        url("../font/tajawal-v3-latin_arabic-regular.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */
-        url("../font/tajawal-v3-latin_arabic-regular.woff") format("woff");
+    url("../font/tajawal-v3-latin_arabic-regular.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/tajawal-v3-latin_arabic-regular.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -16,9 +15,8 @@
     font-style: normal;
     font-weight: 700;
     src: local("Tajawal Bold"), local("Tajawal-Bold"),
-        url("../font/tajawal-v3-latin_arabic-700.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */
-        url("../font/tajawal-v3-latin_arabic-700.woff") format("woff");
+    url("../font/tajawal-v3-latin_arabic-700.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/tajawal-v3-latin_arabic-700.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -28,9 +26,8 @@
     font-style: normal;
     font-weight: 400;
     src: local("Roboto"), local("Roboto-Regular"),
-        url("../font/roboto-v20-latin-regular.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */
-        url("../font/roboto-v20-latin-regular.woff") format("woff");
+    url("../font/roboto-v20-latin-regular.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/roboto-v20-latin-regular.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -40,9 +37,8 @@
     font-style: normal;
     font-weight: 700;
     src: local("Roboto Bold"), local("Roboto-Bold"),
-        url("../font/roboto-v20-latin-700.woff2") format("woff2"),
-        /* Chrome 26+, Opera 23+, Firefox 39+ */
-        url("../font/roboto-v20-latin-700.woff") format("woff");
+    url("../font/roboto-v20-latin-700.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */ url("../font/roboto-v20-latin-700.woff") format("woff");
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
@@ -53,14 +49,6 @@
 .v-application .headline,
 .v-application .title {
     font-family: "Tajawal", sans-serif !important;
-}
-
-tbody tr td:nth-child(4) {
-    color: #424242;
-}
-
-.theme--dark tbody tr td:nth-child(4) {
-    color: #3bd9d9;
 }
 
 .theme--dark .jsondiffpatch-delta {
@@ -75,6 +63,14 @@ tbody tr td:nth-child(4) {
 
 .v-chip {
     /* font-family: "Tajawal", sans-serif !important; */
+}
+
+.v-toolbar {
+    background-color: white;
+}
+
+.v-theme--dark .v-toolbar {
+    background-color: #212121;
 }
 
 button.swh {
@@ -94,10 +90,9 @@ button.swh {
     object-fit: cover;
 }
 
-#bulletins-dt tr, #export-dt tr, #log-dt tr , #users-dt tr{
+#bulletins-dt tr, #export-dt tr, #log-dt tr, #users-dt tr {
     cursor: pointer;
 }
-
 
 
 .event-card {
@@ -442,13 +437,13 @@ input[type="date"]::-webkit-input-placeholder {
 }
 
 .d-sep {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    min-height: 32px;
+    border: 1px solid #000;
+    border-radius: 4px;
     margin: auto;
-    width: 48px;
-    padding: 4px;
-    text-align: center;
+    height: 26px;
+    min-width: 48px;
+    padding: 2px;
+    text-align: left;
 }
 
 
@@ -497,6 +492,40 @@ input[type="date"]::-webkit-input-placeholder {
     text-decoration: none;
 }
 
+
+#graph-layout {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    overflow: hidden;
+    height: 100%;
+    background: #fff;
+}
+
+.graph-footer {
+    position: absolute;
+    bottom: 1px;
+    left: 1px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.23);
+    padding: 10px;
+}
+
+
+#graph-layout .force-graph-container {
+
+
+    overflow: hidden;
+}
+
+#graph {
+    height: 100%;
+
+}
+
+#graph canvas {
+    height: 100% !important;
+}
+
 .graph-node {
     max-width: 80px;
     padding: 1px 2px;
@@ -518,40 +547,6 @@ input[type="date"]::-webkit-input-placeholder {
 
 }
 
-.graph-wrap {
-    position: relative;
-    display: grid;
-    place-content: center;
-
-}
-
-.graph-wrap .graph-legend {
-    padding: 12px;
-    height: 40px;
-    top: 10px;
-    left: 10px;
-    position: absolute;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    background: rgba(215, 215, 215, 0.15);
-
-
-}
-
-.graph-wrap .graph-tip {
-    padding: 12px;
-    height: 40px;
-    bottom: 20px;
-    left: 10px;
-    position: absolute;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    background: rgba(215, 215, 215, 0.15);
-
-
-}
 
 .graph-legend .caption {
     display: flex;
@@ -582,8 +577,6 @@ span.map-bid {
 span.map-bid:empty {
     display: none;
 }
-
-
 
 
 /* access roles styles */
@@ -756,9 +749,8 @@ div.jsondiffpatch-child-node-type-array:after {
 
 /* darkmode leaflet hack */
 .v-theme--dark .leaflet-container {
-  filter: invert(90%) brightness(1.2) contrast(1.2)
+    filter: invert(90%) brightness(1.2) contrast(1.2)
 }
-
 
 
 /* sticky bottom bars */
@@ -779,7 +771,7 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 
 
-.security form  *:has(input[type="radio"])  {
+.security form *:has(input[type="radio"]) {
     display: flex;
     align-items: center;
     gap: 10px;

@@ -4,10 +4,6 @@ const RelatedIncidentsCard = Vue.defineComponent({
       type: Object,
       required: true,
     },
-    i18n: {
-      type: Object,
-      required: true,
-    },
      relationInfo: {
       type: Array,
       required: true,
@@ -15,6 +11,7 @@ const RelatedIncidentsCard = Vue.defineComponent({
   },
   data() {
     return {
+      translations: window.translations,
       incidentPage: 1, // Pagination for incident relations
       incidentLM: false, // Load more flag for incidents
       extractValuesById: extractValuesById, // Reuse the existing method for extracting values by ID
@@ -50,24 +47,30 @@ const RelatedIncidentsCard = Vue.defineComponent({
     },
     probability(item) {
       // Access 'probs' object for incident probabilities
-      return this.i18n.probs[item.probability].tr;
+      return this.translations.probs[item.probability].tr;
     }
+  },
+  computed: {
+    getRelTo(){
+      const c = this.entity.class.toLowerCase()[0];
+      return `relto${c}`;
+    },
   },
   template: `
     <v-card class="ma-2" v-if="entity.incident_relations && entity.incident_relations.length">
       <v-toolbar density="compact">
-        <v-toolbar-title class="text-subtitle-1">{{ i18n.relatedIncidents_ }}
+        <v-toolbar-title class="text-subtitle-1">{{ translations.relatedIncidents_ }}
           <v-btn icon="mdi-image-filter-center-focus-strong" size="x-small" variant="text"
-                 :href="'/admin/incidents/?reltob='+entity.id" target="_self">
+                 :href="'/admin/incidents/?'+this.getRelTo+'='+entity.id" target="_self">
           </v-btn>
         </v-toolbar-title>
       </v-toolbar>
       <v-card-text>
-        <incident-result :i18n="i18n" v-for="(item, index) in entity.incident_relations" :key="index"
+        <incident-result v-for="(item, index) in entity.incident_relations" :key="index"
                          :incident="item.incident">
           <template v-slot:header>
             <v-sheet  class="pa-2">
-              <v-list-item-title variant="flat"  class="text-caption my-2">{{ i18n.relationshipInfo_ }}</v-list-item-title>
+              <v-list-item-title variant="flat"  class="text-caption my-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
               <v-chip v-if="item.probability !== null"  size="small" label>{{ probability(item) }}</v-chip>
               <v-chip v-for="r in extractValuesById(relationInfo, [item.related_as], 'title')" v-if="item.related_as"
                      class="mx-2" color="grey" size="small" label>{{ r }}</v-chip>
@@ -78,7 +81,7 @@ const RelatedIncidentsCard = Vue.defineComponent({
       </v-card-text>
       <v-card-actions>
         <v-btn class="ma-auto" variant="tonal" append-icon="mdi-chevron-down"   color="grey" elevation="0"
-               @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">{{ i18n.loadMore_ }}
+               @click="loadIncidentRelations(incidentPage)" v-if="incidentLM">{{ translations.loadMore_ }}
         </v-btn>
       </v-card-actions>
     </v-card>

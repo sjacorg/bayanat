@@ -51,7 +51,7 @@
                                             <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Language') }}</h4>
                                             <v-btn-toggle divided variant="outlined" color="" mandatory class="mb-3"
                                                           v-model="eitem.BABEL_DEFAULT_LOCALE">
-                                                <v-btn size="small" v-for="(name, code) in eitem.LANGUAGES"
+                                                <v-btn size="small" v-for="(name, code) in languages"
                                                        :value="code">
                                                     ${name}
                                                 </v-btn>

@@ -8,16 +8,13 @@ const RelatedActorsCard = Vue.defineComponent({
       type: Array,
       required: true,
     },
-    i18n: {
-      type: Object,
-      required: true,
-    },
   },
   data() {
     return {
+      translations: window.translations,
       actorPage: 1, // Now managed internally for actor relations pagination
       actorLM: false, // Initially false, updated based on API response for actor relations
-        extractValuesById: extractValuesById, // Reuse the existing method for extracting values by ID
+      extractValuesById: extractValuesById, // Reuse the existing method for extracting values by ID
     };
   },
   watch: {
@@ -48,25 +45,31 @@ const RelatedActorsCard = Vue.defineComponent({
         });
     },
     probability(item) {
-      // Ensure this method correctly accesses the 'probs' object within 'i18n' for actors
-      return this.i18n.probs[item.probability].tr;
+      // Ensure this method correctly accesses the 'probs' object within 'translations' for actors
+      return this.translations.probs[item.probability].tr;
+    }
+  },
+  computed: {
+    getRelTo(){
+      const c = this.entity.class.toLowerCase()[0];
+      return `relto${c}`;
     }
   },
   template: `
       <v-card class="ma-2" v-if="entity.actor_relations && entity.actor_relations.length">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.relatedActors_ }}
+          <v-toolbar-title class="text-subtitle-1">{{ translations.relatedActors_ }}
             <v-btn icon="mdi-image-filter-center-focus-strong" variant="text" size="x-small"
-                   :href="'/admin/actors/?reltob='+entity.id" target="_self">
+                   :href="'/admin/actors/?'+this.getRelTo+'='+entity.id" target="_self">
             </v-btn>
           </v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <actor-result :i18n="i18n" v-for="(item,index) in entity.actor_relations" :key="index"
+          <actor-result v-for="(item,index) in entity.actor_relations" :key="index"
                         :actor="item.actor">
             <template v-slot:header>
               <v-sheet color="yellow" class="pa-2">
-                <v-list-item-title variant="flat"  class="text-caption my-2">{{ i18n.relationshipInfo_ }}</v-list-item-title>
+                <v-list-item-title variant="flat"  class="text-caption my-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
                 <v-chip v-if="item.probability !== null" size="small" label>{{ probability(item) }}
                 </v-chip>
                 <v-chip class="ma-1" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')"
@@ -81,7 +84,7 @@ const RelatedActorsCard = Vue.defineComponent({
           <v-btn class="ma-auto" size="small"
                  variant="tonal"  append-icon="mdi-chevron-down" color="grey"
                  @click="loadActorRelations(actorPage)"
-                 v-if="actorLM">{{ i18n.loadMore_ }}
+                 v-if="actorLM">{{ translations.loadMore_ }}
           </v-btn>
         </v-card-actions>
       </v-card>

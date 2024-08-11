@@ -19,34 +19,37 @@
             </v-toolbar>
 
             <v-card-text>
-                <v-autocomplete
+                <div class="d-flex">
+                    <search-field
                         v-model="bulk.assigned_to_id"
-                        label="{{ _('Assigned To') }}"
-                        :items="users"
-                        @input.native="searchUsers"
-                        @focus="searchUsers"
-                        outline
+                        api="/admin/api/users/"
                         item-title="name"
                         item-value="id"
-                        clearable
-                >
-                </v-autocomplete>
+                        :return-object="false"
+                        :multiple="false"
+                        label="{{ _('Assigned To') }}"
+                        :disabled="bulk.assigneeClear"
+                    ></search-field>
+                    <v-checkbox v-model="bulk.assigneeClear" @update:model-value="clearAssignee" label="{{ _('Clear Assignee') }}"></v-checkbox>
+                </div>
             </v-card-text>
 
             <v-card-text>
-                <v-autocomplete
+                <div class="d-flex">
+                    <search-field
                         v-model="bulk.first_peer_reviewer_id"
-                        label="{{ _('Peer Reviewer') }}"
-                        :items="users"
-                        @input.native="searchUsers"
-                        @focus="searchUsers"
-                        outline
+                        api="/admin/api/users/"
                         item-title="name"
                         item-value="id"
-                        clearable
-                >
-                </v-autocomplete>
+                        :multiple="false"
+                        :return-object="false"
+                        label="{{ _('Peer Reviewer') }}"
+                        :disabled="bulk.reviewerClear"
+                    ></search-field>
+                    <v-checkbox v-model="bulk.reviewerClear" @update:model-value="clearReviewer" label="{{ _('Clear Reviewer') }}"></v-checkbox>
+                </div>
             </v-card-text>
+            
             <v-card-text>
 
                 <v-select
@@ -72,7 +75,7 @@
                         label="{{ _('Access Groups') }}"
                         v-model="bulk.roles"
                 ></search-field>
-                <v-checkbox small v-model="bulk.rolesReplace" label="{{ _('Replace') }}"></v-checkbox>
+                <v-checkbox v-model="bulk.rolesReplace" label="{{ _('Replace') }}"></v-checkbox>
                 </div>
 
             </v-card-text>

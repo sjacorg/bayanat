@@ -58,6 +58,7 @@ const GeoMap = Vue.defineComponent({
 
   data: function () {
     return {
+      translations: window.translations,
       mapId: 'map-' + this.$.uid,
       map: null,
       mapKey: 0,
@@ -169,8 +170,8 @@ const GeoMap = Vue.defineComponent({
       this.map.addControl(
         new L.Control.Fullscreen({
           title: {
-            false: this.$root.translations.enterFullscreen_,
-            true: this.$root.translations.exitFullscreen_,
+            false: this.translations.enterFullscreen_,
+            true: this.translations.exitFullscreen_,
           },
         }),
       );

@@ -1,10 +1,10 @@
 const ExportDownload = Vue.defineComponent({
   props: {
     item: {},
-    i18n: {},
   },
   data: function () {
     return {
+      translations: window.translations,
       timer: null,
     };
   },
@@ -17,7 +17,6 @@ const ExportDownload = Vue.defineComponent({
 
   mounted: function () {
     this.setupInterval();
-    console.log(this.i18n)
   },
 
   methods: {
@@ -76,7 +75,7 @@ const ExportDownload = Vue.defineComponent({
             </v-icon>
             </template>
             </v-tooltip>
-            <v-tooltip location="top" :text="i18n.download_">
+            <v-tooltip location="top" :text="translations.download_">
             <template #activator="{props}">
             <v-btn @click.stop="" 
                   v-bind="props"

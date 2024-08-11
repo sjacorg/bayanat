@@ -42,7 +42,7 @@
 
                         <template v-slot:item.download="{item}">
 
-                            <export-download :item="item" :i18n="translations"></export-download>
+                            <export-download :item="item"></export-download>
 
                         </template>
 
@@ -85,7 +85,7 @@
                 </v-card-text>
             </v-card>
 
-            <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+            <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
 
 
         </v-container>

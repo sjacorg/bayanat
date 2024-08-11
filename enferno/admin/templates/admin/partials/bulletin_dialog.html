@@ -160,7 +160,7 @@
 
                         <v-row>
                             <v-col cols="12">
-                                <global-map :i18n="translations" ref="globalmap" :model-value="compLocations"></global-map>
+                                <global-map ref="globalmap" :model-value="compLocations"></global-map>
 
                             </v-col>
                         </v-row>
@@ -179,7 +179,7 @@
                         <v-row>
                             <v-col col="12">
                                 <geo-locations ref="geolocs" @locations-updated="geoLocationsUpdated"
-                                               :others="editedItem.geoLocations" :i18n="translations"
+                                               :others="editedItem.geoLocations"
                                                v-model="editedItem.geoLocations"></geo-locations>
 
 
@@ -281,7 +281,7 @@
                                             :disabled="unrestricted"
                                             item-title="name"
                                             return-object
-                                            :items="allowedRoles()"
+                                            :items="allowedRoles"
                                             multiple
                                             v-model="editedItem.roles"
                                             label="{{ _('Restrict Bulletin to Access Group(s)') }}"

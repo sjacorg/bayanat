@@ -3,7 +3,11 @@ const MPField = Vue.defineComponent({
     title: String,
     field: [String, Boolean, Array, Object],
     type: Number,
-    i18n: Object,
+  },
+  data: function () {
+    return {
+      translations: window.translations,
+    };
   },
   computed: {
     output() {
@@ -34,9 +38,9 @@ const MPField = Vue.defineComponent({
     formatReporter(rep) {
       const { name, contact, relationship } = rep;
       const output = [
-        name && `${this.i18n.name_}: ${name}`,
-        contact && `${this.i18n.contact_}: ${contact}`,
-        relationship && `${this.i18n.relationship_}: ${relationship}`,
+        name && `${this.translations.name_}: ${name}`,
+        contact && `${this.translations.contact_}: ${contact}`,
+        relationship && `${this.translations.relationship_}: ${relationship}`,
       ]
         .filter(Boolean)
         .join('<br>');

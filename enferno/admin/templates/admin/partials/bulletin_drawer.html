@@ -15,8 +15,7 @@
     </v-container>
 
 
-    <bulletin-card :i18n="translations"
-                   v-if="bulletinDrawer && bulletin"
+    <bulletin-card v-if="bulletinDrawer && bulletin"
                    :show-edit="true" @edit="editItem"
                    :log="true"
                    :diff="true"
@@ -24,7 +23,7 @@
                    close="true"
                    @close="bulletinDrawer=false"
                    :bulletin="bulletin"></bulletin-card>
-    <preview-card :i18n="translations" ref="prev" :item="pitem" v-model="preview"></preview-card>
+    <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
     <pdf-viewer ref="pdfViewer"></pdf-viewer>
-        <visualization ref="viz" :i18n="translations"></visualization>
+        <visualization ref="viz"></visualization>
 </v-navigation-drawer>

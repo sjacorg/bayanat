@@ -9,26 +9,18 @@ const IncidentSearchBox = Vue.defineComponent({
     },
     extraFilters: {
       type: Boolean,
-    },
-    i18n: {
-      type: Object,
+      default: true,
     },
     roles: {
       type: Array,
-    },
-    isAdmin: {
-      type: Boolean,
-      default: false,
     },
   },
 
   emits: ['update:modelValue', 'search'],
   data: () => {
     return {
-          translations: window.translations,
-
+      translations: window.translations,
       q: {},
-
       potentialViolationsCategories: [],
       claimedViolationsCategories: [],
     };
@@ -76,7 +68,7 @@ const IncidentSearchBox = Vue.defineComponent({
                 <v-text-field
 
                     v-model="q.tsv"
-                    :label="i18n.contains_"
+                    :label="translations.contains_"
                     clearable
                     @keydown.enter="$emit('search',q)"
                 ></v-text-field>
@@ -84,91 +76,89 @@ const IncidentSearchBox = Vue.defineComponent({
                 <v-text-field
 
                     v-model="q.extsv"
-                    :label="i18n.notContains_"
+                    :label="translations.notContains_"
                     clearable
                 ></v-text-field>
               </v-col>
             </v-row>
 
             <v-row>
-              <v-col md="6">
-                <div class="d-flex flex-wrap">
-                  <pop-date-field
-                      :i18n="translations"
-                      :label="i18n.createdDate_"
+              <v-col  md="12" >
+                  <pop-date-range-field
+                      :label="translations.createdDate_"
                       v-model="q.created"
                   />
-                </div>
               </v-col>
 
-              <v-col md="6">
-                <div class="d-flex flex-wrap">
-                  <pop-date-field
-                      :i18n="translations"
-                      :label="i18n.updatedDate_"
+              <v-col  md="12">
+                  <pop-date-range-field
+                      :label="translations.updatedDate_"
                       v-model="q.updated"
                   />
-                </div>
               </v-col>
             </v-row>
 
             <v-row>
-              <v-col md="12">
-                <v-alert  class="pa-5 my-3">
-                  <div class="d-flex align-baseline justify-lg-space-between">
+            <v-col md="12">
+              <v-card>
+                <v-toolbar :title=" translations.events_ ">
+                  
+                </v-toolbar>
+                <v-card-text class="d-flex flex-wrap align-enter ga-2">
+
+                  
+                  
+                  
+                  <pop-date-range-field
+                      
+                      :label="translations.eventDate_"
+                      v-model="q.edate"
+                      class="mt-1"
+                  ></pop-date-range-field>
+                  
+                  <v-checkbox   :label="translations.singleEvent_"  v-model="q.singleEvent" color="primary" 
+                             ></v-checkbox>
+                  
+                </v-card-text>
+                <div class="d-flex flex-wrap align-center ga-2">
 
 
-                    <span class="black--text font-weight-bold text-h6">{{ i18n.events_ }}</span>
-                    <v-checkbox :label="i18n.singleEvent_"  v-model="q.singleEvent" color="primary" 
-                                class="ma-3"></v-checkbox>
-                  </div>
 
-
-                  <div class="d-flex align-baseline">
-                    <pop-date-field
-                        :i18n="translations"
-                        :label="i18n.eventDate_"
-                        v-model="q.edate"
-
-                        class="mt-2"
-
-                    />
-
-
-                    <search-field
-                        class="ml-6 mb-3"
-                        v-model="q.etype"
-                        api="/admin/api/eventtypes/"
-                        :query-params="{ typ: 'for_bulletin' }"
-                        item-title="title"
-                        item-value="id"
-                        :multiple="false"
-                        :label="i18n.eventType_"
-                    ></search-field>
-
-
-                  </div>
-
-
-                  <location-search-field
-                      v-model="q.elocation"
-                      api="/admin/api/locations/"
-                      item-title="full_string"
+                  <search-field
+                      
+                      class="w-100 mx-2"
+                      
+                      v-model="q.etype"
+                      api="/admin/api/eventtypes/"
+                      :query-params="{ typ: 'for_bulletin' }"
+                      item-title="title"
                       item-value="id"
                       :multiple="false"
-                      :label="i18n.includeEventLocations_"
-                  ></location-search-field>
+                      :label="translations.eventType_"
+                  ></search-field>
+
+                  
+                <location-search-field
+                    class="w-100 mx-2"
+                    
+                    v-model="q.elocation"
+                    api="/admin/api/locations/"
+                    item-title="full_string"
+                    item-value="id"
+                    :multiple="false"
+                    :label="translations.includeEventLocations_"
+                ></location-search-field>
+
+                </div>
+              </v-card> 
+
+            </v-col>
+          </v-row>
 
 
-                </v-alert>
-
-              </v-col>
-            </v-row>
-
-
-            <v-row v-if="isAdmin">
+            <v-row>
               <v-col md="9">
-                <span class="caption">{{ i18n.accessRoles_ }}</span>
+                <span class="caption">{{ translations.accessRoles_ }}</span>
                 <v-chip-group
                     column
                     multiple
@@ -179,7 +169,7 @@ const IncidentSearchBox = Vue.defineComponent({
                 </v-chip-group>
               </v-col>
               <v-col md="3">
-                <span class="caption">{{ i18n.unrestricted_ }}</span>
+                <span class="caption">{{ translations.unrestricted_ }}</span>
                 <v-switch v-model="q.norole"></v-switch>
               </v-col>
             </v-row>
@@ -187,7 +177,7 @@ const IncidentSearchBox = Vue.defineComponent({
 
             <v-row v-if="extraFilters">
               <v-col>
-                <span class="caption">{{ i18n.assignedUser_ }}</span>
+                <span class="caption">{{ translations.assignedUser_ }}</span>
 
 
                 <v-chip-group
@@ -202,7 +192,7 @@ const IncidentSearchBox = Vue.defineComponent({
 
             <v-row v-if="extraFilters">
               <v-col cols="12">
-                <span class="caption">{{ i18n.reviewer_ }}</span>
+                <span class="caption">{{ translations.reviewer_ }}</span>
 
                 <v-chip-group
                     column
@@ -217,7 +207,7 @@ const IncidentSearchBox = Vue.defineComponent({
 
             <v-row v-if="extraFilters">
               <v-col cols="12">
-                <span class="caption pt-2">{{ i18n.workflowStatus_ }}</span>
+                <span class="caption pt-2">{{ translations.workflowStatus_ }}</span>
 
 
                 <v-chip-group
@@ -235,19 +225,19 @@ const IncidentSearchBox = Vue.defineComponent({
 
             <v-row>
               <v-col cols="12">
-                <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
+                <span class="caption pt-2">{{ translations.reviewAction_ }}</span>
                 <v-chip-group column v-model="q.reviewAction">
-                  <v-chip :value="i18n.noReviewNeeded_" label small filter outlined>{{ i18n.noReviewNeeded_ }}</v-chip>
-                  <v-chip :value="i18n.needsReview_" label small filter outlined>{{ i18n.needsReview_ }}</v-chip>
+                  <v-chip :value="translations.noReviewNeeded_" label small filter outlined>{{ translations.noReviewNeeded_ }}</v-chip>
+                  <v-chip :value="translations.needsReview_" label small filter outlined>{{ translations.needsReview_ }}</v-chip>
 
                 </v-chip-group>
 
               </v-col>
             </v-row>
 
-            <v-row v-if="extraFilters">
+            <v-row>
               <v-col cols="12">
-                <span class="caption pt-2">{{ i18n.potentialViolationsCategories_ }}</span>
+                <span class="caption pt-2">{{ translations.potentialViolationsCategories_ }}</span>
                 <v-chip-group
                     column
                     multiple
@@ -266,9 +256,9 @@ const IncidentSearchBox = Vue.defineComponent({
               </v-col>
             </v-row>
 
-            <v-row v-if="extraFilters">
+            <v-row>
               <v-col cols="12">
-                <span class="caption pt-2">{{ i18n.claimedViolationsCategories_ }}</span>
+                <span class="caption pt-2">{{ translations.claimedViolationsCategories_ }}</span>
                 <v-chip-group
                     column
                     multiple
@@ -297,9 +287,9 @@ const IncidentSearchBox = Vue.defineComponent({
                       item-title="title"
                       item-value="id"
                       :multiple="true"
-                      :label="i18n.includeLabels_"
+                      :label="translations.includeLabels_"
                   ></search-field>
-                  <v-checkbox :label="i18n.any_" dense v-model="q.oplabels" color="primary" small
+                  <v-checkbox :label="translations.any_" dense v-model="q.oplabels" color="primary" small
                               class="mx-3"></v-checkbox>
                 </div>
 
@@ -310,7 +300,7 @@ const IncidentSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
-                    :label="i18n.excludeLabels_"
+                    :label="translations.excludeLabels_"
                 ></search-field>
 
 
@@ -327,10 +317,10 @@ const IncidentSearchBox = Vue.defineComponent({
                       item-title="full_string"
                       item-value="id"
                       :multiple="true"
-                      :label="i18n.includeLocations_"
+                      :label="translations.includeLocations_"
                       :post-request="true"
                   ></location-search-field>
-                  <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
+                  <v-checkbox :label="translations.any_" dense v-model="q.oplocations" color="primary" small
                               class="mx-3"></v-checkbox>
                 </div>
                 <location-search-field
@@ -339,7 +329,7 @@ const IncidentSearchBox = Vue.defineComponent({
                     item-title="full_string"
                     item-value="id"
                     :multiple="true"
-                    :label="i18n.excludeLocations_"
+                    :label="translations.excludeLocations_"
                     :post-request="true"
                 ></location-search-field>
 

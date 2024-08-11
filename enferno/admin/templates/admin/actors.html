@@ -45,36 +45,27 @@
                             hover
                             :headers="headers"
                             @click:row="rowClick"
-                            show-select
                             :items="items"
                             @update:options="refresh"
                             :loading="loading"
                             :items-length="itemsLength"
                             :row-props="rowClass"
+                            show-select
+                            item-value="id"
                             select-strategy="page"
-                            return-object
+                            item-selectable="selectable"
                             class="elevation-1"
                     >
 
-                        <template #item.data-table-select="{ item }">
-
-                            <v-checkbox-btn
-                                    color="primary"
-                                    :model-value="selected.includes(item)"
-                                    @click.stop="toggleSelect(item)"
-
-                            ></v-checkbox-btn>
-
-                        </template>
                         <template v-slot:top>
-                            <v-toolbar class="mt-1" color="white">
-                                <v-btn class="hidden-sm-and-down" small @click="allActors"
+                            <v-sheet class="ma-3 d-flex align-center">
+                                <v-btn variant="text" class="hidden-sm-and-down" @click="allActors"
                                        text>{{ _('All Actors') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn class="hidden-sm-and-down" small @click="myAssigned"
+                                <v-btn variant="text" class="hidden-sm-and-down" @click="myAssigned"
                                        text>{{ _('Assigned to me') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down"
+                                <v-btn variant="text" @click="myReview" class="mr-2 hidden-sm-and-down"
                                        text>{{ _('My Review List') }}</v-btn>
 
                                 <v-text-field
@@ -99,16 +90,22 @@
                                 {% endif %}
                                 {% include 'admin/partials/actor_dialog.html' %}
                                 {% include 'admin/partials/review_dialog.html' %}
-                            </v-toolbar>
+                            </v-sheet>
 
-                            <v-toolbar class="px-3" color="grey-lighten-4" v-if="bulkAllowed() || exportAllowed()">
+                            <v-toolbar class="px-3" v-if="bulkAllowed() || exportAllowed()">
 
                                 <template v-if="bulkIcons">
 
-                                    <v-btn icon="mdi-checkbox-blank-outline"
-                                           @click="selected=[]"
-                                           class="mr-3">
-                                    </v-btn>
+                                    <v-tooltip location="top" text="{{ _('Unselect all') }}">
+                                        <template #activator="{props}">
+                                            <v-btn icon="mdi-checkbox-blank-outline"
+                                                @click="selected=[]"
+                                                class="mr-3 ml-1"
+                                                density="compact"
+                                                :="props">
+                                            </v-btn>
+                                        </template>
+                                    </v-tooltip>
 
                                     <v-btn
                                             @click="bulkActorDrawer=true"
@@ -149,21 +146,15 @@
 
                                 <v-spacer></v-spacer>
 
-                                <div>
-                                    <v-chip label small close color="yellow"
-                                            class="grey--text text-"
-                                            @click:close="allActors"
-                                    >{{ _('About') }} ${itemsLength} {{ _('results') }}
-                                        (${searchTime} {{ _('seconds') }})
-                                    </v-chip>
-                                </div>
-                                <v-spacer></v-spacer>
-
                                 <v-chip small color="accent" v-if="selected.length">
                                     ${selected.length} {{ _('Selected items') }}
                                 </v-chip>
                             </v-toolbar>
 
+                        </template>
+
+                        <template #footer.prepend>
+                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }} ${searchTime} {{ _('seconds') }}</div>
                         </template>
 
                         <template v-slot:item.type="{item}">
@@ -251,11 +242,11 @@
                         ></v-progress-circular>
                     </v-overlay>
 
-                    <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
+                    <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
                                       ref="relateBulletins"></relate-bulletins>
-                    <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
+                    <relate-actors @relate="relateActor" :exids="exActors"
                                    ref="relateActors"></relate-actors>
-                    <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
+                    <relate-incidents @relate="relateIncident" :exids="exIncidents"
                                       ref="relateIncidents"></relate-incidents>
 
                     {% include 'admin/partials/video_player_dialog.html' %}
@@ -724,7 +715,14 @@
 
 
                 formTitle() {
-                    return this.editedItem.id ? this.translations.editActor_ : this.translations.newActr_;
+                    return this.editedItem.id ? this.translations.editActor_ : this.translations.newActor_;
+                },
+
+                allowedRoles() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return this.roles;
+                    }
+                    return this.currentUser.roles;
                 },
 
             },
@@ -733,7 +731,7 @@
 
                 actorDrawer: function (val) {
                     if (val == false) {
-
+                        this.actor = {};
                         if (this.$route.path !== '/admin/actors/')
                             this.$router.push('/admin/actors/')
                     }
@@ -945,10 +943,9 @@
                 },
 
                 exportRequest() {
-                    let ids = this.selected.map(x => x.id);
                     this.loading = true;
                     axios.post(`/export/api/actor/export`, {
-                        items: ids,
+                        items: this.selected,
                         config: this.exportConfig
                     })
                         .then(response => {
@@ -965,21 +962,9 @@
                     });
                 },
 
-
-                selectAllRestrict(props) {
-
-                    if (this.selected.length > 0) {
-                        // untoggle on next tick
-                        this.$nextTick(() => {
-                            this.selected = [];
-                        })
-
-                    }
-                    this.selected = props.items.filter(x => !x.restricted);
-                },
-
                 rowClass(row) {
                     if (row.item.restricted) {
+                        row.item.selectable = false;
                         return {class: 'restricted'}
                     }
                     return {class: ''}
@@ -1058,10 +1043,9 @@
 
 
                 bulk_update() {
-                    let ids = this.selected.map(x => x.id);
                     this.loading = true;
                     axios.put(`/admin/api/actor/bulk/`, {
-                        items: ids,
+                        items: this.selected,
                         bulk: this.bulk
                     })
                         .then(response => {
@@ -1119,13 +1103,16 @@
                     }).then(response => {
                         this.loading = false;
                         const endTime = new Date();
-                        this.searchTime = (endTime - startTime) / 1000;
+                        this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
                         this.showVisualize = !(
                             this.search.length === 1 &&
                             Object.keys(this.search[0]).length === 0
                         );
+                    }).catch(err => {
+                        this.loading = false;
+                        this.showSnack(this.parseValidationError(err.response.data));
                     });
 
 
@@ -1459,13 +1446,6 @@
                     }
                 },
 
-                allowedRoles() {
-                    if (this.has_role(this.currentUser, 'Admin')) {
-                        return this.roles;
-                    }
-                    return this.currentUser.roles;
-                },
-
                 addReview(item) {
                     this.loading = true;
                     this.reviewDialog = true;
@@ -1748,7 +1728,17 @@
                     }
                 },
 
+                clearAssignee() {
+                    if (this.bulk.assigneeClear){
+                        this.bulk.assigned_to_id = null;
+                    }
+                },
 
+                clearReviewer() {
+                    if (this.bulk.reviewerClear){
+                        this.bulk.first_peer_reviewer_id = null;
+                    }
+                }
             }
         });
 

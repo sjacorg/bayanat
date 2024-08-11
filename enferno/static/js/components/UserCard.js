@@ -1,5 +1,5 @@
 const UserCard = Vue.defineComponent({
-  props: ['user', 'close', 'i18n'],
+  props: ['user', 'close'],
   emits: ['close'],
   watch: {
     user: function (val, old) {
@@ -40,7 +40,7 @@ const UserCard = Vue.defineComponent({
         })
         .catch((err) => {
           if (err.response && err.response.status === 401) {
-            alert(this.i18n.loggedOut_);
+            alert(this.translations.loggedOut_);
             window.location.href = '/login'; // Redirect to login page
           } else {
             console.error('Error fetching sessions', err);
@@ -48,11 +48,13 @@ const UserCard = Vue.defineComponent({
         });
     },
 
-    logoutSession(token) {
+    logoutSession(id) {
+
+
       axios
         .delete('/admin/api/session/logout', {
           data: {
-            token: token,
+            sessid: id,
           },
         })
         .then((response) => {
@@ -71,12 +73,12 @@ const UserCard = Vue.defineComponent({
     },
 
     logoutAllSessions(userId) {
-      if (window.confirm(this.i18n.logoutConfirmation_)) {
+      if (window.confirm(this.translations.logoutConfirmation_)) {
         axios
           .delete(`/admin/api/user/${this.user.id}/sessions/logout`)
           .then((response) => {
             console.log('All sessions logged out successfully for user ID:', userId);
-            this.$root.showSnack(this.i18n.allSessionsLoggedOut_);
+            this.$root.showSnack(this.translations.allSessionsLoggedOut_);
             this.resetSessions();
             this.fetchSessions();
           })
@@ -89,6 +91,7 @@ const UserCard = Vue.defineComponent({
 
   data: function () {
     return {
+      translations: window.translations,
       show: false,
       sessions: [],
       page: 1,
@@ -127,38 +130,70 @@ const UserCard = Vue.defineComponent({
         <v-card variant="flat" class="mt-3 pa-3">
 
           <v-label class="ml-3">
-            {{ i18n.userPermissions_ }}
+            {{ translations.userPermissions_ }}
           </v-label>
           <v-card-text>
 
             <v-chip class="ma-2" :color="user.view_usernames ? 'primary' : 'error'"
                     :prepend-icon="user.view_usernames ? 'mdi-checkbox-marked-circle' : 'mdi-close-circle'">
-              {{ i18n.canViewUsernames_ }}
+              {{ translations.canViewUsernames_ }}
             </v-chip>
 
             <v-chip class="ma-2" :color="user.view_simple_history ? 'primary' : 'error'"
                     :prepend-icon="user.view_simple_history ? 'mdi-checkbox-marked-circle' : 'mdi-close-circle'">
-              {{ i18n.canViewSimpleHistory_ }}
+              {{ translations.canViewSimpleHistory_ }}
             </v-chip>
 
             <v-chip class="ma-2" :color="user.view_full_history ? 'primary' : 'error'"
                     :prepend-icon="user.view_full_history ? 'mdi-checkbox-marked-circle' : 'mdi-close-circle'">
-              {{ i18n.canViewFullHistory_ }}
+              {{ translations.canViewFullHistory_ }}
             </v-chip>
 
             <v-chip class="ma-2" :color="user.can_edit_locations ? 'primary' : 'error'"
                     :prepend-icon="user.can_edit_locations ? 'mdi-checkbox-marked-circle' : 'mdi-close-circle'">
-              {{ i18n.canEditLocations_ }}
+              {{ translations.canEditLocations_ }}
             </v-chip>
 
             <v-chip class="ma-2" :color="user.can_export ? 'primary' : 'error'"
                     :prepend-icon="user.can_export ? 'mdi-checkbox-marked-circle' : 'mdi-close-circle'">
-              {{ i18n.canExport_ }}
+              {{ translations.canExport_ }}
             </v-chip>
 
             <v-chip class="ma-2" :color="user.can_self_assign ? 'primary' : 'error'"
                     :prepend-icon="user.can_self_assign ? 'mdi-checkbox-marked-circle' : 'mdi-close-circle'">
-              {{ i18n.canSelfAssign_ }}
+              {{ translations.canSelfAssign_ }}
+            </v-chip>
+
+
+          </v-card-text>
+        </v-card>
+
+        <v-divider></v-divider>
+        
+         <v-card variant="flat" class="mt-3 pa-3">
+
+          <v-label class="ml-3">
+            {{ translations.userTwoFactorMethods_ }}
+          </v-label>
+
+          <v-card-text class="d-flex ga-3">
+
+            <v-chip
+              v-for="device in user.two_factor_devices"
+              :key="device.id"
+              :prepend-icon="device.type === 'authenticator' ? 'mdi-lock-clock' : 'mdi-usb-flash-drive'"
+              color="primary"
+            >
+              {{ device.name }}
+            </v-chip>
+
+            <v-chip
+              v-if="user.two_factor_devices.length == 0"
+              prepend-icon="mdi-lock-open-alert"
+              color="error"
+              label
+            >
+              {{ translations.noTwoFactorMethods_ }}
             </v-chip>
 
 
@@ -170,37 +205,38 @@ const UserCard = Vue.defineComponent({
         <v-card class="mt-2" variant="flat">
 
           <v-card-text>
-            <v-label class="ml-3">{{ i18n.userSessions_ }}</v-label>
+            <v-label class="ml-3">{{ translations.userSessions_ }}</v-label>
             <v-table fluid>
 
               <thead>
               <tr>
-                <th class="text-left">{{ i18n.session_ }}</th>
-                <th class="text-left">{{ i18n.ip_ }}</th>
-                <th class="text-left">{{ i18n.userAgent_ }}</th>
-                <th class="text-left">{{ i18n.started_ }}</th>
-                <th class="text-left">{{ i18n.logOffThisDevice_ }}</th>
+                <th class="text-left">{{ translations.session_ }}</th>
+                <th class="text-left">{{ translations.ip_ }}</th>
+                <th class="text-left">{{ translations.userAgent_ }}</th>
+                <th class="text-left">{{ translations.started_ }}</th>
+                <th class="text-left">{{ translations.logOffThisDevice_ }}</th>
               </tr>
               </thead>
               <tbody>
-
               <tr v-for="session in sessions"
-                  :class="session.session_token===$root.session_id ? 'yellow lighten-5':'' ">
+                  
+                  :class="session.active ? 'bg-yellow-lighten-5':'' ">
                 <td>
+                  
                   <v-tooltip v-if="session.details?._fresh">
                     <template #activator="{ props }">
                       <v-icon v-bind="props" color="green">
                         mdi-circle
                       </v-icon>
                     </template>
-                    {{ i18n.active_ }}
+                    {{ translations.active_ }}
                   </v-tooltip>
 
                   <v-tooltip v-else>
                     <template #activator="{ props }">
                       <v-icon color="grey-darken-5" v-bind="props">mdi-circle</v-icon>
                     </template>
-                    {{ i18n.inactive_ }}
+                    {{ translations.inactive_ }}
                   </v-tooltip>
 
 
@@ -214,7 +250,7 @@ const UserCard = Vue.defineComponent({
                 <td class="text-caption">{{ session.created_at }}</td>
                 <td>
                   <v-btn icon="mdi-logout" variant="plain" v-if="session.details?._fresh"
-                         @click.once="logoutSession(session.session_token)" :disabled="!session.is_active"
+                         @click.once="logoutSession(session.id)" :disabled="!session.is_active"
                          color="error">
 
                   </v-btn>
@@ -224,15 +260,15 @@ const UserCard = Vue.defineComponent({
             </v-table>
           </v-card-text>
           <v-card-text class="text-center">
-            <v-btn v-if="more" fab small @click="fetchSessions(page, perPage)">
-              <v-icon>mdi-dots-horizontal</v-icon>
+            <v-btn icon="mdi-dots-horizontal" variant="plain" v-if="more" fab small @click="fetchSessions(page, perPage)">
+              
             </v-btn>
           </v-card-text>
           <v-divider></v-divider>
 
           <v-card-actions class="text-center justify-center pa-5">
             <v-btn variant="elevated" prepend-icon="mdi-logout" @click.stop="logoutAllSessions" color="error">
-              {{ i18n.logoutAllSessions_ }}
+              {{ translations.logoutAllSessions_ }}
             </v-btn>
 
           </v-card-actions>

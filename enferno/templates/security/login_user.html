@@ -2,9 +2,13 @@
 {% block nav %}{% endblock %}
 {% block content %}
 
-    <v-main class="d-flex align-center justify-center">
+    <v-main class="d-flex flex-column align-center justify-center">
+
+
 
     <v-card class="mx-auto mb-5 elevation-23  w-33 ">
+
+
         <v-toolbar title="{{ _('Account Login') }}" color="primary">
         </v-toolbar>
         <v-card-text>
@@ -56,6 +60,18 @@
 
             </v-form>
         </v-card-text>
+{% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+    <v-card-text>
+
+
+                {% for category, message in messages %}
+                    <v-alert type="{{ category }}" dense dismissible>{{ message }}</v-alert>
+                {% endfor %}
+            </v-card-text>
+        {% endif %}
+    {% endwith %}
+
 
 
         {% if login_user_form.username.errors or login_user_form.password.errors %}

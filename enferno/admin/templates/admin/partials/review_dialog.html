@@ -15,12 +15,12 @@
                 max-height="100vh"
                 class="overflow-y-auto pa-7">
             <v-card variant="outlined" max-width="900" class="mx-auto">
-                <bulletin-card :i18n="translations" v-if="reviewItem && reviewItem.class=='bulletin'"
+                <bulletin-card v-if="reviewItem && reviewItem.class=='bulletin'"
                                @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
-                <actor-card :i18n="translations" v-if="reviewItem.class=='actor'" @thumb-click="viewImage"
+                <actor-card v-if="reviewItem.class=='actor'" @thumb-click="viewImage"
                             :close="false"
                             :actor="reviewItem"></actor-card>
-                <incident-card :i18n="translations" v-if="reviewItem.class=='incident'" :close="false"
+                <incident-card v-if="reviewItem.class=='incident'" :close="false"
                                :incident="reviewItem"></incident-card>
             </v-card>
             <v-divider class="my-9"></v-divider>
@@ -120,7 +120,7 @@
                                 </v-btn>
                             </v-col>
                             <v-col class="text-center">
-                                <v-btn prepend-icon="mdi-magnify" prepend-icon="mdi-magnify" class="mx-3"
+                                <v-btn prepend-icon="mdi-magnify" class="mx-3"
                                        @click="searchRelatedIncidents">
                                     {{ _('Related Incidents') }}
                                 </v-btn>

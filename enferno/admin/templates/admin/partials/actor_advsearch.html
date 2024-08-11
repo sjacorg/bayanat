@@ -1,4 +1,4 @@
-<v-dialog v-model="advSearchExpand" width="770">
+<v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
     <v-sheet>
         <v-card class="rounded-0">
             <v-card-title>
@@ -41,13 +41,11 @@
 
                             <actor-search-box
                                     :show-op="!i==0"
-                                    :i18n="translations"
-                                    :extra-filters="true"
                                     @close="advSearchExpand=false"
                                     close-btn="true"
                                     v-model="search[i]"
                                     :users="users"
-                                    :roles="roles"
+                                    :roles="allowedRoles"
                                     :is-admin="has_role(currentUser,'Admin')"
                             >
                             </actor-search-box>

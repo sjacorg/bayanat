@@ -1,13 +1,13 @@
 from enum import Enum
 from pydantic import BaseModel, validator, Field, root_validator, constr
-from typing import Dict, ForwardRef, Optional, List, Any
+from typing import Dict, Optional, List, Any
 from urllib.parse import urlparse
 from pydantic import BaseModel
 from typing import List, Optional
 from dateutil.parser import parse
 
 from enferno.admin.constants import Constants
-from enferno.admin.validation.util import one_must_exist, sanitize_string
+from enferno.admin.validation.util import one_must_exist, sanitize
 from enferno.utils.typing import typ as t
 
 DEFAULT_STRING_FIELD = Field(None, max_length=255)
@@ -18,36 +18,6 @@ class BaseValidationModel(BaseModel):
 
     class Config:
         anystr_strip_whitespace = True
-
-    @root_validator(pre=True)
-    def sanitize_all_strings(cls: t, values: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Sanitizes all the strings in the given dictionary recursively.
-
-        Args:
-            - values: The dictionary containing the values to be sanitized.
-
-        Returns:
-            - The sanitized dictionary.
-        """
-        sanitized_values = {}
-        for k, v in values.items():
-            if isinstance(v, str):
-                sanitized_values[k] = sanitize_string(v)
-            elif isinstance(v, dict):
-                sanitized_values[k] = cls.sanitize_all_strings(v)
-            elif isinstance(v, list):
-                sanitized_values[k] = [
-                    cls.sanitize_all_strings(item)
-                    if isinstance(item, dict)
-                    else sanitize_string(item)
-                    if isinstance(item, str)
-                    else item
-                    for item in v
-                ]
-            else:
-                sanitized_values[k] = v
-        return sanitized_values
 
 
 class StrictValidationModel(BaseValidationModel):
@@ -64,7 +34,7 @@ class PartialUserModel(BaseValidationModel):
 class PartialRoleModel(BaseValidationModel):
     id: int
     color: Optional[str]
-    description: Optional[str]
+    description: Optional[str] = sanitize()
     name: Optional[str]
 
 
@@ -192,6 +162,24 @@ class PartialEventModel(BaseValidationModel):
                 raise ValueError(f"Invalid date format: {v}")
         return v
 
+    @validator("to_date", pre=False)
+    def validate_to_date(cls, v, values):
+        """
+        Validates the to_date field.
+
+        Returns:
+            str: The validated to_date value.
+
+        Raises:
+            ValueError: If the to_date is before the from_date.
+        """
+        if values.get("from_date") and v:
+            from_date = parse(values["from_date"])
+            to_date = parse(v)
+            if to_date < from_date:
+                raise ValueError("to_date must be after from_date")
+        return v
+
 
 class PartialMediaCategoryModel(BaseValidationModel):
     id: Optional[int]
@@ -215,7 +203,7 @@ class BulletinValidationModel(StrictValidationModel):
     sjac_title: Optional[str]
     assigned_to: Optional[PartialUserModel]
     first_peer_reviewer: Optional[PartialUserModel]
-    description: Optional[str]
+    description: Optional[str] = sanitize()
     comments: constr(min_length=1)  # type: ignore
     source_link: constr(min_length=1)  # type: ignore
     source_link_type: Optional[bool]
@@ -238,7 +226,7 @@ class BulletinValidationModel(StrictValidationModel):
     roles: List[PartialRoleModel] = Field(default_factory=list)
 
     id: Optional[int]
-    review: Optional[str]
+    review: Optional[str] = sanitize()
     review_action: Optional[str]
     sjac_title_ar: Optional[str]
     title_ar: Optional[str]
@@ -299,7 +287,7 @@ class PartialClaimedViolationModel(BaseValidationModel):
 class IncidentValidationModel(StrictValidationModel):
     title: constr(min_length=1)  # type: ignore
     title_ar: Optional[str]
-    description: Optional[str]
+    description: Optional[str] = sanitize()
     labels: List[PartialLabelModel] = Field(default_factory=list)
     locations: List[PartialLocationModel] = Field(default_factory=list)
     potential_violations: List[PartialPotentialViolationModel] = Field(default_factory=list)
@@ -321,7 +309,7 @@ class IncidentValidationModel(StrictValidationModel):
     first_peer_reviewer: Optional[PartialUserModel]
     id: Optional[int]
     class_: Optional[str] = Field(alias="class")
-    review: Optional[str]
+    review: Optional[str] = sanitize()
     review_action: Optional[str]
     updated_at: Optional[str]
     roles: List[PartialRoleModel] = Field(default_factory=list)
@@ -500,7 +488,7 @@ class PartialActorProfileModel(BaseValidationModel):
     actor_id: Optional[int]
     mode: int = 1
     originid: Optional[str]
-    description: Optional[str]
+    description: Optional[str] = sanitize()
     source_link: Optional[str] = DEFAULT_STRING_FIELD
     source_link_type: Optional[bool]
     publish_date: Optional[str]
@@ -649,7 +637,7 @@ class ActorValidationModel(StrictValidationModel):
     actor_profiles: List[PartialActorProfileModel] = Field(default_factory=list)
 
     # Below fields are sent by the frontend, but are not used by the from_json method
-    description: Optional[str]
+    description: Optional[str] = sanitize()
     updated_at: Optional[str]
     documentation_date: Optional[str]
     publish_date: Optional[str]
@@ -662,7 +650,7 @@ class ActorValidationModel(StrictValidationModel):
     class_: Optional[str] = Field(alias="class")
     first_peer_reviewer: Optional[PartialUserModel]
     id: Optional[str]
-    review: Optional[str]
+    review: Optional[str] = sanitize()
     review_action: Optional[str]
 
     @validator("actor_profiles", always=True, pre=False)
@@ -737,10 +725,6 @@ class ActorValidationModel(StrictValidationModel):
 
 class ActorRequestModel(BaseValidationModel):
     item: ActorValidationModel
-
-
-class PartialLabelModel(BaseValidationModel):
-    id: int
 
 
 class LabelValidationModel(StrictValidationModel):
@@ -833,17 +817,17 @@ class LatLngModel(BaseValidationModel):
 class LocationTypeModel(BaseValidationModel):
     id: int
     title: constr(min_length=1)  # type: ignore
-    description: Optional[str]
+    description: Optional[str] = sanitize()
 
 
 class LocationValidationModel(one_must_exist(["title", "title_ar"])):
     title: Optional[str]
     title_ar: Optional[str]
-    description: Optional[str]
-    parent: Optional[ForwardRef("LocationValidationModel")]  # type: ignore
+    description: Optional[str] = sanitize()
+    parent: Optional[PartialLocationModel]  # type: ignore
     country: Optional[dict]
     postal_code: Optional[str]
-    latlng: LatLngModel
+    latlng: Optional[LatLngModel]
     location_type: Optional[LocationTypeModel]
     admin_level: Optional[
         AdminLevelModel | str
@@ -902,6 +886,7 @@ class PartialLocationTypeModel(BaseValidationModel):
 
 class PartialAdminLevelModel(BaseValidationModel):
     id: int
+    code: int
 
 
 class PartialCountryModel(BaseValidationModel):
@@ -944,7 +929,7 @@ class LocationTypeValidationModel(StrictValidationModel):
     title: constr(min_length=1)  # type: ignore
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int]
-    description: Optional[str]
+    description: Optional[str] = sanitize()
 
 
 class LocationTypeRequestModel(BaseValidationModel):
@@ -1105,7 +1090,7 @@ class QueryBaseModel(StrictValidationModel):
     roles: Optional[List[int]]
     norole: Optional[bool]
     assigned: Optional[List[int]]
-    fpr: List[int] = Field(default_factory=list)
+    fpr: Optional[List[int]] = Field(default_factory=list)
     unassigned: Optional[bool]
     reviewer: Optional[List[int]]
     statuses: Optional[List[str]]
@@ -1113,6 +1098,19 @@ class QueryBaseModel(StrictValidationModel):
     rel_to_bulletin: Optional[int]
     rel_to_actor: Optional[int]
     rel_to_incident: Optional[int]
+
+    @root_validator(pre=True)
+    def check_legacy_fields(cls, values):
+        """
+        Checks the legacy date and status fields, throws an error if they are present.
+        """
+        old_fields = ["createdwithin", "updatedwithin", "docdatewithin", "pubdatewithin", "status"]
+        for field in old_fields:
+            if field in values:
+                raise ValueError(
+                    f"The query sent is incompatible with this version. Please delete and re-create the query."
+                )
+        return values
 
     @validator("updated", "created", "docdate", "pubdate", "edate", pre=True, each_item=True)
     def validate_date(cls, v):
@@ -1142,17 +1140,29 @@ class BulletinQueryLocTypes(Enum):
 class BulletinQueryValidationModel(QueryBaseModel):
     op: Optional[str] = "or"
     ids: List[int] = Field(default_factory=list)
-    ref: List[str] = Field(default_factory=list)
+    ref: Optional[List[str]] = Field(default_factory=list)
     inExact: Optional[bool] = False
     opref: Optional[bool] = False
-    exref: List[str] = Field(default_factory=list)
+    exref: Optional[List[str]] = Field(default_factory=list)
     exExact: Optional[bool] = False
     opexref: Optional[bool] = False
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
-    locTypes: List[str] = Field(default_factory=list)
+    locTypes: Optional[List[str]] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel]
+
+    @validator("ref", pre=True)
+    def validate_ref(cls, v):
+        """
+        Validates the ref field.
+
+        Returns:
+            List<str>: The validated ref value.
+        """
+        if isinstance(v, str):
+            v = [v]
+        return v
 
 
 class BulletinQueryRequestModel(BaseValidationModel):
@@ -1160,7 +1170,7 @@ class BulletinQueryRequestModel(BaseValidationModel):
 
 
 class EntityReviewValidationModel(BaseValidationModel):
-    review: Optional[str]
+    review: Optional[str] = sanitize()
     review_action: Optional[str]
 
 
@@ -1179,6 +1189,8 @@ class GenericBulkModel(BaseValidationModel):
     comments: Optional[str]
     roles: List[PartialRoleModel] = Field(default_factory=list)
     rolesReplace: Optional[bool]
+    assigneeClear: Optional[bool]
+    reviewerClear: Optional[bool]
 
 
 class BulletinBulkModel(GenericBulkModel):
@@ -1290,9 +1302,10 @@ class UserValidationModel(StrictValidationModel):
     can_edit_locations: Optional[bool]
     can_export: Optional[bool]
     active: bool
-    force_reset: Optional[bool]
+    force_reset: Optional[str]
     google_id: Optional[str]
     id: Optional[int]
+    two_factor_devices: Optional[Any]
 
 
 class UserRequestModel(BaseValidationModel):
@@ -1343,7 +1356,7 @@ class QueryValidationModel(BaseValidationModel):
 
 
 class GraphVisualizeRequestModel(BaseValidationModel):
-    q: List[BulletinQueryRequestModel | ActorQueryRequestModel] | IncidentQueryRequestModel
+    q: List[Dict[str, Any]] | Dict[str, Any]
 
 
 class ConfigRequestModel(BaseValidationModel):

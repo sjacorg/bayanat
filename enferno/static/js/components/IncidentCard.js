@@ -1,5 +1,5 @@
 const IncidentCard = Vue.defineComponent({
-  props: ['incident', 'close', 'log', 'diff', 'showEdit', 'i18n'],
+  props: ['incident', 'close', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
 
   methods: {
@@ -54,7 +54,10 @@ const IncidentCard = Vue.defineComponent({
     },
 
     editAllowed() {
-      return this.$root.editAllowed(this.incident) && this.showEdit;
+      if (typeof this.$root.editAllowed === 'function') {
+        return this.$root.editAllowed(this.incident) && this.showEdit;
+      }
+      return false;
     },
 
     loadRevisions() {
@@ -95,6 +98,7 @@ const IncidentCard = Vue.defineComponent({
 
   data: function () {
     return {
+      translations: window.translations,
       geoMapLoading: false,
       geoMapOn: false,
       diffResult: '',
@@ -104,8 +108,6 @@ const IncidentCard = Vue.defineComponent({
       hloading: false,
       //global map
       mapLocations: [],
-
-
     };
   },
 
@@ -113,17 +115,17 @@ const IncidentCard = Vue.defineComponent({
       <v-card class="mx-auto">
         <v-toolbar class="d-flex px-2 ga-2">
           <v-chip size="small">
-            {{ i18n.id_ }} {{ incident.id }}
+            {{ translations.id_ }} {{ incident.id }}
           </v-chip>
 
           <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"
                  @click="$emit('edit',incident)">
-            {{ i18n.edit_ }}
+            {{ translations.edit_ }}
           </v-btn>
 
           <v-btn size="small" class="ml-2" variant="tonal" prepend-icon="mdi-graph-outline"
                  @click.stop="$root.$refs.viz.visualize(incident)">
-            {{ i18n.visualize_ }}
+            {{ translations.visualize_ }}
           </v-btn>
 
           <template #append>
@@ -144,7 +146,7 @@ const IncidentCard = Vue.defineComponent({
                   {{ incident.assigned_to['name'] }}
                 </v-chip>
               </template>
-              {{ i18n.assignedUser_ }}
+              {{ translations.assignedUser_ }}
             </v-tooltip>
           </div>
 
@@ -160,7 +162,7 @@ const IncidentCard = Vue.defineComponent({
                   {{ incident.status }}
                 </v-chip>
               </template>
-              {{ i18n.workflowStatus_ }}
+              {{ translations.workflowStatus_ }}
             </v-tooltip>
           </div>
         </v-sheet> 
@@ -171,16 +173,16 @@ const IncidentCard = Vue.defineComponent({
             <template v-slot:activator="{ props }">
               <v-icon color="blue-darken-3" class="mx-2" size="small" v-bind="props">mdi-lock</v-icon>
             </template>
-            {{ i18n.accessRoles_ }}
+            {{ translations.accessRoles_ }}
           </v-tooltip>
           <v-chip label small v-for="role in incident.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
         </v-card>  
         <v-divider v-if="incident.roles?.length" ></v-divider>
 
-        <uni-field :caption="i18n.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
+        <uni-field :caption="translations.title_" :english="incident.title" :arabic="incident.title_ar"></uni-field>
 
         <v-card  v-if="incident.description" class="ma-2 pa-2">
-          <div class="caption grey--text mb-2">{{ i18n.description_ }}</div>
+          <div class="caption grey--text mb-2">{{ translations.description_ }}</div>
           <div class="rich-description" v-html="incident.description"></div>
         </v-card>
 
@@ -189,17 +191,17 @@ const IncidentCard = Vue.defineComponent({
           <v-btn :loading="geoMapLoading" :disabled="geoMapOn" @click="loadGeoMap" block elevation="0"
                  color="primary lighten-2">
             <v-icon left>mdi-map</v-icon>
-            {{ i18n.loadGeoMap_ }}
+            {{ translations.loadGeoMap_ }}
           </v-btn>
           <v-card-text v-if="geoMapOn">
-            <global-map :i18n="i18n" :value="mapLocations"></global-map>
+            <global-map :model-value="mapLocations"></global-map>
           </v-card-text>
         </v-card>
 
         <v-card  class="ma-2"
                 v-if="incident.potential_violations && incident.potential_violations.length">
           <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.potentialViolationsCategories_ }}</div>
+            <div class="px-1 title black--text">{{ translations.potentialViolationsCategories_ }}</div>
             <v-chip-group column>
               <v-chip color="blue-grey lighten-5" v-for="item in incident.potential_violations"
                       :key="item.id">{{ item.title }}
@@ -211,7 +213,7 @@ const IncidentCard = Vue.defineComponent({
         <v-card  class="ma-2"
                 v-if="incident.claimed_violations && incident.claimed_violations.length">
           <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.claimedViolationsCategories_ }}</div>
+            <div class="px-1 title black--text">{{ translations.claimedViolationsCategories_ }}</div>
             <v-chip-group column>
               <v-chip color="blue-grey lighten-5" v-for="item in incident.claimed_violations"
                       :key="item.id">{{ item.title }}
@@ -223,7 +225,7 @@ const IncidentCard = Vue.defineComponent({
 
         <v-card  class="ma-2" v-if="incident.labels && incident.labels.length">
           <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
+            <div class="px-1 title black--text">{{ translations.labels_ }}</div>
             <v-chip-group column>
               <v-chip color="blue-grey lighten-5" v-for="label in incident.labels"
                       :key="label.id">{{ label.title }}
@@ -234,7 +236,7 @@ const IncidentCard = Vue.defineComponent({
 
         <v-card  class="ma-2" v-if="incident.locations && incident.locations.length">
           <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.locations_ }}</div>
+            <div class="px-1 title black--text">{{ translations.locations_ }}</div>
             <v-chip-group column>
               <v-chip color="blue-grey lighten-5" v-for="item in incident.locations"
                       :key="item.id">{{ item.title }}
@@ -247,8 +249,8 @@ const IncidentCard = Vue.defineComponent({
         <!-- Events -->
         <v-card  class="ma-2" v-if="incident.events && incident.events.length">
           <v-card-text class="pa-2">
-            <div class="px-1 title black--text">{{ i18n.events_ }}</div>
-            <event-card v-for="event in incident.events" :key="event.id" :i18n="translations"
+            <div class="px-1 title black--text">{{ translations.events_ }}</div>
+            <event-card v-for="event in incident.events" :key="event.id"
                         :event="event"></event-card>
           </v-card-text>
         </v-card>
@@ -256,22 +258,20 @@ const IncidentCard = Vue.defineComponent({
         <!-- Related Bulletins -->
         <related-bulletins-card v-if="incident" :entity="incident"
                                 :relationInfo="$root.itobInfo"
-                                :i18n="i18n"></related-bulletins-card>
+                                ></related-bulletins-card>
 
         <!-- Related Actors  -->
         <related-actors-card v-if="incident" :entity="incident"
-                             :relationInfo="$root.itoaInfo"
-                             :i18n="i18n"></related-actors-card>
+                             :relationInfo="$root.itoaInfo"></related-actors-card>
 
         <!-- Related Incidents -->
         <related-incidents-card v-if="incident" :entity="incident"
-                                :relationInfo="$root.itoiInfo"
-                                :i18n="i18n"></related-incidents-card>
+                                :relationInfo="$root.itoiInfo"></related-incidents-card>
 
         <v-card v-if="incident.status==='Peer Reviewed'" variant="" elevation="0" class="ma-3"
                 color="teal-lighten-2">
           <v-card-text>
-            <div class="px-1 title black--text">{{ i18n.review_ }}</div>
+            <div class="px-1 title black--text">{{ translations.review_ }}</div>
             <div v-html="incident.review" class="pa-1 my-2 grey--text text--darken-2">
 
             </div>
@@ -282,7 +282,7 @@ const IncidentCard = Vue.defineComponent({
 
         <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
           <v-card-text>
-            <h3 class="title black--text align-content-center">{{ i18n.logHistory_ }}
+            <h3 class="title black--text align-content-center">{{ translations.logHistory_ }}
               <v-btn fab :loading="hloading" @click="loadRevisions" class="elevation-0 align-content-center">
                 <v-icon>mdi-history</v-icon>
               </v-btn>

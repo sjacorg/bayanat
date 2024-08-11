@@ -32,6 +32,6 @@ const PopDateRangeField = {
   },
 
   template: `
-    <v-date-input multiple="range" :label="label" variant="outlined" v-model="dates" @click:clear="$emit('update:modelValue', [])" clearable></v-date-input>
+    <v-date-input v-bind="$attrs" multiple="range" :label="label" variant="outlined" v-model="dates" @click:clear="$emit('update:modelValue', [])" clearable></v-date-input>
   `
 };

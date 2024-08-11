@@ -1,5 +1,5 @@
 const PreviewCard = Vue.defineComponent({
-  props: ['item', 'modelValue', 'i18n'],
+  props: ['item', 'modelValue'],
   watch: {
     modelValue(val) {
       this.preview = val;
@@ -23,9 +23,9 @@ const PreviewCard = Vue.defineComponent({
         </v-toolbar>
         
 
-        <bulletin-card :i18n="i18n" v-if="item && item.class === 'bulletin'" :close="false" :bulletin="item"></bulletin-card>
-        <actor-card :i18n="i18n" v-if="item && item.class === 'actor'" :close="false" :actor="item"></actor-card>
-        <incident-card :i18n="i18n" v-if="item && item.class === 'incident'" :close="false" :incident="item"></incident-card>
+        <bulletin-card v-if="item && item.class === 'bulletin'" :close="false" :bulletin="item"></bulletin-card>
+        <actor-card v-if="item && item.class === 'actor'" :close="false" :actor="item"></actor-card>
+        <incident-card v-if="item && item.class === 'incident'" :close="false" :incident="item"></incident-card>
       </v-sheet>
     </v-dialog>
   `,

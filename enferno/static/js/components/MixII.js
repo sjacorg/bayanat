@@ -16,14 +16,11 @@ const MixII = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
-    i18n: {
-      type: Object,
-      default: () => ({}),
-    },
   },
   emits: ['update:modelValue'],
   data: function () {
     return {
+      translations: window.translations,
       mix: {},
     };
   },
@@ -63,7 +60,7 @@ const MixII = Vue.defineComponent({
             </v-select>
           </div>
           <div class="flex-grow-1 ml-2">
-            <v-textarea rows="2" :label="i18n.details_" v-model="mix.details"></v-textarea>
+            <v-textarea rows="2" :label="translations.details_" v-model="mix.details"></v-textarea>
 
           </div>
 

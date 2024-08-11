@@ -369,40 +369,42 @@
                                             </v-row>
 
                                             <v-row>
-                                                <v-sheet class="d-flex align-center ma-1 pa-1">
+                                                <v-sheet class="d-flex flex-wrap ma-1 pa-1">
                                                     <template 
                                                         v-for="(d,i) in map.description" 
                                                         :key="i">
                                                         <input 
                                                             v-if="i!=0" 
-                                                            class="d-sep" 
+                                                            class="d-sep ml-2 mr-1" 
                                                             width="10" 
-                                                            outlined
-                                                            dense 
-                                                            v-model="map.description[i].sep">
+
+                                                            v-model="map.description[i].sep"
+                                                            placeholder="{{ _('Separator') }}">
                                                         <drop-field 
                                                             v-model="map.description[i].data"
                                                             caption="{{ _('Description') }}">
                                                         </drop-field>
-                                                        <v-icon 
+                                                        <v-btn
                                                             v-if="i!=0" 
                                                             color="red" 
-                                                            small
+                                                            size="x-small"
+                                                            variant="text"
+                                                            class="my-auto mr-2"
+                                                            icon="mdi-minus"
                                                             @click="map.description.splice(i,1)">
-                                                            mdi-minus
-                                                        </v-icon>
+                                                        </v-btn>
                                                     </template>
-        
-                                                </v-sheet>
                                                 <v-btn 
                                                     @click="map.description.push({})"
-                                                    class="my-auto" 
-                                                    fab
-                                                    text 
-                                                    color="green" 
-                                                    small>
-                                                    <v-icon>mdi-plus</v-icon>
+                                                    class="my-auto"
+                                                    variant="text"
+                                                    color="green"
+                                                    icon="mdi-plus"
+                                                    size="x-small">
+
                                                 </v-btn>
+                                                </v-sheet>
+                                                
                                             </v-row>
 
                                             <v-row>
@@ -827,6 +829,7 @@
             mixins: [globalMixin],
 
             data: () => ({
+                translations: window.translations,
                 drawer: drawer,
                 mode: null,
                 loading: false,
@@ -855,7 +858,6 @@
 
                 },
 
-                languages: {{ config.LANGUAGES|safe }},
                 lang: 'en',
 
                 structure: null,

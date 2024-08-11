@@ -5,7 +5,7 @@ const PopDateField = {
   computed: {
     date: {
       get() {
-        return this.modelValue;
+        return dayjs(this.modelValue).isValid() ? dayjs(this.modelValue).toDate() : null;
       },
       set(value) {
         if (value === '') {
@@ -24,6 +24,6 @@ const PopDateField = {
   },
 
   template: `
-    <v-date-input class="flex-fill" :label="label" :rules="[$root.rules.dateValidation]" variant="outlined" hide-actions v-model="date" @click:clear="$emit('update:modelValue', null)" clearable></v-date-input>
+    <v-date-input class="flex-fill" :label="label" v-bind="$attrs" :rules="[$root.rules.dateValidation]" variant="outlined" hide-actions v-model="date" @click:clear="$emit('update:modelValue', null)" clearable></v-date-input>
   `
 };

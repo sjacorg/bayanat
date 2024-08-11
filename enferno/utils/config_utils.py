@@ -235,7 +235,6 @@ class ConfigManager:
             "OCR_EXT": cfg.OCR_EXT,
             "SHEET_IMPORT": cfg.SHEET_IMPORT,
             "DEDUP_TOOL": cfg.DEDUP_TOOL,
-            "LANGUAGES": cfg.LANGUAGES,
             "BABEL_DEFAULT_LOCALE": cfg.BABEL_DEFAULT_LOCALE,
             "MAPS_API_ENDPOINT": cfg.MAPS_API_ENDPOINT,
             "GOOGLE_MAPS_API_KEY": cfg.GOOGLE_MAPS_API_KEY,

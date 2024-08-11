@@ -304,8 +304,8 @@ def test_get_bulletin_relations_endpoint(
 ##### PUT /admin/api/bulletin/assign/<int:id> #####
 
 put_bulletin_assign_endpoint_roles = [
-    ("admin_client", 400),
-    ("da_client", 400),
+    ("admin_client", 200),
+    ("da_client", 403),
     ("mod_client", 403),
     ("client", 401),
     ("admin_sa_client", 200),

@@ -1,4 +1,4 @@
-<v-dialog v-model="activitySearchViews" width="770">
+<v-dialog v-model="activitySearchViews" class="w-sm-100 w-md-75 w-lg-50">
     <v-sheet>
         <v-toolbar class="header-fixed">
             <v-spacer></v-spacer>
@@ -18,9 +18,7 @@
 
                         <bulletin-search-box
                             v-if="searchClass=='bulletin'"
-                            :i18n="translations"
                             :show-op="!i==0"
-                            :extra-filters="true"
                             v-model="search[i]"
                             :users="users"
                             :roles="roles"
@@ -31,8 +29,6 @@
                         <actor-search-box
                             v-if="searchClass=='actor'"
                             :show-op="!i==0"
-                            :i18n="translations"
-                            :extra-filters="true"
                             v-model="search[i]"
                             :users="users"
                             :roles="roles"
@@ -45,8 +41,6 @@
 
             <incident-search-box
                 v-if="searchClass=='incident'"
-                :i18n="translations"
-                :extra-filters="true"
                 v-model="search"
                 :users="users"
                 :roles="roles"

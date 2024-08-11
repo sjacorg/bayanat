@@ -1,4 +1,4 @@
-<v-dialog v-model="advSearchExpand" width="990">
+<v-dialog v-model="advSearchExpand" class="w-sm-100 w-md-75">
 
     <v-sheet>
         <v-card class="rounded-0">
@@ -44,18 +44,13 @@
                             {{ i }}
 
                             <bulletin-search-box
-
                                     v-if="advSearchExpand"
-                                    :i18n="translations"
                                     :show-op="!i==0"
-                                    :extra-filters="true"
                                     @close="advSearchExpand=false"
-
                                     v-model="search[i]"
                                     :users="users"
-                                    :roles="roles"
+                                    :roles="allowedRoles"
                                     :is-admin="has_role(currentUser,'Admin')"
-
                             >
                             </bulletin-search-box>
                         </v-expansion-panel-text>

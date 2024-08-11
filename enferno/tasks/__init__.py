@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import hashlib
+import json
 import os
 import shutil
 import time
@@ -51,6 +52,7 @@ celery.conf.update(
     }
 )
 celery.conf.update({"SECRET_KEY": os.environ.get("SECRET_KEY", cfg.SECRET_KEY)})
+celery.conf.broker_connection_retry_on_startup = True
 celery.conf.add_defaults(cfg)
 
 
@@ -120,14 +122,20 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
             # Assigned user
             assigned_to_id = bulk.get("assigned_to_id")
-            if assigned_to_id:
+            clear_assignee = bulk.get("assigneeClear")
+            if clear_assignee:
+                bulletin.assigned_to_id = None
+            elif assigned_to_id:
                 bulletin.assigned_to_id = assigned_to_id
                 if not status:
                     bulletin.status = "Assigned"
 
             # FPR user
             first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            if first_peer_reviewer_id:
+            clear_reviewer = bulk.get("reviewerClear")
+            if clear_reviewer:
+                bulletin.first_peer_reviewer_id = None
+            elif first_peer_reviewer_id:
                 bulletin.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     bulletin.status = "Peer Review Assigned"
@@ -228,14 +236,20 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
             # Assigned user
             assigned_to_id = bulk.get("assigned_to_id")
-            if assigned_to_id:
+            clear_assignee = bulk.get("assigneeClear")
+            if clear_assignee:
+                actor.assigned_to_id = None
+            elif assigned_to_id:
                 actor.assigned_to_id = assigned_to_id
                 if not status:
                     actor.status = "Assigned"
 
             # FPR user
             first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            if first_peer_reviewer_id:
+            clear_reviewer = bulk.get("reviewerClear")
+            if clear_reviewer:
+                actor.first_peer_reviewer_id = None
+            elif first_peer_reviewer_id:
                 actor.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     actor.status = "Peer Review Assigned"
@@ -333,14 +347,20 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
             # Assigned user
             assigned_to_id = bulk.get("assigned_to_id")
-            if assigned_to_id:
+            clear_assignee = bulk.get("assigneeClear")
+            if clear_assignee:
+                incident.assigned_to_id = None
+            elif assigned_to_id:
                 incident.assigned_to_id = assigned_to_id
                 if not status:
                     incident.status = "Assigned"
 
             # FPR user
             first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            if first_peer_reviewer_id:
+            clear_reviewer = bulk.get("reviewerClear")
+            if clear_reviewer:
+                incident.first_peer_reviewer_id = None
+            elif first_peer_reviewer_id:
                 incident.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     incident.status = "Peer Review Assigned"
@@ -1052,7 +1072,8 @@ def create_query_key(query_json: Any, entity_type: str, user_id: t.id) -> str:
     Returns:
         - Query key.
     """
-    combined_string = f"{query_json}-{entity_type}-{user_id}"
+    normalized_query = json.dumps(query_json, sort_keys=True)  # Ensures consistent key generation
+    combined_string = f"{normalized_query}-{entity_type}-{user_id}"
     return hashlib.sha256(combined_string.encode()).hexdigest()
 
 
@@ -1073,7 +1094,9 @@ def process_graph_generation(
     """
     result_set = get_result_set(query_json, entity_type, type_map)
     rds.set(f"user{user_id}:graph:status", "pending")
-    graph = merge_graphs(result_set, entity_type, user_id)
+    user = User.query.get(user_id)
+    graph_utils = GraphUtils(user)
+    graph = merge_graphs(result_set, entity_type, graph_utils)
 
     # Cache the generated graph with the unique query key
     rds.set(query_key, graph)
@@ -1104,7 +1127,7 @@ def get_result_set(query_json: Any, entity_type: str, type_map: dict) -> Any:
     return model.query.filter(*query)
 
 
-def merge_graphs(result_set: Any, entity_type: str, user_id: t.id) -> Optional[str]:
+def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> Optional[str]:
     """
     Merge graphs for each item in the result set.
 
@@ -1118,6 +1141,6 @@ def merge_graphs(result_set: Any, entity_type: str, user_id: t.id) -> Optional[s
     """
     graph = None
     for item in result_set.all():
-        current_graph = GraphUtils.get_graph_json(entity_type, item.id)
-        graph = current_graph if graph is None else GraphUtils.merge_graphs(graph, current_graph)
+        current_graph = graph_utils.get_graph_json(entity_type, item.id)
+        graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph

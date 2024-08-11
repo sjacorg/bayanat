@@ -5,7 +5,7 @@
         <v-sheet min-width="390" v-for="(item,index) in editedItem.incident_relations" :key="index">
 
 
-            <incident-result :i18n="translations" :incident="item.incident">
+            <incident-result :incident="item.incident">
 
                 <template #header>
                     <v-card class="text">

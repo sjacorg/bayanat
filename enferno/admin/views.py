@@ -1,27 +1,27 @@
 from __future__ import annotations
-from typing import Any, Literal, Optional
-from flask import request, jsonify, abort
-from http.client import HTTPException
+
 import os
 import shutil
-from datetime import datetime, timedelta
 import unicodedata
+from datetime import datetime, timedelta
 from functools import wraps
+from typing import Any, Literal, Optional, Tuple, Union
 from uuid import uuid4
 
-from zxcvbn import zxcvbn
 import bleach
 import boto3
-
-from flask import request, abort, Response, Blueprint, current_app, json, g, send_from_directory
+from flask import Response, Blueprint, current_app, json, g, send_from_directory
+from flask import request, jsonify, abort, session
 from flask.templating import render_template
 from flask_babel import gettext
-from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from flask_security import logout_user
-from sqlalchemy import and_, desc, or_
+from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
+from sqlalchemy import desc, or_
 from werkzeug.utils import safe_join, secure_filename
-from flask import request, jsonify, abort, session, redirect
+from zxcvbn import zxcvbn
+from flask_security.twofactor import tf_disable
 
+import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
     Label,
@@ -93,7 +93,6 @@ from enferno.admin.validation.models import (
     MediaCategoryRequestModel,
     MediaRequestModel,
     PotentialViolationRequestModel,
-    QueryValidationModel,
     RoleRequestModel,
     SourceRequestModel,
     UserForceResetRequestModel,
@@ -102,7 +101,7 @@ from enferno.admin.validation.models import (
     UserRequestModel,
 )
 from enferno.admin.validation.util import validate_with
-from enferno.extensions import rds
+from enferno.extensions import rds, db
 from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
@@ -111,13 +110,11 @@ from enferno.tasks import (
 )
 from enferno.user.models import User, Role, Session
 from enferno.utils.config_utils import ConfigManager
-from enferno.utils.http_response import HTTPResponse
-
-from enferno.utils.logging_utils import get_log_filenames
-from enferno.utils.search_utils import SearchUtils
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.graph_utils import GraphUtils
-import enferno.utils.typing as t
+from enferno.utils.http_response import HTTPResponse
+from enferno.utils.logging_utils import get_log_filenames
+from enferno.utils.search_utils import SearchUtils
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -146,8 +143,12 @@ def require_view_history(f):
     @auth_required("session")
     def decorated_function(*args, **kwargs):
         # Check if user has the required view history permissions
-        if not (current_user.view_simple_history or current_user.view_full_history):
-            abort(403)
+        if not (
+            current_user.has_role("Admin")
+            or current_user.view_simple_history
+            or current_user.view_full_history
+        ):
+            return HTTPResponse.FORBIDDEN
         return f(*args, **kwargs)
 
     return decorated_function
@@ -191,8 +192,8 @@ def has_role_assignment_permission(roles: list) -> bool:
     if not current_user.has_role("Admin"):
         # non-admins can only assign their roles
         user_roles = {role.id for role in current_user.roles}
-        requested_roles = set(roles)
-        if not (user_roles & requested_roles == requested_roles) or not current_app.config.get(
+        requested_roles = set([role.get("id") for role in roles])
+        if not requested_roles.issubset(user_roles) or not current_app.config.get(
             "AC_USERS_CAN_RESTRICT_NEW"
         ):
             return False
@@ -3049,7 +3050,7 @@ def api_bulletin_review_update(
 
         if bulletin.ref is None:
             bulletin.ref = []
-        bulletin.ref += refs
+        bulletin.ref = list(set(bulletin.ref + refs))
 
         if bulletin.save():
             # Create a revision using latest values
@@ -3243,8 +3244,8 @@ def api_bulletin_self_assign(
     """
 
     # permission check
-    if not current_user.can_self_assign:
-        return "User not allowed to self assign", 400
+    if not (current_user.has_role("Admin") or current_user.can_self_assign):
+        return "User not allowed to self assign", 403
 
     bulletin = Bulletin.query.get(id)
 
@@ -3317,8 +3318,8 @@ def api_actor_self_assign(
     """
 
     # permission check
-    if not current_user.can_self_assign:
-        return "User not allowed to self assign", 400
+    if not (current_user.has_role("Admin") or current_user.can_self_assign):
+        return "User not allowed to self assign", 403
 
     actor = Actor.query.get(id)
 
@@ -3382,8 +3383,8 @@ def api_incident_self_assign(
     """
 
     # permission check
-    if not current_user.can_self_assign:
-        return "User not allowed to self assign", 400
+    if not (current_user.has_role("Admin") or current_user.can_self_assign):
+        return "User not allowed to self assign", 403
 
     incident = Incident.query.get(id)
 
@@ -4455,7 +4456,17 @@ def api_user_get(id):
 
 @admin.get("/api/user/<int:id>/sessions")
 @roles_required("Admin")
-def api_user_sessions(id):
+def api_user_sessions(id: int) -> Any:
+    """
+    Retrieve paginated session data for a specific user.
+
+    Args:
+        id (int): The ID of the user whose sessions are to be retrieved.
+
+    Returns:
+        Any: A dictionary with session details and pagination info, or an error message and HTTP status code.
+    """
+
     session_redis = current_app.config["SESSION_REDIS"]
     session_interface = current_app.session_interface
     per_page = request.args.get("per_page", PER_PAGE, int)
@@ -4481,7 +4492,9 @@ def api_user_sessions(id):
             data = session_redis.get(key)
             if data:
                 token = key.split(":")[1]
-                redis_sessions_details[token] = session_interface.serializer.decode(data)
+                session_data = session_interface.serializer.decode(data)
+                # hide session details from the response
+                redis_sessions_details[token] = {"_fresh": session_data.get("_fresh")}
 
         # Prepare the session data for response including the details
         sessions_data = []
@@ -4490,6 +4503,7 @@ def api_user_sessions(id):
             session_info = s.to_dict()
             if s.session_token in redis_sessions_details:
                 session_info["details"] = redis_sessions_details[s.session_token]
+            session_info["active"] = s.session_token == session.sid
             sessions_data.append(session_info)
 
         # Determine if there are more items left
@@ -4504,35 +4518,57 @@ def api_user_sessions(id):
 @admin.delete("/api/session/logout")
 @roles_required("Admin")
 def logout_session():
-    # Safely get the token from the JSON payload
-    token = request.json.get("token") if request.json else None
+    """
+    Handle session logout by session id (admin only).
 
-    if not token:
-        return "Invalid request. Please provide a session token.", 400
-    if token == session.sid:
-        logout_user()
-        # Use a custom JSON response with a specific field to signal a redirect to the front-end
-        return {"logout": "successful", "redirect": True}
+    Returns appropriate messages based on the success or failure of the logout operation.
+    """
 
-    rds = current_app.config["SESSION_REDIS"]
-    session_key = f"session:{token}"
-
+    # get the sessid from the JSON payload
+    sessid = request.json.get("sessid", None)
+    if not sessid:
+        return "Invalid request. Please provide a session ID.", 400
     try:
+        # Query the database to get the session token using the sessid
+        session_ = Session.query.get(sessid)
+
+        if not session_:
+            return f"Session ID {sessid} not found.", 404
+
+        token = session_.session_token
+
+        if token == session.sid:
+            logout_user()
+            # Use a custom JSON response with a specific field to signal a redirect to the front-end
+            return {"logout": "successful", "redirect": True}
+
+        rds = current_app.config["SESSION_REDIS"]
+        session_key = f"session:{token}"
+
         # Check if the session key exists in Redis
         if rds.exists(session_key):
             # Delete the session key from Redis
             rds.delete(session_key)
-            return f"Session {token} logged out successfully."
+            return f"Session {sessid} logged out successfully."
         else:
-            return f"Session {token} not found.", 404
+            return f"Session {sessid} not found in Redis.", 404
 
     except Exception as e:
-        return "Error while logging out session", 500
+        return f"Error while logging out session: {str(e)}", 500
 
 
 @admin.delete("/api/user/<int:user_id>/sessions/logout")
 @roles_required("Admin")
-def logout_all_sessions(user_id):
+def logout_all_sessions(user_id: int) -> Any:
+    """
+    Log out all sessions for a given user.
+
+    Args:
+        user_id (int): The ID of the user whose sessions will be logged out.
+
+    Returns:
+        Tuple[Union[str, dict], int]: A response message and HTTP status code.
+    """
     # Fetch the user to ensure they exist
     user = User.query.get(user_id)
     if not user:
@@ -4563,6 +4599,33 @@ def logout_all_sessions(user_id):
     if errors:
         return {"errors": errors}, 500
     return f"All sessions for user {user_id} logged out successfully", 200
+
+
+@admin.delete("/api/user/revoke_2fa")
+@roles_required("Admin")
+def revoke_2fa() -> Tuple:
+    """
+    Revoke 2FA for a specified user.
+
+    Returns:
+        Tuple[str, int]: A success message and HTTP status code.
+    """
+    user_id: int = request.args.get("user_id", default=None, type=int)
+
+    if not user_id:
+        return HTTPResponse.BAD_REQUEST
+
+    user = User.query.get(user_id)
+    if not user:
+        return HTTPResponse.BAD_REQUEST
+
+    tf_disable(user)
+    # also clear all webauthn credentials
+    for cred in user.webauthn:
+        db.session.delete(cred)
+    user.save()
+
+    return f"2FA revoked for user {user_id} successfully", 200
 
 
 @admin.post("/api/user/")
@@ -5299,7 +5362,7 @@ def api_incident_get(
                 current_user,
                 Activity.ACTION_VIEW,
                 Activity.STATUS_DENIED,
-                request.json,
+                incident.to_mini(),
                 "incident",
                 details=f"Unauthorized attempt to view restricted Incident {id}.",
             )
@@ -5644,10 +5707,11 @@ def graph_json() -> Optional[str]:
     id = request.args.get("id")
     entity_type = request.args.get("type")
     expanded = request.args.get("expanded")
+    graph_utils = GraphUtils(current_user)
     if expanded == "false":
-        return GraphUtils.get_graph_json(entity_type, id)
+        return graph_utils.get_graph_json(entity_type, id)
     else:
-        return GraphUtils.expanded_graph(entity_type, id)
+        return graph_utils.expanded_graph(entity_type, id)
 
 
 @admin.post("/api/graph/visualize")

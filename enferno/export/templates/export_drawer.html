@@ -20,7 +20,6 @@
                  @approve="approveExport"
                  @reject="rejectExport"
                  @change="setExpiry"
-                 :i18n="translations"
                  v-if="exportDrawer && eitem"
                  @close="exportDrawer=false"
                  :exp="eitem"></export-card>

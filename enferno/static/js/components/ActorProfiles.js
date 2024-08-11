@@ -4,13 +4,11 @@ const ActorProfiles = Vue.defineComponent({
       type: Number,
       required: true,
     },
-    i18n: {
-      type: Object,
-    },
   },
 
   data: function () {
     return {
+      translations: window.translations,
       actorProfiles: [],
       tab: 0,
     };
@@ -34,7 +32,7 @@ const ActorProfiles = Vue.defineComponent({
   },
 
   template: `
-      <v-card class="ma-2">
+      <v-card variant="plain" class="rounded-0">
         <v-tabs v-model="tab"
                 background-color="primary"
                 show-arrows>
@@ -59,12 +57,12 @@ const ActorProfiles = Vue.defineComponent({
                       {{ profile.originid }}
                     </v-chip>
                 </template>
-                {{ i18n.originid_ }}
+                {{ translations.originid_ }}
               </v-tooltip>
 
               <v-card outlined class="ma-2" color="grey" v-if="profile.sources?.length">
                 <v-card-text>
-                  <div class="px-1 title black--text">{{ i18n.sources_ }}</div>
+                  <div class="px-1 title black--text">{{ translations.sources_ }}</div>
                   <v-chip-group column>
                     <v-chip small label color="blue-grey" v-for="source in profile.sources" :key="source.id">
                       {{ source.title }}
@@ -75,7 +73,7 @@ const ActorProfiles = Vue.defineComponent({
 
               <v-card outlined class="ma-2" color="grey" v-if="profile.labels?.length">
                 <v-card-text>
-                  <div class="px-1 title black--text">{{ i18n.labels_ }}</div>
+                  <div class="px-1 title black--text">{{ translations.labels_ }}</div>
                   <v-chip-group column>
                     <v-chip small label color="blue-grey" v-for="label in profile.labels" :key="label.id">
                       {{ label.title }}
@@ -87,7 +85,7 @@ const ActorProfiles = Vue.defineComponent({
 
               <v-card outlined class="ma-2" color="grey" v-if="profile.ver_labels?.length">
                 <v-card-text>
-                  <div class="px-1 title black--text">{{ i18n.verifiedLabels_ }}</div>
+                  <div class="px-1 title black--text">{{ translations.verifiedLabels_ }}</div>
                   <v-chip-group column>
                     <v-chip small label color="blue-grey" v-for="verLabel in profile.ver_labels"
                             :key="verLabel.id">
@@ -99,16 +97,16 @@ const ActorProfiles = Vue.defineComponent({
 
               <v-card v-if="profile.description" class="ma-2 mb-4">
                 <v-toolbar density="compact">
-                  <v-toolbar-title class="text-subtitle-1">{{ i18n.description_ }}</v-toolbar-title>
+                  <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
                 </v-toolbar>
 
                 <v-card-text class="text-body-2 " v-html="profile.description"></v-card-text>
               </v-card>
 
-              <mp-card v-if="profile.mode === 3" :i18n="i18n" :profile-id="profile.id"></mp-card>
+              <mp-card v-if="profile.mode === 3" :profile-id="profile.id"></mp-card>
 
-              <uni-field :caption="i18n.publishDate_" :english="profile.publish_date"></uni-field>
-              <uni-field :caption="i18n.documentationDate_" :english="profile.documentation_date"></uni-field>
+              <uni-field :caption="translations.publishDate_" :english="profile.publish_date"></uni-field>
+              <uni-field :caption="translations.documentationDate_" :english="profile.documentation_date"></uni-field>
 
             </v-card>
           </v-window-item>

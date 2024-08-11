@@ -4,10 +4,6 @@ const RelatedBulletinsCard = Vue.defineComponent({
       type: Object,
       required: true,
     },
-    i18n: {
-      type: Object,
-      required: true,
-    },
     relationInfo: {
       type: Array,
       required: true,
@@ -15,6 +11,7 @@ const RelatedBulletinsCard = Vue.defineComponent({
   },
   data() {
     return {
+      translations: window.translations,
       bulletinPage: 1,
       bulletinLM: false,
       extractValuesById: extractValuesById,
@@ -49,25 +46,31 @@ const RelatedBulletinsCard = Vue.defineComponent({
         });
     },
     probability(item) {
-      return this.i18n.probs[item.probability].tr;
+      return this.translations.probs[item.probability].tr;
     },
 
+  },
+  computed: {
+    getRelTo(){
+      const c = this.entity.class.toLowerCase()[0];
+      return `relto${c}`;
+    }
   },
   template: `
       <v-card class="ma-2" v-if="entity.bulletin_relations && entity.bulletin_relations.length">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.relatedBulletins_ }}
+          <v-toolbar-title class="text-subtitle-1">{{ translations.relatedBulletins_ }}
             <v-btn variant="text" size="x-small" icon="mdi-image-filter-center-focus-strong"
-                   :href="'/admin/bulletins/?reltob='+entity.id" target="_self">
+                   :href="'/admin/bulletins/?'+ this.getRelTo + '='+entity.id" target="_self">
             </v-btn>
           </v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <bulletin-result :i18n="i18n" v-for="(item,index) in entity.bulletin_relations" :key="index"
+          <bulletin-result v-for="(item,index) in entity.bulletin_relations" :key="index"
                            :bulletin="item.bulletin">
             <template v-slot:header>
               <v-sheet class="pa-2 border-b">
-                <v-list-item-title variant="flat"  class="text-caption my-2">{{ i18n.relationshipInfo_ }}</v-list-item-title>
+                <v-list-item-title variant="flat"  class="text-caption my-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
                 <v-chip v-if="item.probability !== null" size="small" label>{{ probability(item) }}
                 </v-chip>
                 <v-chip class="ma-1" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')"
@@ -81,7 +84,7 @@ const RelatedBulletinsCard = Vue.defineComponent({
         <v-card-actions>
           <v-btn class="ma-auto" append-icon="mdi-chevron-down" size="small" variant="tonal" color="grey" 
                  @click="loadBulletinRelations(bulletinPage)"
-                 v-if="bulletinLM">{{ i18n.loadMore_ }}
+                 v-if="bulletinLM">{{ translations.loadMore_ }}
             
           </v-btn>
         </v-card-actions>

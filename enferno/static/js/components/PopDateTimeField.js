@@ -71,7 +71,7 @@ const PopDateTimeField = Vue.defineComponent({
 
   template: `
       <v-sheet class="d-flex">
-        <pop-date-field :label="label" v-model="dt"></pop-date-field>
+        <pop-date-field :label="label" v-bind="$attrs" v-model="dt"></pop-date-field>
         <v-text-field  variant="plain"  class="mt-2 ml-2 flex-0-0" @update:modelValue="emitInput" v-model="tm" type="time" :label="timeLabel"></v-text-field>
       </v-sheet>
     `,

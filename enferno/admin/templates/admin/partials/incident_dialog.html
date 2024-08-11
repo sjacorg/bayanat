@@ -28,7 +28,7 @@
 
 
                 <v-card-text>
-                    <v-container>
+                    <v-container fluid>
 
                         <v-row>
                             <v-col cols="12" md="12">
@@ -253,7 +253,7 @@
                                                 :disabled="unrestricted"
                                                 item-title="name"
                                                 return-object
-                                                :items="allowedRoles()"
+                                                :items="allowedRoles"
                                                 multiple
                                                 v-model="editedItem.roles"
                                                 label="{{ _('Restrict Incident to Access Group(s)') }}"

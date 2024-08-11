@@ -1,5 +1,5 @@
 const BulletinCard = Vue.defineComponent({
-  props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit', 'i18n'],
+  props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
   watch: {
     bulletin: function (val, old) {
@@ -10,6 +10,9 @@ const BulletinCard = Vue.defineComponent({
 
   mounted() {
     this.removeVideo();
+    if (this.bulletin?.id) {
+        this.mapLocations = aggregateBulletinLocations(this.bulletin);
+    }
   },
 
   methods: {
@@ -140,9 +143,6 @@ const BulletinCard = Vue.defineComponent({
       // image viewer
       lightbox: null,
       mediasReady: 0,
-
-
-
     };
   },
 
@@ -152,7 +152,7 @@ const BulletinCard = Vue.defineComponent({
       <v-card variant="flat" class=" mb-4 rounded-0">
         <v-toolbar class="d-flex px-2 ga-2">
           <v-chip size="small">
-            {{ i18n.id_ }} {{ bulletin.id }}
+            {{ translations.id_ }} {{ bulletin.id }}
           </v-chip>
 
           <v-tooltip v-if="bulletin.originid" location="bottom">
@@ -169,17 +169,17 @@ const BulletinCard = Vue.defineComponent({
 
                   </v-chip>
               </template>
-              {{ i18n.originid_ }}
+              {{ translations.originid_ }}
           </v-tooltip>
 
           <v-btn variant="tonal" size="small" prepend-icon="mdi-pencil" v-if="editAllowed()" class="ml-2"
                  @click="$emit('edit',bulletin)">
-            {{ i18n.edit_ }}
+            {{ translations.edit_ }}
           </v-btn>
 
           <v-btn size="small" class="ml-2" variant="tonal" prepend-icon="mdi-graph-outline"
                  @click.stop="$root.$refs.viz.visualize(bulletin)">
-            {{ i18n.visualize_ }}
+            {{ translations.visualize_ }}
           </v-btn>
 
           <template #append>
@@ -201,7 +201,7 @@ const BulletinCard = Vue.defineComponent({
                   {{ bulletin.assigned_to['name'] }}
                 </v-chip>
               </template>
-              {{ i18n.assignedUser_ }}
+              {{ translations.assignedUser_ }}
             </v-tooltip>
           </div>
 
@@ -217,7 +217,7 @@ const BulletinCard = Vue.defineComponent({
                   {{ bulletin.status }}
                 </v-chip>
               </template>
-              {{ i18n.workflowStatus_ }}
+              {{ translations.workflowStatus_ }}
             </v-tooltip>
           </div>
         </v-sheet> 
@@ -228,7 +228,7 @@ const BulletinCard = Vue.defineComponent({
             <template v-slot:activator="{ props }">
               <v-icon color="blue-darken-3" class="mx-2" size="small" v-bind="props">mdi-lock</v-icon>
             </template>
-            {{ i18n.accessRoles_ }}
+            {{ translations.accessRoles_ }}
           </v-tooltip>
           <v-chip label small v-for="role in bulletin.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
         </v-card>  
@@ -239,7 +239,7 @@ const BulletinCard = Vue.defineComponent({
             <template v-slot:activator="{ props }">
               <v-icon color="primary" class="mx-2" size="small" v-bind="props">mdi-tag</v-icon>
             </template>
-            {{ i18n.ref_ }}
+            {{ translations.ref_ }}
           </v-tooltip>
           <v-chip size="small" v-for="e in bulletin.ref" class="caption black--text mx-1 mb-1">{{ e }}</v-chip>
         </v-card>
@@ -262,20 +262,20 @@ const BulletinCard = Vue.defineComponent({
                 
               </v-chip>
             </template>
-            {{ i18n.sourceLink_ }}: {{ bulletin.source_link }}
+            {{ translations.sourceLink_ }}: {{ bulletin.source_link }}
           </v-tooltip>
         </v-card> 
         <v-divider v-if="bulletin.source_link" ></v-divider>
       </v-card>
 
       <!-- Titles -->
-      <uni-field :caption="i18n.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
-      <uni-field :caption="i18n.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
+      <uni-field :caption="translations.originalTitle_" :english="bulletin.title" :arabic="bulletin.title_ar"></uni-field>
+      <uni-field :caption="translations.title_" :english="bulletin.sjac_title" :arabic="bulletin.sjac_title_ar"></uni-field>
 
       <!-- Description -->
       <v-card v-if="bulletin.description" class="ma-2 mb-4">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.description_ }}</v-toolbar-title>
+          <v-toolbar-title class="text-subtitle-1">{{ translations.description_ }}</v-toolbar-title>
         </v-toolbar>
 
         <v-card-text class="text-body-2 " v-html="bulletin.description"></v-card-text>
@@ -286,14 +286,14 @@ const BulletinCard = Vue.defineComponent({
       <v-divider></v-divider>
       <v-card variant="flat" >
        
-        <global-map :i18n="i18n" v-model="mapLocations"></global-map>
+        <global-map v-model="mapLocations"></global-map>
       </v-card>
 
 
       <!-- Sources -->
       <v-card class="ma-2"  v-if="bulletin.sources && bulletin.sources.length">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.sources_ }}</v-toolbar-title>
+          <v-toolbar-title class="text-subtitle-1">{{ translations.sources_ }}</v-toolbar-title>
 
         </v-toolbar>
         <v-card-text>
@@ -309,11 +309,11 @@ const BulletinCard = Vue.defineComponent({
       <!-- Events -->
       <v-card class="ma-2" v-if="bulletin.events && bulletin.events.length">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.events_ }}</v-toolbar-title>
+          <v-toolbar-title class="text-subtitle-1">{{ translations.events_ }}</v-toolbar-title>
         </v-toolbar>
 
         <v-card-text class="pa-2">
-          <event-card v-for="(event, index) in bulletin.events" :i18n="translations" :number="index+1" :key="event.id"
+          <event-card v-for="(event, index) in bulletin.events" :number="index+1" :key="event.id"
                       :event="event"></event-card>
         </v-card-text>
       </v-card>
@@ -322,7 +322,7 @@ const BulletinCard = Vue.defineComponent({
 
       <v-card class="ma-2" v-if="bulletin.labels && bulletin.labels.length">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.labels_ }}</v-toolbar-title>
+          <v-toolbar-title class="text-subtitle-1">{{ translations.labels_ }}</v-toolbar-title>
         </v-toolbar>
 
         <v-card-text>
@@ -339,7 +339,7 @@ const BulletinCard = Vue.defineComponent({
 
       <v-card class="ma-2" v-if="bulletin.verLabels && bulletin.verLabels.length">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.verifiedLabels_ }}</v-toolbar-title>
+          <v-toolbar-title class="text-subtitle-1">{{ translations.verifiedLabels_ }}</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
           <v-chip-group column>
@@ -355,7 +355,7 @@ const BulletinCard = Vue.defineComponent({
 
       <v-card class="ma-2" v-if="bulletin.medias && bulletin.medias.length">
         <v-toolbar density="compact">
-            <v-toolbar-title class="text-subtitle-1">{{ i18n.media_ }}</v-toolbar-title>
+            <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
         </v-toolbar>
         <v-card variant="flat"  v-if="iplayer" id="iplayer" class="px-2 my-3">
           <video :id="'player'+ $.uid" controls class="video-js vjs-default-skin vjs-big-play-centered "
@@ -373,7 +373,7 @@ const BulletinCard = Vue.defineComponent({
       <!-- Locations -->
       <v-card class="ma-2"  v-if="bulletin.locations && bulletin.locations.length">
         <v-toolbar density="compact">
-          <v-toolbar-title class="text-subtitle-1">{{ i18n.locations_ }}</v-toolbar-title>
+          <v-toolbar-title class="text-subtitle-1">{{ translations.locations_ }}</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
           <v-chip-group column>
@@ -387,29 +387,26 @@ const BulletinCard = Vue.defineComponent({
 
       <!-- Related Bulletins -->
       <related-bulletins-card v-if="bulletin" :entity="bulletin"
-                            :relationInfo="$root.btobInfo"
-                            :i18n="i18n"> </related-bulletins-card>
+                            :relationInfo="$root.btobInfo"> </related-bulletins-card>
       
       <!-- Related Actors  -->
       <related-actors-card v-if="bulletin" :entity="bulletin" 
-                           :relationInfo="$root.atobInfo"
-                           :i18n="i18n" ></related-actors-card>
+                           :relationInfo="$root.atobInfo" ></related-actors-card>
 
       <!-- Related Incidents -->
       <related-incidents-card v-if="bulletin" :entity="bulletin"
-                                :relationInfo="$root.itobInfo"
-                                :i18n="i18n"></related-incidents-card>
+                                :relationInfo="$root.itobInfo"></related-incidents-card>
 
       <!-- Pub/Doc Dates -->
       <v-sheet class="d-flex">
-        <uni-field :caption="i18n.publishDate_" :english="bulletin.publish_date"></uni-field>
-        <uni-field :caption="i18n.documentationDate_" :english="bulletin.documentation_date"></uni-field>
+        <uni-field :caption="translations.publishDate_" :english="bulletin.publish_date"></uni-field>
+        <uni-field :caption="translations.documentationDate_" :english="bulletin.documentation_date"></uni-field>
       </v-sheet>
 
       <!-- Review -->
       <v-card v-if="showReview(bulletin)" variant="outlined" elevation="0" class="ma-3" color="teal-lighten-2">
         <v-card-text>
-          <div class="px-1">{{ i18n.review_ }}</div>
+          <div class="px-1">{{ translations.review_ }}</div>
           <div v-html="bulletin.review" class="pa-1 my-2 grey--text text--darken-2">
 
           </div>
@@ -423,7 +420,7 @@ const BulletinCard = Vue.defineComponent({
           <v-toolbar-title>
           <v-btn variant="plain" class="text-subtitle-2" append-icon="mdi-history" :loading="hloading"
                  @click="loadRevisions">
-            {{ i18n.logHistory_ }}
+            {{ translations.logHistory_ }}
             
           </v-btn>
             </v-toolbar-title>
@@ -438,7 +435,7 @@ const BulletinCard = Vue.defineComponent({
                 <v-chip label size="small"
                 >{{ translate_status(revision.data.status) }}</v-chip> -
                 {{ revision.created_at }}
-                - {{ i18n.by_ }} {{ revision.user.username }}</span>
+                - {{ translations.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
               <v-btn icon="mdi-vector-difference" v-if="diffAllowed()" v-show="index!=revisions.length-1"

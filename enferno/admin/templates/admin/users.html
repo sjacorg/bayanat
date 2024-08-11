@@ -48,6 +48,22 @@
                                     </v-btn>
                                 </template>
                             </v-tooltip>
+
+                            <v-tooltip location="top"
+                                    v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
+                                    :text="'{{ _('Revoke 2FA') }}'">
+                                <template #activator="{props}">
+                                    <v-btn
+                                            @click.stop="revoke2fa(item.id)"
+                                            variant="plain"
+                                            color="warning"
+                                            v-bind="props"
+                                            size="small"
+                                            icon="mdi-lock-remove">
+                                    </v-btn>
+                                </template>
+                            </v-tooltip>
+
                             <v-tooltip location="top" text="{{ _('Password reset requested.') }}">
                                 <template #activator="{props}">
                                     <v-btn icon="mdi-exclamation-thick" size="small" color="error" variant="plain"
@@ -56,6 +72,30 @@
                                 </template>
                             </v-tooltip>
 
+                        </template>
+
+                        <template v-slot:item.2fa="{ item }">
+                            <v-tooltip location="top"
+                                       :text="item.two_factor_devices && item.two_factor_devices.length > 0 ? '{{ _('2FA Active') }}' : '{{ _('2FA Inactive') }}'">
+                                <template #activator="{props}">
+                                    <v-icon
+                                            v-if="item.two_factor_devices && item.two_factor_devices.length > 0"
+                                            color="success"
+                                            v-bind="props"
+                                            size="small"
+                                    >
+                                        mdi-lock-check
+                                    </v-icon>
+                                    <v-icon
+                                            v-else
+                                            color="error"
+                                            v-bind="props"
+                                            size="small"
+                                    >
+                                        mdi-lock-open-alert
+                                    </v-icon>
+                                </template>
+                            </v-tooltip>
                         </template>
 
                         <template v-slot:item.roles="{ item }">
@@ -72,7 +112,7 @@
 
                         <template v-slot:no-data></template>
                     </v-data-table-server>
-                    <v-dialog v-model="dialog" max-width="1000px">
+                    <v-dialog v-model="dialog" max-width="1200px">
                         <v-card>
                             <v-toolbar :title="formTitle">
                                 <template #append>
@@ -173,6 +213,7 @@
                                                     label="{{ _('Groups') }}"
                                                     return-object
                                                     multiple
+                                                    @update:model-value="checkRoles"
                                             ></v-select>
 
                                         </v-col>
@@ -183,36 +224,40 @@
                                     </v-row>
                                     <v-row>
                                         <v-col cols="12" md="3">
-                                            <v-switch color="primary" label="{{ _('Can view usernames') }}"
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view usernames') }}"
                                                       v-model="editedItem.view_usernames"></v-switch>
                                         </v-col>
                                         <v-col cols="12" md="3">
-                                            <v-switch color="primary" label="{{ _('Can view simple history') }}"
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view simple history') }}"
                                                       v-model="editedItem.view_simple_history"></v-switch>
                                         </v-col>
                                         <v-col cols="12" md="3">
-                                            <v-switch color="primary" label="{{ _('Can view Full History') }}"
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can view Full History') }}"
                                                       v-model="editedItem.view_full_history"></v-switch>
                                         </v-col>
                                         <v-col cols="12" md="3">
-                                            <v-switch color="primary" label="{{ _('Can self assign') }}"
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can self assign') }}"
                                                       v-model="editedItem.can_self_assign"></v-switch>
 
                                         </v-col>
                                         <v-col cols="12" md="3">
-                                            <v-switch color="primary" label="{{ _('Can edit Locations') }}"
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can edit Locations') }}"
                                                       v-model="editedItem.can_edit_locations"></v-switch>
 
                                         </v-col>
 
                                         <v-col cols="12" md="3">
-                                            <v-switch color="primary" label="{{ _('Can Request Exports') }}"
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Request Exports') }}"
                                                       v-model="editedItem.can_export"></v-switch>
                                         </v-col>
                                     </v-row>
                                 </v-container>
                             </v-card-text>
                             <v-card-text class="text-center">
+                                <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
+                                    {{ _('Revoke 2FA') }}
+                                </v-btn>
+
                                 <v-btn @click.once="logoutAllSessions(editedItem.id)" color="error">
                                     <v-icon left>mdi-logout</v-icon>
                                     {{ _('Logout All Sessions') }}
@@ -265,6 +310,7 @@
                     {title: "{{_('Name')}}", value: "name"},
                     {title: "{{_('Google ID')}}", value: "google_id"},
                     {title: "{{_('Groups')}}", value: "roles"},
+                    {title: "{{_('Two Factor Authentication')}}", value: "2fa"},
                     {title: "{{_('Actions')}}", value: "action", sortable: false}
                 ],
 
@@ -279,6 +325,7 @@
                 disableUsername: true,
                 disablePassword: true,
                 disableEmail: true,
+                isAdmin: false,
                 userDrawer: false,
                 user: null,
                 session_id: '{{ session.sid }}'
@@ -288,7 +335,7 @@
 
             computed: {
                 formTitle() {
-                    return this.editedIndex === -1 ? "{{_('New Item')}}" : "{{_('Edit Item')}}";
+                    return this.editedItem?.id ? "{{_('Edit Item')}}" : "{{_('New Item')}}";
                 }
             },
 
@@ -298,7 +345,11 @@
 
             watch: {
                 dialog(val) {
-                    val || this.close();
+                    if (val) {
+                        this.checkRoles();
+                    } else {
+                        this.close();
+                    }
                 },
 
                 userDrawer: function (val) {
@@ -339,6 +390,25 @@
                     });
 
                 },
+
+                revoke2fa(userId) {
+                    if (confirm(`{{ _('Are you sure you want to revoke 2FA for this user?') }}`)) {
+                        axios.delete(`/admin/api/user/revoke_2fa`, {
+                            params: {user_id: userId}
+                        })
+                            .then(response => {
+                                this.showSnack(response.data);
+                                this.refresh();
+                                this.dialog = false;
+
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                this.showSnack(this.parseValidationError(err?.response?.data));
+                            });
+                    }
+                },
+
 
                 rowClick(e, row) {
                     const item = row.item;
@@ -417,6 +487,20 @@
 
                 },
 
+                checkRoles() {
+                    this.isAdmin = this.editedItem.roles?.some(r => r.name === "Admin") || false;
+                    if (this.isAdmin) {
+                        this.editedItem.view_usernames = true;
+                        this.editedItem.view_simple_history = true;
+                        this.editedItem.view_full_history = true;
+                        this.editedItem.can_self_assign = true;
+                        this.editedItem.can_edit_locations = true;
+                        this.editedItem.can_export = true;
+                        return true;
+                    }
+                    return false;
+                },
+
                 refresh(options) {
                     this.options = options || this.options;
                     this.loading = true;
@@ -450,6 +534,7 @@
                 close() {
                     this.dialog = false;
                     this.showPassword = false;
+                    this.isAdmin = false;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;

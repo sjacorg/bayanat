@@ -10,18 +10,14 @@ const BulletinSearchBox = Vue.defineComponent({
     roles: {
       type: Array,
     },
-
     extraFilters: {
       type: Boolean,
+      default: true,
     },
     showOp: {
       type: Boolean,
       default: true,
     },
-    i18n: {
-      type: Object,
-    },
-
     isAdmin: {
       type: Boolean,
       default: false,
@@ -46,7 +42,8 @@ const BulletinSearchBox = Vue.defineComponent({
 
   mounted() {
 
-    this.q.locTypes = this.translations.bulletinLocTypes_.map((x) => x.code);
+    this.q.locTypes = this.q.locTypes || this.translations.bulletinLocTypes_.map((x) => x.code);
+
   },
 
   watch: {
@@ -78,8 +75,8 @@ const BulletinSearchBox = Vue.defineComponent({
           <v-row v-if="showOp">
             <v-col>
               <v-btn-toggle mandatory v-model="q.op">
-                <v-btn small value="and">{{ i18n.and_ }}</v-btn>
-                <v-btn small value="or">{{ i18n.or_ }}</v-btn>
+                <v-btn small value="and">{{ translations.and_ }}</v-btn>
+                <v-btn small value="or">{{ translations.or_ }}</v-btn>
               </v-btn-toggle>
             </v-col>
           </v-row>
@@ -88,7 +85,7 @@ const BulletinSearchBox = Vue.defineComponent({
 
               <v-text-field
                   v-model="q.tsv"
-                  :label="i18n.contains_"
+                  :label="translations.contains_"
                   clearable
                   @keydown.enter="$emit('search',q)"
               ></v-text-field>
@@ -96,13 +93,13 @@ const BulletinSearchBox = Vue.defineComponent({
               <v-text-field
 
                   v-model="q.extsv"
-                  :label="i18n.notContains_"
+                  :label="translations.notContains_"
                   clearable
               ></v-text-field>
               <div class="d-flex align-center">
                 <v-combobox
                     v-model="q.ref"
-                    :label="i18n.inRef_"
+                    :label="translations.inRef_"
                     multiple
                     chips
                     closable-chips
@@ -110,7 +107,7 @@ const BulletinSearchBox = Vue.defineComponent({
                     clearable
                 ></v-combobox>
 
-                <v-checkbox :label="i18n.any_" dense v-model="q.opref" color="primary" small
+                <v-checkbox :label="translations.any_" dense v-model="q.opref" color="primary" small
                             class="mx-3"></v-checkbox>
                 <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
                             class="mx-3"></v-checkbox>
@@ -121,16 +118,16 @@ const BulletinSearchBox = Vue.defineComponent({
 
                 <v-combobox
                     v-model="q.exref"
-                    :label="i18n.exRef_"
+                    :label="translations.exRef_"
                     multiple
                     chips
                     closable-chips
                     clearable
                 ></v-combobox>
 
-                <v-checkbox :label="i18n.all_" dense v-model="q.opexref" color="primary" small
+                <v-checkbox :label="translations.all_" dense v-model="q.opexref" color="primary" small
                             class="mx-3"></v-checkbox>
-                <v-checkbox :label="i18n.exactMatch_" dense v-model="q.exExact" color="primary" small
+                <v-checkbox :label="translations.exactMatch_" dense v-model="q.exExact" color="primary" small
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -142,9 +139,8 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations"
                     ref="publishDateComponent"
-                    :label="i18n.publishDate_"
+                    :label="translations.publishDate_"
                     v-model="q.pubdate"
                 />
               </div>
@@ -153,8 +149,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations"
-                    :label="i18n.documentationDate_"
+                    :label="translations.documentationDate_"
                     v-model="q.docdate"
                 />
               </div>
@@ -165,8 +160,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations"
-                    :label="i18n.createdDate_"
+                    :label="translations.createdDate_"
                     v-model="q.created"
                 />
               </div>
@@ -175,8 +169,7 @@ const BulletinSearchBox = Vue.defineComponent({
             <v-col md="6">
               <div class="d-flex flex-wrap">
                 <pop-date-range-field
-                    :i18n="translations"
-                    :label="i18n.updatedDate_"
+                    :label="translations.updatedDate_"
                     v-model="q.updated"
                 />
               </div>
@@ -186,7 +179,7 @@ const BulletinSearchBox = Vue.defineComponent({
           <v-row>
             <v-col md="12">
               <v-card>
-                <v-toolbar :title=" i18n.events_ ">
+                <v-toolbar :title=" translations.events_ ">
                   
                 </v-toolbar>
                 <v-card-text class="d-flex align-enter ga-2">
@@ -195,13 +188,12 @@ const BulletinSearchBox = Vue.defineComponent({
                   
                   
                   <pop-date-range-field
-                      :i18n="translations"
-                      :label="i18n.eventDate_"
+                      :label="translations.eventDate_"
                       v-model="q.edate"
                       class="mt-1"
                   ></pop-date-range-field>
                   
-                  <v-checkbox   :label="i18n.singleEvent_" dense v-model="q.singleEvent" color="primary" small
+                  <v-checkbox   :label="translations.singleEvent_" dense v-model="q.singleEvent" color="primary" small
                              ></v-checkbox>
                   
                 </v-card-text>
@@ -217,7 +209,7 @@ const BulletinSearchBox = Vue.defineComponent({
                       item-title="title"
                       item-value="id"
                       :multiple="false"
-                      :label="i18n.eventType_"
+                      :label="translations.eventType_"
                   ></search-field>
 
                   
@@ -229,7 +221,7 @@ const BulletinSearchBox = Vue.defineComponent({
                     item-title="full_string"
                     item-value="id"
                     :multiple="false"
-                    :label="i18n.includeEventLocations_"
+                    :label="translations.includeEventLocations_"
                 ></location-search-field>
 
                 </v-card-text>
@@ -238,9 +230,9 @@ const BulletinSearchBox = Vue.defineComponent({
             </v-col>
           </v-row>
 
-          <v-row v-if="isAdmin">
+          <v-row>
             <v-col md="9">
-              <span class="caption">{{ i18n.accessRoles_ }}</span>
+              <span class="caption">{{ translations.accessRoles_ }}</span>
               <v-chip-group
                   column
                   multiple
@@ -252,7 +244,7 @@ const BulletinSearchBox = Vue.defineComponent({
               </v-chip-group>
             </v-col>
             <v-col md="3">
-              <span class="caption">{{ i18n.unrestricted_ }}</span>
+              <span class="caption">{{ translations.unrestricted_ }}</span>
               <v-switch color="primary" v-model="q.norole"></v-switch>
             </v-col>
           </v-row>
@@ -261,7 +253,7 @@ const BulletinSearchBox = Vue.defineComponent({
           <v-row v-if="extraFilters">
 
             <v-col md="9">
-              <span class="caption">{{ i18n.assignedUser_ }}</span>
+              <span class="caption">{{ translations.assignedUser_ }}</span>
 
 
               <v-chip-group
@@ -281,14 +273,14 @@ const BulletinSearchBox = Vue.defineComponent({
               </v-chip-group>
             </v-col>
             <v-col md="3">
-              <span class="caption">{{ i18n.unassigned_ }}</span>
+              <span class="caption">{{ translations.unassigned_ }}</span>
               <v-switch color="primary" v-model="q.unassigned"></v-switch>
             </v-col>
           </v-row>
 
           <v-row v-if="extraFilters">
             <v-col cols="12">
-              <span class="caption">{{ i18n.reviewer_ }}</span>
+              <span class="caption">{{ translations.reviewer_ }}</span>
 
               <v-chip-group
                   column
@@ -307,7 +299,7 @@ const BulletinSearchBox = Vue.defineComponent({
 
           <v-row v-if="extraFilters">
             <v-col cols="12">
-              <span class="caption pt-2">{{ i18n.workflowStatus_ }}</span>
+              <span class="caption pt-2">{{ translations.workflowStatus_ }}</span>
 
 
               <v-chip-group
@@ -325,10 +317,10 @@ const BulletinSearchBox = Vue.defineComponent({
 
           <v-row>
             <v-col cols="12">
-              <span class="caption pt-2">{{ i18n.reviewAction_ }}</span>
+              <span class="caption pt-2">{{ translations.reviewAction_ }}</span>
               <v-chip-group column v-model="q.reviewAction">
-                <v-chip :value="i18n.noReviewNeeded_" label small filter outlined>{{ i18n.noReviewNeeded_ }}</v-chip>
-                <v-chip :value="i18n.needsReview_" label small filter outlined>{{ i18n.needsReview_ }}</v-chip>
+                <v-chip :value="translations.noReviewNeeded_" label small filter outlined>{{ translations.noReviewNeeded_ }}</v-chip>
+                <v-chip :value="translations.needsReview_" label small filter outlined>{{ translations.needsReview_ }}</v-chip>
 
               </v-chip-group>
 
@@ -346,9 +338,9 @@ const BulletinSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
-                    :label="i18n.includeSources_"
+                    :label="translations.includeSources_"
                 ></search-field>
-                <v-checkbox :label="i18n.any_" dense v-model="q.opsources" color="primary" small
+                <v-checkbox :label="translations.any_" dense v-model="q.opsources" color="primary" small
                             class="mx-3"></v-checkbox>
 
               </div>
@@ -359,11 +351,11 @@ const BulletinSearchBox = Vue.defineComponent({
                   item-title="title"
                   item-value="id"
                   :multiple="true"
-                  :label="i18n.excludeSources_"
+                  :label="translations.excludeSources_"
 
               ></search-field>
 
-              <v-switch color="primary" v-model="q.childsources" :label="i18n.includeChildSources_"></v-switch>
+              <v-switch color="primary" v-model="q.childsources" :label="translations.includeChildSources_"></v-switch>
 
 
             </v-col>
@@ -379,9 +371,9 @@ const BulletinSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
-                    :label="i18n.includeLabels_"
+                    :label="translations.includeLabels_"
                 ></search-field>
-                <v-checkbox :label="i18n.any_" dense v-model="q.oplabels" color="primary" small
+                <v-checkbox :label="translations.any_" dense v-model="q.oplabels" color="primary" small
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -392,10 +384,10 @@ const BulletinSearchBox = Vue.defineComponent({
                   item-title="title"
                   item-value="id"
                   :multiple="true"
-                  :label="i18n.excludeLabels_"
+                  :label="translations.excludeLabels_"
               ></search-field>
 
-              <v-switch color="primary" v-model="q.childlabels" :label="i18n.includeChildLabels_"></v-switch>
+              <v-switch color="primary" v-model="q.childlabels" :label="translations.includeChildLabels_"></v-switch>
 
 
             </v-col>
@@ -410,9 +402,9 @@ const BulletinSearchBox = Vue.defineComponent({
                     item-title="title"
                     item-value="id"
                     :multiple="true"
-                    :label="i18n.includeVerLabels_"
+                    :label="translations.includeVerLabels_"
                 ></search-field>
-                <v-checkbox :label="i18n.any_" dense v-model="q.opvlabels" color="primary" small
+                <v-checkbox :label="translations.any_" dense v-model="q.opvlabels" color="primary" small
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -423,10 +415,10 @@ const BulletinSearchBox = Vue.defineComponent({
                   item-title="title"
                   item-value="id"
                   :multiple="true"
-                  :label="i18n.excludeVerLabels_"
+                  :label="translations.excludeVerLabels_"
               ></search-field>
 
-              <v-switch color="primary" v-model="q.childverlabels" :label="i18n.includeChildVerLabels_"></v-switch>
+              <v-switch color="primary" v-model="q.childverlabels" :label="translations.includeChildVerLabels_"></v-switch>
             </v-col>
           </v-row>
 
@@ -439,10 +431,10 @@ const BulletinSearchBox = Vue.defineComponent({
                     item-title="full_string"
                     item-value="id"
                     :multiple="true"
-                    :label="i18n.includeLocations_"
+                    :label="translations.includeLocations_"
 
                 ></location-search-field>
-                <v-checkbox :label="i18n.any_" dense v-model="q.oplocations" color="primary" small
+                <v-checkbox :label="translations.any_" dense v-model="q.oplocations" color="primary" small
                             class="mx-3"></v-checkbox>
               </div>
               <location-search-field
@@ -451,7 +443,7 @@ const BulletinSearchBox = Vue.defineComponent({
                   item-title="full_string"
                   item-value="id"
                   :multiple="true"
-                  :label="i18n.excludeLocations_"
+                  :label="translations.excludeLocations_"
                   :post-request="true"
               ></location-search-field>
 
@@ -460,7 +452,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-sheet class="ma-4">
-            <span class="caption pt-2">{{ i18n.geospatial_ }}</span>
+            <span class="caption pt-2">{{ translations.geospatial_ }}</span>
 
 
             <v-chip-group

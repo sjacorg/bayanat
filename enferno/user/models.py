@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Dict
 from datetime import datetime
 from uuid import uuid4
 
@@ -374,6 +374,42 @@ class User(UserMixin, db.Model, BaseMixin):
         self.active = item.get("active")
         return self
 
+    @property
+    def two_factor_devices(self) -> Dict[str, Any]:
+        """
+        Unified list of user's 2FA methods and devices.
+
+        Returns a list of dictionaries, each representing a 2FA method or device.
+        Combines traditional 2FA methods (authenticator, phone) with WebAuthn devices,
+        providing a consistent structure for easy display and management.
+
+        Returns:
+            list: A list of dictionaries containing 2FA device information.
+        """
+        devices = []
+
+        # Add primary 2FA method if set
+        if self.tf_primary_method:
+            if self.tf_primary_method == "authenticator":
+                devices.append(
+                    {"type": "authenticator", "name": "Authenticator App", "is_primary": True}
+                )
+
+        # Add WebAuthn devices
+        for device in self.webauthn:
+            devices.append(
+                {
+                    "type": "webauthn",
+                    "name": device.name,
+                    "last_used": device.lastuse_datetime.isoformat(),
+                    "device_type": device.device_type,
+                    "is_primary": device.usage == "primary",
+                    "backup_state": device.backup_state,
+                }
+            )
+
+        return devices
+
     def to_compact(self) -> dict:
         """
         Compact serializer for User class.
@@ -406,6 +442,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "can_edit_locations": self.can_edit_locations,
             "can_export": self.can_export,
             "force_reset": self.security_reset_key,
+            "two_factor_devices": self.two_factor_devices,
         }
 
     def to_json(self) -> str:
@@ -440,7 +477,6 @@ class Session(db.Model, BaseMixin):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "session_token": self.session_token,
             "last_active": self.last_active,
             "expires_at": self.expires_at,
             "ip_address": self.ip_address,

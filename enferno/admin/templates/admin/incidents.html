@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block css %}
+    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+{% endblock %}
+
 {% block content %}
 
 
@@ -41,55 +45,40 @@
                             :headers="headers"
                             @click:row="rowClick"
                             hover
-                            show-select
                             :items="items"
                             :loading="loading"
                             :items-length="itemsLength"
                             @update:options="refresh"
                             :row-props="rowClass"
+                            show-select
+                            item-value="id"
                             select-strategy="page"
-                            return-object
+                            item-selectable="selectable"
                             class="elevation-1"
                     >
 
-
-                        <template #item.data-table-select="{ item }">
-
-                            <v-checkbox-btn
-                                    color="primary"
-                                    :model-value="selected.includes(item)"
-                                    @click.stop="toggleSelect(item)"
-
-                            ></v-checkbox-btn>
-
-                        </template>
                         <template v-slot:top>
-                            <v-toolbar class="mt-1" color="white">
-                                <v-btn class="hidden-sm-and-down" small @click="allIncidents"
-                                       text>{{ _('All Incidents') }}</v-btn>
+                            <v-sheet class="ma-3 d-flex align-center ">
+                                <v-btn class="hidden-sm-and-down" @click="allIncidents"
+                                variant="text">{{ _('All Incidents') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn class="hidden-sm-and-down" small @click="myAssigned"
-                                       text>{{ _('Assigned to me') }}</v-btn>
+                                <v-btn class="hidden-sm-and-down" @click="myAssigned"
+                                variant="text">{{ _('Assigned to me') }}</v-btn>
                                 <v-divider class="mx-2 hidden-sm-and-down" inset vertical></v-divider>
-                                <v-btn small @click="myReview" class="mr-2 hidden-sm-and-down"
-                                       text>{{ _('My Review List') }}</v-btn>
+                                <v-btn @click="myReview" class="mr-2 hidden-sm-and-down"
+                                       variant="text">{{ _('My Review List') }}</v-btn>
 
 
                                 <v-text-field
                                         density="compact"
                                         variant="outlined"
-
                                         v-model="search.tsv"
-                                        @keydown.enter="refresh"
-
+                                        @keydown.enter="doSearch"
                                         hide-details
                                         append-icon="mdi-ballot"
-
                                         @click:append="toggleAdvSearch"
                                         :append-inner-icon="searchEmpty ? '' : 'mdi-close'"
-
                                         @click:append-inner="resetSearch"
-                                        @click:append="toggleAdvSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                 ></v-text-field>
@@ -104,18 +93,22 @@
                                 {% include 'admin/partials/incident_dialog.html' %}
                                 {% include 'admin/partials/review_dialog.html' %}
 
-                            </v-toolbar>
+                            </v-sheet>
 
 
-                            <v-toolbar class="px-3" color="grey-lighten-4" v-if="bulkAllowed() || exportAllowed()">
+                            <v-toolbar class="px-3" v-if="bulkAllowed() || exportAllowed()">
 
                                 <template v-if="bulkIcons">
-
-                                    <v-btn @click="selected=[]" x-small fab
-                                           class="mr-3" elevation="0" color="white">
-                                        <v-icon>mdi-checkbox-blank-outline</v-icon>
-                                    </v-btn>
-
+                                    <v-tooltip location="top" text="{{ _('Unselect all') }}">
+                                        <template #activator="{props}">
+                                            <v-btn icon="mdi-checkbox-blank-outline"
+                                                @click="selected=[]"
+                                                class="mr-3 ml-1"
+                                                density="compact"
+                                                :="props">
+                                            </v-btn>
+                                        </template>
+                                    </v-tooltip>
 
                                     <v-btn
                                             @click="bulkIncidentDrawer=true"
@@ -158,26 +151,15 @@
                                 </template>
                                 <v-spacer></v-spacer>
 
-                                <div>
-                                    <v-tooltip text="search" location="top">
-                                        <template #activator="{ props }">
-                                            <v-chip :="props" label small close color="yellow lighten-4"
-                                                    @click:close="allIncidents"
-                                            >{{ _('About') }} ${itemsLength} {{ _('results') }}
-                                                (${searchTime} {{ _('seconds') }})
-                                            </v-chip>
-                                        </template>
-                                    </v-tooltip>
-                                </div>
-                                <v-spacer></v-spacer>
                                 <v-chip small color="accent" v-if="selected.length">
                                     ${selected.length} {{ _('Selected items') }}</v-chip>
 
                             </v-toolbar>
-
-
                         </template>
 
+                        <template #footer.prepend>
+                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }} ${searchTime} {{ _('seconds') }}</div>
+                        </template>
 
                         <template v-slot:item.roles="{item}">
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
@@ -255,11 +237,11 @@
                         <v-progress-circular indeterminate size="64"></v-progress-circular>
                     </v-overlay>
 
-                    <relate-bulletins :i18n="translations" @relate="relateBulletin" :exids="exBulletins"
+                    <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
                                       ref="relateBulletins"></relate-bulletins>
-                    <relate-actors :i18n="translations" @relate="relateActor" :exids="exActors"
+                    <relate-actors @relate="relateActor" :exids="exActors"
                                    ref="relateActors"></relate-actors>
-                    <relate-incidents :i18n="translations" @relate="relateIncident" :exids="exIncidents"
+                    <relate-incidents @relate="relateIncident" :exids="exIncidents"
                                       ref="relateIncidents"></relate-incidents>
 
 
@@ -279,6 +261,8 @@
                         </v-card>
 
                     </v-dialog>
+
+                    <pdf-viewer ref="pdfViewer"></pdf-viewer>
 
                 </v-card-text>
             </v-card>
@@ -320,6 +304,7 @@
 
     <script src="/static/js/components/BulletinCard.js"></script>
     <script src="/static/js/components/ActorCard.js"></script>
+    <script src="/static/js/components/ActorProfiles.js"></script>
     <script src="/static/js/components/IncidentCard.js"></script>
 
     <script src="/static/js/components/BulletinSearchBox.js"></script>
@@ -353,6 +338,10 @@
     <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
 
+    <script src="/static/js/components/MPCard.js"></script>
+
+    <script src="/static/js/videojs/video.min.js"></script>
+
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
@@ -377,7 +366,6 @@
             mixins: [globalMixin],
             data: () => ({
                 valid: false,
-                // i18n
                 translations: window.translations,
 
                 itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
@@ -673,19 +661,28 @@
 
                     return ids;
                 },
+                
                 formTitle() {
-                    return this.editedIndex === -1 ? "{{_('New Incident')}}" : "{{_('Edit Incident')}}";
+                    return this.editedItem.id ? "{{_('Edit Incident')}}" : "{{_('New Incident')}}";
                 },
+
                 videoPlayer() {
                     return document.querySelector("#player");
-                }
+                },
+
+                allowedRoles() {
+                    if (this.has_role(this.currentUser, 'Admin')) {
+                        return this.roles;
+                    }
+                    return this.currentUser.roles;
+                },
             },
 
             watch: {
 
                 incidentDrawer: function (val) {
                     if (val === false) {
-
+                        this.incident = {};
                         if (this.$route.path !== '/admin/incidents/')
                             this.$router.push('/admin/incidents/')
                     }
@@ -816,11 +813,9 @@
                 },
 
                 exportRequest() {
-
-                    let ids = this.selected.map(x => x.id);
                     this.loading = true;
                     axios.post(`/export/api/incident/export`, {
-                        items: ids,
+                        items: this.selected,
                         config: this.exportConfig
                     })
                         .then(response => {
@@ -837,21 +832,9 @@
                     });
                 },
 
-
-                selectAllRestrict(props) {
-                    if (props.value === false) {
-                        // untoggle on next tick
-                        this.$nextTick(() => {
-                            this.selected = [];
-                        })
-                    }
-
-                    console.log(props.items);
-                    this.selected = this.selected.concat(props.items.filter(x => !x.restricted))
-                },
-
                 rowClass(row) {
                     if (row.item.restricted) {
+                        row.item.selectable = false;
                         return {class: 'restricted'}
                     }
                     return {class: ''}
@@ -928,16 +911,15 @@
 
 
                 bulk_update() {
-                    let ids = this.selected.map(x => x.id);
                     this.loading = true;
                     axios.put(`/admin/api/incident/bulk/`, {
-                        items: ids,
+                        items: this.selected,
                         bulk: this.bulk
                     })
                         .then(response => {
                             this.loading = false;
                             this.showSnack(response.data);
-                            this.refresh(this.options);
+                            this.refresh();
                             //reset bulk drawer, and bulk data
                             this.bulkIncidentDrawer = false;
                             this.selected = [];
@@ -995,7 +977,7 @@
                     axios.post(`/admin/api/incidents/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
                         const endTime = new Date();
 
-                        this.searchTime = (endTime - startTime) / 1000;
+                        this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
 
@@ -1004,7 +986,11 @@
                         );
                     }).catch(error => {
                         console.error(error);
+                        if (error.response?.data) {
+                            this.showSnack(this.parseValidationError(error.response.data));
+                        }else{
                         this.showSnack(handleRequestError(error));
+                        }
                     }).finally(() => {
                         this.loading = false;
                     });
@@ -1289,14 +1275,6 @@
 
                 },
 
-                allowedRoles() {
-                    if (this.has_role(this.currentUser, 'Admin')) {
-                        return this.roles;
-                    }
-                    return this.currentUser.roles;
-                },
-
-
                 addReview(item) {
                     this.loading = true;
                     this.reviewDialog = true;
@@ -1322,7 +1300,7 @@
                         .then(response => {
                             this.reviewDialog = false;
                             this.showSnack(response.data);
-                            this.refresh(this.options);
+                            this.refresh();
                         });
 
                 },
@@ -1441,7 +1419,7 @@
                     if (cfm) {
                         axios.delete(`/admin/api/incident/${item.id}`).then(response => {
                             this.showSnack(response.data);
-                            this.refresh(this.options);
+                            this.refresh();
                         });
                     }
                 },
@@ -1648,7 +1626,17 @@
                     }
                 },
 
+                clearAssignee() {
+                    if (this.bulk.assigneeClear){
+                        this.bulk.assigned_to_id = null;
+                    }
+                },
 
+                clearReviewer() {
+                    if (this.bulk.reviewerClear){
+                        this.bulk.first_peer_reviewer_id = null;
+                    }
+                }
             }
         });
 
@@ -1674,7 +1662,9 @@
 
         app.component('BulletinCard', BulletinCard);
         app.component('ActorCard', ActorCard);
+        app.component('ActorProfiles', ActorProfiles);
         app.component('IncidentCard', IncidentCard);
+        app.component('mp-card', MPCard);
         app.component('EventCard', EventCard);
         app.component('PopDateField', PopDateField);
         app.component('PopDateTimeField', PopDateTimeField);

@@ -4,13 +4,11 @@ const LocationSearchBox = Vue.defineComponent({
       type: Object,
       required: true,
     },
-    i18n: {
-      type: Object,
-    },
   },
 
   data: () => {
     return {
+      translations: window.translations,
       q: {},
     };
   },
@@ -35,7 +33,7 @@ const LocationSearchBox = Vue.defineComponent({
   template: `
       <v-sheet>
       <v-card>
-        <v-toolbar :title="i18n.searchLocations_" > 
+        <v-toolbar :title="translations.searchLocations_" > 
           
           
           <template #append>
@@ -54,14 +52,14 @@ const LocationSearchBox = Vue.defineComponent({
 
               <v-text-field
                   v-model="q.title"
-                  :label="i18n.title_"
+                  :label="translations.title_"
                   clearable
                   @keydown.enter="$emit('search',q)"
               ></v-text-field>
 
               <v-text-field
                   v-model="q.tsv"
-                  :label="i18n.description_"
+                  :label="translations.description_"
                   clearable
               ></v-text-field>
 
@@ -80,10 +78,8 @@ const LocationSearchBox = Vue.defineComponent({
                   api="/admin/api/location-types/"
                   item-title="title"
                   item-value="id"
-
-                  :return-object="false"
                   :multiple="false"
-                  :label="i18n.locationType_">
+                  :label="translations.locationType_">
               </search-field>
 
 
@@ -91,12 +87,9 @@ const LocationSearchBox = Vue.defineComponent({
                   api="/admin/api/location-admin-levels/"
                   item-title="title"
                   item-value="id"
-
                   v-model="q.admin_level"
-
-                  :return-object="false"
                   :multiple="false"
-                  :label="i18n.adminLevel_">
+                  :label="translations.adminLevel_">
               </search-field>
 
 
@@ -104,14 +97,11 @@ const LocationSearchBox = Vue.defineComponent({
                   v-model="q.country"
                   api="/admin/api/countries/"
                   item-title="title"
-                  item-value="title"
+                  item-value="id"
                   :multiple="false"
-                  :return-object="false"
                   clearable
-                  :label="i18n.country_"
-                  
+                  :label="translations.country_"
               ></search-field>
-
 
               <div class="d-flex align-center">
                 <v-combobox
@@ -123,7 +113,7 @@ const LocationSearchBox = Vue.defineComponent({
                     clearable
                 ></v-combobox>
 
-                <v-checkbox :label="i18n.any_" dense v-model="q.optags" color="primary" small
+                <v-checkbox :label="translations.any_" dense v-model="q.optags" color="primary" small
                             class="mx-3"></v-checkbox>
 
               </div>
@@ -140,9 +130,9 @@ const LocationSearchBox = Vue.defineComponent({
       <v-card tile class="text-center  search-toolbar" elevation="10" color="grey lighten-5">
         <v-card-text>
           <v-spacer></v-spacer>
-          <v-btn @click="q={}" text>{{ i18n.clearSearch_ }}</v-btn>
+          <v-btn @click="q={}" text>{{ translations.clearSearch_ }}</v-btn>
 
-          <v-btn @click="$emit('search',q)" color="primary">{{ i18n.search_ }}</v-btn>
+          <v-btn @click="$emit('search',q)" color="primary">{{ translations.search_ }}</v-btn>
           <v-spacer></v-spacer>
         </v-card-text>
 

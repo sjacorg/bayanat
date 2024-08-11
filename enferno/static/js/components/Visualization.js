@@ -1,12 +1,12 @@
 const Visualization = Vue.defineComponent({
-  props: ['item', 'i18n'],
-
   data() {
     return {
+      mainNodeId: null,
+      translations: window.translations,
       dlg: false,
       loading: false,
       graph: null,
-      graphData: { nodes: [], links: [] }, // Initialize with empty arrays
+      graphData: { nodes: [], links: [], legend: [] }, // Initialize with empty arrays
       initRendered: false, // initial zoom to fit flag
     };
   },
@@ -17,6 +17,7 @@ const Visualization = Vue.defineComponent({
     },
 
     hide() {
+      this.graph = null;
       this.dlg = false;
     },
 
@@ -40,10 +41,19 @@ const Visualization = Vue.defineComponent({
     },
 
     visualize(item) {
+
+        this.mainNodeId = `${item.class.charAt(0).toUpperCase()}${item.class.slice(1)}${item.id}`;
+
+
+      this.resetGraph();
       this.show();
       this.getGraphData(item.id, item.class).then(() => {
         this.drawGraph();
       });
+    },
+    resetGraph() {
+      this.graph = null;
+      this.initRendered = false;
     },
 
     visualizeQuery() {
@@ -54,6 +64,7 @@ const Visualization = Vue.defineComponent({
         .get('/admin/api/graph/data')
         .then((response) => {
           this.graphData = response.data;
+
           this.drawGraph(); // Call drawGraph to render the graph with new data
         })
         .catch((error) => {
@@ -70,68 +81,27 @@ const Visualization = Vue.defineComponent({
         this.graph = ForceGraph()(document.querySelector('#graph'));
       }
 
+      // if graph has a start item, Set the color of the main node to black
+
+
+      if (!!this.mainNodeId) {
+        this.graphData.nodes.forEach((node) => {
+
+          if (node.id === this.mainNodeId) {
+            node.color = 'black'; // Set the main node color to black
+          }
+        });
+      }
+
       this.graph
         .cooldownTime(800)
         .nodeId('id')
         .nodeLabel('title')
         .linkSource('source')
         .linkTarget('target')
-        .linkColor(() => '#444')
         .linkCanvasObjectMode(() => 'after')
 
-        .linkCanvasObject((link, ctx) => {
-          const MAX_FONT_SIZE = 1.2;
-          const LABEL_NODE_MARGIN = this.graph.nodeRelSize() * 1.5;
-
-          const start = link.source;
-          const end = link.target;
-
-          // ignore unbound links
-          if (typeof start !== 'object' || typeof end !== 'object') return;
-
-          // calculate label positioning
-          const textPos = Object.assign(
-            ...['x', 'y'].map((c) => ({
-              [c]: start[c] + (end[c] - start[c]) / 4, // calc  point so its closer to source node !
-            })),
-          );
-
-          const relLink = { x: end.x - start.x, y: end.y - start.y };
-
-          const maxTextLength =
-            Math.sqrt(Math.pow(relLink.x, 2) + Math.pow(relLink.y, 2)) - LABEL_NODE_MARGIN * 2;
-
-          let textAngle = Math.atan2(relLink.y, relLink.x);
-          // maintain label vertical orientation for legibility
-          if (textAngle > Math.PI / 2) textAngle = -(Math.PI - textAngle);
-          if (textAngle < -Math.PI / 2) textAngle = -(-Math.PI - textAngle);
-
-          const label = `${link.type}`;
-          if (!label) {
-            return;
-          }
-
-          // estimate fontSize to fit in link length
-          ctx.font = '1px Sans-Serif';
-          const fontSize = Math.min(MAX_FONT_SIZE, maxTextLength / ctx.measureText(label).width);
-          ctx.font = `${fontSize}px monospace, 'Courier New', sans-serif`;
-          const textWidth = ctx.measureText(label).width;
-          const bckgDimensions = [textWidth, fontSize].map((n) => n + fontSize * 0.3); // some padding
-
-          // draw text label (with background rect)
-          ctx.save();
-          ctx.translate(textPos.x, textPos.y);
-          ctx.rotate(textAngle);
-
-          ctx.fillStyle = __settings__.dark ? 'rgba(10,10,10,0.5)' : 'rgba(255, 255, 255, 0.8)';
-          ctx.fillRect(-bckgDimensions[0] / 2, -bckgDimensions[1] / 2, ...bckgDimensions);
-
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = __settings__.dark ? '#ddd' : 'darkgrey';
-          ctx.fillText(label, 0, 0);
-          ctx.restore();
-        })
+        .linkCanvasObject(this.drawLink)
 
         .linkColor(() => {
           return __settings__.dark ? 'rgba(100,100,100,0.9)' : '#ddd';
@@ -139,30 +109,95 @@ const Visualization = Vue.defineComponent({
 
         .nodeCanvasObjectMode((node) => 'replace')
 
-        .onNodeClick((node, event) => {
-          if (event.ctrlKey || event.metaKey) {
-            // command click or ctrl click
-            const id = node.id.substring(1);
-            const type = node.type.toLowerCase();
-            if (['bulletin', 'actor', 'incident'].includes(type)) {
-              this.$root.previewItem(`/admin/api/${type}/${node._id}`);
-            }
-          } else if (node.collapsed) {
-            this.loadNode(node);
-          }
-
-          //    Graph.graphData([]);
-        })
+        .onNodeClick(this.handleNodeClick)
         .onEngineStop(() => {
           if (!this.initRendered) {
-          this.graph.zoomToFit(500);
-          this.initRendered = true; // Update the flag
-        }
-
+            this.graph.zoomToFit(500);
+            this.initRendered = true;
+          }
         })
         .graphData(this.graphData);
     },
 
+
+drawLink(link, ctx) {
+  const { source: start, target: end, type } = link;
+  if (!start || !end) return;
+
+  const text = String(type || ''); // Ensure type is a string
+  if (!text) return; // Do nothing if the text is empty
+
+  const FONT_SIZE = 0.6; // Fixed font size
+  const PADDING = 0.5;
+  const LETTER_SPACING = 0.05; // Desired letter spacing
+
+  // Calculate label position and angle
+  const textPos = {
+    x: start.x + (end.x - start.x) / 2  + 0.7,
+    y: start.y + (end.y - start.y) / 2 ,
+  };
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  let textAngle = Math.atan2(dy, dx);
+
+  // Adjust angle for readability
+  if (Math.abs(textAngle) > Math.PI / 2) {
+    textAngle = textAngle > 0 ? -(Math.PI - textAngle) : -(-Math.PI - textAngle);
+  }
+
+  // Set fixed font size and style
+  ctx.font = `${FONT_SIZE}px monospace, 'Courier New', sans-serif`;
+
+  // Recalculate text width based on letter spacing
+  const individualCharWidth = FONT_SIZE;
+  const textWidth = (individualCharWidth * text.length) + (LETTER_SPACING * (text.length - 1));
+  const bgWidth = textWidth ;
+  const bgHeight = FONT_SIZE ;
+
+  // Draw background
+  ctx.save();
+  ctx.translate(textPos.x, textPos.y);
+  ctx.rotate(textAngle);
+  ctx.fillStyle = __settings__.dark ? 'rgba(10,10,10,0.5)' : 'rgba(255,255,255,0.8)';
+  ctx.fillRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight);
+
+  // Draw text with letter spacing
+  ctx.fillStyle = __settings__.dark ? '#ddd' : 'darkgrey';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const startX = -textWidth / 2 + 0.8;
+  for (let i = 0; i < text.length; i++) {
+    ctx.fillText(text[i], startX + i * (individualCharWidth + LETTER_SPACING), 0);
+  }
+
+  ctx.restore();
+}
+
+
+
+
+
+
+
+,
+
+
+    handleNodeClick(node, event) {
+      if (node.restricted) {
+      return; // Do nothing if the node is restricted
+    }
+      if (event.ctrlKey || event.metaKey) {
+
+        const id = node.id.substring(1);
+        const type = node.type.toLowerCase();
+        if (['bulletin', 'actor', 'incident'].includes(type)) {
+          this.$root.previewItem(`/admin/api/${type}/${node._id}`);
+        }
+      } else if (node.collapsed) {
+        this.loadNode(node);
+      }
+    },
 
     loadNode(node) {
       const id = node._id;
@@ -177,9 +212,7 @@ const Visualization = Vue.defineComponent({
           this.mergeGraphData(res.data);
           this.drawGraph();
         })
-        .catch((err) => {
-          console.error(err);
-        })
+        .catch(console.error)
         .finally(() => {
           this.loading = false;
         });
@@ -252,58 +285,62 @@ const Visualization = Vue.defineComponent({
   },
 
   template: `
-         <v-dialog fullscreen v-model="dlg">
+      <v-dialog fullscreen v-model="dlg">
 
 
-        <v-card>
+        <div id="graph-layout">
+          <div class="graph-header">
           <v-toolbar density="compact">
-            <v-toolbar-title class="align-center" >
+            <v-toolbar-title class="align-center">
               <div class="d-flex align-center">
 
-              <div class="text-caption mr-3">
-                <v-icon size="small" color="blue" left> mdi-checkbox-blank-circle</v-icon>
-                {{ i18n.bulletins_ }}
-              </div>
+                <div class="text-caption mr-3">
+                  <v-icon size="small" :color="graphData.legend.bulletin" left> mdi-checkbox-blank-circle</v-icon>
+                  {{ translations.bulletins_ }}
+                </div>
 
-              <div class="text-caption mr-3">
-                <v-icon size="small" color="green" left> mdi-checkbox-blank-circle</v-icon>
-                {{ i18n.actors_ }}
-              </div>
+                <div class="text-caption mr-3">
+                  <v-icon size="small" :color="graphData.legend.actor" left> mdi-checkbox-blank-circle</v-icon>
+                  {{ translations.actors_ }}
+                </div>
 
-              <div class="text-caption mr-3">
-                <v-icon size="small" color="yellow" left> mdi-checkbox-blank-circle</v-icon>
-                {{ i18n.incidents_ }}
-              </div>
+                <div class="text-caption mr-3">
+                  <v-icon size="small" :color="graphData.legend.incident" left> mdi-checkbox-blank-circle</v-icon>
+                  {{ translations.incidents_ }}
+                </div>
 
-              <div class="text-caption mr-3">
-                <v-icon size="small" color="ff4433" left> mdi-checkbox-blank-circle</v-icon>
-                {{ i18n.locations_ }}
-              </div>
+                <div class="text-caption mr-3">
+                  <v-icon size="small" :color="graphData.legend.location" left> mdi-checkbox-blank-circle</v-icon>
+                  {{ translations.locations_ }}
+                </div>
                 <v-spacer></v-spacer>
-                 <v-btn size="small" icon="mdi-close" @click="hide" ></v-btn>
-              
-            </div>
-              
+                <v-btn size="small" icon="mdi-close" @click="hide"></v-btn>
+
+              </div>
+
             </v-toolbar-title>
           </v-toolbar>
-          <v-card-text>
-            
-            
+          </div>
+
 
             <div id="graph"></div>
+          
+          
 
-            <div class="graph-tip">
-              <v-icon left>mdi-information-outline</v-icon>
-              {{ i18n.visInfo_ }}
+            <div class="graph-footer">
+              <v-chip variant="text" prepend-icon="mdi-information-outline">
+                {{ translations.visInfo_ }}
+              </v-chip>
+
             </div>
+
+
           
-            
-          </v-card-text>
-         
-          
-        </v-card>
+
+
+        </div>
 
       </v-dialog>
 
-  `,
+    `,
 });

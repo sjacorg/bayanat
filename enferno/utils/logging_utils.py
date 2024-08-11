@@ -7,16 +7,17 @@ from enferno.settings import Config
 import re
 from datetime import datetime
 import os
+from traceback import TracebackException
 
 cfg = Config()
 
 
 class JsonFormatter(logging.Formatter):
-    """A custom formatter to output log records as JSON."""
+    """A custom formatter to output log records as JSON with relative paths."""
 
     def format(self, record: logging.LogRecord) -> str:
         """
-        Format a log record as a JSON string.
+        Format a log record as a JSON string with relative paths.
 
         Args:
             - record: The log record to format.
@@ -33,10 +34,21 @@ class JsonFormatter(logging.Formatter):
         }
         if record.exc_info:
             exc_type, exc_value, exc_traceback = record.exc_info
+            te = TracebackException(exc_type, exc_value, exc_traceback)
+
+            # Custom formatting of the traceback with relative paths
+            formatted_tb = []
+            for frame in te.stack:
+                formatted_tb.append(
+                    f'  File "{os.path.relpath(frame.filename)}", line {frame.lineno}, in {frame.name}\n    {frame.line}'
+                )
+
             record_dict["exception"] = {
-                "type": str(exc_type.__name__),
+                "type": exc_type.__name__,
                 "message": str(exc_value),
-                "traceback": "".join(format_exception(exc_type, exc_value, exc_traceback)),
+                "traceback": "Traceback (most recent call last):\n"
+                + "\n".join(formatted_tb)
+                + f"\n{exc_type.__name__}: {exc_value}",
             }
         return json.dumps(record_dict)
 

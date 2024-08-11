@@ -5,7 +5,7 @@
 
         <v-sheet min-width="390" v-for="(item,index) in editedItem.bulletin_relations" :key="index">
 
-            <bulletin-result :i18n="translations" :bulletin="item.bulletin"
+            <bulletin-result :bulletin="item.bulletin"
                              :show-hide="false">
                 <!--  attach relationship form -->
                 <template #header>

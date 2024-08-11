@@ -1,5 +1,10 @@
 const SystemLogCard = Vue.defineComponent({
-    props: ['log', 'close', 'i18n'],
+    props: ['log', 'close'],
+    data: function () {
+        return {
+          translations: window.translations,
+        };
+      },
     computed: {
         formattedStacktrace() {
             return this.log.exception.traceback.replace(/\n/g, '<br>');
@@ -44,7 +49,7 @@ const SystemLogCard = Vue.defineComponent({
     <v-card color="grey lighten-3" v-if="log != null">
             <v-toolbar color="white" class="d-flex">
                 <!-- Time -->
-                <v-tooltip :text="i18n.time_">
+                <v-tooltip :text="translations.time_">
                     <template v-slot:activator="{ props }">
                         <v-chip prepend-icon="mdi-clock" size="small" class="ml-2 my-1" v-bind="props">
                             {{ log.timestampFmt }}
@@ -53,7 +58,7 @@ const SystemLogCard = Vue.defineComponent({
                 </v-tooltip>
                 
                 <!-- Log Level Chip -->
-                <v-tooltip :text="i18n.level_">
+                <v-tooltip :text="translations.level_">
                     <template v-slot:activator="{ props }">
                         <v-chip :prepend-icon="getLevelIcon" size="small" :color="getLogColor" class="ml-2 my-1" v-bind="props">
                             {{ getLevelString() }}
@@ -62,7 +67,7 @@ const SystemLogCard = Vue.defineComponent({
                 </v-tooltip>
 
                 <!-- Error Type -->
-                <v-tooltip :text="i18n.errType_">
+                <v-tooltip :text="translations.errType_">
                     <template v-slot:activator="{ props }">
                         <v-chip v-if="log.exception?.type" prepend-icon="mdi-tag" size="small" color="red" class="ml-2 my-1" v-bind="props">
                             {{ log.exception?.type }}
@@ -71,7 +76,7 @@ const SystemLogCard = Vue.defineComponent({
                 </v-tooltip>
                 
                 <!-- Error Path -->
-                <v-tooltip :text="i18n.path_">
+                <v-tooltip :text="translations.path_">
                     <template v-slot:activator="{ props }">
                         <v-chip prepend-icon="mdi-file" size="small" class="ml-2 my-1"  v-bind="props">
                             {{ log.pathname }}
@@ -80,7 +85,7 @@ const SystemLogCard = Vue.defineComponent({
                 </v-tooltip>
                 
                 <!-- Error Line No -->
-                <v-tooltip :text="i18n.lineno_">
+                <v-tooltip :text="translations.lineno_">
                     <template v-slot:activator="{ props }">
                         <v-chip prepend-icon="mdi-timeline-alert" size="small" class="ml-2 my-1"  v-bind="props">
                             {{ log.lineno }}
@@ -89,7 +94,7 @@ const SystemLogCard = Vue.defineComponent({
                 </v-tooltip>
 
                 <!-- User ID -->
-                <v-tooltip :text="i18n.userid_">
+                <v-tooltip :text="translations.userid_">
                     <template v-slot:activator="{ props }">
                         <v-chip v-if="log.user_id" prepend-icon="mdi-account" size="small" class="ml-2 my-1"  v-bind="props">
                             {{ log.user_id }}
@@ -98,7 +103,7 @@ const SystemLogCard = Vue.defineComponent({
                 </v-tooltip>
 
                 <!-- Endpoint -->
-                <v-tooltip :text="i18n.endpoint_">
+                <v-tooltip :text="translations.endpoint_">
                     <template v-slot:activator="{ props }">
                         <v-chip v-if="log.endpoint" prepend-icon="mdi-api" size="small" class="ml-2 my-1"  v-bind="props">
                             {{ log.endpoint }}
@@ -113,10 +118,10 @@ const SystemLogCard = Vue.defineComponent({
                     <v-row>
                         <v-col>
                             <v-list variant="plain" class="mx-2 my-1 pa-2 align-center">
-                                <v-list-item :title="i18n.message_">
+                                <v-list-item :title="translations.message_">
                                     {{ log.message }}
                                 </v-list-item>
-                                <v-list-item v-if='log.exception?.traceback' :title="i18n.stacktrace_">
+                                <v-list-item v-if='log.exception?.traceback' :title="translations.stacktrace_">
                                     <div v-html="formattedStacktrace"></div>
                                 </v-list-item>
                             </v-list>

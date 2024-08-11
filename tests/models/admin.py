@@ -1,4 +1,4 @@
-from typing import ForwardRef, Optional, List, Dict, Union
+from typing import Any, ForwardRef, Optional, List, Dict, Union
 from pydantic import BaseModel, Field
 from tests.models.user import UserCompactModel, RoleModel, UserItemModel
 from tests.models.common import StrictModel, BaseResponseModel
@@ -853,3 +853,21 @@ class AppConfigsResponseModel(BaseModel):
     items: List[AppConfigItemModel]
     perPage: int
     total: int
+
+
+class UserSessionItemModel(BaseModel):
+    id: int
+    user_id: int
+    details: Optional[dict[str, Any]]
+    last_active: Optional[str]
+    expires_at: Optional[str]
+    ip_address: str
+    meta: Optional[Dict]
+    is_active: bool
+    created_at: str
+    updated_at: str
+
+
+class UserSessionsResponseModel(BaseModel):
+    items: List[UserSessionItemModel]
+    more: bool

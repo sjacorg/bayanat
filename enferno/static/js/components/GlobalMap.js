@@ -3,8 +3,6 @@ const GlobalMap = Vue.defineComponent({
     modelValue: {
       default: [],
     },
-
-    i18n: {},
     legend: {
       default: true,
     },
@@ -12,11 +10,10 @@ const GlobalMap = Vue.defineComponent({
 
   data: function () {
     return {
-
+      translations: window.translations,
       mapId: 'map-' + this.$.uid,
-
       map: null,
-      locations: this.modelValue.length ? this.modelValue : [],
+      locations: this.modelValue?.length ? this.modelValue : [],
       mapHeight: 300,
       zoom: 10,
       mapKey: 0,
@@ -40,12 +37,14 @@ const GlobalMap = Vue.defineComponent({
 
   mounted() {
 
+
     this.initMap();
   },
 
   watch: {
     modelValue(val, old) {
-      if ((val && val.length) || val !== old) {
+
+      if (val?.length || val !== old) {
         this.locations = val;
         this.fitMarkers();
       }
@@ -55,6 +54,7 @@ const GlobalMap = Vue.defineComponent({
     },
 
     locations() {
+
       this.$emit('update:modelValue', this.locations);
     },
   },
@@ -67,7 +67,7 @@ const GlobalMap = Vue.defineComponent({
       <p>Number: ${loc.number} Parent ID: ${loc.parentId}</p>
       <p>Coordinates: ${loc.lat?.toFixed(6)}, ${loc.lng?.toFixed(6)}</p>
       ${loc.full_string ? `<p>${loc.full_string}</p>` : ''}
-      ${loc.main ? `<p>${this.i18n.mainIncident_}</p>` : ''}
+      ${loc.main ? `<p>${this.translations.mainIncident_}</p>` : ''}
       ${loc.geotype ? `<p>Type: ${loc.geotype.title}</p>` : ''}
       ${loc.eventtype ? `<p>Event Type: ${loc.eventtype}</p>` : ''}
     </div>`;
@@ -143,9 +143,10 @@ const GlobalMap = Vue.defineComponent({
         const locationsWithCoordinates = this.locations.filter(loc => loc.lat && loc.lng);
 
         for (const loc of locationsWithCoordinates) {
+
           let mainStr = false;
           if (loc.main) {
-            mainStr = this.i18n.mainIncident_;
+            mainStr = this.translations.mainIncident_;
             loc.color = '#000000';
           }
 
@@ -304,15 +305,15 @@ const GlobalMap = Vue.defineComponent({
             <div v-if="legend" class="map-legend d-flex mb-3 align-center" style="column-gap: 10px">
               <div class="caption">
                 <v-icon small color="#00a1f1"> mdi-checkbox-blank-circle</v-icon>
-                {{ i18n.locations_ }}
+                {{ translations.locations_ }}
               </div>
               <div class="caption">
                 <v-icon small color="#ffbb00"> mdi-checkbox-blank-circle</v-icon>
-                {{ i18n.geoMarkers_ }}
+                {{ translations.geoMarkers_ }}
               </div>
               <div class="caption">
                 <v-icon small color="#00f166"> mdi-checkbox-blank-circle</v-icon>
-                {{ i18n.events_ }}
+                {{ translations.events_ }}
               </div>
 
             </div>

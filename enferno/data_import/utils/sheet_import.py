@@ -330,7 +330,7 @@ class SheetImport:
 
         attr = getattr(self.actor_profile, field)
         if not attr:
-            setattr(self.actor_profile, field, {"opts": [], "details": ""})
+            setattr(self.actor_profile, field, {"opts": "", "details": ""})
         getattr(self.actor_profile, field)["opts"] = str(value).strip().capitalize()
         flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")
@@ -349,7 +349,10 @@ class SheetImport:
         field = details.replace("_details", "")
         attr = getattr(self.actor_profile, field)
         if not attr:
-            setattr(self.actor_profile, field, {"opts": [], "details": ""})
+            if details == "skin_markings_details":
+                setattr(self.actor_profile, field, {"opts": [], "details": ""})
+            else:
+                setattr(self.actor_profile, field, {"opts": "", "details": ""})
         getattr(self.actor_profile, field)["details"] = str(value)
         flag_modified(self.actor_profile, field)
         self.data_import.add_to_log(f"Processed {field}")

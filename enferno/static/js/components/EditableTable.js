@@ -152,7 +152,7 @@ const EditableTable = Vue.defineComponent({
     },
 
     itemDelete(item) {
-      if (confirm(`${translations.confirmDelete_}: "${item.title}"`)) {
+      if (confirm(`${this.translations.confirmDelete_}: "${item.title}"`)) {
         axios
           .delete(`${this.deleteEndpoint}/${item.id}`)
           .then((res) => {

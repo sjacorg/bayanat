@@ -3,7 +3,6 @@ const GeoLocations = Vue.defineComponent({
     modelValue: {
       default: [],
     },
-    i18n: {},
     others: {
       type: Array,
       default: () => [],
@@ -13,6 +12,7 @@ const GeoLocations = Vue.defineComponent({
 
   data: function () {
     return {
+      translations: window.translations,
       // temp item to hold new locations
       e: {},
       addDlg: false,
@@ -90,7 +90,7 @@ const GeoLocations = Vue.defineComponent({
     },
 
     removeLocation(i) {
-      if (confirm(this.i18n.confirm_)) {
+      if (confirm(this.translations.confirm_)) {
         this.locations.splice(i, 1);
         this.$emit('update:modelValue', this.locations);
       }
@@ -102,7 +102,7 @@ const GeoLocations = Vue.defineComponent({
         <v-card>
           <v-toolbar elevation="0">
             <v-toolbar-title>
-              {{ i18n.geoMarkers_ }}
+              {{ translations.geoMarkers_ }}
             </v-toolbar-title>
             <v-spacer></v-spacer>
             <v-btn icon="mdi-plus-circle" color="primary" @click="newLocation" variant="text"></v-btn>
@@ -118,7 +118,7 @@ const GeoLocations = Vue.defineComponent({
 
                       <v-chip size="small" class="primary">{{ i + 1 }}</v-chip>
                       <v-chip size="small" v-if="loc.geotype" class="grey lighten-3">{{ loc.geotype.title }}</v-chip>
-                      <v-chip size="small" v-if="loc.main" class="grey lighten-3">{{ i18n.mainIncident_ }}</v-chip>
+                      <v-chip size="small" v-if="loc.main" class="grey lighten-3">{{ translations.mainIncident_ }}</v-chip>
                       <h4 class="pa-3 mb-2 text-caption">{{ loc.title }}</h4>
                       <div class="text-subtitle-1 ">
                         <v-icon size="small" left>mdi-map-marker</v-icon>
@@ -168,7 +168,7 @@ const GeoLocations = Vue.defineComponent({
         </v-card>
         <v-dialog v-if="addDlg" max-width="770" v-model="addDlg">
           <v-card>
-            <v-toolbar :title="i18n.addGeoMarker_">
+            <v-toolbar :title="translations.addGeoMarker_">
               <template #append>
                 <v-btn @click="addDlg=false" icon="mdi-close"></v-btn>
               </template>
@@ -178,10 +178,10 @@ const GeoLocations = Vue.defineComponent({
 
             <v-card-text>
               <div class="d-flex px-5 ga-3">
-                <v-text-field v-model="e.title" :label="i18n.title_"></v-text-field>
+                <v-text-field v-model="e.title" :label="translations.title_"></v-text-field>
 
                 <search-field
-                    :label="i18n.type_"
+                    :label="translations.type_"
                     api="/admin/api/geolocationtypes/"
                     v-model="e.geotype"
                     item-title="title"
@@ -191,8 +191,8 @@ const GeoLocations = Vue.defineComponent({
                 </search-field>
               </div>
               <div class="d-flex px-5 ga-2">
-                <v-text-field v-model="e.comment" :label="i18n.comment_"></v-text-field>
-                <v-checkbox :label="i18n.mainIncident_" v-model="e.main"></v-checkbox>
+                <v-text-field v-model="e.comment" :label="translations.comment_"></v-text-field>
+                <v-checkbox :label="translations.mainIncident_" v-model="e.main"></v-checkbox>
               </div>
 
             </v-card-text>
@@ -202,7 +202,7 @@ const GeoLocations = Vue.defineComponent({
             <v-card-actions class="pa-4">
               <v-spacer></v-spacer>
               <v-btn :disabled="!eformValid" @click="saveLocation" variant="elevated" width="220" color="primary">
-                {{ i18n.save_ }}
+                {{ translations.save_ }}
               </v-btn>
               <v-spacer></v-spacer>
             </v-card-actions>
