@@ -1,5 +1,6 @@
 import os, boto3
 from typing import Any, Literal, Optional
+from flask import current_app
 import pyexifinfo as exiflib
 from docx import Document
 from pypdf import PdfReader
@@ -15,7 +16,10 @@ from enferno.settings import Config as cfg
 import subprocess
 
 from enferno.utils.base import DatabaseException
+from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
+
+logger = get_logger()
 
 
 def now() -> str:
@@ -30,7 +34,7 @@ if cfg.OCR_ENABLED:
         pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
         tesseract_langs = "+".join(pytesseract.get_languages(config=""))
     except Exception as e:
-        print(
+        logger.error(
             f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
         )
 

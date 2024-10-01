@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from uuid import uuid4
 from unittest.mock import patch
 
@@ -35,7 +36,35 @@ def app():
     app = create_app(cfg)
     app.test_client_class = FlaskLoginClient
     with app.app_context():
-        yield app
+        with patch("enferno.setup.views.check_installation", return_value=False):
+            yield app
+
+
+@pytest.fixture(scope="session")
+def uninitialized_app():
+    """Create a Flask app context for testing."""
+    from enferno.app import create_app
+    from flask_login import FlaskLoginClient
+
+    with patch.object(cfg, "SETUP_COMPLETE", None):
+        app = create_app(cfg)
+        app.test_client_class = FlaskLoginClient
+        with app.app_context():
+            with patch("enferno.setup.views.check_installation", return_value=True):
+                yield app
+
+
+@pytest.fixture(scope="session")
+def setup_completed_app():
+    """Create a Flask app context for testing."""
+    from enferno.app import create_app
+    from flask_login import FlaskLoginClient
+
+    with patch.object(cfg, "SETUP_COMPLETE", True):
+        app = create_app(cfg)
+        app.test_client_class = FlaskLoginClient
+        with app.app_context():
+            yield app
 
 
 @pytest.fixture(scope="session")
@@ -63,12 +92,52 @@ def setup_db(app):
     _db.drop_all()
 
 
+@pytest.fixture(scope="session")
+def setup_db_uninitialized(uninitialized_app):
+    """Create a test database for the app."""
+    from enferno.extensions import db as _db
+    from enferno.utils.data_helpers import (
+        generate_user_roles,
+        generate_workflow_statues,
+        create_default_location_data,
+    )
+
+    try:
+        _db.engine.execute("CREATE EXTENSION if not exists pg_trgm ;")
+        _db.engine.execute("CREATE EXTENSION if not exists postgis ;")
+        _db.drop_all()
+        _db.create_all()
+        generate_user_roles()
+        generate_workflow_statues()
+        create_default_location_data()
+    except Exception as e:
+        pass
+    yield _db
+    try:
+        _db.session.remove()
+        _db.drop_all()
+    except Exception as e:
+        pass
+
+
 @pytest.fixture(scope="function")
 def session(setup_db, app):
     """Create a new database session for a test."""
     from enferno.extensions import db
 
     with app.app_context():
+        with db.engine.begin() as conn:
+            trans = conn.begin_nested()
+            yield db.session
+            trans.rollback()
+
+
+@pytest.fixture(scope="function")
+def session_uninitialized(setup_db_uninitialized, uninitialized_app):
+    """Create a new database session for a test."""
+    from enferno.extensions import db
+
+    with uninitialized_app.app_context():
         with db.engine.begin() as conn:
             trans = conn.begin_nested()
             yield db.session
@@ -136,6 +205,35 @@ def users(session):
     session.commit()
 
 
+@pytest.fixture(scope="function")
+def uninitialized_users(session_uninitialized):
+    """Create users for testing."""
+    from enferno.user.models import User, Role
+
+    session = session_uninitialized
+    admin_user = User.query.filter(User.roles.any(Role.name == "Admin")).first()
+    yield admin_user
+
+
+@pytest.fixture(scope="function")
+def uninitialized_admin_client(uninitialized_app, session_uninitialized, uninitialized_users):
+    """Test client for a user logged in as Admin role."""
+    with uninitialized_app.app_context():
+        admin_user = uninitialized_users
+        with uninitialized_app.test_client(user=admin_user) as client:
+            client.follow_redirects = True
+            yield client
+
+
+@pytest.fixture(scope="function")
+def uninitialized_anonymous_client(uninitialized_app):
+    """Test client for an unauthenticated user."""
+    with uninitialized_app.app_context():
+        with uninitialized_app.test_client() as client:
+            client.follow_redirects = True
+            yield client
+
+
 # test client for a user logged in as Admin role
 @pytest.fixture(scope="function")
 def admin_client(app, session, users):
@@ -171,7 +269,7 @@ def mod_client(app, session, users):
 
 # test client for an unauthenticated user
 @pytest.fixture(scope="function")
-def client(app, session):
+def anonymous_client(app, session):
     """Test client for an unauthenticated user."""
     with app.app_context():
         with app.test_client() as client:
@@ -210,3 +308,40 @@ def mod_sa_client(app, session, users):
         with app.test_client(user=sa_dict["mod"]) as client:
             client.follow_redirects = True
             yield client
+
+
+@pytest.fixture(scope="function")
+def create_test_role(app, session):
+    from enferno.user.models import Role
+
+    rol = session.query(Role).filter(Role.name == "TestRole").first()
+    if not rol:
+        newRole = Role(name="TestRole")
+        session.add(newRole)
+        session.commit()
+        yield newRole
+        session.delete(newRole)
+        session.commit()
+    else:
+        yield rol
+
+
+@pytest.fixture(scope="function")
+def roled_client(app, session, create_test_role):
+    from enferno.user.models import User
+    from enferno.admin.models import Activity
+
+    new_user = User(username="TestUser", password="password", active=1)
+    new_user.roles.append(create_test_role)
+    new_user.fs_uniquifier = uuid4().hex
+    session.add(new_user)
+    session.commit()
+    with app.app_context():
+        with app.test_client(user=new_user) as client:
+            client.follow_redirects = True
+            yield client
+    new_user.roles = []
+    session.query(Activity).filter(Activity.user_id == new_user.id).delete(
+        synchronize_session=False
+    )
+    session.delete(new_user)

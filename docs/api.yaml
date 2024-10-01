@@ -9,6 +9,8 @@ info:
     name: AGPLv3
     url: 'https://github.com/sjacorg/bayanat.sjac/blob/master/license.txt'
 tags:
+  - name: Setup
+    description: Operations related to the setup wizard
   - name: Public
     description: Operations available to unauthenticated consumers
   - name: Protected
@@ -72,6 +74,210 @@ tags:
   - name: Configuration Management
     description: Operations related to configuration settings
 paths:
+  /admin/api/reload:
+    post:
+      tags:
+        - Protected
+        - Configuration Management
+      summary: Reload the application
+      description: |
+        Reloads the application, applying any changes to configuration.
+
+        Accepted roles:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Reloaded Bayanat"
+        '401':
+          $ref: '#/components/responses/UnauthenticatedResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+
+  /api/check-admin:
+    get:
+      tags:
+        - Setup
+        - Public
+      summary: Check if admin user was created
+      description: |
+        Check if admin user was created.
+      responses:
+        '200':
+          description: Result of the check
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - not_found
+                      - exists
+                  message:
+                    type: string
+                    description: Message from the check
+  /api/create-admin:
+    post:
+      tags:
+        - Setup
+        - Public
+      summary: Create an admin user
+      description: |
+        Create an admin user.
+      requestBody:
+        description: Admin user credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of the admin user
+                password:
+                  type: string
+                  description: Password of the admin user
+      responses:
+        '201':
+          description: Admin user installed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Message from the installation
+        '400':
+          description: Bad request
+
+  /api/check-data-imported:
+    get:
+      tags:
+        - Setup
+        - Protected
+      summary: Check if default data was imported
+      description: |
+        Check if default data was imported
+
+        Accepted roles:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: Result of the check
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - not_imported
+                      - imported
+                  message:
+                    type: string
+                    description: Message from the check
+  /api/import-data:
+    post:
+      tags:
+        - Setup
+        - Protected
+      summary: Import default data
+      description: |
+        Import default data into the database.
+        
+        Accepted roles:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: Default data imported successfully
+        '500':
+          description: Internal server error
+
+  /api/default-config:
+    get:
+      tags:
+        - Setup
+        - Protected
+      summary: Get default configuration
+      description: |
+        Get default configuration.
+        
+        Accepted roles:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: Default configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                    description: Key of the configuration
+                  value:
+                    type: string
+                    description: Value of the configuration
+
+        '401':
+          $ref: '#/components/responses/UnauthenticatedResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+        
+  /api/complete-setup:
+    put:
+      tags:
+        - Setup
+        - Protected
+      summary: Complete the setup wizard
+      description: |
+        Complete the setup wizard with the provided configuration.
+        
+        Accepted roles:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      requestBody:
+        description: Configuration to complete the setup
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: Key of the configuration
+                value:
+                  type: string
+                  description: Value of the configuration
+      responses:
+        '200':
+          description: Setup completed successfully
+        '400':
+          description: Bad request
+        '401':
+          $ref: '#/components/responses/UnauthenticatedResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+
   /login:
     post:
       tags:
@@ -5931,50 +6137,54 @@ paths:
         - Join Tables Info Management
       summary: Get information about all relations.
       description: |
-        Get information about all relations of a type.
-        
+        Fetches information about all types of relations and returns them as a JSON object.
+
         Roles accepted:
         - Admin
         - Mod
         - DA
       security:
-        - SessionCookieAuth: []
-      parameters:
-        - in: query
-          name: type
-          required: false
-          description: Type of relation to get info for.
-          schema:
-            type: string
-            enum:
-              - atob
-              - atoa
-              - btob
-              - itoi
-              - itob
-              - itoa
+        - SessionCookieAuth: [ ]
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: '#/components/schemas/AtoaItem'
-                    - $ref: '#/components/schemas/AtobItem'
-                    - $ref: '#/components/schemas/BtobItem'
-                    - $ref: '#/components/schemas/ItoiItem'
-                    - $ref: '#/components/schemas/ItobItem'
-                    - $ref: '#/components/schemas/ItoaItem'
+                type: object
+                properties:
+                  atobInfo:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AtobItem'
+                  itobInfo:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItobItem'
+                  btobInfo:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BtobItem'
+                  atoaInfo:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AtoaItem'
+                  itoaInfo:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItoaItem'
+                  itoiInfo:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItoiItem'
             text/plain:
               schema:
                 type: object
                 example:
-                  {"error": "Invalid table type"}
+                  { "error": "Invalid request" }
         '401':
           $ref: '#/components/responses/UnauthenticatedResponse'
+
   /admin/api/graph/json:
     get:
       operationId: getGraphJson

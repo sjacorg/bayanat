@@ -2,6 +2,10 @@ import json
 from types import MappingProxyType
 from flask_security import current_user
 
+import logging
+
+logger = logging.getLogger("app_logger")
+
 
 class ConfigManager:
     CONFIG_FILE_PATH = "config.json"
@@ -124,6 +128,7 @@ class ConfigManager:
                 "VIEW": True,
             },
             "ACTIVITIES_RETENTION": 90,
+            "ADV_ANALYSIS": False,
         }
     )
 
@@ -175,6 +180,7 @@ class ConfigManager:
             "EXPORT_DEFAULT_EXPIRY": "Export Default Expiry Time",
             "ACTIVITIES": "List of users activities to log.",
             "ACTIVITIES_RETENTION": "Activity Retention Period",
+            "ADV_ANALYSIS": "Advanced Analysis Features",
         }
     )
 
@@ -183,7 +189,7 @@ class ConfigManager:
             with open(self.CONFIG_FILE_PATH) as file:
                 self.config = json.loads(file.read())
         except EnvironmentError:
-            print("No config file found, Loading default Bayanat configurations")
+            logger.error("No config file found, Loading default Bayanat configurations")
 
     def get_config(self, cfg):
         # custom getter with a fallback
@@ -252,6 +258,7 @@ class ConfigManager:
             "EXPORT_DEFAULT_EXPIRY": int(cfg.EXPORT_DEFAULT_EXPIRY.total_seconds()) / 3600,
             "ACTIVITIES": cfg.ACTIVITIES,
             "ACTIVITIES_RETENTION": int(cfg.ACTIVITIES_RETENTION.total_seconds()) / 86400,
+            "ADV_ANALYSIS": cfg.ADV_ANALYSIS,
         }
         return conf
 
@@ -261,7 +268,6 @@ class ConfigManager:
 
     @staticmethod
     def write_config(conf):
-        from enferno.tasks import reload_app
         from enferno.admin.models import AppConfig, Activity
 
         # handle secrets
@@ -290,11 +296,11 @@ class ConfigManager:
 
                 with open(ConfigManager.CONFIG_FILE_PATH, "w") as f:
                     f.write(json.dumps(conf, indent=2))
-                    # attempt app reload
-                    reload_app()
-                    return True
+                    logger.info("New configuration saved.")
 
-            except Exception as e:
-                print(e)
+                return True
+
+            except Exception:
+                logger.error("Error writing new configuration.", exc_info=True)
 
         return False

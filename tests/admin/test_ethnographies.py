@@ -43,7 +43,7 @@ ethnographies_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -70,7 +70,7 @@ post_ethnography_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -97,7 +97,7 @@ put_ethnography_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -129,7 +129,7 @@ delete_ethnography_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 

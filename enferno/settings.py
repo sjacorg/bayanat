@@ -262,10 +262,16 @@ class Config(object):
     BACKUPS_AWS_SECRET_ACCESS_KEY = os.environ.get("BACKUPS_AWS_SECRET_ACCESS_KEY")
     BACKUPS_AWS_REGION = os.environ.get("BACKUPS_AWS_REGION")
 
+    # Setup Wizard
+    SETUP_COMPLETE = manager.get_config("SETUP_COMPLETE")
+
+    ADV_ANALYSIS = manager.get_config("ADV_ANALYSIS")
+
 
 class TestConfig(Config):
     """Test configuration."""
 
+    TESTING = True
     POSTGRES_USER = os.environ.get("POSTGRES_USER", "")
     POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
     POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
@@ -316,7 +322,7 @@ class TestConfig(Config):
     DEDUP_LOW_DISTANCE = 0.3
     DEDUP_MAX_DISTANCE = 0.5
     DEDUP_TOOL = False
-    ETL_PATH_IMPORT = False
+    ETL_PATH_IMPORT = True
     ETL_TOOL = True
     ETL_VID_EXT = [
         "webm",
@@ -395,5 +401,7 @@ class TestConfig(Config):
     SECURITY_WEBAUTHN = True
     SECURITY_ZXCVBN_MINIMUM_SCORE = 3
     SHEETS_ALLOWED_EXTENSIONS = ["csv", "xls", "xlsx"]
-    SHEET_IMPORT = False
+    SHEET_IMPORT = True
     VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]
+    SETUP_COMPLETE = False
+    IMPORT_DIR = "tests/imports"

@@ -1,13 +1,14 @@
 from pathlib import Path
 from typing import Literal, Optional
 
-from flask import request, Response, Blueprint, json, send_from_directory
+from flask import current_app, request, Response, Blueprint, json, send_from_directory
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
 from enferno.admin.models import Activity
 from enferno.export.models import Export
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
 
 export = Blueprint(
@@ -20,6 +21,8 @@ export = Blueprint(
 )
 
 PER_PAGE = 30
+
+logger = get_logger()
 
 
 @export.before_request
@@ -47,9 +50,7 @@ def exports_dashboard(id: Optional[t.id] = None) -> str:
 
 
 @export.post("/api/bulletin/export")
-def export_bulletins() -> (
-    tuple[str, Literal[200]] | tuple[Literal["Error creating export request"], Literal[417]]
-):
+def export_bulletins() -> Response:
     """
     just creates an export request.
 
@@ -74,9 +75,7 @@ def export_bulletins() -> (
 
 
 @export.post("/api/actor/export")
-def export_actors() -> (
-    tuple[str, Literal[200]] | tuple[Literal["Error creating export request"], Literal[417]]
-):
+def export_actors() -> Response:
     """
     just creates an export request.
 
@@ -100,9 +99,7 @@ def export_actors() -> (
 
 
 @export.post("/api/incident/export")
-def export_incidents() -> (
-    tuple[str, Literal[200]] | tuple[Literal["Error creating export request"], Literal[417]]
-):
+def export_incidents() -> Response:
     """
     just creates an export request.
 
@@ -126,7 +123,7 @@ def export_incidents() -> (
 
 
 @export.get("/api/export/<int:id>")
-def api_export_get(id: t.id) -> Response | tuple[str, Literal[200]]:
+def api_export_get(id: t.id) -> Response:
     """
     Endpoint to get a single export.
 
@@ -180,14 +177,7 @@ def api_exports() -> Response:
 
 @export.put("/api/exports/status")
 @roles_required("Admin")
-def change_export_status() -> (
-    tuple[Literal["Please check request action"], Literal[417]]
-    | tuple[Literal["Invalid export request id"], Literal[417]]
-    | tuple[Literal["Export request does not exist"], Literal[404]]
-    | tuple[Literal["Export request approval will be processed shortly."], Literal[200]]
-    | tuple[Literal["Export request rejected."], Literal[200]]
-    | None
-):
+def change_export_status() -> Response:
     """
     endpoint to approve or reject an export request.
 
@@ -243,12 +233,7 @@ def change_export_status() -> (
 
 @export.put("/api/exports/expiry")
 @roles_required("Admin")
-def update_expiry() -> (
-    Response
-    | tuple[Literal["Invalid expiry date"], Literal[417]]
-    | tuple[str, Literal[200]]
-    | tuple[Literal["Save failed"], Literal[417]]
-):
+def update_expiry() -> Response:
     """
     endpoint to set expiry date of an approved export.
 
@@ -312,5 +297,5 @@ def download_export_file() -> Response:
             return HTTPResponse.REQUEST_EXPIRED
 
     except Exception as e:
-        print(f"Unable to decrypt export request uid {e}")
+        logger.error(f"Unable to decrypt export request uid {e}")
         return HTTPResponse.NOT_FOUND

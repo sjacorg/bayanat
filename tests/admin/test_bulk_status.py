@@ -6,7 +6,7 @@ bulk_status_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 

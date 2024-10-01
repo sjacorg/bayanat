@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   postgres:
     container_name: postgres
@@ -42,7 +40,7 @@ services:
     container_name: bayanat
     build:
       context: .
-      dockerfile: ./flask/Dockerfile.dev
+      dockerfile: ./flask/Dockerfile.test
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,7 +52,7 @@ services:
       - '${PWD}/reload.ini:/app/reload.ini:rw'
       - '${PWD}/${ENV_FILE:-.env.test}:/app/.env:ro'
       - 'bayanat_test_media:/app/enferno/media:rw'
-      - 'bayanat_test_imports:/app/enferno/imports:rw'
+      - 'bayanat_test_imports:/app/tests/imports:rw'
       - 'bayanat_test_logs:/app/logs:rw'
     command: [ "pytest" ]
 

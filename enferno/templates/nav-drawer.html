@@ -28,7 +28,7 @@
 
         {% if current_user.has_role("Admin") %}
             <!-- Secondary Data (Location Configurations) -->
-            <v-list-item prepend-icon="mdi-map-marker-path" title="{{ _('Component Data') }}"
+            <v-list-item prepend-icon="mdi-database-cog" title="{{ _('Component Data') }}"
                          href="/admin/component-data/" key="comp-data"></v-list-item>
 
             <v-list-group>
@@ -55,7 +55,7 @@
 
         {% if deduplication %}
             {% if current_user.has_role('Admin') or current_user.has_role('Mod') %}
-                <v-list-item prepend-icon="mdi-link-variant-plus" title="{{ _('Deduplication Dashboard') }}"
+                <v-list-item prepend-icon="mdi-link-variant-plus" title="{{ _('Deduplication') }}"
                              href="/deduplication/dashboard/" key="deduplication"></v-list-item>
             {% endif %}
         {% endif %}

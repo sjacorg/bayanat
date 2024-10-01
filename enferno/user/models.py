@@ -14,9 +14,12 @@ from sqlalchemy.ext.mutable import Mutable
 from enferno.extensions import db, rds
 from enferno.settings import Config as cfg
 from enferno.utils.base import BaseMixin
+from enferno.utils.logging_utils import get_logger
 
 # Redis key namespace to set flag for forcing password reset
 SECURITY_KEY_NAMESPACE = "security:user"
+
+logger = get_logger()
 
 
 class MutableList(Mutable, list):
@@ -254,7 +257,7 @@ class User(UserMixin, db.Model, BaseMixin):
             except Exception as e:
                 errors.append(f"Failed to delete session {s.session_token}: {str(e)}")
         if errors:
-            current_app.logger.error("Failed to delete some sessions: %s", errors)
+            logger.error("Failed to delete some sessions: %s", errors)
 
     @property
     def secure_email(self):

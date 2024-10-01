@@ -217,7 +217,7 @@
     <section>
         <h4>Description</h4>
         <div class="description">
-            {{ actor.description|safe }}
+            {{ actor.actor_profiles[0].description | replace('../api/serve/inline/', 'file://' + path + '/media/inline/') | safe  }}
         </div>
     </section>
 

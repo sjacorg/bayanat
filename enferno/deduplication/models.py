@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+
+import time
 from sqlalchemy import JSON
 
-from enferno.admin.models import Bulletin, Btob, Activity
-from enferno.extensions import db
+from enferno.admin.models import Bulletin, Btob, Activity, Media
+from enferno.extensions import db, rds
 from enferno.utils.base import BaseMixin
 import os
 from enferno.settings import Config as CONFIG
@@ -10,6 +12,9 @@ from enferno.settings import Config as CONFIG
 
 # Deduplication relation
 from enferno.user.models import User
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger()
 
 
 class DedupRelation(db.Model, BaseMixin):
@@ -48,6 +53,12 @@ class DedupRelation(db.Model, BaseMixin):
             "result": self.result,
         }
 
+    def lookup(self, video):
+        return (
+            Bulletin.query.filter_by(originid=video).first()
+            or Bulletin.query.filter(Bulletin.medias.any(Media.search.ilike(f"%{video}%"))).first()
+        )
+
     def process(self, user_id: int = 1) -> None:
         """
         this method will go compare video deduplication data against database bulletins and establish relationship
@@ -59,36 +70,48 @@ class DedupRelation(db.Model, BaseMixin):
         Returns:
             None
         """
-        print("Processing match {}: {},{}".format(self.id, self.query_video, self.match_video))
+
+        logger.info(
+            f"Match {self.id}: {self.query_video},{self.match_video}"
+        )
+
 
         if self.distance > CONFIG.DEDUP_MAX_DISTANCE:
             self.status = 2
         elif self.query_video != self.match_video:
-            b1 = Bulletin.query.filter_by(originid=self.query_video).first()
-            b2 = Bulletin.query.filter_by(originid=self.match_video).first()
+            b1 = self.lookup(self.query_video)
+            b2 = self.lookup(self.match_video)
+
             if b1 and b2:
-                rel_ids = sorted((b1.id, b2.id))
-                relation = Btob.query.get(rel_ids)
-                if relation:
+                while rds.sadd("dedup_processing", b1.id) == 0:
+                    logger.info(f"Match {self.match_id} Bulletin {b1.id} is busy. Sleeping for 2...")
+                    time.sleep(2)
+                while rds.sadd("dedup_processing", b2.id) == 0:
+                    logger.info(f"Match {self.match_id} Bulletin {b2.id} is busy. Sleeping for 2...")
+                    time.sleep(2)
+
+                logger.info(f"Processing match {self.match_id}...")
+
+                existing_relation = Btob.are_related(b1.id, b2.id)
+
+                if existing_relation:
                     self.status = 1
                 else:
-                    b = Btob(bulletin_id=rel_ids[0], related_bulletin_id=rel_ids[1])
+                    new_relation = Btob.relate(b1, b2)
                     if self.distance < CONFIG.DEDUP_LOW_DISTANCE:
-                        b.related_as = 5
+                        new_relation.related_as = [6]
                         self.notes = "Potentially Duplicate"
 
                     if (
                         self.distance >= CONFIG.DEDUP_LOW_DISTANCE
                         and self.distance <= CONFIG.DEDUP_MAX_DISTANCE
                     ):
-                        b.related_as = 6
+                        new_relation.related_as = [7]
                         self.notes = "Potentially Related"
-                    b.comment = "{}".format(self.distance)
+                    new_relation.comment = f"{self.distance}"
 
-                    b.save()
-                    revision_comment = "Btob (type {}) created from match {}-{} distance {}".format(
-                        b.related_as, rel_ids[0], rel_ids[1], self.distance
-                    )
+                    new_relation.save()
+                    revision_comment = f"Btob (type {self.notes}) created from match {self.query_video}-{self.match_video} distance {self.distance}"
 
                     b1.comments = revision_comment
                     b2.comments = revision_comment
@@ -114,15 +137,20 @@ class DedupRelation(db.Model, BaseMixin):
 
                     relation_dict = {
                         "class": "btob",
-                        "b1": "{}".format(b.bulletin_id),
-                        "b2": "{}".format(b.related_bulletin_id),
-                        "type": "{}".format(b.related_as),
+                        "b1": "{}".format(new_relation.bulletin_id),
+                        "b2": "{}".format(new_relation.related_bulletin_id),
+                        "type": "{}".format(new_relation.related_as),
                     }
 
                     self.status = 3
                     self.result = relation_dict
 
+                x = rds.srem("dedup_processing", b1.id)
+                y = rds.srem("dedup_processing", b2.id)
+                logger.info(f"Processed match {self.match_id} {x} {y}")
+
             else:
                 self.status = 4
         self.save()
-        print("Completed match {}".format(self.id))
+        logger.info(f"Completed match {self.match_id}")
+

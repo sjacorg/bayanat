@@ -18,7 +18,7 @@
                 <v-spacer></v-spacer>
 
                 <template #append>
-                     <v-btn type="button" @click="validateForm" variant="outlined" class="mx-2" >
+                     <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2" >
                     {{ _('Save Actor') }}
                 </v-btn>
                 <v-btn icon="mdi-close" @click="confirmClose">
@@ -33,18 +33,19 @@
             <v-sheet
                     id="card-content"
                     max-height="100vh"
-                    class="overflow-y-auto pt-11">
+                    class="overflow-y-auto">
 
                 <v-card-text>
                     <v-container fluid>
 
                         <v-row>
                             <v-col md="2">
-                                <v-btn-toggle class="mt-5" v-model="editedItem.type" mandatory>
+                                <v-btn-toggle v-model="editedItem.type" tile mandatory>
                                     <v-btn
                                             v-for="item in ['Entity', 'Person']"
                                             :key="item"
-                                            :value="item">
+                                            :value="item"
+                                            color="primary">
                                         ${ item }
                                     </v-btn>
                                 </v-btn-toggle>
@@ -186,6 +187,7 @@
                                             item-title="full_string"
                                             item-value="id"
                                             :multiple="false"
+                                            :show-copy-icon="advFeatures"
                                             label="{{ _('Place of Origin') }}"
                                     ></location-search-field>
                                 </v-col>
@@ -354,9 +356,9 @@
                             </v-tabs>
 
 
-                            <v-window class="w-100 bg-grey-lighten-5 border" v-model="tab">
+                            <v-window class="w-100 border" v-model="tab">
                                 <v-window-item v-for="(profile, index) in editedItem.actor_profiles" :key="index">
-                                    <v-card class="pa-3 grey lighten-5" variant="text">
+                                    <v-card class="pa-3" variant="text">
 
                                         <!-- Source Link -->
                                         <v-card-text v-if="shouldDisplayField(profile.mode, 'source')">
@@ -420,6 +422,7 @@
                                                     item-title="title"
                                                     item-value="id"
                                                     :multiple="true"
+                                                    :show-copy-icon="advFeatures"
                                                     label="{{ _('Labels') }}"
                                             ></search-field>
                                         </v-card-text>
@@ -432,6 +435,7 @@
                                                     item-title="title"
                                                     item-value="id"
                                                     :multiple="true"
+                                                    :show-copy-icon="advFeatures"
                                                     label="{{ _('Verified Labels') }}"
                                             ></search-field>
                                         </v-card-text>
@@ -467,7 +471,7 @@
                                                         v-if="editedItem.type === 'Person'">
 
                                                     <v-card-text v-show="profile.id || profile">
-                                                        <v-container>
+                                                        <v-container fluid>
                                                             <v-row>
                                                                 <v-col cols="12" md="4">
                                                                     <v-text-field label="{{ _('Last Address') }}"
@@ -508,7 +512,7 @@
 
 
                                                                 <v-col md="6">
-                                                                    <v-card class="pa-3" color="yellow lighten-4">
+                                                                    <v-card class="pa-3">
                                                                         <v-card-title class="subtitle-2">
                                                                             {{ _('Details of the person who saw them last') }}
                                                                         </v-card-title>

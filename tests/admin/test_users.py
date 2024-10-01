@@ -113,7 +113,7 @@ get_users_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -132,7 +132,7 @@ post_user_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -159,7 +159,7 @@ post_checkuser_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -193,7 +193,7 @@ put_user_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -227,7 +227,7 @@ post_password_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -257,7 +257,7 @@ post_force_reset_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -281,7 +281,7 @@ post_force_reset_all_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -305,7 +305,7 @@ delete_user_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -333,7 +333,7 @@ get_user_sessions_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 

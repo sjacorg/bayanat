@@ -9,6 +9,7 @@ from tests.factories import LocationFactory, create_location, LocationTypeFactor
 from tests.test_utils import (
     conform_to_schema_or_fail,
     convert_empty_strings_to_none,
+    create_csv_for_entities,
     get_first_or_fail,
     load_data,
 )
@@ -28,6 +29,16 @@ def clean_slate_locations(session):
     session.query(Location).delete(synchronize_session=False)
     session.commit()
     yield
+
+
+@pytest.fixture(scope="function")
+def create_location_csv():
+    l1 = LocationFactory()
+    l1.id = 0
+    l2 = LocationFactory()
+    l2.id = 1
+    headers = ["id", "title", "title_ar", "parent_id", "deleted"]
+    yield from create_csv_for_entities([l1, l2], headers)
 
 
 class LocationTypeEnum(Enum):
@@ -54,7 +65,7 @@ locations_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -79,7 +90,7 @@ location_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 302),
+    ("anonymous_client", 302),
 ]
 
 
@@ -102,7 +113,7 @@ post_location_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 400),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -135,7 +146,7 @@ put_location_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 400),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -162,3 +173,35 @@ def test_put_location_endpoint(
         assert found_location.title == new_title
     else:
         assert found_location.title != new_title
+
+
+##### POST /admin/api/location/import #####
+
+import_location_endpoint_roles = [
+    ("admin_client", 200),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 200),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", import_location_endpoint_roles)
+def test_import_location_endpoint(
+    clean_slate_locations, create_location_csv, request, client_fixture, expected_status
+):
+    client_ = request.getfixturevalue(client_fixture)
+    with open(create_location_csv, "rb") as f:
+        data = {"csv": (f, "test.csv")}
+        response = client_.post(
+            "/admin/api/location/import",
+            content_type="multipart/form-data",
+            data=data,
+            follow_redirects=True,
+        )
+        assert response.status_code == expected_status
+        locations = Location.query.all()
+        if expected_status == 200 and client_fixture == "admin_client":
+            # unauthenticated client redirects to login page with 200
+            assert len(locations) == 2
+        else:
+            assert len(locations) == 0

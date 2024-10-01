@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   postgres:
     container_name: postgres
@@ -9,9 +7,14 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - 'postgres_dev_data:/var/lib/postgresql/data'
+      - 'postgres_dev_data:/var/lib/postgresql/data:rw'
     expose:
       - '5432'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/run/postgresql 
     healthcheck:
       test: "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"
       interval: 3s
@@ -23,6 +26,9 @@ services:
     expose:
       - '6379'
     command: redis-server --requirepass '${REDIS_PASSWORD}'
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - 'redis_dev_data:/var/lib/redis/data:rw'
     healthcheck:
@@ -32,18 +38,18 @@ services:
 
   bayanat:
     container_name: bayanat
-    image: bayanat/bayanat:dev
     build:
       context: .
-      dockerfile: ./flask/Dockerfile.dev
+      dockerfile: ./flask/Dockerfile
       args:
         - ROLE=flask
         - ENV_FILE=${ENV_FILE:-.env.dev}
     volumes:
+      - 'bayanat_dev_backups:/app/backups/:rw'
       - 'bayanat_dev_media:/app/enferno/media/:rw'
-      - 'bayanat_dev_imports:/app/enferno/imports:rw'
+      - 'bayanat_dev_imports:/app/enferno/imports/:rw'
+      - 'bayanat_dev_logs:/app/logs/:rw'
       - '${PWD}/config.json:/app/config.json:rw'
-      - '${PWD}/reload.ini:/app/reload.ini:rw'
       - '${PWD}/${ENV_FILE:-.env.dev}:/app/.env:ro'
     depends_on:
       postgres:
@@ -54,8 +60,31 @@ services:
       - '127.0.0.1:5000:5000'
     restart: always
 
+  celery:
+    container_name: celery
+    build:
+      context: .
+      dockerfile: ./flask/Dockerfile
+      args:
+        - ROLE=celery
+        - ENV_FILE=${ENV_FILE:-.env.dev}
+    volumes_from:
+      - bayanat
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   redis_dev_data:
   postgres_dev_data:
   bayanat_dev_media:
   bayanat_dev_imports:
+  bayanat_dev_backups:
+  bayanat_dev_logs:

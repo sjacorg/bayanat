@@ -4,10 +4,11 @@ from sqlalchemy import create_engine, MetaData
 from enferno.settings import Config as cfg
 from enferno.extensions import db
 import enferno.utils.typing as t
+from enferno.utils.logging_utils import get_logger
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-logger = logging.getLogger()
+logger = get_logger()
 
 
 class DBAlignmentChecker:

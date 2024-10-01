@@ -2,6 +2,11 @@ from datetime import datetime
 from typing import Any, Optional
 import arrow
 from dateutil.parser import parse
+from flask import current_app
+
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger()
 
 
 class DateHelper:
@@ -35,7 +40,7 @@ class DateHelper:
             d = arrow.get(dt, "YYYY:MM:DD HH:mm:ss").format("YYYY-MM-DDTHH:mm") if dt else None
             return d
         except Exception as e:
-            print(e)
+            logger.error(e, exc_info=True)
             return None
 
     @staticmethod
@@ -53,7 +58,7 @@ class DateHelper:
             d = arrow.get(dt, "YYYY-MM-DDTHH:mm").datetime.replace(tzinfo=None) if dt else None
             return d
         except Exception as e:
-            print(e)
+            logger.error(e, exc_info=True)
             return None
 
     @staticmethod
@@ -74,5 +79,5 @@ class DateHelper:
             d = parse(str(str_date))
             return str(d)
         except Exception as e:
-            print(e)
+            logger.error(e, exc_info=True)
             return None

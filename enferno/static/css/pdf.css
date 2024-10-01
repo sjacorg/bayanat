@@ -104,6 +104,13 @@ h4 {
     background: #fafafa;
 }
 
+.description img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
 .tag {
     background: #f0f0f0;
     border-radius: 5pt;

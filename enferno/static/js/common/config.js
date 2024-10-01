@@ -153,7 +153,8 @@ const router = createRouter({
 
 // Rich text configurations for tinymce editor
 var tinyConfig = {
-    plugins: ['link autolink directionality fullscreen lists table searchreplace image'],
+    license_key: 'gpl',
+    plugins: 'link autolink directionality fullscreen lists table searchreplace image',
     toolbar_mode: 'sliding',
     images_upload_url: '/admin/api/inline/upload',
     images_upload_base_path: '/admin/api/serve/inline/',
@@ -377,6 +378,7 @@ function parseResponse(dzFile) {
     return {
         uuid: dzFile.upload.uuid,
         type: dzFile.type,
+        name: dzFile.name,
         s3url: response.filename,
         filename: response.filename,
         etag: response.etag,

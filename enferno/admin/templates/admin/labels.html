@@ -331,7 +331,7 @@
                     axios.post('/admin/api/label/import/', reqData).then(response => {
                         this.imDialog = false;
                         this.refresh();
-                        tthis.showSnack(response.data);
+                        this.showSnack(response.data);
                     })
 
                 },

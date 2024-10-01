@@ -114,6 +114,7 @@ const ActorCard = Vue.defineComponent({
             this.play();
           },
         );
+        video.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
     },
 

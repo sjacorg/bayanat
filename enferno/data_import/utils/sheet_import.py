@@ -637,7 +637,7 @@ class SheetImport:
         # handle complex list of dicts for reporters
         # detect reporters map
 
-        if field == "type" or field == "etype":
+        if field == "type" or field == "dtype":
             self.set_actor_type(field, map_item)
             return
 

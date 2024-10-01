@@ -1,6 +1,7 @@
 from typing import Optional
 from flask import render_template
-from weasyprint import HTML, CSS
+from weasyprint import HTML
+from flask import current_app
 
 
 class PDFUtil:
@@ -17,11 +18,19 @@ class PDFUtil:
             - output (str): The path to save the PDF to. If None, the PDF will be returned as a binary string.
         """
         if self.model.__tablename__ == "bulletin":
-            html = render_template("pdf/bulletin.html", bulletin=self.model)
+            html = render_template(
+                "pdf/bulletin.html", bulletin=self.model, path=current_app.root_path
+            )
         elif self.model.__tablename__ == "actor":
-            html = render_template("pdf/actor.html", actor=self.model)
+            html = render_template(
+                "pdf/actor.html",
+                actor=self.model,
+                path=current_app.root_path,
+            )
         elif self.model.__tablename__ == "incident":
-            html = render_template("pdf/incident.html", incident=self.model)
+            html = render_template(
+                "pdf/incident.html", incident=self.model, path=current_app.root_path
+            )
 
         if output:
             pdf = HTML(string=html).write_pdf(output)

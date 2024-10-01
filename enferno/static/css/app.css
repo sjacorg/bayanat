@@ -456,6 +456,13 @@ input[type="date"]::-webkit-input-placeholder {
 }
 
 
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+}
+
+
 /* sticky related items headers */
 
 .header-sticky {
@@ -781,4 +788,21 @@ div.jsondiffpatch-child-node-type-array:after {
 
 .security form ul *:has(input[type="radio"]) input {
     scale: 1.3;
+}
+
+.custom-play-icon.dark-play-icon {
+    color: black !important;
+}
+
+.custom-play-icon.light-play-icon {
+    color: white !important;
+}
+
+.v-card--reveal {
+    align-items: center;
+    top: 0;
+    justify-content: center;
+    opacity: .9;
+    position: absolute;
+    width: 100%;
 }

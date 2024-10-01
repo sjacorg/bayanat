@@ -67,7 +67,7 @@ let mediaMixin = {
       }
     },
     fileRemoved(file, error, xhr) {
-      this.editedMedia.files = this.editedMedia.files.filter((f) => f.name !== file.name);
+      this.editedMedia.files = this.editedMedia.files.filter((f) => f.upload.uuid !== file.upload.uuid);
     },
     uploadSuccess(file, response) {
       // Add file to editedMedia.files here.
@@ -76,6 +76,12 @@ let mediaMixin = {
 
       file.etag = response.etag;
       file.filename = response.filename;
+      if(this.editedItem.medias.some(m => m.etag === file.etag)) {
+        this.showSnack(file.name + ' is already uploaded. Skipping...');
+        this.$refs.dropzone.dz.removeFile(file);
+        this.upMediaBtnDisabled = false;
+        return;
+      }
       this.editedMedia.files.push(file);
       this.upMediaBtnDisabled = false;
     },
@@ -384,10 +390,13 @@ let mediaMixin = {
 
       //console.log(this.editedItem);
       //push files from editedMedia to edited item medias
+      
       for (const file of this.editedMedia.files) {
         let item = {};
         const response = JSON.parse(file.xhr.response);
         item.title = this.editedMedia.title;
+        item.title_ar = this.editedMedia.title_ar;
+        item.category = this.editedMedia.category;
         item.fileType = file.type;
         item.filename = response.filename;
         item.uuid = file.upload.uuid;
@@ -411,5 +420,5 @@ let mediaMixin = {
         console.log(error);
       }
     },
-  },
+  }
 };

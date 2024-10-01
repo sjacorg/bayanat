@@ -8,7 +8,6 @@
                             {{ _('Administration Dashboard') }}
                                 <v-spacer></v-spacer>
                             <v-btn prepend-icon="mdi-history" variant="elevated" class="ma-1" size="small" @click="showRevisions=!showRevisions">
-
                                 {{ _('Revision History') }}
                             </v-btn>
 
@@ -27,7 +26,7 @@
                             </v-tabs>
 
 
-                            <v-window v-model="tab" >
+                            <v-window v-model="tab">
                                 <v-window-item value="general">
                                     <v-card :disabled="loading" :loading="loading">
                                         <v-card-text>
@@ -49,7 +48,7 @@
                                                         v-model="eitem.VIDEO_RATES"></v-combobox>
 
                                             <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Language') }}</h4>
-                                            <v-btn-toggle divided variant="outlined" color="" mandatory class="mb-3"
+                                            <v-btn-toggle divided variant="outlined" color="primary" mandatory class="mb-3"
                                                           v-model="eitem.BABEL_DEFAULT_LOCALE">
                                                 <v-btn size="small" v-for="(name, code) in languages"
                                                        :value="code">
@@ -93,6 +92,11 @@
 
                                                 </v-sheet>
                                             </v-slide-y-transition>
+
+                                            <v-switch color="primary" label="{{ _('Advanced Anaylsis Features') }}"
+                                                      v-model="eitem.ADV_ANALYSIS"
+                                                      persistent-hint
+                                                      hint="{{ _('Advanced features for more efficent analysis.') }}"></v-switch>
                                         </v-card-text>
                                     </v-card>
                                 </v-window-item>
@@ -101,10 +105,11 @@
                                 <v-window-item value="storage">
                                     <v-card :disabled="loading" :loading="loading">
                                         <v-card-text>
-                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Media Storage') }}</h4>
-                                            <p class="caption">{{ _('Storage options for media files uploaded to Bayanat. It\'s possible to store these files locally on the host or in S3 bucket.') }}</p>
-                                            <v-btn-toggle v-model="eitem.FILESYSTEM_LOCAL"
-                                                          mandatory class="my-3 mb-9">
+                                            <h2 class="mt-1 subtitle-2 mb-2">{{ _('Media Storage') }}</h2>
+                                            <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
+                                            <v-btn-toggle divided variant="outlined" color="primary" mandatory
+                                                            v-model="eitem.FILESYSTEM_LOCAL"
+                                                            class="my-3 mb-9">
                                                 <v-btn :value="1">{{ _('Local Filesystem') }}</v-btn>
                                                 <v-btn :value="0">{{ _('S3 Storage') }}</v-btn>
                                             </v-btn-toggle>
@@ -146,25 +151,86 @@
 
 
                                 <v-window-item value="security">
-                                    <v-card :disabled="loading" :loading="loading">
+                                    <v-card :disabled="loading" :loading="loading" >
+
+                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Password Policies') }}</h2>
                                         <v-card-text>
 
                                             <v-text-field class="mb-9" type="number"
-                                                          label="{{ _('Security Freshness') }}"
+                                                          label="{{ _('Password Minimum Length') }}"
                                                           persistent-hint
-                                                          hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
-                                                          suffix="minutes"
-                                                          v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
+                                                          hint="{{ _('Minimum required length for passwords') }}"
+                                                          suffix="charachters"
+                                                          v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
+
+                                            <h3 class="mt-1 subtitle-2 mb-2">{{ _('Password Strength') }}</h3>
+
+                                            <p class="text-caption">{{ _('Bayanat uses zxcvbn password strength estimator to calculate a password score. \'Medium\' coresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. \'Strong\' corresponds to a score of 3, we recommend this setting for online Bayanat installations. \'Very Strong\' corresponds to a zxcvbn score of 4 and offers the highest level of protection.') }}</p>
+
+                                            <v-sheet width="400">
+                                                <v-slider
+                                                        v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
+                                                        min="2"
+                                                        max="4"
+                                                        hint="{{ _('') }}"
+                                                        persistent-hint
+                                                        color="primary"
+                                                        show-ticks="always"
+                                                        :ticks="{
+                                                            2: 'Medium',
+                                                            3: 'Strong',
+                                                            4: 'Very Strong'}"
+                                                        :tick-size="4"
+                                                        step="1"
+                                                ></v-slider>
+                                            </v-sheet>
+
+                                            <v-btn @click.once="forceGlobalReset" class="ma-2" color="error" variant="elevated">
+                                                {{ _('Force Global Password Reset') }}
+                                            </v-btn>
+
+                                        </v-card-text>
+
+                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Two Factor Authentication Policies') }}</h2>
+                                        <v-card-text>
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Force users to enroll in two factor authentication') }}"
+                                                      v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
+                                            >
+                                            </v-switch>
+
+                                            <v-switch color="primary" class="mb-9"
+                                                      label="{{ _('WebAuthn Authentication') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Allow use of FIDO hardware and passkeys as second factor.') }}"
+                                                      v-model="eitem.SECURITY_WEBAUTHN"
+                                            >
+                                            </v-switch>
+                                        </v-card-text>
+
+                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Session Policies') }}</h2>
+                                        <v-card-text>
+                                            <v-switch color="primary" class="mb-9"
+                                                              label="{{ _('Disallow Multiple Concurrent Sessions') }}"
+                                                              persistent-hint
+                                                              hint="{{ _('Prevents users from logging in to multiple devices simultaneously') }}"
+                                                              v-model="eitem.DISABLE_MULTIPLE_SESSIONS">
+                                                    </v-switch>
+
                                             <v-text-field class="mb-9" type="number"
-                                                          label="{{ _('Security Freshness Grace Period') }}"
-                                                          persistent-hint
-                                                          hint="{{ _('Re-authentication will require a second factor after this period.') }}"
-                                                          suffix="minutes"
-                                                          v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
+                                                          label="{{ _('Session Data Retention Period') }}" persistent-hint
+                                                          hint="{{ _('Period after which session data will be deleted.') }}"
+                                                          suffix="days"
+                                                          v-model.number="eitem.SESSION_RETENTION_PERIOD"></v-text-field>
+                                        </v-card-text>
+
+                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Additional Security Settings') }}</h2>
+                                        <v-card-text>
 
                                             <v-switch color="primary" class="mb-9" label="{{ _('Recaptcha Enabled') }}"
                                                       persistent-hint
-                                                      hint="{{ _('Require Google Recaptcha on the login form.') }}"
+                                                      hint="{{ _('Add further security to Bayanat\'s by requiring Google Recaptcha on the login form.') }}"
                                                       v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
 
                                             <v-slide-y-transition>
@@ -194,85 +260,21 @@
 
                                                     <v-text-field label="{{ _('Google Discovery URL') }}"
                                                                   v-model="eitem.GOOGLE_DISCOVERY_URL"></v-text-field>
-
                                                 </v-sheet>
                                             </v-slide-y-transition>
 
-
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
-                                                      persistent-hint
-                                                      hint="{{ _('Force users to enroll in two factor authentication') }}"
-                                                      v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
-                                            >
-
-                                            </v-switch>
-
-                                            <v-switch color="primary" class="mb-9"
-                                                      label="{{ _('Hardware-Enhanced 2FA via WebAuthn & FIDO') }}"
-                                                      persistent-hint
-                                                      hint="{{ _('Secure your account with FIDO hardware for robust WebAuthn-based 2FA') }}"
-                                                      v-model="eitem.SECURITY_WEBAUTHN"
-                                            >
-
-                                            </v-switch>
-
-                                             <v-switch class="mb-9"
-                                                              label="{{ _('Disallow Multiple Concurrent Sessions') }}"
-                                                              persistent-hint
-                                                              hint="{{ _('Prevents users from logging in to multiple devices simultaneously') }}"
-                                                              v-model="eitem.DISABLE_MULTIPLE_SESSIONS">
-                                                    </v-switch>
-
-                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Session Data Retention Period') }}</h4>
-                                            <v-btn-toggle mandatory class="mb-3"
-                                                          divided variant="outlined"
-                                                          v-model="eitem.SESSION_RETENTION_PERIOD">
-                                                <v-btn small value="7">{{ _('7 DAYS') }}</v-btn>
-                                                <v-btn small value="30">{{ _('30 DAYS') }}</v-btn>
-                                                <v-btn small value="90">{{ _('90 DAYS') }}</v-btn>
-                                                <v-btn small value="180">{{ _('180 DAYS') }}</v-btn>
-                                                <v-btn small value="365">{{ _('365 DAYS') }}</v-btn>
-                                                <v-btn small value="0">{{ _('INFINITE') }}</v-btn>
-                                            </v-btn-toggle>
-
-
-                                        </v-card-text>
-
-                                        <v-card-title>{{ _('Password Policies') }}</v-card-title>
-                                        <v-card-text>
-
                                             <v-text-field class="mb-9" type="number"
-                                                          label="{{ _('Password Minimum Length') }}"
+                                                          label="{{ _('Security Freshness') }}"
                                                           persistent-hint
-                                                          hint="{{ _('Minimum required length for passwords') }}"
-                                                          suffix="charachters"
-                                                          v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
-
-                                        </v-card-text>
-
-                                        <v-card-title>{{ _('Password Strength') }}</v-card-title>
-                                        <v-card-text>
-                                            <v-sheet width="400">
-                                                <v-slider
-                                                        v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
-                                                        :min="0"
-                                                        :max="4"
-                                                        hint="{{ _('0 is weekest, 4 is strongest') }}"
-                                                        persistent-hint
-
-                                                        show-ticks="always"
-                                                        :ticks="[0,1,2,3,4]"
-                                                        :tick-size="4"
-                                                        step="1"
-                                                ></v-slider>
-                                            </v-sheet>
-                                        </v-card-text>
-
-
-                                        <v-card-text>
-                                            <v-btn @click.once="forceGlobalReset" color="yv" dark>
-                                                {{ _('Force Global Password Reset') }}
-                                            </v-btn>
+                                                          hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
+                                                          suffix="minutes"
+                                                          v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
+                                            <v-text-field class="mb-9" type="number"
+                                                          label="{{ _('Security Freshness Grace Period') }}"
+                                                          persistent-hint
+                                                          hint="{{ _('Re-authentication will require a second factor after this period.') }}"
+                                                          suffix="minutes"
+                                                          v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
                                         </v-card-text>
 
                                     </v-card>
@@ -282,6 +284,7 @@
 
                                     <v-card :disabled="loading" :loading="loading">
                                         <v-card-text>
+                                            <p class="text-caption">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
 
                                             <v-switch color="primary" class="mb-9" label="{{ _('Restrictive Access Control') }}"
                                                       persistent-hint
@@ -299,7 +302,6 @@
                                 <v-window-item value="logging">
                                     <v-card :disabled="loading" :loading="loading">
                                         <v-card-text>
-                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Activity Monitor') }}</h4>
                                             <p class="caption">{{
                                                     _('Set users\' actions to be logged in the Activity Monitor.')
                                                 }}</p>
@@ -412,7 +414,7 @@
 
                                             <v-switch color="primary" class="mb-9" label="{{ _('Media Import Tool') }}"
                                                       persistent-hint
-                                                      hint="{{ _('Enable importing and parsing media items in bulk directly into bulletins.') }}"
+                                                      hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
                                                       v-model="eitem.ETL_TOOL"></v-switch>
 
                                             <v-slide-y-transition>
@@ -455,7 +457,7 @@
 
                                             <v-switch color="primary" class="mb-9" label="{{ _('Sheet Import') }}"
                                                       persistent-hint
-                                                      hint="{{ _('Enable importing spreadsheets and mapping them to Actors.') }}"
+                                                      hint="{{ _('Enables dynamic import of spreadsheets into Actors.') }}"
                                                       v-model="eitem.SHEET_IMPORT"></v-switch>
 
                                             <v-slide-y-transition>
@@ -484,13 +486,13 @@
                                             <v-switch color="primary" class="mb-9" label="{{ _('Export System') }}"
                                                       v-model="eitem.EXPORT_TOOL"
                                                       persistent-hint
-                                                      hint="{{ _('Enables Export System.') }}"></v-switch>
+                                                      hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Adminisrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
                                             <v-slide-y-transition>
                                                 <v-sheet v-show="eitem.EXPORT_TOOL">
                                                     <v-text-field class="mb-9" type="number"
                                                                   label="{{ _('Export Expiry Time') }}"
                                                                   persistent-hint
-                                                                  hint="{{ _('Time after which exports will expired and be deleted') }}"
+                                                                  hint="{{ _('Period after which exports will expired and be deleted.') }}"
                                                                   suffix="hours"
                                                                   v-model.number="eitem.EXPORT_DEFAULT_EXPIRY"></v-text-field>
                                                 </v-sheet>
@@ -508,6 +510,9 @@
                                                           persistent-hint
                                                           hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
                                                           v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
+
+                                            <h2 class="mt-3 subtitle-2 mb-2">{{ _('Satalite Imagery') }}</h2>
+                                            <span class="text-caption">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satalite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</span>
 
                                             <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
                                                           persistent-hint
@@ -656,17 +661,20 @@
     </v-dialog>
 
     <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
-        <v-progress-circular
-                class="mr-3"
-                color="white"
-                indeterminate
-                size="32"
-
-        >
-
-        </v-progress-circular>
-
-        {{ _('Restarting Bayanat, please wait...') }}
+        <v-row class="align-center justify-center">
+            <v-progress-circular
+                    class="mr-3"
+                    color="white"
+                    indeterminate
+                    size="32"
+            ></v-progress-circular>
+        </v-row>
+        <v-row class="align-center justify-center">
+            {{ _('Restarting Bayanat to new settings to take effect, please wait...') }}
+        </v-row>
+        <v-row class="align-center justify-center">
+            {{ _('This can take up to a minute. If it takes longer, please restart Bayanat manually.') }}
+        </v-row>
 
     </v-overlay>
 
@@ -854,7 +862,6 @@
                 },
                 preprocessConfig() {
                     // apply any additional fixes needed
-
                     this.eitem.ITEMS_PER_PAGE_OPTIONS = this.eitem.ITEMS_PER_PAGE_OPTIONS.map(x => Number(x))
                     this.eitem.VIDEO_RATES = this.eitem.VIDEO_RATES.map(x => Number(x))
                     if (this.eitem.FILESYSTEM_LOCAL) {
@@ -875,7 +882,7 @@
                         this.eitem = res.data.config;
                         this.configLabels = res.data.labels;
                         // also store the configuration in a persistent var
-                        this.exconfig = {...this.eitem}
+                        this.exconfig = JSON.parse(JSON.stringify(this.eitem));
 
 
                     }).catch(e => {
@@ -890,25 +897,6 @@
 
                 },
 
-                waitForRelaod() {
-
-
-                    setTimeout(() => {
-                        axios.get('/').then(res => {
-                            this.overlay = false;
-                            this.showSnack("{{_('App configurations reloaded successfully.')}}");
-                            this.loadConfiguration();
-                            // reset settings
-
-
-                        }).catch(err => {
-                            this.waitForRelaod();
-                        });
-                    }, 1000)
-
-
-                },
-
                 loadRevisions() {
                     this.revisionLoading = true;
                     const config = {
@@ -917,7 +905,6 @@
                             per_page: 4
                         }
                     };
-
 
                     axios.get('/admin/api/appconfig/', config)
                         .then(res => {
@@ -935,28 +922,43 @@
                     })
                 },
 
+                waitForRelaod() {
+                    setTimeout(() => {
+                        axios.get('/').then(res => {
+                            this.overlay = false;
+                            this.loadConfiguration();
+                            this.loadRevisions();
+                            this.showSnack("{{_('Bayanat reloaded successfully.')}}");
+                            // reset settings
+                        }).catch(err => {
+                            this.waitForRelaod();
+                        });
+                    }, 5000)
+                },
+
+                reloadApp() {
+                    this.overlay = true;
+                    axios.post('/admin/api/reload/')
+                    this.waitForRelaod();
+                },
+
                 saveConfiguration() {
                     this.overlay = true
                     this.preprocessConfig();
                     axios.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
-                        //this.showSnack(res.data);
-                        this.loadRevisions();
-
-
+                        this.reloadApp();
                     }).catch(e => {
-                        this.showSnack(e.response?.data);
+                        this.showSnack(this.parseValidationError(e.response?.data));
                         console.error(e);
+                        // Allow user to read the error message(s), 2 seconds
+                        this.overlay = false;
+                        setTimeout(() => {
+                            this.loadConfiguration();
+                        }, 2000)
                     }).finally(() => {
                         this.confirmDialog = false;
-
-                        this.waitForRelaod();
-
-
                     })
-
                 },
-
-
             }
         });
         app.component('geo-map', GeoMap);

@@ -1,21 +1,27 @@
-from typing import List, Union, get_args, get_origin
-from pydantic import BaseModel, ValidationError, root_validator
+from typing import Union, get_args, get_origin
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class StrictModel(BaseModel):
-    class Config:
-        extra = "forbid"
-        # allow_population_by_field_name = True
+    model_config = ConfigDict(extra="forbid")
 
 
 class BaseResponseModel(StrictModel):
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_items(cls, values):
-        items_type = cls.__annotations__.get("items")
+        items_type = cls.model_fields.get("items")
         if not items_type:
             raise ValueError("The 'items' field is not defined in the subclass.")
 
-        if get_origin(items_type) is list or get_origin(items_type) is List:
+        items = values.get("items", [])
+        if not isinstance(items, list):
+            raise ValueError("'items' must be a list")
+
+        # Get the type of items
+        items_type = items_type.annotation
+
+        if get_origin(items_type) is list:
             # Extract the type inside the List (which should be a Union)
             union_type = get_args(items_type)[0]
             # Now check if this type is a Union
@@ -30,15 +36,15 @@ class BaseResponseModel(StrictModel):
 
         validated_items = []
 
-        for v in values.get("items", []):
+        for v in items:
             item_validated = False
             for model in models:
                 try:
-                    validated_item = model(**v)
+                    validated_item = model.model_validate(v)
                     validated_items.append(validated_item)
                     item_validated = True
                     break
-                except ValidationError:
+                except ValueError:
                     continue
 
             if not item_validated:

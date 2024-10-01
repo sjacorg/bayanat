@@ -739,7 +739,7 @@
                             {{ _('Optional: Upload more sheets to process') }}
                         </v-card-title>
 
-                        <v-card-text>
+                        <v-card-text class="overflow-y-auto" style="max-height: 45vh">
 
                             <vue-dropzone ref="extradropzone" id="dropzone" class="ma-auto"
                                           :options="dzMoreOpts"
@@ -1000,7 +1000,7 @@
                             this.backup = this.fields.slice();
                             // since we are mapping, make sure selectedMap is not populated
                             this.selectedMap = null;
-                            this.step = "one";
+                            this.step = "two";
                         }).catch(
                             err => {
                                 console.log(err.response.data)

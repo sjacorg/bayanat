@@ -5,13 +5,19 @@ from typing import Any, Generator, Literal
 
 import click
 import pandas as pd
-from flask import Blueprint, render_template, Response, request
+from flask import Blueprint, current_app, render_template, Response, request
 from flask.cli import with_appcontext
 from flask_security import auth_required
 from flask_security import roles_required, roles_accepted, current_user
+from sqlalchemy import desc
+from sqlalchemy.sql.expression import func
 
 from enferno.deduplication.models import DedupRelation
 from enferno.extensions import db, rds
+from enferno.tasks import start_dedup
+
+from enferno.settings import Config as cfg
+from enferno.utils.http_response import HTTPResponse
 
 deduplication = Blueprint(
     "deduplication",
@@ -19,6 +25,7 @@ deduplication = Blueprint(
     static_folder="../static",
     template_folder="../deduplication/templates",
     cli_group=None,
+    url_prefix="/deduplication",
 )
 
 
@@ -40,7 +47,7 @@ def deduplication_app_context() -> dict:
     return {"deduplication": True}
 
 
-@deduplication.route("/deduplication/dashboard/")
+@deduplication.route("/dashboard/")
 @roles_accepted("Admin", "Mod")
 def deduplication_dash() -> str:
     """
@@ -60,60 +67,40 @@ def api_deduplication() -> Response:
     """
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", 1000, int)
-    data = DedupRelation.query.paginate(page, per_page)
-    items = data.items
-    total = data.total
-    items = [item.to_dict() for item in items]
+    data = DedupRelation.query.order_by(desc(DedupRelation.updated_at)).paginate(
+        page=page, per_page=per_page
+    )
     # calculate the number of unprocessed items , this totally simplifies calculating progress
     pending = DedupRelation.query.filter(DedupRelation.status == 0).count()
-    print(pending)
-    response = {"items": items, "perPage": per_page, "total": total, "pending": pending}
+    response = {
+        "items": [item.to_dict() for item in data.items],
+        "perPage": per_page,
+        "total": data.total,
+        "pending": pending,
+    }
     return Response(json.dumps(response), content_type="application/json"), 200
 
 
-@deduplication.route("/api/deduplication/process", methods=["POST"])
+@deduplication.route("/api/process", methods=["POST"])
 @roles_required("Admin")
-def api_process() -> tuple[Literal["Data queued successfully"], Literal[200]]:
+def api_process() -> Response:
     """
     Endpoint used to process all deduplication data.
     """
-    items = DedupRelation.query.filter_by(status=0)
-
-    for item in items:
-        # add all item ids to redis with current user id
-        rds.sadd("dedq", "{}|{}".format(item.id, current_user.id))
-    # activate redis flag to process data
-    rds.set("dedup", 1)
-    return "Data queued successfully", 200
+    start_dedup.delay(current_user.id)
+    return "Processing will start shortly.", 200
 
 
-@deduplication.route("/api/deduplication/stop", methods=["POST"])
+@deduplication.route("/api/stop", methods=["POST"])
 @roles_required("Admin")
-def api_process_stop() -> tuple[Literal["Success, processing will stop shortly."], Literal[200]]:
+def api_process_stop() -> Response:
     """
     Endpoint used to stop processing dedup data.
     """
     # just remove the redis flag
-    rds.delete("dedup")
+    rds.set("dedup", 0)
 
-    return "Success, processing will stop shortly.", 200
-
-
-'''
-@deduplication.route('/api/deduplication/clear',methods=['DELETE'])
-@roles_required('Admin')
-def api_clear():
-    """
-    API Endpoint to clear all deduplication Data
-    """
-    try:
-        DedupRelation.query.delete()
-        db.session.commit()
-        return 'Data cleared', 200
-    except Exception as e:
-        print (e)
-        return 'Error clearing deduplication data'
-'''
+    return "Processing will stop shortly.", 200
 
 
 @deduplication.cli.command()
@@ -138,18 +125,28 @@ def dedup_import(file: str, remove: bool, distance: float) -> None:
     if remove:
         DedupRelation.query.delete()
         db.session.commit()
-        print("Cleared all existing matches.")
+        click.echo("Cleared all existing matches.")
 
     # create pandas data frame
-    print("Reading CSV file...")
+    click.echo("Reading CSV file...")
     df = pd.read_csv(file)
-    print("Droping self-referencing matches...")
+    exts = ["." + ext for ext in cfg.ETL_VID_EXT]
+    click.echo("Cleaning up...")
+    df["match_video"] = df["match_video"].replace(r"_.{64}_vgg_features", "", regex=True)
+    df["match_video"] = df["match_video"].replace("_vgg_features", "", regex=True)
+    df["match_video"] = df["match_video"].replace(exts, "", regex=True)
+
+    df["query_video"] = df["query_video"].replace(r"_.{64}_vgg_features", "", regex=True)
+    df["query_video"] = df["query_video"].replace("_vgg_features", "", regex=True)
+    df["query_video"] = df["query_video"].replace(exts, "", regex=True)
+
+    click.echo("Droping self-referencing matches...")
     df = df[df.query_video != df.match_video]
-    print("Droping matches with out-of-scope distances...")
+    click.echo("Droping matches with out-of-scope distances...")
     df = df[df.distance < distance]
-    print("Droping duplicate matches based on unique_index column...")
+    click.echo("Droping duplicate matches based on unique_index column...")
     df.drop_duplicates(subset="unique_index", keep="first", inplace=True)
-    print("Droping duplicate matches for same query and match videos...")
+    click.echo("Droping duplicate matches for same query and match videos...")
     # to handle duplicate in both directions , generate a computed column first
     df["match_id"] = df.apply(lambda x: str(sorted([x.query_video, x.match_video])), axis=1)
     df.drop_duplicates(subset=["match_id"], keep="first", inplace=True)
@@ -165,12 +162,12 @@ def dedup_import(file: str, remove: bool, distance: float) -> None:
             br.match_id = sorted((br.query_video, br.match_video))
             br.notes = item.get("notes")
             if not br.save():
-                print(
+                click.echo(
                     "Error importing match {}-{}.".format(
                         item.get("query_video"), item.get("match_video")
                     )
                 )
-    print("=== Done ===")
+    click.echo("=== Done ===")
 
 
 @deduplication.cli.command()
@@ -186,8 +183,9 @@ def fast_process(no_of_processes: int) -> None:
     Returns:
         None
     """
+    rds.delete("dedup_processing")
     pool = Pool(processes=no_of_processes)
-    items = DedupRelation.query.filter_by(status=0)
+    items = DedupRelation.query.filter_by(status=0).order_by(func.random())
     if items:
         pool.map(DedupRelation.process, items, 1)
 
@@ -195,18 +193,13 @@ def fast_process(no_of_processes: int) -> None:
 # statistics endpoints
 
 
-def process_stream() -> Generator[str, Any, Literal[""]]:
-    """Stream deduplication process messages."""
-    pubsub = rds.pubsub()
-    pubsub.subscribe("dedprocess")
-    # avoid sending first subscription message
-    for msg in pubsub.listen():
-        if msg["type"] == "message":
-            yield "data:{}\n\n".format(msg["data"])
-    return ""
+@deduplication.get("/status")
+def status() -> Response:
+    """
+    Endpoint to return deduplication backend status.
+    """
+    if status := rds.get("dedup"):
+        response = {"status": status.decode()}
+        return Response(json.dumps(response), content_type="application/json"), 200
 
-
-@deduplication.route("/stream")
-def stream() -> Response:
-    """Endpoint to stream deduplication process messages."""
-    return Response(process_stream(), mimetype="text/event-stream")
+    return "Background tasks are not running correctly", 503

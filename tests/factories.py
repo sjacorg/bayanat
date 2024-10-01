@@ -1,6 +1,10 @@
 import random
 import factory
 from uuid import uuid4
+import json
+
+import factory.random
+from enferno.data_import.models import DataImport, Mapping
 
 from geoalchemy2.shape import WKTElement
 
@@ -58,6 +62,24 @@ class ActorProfileFactory(factory.Factory):
     documentation_date = factory.Faker("date")
 
 
+class DataImportFactory(factory.Factory):
+    class Meta:
+        model = DataImport
+
+    table = factory.Sequence(lambda n: f"Table {n}")
+    item_id = 1
+    file = factory.Sequence(lambda n: f"File {n}")
+    file_format = factory.Sequence(lambda n: f"File format {n}")
+    file_hash = factory.Sequence(lambda n: f"File hash {n}")
+    batch_id = factory.Sequence(lambda n: f"Batch id {n}")
+    status = "Pending"
+    data = factory.Sequence(lambda n: {f"Key{n}": f"Value{n}"})
+    log = factory.Sequence(lambda n: f"Log {n}")
+    imported_at = factory.Faker("date_time")
+    updated_at = factory.Faker("date_time")
+    created_at = factory.Faker("date_time")
+
+
 class ActorFactory(factory.Factory):
     class Meta:
         model = Actor
@@ -78,14 +100,14 @@ class ActorFactory(factory.Factory):
     father_name = factory.Faker("name_male")
     father_name_ar = factory.LazyAttribute(lambda obj: f"{obj.father_name} (Ar)")
     sex = factory.LazyFunction(lambda: random.choice(["male", "female"]))
-    age = factory.LazyFunction(lambda: random.randint(9, 99))
+    age = factory.LazyFunction(lambda: str(random.randint(9, 99)))
     civilian = factory.Faker("text", max_nb_chars=255)
     occupation = factory.Faker("job")
     occupation_ar = factory.LazyAttribute(lambda obj: f"{obj.occupation} (Ar)"[:255])
     position = factory.Faker("text", max_nb_chars=255)
     position_ar = factory.LazyAttribute(lambda obj: f"{obj.position} (Ar)"[:255])
     family_status = factory.Faker("text", max_nb_chars=255)
-    no_children = factory.LazyFunction(lambda: random.randint(0, 10))
+    no_children = factory.LazyFunction(lambda: str(random.randint(0, 10)))
     id_number = factory.Faker("ssn")
     status = factory.Faker("text", max_nb_chars=255)
     comments = factory.Faker("text", max_nb_chars=255)
@@ -154,6 +176,9 @@ class LocationFactory(factory.Factory):
         model = Location
 
     title = factory.Sequence(lambda n: f"Location {n}")
+    title_ar = factory.Sequence(lambda n: f"Location Ar {n}")
+    parent_id = None
+    deleted = False
     latlng = factory.LazyFunction(
         lambda: WKTElement(
             f"POINT({random.uniform(-180.00000, 180.00000)} {random.uniform(-90.00000, 90.00000)})",
@@ -179,6 +204,8 @@ class LabelFactory(factory.Factory):
     for_incident = False
     for_offline = False
     verified = False
+    order = factory.random.randgen.randint(0, 100)
+    parent_label_id = None
     comments = factory.Faker("sentence")
 
 
@@ -229,6 +256,7 @@ class SourceFactory(factory.Factory):
 
     etl_id = factory.Faker("text")
     title = factory.Sequence(lambda n: f"Source {n}")
+
     title_ar = factory.LazyAttribute(lambda obj: f"{obj.title} (Ar)"[:255])
     source_type = factory.Faker("text", max_nb_chars=255)
     comments = factory.Faker("paragraph")
@@ -393,6 +421,14 @@ class AppConfigFactory(factory.Factory):
     config = {"config_key": "config_val"}
 
 
+class MappingFactory(factory.Factory):
+    class Meta:
+        model = Mapping
+
+    name = factory.Sequence(lambda n: f"Mapping {n}")
+    data = {"key": "val"}
+
+
 class GeoLocationFactory(factory.Factory):
     class Meta:
         model = GeoLocation
@@ -410,6 +446,25 @@ class GeoLocationFactory(factory.Factory):
 
 # endregion: factory models
 # region: factory fixtures
+
+##### HELPERS #####
+
+
+@pytest.fixture
+def restrict_to_roles(request, session):
+    def _restrict_to_roles(entity, roles):
+        for role in roles:
+            rol = session.query(Role).filter(Role.name == role).first()
+            if rol:
+                entity.roles.append(rol)
+            else:
+                pytest.fail(f"Role {role} not found in database")
+        session.commit()
+        return entity
+
+    return _restrict_to_roles
+
+
 ##### USERS #####
 
 
@@ -575,6 +630,137 @@ def create_profile_for(request, session):
         return profile
 
     return _create_profile
+
+
+##### ACTOR #####
+
+
+@pytest.fixture(scope="function")
+def create_simple_actor(session, users):
+    actor = ActorFactory()
+    session.add(actor)
+    session.commit()
+    yield actor
+
+
+@pytest.fixture(scope="function")
+def create_full_actor(
+    session,
+    users,
+    create_label_for,
+    create_ver_label_for,
+    create_source,
+    create_event_for,
+    create_profile_for,
+):
+    actor = ActorFactory()
+    user, _, _, _ = users
+    actor.first_peer_reviewer = user
+    actor.assigned_to = user
+    profile = create_profile_for(actor)
+    label = create_label_for("actor")
+    ver_label = create_ver_label_for("actor")
+    event = create_event_for("actor")
+    profile.labels.append(label)
+    profile.ver_labels.append(ver_label)
+    profile.sources.append(create_source)
+    actor.events.append(event)
+    session.add(actor)
+    session.commit()
+    yield actor
+
+
+@pytest.fixture(scope="function")
+def create_related_actor(session):
+    a1 = ActorFactory()
+    a2 = ActorFactory()
+    a3 = ActorFactory()
+    session.add_all([a1, a2, a3])
+    session.commit()
+    a2.relate_actor(a1, json.dumps({}), False)
+    a3.relate_actor(a1, json.dumps({}), False)
+    yield a1, a2, a3
+
+
+##### INCIDENTS #####
+
+
+@pytest.fixture(scope="function")
+def create_simple_incident(session):
+    incident = IncidentFactory()
+    session.add(incident)
+    session.commit()
+    yield incident
+
+
+@pytest.fixture(scope="function")
+def create_full_incident(session, users, create_label_for):
+    incident = IncidentFactory()
+    user, _, _, _ = users
+    incident.first_peer_reviewer = user
+    incident.assigned_to = user
+
+    label = create_label_for("incident")
+    incident.labels.append(label)
+
+    session.add(incident)
+    session.commit()
+    yield incident
+
+
+@pytest.fixture(scope="function")
+def create_related_incident(session):
+    i1 = IncidentFactory()
+    i2 = IncidentFactory()
+    i3 = IncidentFactory()
+    session.add_all([i1, i2, i3])
+    session.commit()
+    i2.relate_incident(i1, json.dumps({}), False)
+    i3.relate_incident(i1, json.dumps({}), False)
+    yield i1, i2, i3
+
+
+##### BULLETINS ######
+
+
+@pytest.fixture(scope="function")
+def create_simple_bulletin(session):
+    bulletin = BulletinFactory()
+    session.add(bulletin)
+    session.commit()
+    yield bulletin
+
+
+@pytest.fixture(scope="function")
+def create_full_bulletin(
+    session, users, create_label_for, create_ver_label_for, create_source, create_event_for
+):
+    bulletin = BulletinFactory()
+    user, _, _, _ = users
+    bulletin.first_peer_reviewer = user
+    bulletin.assigned_to = user
+    label = create_label_for("bulletin")
+    ver_label = create_ver_label_for("bulletin")
+    event = create_event_for("bulletin")
+    bulletin.labels.append(label)
+    bulletin.sources.append(create_source)
+    bulletin.ver_labels.append(ver_label)
+    bulletin.events.append(event)
+    session.add(bulletin)
+    session.commit()
+    yield bulletin
+
+
+@pytest.fixture(scope="function")
+def create_related_bulletin(session):
+    b1 = BulletinFactory()
+    b2 = BulletinFactory()
+    b3 = BulletinFactory()
+    session.add_all([b1, b2, b3])
+    session.commit()
+    b2.relate_bulletin(b1, json.dumps({}), False)
+    b3.relate_bulletin(b1, json.dumps({}), False)
+    yield b1, b2, b3
 
 
 # endregion: factory fixtures

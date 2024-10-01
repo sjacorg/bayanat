@@ -1,9 +1,14 @@
 import os
 import tempfile
 import json
+import pandas as pd
 from typing import Any, Generator
+from flask import current_app
 import pytest
+from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
+
+logger = get_logger()
 
 
 # if the content-type: application/json header is missing, use json.loads to parse the
@@ -24,7 +29,7 @@ def load_data(response: Any) -> dict:
         try:
             json_data = json.loads(response.text)
         except json.JSONDecodeError as e:
-            print("Response is not in valid JSON format", e)
+            logger.error(f"Response is not in valid JSON format: {e}", exc_info=True)
             return None
     else:
         json_data = response.json
@@ -132,6 +137,26 @@ def create_binary_file(extension, content=b"Test content"):
     """
     with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix="." + extension) as tmp:
         tmp.write(content)
+        tmp.flush()  # Ensure all data is written to disk
+        yield tmp.name  # Yield the path to the temporary file for use in tests
+
+    os.unlink(tmp.name)  # Cleanup: remove the temporary file after the test
+
+
+# utility generator function for temp xls
+def create_xls_file(content={}):
+    """
+    Generator function to create and yield a temporary xls file.
+
+    Args:
+        content (dict): The content to write to the file.
+
+    Yields:
+        str: The path to the temporary file.
+    """
+    df = pd.DataFrame(content)
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".xlsx") as tmp:
+        df.to_excel(tmp.name, index=False)
         tmp.flush()  # Ensure all data is written to disk
         yield tmp.name  # Yield the path to the temporary file for use in tests
 

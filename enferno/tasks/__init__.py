@@ -14,6 +14,7 @@ import pandas as pd
 from celery import Celery, chain
 from celery.schedules import crontab
 from sqlalchemy import and_
+from sqlalchemy.sql.expression import func
 
 from enferno.admin.models import (
     Bulletin,
@@ -33,6 +34,7 @@ from enferno.utils.csv_utils import convert_list_attributes
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
+from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
@@ -54,6 +56,8 @@ celery.conf.update(
 celery.conf.update({"SECRET_KEY": os.environ.get("SECRET_KEY", cfg.SECRET_KEY)})
 celery.conf.broker_connection_retry_on_startup = True
 celery.conf.add_defaults(cfg)
+
+logger = get_logger()
 
 
 # Class to run tasks within application's context
@@ -101,7 +105,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     Returns:
         None
     """
-    print("processing bulletin bulk update")
+    logger.info(f"Processing Bulletin bulk-update... User ID: {cur_user_id} Total: {len(ids)}")
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -180,7 +184,6 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # add only to session
             db.session.add(bulletin)
 
-        print("creating revisions ...")
         revmaps = []
         bulletins = Bulletin.query.filter(Bulletin.id.in_(group)).all()
         for bulletin in bulletins:
@@ -199,9 +202,8 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         )
         # perhaps allow a little time out
         time.sleep(0.1)
-        print("Chunk Processed")
 
-    print("Bulletins Bulk Update Successful")
+    logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
 
 @celery.task
@@ -217,6 +219,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     Returns:
         None
     """
+    logger.info(f"Processing Actor bulk-update... User ID: {cur_user_id} Total: {len(ids)}")
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -303,9 +306,8 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         )
         # perhaps allow a little time out
         time.sleep(0.25)
-        print("Chunk Processed")
 
-    print("Actors Bulk Update Successful")
+    logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
 
 @celery.task
@@ -321,6 +323,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     Returns:
         None
     """
+    logger.info(f"Processing Incident bulk-update... User ID: {cur_user_id} Total: {len(ids)}")
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -443,9 +446,8 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
         # perhaps allow a little time out
         time.sleep(0.25)
-        print("Chunk Processed")
 
-    print("Incidents Bulk Update Successful")
+    logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
 
 @celery.task(rate_limit=10)
@@ -500,7 +502,7 @@ def process_dedup(id: t.id, user_id: t.id) -> None:
         d.process(user_id)
         # detect final task and send a refresh message
         if rds.scard("dedq") == 0:
-            rds.publish("dedprocess", 2)
+            rds.set("dedup", 2)
 
 
 @celery.on_after_configure.connect
@@ -519,15 +521,15 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
     if cfg.DEDUP_TOOL == True:
         seconds = int(os.environ.get("DEDUP_INTERVAL", cfg.DEDUP_INTERVAL))
         sender.add_periodic_task(seconds, dedup_cron.s(), name="Deduplication Cron")
-        print("Deduplication periodic task is set up")
+        logger.info("Deduplication periodic task is set up.")
     # Export expiry periodic task
     if "export" in db.metadata.tables.keys():
         sender.add_periodic_task(300, export_cleanup_cron.s(), name="Exports Cleanup Cron")
-        print("Export cleanup periodic task is set up")
+        logger.info("Export cleanup periodic task is set up.")
 
     # activity peroidic task every 24 hours
     sender.add_periodic_task(24 * 60 * 60, activity_cleanup_cron.s(), name="Activity Cleanup Cron")
-    print("Activity cleanup periodic task is set up")
+    logger.info("Activity cleanup periodic task is set up.")
 
     # Backups periodic task
     if cfg.BACKUPS:
@@ -537,7 +539,7 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
             daily_backup_cron.s(),
             name="Backups Cron",
         )
-        print(
+        logger.info(
             f"Backup periodic task is set up. Backups will run at 3:00 every {cfg.BACKUP_INTERVAL} day(s)."
         )
 
@@ -553,19 +555,34 @@ def session_cleanup():
     if cfg.SESSION_RETENTION_PERIOD:
         session_retention_days = int(cfg.SESSION_RETENTION_PERIOD)
         if session_retention_days == 0:
-            print("Session cleanup is disabled")
+            logger.info("Session cleanup is disabled.")
             return
 
         cutoff_date = datetime.utcnow() - timedelta(days=session_retention_days)
         expired_sessions = db.session.query(Session).filter(Session.created_at < cutoff_date)
 
-        print("Cleaning up expired sessions...")
+        logger.info("Cleaning up expired sessions...")
         deleted = expired_sessions.delete(synchronize_session=False)
         if deleted:
             db.session.commit()
-            print(f"{deleted} expired sessions deleted.")
+            logger.info(f"{deleted} expired sessions deleted.")
         else:
-            print("No expired sessions to delete.")
+            logger.info("No expired sessions to delete.")
+
+
+@celery.task
+def start_dedup(user_id) -> None:
+    """
+    Initiates the Deduplication process and queue unprocessed items.
+    """
+    print("Queuing unprocessed matches for deduplication...")
+    items = DedupRelation.query.filter_by(status=0).order_by(func.random())
+    for item in items:
+        # add all item ids to redis with current user id
+        rds.sadd("dedq", f"{item.id}|{user_id}")
+    # activate redis flag to process data
+    rds.set("dedup", 1)
+    print("Starting Deduplication process...")
 
 
 @celery.task
@@ -573,16 +590,16 @@ def dedup_cron() -> None:
     """Deduplication cron task."""
     # shut down processing when we hit 0 items in the queue or when we turn off the processing
     if rds.get("dedup") != b"1" or rds.scard("dedq") == 0:
-        rds.delete("dedup")
-        rds.publish("dedprocess", 0)
+        rds.set("dedup", 0)
         # Pause processing / do nothing
-        print("Process engine - off")
         return
 
+    # clear current processing
+    rds.delete("dedup_processing")
     data = []
-    items = rds.spop("dedq", cfg.DEDUP_BATCH_SIZE).decode("utf-8")
+    items = rds.spop("dedq", cfg.DEDUP_BATCH_SIZE)
     for item in items:
-        data = item.split("|")
+        data = item.decode().split("|")
         process_dedup.delay(data[0], data[1])
 
     update_stats()
@@ -634,15 +651,16 @@ def process_row(
     si.import_row()
 
 
+def reload_app():
+    import os
+    import signal
+
+    os.kill(os.getppid(), signal.SIGHUP)
+
+
 @celery.task
-def reload_app() -> None:
-    """Reload the application."""
-    try:
-        os.system("touch reload.ini")
-        # this workaround will also restart local flask server if it is being used to run bayanat
-        os.system("touch run.py")
-    except Exception as e:
-        print(e)
+def reload_celery():
+    reload_app()
 
 
 # ---- Export tasks ----
@@ -731,11 +749,11 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
 
         export_request.file_id = dir_id
         export_request.save()
-        print(f"---- Export generated successfully for Id: {export_request.id} ----")
+        logger.info(f"Export #{export_request.id} PDF file generated successfully.")
         # pass the ids to the next celery task
         return export_id
     except Exception as e:
-        print(f"Error writing export file: {e}")
+        logger.error(f"Error writing PDF file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
 
@@ -755,7 +773,6 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
-    print("generating export file .....")
     try:
         with open(f"{file_path}.json", "a") as file:
             file.write("{ \n")
@@ -783,11 +800,11 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
             file.write("] \n }")
         export_request.file_id = dir_id
         export_request.save()
-        print(f"---- Export File generated successfully for Id: {export_request.id} ----")
+        logger.info(f"Export #{export_request.id} JSON file generated successfully.")
         # pass the ids to the next celery task
         return export_id
     except Exception as e:
-        print(f"Error writing export file: {e}")
+        logger.error(f"Error writing JSON file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
 
@@ -806,8 +823,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
     export_request = Export.query.get(export_id)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
-    print(file_path, dir_id)
-    print("generating export file .....")
+
     try:
         csv_df = pd.DataFrame()
         for id in export_request.items:
@@ -837,11 +853,11 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
 
         export_request.file_id = dir_id
         export_request.save()
-        print(f"---- Export File generated successfully for Id: {export_request.id} ----")
+        logger.info(f"Export #{export_request.id} CSV file generated successfully.")
         # pass the ids to the next celery task
         return export_id
     except Exception as e:
-        print(f"Error writing export file: {e}")
+        logger.error(f"Error writing CSV file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
 
@@ -884,11 +900,9 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
             target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"
 
             if cfg.FILESYSTEM_LOCAL:
-                print("Downloading file locally")
                 # copy file (including metadata)
                 shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
             else:
-                print("Downloading S3 file")
                 s3 = boto3.client(
                     "s3",
                     aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
@@ -898,7 +912,10 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
                 except Exception as e:
-                    print(f"Error downloading file from s3: {e}")
+                    logger.error(
+                        f"Error downloading Export #{export_request.id} file from S3.",
+                        exc_info=True,
+                    )
 
         time.sleep(0.05)
     return export_request.id
@@ -919,15 +936,15 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     if previous_result == False:
         return False
 
-    print("Generating zip archive")
     export_request = Export.query.get(previous_result)
+    logger.info(f"Generating Export #{export_request.id} ZIP archive")
 
     shutil.make_archive(
         f"{Export.export_dir}/{export_request.file_id}",
         "zip",
         f"{Export.export_dir}/{export_request.file_id}",
     )
-    print(f"Export Complete {export_request.file_id}.zip")
+    logger.info(f"Export #{export_request.id} Complete {export_request.file_id}.zip")
 
     # Remove export folder after completion
     shutil.rmtree(f"{Export.export_dir}/{export_request.file_id}")
@@ -954,13 +971,13 @@ def export_cleanup_cron() -> None:
         for export_request in expired_exports:
             export_request.status = "Expired"
             if export_request.save():
-                print(f"Expired Export #{export_request.id}")
+                logger.info(f"Expired Export #{export_request.id}")
                 try:
                     os.remove(f"{Export.export_dir}/{export_request.file_id}.zip")
                 except FileNotFoundError:
-                    print(f"Export #{export_request.id}'s files not found to delete.")
+                    logger.warning(f"Export #{export_request.id}'s files not found to delete.")
             else:
-                print(f"Error expiring Export #{export_request.id}")
+                logger.error(f"Error expiring Export #{export_request.id}")
 
 
 type_map = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}
@@ -974,13 +991,13 @@ def activity_cleanup_cron() -> None:
     expired_activities = Activity.query.filter(
         datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
     )
-    print(f"Cleaning up Activities...")
+    logger.info(f"Cleaning up Activities...")
     deleted = expired_activities.delete(synchronize_session=False)
     if deleted:
         db.session.commit()
-        print(f"{deleted} expired activities deleted.")
+        logger.info(f"{deleted} expired activities deleted.")
     else:
-        print("No expired activities to delete.")
+        logger.info("No expired activities to delete.")
 
 
 @celery.task
@@ -993,7 +1010,7 @@ def daily_backup_cron():
     try:
         pg_dump(filepath)
     except:
-        print("Error during daily backups")
+        logger.error("Error during daily backups", exc_info=True)
         return
 
     if cfg.BACKUPS_S3_BUCKET:
@@ -1001,10 +1018,9 @@ def daily_backup_cron():
             try:
                 os.remove(filepath)
             except FileNotFoundError:
-                print(f"Backup file {filename} not found to delete.")
+                logger.error(f"Backup file {filename} not found to delete.", exc_info=True)
             except OSError as e:
-                print("Unable to remove backup file {filename}.")
-                print(str(e))
+                logger.error(f"Unable to remove backup file {filename}.", exc_info=True)
 
 
 ## Query graph visualization tasks
@@ -1046,7 +1062,6 @@ def generate_graph(query_json: Any, entity_type: str, user_id: t.id) -> Optional
     if existing_query_key and existing_query_key.decode() == query_key:
         # Return the existing graph data if query keys match
         existing_graph_data = rds.hget(user_hash_key, "graph_data")
-        print("Returning cached graph")
         return existing_graph_data.decode()
 
     # Generate the graph if no cache hit
@@ -1056,7 +1071,6 @@ def generate_graph(query_json: Any, entity_type: str, user_id: t.id) -> Optional
     rds.hset(user_hash_key, "query_key", query_key)
     rds.hset(user_hash_key, "graph_data", graph_data)
 
-    print("Graph generation complete")
     return graph_data
 
 

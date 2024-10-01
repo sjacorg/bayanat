@@ -36,7 +36,7 @@
     <section>
         <h4>Description</h4>
         <div class="description">
-            {{ incident.description|safe }}
+            {{ incident.description | replace('../api/serve/inline/', 'file://' + path + '/media/inline/') | safe  }}
         </div>
     </section>
 

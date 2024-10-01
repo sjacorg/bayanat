@@ -47,7 +47,7 @@
 
                 <template #append>
 
-                    <v-btn type="button" @click="validateForm" variant="elevated" class="mx-2">
+                    <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>
                     <v-btn icon="mdi-close" @click="confirmClose"></v-btn>
@@ -124,6 +124,7 @@
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
+                                        :show-copy-icon="advFeatures"
                                         label="{{ _('Labels') }}"
                                 ></search-field>
                             </v-col>
@@ -137,6 +138,7 @@
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
+                                        :show-copy-icon="advFeatures"
                                         label="{{ _('Verified Labels') }}"
                                 ></search-field>
 
@@ -152,6 +154,7 @@
                                         item-title="full_string"
                                         item-value="id"
                                         :multiple="true"
+                                        :show-copy-icon="advFeatures"
                                         label="{{ _('Locations') }}"
                                 ></location-search-field>
 

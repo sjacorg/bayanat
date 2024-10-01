@@ -4,6 +4,10 @@
   </a>
 </p>
 
+[![Semgrep](https://github.com/sjacorg/bayanat/actions/workflows/semgrep.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/semgrep.yml)
+[![pip-audit](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml)
+[![Tests](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml)
+
 Bayanat is an open source data management solution for processing huge amounts of data relevant to human rights abuses and war crimes, developed and maintained by Syrian talents at the [Syria Justice and Accountability Centre](https://syriaaccountability.org/) (SJAC). You can watch this [video](https://www.youtube.com/watch?v=thCkihoXAk0) for a quick introduction into Bayanat.
 
 Installation and Documentation

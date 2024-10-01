@@ -129,6 +129,8 @@ const SearchField = Vue.defineComponent({
 
 
       navigator.clipboard.writeText(textToCopy).then(() => {
+        // hacky but safe way to show a snackbar
+        this.$root?.showSnack?.('Copied to clipboard');
         // You might want to show a notification here that the text was copied
         console.log('Copied to clipboard');
       }).catch(err => {
@@ -166,9 +168,13 @@ const SearchField = Vue.defineComponent({
       v-bind="$attrs"
       :loading="loading"
       :rules="rules"
-      :append-icon="showCopyIcon ? 'mdi-content-copy' : ''"
-      @click:append="showCopyIcon ? copyValue() : ''"
+      
     >
+      <template v-slot:append>
+      <v-btn icon="mdi-content-copy" variant="plain"  v-if="showCopyIcon" @click="copyValue">
+        
+      </v-btn>
+    </template>
     </v-combobox>
   `,
 });

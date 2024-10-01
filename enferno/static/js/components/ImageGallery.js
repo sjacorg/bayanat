@@ -74,30 +74,27 @@ const ImageGallery = Vue.defineComponent({
   },
 
   template: `
-    <div>
-      <div class="d-flex flex-wrap" id="lightbox">
+    
+      <div id="lightbox">
         
-        <v-slide-group show-arrows>
-            <v-slide-group-item v-for="(media,index) in medias" :key="media.id">
-              <v-card width="250" height="300" class="mx-3" variant="flat"> 
-                
-              
-          <media-card @ready="updateMediaState" @thumb-click="handleThumb" @video-click="handleVideo" :media="media">
+        <v-sheet class="media-grid">
             
+                
+              <v-sheet  v-for="(media,index) in medias" :key="media.id">
+                <media-card @ready="updateMediaState" @thumb-click="handleThumb" @video-click="handleVideo" :media="media">
               <template v-slot:actions v-if="enableDelete">
-              <v-spacer></v-spacer>
-              <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red">
-                
-              </v-btn>
+                <v-divider></v-divider>
+                <v-card-actions class="justify-end d-flex">
+                    <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
+                </v-card-actions>
             </template>
-
-            
+           
           </media-card>
-                </v-card>
-            </v-slide-group-item>
-        </v-slide-group>
+                  </v-sheet>
+            
+        </v-sheet>
         
       </div>
-    </div>
+    
   `,
 });

@@ -57,9 +57,7 @@ def get_google_provider_cfg() -> Any:
 
 
 @bp_user.route("/auth")
-def auth() -> (
-    tuple[Literal["Google Auth is not enabled or configured properly"], Literal[417]] | Response
-):
+def auth() -> Response:
     """
     Endpoint to authorize with Google OpenID.
 
@@ -83,13 +81,7 @@ def auth() -> (
 
 
 @bp_user.route("/auth/callback")
-def auth_callback() -> (
-    tuple[Literal["Google Auth is not enabled or configured properly"], Literal[417]]
-    | tuple[Literal["User email not available or not verified by Google…"], Literal[400]]
-    | tuple[Literal["User email rejected!"], Literal[403]]
-    | tuple[Literal["User not found. Ask an administrator to create an …"], Literal[404]]
-    | Response
-):
+def auth_callback() -> Response:
     """
     Open ID callback endpoint.
     """
@@ -175,10 +167,7 @@ def settings() -> str:
 
 @bp_user.route("/settings/save", methods=["PUT"])
 @auth_required("session")
-def save_settings() -> (
-    tuple[Literal["Problem loading user"], Literal[417]]
-    | tuple[Literal["Settings Saved"], Literal[200]]
-):
+def save_settings() -> Response:
     """API Endpoint to save user settings."""
     json = request.json.get("settings")
     dark = json.get("dark")
@@ -189,6 +178,7 @@ def save_settings() -> (
     user.settings = {"dark": dark}
     lang = json.get("language")
     user.settings["language"] = lang
+    user.settings["setupCompleted"] = json.get("setupCompleted")
     flag_modified(user, "settings")
     user.save()
     return "Settings Saved", 200
@@ -196,9 +186,7 @@ def save_settings() -> (
 
 @bp_user.route("/settings/load", methods=["GET"])
 @auth_required("session")
-def load_settings() -> (
-    tuple[Literal["Problem loading user "], Literal[417]] | tuple[Response, Literal[200]]
-):
+def load_settings() -> Response:
     """API Endpoint to load user settings, in json format."""
     user_id = current_user.id
 
@@ -232,7 +220,7 @@ def before_app_request() -> Optional[Response]:
 
 
 @user_authenticated.connect
-def user_authenticated_handler(app, user, authn_via, **extra_args):
+def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
     session_data = {
         "user_id": user.id,
         "session_token": session.sid,

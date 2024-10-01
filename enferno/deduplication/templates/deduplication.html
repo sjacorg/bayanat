@@ -2,268 +2,365 @@
 
 {% block content %}
 
-<div id="app">
-    <v-app v-cloak>
-        {% include 'nav-drawer.html' %} {% include 'nav-bar.html' %}
-        <v-main class="align-start ma-3">
+
+        <v-main>
             <v-container fluid fill-height>
-                <v-row>
-                    <v-col cols="12">
-                        <v-toolbar elevation="1" dense >
-                            <v-btn @click="process" :disabled="processOn" color="green" class="white--text">
-                                <v-icon  left>mdi-play</v-icon>
-                                {{ _('Start') }}
-                            </v-btn>
+                <v-card>
+                    <v-card-text>
 
-                            <v-btn  @click="stop" :disabled="!processOn" color="red"  class="mx-3 white--text" >
-                                <v-icon left>mdi-stop</v-icon>
-                                {{ _('Stop') }}
-                            </v-btn>
-
-                            <v-progress-linear :value="progress" color="primary" height="25">
-                                <template v-slot:default="{ value }">
-                                    <strong>${progressText}</strong>
-                                </template>
-
-
-                            </v-progress-linear>
-
-                            <v-progress-circular
-      :indeterminate="processOn"
-      color="green"
-      class="mx-3"
-    ></v-progress-circular>
-
-
-                        </v-toolbar>
-                        <v-data-table
-                                height="calc(100vh - 290px)"
-                                fixed-header
-                                :loading="loading"
-                                :items="items"
-                                :headers="headers"
-                                :options.sync="options"
-                                :server-items-length="itemsLength"
-                                :footer-props.sync="footerProps"
-                                class="elevation-1"
-
+                        <v-data-table-server
+                            fixed-header
+                            height="calc(100vh - 285px)"
+                            id="dedup-dt"
+                            hover
+                            :headers="headers"
+                            :items="items"
+                            @update:options="refresh"
+                            :loading="loading"
+                            :items-length="itemsLength"
+                            class="elevation-1"
                         >
 
+                        <template v-slot:top>
+                            <v-toolbar>
+                                <v-toolbar-title>
+                                    {{ _('Deduplication Dashboard') }}
+                                </v-toolbar-title>
+
+                                <v-spacer></v-spacer>
+                                
+                                <v-btn @click="process" class="ma-2" :disabled="processOn" color="green" variant="elevated">
+                                    <v-icon left>mdi-play</v-icon>
+                                    {{ _('Start') }}
+                                </v-btn>
+
+                                <v-btn  @click="stop" class="ma-2" :disabled="!processOn" color="red" variant="elevated">
+                                    <v-icon left>mdi-stop</v-icon>
+                                    {{ _('Stop') }}
+                                </v-btn>
+                                
+                            </v-toolbar>
+                            <v-sheet class="mx-3 d-flex align-center">
+                                <v-progress-linear 
+                                    v-model="progress" 
+                                    class="mx-2" 
+                                    color="primary" 
+                                    :striped="processOn" 
+                                    height="25">
+                                    <template v-slot:default="{ value }">
+                                        <strong>${progressText}</strong>
+                                      </template>
+                                </v-progress-linear>
+                            </v-sheet>
+
+                        </template>
+
+                        <template #footer.prepend>
+                            <div v-if="processOn" class="ma-2 d-flex me-auto">${footerText}</div>
+                        </template>
+
                             <template v-slot:item.distance="{item}">
-                                ${item.distance | formatDistance}
+                                ${formatDistance(item.distance)}
 
                             </template>
 
                             <template v-slot:item.result="{item}">
-                                <div v-if="item.status==3">
-                                    <v-btn @click="previewItem('/admin/api/bulletin/'+item.result.b1)"
-                                           color="grey lighten-2" elevation="0" class="mx-2" small>
-                                        <v-icon color="grey darken-2" left x-small>mdi-library-books</v-icon>
+                                <div v-if="item.status===3">
+                                    <v-btn
+                                        size="small"
+                                        variant="tonal"
+                                        class="mx-2"
+                                        @click="previewItem('/admin/api/bulletin/' + item.result.b1 + '?mode=3')">
+                                        <v-icon color="grey darken-2" left>
+                                            mdi-file-document-multiple
+                                        </v-icon>
+
                                         ${item.result.b1}
                                     </v-btn>
                                     -
-                                    <v-btn @click="previewItem('/admin/api/bulletin/'+item.result.b2)"
-                                           color="grey lighten-2" class="mx-1" elevation="0" small>
-                                        <v-icon color="grey darken-2" left x-small>mdi-library-books</v-icon>
+                                    <v-btn
+                                        size="small"
+                                        variant="tonal"
+                                        class="mx-2"
+                                        @click="previewItem('/admin/api/bulletin/' + item.result.b2 + '?mode=3')">
+                                        <v-icon color="grey darken-2" left>
+                                            mdi-file-document-multiple
+                                        </v-icon>
+
                                         ${item.result.b2}
                                     </v-btn>
                                 </div>
                             </template>
 
-                        </v-data-table>
-
+                        </v-data-table-server>
 
                         <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
-
-                    </v-col>
-                </v-row>
+                    </v-card-text>
+                </v-card>
             </v-container>
         </v-main>
-    </v-app>
-</div>
 
 
 {% endblock %}
 
 {% block js %}
+<script src="/static/js/mixins/media-mixin.js"></script>
+
+<script src="/static/js/components/GeoMap.js"></script>
+<script src="/static/js/components/GlobalMap.js"></script>
+<script src="/static/js/components/GeoLocations.js"></script>
+
+<script src="/static/js/components/UniField.js"></script>
+<script src="/static/js/components/DualField.js"></script>
+
+<script src="/static/js/components/BulletinCard.js"></script>
+<script src="/static/js/components/ActorProfiles.js"></script>
+<script src="/static/js/components/ActorCard.js"></script>
+<script src="/static/js/components/IncidentCard.js"></script>
+<script src="/static/js/components/EventCard.js"></script>
 <script src="/static/js/components/MediaCard.js"></script>
+<script src="/static/js/components/PreviewCard.js"></script>
+
 <script src="/static/js/components/BulletinResult.js"></script>
 <script src="/static/js/components/ActorResult.js"></script>
 <script src="/static/js/components/IncidentResult.js"></script>
 
+<script src="/static/js/components/RelatedBulletinsCard.js"></script>
+<script src="/static/js/components/RelatedActorsCard.js"></script>
+<script src="/static/js/components/RelatedIncidentsCard.js"></script>
+
+<script src="/static/js/components/PopDateField.js"></script>
+<script src="/static/js/components/PopDateRangeField.js"></script>
+<script src="/static/js/components/PopDateTimeField.js"></script>
+
+<script src="/static/js/components/ImageGallery.js"></script>
+<script src="/static/js/components/PdfViewer.js"></script>
+
+<script src="/static/js/components/Visualization.js"></script>
+<script src="/static/js/element-resize-detector.min.js"></script>
+<script src="/static/js/force-graph.min.js"></script>
+
+<script src="/static/js/components/MPCard.js"></script>
+<script src="/static/js/components/MPField.js"></script>
+<script src="/static/js/components/MixI.js"></script>
+<script src="/static/js/components/MixII.js"></script>
+<script src="/static/js/components/MixIII.js"></script>
+
+<script src="/static/js/videojs/video.min.js"></script>
+
+{% if config.GOOGLE_MAPS_API_KEY %}
+{{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+{% endif %}
+
+<script src="/static/js/Leaflet.GoogleMutant.js"></script>
+
 <script>
 
-    const app = new Vue({
-        el: "#app",
-        vuetify: vuetify,
+    const {createApp} = Vue;
+    const {createVuetify} = Vuetify;
+    const vuetify = createVuetify(vuetifyConfig);
+
+    const app = createApp({
         delimiters: delimiters,
         mixins: [globalMixin],
         
         data: () => ({
 
             translations: translations,
+            currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+            updateInterval: Number('{{ config.DEDUP_INTERVAL }}'),
             
             // will use this to calculate progress based on all database items and what is being processed
             progress: 0,
             progressText: '',
+            footerText: '',
             processOn : false,
             // remaining unprocessed items
-            pending: null,
+            pending: 0,
+            processed: 0,
+            startTime: null,
+            timer: null,
             drawer: drawer,
             mode: null,
             loading: false,
             itemsLength: 0,
             headers: [
-                {text: "{{_('ID')}}", value: 'id', sortable: false},
-                {text: "{{ _('Query') }}", value: 'query', sortable: false},
-                {text: "{{ _('Match')}}", value: 'match', sortable: false},
-                {text: "{{_('Distance')}}", value: 'distance', sortable: false},
-
-                {text: "{{_('Data')}}", width: 300, value: 'result'},
-                {text: "{{_('Status')}}", value: 'hstatus', sortable: false},
-
+                {title: "{{_('ID')}}", value: 'id', sortable: false},
+                {title: "{{ _('Query') }}", value: 'query', sortable: false},
+                {title: "{{ _('Match')}}", value: 'match', sortable: false},
+                {title: "{{_('Distance')}}", value: 'distance', sortable: false},
+                {title: "{{_('Data')}}", width: 300, value: 'result'},
+                {title: "{{_('Status')}}", value: 'hstatus', sortable: false},
             ],
 
             //preview bulletins
             pitem: {},
             preview: false,
 
-
             items: [],
             options: {},
         }),
         filters: {
-            formatDistance: function (n) {
-
-                return parseFloat(n).toFixed(2);
-
-            }
+            
         },
         mounted() {
-            this.refresh();
-            this.sse();
-
-
-        },
-
-
-        computed: {},
-
-
-        watch: {
-
-
-            options: {
-                handler: "refresh"
-            }
+            // this.sse();
+            this.setupInterval();
+            this.startTime = new Date();
         },
 
         methods: {
-            sse() {
-                let source = new EventSource('/stream');
-                let self = this;
-                source.onmessage = function (e) {
-                    if (e.data == '1') {
-                        // reload only if process is active
-                        self.refresh()
-                        self.processOn = true;
-                    }
-                    else if (e.data == '2'){
-                        // process is finished, just refresh
 
-                        self.refresh();
-                        self.processOn = false;
+            formatDistance(n) {
+                return parseFloat(n).toFixed(2);
+            },
 
-                    }
-                    else {
-                        // process is stopped
-                        self.processOn = false;
-                    }
+            setupInterval() {
+                this.timer = setInterval(this.checkStatus, this.updateInterval * 1000);
+            },
 
-
-                }
-
-
+            checkStatus() {
+                axios
+                    .get(`/deduplication/status`)
+                    .then((response) => {
+                        this.status = response.data.status;
+                        if (this.status === '2' || this.pending === '0') {
+                            // process is finished, just refresh
+                            clearInterval(this.timer);
+                            this.refresh();
+                            this.timer = null;
+                            this.processOn = false
+                        } else if (this.status === '1') {
+                            // processing
+                            this.refresh();
+                            this.processOn = true;
+                        } else {
+                            // process is stopped
+                            this.processOn = false;
+                        }
+                    })
+                    .catch((error) => {
+                        this.showSnack(this.parseValidationError(error.response.data));
+                    });
             },
 
             previewItem(endpoint) {
-
                 axios.get(endpoint).then(res => {
                     this.pitem = res.data;
                     this.preview = true;
 
                 })
             },
+
             editAllowed() {
                 return false;
             },
 
-            clearData() {
-                this.loading = true;
-                axios.delete('/api/deduplication/clear').then(res => {
-                    this.showSnack(res.data);
-                }).catch(err => console.log(err)).finally(
-                    () => {
-                        this.loading = false;
-                        this.refresh();
-
-                    }
-                )
-            },
-
-
             process() {
                 this.loading = true;
-                axios.post('/api/deduplication/process').then(res => {
+                axios.post('/deduplication/api/process').then(res => {
                     this.showSnack(res.data);
-
-                }).catch(err => console.log(err.response.data))
-                    .finally(() => {
+                    this.startTime = new Date();
+                    this.processed = 0;
+                    }).catch(error => 
+                        this.showSnack(this.parseValidationError(error.response.data))
+                    ).finally(() => {
                         this.loading = false;
                         this.refresh();
                     })
-
             },
+
             stop() {
                 this.loading = true;
-                axios.post('/api/deduplication/stop').then(res => {
+                axios.post('/deduplication/api/stop').then(res => {
                     this.showSnack(res.data);
-
-                }).catch(err => console.log(err.response.data)).finally(() => {
-                    this.loading = false;
-                    this.refresh();
+                    }).catch(error => 
+                        this.showSnack(this.parseValidationError(error.response.data))
+                    ).finally(() => {
+                        this.loading = false;
+                        this.refresh();
                 })
-
-
             },
 
+            updateStats() {
+                const currentTime = new Date();
+                const diffTime = ((currentTime - this.startTime) / 1000);
+                const speed = (this.processed * 60 * 60 / diffTime);
+                const eta = (this.pending / speed);
+                var etaText = '';
+                eta > 1 ? etaText = eta.toFixed(1) + "{{ _(' hours') }}" : etaText = (eta * 60).toFixed(0) + "{{ _(' minutes') }}"
+                this.footerText = "{{ _('Processed: ') }}" + this.processed +  " | " +  "{{ _('Speed: ') }}" + speed.toFixed(0) + "{{ _('/hour') }}" +  " | " + "{{ _('Approx. time to complete: ') }}" + etaText;
+            },
 
-            refresh() {
+            refresh(options) {
+                this.options = options || this.options;
 
                 this.loading = true;
-                axios.get(`/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
+                axios.get(`/deduplication/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
                     this.items = res.data.items;
                     this.itemsLength = res.data.total;
+                    if (this.pending) {
+                        this.processed += (this.pending - res.data.pending);
+                    }
+                    this.pending = res.data.pending;                    
 
                     // update progress bar
+                    this.progress = Math.round(((this.itemsLength - this.pending) * 100) / this.itemsLength);
+                    this.progressText = (this.itemsLength - this.pending).toString() + "{{ _(' of ') }}" + this.itemsLength  + "{{ _(' items (') }}" + this.pending + "{{ _(' pending)') }}";
 
-                    this.progress = Math.round(((this.itemsLength - res.data.pending) * 100) / this.itemsLength);
-                    this.progressText = (this.itemsLength - res.data.pending).toString() + ' of ' + this.itemsLength  + ' items';
-                    console.log('progress', this.progress);
-
-
-
-                }).catch(err => console.log(err)).finally(() => {
-                    this.loading = false
+                    if (this.status === '1') {
+                        this.updateStats();
+                    }
+                }).catch(error => 
+                    this.showSnack(this.parseValidationError(error.response.data))
+                ).finally(() => {
+                    this.loading = false;
                 })
-
             },
-
-
-
-
         }
     });
+    
+    app.component('UniField', UniField);
+    app.component('DualField', DualField);
+
+    app.component('GeoMap', GeoMap);
+    app.component('GeoLocations', GeoLocations);
+    app.component('GlobalMap', GlobalMap);
+
+    app.component('ActorResult', ActorResult);
+    app.component('BulletinResult', BulletinResult);
+    app.component('IncidentResult', IncidentResult);
+
+    app.component('BulletinCard', BulletinCard);
+    app.component('ActorProfiles', ActorProfiles);
+    app.component('ActorCard', ActorCard);
+    app.component('IncidentCard', IncidentCard);
+    app.component('EventCard', EventCard);
+    app.component('MediaCard', MediaCard);
+    app.component('PreviewCard', PreviewCard);
+
+    app.component('PopDateField', PopDateField);
+    app.component('PopDateTimeField', PopDateTimeField);
+    app.component('PopDateRangeField', PopDateRangeField);
+
+    app.component('ImageGallery', ImageGallery);
+    app.component('PdfViewer', PdfViewer);
+
+    app.component('RelatedBulletinsCard', RelatedBulletinsCard);
+    app.component('RelatedActorsCard', RelatedActorsCard);
+    app.component('RelatedIncidentsCard', RelatedIncidentsCard);
+
+    app.component('Visualization', Visualization);
+
+    app.component('mix-i', MixI);
+    app.component('mix-ii', MixII);
+    app.component('mix-iii', MixIII);
+    app.component('mp-field', MPField);
+    app.component('mp-card', MPCard);
+
+    app.use(vuetify).mount('#app');
+
+    window.app = app;
 </script>
 
 {% endblock %}

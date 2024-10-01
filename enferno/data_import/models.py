@@ -10,6 +10,9 @@ from enferno.admin.models import Actor, Bulletin
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin, DatabaseException
 from enferno.utils.date_helper import DateHelper
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger()
 
 
 class DataImport(db.Model, BaseMixin):
@@ -149,7 +152,7 @@ class DataImport(db.Model, BaseMixin):
             super().save()
         except DatabaseException as e:
             if has_app_context():
-                current_app.logger.error(f"{e}")
+                logger.error(f"{e}")
             else:
                 print(f"{e}")
 

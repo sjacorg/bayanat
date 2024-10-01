@@ -24,7 +24,7 @@
                             :loading="visualizeLoading"
                             variant="elevated"
                             class="mb-5 mr-5 position-absolute "
-                            style="right: 20px; bottom: 20px; z-index: 1000;"
+                            style="right: 30px; bottom: 90px; z-index: 1000;"
                             icon="mdi-graph"
                     >
 
@@ -276,12 +276,6 @@
     </v-main>
 
     {% block outside %}
-        <div class="d-none" data-itob='{{ itobInfo|tojson }}'></div>
-        <div class="d-none" data-itoa='{{ itoaInfo|tojson }}'></div>
-        <div class="d-none" data-atob='{{ atobInfo|tojson }}'></div>
-        <div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
-        <div class="d-none" data-btob='{{ btobInfo|tojson }}'></div>
-        <div class="d-none" data-itoi='{{ itoiInfo|tojson }}'></div>
         <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
         <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
 
@@ -386,13 +380,16 @@
                 valid: false,
 
                 translations: window.translations,
+                advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
-                itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
-                itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
-                itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
-                atobInfo: JSON.parse(document.querySelector('[data-atob]').dataset.atob),
-                btobInfo: JSON.parse(document.querySelector('[data-btob]').dataset.btob),
-                atoaInfo: JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
+                helper: {}, // helper object for review items
+
+                itobInfo: [],
+                itoaInfo: [],
+                itoiInfo: [],
+                atobInfo: [],
+                btobInfo: [],
+                atoaInfo: [],
 
                 assignActor: {},
                 selfAssignDialog: false,
@@ -418,6 +415,7 @@
                     thumbnailHeight: 80,
                     parallelUploads: 1,
                     maxFilesize: mediaUploadMaxFileSize,
+                    maxFiles: 1,
                 },
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
@@ -449,6 +447,7 @@
 
                 drawer: drawer,
                 dialog: dialog,
+                saving: false,
                 //load advsearch constants
 
                 eventDialog: false,
@@ -825,7 +824,28 @@
 
             },
 
+            created(){
+              this.fetchRelationInfo();
+            },
+
             methods: {
+
+                 fetchRelationInfo() {
+                        axios.get('/admin/api/relation/info')
+                            .then(response => {
+                                this.itobInfo = response.data.itobInfo;
+                                this.itoaInfo = response.data.itoaInfo;
+                                this.atobInfo = response.data.atobInfo;
+                                this.atoaInfo = response.data.atoaInfo;
+                                this.btobInfo = response.data.btobInfo;
+                                this.itoiInfo = response.data.itoiInfo;
+                            })
+                            .catch(error => {
+                                console.error('Error fetching relation info:', error);
+                                this.showSnack('Error fetching relation info');
+                            });
+                    },
+
                 validateForm() {
                     this.$refs.form.validate().then(valid => {
                         if (valid) {
@@ -1051,7 +1071,7 @@
                         .then(response => {
                             this.loading = false;
                             this.showSnack(response.data);
-                            this.refresh(this.options);
+                            this.refresh();
                             //reset bulk drawer, and bulk data
                             this.bulkActorDrawer = false;
                             this.selected = [];
@@ -1473,7 +1493,7 @@
                         .then(response => {
                             this.reviewDialog = false;
                             this.showSnack(response.data);
-                            this.refresh(this.options);
+                            this.refresh();
                         });
 
                 },
@@ -1526,7 +1546,7 @@
                         axios.delete(`/admin/api/actor/${item.id}`).then(response => {
                             this.showSnack(response.data);
 
-                            this.refresh(this.options);
+                            this.refresh();
                         });
                     }
                 },
@@ -1544,6 +1564,7 @@
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.editedIndex = -1;
                         this.unrestricted = false;
+                        this.saving = false;
                     }, 300);
 
                 },
@@ -1554,39 +1575,35 @@
                         return;
                     }
 
+                    this.saving = true;
                     if (this.editedItem.id) {
                         //update record
-                        this.loading = true;
                         axios.put(`/admin/api/actor/${this.editedItem.id}`, {
                             item: this.editedItem
-                        })
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh(this.options);
-                                this.close();
-                            }).catch(err => {
+                        }).then(response => {
+                            this.showSnack(response.data);
+                            this.refresh();
+                            this.close();
+                        }).catch(err => {
                             console.error(err.response?.data);
                             this.showSnack(this.parseValidationError(err.response?.data))
-                        }).finally(() => {
-                            this.loading = false;
+                            this.saving = false;
                         });
                     } else {
-
+                        this.items.push(this.editedItem);
                         //create new record
-                        this.loading = true;
-                        axios.post("/admin/api/actor/", {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
-                                this.refresh(this.options);
-                                this.close();
-                            }).catch(err => {
+                        axios.post("/admin/api/actor/", {
+                            item: this.editedItem
+                        }).then(response => {
+                            this.showSnack(response.data);
+                            this.refresh();
+                            this.close();
+                        }).catch(err => {
                             console.error(err.response?.data);
                             this.showSnack(this.parseValidationError(err.response?.data));
-                        }).finally(() => {
-                            this.loading = false;
+                            this.saving = false
                         });
                     }
-
                 },
 
                 editEvent(evt, item, index) {

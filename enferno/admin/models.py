@@ -8,6 +8,7 @@ from typing import Any, Optional, Union
 
 import pandas as pd
 from dateutil.parser import parse
+from flask import has_app_context, has_request_context
 from flask_babel import gettext
 from flask_login import current_user
 from geoalchemy2 import Geometry, Geography
@@ -26,7 +27,10 @@ from enferno.utils.csv_utils import convert_simple_relation, convert_complex_rel
 from enferno.utils.date_helper import DateHelper
 from enferno.user.models import User
 
+from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
+
+logger = get_logger()
 
 
 ######  Role based Access Control Decorator for Bulletins / Actors  / Incidents  ######
@@ -70,6 +74,25 @@ def check_relation_roles(method):
         if incident and incident.get("restricted"):
             return {"incident": incident, "restricted": True}
         return method_output
+
+    return _impl
+
+
+def check_history_access(method):
+    """
+    Decorator to check if the current user has access to the fulll history. If the
+    user does not have the correct access, the to_dict method will return a shorter
+    data histroy.
+    """
+
+    def can_access():
+        if has_request_context() and has_app_context():
+            return True if current_user.view_full_history else False
+        return True
+
+    @wraps(method)
+    def _impl(self, *method_args, **method_kwargs):
+        return method(self, full=can_access(), *method_args, **method_kwargs)
 
     return _impl
 
@@ -229,7 +252,6 @@ class Source(db.Model, BaseMixin):
         max_id = db.session.execute("select max(id)+1  from source").scalar()
         db.session.execute("alter sequence source_id_seq restart with :m", {"m": max_id})
         db.session.commit()
-        print("Source ID counter updated.")
 
         return ""
 
@@ -462,7 +484,6 @@ class Label(db.Model, BaseMixin):
         max_id = db.session.execute("select max(id)+1  from label").scalar()
         db.session.execute("alter sequence label_id_seq restart with :m", {"m": max_id})
         db.session.commit()
-        print("Label ID counter updated.")
         return ""
 
 
@@ -546,7 +567,6 @@ class Eventtype(db.Model, BaseMixin):
         max_id = db.session.execute("select max(id)+1  from eventtype").scalar()
         db.session.execute("alter sequence eventtype_id_seq restart with :m", {"m": max_id})
         db.session.commit()
-        print("Eventtype ID counter updated.")
         return ""
 
 
@@ -675,7 +695,18 @@ class Media(db.Model, BaseMixin):
     SQL Alchemy model for media
     """
 
-    __table_args__ = {"extend_existing": True}
+    # __table_args__ = {"extend_existing": True}
+
+    extend_existing = True
+
+    __table_args__ = (
+        db.Index(
+            "ix_media_etag_unique_not_deleted",
+            "etag",
+            unique=True,
+            postgresql_where=db.text("deleted = FALSE"),
+        ),
+    )
 
     # set media directory here (could be set in the settings)
     media_dir = Path("enferno/media")
@@ -684,7 +715,7 @@ class Media(db.Model, BaseMixin):
     media_file = db.Column(db.String, nullable=False)
     media_file_type = db.Column(db.String, nullable=False)
     category = db.Column(db.Integer)
-    etag = db.Column(db.String, unique=True)
+    etag = db.Column(db.String, index=True)
     duration = db.Column(db.String)
 
     title = db.Column(db.String)
@@ -721,10 +752,18 @@ class Media(db.Model, BaseMixin):
     @check_roles
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the media."""
+        category_title = None
+
+        # Retrieve category title if self.category exists
+        if self.category:
+            media_category = MediaCategory.query.get(self.category)
+            if media_category:
+                category_title = media_category.title
         return {
             "id": self.id,
             "title": self.title if self.title else None,
             "title_ar": self.title_ar if self.title_ar else None,
+            "category": category_title if category_title else None,
             "fileType": self.media_file_type if self.media_file_type else None,
             "filename": self.media_file if self.media_file else None,
             "etag": getattr(self, "etag", None),
@@ -840,8 +879,6 @@ class Location(db.Model, BaseMixin):
             l.updated_at = created
         l.save()
 
-        print("Created Location revision")
-
     def get_children_ids(self) -> list:
         """
         Get the ids of the children of the current location.
@@ -896,9 +933,6 @@ class Location(db.Model, BaseMixin):
     # custom serialization method
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the location."""
-        if self.parent:
-            if not self.parent.admin_level:
-                print(self.parent, " <-")
 
         return {
             "id": self.id,
@@ -1100,11 +1134,10 @@ class Location(db.Model, BaseMixin):
     def rebuild_id_trees():
         """Rebuild the id tree for all locations."""
         for l in Location.query.all():
-            print("Generating id tree for Location - {}".format(l.id))
             l.id_tree = l.get_id_tree()
             l.save()
 
-        print("ID tree generated successfuly for location table")
+        logger.info("Locations ID tree generated successfuly.")
 
     # imports csv data into db
     @staticmethod
@@ -1135,18 +1168,17 @@ class Location(db.Model, BaseMixin):
 
         # step.1 import locations - no parents
         no_df.to_sql("location", con=db.engine, index=False, if_exists="append")
-        print("locations imported successfully")
+        logger.info("Locations imported successfully.")
 
         # step.2 update locations - add parents
         db.session.bulk_update_mappings(Location, df.to_dict(orient="records"))
         db.session.commit()
-        print("locations parents imported successfully")
+        logger.info("Locations parents updated successfully.")
 
         # reset id sequence counter
         max_id = db.session.execute("select max(id)+1  from location").scalar()
         db.session.execute("alter sequence location_id_seq restart with :m", {"m": max_id})
         db.session.commit()
-        print("Location ID counter updated.")
 
         return ""
 
@@ -1450,9 +1482,7 @@ class Btob(db.Model, BaseMixin):
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
             self.comment = relation["comment"] if "comment" in relation else None
-            print("Relation has been updated.")
-        else:
-            print("Relation was not updated.")
+
         return self
 
 
@@ -1556,9 +1586,7 @@ class Atob(db.Model, BaseMixin):
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
             self.comment = relation["comment"] if "comment" in relation else None
-            print("Relation has been updated.")
-        else:
-            print("Relation was not updated.")
+
         return self
 
 
@@ -1728,9 +1756,7 @@ class Atoa(db.Model, BaseMixin):
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
             self.comment = relation["comment"] if "comment" in relation else None
-            print("Relation has been updated.")
-        else:
-            print("Relation was not updated.")
+
         return self
 
     def from_etl(self, json):
@@ -1934,8 +1960,6 @@ class Bulletin(db.Model, BaseMixin):
             b.created_at = created
             b.updated_at = created
         b.save()
-
-        print("created bulletin revision")
 
     def related(self, include_self: bool = False) -> dict[str, Any]:
         """
@@ -2728,6 +2752,18 @@ class ActorProfile(db.Model, BaseMixin):
     publish_date = db.Column(db.DateTime)
     documentation_date = db.Column(db.DateTime)
 
+    search = db.Column(
+        db.Text,
+        db.Computed(
+            """
+         (id)::text || ' ' ||
+         COALESCE(originid, ''::character varying) || ' ' ||
+         COALESCE(description, ''::character varying) || ' ' ||
+         COALESCE(source_link, ''::text)
+        """
+        ),
+    )
+
     # Foreign key to reference the Actor
     actor_id = db.Column(db.Integer, db.ForeignKey("actor.id"))
 
@@ -2810,6 +2846,15 @@ class ActorProfile(db.Model, BaseMixin):
     hypothesis_status = db.Column(db.String, comment="MP")
     # death_cause = db.Column(db.String)
     reburial_location = db.Column(db.String, comment="MP")
+
+    __table_args__ = (
+        db.Index(
+            "ix_actor_profile_search",
+            "search",
+            postgresql_using="gin",
+            postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+    )
 
     def from_json(self, json: dict[str, Any]) -> "ActorProfile":
         """
@@ -3200,7 +3245,6 @@ class Actor(db.Model, BaseMixin):
             a.created_at = created
             a.updated_at = created
         a.save()
-        print("created actor revision ")
 
     # returns all related actors
     @property
@@ -3923,9 +3967,7 @@ class Itob(db.Model, BaseMixin):
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
             self.comment = relation["comment"] if "comment" in relation else None
-            print("Relation has been updated.")
-        else:
-            print("Relation was not updated.")
+
         return self
 
 
@@ -4027,9 +4069,7 @@ class Itoa(db.Model, BaseMixin):
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
             self.comment = relation["comment"] if "comment" in relation else None
-            print("Relation has been updated.")
-        else:
-            print("Relation was not updated.")
+
         return self
 
 
@@ -4211,9 +4251,7 @@ class Itoi(db.Model, BaseMixin):
             self.probability = relation["probability"] if "probability" in relation else None
             self.related_as = relation["related_as"] if "related_as" in relation else None
             self.comment = relation["comment"] if "comment" in relation else None
-            print("Relation has been updated.")
-        else:
-            print("Relation was not updated.")
+
         return self
 
 
@@ -4315,7 +4353,7 @@ class PotentialViolation(db.Model, BaseMixin):
             "alter sequence potential_violation_id_seq restart with :m", {"m": max_id}
         )
         db.session.commit()
-        print("Potential Violation ID counter updated.")
+
         return ""
 
 
@@ -4376,7 +4414,7 @@ class ClaimedViolation(db.Model, BaseMixin):
         max_id = db.session.execute("select max(id)+1  from claimed_violation").scalar()
         db.session.execute("alter sequence claimed_violation_id_seq restart with :m", {"m": max_id})
         db.session.commit()
-        print("Claimed Violation ID counter updated.")
+        logger.info("Claimed Violation imported successfully.")
         return ""
 
 
@@ -4584,7 +4622,6 @@ class Incident(db.Model, BaseMixin):
             i.created_at = created
             i.updated_at = created
         i.save()
-        print("created incident revision ")
 
     # returns all related incidents
     @property
@@ -5037,12 +5074,22 @@ class BulletinHistory(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="bulletin_revisions", foreign_keys=[user_id])
 
+    @property
+    def restricted_data(self):
+        return {
+            "comments": self.data.get("comments"),
+            "status": self.data.get("status"),
+        }
+
     # serialize
-    def to_dict(self) -> dict[str, Any]:
-        """Return a dictionary representation of the bulletin revision."""
+    @check_history_access
+    def to_dict(self, full=False) -> dict[str, Any]:
+        """
+        Return a dictionary representation of the bulletin revision.
+        """
         return {
             "id": self.id,
-            "data": self.data,
+            "data": self.data if full else self.restricted_data,
             "created_at": DateHelper.serialize_datetime(self.created_at),
             "user": self.user.to_compact() if self.user else None,
         }
@@ -5075,12 +5122,20 @@ class ActorHistory(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="actor_revisions", foreign_keys=[user_id])
 
+    @property
+    def restricted_data(self):
+        return {
+            "comments": self.data.get("comments"),
+            "status": self.data.get("status"),
+        }
+
     # serialize
-    def to_dict(self) -> dict[str, Any]:
+    @check_history_access
+    def to_dict(self, full=False) -> dict[str, Any]:
         """Return a dictionary representation of the actor revision."""
         return {
             "id": self.id,
-            "data": self.data,
+            "data": self.data if full else self.restricted_data,
             "created_at": DateHelper.serialize_datetime(self.created_at),
             "user": self.user.to_compact() if self.user else None,
         }
@@ -5110,12 +5165,20 @@ class IncidentHistory(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="incident_revisions", foreign_keys=[user_id])
 
+    @property
+    def restricted_data(self):
+        return {
+            "comments": self.data.get("comments"),
+            "status": self.data.get("status"),
+        }
+
     # serialize
-    def to_dict(self) -> dict[str, Any]:
+    @check_history_access
+    def to_dict(self, full=False) -> dict[str, Any]:
         """Return a dictionary representation of the incident revision."""
         return {
             "id": self.id,
-            "data": self.data,
+            "data": self.data if full else self.restricted_data,
             "created_at": DateHelper.serialize_datetime(self.created_at),
             "user": self.user.to_compact() if self.user else None,
         }
@@ -5259,11 +5322,7 @@ class Activity(db.Model, BaseMixin):
             activity.save()
 
         except Exception:
-            print("Error creating activity")
-            # print to sys log to preserve log
-            print(
-                f"user id: {user.id} | action: {action} | status: {status} | model: {model} | details: {details}"
-            )
+            logger.error("Error creating activity", exc_info=True)
 
 
 class Settings(db.Model, BaseMixin):
@@ -5335,7 +5394,6 @@ class AppConfig(db.Model, BaseMixin):
 
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the app config."""
-        print(self.user)
         return {
             "id": self.id,
             "config": self.config,
