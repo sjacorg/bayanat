@@ -7,6 +7,7 @@
 [![Semgrep](https://github.com/sjacorg/bayanat/actions/workflows/semgrep.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/semgrep.yml)
 [![pip-audit](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/pip-audit.yml)
 [![Tests](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml/badge.svg)](https://github.com/sjacorg/bayanat/actions/workflows/run-tests.yml)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsjacorg%2Fbayanat.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsjacorg%2Fbayanat?ref=badge_shield)
 
 Bayanat is an open source data management solution for processing huge amounts of data relevant to human rights abuses and war crimes, developed and maintained by Syrian talents at the [Syria Justice and Accountability Centre](https://syriaaccountability.org/) (SJAC). You can watch this [video](https://www.youtube.com/watch?v=thCkihoXAk0) for a quick introduction into Bayanat.
 
@@ -47,3 +48,7 @@ If you like our work please consider making a donation at [donate.syriaaccountab
 License
 -------------
 This system is distributed WITHOUT ANY WARRANTY under the GNU Affero General Public License v3.0.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsjacorg%2Fbayanat.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsjacorg%2Fbayanat?ref=badge_large)
