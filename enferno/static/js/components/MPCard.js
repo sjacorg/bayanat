@@ -89,7 +89,7 @@ const MPCard = Vue.defineComponent({
               <mp-field :field="this.mp._facial_hair" :title="translations.facialhair_"></mp-field>
               <mp-field :field="this.mp.posture" :title="translations.postureNotes_"></mp-field>
               <mp-field :type="1" :field="this.mp.skin_markings" :title="translations.skinMarkings_"></mp-field>
-              <mp-field :field="this.mp._handedness" :title="translations.handness_"></mp-field>
+              <mp-field :field="this.mp._handedness" :title="translations.handedness_"></mp-field>
               <mp-field :field="this.mp.glasses" :title="translations.glasses_"></mp-field>
               <mp-field :field="this.mp._eye_color" :title="translations.eyecolor_"></mp-field>
               <mp-field :field="this.mp.dist_char_con" :title="translations.characteristicsCongenital_"></mp-field>
@@ -109,7 +109,7 @@ const MPCard = Vue.defineComponent({
               <mp-field :field="this.mp.dentist_info" :title="translations.DentistContact_"></mp-field>
               <mp-field :field="this.mp.teeth_features" :title="translations.teethFeatures_"></mp-field>
               <mp-field :field="this.mp.dental_problems" :title="translations.dentalProblems_"></mp-field>
-              <mp-field :field="this.mp.dental_treatments" :title="translations.dentalTreatmetns_"></mp-field>
+              <mp-field :field="this.mp.dental_treatments" :title="translations.dentalTreatments_"></mp-field>
               <mp-field :field="this.mp.dental_habits" :title="translations.dentalHabits_"></mp-field>
               <mp-field :field="this.mp._case_status" :title="translations.caseStatus_"></mp-field>
               <mp-field :type="2" :field="this.mp.reporters" :title="translations.reporters_"></mp-field>

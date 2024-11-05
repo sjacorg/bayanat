@@ -752,18 +752,12 @@ class Media(db.Model, BaseMixin):
     @check_roles
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of the media."""
-        category_title = None
-
-        # Retrieve category title if self.category exists
-        if self.category:
-            media_category = MediaCategory.query.get(self.category)
-            if media_category:
-                category_title = media_category.title
+        media_category = MediaCategory.query.get(self.category) if self.category else None
         return {
             "id": self.id,
             "title": self.title if self.title else None,
             "title_ar": self.title_ar if self.title_ar else None,
-            "category": category_title if category_title else None,
+            "category": media_category.to_dict() if media_category else None,
             "fileType": self.media_file_type if self.media_file_type else None,
             "filename": self.media_file if self.media_file else None,
             "etag": getattr(self, "etag", None),

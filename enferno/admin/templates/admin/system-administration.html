@@ -93,10 +93,10 @@
                                                 </v-sheet>
                                             </v-slide-y-transition>
 
-                                            <v-switch color="primary" label="{{ _('Advanced Anaylsis Features') }}"
+                                            <v-switch color="primary" label="{{ _('Advanced Analysis Features') }}"
                                                       v-model="eitem.ADV_ANALYSIS"
                                                       persistent-hint
-                                                      hint="{{ _('Advanced features for more efficent analysis.') }}"></v-switch>
+                                                      hint="{{ _('Advanced features for more efficient analysis.') }}"></v-switch>
                                         </v-card-text>
                                     </v-card>
                                 </v-window-item>
@@ -423,7 +423,7 @@
                                                             class="mb-9"
                                                             label="{{ _('Media Import Path Scanning') }}"
                                                             persistent-hint
-                                                            hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilise this feature. It should be turned on only when it\'s needed.') }}"
+                                                            hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
                                                             v-model="eitem.ETL_PATH_IMPORT"></v-switch>
 
                                                     <v-combobox class="mb-9" multiple chips
@@ -486,7 +486,7 @@
                                             <v-switch color="primary" class="mb-9" label="{{ _('Export System') }}"
                                                       v-model="eitem.EXPORT_TOOL"
                                                       persistent-hint
-                                                      hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Adminisrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
+                                                      hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Administrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
                                             <v-slide-y-transition>
                                                 <v-sheet v-show="eitem.EXPORT_TOOL">
                                                     <v-text-field class="mb-9" type="number"

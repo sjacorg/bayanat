@@ -11,7 +11,7 @@ from pydantic import (
     confloat,
     HttpUrl,
 )
-from typing import Literal, Optional, Any
+from typing import Literal, Optional, Any, Union
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
@@ -201,7 +201,7 @@ class PartialMediaModel(BaseValidationModel):
     fileType: Optional[str] = None
     filename: Optional[str] = None
     etag: Optional[str] = None
-    time: Optional[str] = None
+    time: Optional[Any] = None
     category: Optional[PartialMediaCategoryModel] = None
 
 
@@ -1142,16 +1142,17 @@ class QueryBaseModel(StrictValidationModel):
         Validates the date fields.
 
         Returns:
-            str: The validated date value.
+            list[str]: The validated list of date values.
 
         Raises:
-            ValueError: If the date is not a valid date.
+            ValueError: If any date in the list is not a valid date.
         """
         if v:
-            try:
-                parse(v)
-            except ValueError:
-                raise ValueError(f"Invalid date format: {v}")
+            for date in v:
+                try:
+                    parse(date)
+                except ValueError:
+                    raise ValueError(f"Invalid date format: {date}")
         return v
 
 
@@ -1505,6 +1506,9 @@ class ConfigValidationModel(StrictValidationModel):
     def validate_aws_secret_key(v):
         if not isinstance(v, str):
             return None
+        # Allow MASK String as a valid value
+        if v == "**********":
+            return v
         if len(v) < 40 or len(v) > 64:
             return None
         return v

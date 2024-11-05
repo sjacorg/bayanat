@@ -136,7 +136,7 @@ const MediaCard = Vue.defineComponent({
         <v-tooltip location="bottom">
           <template v-slot:activator="{ props }">
             <v-chip prepend-icon="mdi-tag" variant="plain" v-if="media.category" size="small" v-bind="props">
-              {{ media.category }}
+              {{ media.category.title }}
             </v-chip>
           </template>
           <span>{{ translations.category_ }}</span>
