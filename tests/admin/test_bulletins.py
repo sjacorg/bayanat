@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch
 from enferno.admin.models import Activity, Bulletin, Btob, GeoLocation, Location
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from enferno.user.models import User
 from enferno.settings import Config as cfg
 from tests.factories import (
@@ -22,7 +23,6 @@ from tests.admin.data.generators import (
 
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_first_or_fail,
     load_data,
     get_uid_from_client,
@@ -114,17 +114,17 @@ def test_bulletin_endpoint(
             # Mode 1
             response = client_.get(f"/admin/api/bulletin/{bulletin.id}?mode=1")
             data = convert_empty_strings_to_none(load_data(response))
-            assert "ref" not in dict.keys(data)
+            assert "tags" not in dict.keys(data)
             conform_to_schema_or_fail(data, BulletinItemMinModel)
             # Mode 2
             response = client_.get(f"/admin/api/bulletin/{bulletin.id}?mode=2")
             data = convert_empty_strings_to_none(load_data(response))
-            assert "ref" not in dict.keys(data)
+            assert "tags" not in dict.keys(data)
             conform_to_schema_or_fail(data, BulletinItemMode2Model)
             # Mode 3
             response = client_.get(f"/admin/api/bulletin/{bulletin.id}?mode=3")
             data = convert_empty_strings_to_none(load_data(response))
-            assert "ref" in dict.keys(data)
+            assert "tags" in dict.keys(data)
             conform_to_schema_or_fail(data, BulletinItemMode3Model)
         elif expected_status == 302:
             assert "login" in response.headers["Location"]

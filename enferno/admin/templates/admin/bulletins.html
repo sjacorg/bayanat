@@ -54,6 +54,7 @@
                             @click:row="rowClick"
                             :items="items"
                             @update:options="refresh"
+                            :page="options.page"
                             :loading="loading"
                             :items-length="itemsLength"
                             :row-props="rowClass"
@@ -105,6 +106,17 @@
                                             class="ma-2"
                                     >{{ _('New Bulletin') }}</v-btn
                                     >
+                                    {% if config.WEB_IMPORT and (current_user.can_import_web or current_user.has_role("Admin")) %}
+                                    <v-btn
+                                            @click="webImportDlg = true"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="ma-2"
+                                    >
+                                        <v-icon left>mdi-web</v-icon>
+                                            {{ _('Import from Web') }}
+                                        </v-btn>
+                                    {% endif %}
                                 {% endif %}
                                 {% include'admin/partials/bulletin_dialog.html' %}
                                 {% include'admin/partials/review_dialog.html' %}
@@ -260,6 +272,7 @@
 
 
                     {% include 'admin/partials/video_player_dialog.html' %}
+                    {% include 'admin/partials/audio_player_dialog.html' %}
 
 
                     <v-dialog width="600" v-model="selfAssignDialog">
@@ -270,8 +283,8 @@
 
                                         small-chips
                                         multiple
-                                        v-model="assignBulletin.ref"
-                                        label="{{ _('Ref') }}"
+                                        v-model="assignBulletin.tags"
+                                        label="{{ _('Tags') }}"
                                         class="mr-2"
                                 ></v-combobox>
                                 <v-textarea v-model="assignBulletin.comments"
@@ -284,6 +297,39 @@
                             </v-card-actions>
                         </v-card>
 
+                    </v-dialog>
+
+                    <v-dialog v-model="webImportDlg" max-width="600" @update:model-value="webUrl = ''">
+                        <v-card class="pa-3">
+                            <v-card-title class="text-h5">
+                                {{ _('Import from Web') }}
+                            </v-card-title>
+                            
+                            <v-card-text>
+                                <v-row align="center">
+                                    <v-col cols="9">
+                                        <v-text-field
+                                            v-model="webUrl"
+                                            label="{{ _('Enter URL') }}"
+                                            placeholder="https://example.com/article"
+                                            @keydown.enter="submitWebImport"
+                                            autofocus
+                                        ></v-text-field>
+                                    </v-col>
+                                    <v-col cols="3">
+                                        <v-btn
+                                            color="primary"
+                                            variant="elevated"
+                                            :loading="webImportLoading"
+                                            @click="submitWebImport"
+                                            block
+                                        >
+                                            {{ _('Import') }}
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                        </v-card>
                     </v-dialog>
 
 
@@ -504,7 +550,9 @@
                     bulkBulletinDrawer: false,
 
                     exportDrawer: false,
-                    exportConfig: {},
+                    exportConfig: {
+                        format: 'pdf'
+                    },
                     sources: [],
                     locations: [],
                     labels: [],
@@ -631,7 +679,11 @@
 
 
                     bulletin: {},
-                    bulletinLoader: false
+                    bulletinLoader: false,
+
+                    webImportDlg: false,
+                    webUrl: '',
+                    webImportLoading: false
                 }),
 
                 computed: {
@@ -867,7 +919,6 @@
                 },
 
                 methods: {
-
                     fetchRelationInfo() {
                         axios.get('/admin/api/relation/info')
                             .then(response => {
@@ -925,6 +976,7 @@
                             this.showSnack("{{ _('Graph is being generated.')}}");
                             this.graphTimer = setInterval(this.checkGraphStatus, 3000);
                         }).catch(e => {
+                            this.visualizeLoading = false;
                             console.error(e.message);
                         }).finally(() => {
                         });
@@ -938,18 +990,17 @@
                         axios.post(`/export/api/bulletin/export`, {
                             items: this.selected,
                             config: this.exportConfig
-                        })
-                            .then(response => {
-                                this.showSnack(response.data);
-                            }).catch(error => {
-                            console.error(error.response?.data);
-                            this.showSnack(error.response?.data)
-                        }).finally(() => {
-                            this.loading = false;
+                        }).then(response => {
+                            this.showSnack(response.data);
                             this.exportDrawer = false;
                             this.selected = [];
-                            this.exportConfig = {};
-
+                            this.exportConfig = {
+                                format: 'pdf'
+                            };
+                        }).catch(error => {
+                            console.error(error.response?.data);
+                        }).finally(() => {
+                            this.loading = false;
                         });
                     },
 
@@ -976,8 +1027,6 @@
                             this.showSnack("{{ _('Bulletin assigned successfully.')}}")
                             this.refresh();
 
-                        }).catch(err => {
-                            this.showSnack(err.response.data);
                         }).finally(() => {
                             this.selfAssignDialog = false;
                             this.assignBulletin = {};
@@ -1054,20 +1103,19 @@
                         axios.put(`/admin/api/bulletin/bulk/`, {
                             items: this.selected,
                             bulk: this.bulk
-                        })
-                            .then(response => {
-                                this.loading = false;
-                                this.showSnack(response.data);
-                                this.refresh();
-                                //reset bulk drawer, and bulk data
-                                this.bulkBulletinDrawer = false;
-                                this.selected = [];
-                                this.bulk = {};
-                                clearInterval(this.bulkTimer);
-                                // if (!this.bulkProcInterval)
-                                this.bulkTimer = setInterval(this.bulkStatus, 3000);
-
-                            });
+                        }).then(response => {
+                            this.showSnack(response.data);
+                            this.refresh();
+                            //reset bulk drawer, and bulk data
+                            this.bulkBulletinDrawer = false;
+                            this.selected = [];
+                            this.bulk = {};
+                            clearInterval(this.bulkTimer);
+                            // if (!this.bulkProcInterval)
+                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
+                        }).finally(() => {
+                            this.loading = false;
+                        });
                     },
 
 
@@ -1083,14 +1131,12 @@
                     doSearch() {
                         this.options.page = 1;
                         this.advSearchExpand = this.advSearchExpand && false;
-
-
                         this.refresh();
-                    }
-                    ,
+                    },
+
                     refresh(options) {
 
-                        this.options = options || this.options;
+                        this.options = options || { ...this.options, page: 1 };
                         this.loading = true;
                         const startTime = new Date()
 
@@ -1102,7 +1148,6 @@
                         }).then(response => {
                             const endTime = new Date()
                             this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                            this.loading = false;
                             this.itemsLength = response.data.total;
                             this.items = response.data.items;
                             this.showVisualize = !(
@@ -1110,9 +1155,8 @@
                                 Object.keys(this.search[0]).length === 0
                             );
 
-                        }).catch(error => {
+                        }).finally(() => {
                             this.loading = false;
-                            this.showSnack(this.parseValidationError(error.response.data));
                         });
 
 
@@ -1174,8 +1218,6 @@
                             if (selectLast === true) {
                                 this.savedSearchSelection = this.searches.at(-1);
                             }
-                        }).catch(error => {
-                            this.showSnack(handleRequestError(error))
                         });
 
                     },
@@ -1192,9 +1234,6 @@
                                 this.queryName = null;
                                 // just reload searches and select the last one
                                 this.loadSearchesFromAPI(true);
-                            })
-                            .catch(error => {
-                                this.showSnack(handleRequestError(error));
                             });
                     },
 
@@ -1203,9 +1242,6 @@
                         axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                             .then(res => {
                                 this.showSnack(res.data);
-                            })
-                            .catch(error => {
-                                this.showSnack(handleRequestError(error));
                             });
                     },
 
@@ -1218,9 +1254,6 @@
                                     this.savedSearchSelection = null;
                                     this.search = [{}];
                                 }
-                            })
-                            .catch(error => {
-                                this.showSnack(handleRequestError(error));
                             });
                     },
 
@@ -1289,9 +1322,6 @@
                             this.bulletin = response.data;
                         }).catch(error => {
                             this.bulletinDrawer = false;
-                            if (error.response) {
-                                this.showSnack(error.response.data)
-                            }
                         }).finally(() => {
                             this.bulletinLoader = false;
                         });
@@ -1514,9 +1544,8 @@
                                 })
 
 
-                            }).catch(error => {
-                                this.showSnack("{{ _('Oops! We couldn\'t find this item.')}}")
-
+                            }).finally(() => {
+                                this.loading = false;
                             });
 
 
@@ -1572,21 +1601,19 @@
                                 this.close();
                             }).catch(err => {
                                 console.error(err.response?.data);
-                                this.showSnack(this.parseValidationError(err.response?.data))
                                 this.saving = false;
                             });
                         } else {
-                            this.items.push(this.editedItem);
                             //create new record
                             axios.post("/admin/api/bulletin/", {
                                 item: this.editedItem
                             }).then(response => {
+                                this.items.push(this.editedItem);
                                 this.showSnack(response.data);
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
                                 console.error(err.response?.data);
-                                this.showSnack(this.parseValidationError(err.response?.data));
                                 this.saving = false;
                             });
                         }
@@ -1739,6 +1766,30 @@
                         if (this.bulk.reviewerClear) {
                             this.bulk.first_peer_reviewer_id = null;
                         }
+                    },
+
+                    submitWebImport() {
+                        if (!this.webUrl.trim()) {
+                            this.showSnack('{{ _("Please enter a URL") }}');
+                            return;
+                        }
+
+                        this.webImportLoading = true;
+                        
+                        axios.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
+                            .then(res => {
+                                this.webUrl = ''; // Clear the input
+                                this.webImportDlg = false;
+                                this.showSnack('{{ _("URL import started") }}');
+                                this.refresh(); // Refresh the bulletins list
+                            })
+                            .catch(err => {
+                                this.showSnack(handleRequestError(err));
+                                console.error(err);
+                            })
+                            .finally(() => {
+                                this.webImportLoading = false;
+                            });
                     }
                 }
             })

@@ -21,6 +21,8 @@ from sqlalchemy import desc, or_
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
+import shortuuid
+from urllib.parse import urlparse
 
 import enferno.utils.typing as t
 from enferno.admin.models import (
@@ -57,7 +59,10 @@ from enferno.admin.models import (
     WorkflowStatus,
     ActorProfile,
 )
+from enferno.data_import.models import DataImport
+
 from enferno.admin.validation.models import (
+    ActorBulkUpdateRequestModel,
     ActorQueryRequestModel,
     ActorRequestModel,
     ActorReviewRequestModel,
@@ -87,6 +92,7 @@ from enferno.admin.validation.models import (
     ItobInfoRequestModel,
     ItoiInfoRequestModel,
     LabelRequestModel,
+    LocationAdminLevelReorderRequestModel,
     LocationAdminLevelRequestModel,
     LocationQueryRequestModel,
     LocationRequestModel,
@@ -100,6 +106,7 @@ from enferno.admin.validation.models import (
     UserNameCheckValidationModel,
     UserPasswordCheckValidationModel,
     UserRequestModel,
+    WebImportValidationModel,
 )
 from enferno.admin.validation.util import validate_with
 from enferno.extensions import rds, db
@@ -107,7 +114,9 @@ from enferno.tasks import (
     bulk_update_bulletins,
     bulk_update_actors,
     bulk_update_incidents,
+    download_media_from_web,
     generate_graph,
+    regenerate_locations,
 )
 from enferno.user.models import User, Role, Session
 from enferno.utils.config_utils import ConfigManager
@@ -1182,6 +1191,22 @@ def api_location_get(id: t.id) -> Response:
         return json.dumps(location.to_dict()), 200
 
 
+@admin.post("/api/location/regenerate/")
+@roles_required("Admin")
+def api_location_regenerate() -> Response:
+    """Endpoint for regenerating locations."""
+    if rds.get(Location.CELERY_FLAG):
+        return (
+            "Full Location texts regeneration already in progress, try again in a few moments.",
+            429,
+        )
+    regenerate_locations.delay()
+    return (
+        "Full Location texts regeneration is queued successfully. This task will need a few moments to complete.",
+        200,
+    )
+
+
 @admin.route("/component-data/", defaults={"id": None})
 @roles_required("Admin")
 def locations_config(id: Optional[t.id]):
@@ -1226,6 +1251,13 @@ def api_location_admin_level_create(
     """
     admin_level = LocationAdminLevel()
     admin_level.from_json(validated_data["item"])
+    all_codes = [level.code for level in LocationAdminLevel.query.all()]
+    max_code = max(all_codes) if len(all_codes) > 0 else 0
+
+    if admin_level.code is None:
+        admin_level.code = max_code + 1
+    elif admin_level.code != max_code + 1:
+        return "Code must be unique and one more than the highest code", 417
 
     if admin_level.save():
         Activity.create(
@@ -1256,6 +1288,8 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
     """
     admin_level = LocationAdminLevel.query.get(id)
     if admin_level:
+        if validated_data["item"]["code"] != admin_level.code:
+            return "Cannot change the code of a level", 417
         admin_level.from_json(validated_data["item"])
         if admin_level.save():
             Activity.create(
@@ -1270,6 +1304,58 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
             return "Error saving item", 417
     else:
         return HTTPResponse.NOT_FOUND
+
+
+@admin.delete("/api/location-admin-level/<int:id>")
+@roles_required("Admin")
+def api_location_admin_level_delete(id: t.id) -> Response:
+    """
+    Endpoint to delete a location admin level.
+
+    Args:
+        - id: id of the location admin level.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    if id in [1, 2, 3] or LocationAdminLevel.query.count() <= 3:
+        return "Cannot delete the first 3 levels", 417
+    admin_level = LocationAdminLevel.query.get(id)
+    if admin_level is None:
+        return HTTPResponse.NOT_FOUND
+    if Location.query.filter(Location.admin_level_id == id).count() > 0:
+        return "Cannot delete a level that is in use by a location", 417
+
+    max_code = max([level.code for level in LocationAdminLevel.query.all()])
+    if admin_level.code != max_code:
+        return "Only the highest level can be deleted.", 417
+
+    if admin_level.delete():
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            admin_level.to_mini(),
+            "adminlevel",
+        )
+        return f"Location Admin Level Deleted #{admin_level.id}", 200
+    else:
+        return "Error deleting Location Admin Level", 417
+
+
+@admin.post("/api/location-admin-levels/reorder")
+@roles_required("Admin")
+@validate_with(LocationAdminLevelReorderRequestModel)
+def api_location_admin_levels_reorder(validated_data: dict) -> Response:
+    """
+    Endpoint to reorder location admin levels.
+    """
+    new_order = validated_data.get("order")
+    try:
+        LocationAdminLevel.reorder(new_order)
+    except Exception as e:
+        return str(e), 417
+    return "Updated, user should regenerate full locations from system settings", 200
 
 
 # location type endpoints
@@ -2780,7 +2866,9 @@ def api_bulletins(validated_data: dict) -> Response:
 
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
-    result = result.order_by(Bulletin.id.desc()).paginate(page=page, per_page=per_page, count=True)
+    result = result.order_by(Bulletin.updated_at.desc()).paginate(
+        page=page, per_page=per_page, count=True
+    )
 
     # Select json encoding type
     mode = request.args.get("mode", "1")
@@ -2936,11 +3024,11 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
         bulletin.status = "Peer Reviewed"
 
         # append refs
-        refs = validated_data.get("item", {}).get("revrefs", [])
+        tags = validated_data.get("item", {}).get("revTags", [])
 
-        if bulletin.ref is None:
-            bulletin.ref = []
-        bulletin.ref = list(set(bulletin.ref + refs))
+        if bulletin.tags is None:
+            bulletin.tags = []
+        bulletin.tags = list(set(bulletin.tags + tags))
 
         if bulletin.save():
             # Create a revision using latest values
@@ -3146,8 +3234,8 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
         # update bulletin assignement
         bulletin.assigned_to_id = current_user.id
         bulletin.comments = b.get("comments")
-        bulletin.ref = bulletin.ref or []
-        bulletin.ref = bulletin.ref + b.get("ref", [])
+        bulletin.tags = bulletin.tags or []
+        bulletin.tags = bulletin.tags + b.get("tags", [])
 
         # Change status to assigned if needed
         if bulletin.status == "Machine Created" or bulletin.status == "Human Created":
@@ -3740,7 +3828,9 @@ def api_actors(validated_data: dict) -> Response:
 
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
-    result = result.paginate(page=page, per_page=per_page, count=True)
+    result = result.order_by(Actor.updated_at.desc()).paginate(
+        page=page, per_page=per_page, count=True
+    )
     # Select json encoding type
     mode = request.args.get("mode", "1")
     response = {
@@ -3915,7 +4005,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
 # bulk update actor endpoint
 @admin.put("/api/actor/bulk/")
 @roles_accepted("Admin", "Mod")
-@validate_with(BulkUpdateRequestModel)
+@validate_with(ActorBulkUpdateRequestModel)
 def api_actor_bulk_update(
     validated_data: dict,
 ) -> Response:
@@ -4234,6 +4324,7 @@ def api_users() -> Response:
 
 @admin.get("/users/", defaults={"id": None})
 @admin.get("/users/<int:id>")
+@auth_required(within=15, grace=0)
 @roles_required("Admin")
 def users(id) -> str:
     """
@@ -4651,6 +4742,7 @@ def api_user_delete(
 
 # Roles routes
 @admin.route("/roles/")
+@auth_required(within=15, grace=0)
 @roles_required("Admin")
 def roles() -> str:
     """
@@ -4855,7 +4947,7 @@ def api_incidents(validated_data: dict) -> Response:
 
     result = (
         Incident.query.filter(*query)
-        .order_by(Incident.id.desc())
+        .order_by(Incident.updated_at.desc())
         .paginate(page=page, per_page=per_page, count=True)
     )
     # Select json encoding type
@@ -5508,6 +5600,17 @@ def api_app_config() -> Response:
     return Response(json.dumps(response), content_type="application/json"), 200
 
 
+@admin.get("/api/configuration/defaults/")
+@roles_required("Admin")
+def api_config_defaults() -> Response:
+    """Returns default app configurations."""
+    response = {
+        "config": ConfigManager.get_all_default_configs(),
+        "labels": dict(ConfigManager.CONFIG_LABELS),
+    }
+    return Response(json.dumps(response), content_type="application/json"), 200
+
+
 @admin.get("/api/configuration/")
 @roles_required("Admin")
 def api_config() -> str:
@@ -5662,3 +5765,59 @@ def api_logs() -> Response:
             return "Error sending log file", 417
     else:
         return "Log file not found", 404
+
+
+@admin.post("/api/bulletin/web")
+@roles_accepted("Admin", "DA")
+@validate_with(WebImportValidationModel)
+def api_bulletin_web_import(validated_data: dict) -> Response:
+    """Import bulletin from web URL"""
+
+    if not current_app.config.get("WEB_IMPORT"):
+        return "Web import is disabled", 403
+
+    if not (current_user.has_role("Admin") or current_user.can_import_web):
+        return HTTPResponse.FORBIDDEN
+
+    url = validated_data["url"]
+
+    # Check for duplicate URL
+    existing_bulletin = Bulletin.query.filter(Bulletin.source_link == url).first()
+    if existing_bulletin:
+        return (
+            jsonify(
+                {
+                    "error": "Duplicate URL",
+                    "message": f"This URL has already been imported in bulletin #{existing_bulletin.id}",
+                    "bulletin_id": existing_bulletin.id,
+                }
+            ),
+            409,
+        )
+
+    # Create import log
+    data_import = DataImport(
+        user_id=current_user.id,
+        table="bulletin",
+        file=url,
+        batch_id=shortuuid.uuid()[:9],
+        data={
+            "mode": 3,  # Web import mode
+            "optimize": False,
+            "sources": [],
+            "labels": [],
+            "ver_labels": [],
+            "locations": [],
+            "tags": [],
+            "roles": [],
+        },
+    )
+    data_import.add_to_log(f"Started download from {url}")
+    data_import.save()
+
+    # Start async download
+    download_media_from_web.delay(
+        url=url, user_id=current_user.id, batch_id=data_import.batch_id, import_id=data_import.id
+    )
+
+    return jsonify({"batch_id": data_import.batch_id}), 202

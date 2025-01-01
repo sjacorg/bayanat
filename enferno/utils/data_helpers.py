@@ -204,8 +204,14 @@ def import_csv_to_table(model: t.Model, csv_file_path: str) -> None:
 
     # reset id sequence counter
     table = model.__table__
-    query = db.select([db.func.max(table.c.id) + 1])
-    max_id = db.session.execute(query).scalar()
-    db.session.execute("alter sequence source_id_seq restart with :m", {"m": max_id})
+    query = db.select(db.func.max(table.c.id) + 1)
+    max_id = db.session.scalar(query)
+    sequence_name = f"{table.name}_id_seq"
+
+    stmt = db.text("SELECT format('%I', :seq)")
+    quoted_seq = db.session.scalar(stmt, {"seq": sequence_name})
+
+    stmt = db.text(f"ALTER SEQUENCE {quoted_seq} RESTART WITH :val")
+    db.session.execute(stmt, {"val": max_id or 1})
     db.session.commit()
     logger.info(f"{model.__name__} ID counter updated.")

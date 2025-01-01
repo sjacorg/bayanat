@@ -444,6 +444,31 @@ class SheetImport:
         except:
             self.handle_mismatch(field, value)
 
+    def set_tags(self, value: Any) -> None:
+        """
+        Method to set tags on the actor.
+
+        Args:
+            - value: The value to set for the tags field. Can be a comma-separated string or a single value.
+
+        Returns:
+            None
+        """
+        if not value:
+            return
+
+        # Parse the value into a list of tags
+        if isinstance(value, str):
+            # Handle comma-separated values
+            tags = SheetImport.parse_array_field(value)
+            # Clean and filter empty tags
+            tags = [tag.strip() for tag in tags if tag.strip()]
+            if tags:
+                self.actor.tags = tags
+                self.data_import.add_to_log(f"Processed tags")
+        else:
+            self.handle_mismatch("tags", value)
+
     def set_actor_type(self, field: str, map_item: Union[str, tuple]) -> None:
         """
         Sets the actor type based on the given map_item.
@@ -636,6 +661,9 @@ class SheetImport:
 
         # handle complex list of dicts for reporters
         # detect reporters map
+        if field == "tags":
+            self.set_tags(value)
+            return
 
         if field == "type" or field == "dtype":
             self.set_actor_type(field, map_item)

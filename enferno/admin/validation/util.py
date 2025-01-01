@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Type, Annotated
+from typing import Any, Type, Annotated
 from flask import request
 from pydantic import (
     BaseModel,
@@ -132,12 +132,16 @@ def validate_with(model: Type[BaseModel]):
                 # Replace aliased keys in the incoming data
                 input_data = {aliases.get(k, k): v for k, v in request.json.items()}
 
+                # Convert empty strings to None
+                input_data = convert_empty_strings_to_none(input_data)
+
                 # Validate the data
-                validated_data = model(**input_data).model_dump(exclude_unset=True)
+                validated_data = model(**input_data).model_dump(exclude_unset=True, by_alias=True)
 
                 # Convert back to original field names for the output
                 reversed_aliases = {v: k for k, v in aliases.items()}
                 output_data = {reversed_aliases.get(k, k): v for k, v in validated_data.items()}
+
             except ValidationError as e:
                 formatted_errors = format_validation_errors(e.errors())
                 return {"message": "Validation failed", "errors": formatted_errors}, 400
@@ -204,3 +208,24 @@ def one_must_exist(field_names: list[str], strict=False) -> Type[BaseModel]:
             return data
 
     return Model
+
+
+# utility function to recursively set empty strings to None
+def convert_empty_strings_to_none(data: Any) -> Any:
+    """
+    Recursively convert empty strings in a data structure to None.
+
+    Args:
+        - data: The data structure to convert.
+
+    Returns:
+        - The data structure with empty strings converted to None.
+    """
+    if isinstance(data, dict):
+        return {k: convert_empty_strings_to_none(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_empty_strings_to_none(item) for item in data]
+    elif isinstance(data, str) and data == "":
+        return None
+    else:
+        return data

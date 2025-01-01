@@ -1,14 +1,16 @@
 from enum import Enum
+from unittest.mock import patch
 import pytest
 
 
 from enferno.admin.models import Location, LocationType
 
+from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.tasks import regenerate_locations
 from tests.factories import LocationFactory, create_location, LocationTypeFactory
 
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     create_csv_for_entities,
     get_first_or_fail,
     load_data,
@@ -205,3 +207,25 @@ def test_import_location_endpoint(
             assert len(locations) == 2
         else:
             assert len(locations) == 0
+
+
+##### POST /admin/api/location/regenerate #####
+
+regenerate_location_endpoint_roles = [
+    ("admin_client", 200),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 302),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", regenerate_location_endpoint_roles)
+def test_regenerate_location_endpoint(request, client_fixture, expected_status):
+    with patch.object(regenerate_locations, "delay") as mock_delay:
+        client_ = request.getfixturevalue(client_fixture)
+        response = client_.post("/admin/api/location/regenerate/")
+        assert response.status_code == expected_status
+        if expected_status == 200:
+            mock_delay.assert_called_once()
+        else:
+            mock_delay.assert_not_called()

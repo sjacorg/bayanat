@@ -1,8 +1,8 @@
 const DropField = Vue.defineComponent({
   props: {
     caption: String,
-    samples: [],
-    modelValue: [],
+    samples: Array,
+    modelValue: Array,
   },
   emits: ['update:modelValue'],
   data: function () {

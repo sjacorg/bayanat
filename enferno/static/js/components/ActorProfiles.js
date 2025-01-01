@@ -60,38 +60,38 @@ const ActorProfiles = Vue.defineComponent({
                 {{ translations.originid_ }}
               </v-tooltip>
 
-              <v-card outlined class="ma-2" color="grey" v-if="profile.sources?.length">
+              <v-card class="ma-2" v-if="profile.sources?.length">
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.sources_ }}</div>
-                  <v-chip-group column>
-                    <v-chip small label color="blue-grey" v-for="source in profile.sources" :key="source.id">
+                  <div class="flex-chips">
+                    <v-chip size="small" class="flex-chip" label v-for="source in profile.sources" :key="source.id">
                       {{ source.title }}
                     </v-chip>
-                  </v-chip-group>
+                  </div>
                 </v-card-text>
               </v-card>
 
-              <v-card outlined class="ma-2" color="grey" v-if="profile.labels?.length">
+              <v-card class="ma-2" v-if="profile.labels?.length">
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.labels_ }}</div>
-                  <v-chip-group column>
-                    <v-chip small label color="blue-grey" v-for="label in profile.labels" :key="label.id">
+                  <div class="flex-chips">
+                    <v-chip size="small" class="flex-chip" label v-for="label in profile.labels" :key="label.id">
                       {{ label.title }}
                     </v-chip>
-                  </v-chip-group>
+                  </div>
                 </v-card-text>
               </v-card>
 
 
-              <v-card outlined class="ma-2" color="grey" v-if="profile.ver_labels?.length">
+              <v-card class="ma-2" v-if="profile.ver_labels?.length">
                 <v-card-text>
                   <div class="px-1 title black--text">{{ translations.verifiedLabels_ }}</div>
-                  <v-chip-group column>
-                    <v-chip small label color="blue-grey" v-for="verLabel in profile.ver_labels"
+                  <div class="flex-chips">
+                    <v-chip size="small" class="flex-chip" label v-for="verLabel in profile.ver_labels"
                             :key="verLabel.id">
                       {{ verLabel.title }}
                     </v-chip>
-                  </v-chip-group>
+                  </div>
                 </v-card-text>
               </v-card>
 

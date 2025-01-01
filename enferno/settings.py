@@ -110,7 +110,7 @@ class Config(object):
     SECURITY_TOTP_SECRETS = {"1": os.environ.get("SECURITY_TOTP_SECRETS")}
     SECURITY_TOTP_ISSUER = "Bayanat"
 
-    SECURITY_WEBAUTHN = manager.get_config("SECURITY_WEBAUTHN")
+    SECURITY_WEBAUTHN = True
     SECURITY_WAN_ALLOW_AS_FIRST_FACTOR = False
     SECURITY_WAN_ALLOW_AS_MULTI_FACTOR = True
     SECURITY_WAN_ALLOW_AS_VERIFY = ["first", "secondary"]
@@ -267,6 +267,15 @@ class Config(object):
 
     ADV_ANALYSIS = manager.get_config("ADV_ANALYSIS")
 
+    # Location Admin Levels
+    LOCATIONS_INCLUDE_POSTAL_CODE = manager.get_config("LOCATIONS_INCLUDE_POSTAL_CODE")
+
+    WEB_IMPORT = manager.get_config("WEB_IMPORT")
+    # YTDLP Proxy Settings
+    YTDLP_PROXY = manager.get_config("YTDLP_PROXY")
+    YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
+    YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
+
 
 class TestConfig(Config):
     """Test configuration."""
@@ -373,7 +382,7 @@ class TestConfig(Config):
     GOOGLE_CLIENT_ID = "dummy_client_id"
     GOOGLE_CLIENT_SECRET = "dummy_client_secret"
     GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-    GOOGLE_MAPS_API_KEY = "dummy_maps_api_key"
+    GOOGLE_MAPS_API_KEY = "dummy_maps_api_key_for_testing"
     GOOGLE_OAUTH_ENABLED = False
     ITEMS_PER_PAGE_OPTIONS = [10, 30, 100]
     LANGUAGES = {
@@ -405,3 +414,7 @@ class TestConfig(Config):
     VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]
     SETUP_COMPLETE = False
     IMPORT_DIR = "tests/imports"
+    LOCATIONS_INCLUDE_POSTAL_CODE = False
+    YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
+    YTDLP_COOKIES = ""
+    YTDLP_PROXY = ""

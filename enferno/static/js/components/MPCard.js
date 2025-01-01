@@ -66,7 +66,7 @@ const MPCard = Vue.defineComponent({
               <mp-field :field="this.mp.months_pregnant" :title="translations.mpAtDisappearance_"></mp-field>
               <mp-field :field="this.mp.missing_relatives" :title="translations.missingRelatives_"></mp-field>
               <v-card v-if="showDPS" color="yellow lighten-5" class="my-2" outlined>
-                <v-card-text >
+                <v-card-text>
                   <h3 class="subtitle-2 mb-2 black--text">{{ translations.detailsPersonSawLast_ }}</h3>
                   <mp-field :field="this.mp.saw_name" :title="translations.name_"></mp-field>
                   <mp-field :field="this.mp.saw_address" :title="translations.address_"></mp-field>

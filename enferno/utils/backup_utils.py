@@ -2,6 +2,7 @@ import os
 
 from subprocess import check_output
 import boto3
+from flask import current_app
 
 from enferno.settings import Config as cfg
 from enferno.utils.logging_utils import get_logger

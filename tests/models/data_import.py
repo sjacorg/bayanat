@@ -1,12 +1,11 @@
 from typing import Any, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from tests.models.user import UserCompactModel
 
 
 class DataImportItemModel(BaseModel):
-    class Config:
-        anystr_strip_whitespace = True
+    model_config = ConfigDict(anystr_strip_whitespace=True)
 
     id: int
     table: str
@@ -31,8 +30,7 @@ class DataImportResponseModel(BaseModel):
 
 
 class MediaPathItemModel(BaseModel):
-    class Config:
-        anystr_strip_whitespace = True
+    model_config = ConfigDict(anystr_strip_whitespace=True)
 
     filename: str
     path: str

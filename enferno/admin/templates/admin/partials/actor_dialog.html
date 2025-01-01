@@ -74,6 +74,10 @@
                                             label-translation="{{ _('Nickname (AR)') }}"
                                     ></dual-field>
                                 </v-col>
+
+                                <v-col cols="12" md="4">
+                                    <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
+                                </v-col>
                             </v-row>
                         </template>
 
@@ -236,7 +240,7 @@
                                 <v-col md="4">
                                     <v-text-field label="{{ _('No of Children') }}"
                                                   v-model="editedItem.no_children"
-                                                  type="number"></v-text-field>
+                                                  :rules="integerRule"></v-text-field>
                                 </v-col>
 
                                 <v-col cols="12" md="4">
@@ -287,7 +291,10 @@
                                             v-model="editedItem.id_number"
                                             label="{{ _('ID Number') }}"
                                     ></v-text-field>
+                                </v-col>
 
+                                <v-col cols="12" md="4">
+                                    <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                 </v-col>
 
                             </v-row>
@@ -496,9 +503,9 @@
                                                                 </v-col>
                                                                 <v-col md="4">
                                                                     <v-text-field
-
-                                                                            label="{{ _('Months Pregnant at time of disappearance') }}"
-                                                                            v-model="profile.months_pregnant"></v-text-field>
+                                                                        label="{{ _('Months Pregnant at time of disappearance') }}"
+                                                                        v-model="profile.months_pregnant" :rules="integerRule"
+                                                                    ></v-text-field>
 
                                                                 </v-col>
                                                                 <v-col md="4">
@@ -567,6 +574,7 @@
                                                                     <v-text-field v-model="profile.height"
                                                                                   label="{{ _('Height') }}"
                                                                                   suffix="cm"
+                                                                                  :rules="integerRule"
                                                                     ></v-text-field>
 
 
@@ -575,6 +583,7 @@
                                                                     <v-text-field v-model="profile.weight"
                                                                                   label="{{ _('Weight') }}"
                                                                                   suffix="kg"
+                                                                                  :rules="integerRule"
                                                                     ></v-text-field>
 
 

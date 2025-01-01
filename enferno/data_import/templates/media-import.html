@@ -206,7 +206,7 @@
                                                         <v-combobox
                                                                 small-chips
                                                                 multiple
-                                                                label="{{ _('Refs') }}"
+                                                                label="{{ _('Tags') }}"
                                                                 v-model="refs"
                                                                 hint="{{ _('Type and enter free tags') }}"
 
@@ -366,8 +366,8 @@
                     chunkSize: 500000, // Bytes
                     thumbnailWidth: 80, // px
                     thumbnailHeight: 80,
-                    parallelUploads: 1
-
+                    parallelUploads: 1,
+                    maxFilesize: mediaUploadMaxFileSize,
                 },
 
 
@@ -520,10 +520,6 @@
                         this.items = this.preprocessPath(res.data);
                         this.mode = 2;
 
-                    }).catch(error => {
-                        if (error.response) {
-                            this.showSnack(error.response.data);
-                        }
                     }).finally(() => {
                         this.selectDlg = false;
                         this.loading = false;
@@ -579,7 +575,7 @@
                         ver_labels: this.verLabels,
                         sources: this.sources,
                         locations: this.locations,
-                        refs: this.refs,
+                        tags: this.refs,
                         roles: this.roles,
                         mode: this.mode,
                         optimize: this.optimize,

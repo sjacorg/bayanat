@@ -36,27 +36,6 @@ def load_data(response: Any) -> dict:
     return json_data
 
 
-# utility function to recursively set empty strings to None
-def convert_empty_strings_to_none(data: Any) -> Any:
-    """
-    Recursively convert empty strings in a data structure to None.
-
-    Args:
-        - data: The data structure to convert.
-
-    Returns:
-        - The data structure with empty strings converted to None.
-    """
-    if isinstance(data, dict):
-        return {k: convert_empty_strings_to_none(v) for k, v in data.items()}
-    elif isinstance(data, list):
-        return [convert_empty_strings_to_none(item) for item in data]
-    elif isinstance(data, str) and data == "":
-        return None
-    else:
-        return data
-
-
 # utility function to get first record of entity or fail
 def get_first_or_fail(entity: t.Model) -> t.Model:
     """

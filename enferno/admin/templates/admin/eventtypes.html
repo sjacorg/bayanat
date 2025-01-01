@@ -18,6 +18,7 @@
                                     :headers="headers"
                                     :items="items"
                                     @update:options="refresh"
+                                    :page="options.page"
                                     :loading="loading"
                                     :items-length="itemsLength"
                                     class="elevation-1"
@@ -238,6 +239,7 @@
 
             methods: {
                 refresh(options) {
+                    this.options = options || { ...this.options, page: 1 };
 
                     axios.get(`/admin/api/eventtypes/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
                         this.loading = false;
@@ -253,7 +255,7 @@
                     axios.post('/admin/api/eventtype/import/', reqData).then(response => {
 
                         this.imDialog = false;
-                        this.refresh(this.options);
+                        this.refresh();
                         this.showSnack(response.data);
                     })
 
@@ -273,7 +275,7 @@
                         axios.delete(`/admin/api/eventtype/${item.id}`)
                             .then(response => {
                                 this.showSnack(response.data);
-                                this.refresh(this.options)
+                                this.refresh()
                             })
                     }
                 },
@@ -297,7 +299,7 @@
                         axios.put(`/admin/api/eventtype/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
-                                this.refresh(this.options);
+                                this.refresh();
                                 this.close();
                             }).catch(err => {
                             this.showSnack(this.parseValidationError(err?.response?.data));
@@ -310,7 +312,7 @@
                             .then(response => {
 
                                 this.showSnack(response.data);
-                                this.refresh(this.options);
+                                this.refresh();
                                 this.close();
                             }).catch(err => {
                             this.showSnack(this.parseValidationError(err?.response?.data));

@@ -2,19 +2,29 @@
 {% block content %}
 
     <v-main class="system-admin overflow-auto">
-        <v-card class="ma-5 pa-2">
+        <v-card class="ma-5 pb-2 px-2 pt-0 overflow-unset">
 
-                        <v-card-title  class="d-flex">
-                            {{ _('Administration Dashboard') }}
+                        <v-card-title class="d-flex flex-column position-sticky pt-0 bg-surface top-0 z-1">
+                            <div class="d-flex mb-6 mt-4">
+                                {{ _('Administration Dashboard') }}
                                 <v-spacer></v-spacer>
-                            <v-btn prepend-icon="mdi-history" variant="elevated" class="ma-1" size="small" @click="showRevisions=!showRevisions">
-                                {{ _('Revision History') }}
-                            </v-btn>
+                                <div class="d-flex ga-4">
+                                    <v-btn prepend-icon="mdi-restore" variant="elevated" color="warning" @click="loadDefaults">
+                                        {{ _('Restore Default Settings') }}
+                                    </v-btn>
+                                    <v-btn prepend-icon="mdi-history" variant="elevated" @click="showRevisions=!showRevisions">
+                                        {{ _('Revision History') }}
+                                    </v-btn>
+                                    <v-btn
+                                        @click.stop="showConfigDiff"
+                                        variant="elevated"
+                                        color="primary"
+                                        prepend-icon="mdi-content-save"
+                                    >{{ _('Save') }}</v-btn>    
+                                </div>
+                            </div>
 
-
-                        </v-card-title>
-                        <v-card-text class="pa-4">
-                            <v-tabs bg-color="primary" v-model="tab" class="mb-9 ">
+                            <v-tabs bg-color="primary" v-model="tab">
                                 <v-tab value="general">{{ _('General') }}</v-tab>
                                 <v-tab value="storage">{{ _('Storage') }}</v-tab>
                                 <v-tab value="security">{{ _('Security') }}</v-tab>
@@ -23,7 +33,10 @@
                                 <v-tab value="import">{{ _('Import Tools') }}</v-tab>
                                 <v-tab value="export">{{ _('Export Tool') }}</v-tab>
                                 <v-tab value="maps">{{ _('Maps') }}</v-tab>
+                                <v-tab value="locations">{{ _('Locations') }}</v-tab>
                             </v-tabs>
+                        </v-card-title>
+                        <v-card-text class="pa-4">
 
 
                             <v-window v-model="tab">
@@ -184,11 +197,6 @@
                                                         step="1"
                                                 ></v-slider>
                                             </v-sheet>
-
-                                            <v-btn @click.once="forceGlobalReset" class="ma-2" color="error" variant="elevated">
-                                                {{ _('Force Global Password Reset') }}
-                                            </v-btn>
-
                                         </v-card-text>
 
                                         <h2 class="mt-1 subtitle-2 mb-2">{{ _('Two Factor Authentication Policies') }}</h2>
@@ -197,14 +205,6 @@
                                                       persistent-hint
                                                       hint="{{ _('Force users to enroll in two factor authentication') }}"
                                                       v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
-                                            >
-                                            </v-switch>
-
-                                            <v-switch color="primary" class="mb-9"
-                                                      label="{{ _('WebAuthn Authentication') }}"
-                                                      persistent-hint
-                                                      hint="{{ _('Allow use of FIDO hardware and passkeys as second factor.') }}"
-                                                      v-model="eitem.SECURITY_WEBAUTHN"
                                             >
                                             </v-switch>
                                         </v-card-text>
@@ -290,7 +290,7 @@
                                                       persistent-hint
                                                       hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
                                                       v-model="eitem.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
-                                            <v-switch class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
                                                       persistent-hint
                                                       hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
                                                       v-model="eitem.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
@@ -330,7 +330,7 @@
                                                     v-model="eitem.ACTIVITIES['DELETE']">
                                                 </v-switch>
 
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Items reviewer by users.') }}"
+                                                <v-switch color="primary" class="mb-9" label="{{ _('Items reviewed by users.') }}"
                                                     persistent-hint
                                                     hint="{{ _('This setting will enable logging all items peer-viewed by authorized users.') }}"
                                                     v-model="eitem.ACTIVITIES['REVIEW']">
@@ -474,6 +474,46 @@
                                                 </v-sheet>
                                             </v-slide-y-transition>
 
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Web Import') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Enables import of videos from online sources into Bulletins.') }}"
+                                                      v-model="eitem.WEB_IMPORT"></v-switch>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.WEB_IMPORT"
+                                                         class=" pa-4 grey lighten-4">
+
+                                                    <v-text-field class="mb-9" 
+                                                                  label="{{ _('Web Import Proxy') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Proxy URL to use when importing media from web sources (e.g. socks5://user:pass@host:port).') }}"
+                                                                  v-model="eitem.YTDLP_PROXY"></v-text-field>
+
+                                                    <v-textarea class="mb-9" 
+                                                                label="{{ _('Web Import Cookies') }}"
+                                                                persistent-hint
+                                                                hint="{{ _('Cookie data for authenticated web imports (in Netscape/Mozilla format).') }}"
+                                                                auto-grow
+                                                                rows="3"
+                                                                v-model="eitem.YTDLP_COOKIES"></v-textarea>
+
+                                                    <v-slide-y-transition>
+                                                        <v-sheet>
+                                                            <v-combobox class="mb-9" 
+                                                                        multiple 
+                                                                        chips
+                                                                        label="{{ _('Allowed Domains') }}"
+                                                                        persistent-hint
+                                                                        hint="{{ _('List of domains from which media can be imported. Check yt-dlp\'s repository (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list of supported websites.') }}"
+                                                                        :items="eitem.YTDLP_ALLOWED_DOMAINS"
+                                                                        v-model="eitem.YTDLP_ALLOWED_DOMAINS">
+                                                            </v-combobox>
+                                                        </v-sheet>
+                                                    </v-slide-y-transition>
+
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+
                                         </v-card-text>
 
                                     </v-card>
@@ -512,7 +552,7 @@
                                                           v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
 
                                             <h2 class="mt-3 subtitle-2 mb-2">{{ _('Satalite Imagery') }}</h2>
-                                            <span class="text-caption">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satalite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</span>
+                                            <v-card-item class="text-caption my-2">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satalite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</v-card-item>
 
                                             <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
                                                           persistent-hint
@@ -528,16 +568,22 @@
                                         </v-card-text>
                                     </v-card>
                                 </v-window-item>
+                                <v-window-item value="locations">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Full Location Generation Settings') }}</h4>
+                                            <v-switch color="primary" label="{{ _('Include Postal Codes in Full Location Text Format') }}"
+                                                      v-model="eitem.LOCATIONS_INCLUDE_POSTAL_CODE"
+                                                      persistent-hint
+                                                      hint="{{ _('Include postal codes in the format of full location text of all entries. Note: you must regenerate full locations from the Component Data dashboard for this change to take effect.') }}"></v-switch>
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
                             </v-window>
 
 
 
                         </v-card-text>
-                        <v-card-actions class="pa-4 justify-center">
-                                <v-btn @click.stop="showConfigDiff" width="200" variant="elevated" color="primary">
-                                    {{ _('Save') }}
-                                </v-btn>
-                            </v-card-actions>
                     </v-card>
 
     </v-main>
@@ -606,17 +652,10 @@
 
     <v-dialog v-model="confirmDialog" max-width="900">
         <v-card>
-            <v-toolbar>
-                <v-toolbar-title class="d-flex">
-                    {{ _('Review and Confirm Changes') }}
-                    <v-spacer></v-spacer>
-
-
-
+            <v-card-title class="d-flex justify-space-between align-center">
+                {{ _('Review and Confirm Changes') }}
                 <v-btn icon="mdi-close" variant="text" @click="confirmDialog=false"></v-btn>
-                </v-toolbar-title>
-
-            </v-toolbar>
+            </v-card-title>
             <v-card-text>
                 <v-sheet class="pa-5" color="yellow lighten-5 d-flex">
                     <div class="d-flex align-center body-2">
@@ -756,6 +795,7 @@
 
                 revisions: [],
                 revisionLoading: null,
+                translations: window.translations,
 
 
             }),
@@ -781,25 +821,17 @@
 
             methods: {
 
-                forceGlobalReset() {
-                    if (confirm("{{_('Are you sure you want to force a password reset for all users?')}}")) {
-                        this.loading = true;
-                        axios.post('/admin/api/user/force-reset-all').then(
-                            res => {
-
-                                this.showSnack(res.data);
-                            }
-                        ).catch(
-                            err => {
-                                console.error(err?.response?.data);
-                            }
-                        ).finally(
-                            () => {
-                                this.loading = false;
-                            }
-                        )
-
-                    }
+                loadDefaults() {
+                    axios.get('/admin/api/configuration/defaults/').then(res => {
+                        this.eitem = res.data.config;
+                        this.configLabels = res.data.labels;
+                        this.$root.showSnack(this.translations.defaultsLoaded_);
+                    }).catch(err => {
+                        this.$root.showSnack(err?.response?.data);
+                        console.error(err);
+                    }).finally(() => {
+                        this.loading = false;
+                    })
                 },
 
                 revertVersion(config) {
@@ -948,13 +980,9 @@
                     axios.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
                         this.reloadApp();
                     }).catch(e => {
-                        this.showSnack(this.parseValidationError(e.response?.data));
                         console.error(e);
-                        // Allow user to read the error message(s), 2 seconds
                         this.overlay = false;
-                        setTimeout(() => {
-                            this.loadConfiguration();
-                        }, 2000)
+                        this.addToCallbackQueueIfReauthRequired(e, this.saveConfiguration);
                     }).finally(() => {
                         this.confirmDialog = false;
                     })

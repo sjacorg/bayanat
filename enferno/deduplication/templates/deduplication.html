@@ -16,6 +16,7 @@
                             :headers="headers"
                             :items="items"
                             @update:options="refresh"
+                            :page="options.page"
                             :loading="loading"
                             :items-length="itemsLength"
                             class="elevation-1"
@@ -238,9 +239,6 @@
                             // process is stopped
                             this.processOn = false;
                         }
-                    })
-                    .catch((error) => {
-                        this.showSnack(this.parseValidationError(error.response.data));
                     });
             },
 
@@ -262,9 +260,7 @@
                     this.showSnack(res.data);
                     this.startTime = new Date();
                     this.processed = 0;
-                    }).catch(error => 
-                        this.showSnack(this.parseValidationError(error.response.data))
-                    ).finally(() => {
+                    }).finally(() => {
                         this.loading = false;
                         this.refresh();
                     })
@@ -274,9 +270,7 @@
                 this.loading = true;
                 axios.post('/deduplication/api/stop').then(res => {
                     this.showSnack(res.data);
-                    }).catch(error => 
-                        this.showSnack(this.parseValidationError(error.response.data))
-                    ).finally(() => {
+                    }).finally(() => {
                         this.loading = false;
                         this.refresh();
                 })
@@ -293,7 +287,7 @@
             },
 
             refresh(options) {
-                this.options = options || this.options;
+                this.options = options || { ...this.options, page: 1 };
 
                 this.loading = true;
                 axios.get(`/deduplication/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
@@ -311,9 +305,7 @@
                     if (this.status === '1') {
                         this.updateStats();
                     }
-                }).catch(error => 
-                    this.showSnack(this.parseValidationError(error.response.data))
-                ).finally(() => {
+                }).finally(() => {
                     this.loading = false;
                 })
             },

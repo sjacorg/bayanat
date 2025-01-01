@@ -113,6 +113,7 @@ class ActorFactory(factory.Factory):
     comments = factory.Faker("text", max_nb_chars=255)
     review = factory.Faker("text")
     review_action = factory.Faker("text", max_nb_chars=255)
+    tags = factory.LazyFunction(lambda: [])
 
 
 class ActorHistoryFactory(factory.Factory):
@@ -137,7 +138,7 @@ class BulletinFactory(factory.Factory):
     status = factory.Faker("text", max_nb_chars=255)
     source_link = factory.Faker("uri")
     source_link_type = factory.LazyFunction(lambda: random.choice([True, False]))
-    ref = factory.LazyFunction(lambda: [])
+    tags = factory.LazyFunction(lambda: [])
     originid = factory.Faker("ssn")
     comments = factory.Faker("text")
     review = factory.Faker("text")

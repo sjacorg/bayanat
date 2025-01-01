@@ -1567,6 +1567,32 @@ paths:
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
+  /admin/api/location/regenerate:
+    post:
+      operationId: regenerateLocations
+      tags:
+        - Protected
+        - Location Management
+      summary: Regenerate full-strings for all locations
+      description: |
+        Regenerate the full-strings for all locations.
+        
+        Roles accepted:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Regeneration started"
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
   /admin/api/location-admin-levels:
     get:
       operationId: getLocationAdminLevels
@@ -1667,6 +1693,90 @@ paths:
           $ref: '#/components/responses/NotFoundTextResponse'
         '417':
           $ref: '#/components/responses/SaveFailedResponse'
+    delete:
+      operationId: deleteLocationAdminLevel
+      tags:
+        - Protected
+        - LocationAdminLevel Management
+      summary: Delete an existing Location Admin Level
+      description: |
+        Delete the location admin level with `{id}`.
+        
+        Roles accepted: 
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Id of the location admin level to be deleted.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Location Admin Level Deleted #{id}"
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+        '417':
+          description: Location Admin Level could not be deleted
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Error deleting location admin level"
+
+  /admin/api/location-admin-levels/reorder:
+    post:
+      operationId: reorderLocationAdminLevels
+      tags:
+        - Protected
+        - LocationAdminLevel Management
+      summary: Reorder Location Admin Levels
+      description: |
+        Reorder the location admin levels with the provided order.
+        
+        Roles accepted:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+                description: A list of location admin level ids in the new order. Must be exhaustive.
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Updated"
+        '417':
+          description: Location Admin Levels could not be reordered
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Error reordering location admin levels"
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+
+
   /admin/api/location-types:
     get:
       operationId: getLocationTypes
@@ -3558,11 +3668,11 @@ paths:
                         review_action:
                           type: string
                           description: Review action
-                        revrefs:
+                        revTags:
                           type: array
                           items:
-                            type: integer
-                          description: Review refs
+                            type: string
+                          description: Review tags
       responses:
         '200':
           description: OK
@@ -3612,11 +3722,11 @@ paths:
                   allOf:
                     - $ref: '#/components/schemas/GenericBulk'
                     - properties:
-                        ref:
+                        tags:
                           type: array
                           items:
                             type: integer
-                        refReplace:
+                        tagsReplace:
                           type: boolean
       responses:
         '200':
@@ -3734,10 +3844,10 @@ paths:
                   properties:
                     comments:
                       type: string
-                    ref:
+                    tags:
                       type: array
                       items:
-                        type: integer
+                        type: string
       responses:
         '200':
           description: OK
@@ -4486,7 +4596,7 @@ paths:
                     type: integer
                   description: Actor IDs to be updated
                 bulk:
-                  $ref: '#/components/schemas/GenericBulk'
+                  $ref: '#/components/schemas/ActorBulk'
       responses:
         '200':
           description: OK
@@ -6811,24 +6921,24 @@ components:
               type: array
               items:
                 type: integer
-            ref:
+            tags:
               type: array
               items:
                 type: string
             inExact:
               type: boolean
               default: false
-            opref:
+            opTags:
               type: boolean
               default: false
-            exref:
+            exTags:
               type: array
               items:
                 type: string
             exExact:
               type: boolean
               default: false
-            opexref:
+            opExTags:
               type: boolean
               default: false
             childlabels:
@@ -8130,7 +8240,7 @@ components:
           type: string
         source_link_type:
           type: boolean
-        ref:
+        tags:
           type: array
           items:
             type: string
@@ -8206,10 +8316,10 @@ components:
           type: string
         source_link_type:
           type: boolean
-        ref:
+        tags:
           type: array
           items:
-            type: integer
+            type: string
         locations:
           type: array
           items:
@@ -8433,6 +8543,16 @@ components:
                 type: integer
         rolesReplace:
           type: boolean
+    ActorBulk:
+      allOf:
+        - $ref: '#/components/schemas/GenericBulk'
+        - properties:
+            tags:
+              type: array
+              items:
+                type: string
+            tagsReplace:
+              type: boolean
     CreateActorRequest:
       allOf:
         - $ref: '#/components/schemas/ItemWrapper'
@@ -8449,6 +8569,10 @@ components:
             - Person
         name:
           type: string
+        tags:
+          type: array
+          items:
+            type: string
         name_ar:
           type: string
         nickname:
@@ -8862,6 +8986,10 @@ components:
         updated_at:
           type: string
           format: date-time
+        tags:
+          type: array
+          items:
+            type: string
         roles:
           type: array
           items:

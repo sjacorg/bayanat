@@ -16,7 +16,7 @@ const IncidentResult = Vue.defineComponent({
             
           </v-toolbar>
           
-          <v-card-title class="text-subtitle-2">{{incident.title}}</v-card-title>
+          <v-card-title class="text-subtitle-2 text-wrap text-break">{{incident.title}}</v-card-title>
             <v-divider></v-divider>
           <slot name="header"></slot>
             

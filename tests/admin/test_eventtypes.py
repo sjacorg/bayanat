@@ -1,11 +1,11 @@
 import pytest
 
 from enferno.admin.models import Eventtype
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from tests.factories import EventtypeFactory
 from tests.models.admin import EventtypesResponseModel
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_first_or_fail,
     create_csv_for_entities,
 )

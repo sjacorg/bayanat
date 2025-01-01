@@ -18,5 +18,5 @@
       <actor-card v-if="actorDrawer && actor" :show-edit="true" :close="true" @edit="editItem" :active="actorDrawer" :log="true" :diff="true" @thumb-click="viewImage" :key="actor.id" @close="actorDrawer=false" :actor="actor"></actor-card>
       <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
     <pdf-viewer ref="pdfViewer"></pdf-viewer>
-    <visualization ref="viz"></visualization>
+    <visualization ref="viz" @error="showSnack($event)"></visualization>
     </v-navigation-drawer>  

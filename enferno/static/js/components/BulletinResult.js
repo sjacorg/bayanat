@@ -13,13 +13,13 @@ const BulletinResult = Vue.defineComponent({
       <v-card v-if="!bulletin.restricted" hover class="ma-2">
         <v-toolbar density="compact" class="d-flex px-2">
           <v-chip color="primary" variant="flat" size="small">{{ translations.id_ }} {{ bulletin.id }}</v-chip>
-          <v-chip variant="text" :href="bulletin.source_link" target="_blank" class="white--text ml-1" label
+          <v-chip v-if="bulletin.originid" variant="text" :href="bulletin.source_link" target="_blank" class="white--text ml-1" label
                   size="small"># {{ bulletin.originid }}
           </v-chip>
           <v-spacer></v-spacer>
           <v-chip variant="text" v-if="bulletin.publish_date" size="small">{{ bulletin.publish_date }}</v-chip>
         </v-toolbar>
-        <v-card-title class="text-subtitle-2">{{bulletin.title}}</v-card-title>
+        <v-card-title class="text-subtitle-2 text-wrap text-break">{{bulletin.title}}</v-card-title>
         <v-divider></v-divider>
         <slot name="header"></slot>
         
@@ -31,25 +31,23 @@ const BulletinResult = Vue.defineComponent({
 
 
               <v-list-item v-if="bulletin.locations?.length" :title="translations.locations_">
-                <v-list-item-subtitle>
-                  <v-chip-group column>
-                    <v-chip size="small" v-for="location in bulletin.locations" :key="location">
+                <v-list-item-subtitle opacity="1">
+                  <div class="flex-chips">
+                    <v-chip label size="small" prepend-icon="mdi-map-marker" class="flex-chip" v-for="location in bulletin.locations" :key="location">
                       {{ location.full_string }}
                     </v-chip>
-                  </v-chip-group>
+                  </div>
                 </v-list-item-subtitle>
               </v-list-item>
 
 
               <v-list-item v-if="bulletin.sources?.length" :title="translations.sources_">
                 <v-list-item-subtitle>
-                  <v-chip-group
-                      column
-                  >
-                    <v-chip size="small" color="grey" v-for="source in bulletin.sources" :key="source">
+                  <div class="flex-chips">
+                    <v-chip size="small" color="grey" class="flex-chip" v-for="source in bulletin.sources" :key="source">
                       {{ source.title }}
                     </v-chip>
-                  </v-chip-group>
+                  </div>
                 </v-list-item-subtitle>
 
               </v-list-item>

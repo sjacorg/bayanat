@@ -3,16 +3,7 @@ const IncidentCard = Vue.defineComponent({
   emits: ['edit', 'close'],
 
   methods: {
-
-     extractValuesById(dataList, idList, valueKey) {
-      // handle null related_as case
-      if (idList === null) {
-        return [];
-      }
-
-      return dataList.filter((item) => idList.includes(item.id)).map((item) => item[valueKey]);
-    },
-
+    
     loadGeoMap() {
       this.geoMapLoading = true;
       //load again all bulletin relations without paging (soft limit is 1000 bulletin)
@@ -95,7 +86,6 @@ const IncidentCard = Vue.defineComponent({
       }
     },
   },
-
   data: function () {
     return {
       translations: window.translations,
@@ -175,7 +165,7 @@ const IncidentCard = Vue.defineComponent({
             </template>
             {{ translations.accessRoles_ }}
           </v-tooltip>
-          <v-chip label small v-for="role in incident.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
+          <v-chip label size="small" v-for="role in incident.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
         </v-card>  
         <v-divider v-if="incident.roles?.length" ></v-divider>
 
@@ -202,11 +192,11 @@ const IncidentCard = Vue.defineComponent({
                 v-if="incident.potential_violations && incident.potential_violations.length">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.potentialViolationsCategories_ }}</div>
-            <v-chip-group column>
-              <v-chip color="blue-grey lighten-5" v-for="item in incident.potential_violations"
+            <div class="flex-chips">
+              <v-chip class="flex-chip" v-for="item in incident.potential_violations"
                       :key="item.id">{{ item.title }}
               </v-chip>
-            </v-chip-group>
+            </div>
           </v-card-text>
         </v-card>
 
@@ -214,11 +204,11 @@ const IncidentCard = Vue.defineComponent({
                 v-if="incident.claimed_violations && incident.claimed_violations.length">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.claimedViolationsCategories_ }}</div>
-            <v-chip-group column>
-              <v-chip color="blue-grey lighten-5" v-for="item in incident.claimed_violations"
+            <div class="flex-chips">
+              <v-chip class="flex-chip" v-for="item in incident.claimed_violations"
                       :key="item.id">{{ item.title }}
               </v-chip>
-            </v-chip-group>
+            </div>
           </v-card-text>
         </v-card>
 
@@ -226,22 +216,22 @@ const IncidentCard = Vue.defineComponent({
         <v-card  class="ma-2" v-if="incident.labels && incident.labels.length">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.labels_ }}</div>
-            <v-chip-group column>
-              <v-chip color="blue-grey lighten-5" v-for="label in incident.labels"
+            <div class="flex-chips">
+              <v-chip class="flex-chip" v-for="label in incident.labels"
                       :key="label.id">{{ label.title }}
               </v-chip>
-            </v-chip-group>
+            </div>
           </v-card-text>
         </v-card>
 
         <v-card  class="ma-2" v-if="incident.locations && incident.locations.length">
           <v-card-text>
             <div class="px-1 title black--text">{{ translations.locations_ }}</div>
-            <v-chip-group column>
-              <v-chip color="blue-grey lighten-5" v-for="item in incident.locations"
+            <div class="flex-chips">
+              <v-chip class="flex-chip" v-for="item in incident.locations"
                       :key="item.id">{{ item.title }}
               </v-chip>
-            </v-chip-group>
+            </div>
           </v-card-text>
         </v-card>
 
@@ -250,7 +240,7 @@ const IncidentCard = Vue.defineComponent({
         <v-card  class="ma-2" v-if="incident.events && incident.events.length">
           <v-card-text class="pa-2">
             <div class="px-1 title black--text">{{ translations.events_ }}</div>
-            <event-card v-for="event in incident.events" :key="event.id"
+            <event-card v-for="(event, index) in incident.events" :key="event.id" :number="index+1"
                         :event="event"></event-card>
           </v-card-text>
         </v-card>

@@ -11,22 +11,22 @@
         <v-card-text>
             {% include "security/_messages.html" %}
         </v-card-text>
-    <v-toolbar title="{{ _fsdomain('Select Two Factor Method') }}"></v-toolbar>
+
+        <v-toolbar title="{{ _fsdomain('Select a two factor authentication method') }}"></v-toolbar>
+
         <form action="{{ url_for_security('tf_select') }}{{ prop_next() }}" method="post" name="tf_select">
-        <v-card-text>
-
-    {{ two_factor_select_form.hidden_tag() }}
-    {{ render_field_with_errors(two_factor_select_form.which) }}
-        </v-card-text>
-        <v-card-actions class="pa-4">
-            <v-btn type="submit" color="primary" variant="elevated">Select</v-btn>
-        </v-card-actions>
-  </form>
-
+            <v-card-text>
+            {{ two_factor_select_form.hidden_tag() }}
+            {{ render_field_with_errors(two_factor_select_form.which) }}
+            </v-card-text>
+            
+            <v-card-actions class="pa-4">
+                <v-btn type="submit" color="primary" variant="elevated">Select</v-btn>
+            </v-card-actions>
+        </form>
+        
     </v-card>
-
-
-    </v-main>
+</v-main>
 {% endblock content %}
 
 

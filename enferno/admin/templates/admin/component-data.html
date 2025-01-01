@@ -51,6 +51,12 @@
                         <v-tab value="geo-location-types" class="justify-start">
                             {{ _('Geo Location Types') }}
                         </v-tab>
+                        <v-tab value="potential-violation-categories" class="justify-start">
+                            {{ _('Potential Violation Categories') }}
+                        </v-tab>
+                        <v-tab value="claimed-violation-categories" class="justify-start">
+                            {{ _('Claimed Violation Categories') }}
+                        </v-tab>
                     </v-tabs>
                 </v-col>
 
@@ -60,12 +66,75 @@
                         <v-window-item value="location-admin-levels" class="pa-1">
                             <v-card>
                                 <v-card-text>
-                                    <editable-table title="{{ _('Location Administrative Levels') }}"
+                                    <editable-table ref="locationAdminLevelsTable" title="{{ _('Location Administrative Levels') }}"
                                                     :item-headers="alHeaders"
-                                                    :allow-add="false"
+                                                    :editable-columns="['title']"
+                                                    :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
+                                                    delete-endpoint="/admin/api/location-admin-level"
                                                     save-endpoint="/admin/api/location-admin-level"
-                                                    load-endpoint="/admin/api/location-admin-levels/?per_page=1000">
+                                                    load-endpoint="/admin/api/location-admin-levels/?per_page=1000"
+                                                    @items-updated="onLocationAdminLevelsUpdated">
                                     </editable-table>
+                                    <v-divider class="my-4"></v-divider>
+                                    <!-- Add toolbar template -->
+                                    <v-toolbar flat>
+                                        <h3 class="text-h6 mb-2">{{ _('Full Location Text Format') }}</h3>
+                                    </v-toolbar>
+                                    <div class="text-caption">{{ _('These settings control how the full location text of each Location is formatted and generated from its title and its parents. You can customize this order to match the address system of the country you\'re working on.') }}</div>
+                                    <draggable 
+                                        v-model="lalChips"
+                                        :item-key="'id'"
+                                        class="d-flex flex-wrap"
+                                        @end="onDragEnd">
+                                        <template #item="{element}">
+                                            <v-chip class="ma-2">
+                                                <v-icon left small>mdi-drag</v-icon>
+                                                <span v-text="element.title"></span>
+                                            </v-chip>
+                                        </template>
+                                    </draggable>
+                                    <div class="text-caption">
+                                        {{ _('You can change the option to include postal codes in format of the full location text in the system settings.') }}
+                                    </div>
+                                    <div class="d-flex align-center justify-end mt-4">
+                                        <div v-if="isOrderChanged" class="me-2">
+                                            <v-btn 
+                                                color="secondary"
+                                                variant="elevated"
+                                                size="small"
+                                                @click="revertOrder"
+                                                prepend-icon="mdi-undo"
+                                                class="me-2">
+                                                {{ _('Revert Changes') }}
+                                            </v-btn>
+                                            <v-btn 
+                                                color="primary"
+                                                variant="elevated"
+                                                size="small"
+                                                prepend-icon="mdi-check"
+                                                @click="reorderLocationAdminLevels">
+                                                {{ _('Save Order') }}
+                                            </v-btn>
+                                        </div>
+                                        <div>
+                                            <v-btn
+                                                color="warning"
+                                                variant="elevated"
+                                                size="small"
+                                                prepend-icon="mdi-refresh"
+                                                @click="regenerateLocations">
+                                                {{ _('Regenerate Full Location Texts') }}
+                                            </v-btn>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <v-card class="pa-2 mt-2 mb-3" color="info" v-if="showLalWarning">
+                                            <v-card-text>
+                                                <v-icon>mdi-information</v-icon>
+                                                {{ _('You must Re-generate Full Location Texts for the new format to take effect.') }}
+                                            </v-card-text>
+                                        </v-card>
+                                    </div>
                                 </v-card-text>
                             </v-card>
                         </v-window-item>
@@ -74,7 +143,7 @@
                             <v-card>
                                 <v-card-text>
                                     <editable-table title="{{ _('Location Types') }}" :item-headers="ltHeaders"
-                                                    no-action-ids="[1,2]"
+                                                    :no-action-ids="[1,2]"
                                                     delete-endpoint="/admin/api/location-type"
                                                     save-endpoint="/admin/api/location-type"
                                                     load-endpoint="/admin/api/location-types/?per_page=1000">
@@ -234,6 +303,26 @@
                             </v-card>
                         </v-window-item>
 
+                        <v-window-item value="potential-violation-categories" class="pa-1">
+                            <v-card>
+                                <v-card-text>
+                                    <editable-table title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
+                                                    :editable-columns="['title','title_tr']"
+                                                    delete-endpoint="/admin/api/potentialviolation"
+                                                    save-endpoint="/admin/api/potentialviolation"
+                                                    load-endpoint="/admin/api/potentialviolation/?per_page=1000">
+                                    </editable-table>
+                        </v-window-item>
+
+                        <v-window-item value="claimed-violation-categories" class="pa-1">
+                            <v-card>
+                                <v-card-text>
+                                    <editable-table title="{{ _('Claimed Violation Categories') }}" :item-headers="claimedHeaders"
+                                                    :editable-columns="['title','title_tr']"
+                                                    delete-endpoint="/admin/api/claimedviolation"
+                                                    save-endpoint="/admin/api/claimedviolation"
+                                                    load-endpoint="/admin/api/claimedviolation/?per_page=1000">
+                                    </editable-table>
                     </v-window>
                 </v-col>
                 
@@ -253,10 +342,13 @@
     {% endif %}
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>
     <script src="/static/js/components/EditableTable.js"></script>
+    <script src="/static/js/Sortable.min.js"></script>
+    <script src="/static/js/vuedraggable.umd.js"></script>
 
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
 
+        const draggable = vuedraggable;
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
         const vuetify = createVuetify(vuetifyConfig);
@@ -269,7 +361,7 @@
                 EditableTable
             },
             data: () => ({
-
+                translations: window.translations,
                 itemsPerPageOptions: window.itemsPerPageOptions,
                 drawer: drawer,
                 selectedTab: null,
@@ -336,16 +428,85 @@
                     {title: "{{_('Actions')}}", value: "actions"},
                 ],
 
+                potentialHeaders: [
+                    {title: "{{_('ID')}}", value: "id"},
+                    {title: "{{_('Title')}}", value: "title"},
+                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                    {title: "{{_('Actions')}}", value: "actions"},
+                ],
+
+                claimedHeaders: [
+                    {title: "{{_('ID')}}", value: "id"},
+                    {title: "{{_('Title')}}", value: "title"},
+                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                    {title: "{{_('Actions')}}", value: "actions"},
+                ],
+
+                noDeleteIdsForLocationAdminLevels: [],
+                locationAdminLevels: [],
+                lalChips: [],
+                showLalWarning: false,
+                cachedOrder: [],
             }),
 
-
-            mounted() {
-
-
+            watch: {
+                locationAdminLevels: {
+                    handler(items) {
+                        this.updateLalChips(items);
+                        this.updateCachedOrder();
+                    },
+                    deep: true
+                },
             },
 
-            methods: {}
+            computed: {
+                isOrderChanged() {
+                    return JSON.stringify(this.cachedOrder) !== JSON.stringify(this.lalChips.map(chip => chip.id));
+                }
+            },
+
+            methods: {
+                onDragEnd() {
+                    if (this.isOrderChanged) {
+                        this.showLalWarning = true;
+                    }
+                },
+                revertOrder() {
+                    this.lalChips = this.cachedOrder.map(id => this.locationAdminLevels.find(item => item.id === id));
+                },
+                updateCachedOrder() {
+                    this.cachedOrder = this.lalChips.map(chip => chip.id);
+                },
+                onLocationAdminLevelsUpdated(items) {
+                    this.locationAdminLevels = items;
+                    this.updateNoActionIdsForLocationAdminLevels(items);
+                },
+                updateNoActionIdsForLocationAdminLevels(items) {
+                    const maxCode = Math.max(...items.map(item => item.code));
+                    this.noDeleteIdsForLocationAdminLevels = items.filter(item => item.code !== maxCode).map(item => item.id);
+                },
+                updateLalChips(items) {
+                    this.lalChips = items.map(item => ({id: item.id, title: item.title, display_order: item.display_order})).sort((a, b) => a.display_order - b.display_order);
+                },
+                reorderLocationAdminLevels() {
+                    axios.post("/admin/api/location-admin-levels/reorder", {order: this.lalChips.map(chip => chip.id)}).then(response => {
+                        if(response.status === 200) {
+                            this.updateCachedOrder();
+                            this.showLalWarning = true;
+                            this.$root.showSnack("Order updated");
+                        }
+                    });
+                },
+                regenerateLocations() {
+                    axios.post("/admin/api/location/regenerate/").then(response => {
+                        this.$root.showSnack(response.data);
+                        this.showLalWarning = false;
+                    });
+                }
+            }
         });
+        app.component('draggable', draggable);
         app.use(vuetify).mount('#app');
     </script>
 {% endblock %}
+

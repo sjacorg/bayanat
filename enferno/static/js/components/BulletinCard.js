@@ -16,15 +16,6 @@ const BulletinCard = Vue.defineComponent({
   },
 
   methods: {
-    extractValuesById(dataList, idList, valueKey) {
-      // handle null related_as case
-      if (idList === null) {
-        return [];
-      }
-
-      return dataList.filter((item) => idList.includes(item.id)).map((item) => item[valueKey]);
-    },
-
     updateMediaState() {},
 
     prepareImagesForPhotoswipe() {},
@@ -109,6 +100,20 @@ const BulletinCard = Vue.defineComponent({
       });
     },
 
+    viewAudio(s3url) {
+      this.iaplayer = true;
+      //solve bug when the player div is not ready yet
+      // wait for vue's next tick
+
+      this.$nextTick(() => {
+        const audio = this.$el.querySelector('#iaplayer video');
+        audio.src = s3url;
+        audio.load();
+        audio.play();
+        audio.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    },
+
     showDiff(e, index) {
       this.diffDialog = true;
       //calculate diff
@@ -140,6 +145,7 @@ const BulletinCard = Vue.defineComponent({
       hloading: false,
       mapLocations: [],
       iplayer: false,
+      iaplayer: false,
 
       // image viewer
       lightbox: null,
@@ -231,20 +237,20 @@ const BulletinCard = Vue.defineComponent({
             </template>
             {{ translations.accessRoles_ }}
           </v-tooltip>
-          <v-chip label small v-for="role in bulletin.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
+          <v-chip label size="small" v-for="role in bulletin.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
         </v-card>  
         <v-divider v-if="bulletin.roles?.length" ></v-divider>
         
-        <v-card v-if="bulletin.ref?.length" variant="flat" class="ma-2 pa-2 flex-grow-1">
+        <v-card v-if="bulletin.tags?.length" variant="flat" class="ma-2 pa-2 flex-grow-1">
           <v-tooltip location="bottom">
             <template v-slot:activator="{ props }">
               <v-icon color="primary" class="mx-2" size="small" v-bind="props">mdi-tag</v-icon>
             </template>
             {{ translations.ref_ }}
           </v-tooltip>
-          <v-chip size="small" v-for="e in bulletin.ref" class="caption black--text mx-1 mb-1">{{ e }}</v-chip>
+          <v-chip size="small" v-for="e in bulletin.tags" class="caption black--text mx-1 mb-1">{{ e }}</v-chip>
         </v-card>
-        <v-divider v-if="bulletin.ref?.length" ></v-divider>
+        <v-divider v-if="bulletin.tags?.length" ></v-divider>
     
         <v-card v-if="bulletin.source_link && bulletin.source_link !='NA'" variant="flat" class=" pa-2 ma-1 d-flex align-center flex-grow-1">
           <v-tooltip location="bottom">
@@ -299,11 +305,12 @@ const BulletinCard = Vue.defineComponent({
         </v-toolbar>
         <v-card-text>
 
-          <v-chip-group column>
-            <v-chip small label color="blue-grey " v-for="source in bulletin.sources"
-                    :key="source.id">{{ source.title }}
+          <div class="flex-chips">
+            <v-chip size="small" class="flex-chip" v-for="source in bulletin.sources"
+                    :key="source.id">
+              {{ source.title }}
             </v-chip>
-          </v-chip-group>
+          </div>
         </v-card-text>
       </v-card>
 
@@ -328,11 +335,12 @@ const BulletinCard = Vue.defineComponent({
 
         <v-card-text>
 
-          <v-chip-group column>
-            <v-chip label small color="blue-grey " v-for="label in bulletin.labels"
-                    :key="label.id">{{ label.title }}
+          <div class="flex-chips">
+            <v-chip label size="small" class="flex-chip" v-for="label in bulletin.labels"
+                    :key="label.id">
+              {{ label.title }}
             </v-chip>
-          </v-chip-group>
+          </div>
         </v-card-text>
       </v-card>
 
@@ -343,11 +351,12 @@ const BulletinCard = Vue.defineComponent({
           <v-toolbar-title class="text-subtitle-1">{{ translations.verifiedLabels_ }}</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <v-chip-group column>
-            <v-chip label small color="blue-grey " v-for="vlabel in bulletin.verLabels"
-                    :key="vlabel.id">{{ vlabel.title }}
+          <div class="flex-chips">
+            <v-chip label size="small" class="flex-chip" v-for="vlabel in bulletin.verLabels"
+                    :key="vlabel.id">
+              {{ vlabel.title }}
             </v-chip>
-          </v-chip-group>
+          </div>
         </v-card-text>
       </v-card>
 
@@ -364,10 +373,17 @@ const BulletinCard = Vue.defineComponent({
                  height="360" preload="auto"></video>
 
         </v-card>
+
+        <v-card variant="flat"  v-if="iaplayer" id="iaplayer" class="px-2 my-3">
+          <video :id="'player'+ $.uid" controls
+                 crossorigin="anonymous" poster="/static/img/waveform.png"
+                 class="w-100 mx-auto" preload="auto"></video>
+
+        </v-card>
         
         <v-card-text>
           
-          <image-gallery :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewVideo"></image-gallery>
+          <image-gallery prioritize-videos :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewVideo" @audio-click="viewAudio"></image-gallery>
         </v-card-text>
       </v-card>
 
@@ -377,12 +393,12 @@ const BulletinCard = Vue.defineComponent({
           <v-toolbar-title class="text-subtitle-1">{{ translations.locations_ }}</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <v-chip-group column>
-            <v-chip label small color="blue-grey " v-for="location in bulletin.locations"
+          <div class="flex-chips">
+            <v-chip label size="small" prepend-icon="mdi-map-marker" class="flex-chip" v-for="location in bulletin.locations"
                     :key="location.id">
               {{ location.full_string }}
             </v-chip>
-          </v-chip-group>
+          </div>
         </v-card-text>
       </v-card>
 

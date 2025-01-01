@@ -17,9 +17,8 @@
 
     <v-card style="width:min(500px, 100%)" class=" ma-auto mt-5">
         {% if is_secondary %}
-            <v-toolbar color="primary" dark text>
+        <v-toolbar color="primary" dark text>
             <v-toolbar-title>{{ _("Sign In Using your Security Key") }}</v-toolbar-title>
-            <v-spacer></v-spacer>
         </v-toolbar>
         {% endif %}
         <v-card-text class="text-center">
@@ -47,34 +46,64 @@
           require an input focus field (such as Safari)
       #}
                     {{ render_field(wan_signin_response_form.credential) }}
-                    <div id="wan-errors"></div>
+                    <v-alert v-if="wanErrors" color="error">${wanErrors}</v-alert>
+                    <v-card-actions class="justify-space-between mt-8">
+                        <div class="d-flex">
+                            <v-btn variant="text" href="{{ url_for_security('tf_select') }}{{ prop_next() }}">{{ _('Back')}}</v-btn>
+                            <v-btn variant="text" href="/mf-recovery">{{ _('Recovery Code')}}</v-btn>
+                            <v-btn variant="text" href="/login">{{ _('Logout')}}</v-btn>
+                        </div>
+                        <v-btn v-if="isTryAgainVisible" color="primary" variant="outlined" type="button" @click="reloadPage" prepend-icon="mdi-reload">{{ _('Try again')}}</v-btn>
+                    </v-card-actions>
                 </form>
-
-
-
-                <script type="text/javascript">
-                    handleSignin('{{ credential_options|safe }}')
-                        .then((result) => {
-                            if (result.error_msg) {
-                                const error_element = document.getElementById("wan-errors");
-                                error_element.innerHTML = `<em>${result.error_msg}</em>`;
-                            } else {
-                                document.getElementById("credential").value = result.credential;
-                                {# We auto-submit this form - there is a Submit button on the
-                                    form we could use - but there really isn't any reason to force the
-                                    user to click yet another button
-                                  #}
-                                document.forms["wan-signin-response-form"].submit();
-                            }
-                        });
-                </script>
             {% endif %}
         </v-card-text>
-    <v-card-actions class="justify-center mt-4">
-<p>
-
- <a href="/mf-recovery">  {{ _('Recovery Codes')}}</a> |  <a href="/logout">Logout</a>
-    </p>
-    </v-card-actions>
     </v-card>
 {% endblock content %}
+
+{% block js %}
+<script>
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+
+    const vuetify = createVuetify(vuetifyConfig);
+
+    const app = createApp({
+        delimiters: delimiters,
+        data: () => ({
+            isTryAgainVisible: false,
+            wanErrors: null,
+        }),
+        mounted() {
+            {% if credential_options %}
+                this.initWanSignIn('{{ credential_options|safe }}');
+            {% else %}
+                this.autoSubmitWanSignInForm();
+            {% endif %}
+        },
+        methods: {
+            autoSubmitWanSignInForm() {
+                document.forms["wan-signin-form"]?.submit?.();
+            },
+            reloadPage() {
+                window.location.reload();
+            },
+            initWanSignIn() {
+                handleSignin('{{ credential_options|safe }}')
+                    .then((result) => {
+                        if (result.error_msg) {
+                            const auth_failed_msg = `{{ _("Authentication was canceled or timed out.") }}`
+                            this.isTryAgainVisible = true;
+                            this.wanErrors = result.error_msg.includes('timed out') ? auth_failed_msg : result.error_msg;
+                        } else {
+                            document.getElementById("credential").value = result.credential;
+                            document.forms["wan-signin-response-form"].submit();
+                        }
+                    });
+            }
+        }
+    });
+
+    app.use(vuetify).mount('#app');
+</script>
+{% endblock %}

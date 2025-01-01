@@ -1,15 +1,24 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 23.11.0
+    rev: 24.10.0
     hooks:
       - id: black
-        language_version: python3.12
+        name: black
+        entry: black
+        types: [python]
+        files: \.py$
+        language_version: python3.13
 
   - repo: https://github.com/prettier/prettier
-    rev: '2.5.1'  # Use the latest version of Prettier
+    rev: '2.5.1'
     hooks:
       - id: prettier
         name: prettier
         entry: prettier --write
         types: [css, javascript]
         files: \.(css|js)$
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.1
+    hooks:
+      - id: gitleaks

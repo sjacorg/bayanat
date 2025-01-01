@@ -26,14 +26,16 @@ hide_: "{{ _('Hide') }}",
 relate_: "{{ _('Relate') }}",
 contains_: "{{ _('Contains') }}",
 notContains_: "{{ _('Does not contain') }}",
-ref_: "{{ _('Refs') }}",
-inRef_: "{{ _('Include Refs') }}",
-exRef_: "{{ _('Exclude Refs') }}",
+tags_: "{{ _('Tags') }}",
+ref_: "{{ _('Tags') }}",
+inRef_: "{{ _('Include Tags') }}",
+exRef_: "{{ _('Exclude Tags') }}",
 publishDate_: "{{ _('Publish Date') }}",
 documentationDate_: "{{ _('Documentation Date') }}",
 createdDate_: "{{ _('Creation Date') }}",
 updatedDate_: "{{ _('Last Modified Date') }}",
 eventDate_: "{{ _('Event Date') }}",
+timingForThisEventIsEstimated_: "{{ _('Timing for this event is estimated') }}",
 singleEvent_: "{{ _('Search in a single event') }}",
 assignedUser_: "{{ _('Assigned User') }}",
 unassigned_: "{{ _('Unassigned') }}",
@@ -304,6 +306,7 @@ confirmDelete_: "{{ _('Are you sure you want to delete') }}",
 
 //Export card
 includeMedia_: "{{ _('Include Media') }}",
+exportFormat_: "{{ _('Export format') }}",
 
 // Export Download
 download_: "{{ _('Download') }}",
@@ -318,11 +321,17 @@ userPermissions_: "{{ _('User Permissions') }}",
 userTwoFactorMethods_: "{{ _('User 2FA Methods') }}",
 noTwoFactorMethods_: "{{ _('2FA Inactive') }}",
 canViewUsernames_: "{{ _('Can View Usernames') }}",
+cannotViewUsernames_: "{{ _('Cannot View Usernames') }}",
 canViewSimpleHistory_: "{{ _('Can View Simple History') }}",
+cannotViewSimpleHistory_: "{{ _('Cannot View Simple History') }}",
 canViewFullHistory_: "{{ _('Can View Full History') }}",
+cannotViewFullHistory_: "{{ _('Cannot View Full History') }}",
 canEditLocations_: "{{ _('Can Edit Locations') }}",
+cannotEditLocations_: "{{ _('Cannot Edit Locations') }}",
 canExport_: "{{ _('Can Export') }}",
+cannotExport_: "{{ _('Cannot Export') }}",
 canSelfAssign_: "{{ _('Can Self Assign') }}",
+cannotSelfAssign_: "{{ _('Cannot Self Assign') }}",
 userSessions_: "{{ _('User Sessions') }}",
 session_: "{{ _('Session') }}",
 ip_: "{{ _('IP') }}",
@@ -333,6 +342,11 @@ logOffDevice_: "{{ _('Log off this device') }}",
 // Geomap
 enterFullscreen_: "{{ _('View Fullscreen') }}",
 exitFullscreen_: "{{ _('Exit Fullscreen') }}",
+number_: "{{ _('Number') }}",
+coordinates_: "{{ _('Coordinates') }}",
+type_: "{{ _('Type') }}",
+eventType_: "{{ _('Event Type') }}",
+parentId_: "{{ _('Parent ID') }}",
 
 // Media
 image_preview_ : "{{ _('Preview Image') }}",
@@ -345,8 +359,12 @@ click_to_copy_ : "{{ _('Click to copy') }}",
 etag_ : "{{ _('File Hash') }}",
 filename_ : "{{ _('Filename') }}",
 
+// System Administration
+defaultsLoaded_: "{{ _('Default settings loaded. Click Save to apply changes.') }}",
+
 // Component Data
 include_postal_code_ : "{{ _('Include Postal Code') }}",
+logger_ : "{{ _('Logger') }}",
 // bulletin location types
 bulletinLocTypes_:
 [
@@ -421,6 +439,7 @@ probs : [
 
 loggedOut_: "{{ _('You have been logged out. Please log in again.') }}",
 logoutConfirmation_: "{{ _('Are you sure you want to log out all sessions for this user?') }}",
+logoutSessionConfirmation_: "{{ _('Are you sure you want to end the session for this device?') }}",
 allSessionsLoggedOut_: "{{ _('All sessions for the user have been logged out successfully.') }}",
 loggedOutSession_: "{{ _('Logged out session') }}",
 errorFetchingSessions_: "{{ _('Error fetching sessions') }}",
@@ -441,7 +460,12 @@ started_: "{{ _('Started') }}",
 logOffThisDevice_: "{{ _('Log off this device') }}",
 active_: "{{ _('Active') }}",
 inactive_: "{{ _('Inactive') }}",
-logoutAllSessions_: "{{ _('Logout All Sessions') }}"
+logoutAllSessions_: "{{ _('Logout All Sessions') }}",
+resetPassword_: "{{ _('Reset password') }}",
+passwordResetAlreadyRequested_: "{{ _('Password reset already requested.') }}",
+passwordResetRequested_: "{{ _('Password reset requested.') }}",
+forcePasswordReset_: "{{ _('Force password reset') }}",
+revoke2fa_: "{{ _('Revoke 2FA') }}"
 
 
 

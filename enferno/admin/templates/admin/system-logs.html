@@ -11,17 +11,18 @@
                                     height="calc(100vh - 335px)"
                                     id="logs-dt"
                                     fixed-header
-                                    v-model:items-per-page="options.itemsPerPage"
-                                    v-model:page="options.page"
                                     :headers="headers"
                                     @click:row.stop="rowClick"
                                     :items="items"
                                     :loading="loading"
                                     :items-per-page-options="itemsPerPageOptions"
                                     @update:options="refresh"
+                                    :page="options.page"
                                     :items-length="itemsLength"
                                     select-strategy="page"
                                     class="elevation-1"
+                                    v-model:sort-by="sortBy"
+                                    must-sort
                             >
                                 <template v-slot:top>
                                     <v-card variant="flat" class="border-b-thin">
@@ -127,7 +128,12 @@
                 availableDates: [],
                 menu: false,
                 date: null,
-
+                sortBy: [
+                    {
+                        "key": "timestampFmt",
+                        "order": "desc"
+                    }
+                ]
             }),
 
             computed: {
@@ -136,11 +142,12 @@
                 },
                 headers() {
                     return [
-                        {title: "{{_('Timestamp')}}", value: "timestampFmt", width: 50},
-                        {title: "{{_('Level')}}", value: "level", width: 50},
-                        {title: "{{_('Type')}}", value: "exception.type", width: 100},
-                        {title: "{{_('Endpoint')}}", value: "endpoint", width: 100},
-                        {title: "{{_('Message')}}", value: "messageTrunc", width: 200},
+                        {title: "{{_('Timestamp')}}", value: "timestampFmt", width: 50, sortable: true},
+                        {title: "{{_('Logger')}}", value: "logger", width: 100, sortable: true},
+                        {title: "{{_('Level')}}", value: "level", width: 50, sortable: true},
+                        {title: "{{_('Type')}}", value: "exception.type", width: 100, sortable: true},
+                        {title: "{{_('Endpoint')}}", value: "endpoint", width: 100, sortable: true},
+                        {title: "{{_('Message')}}", value: "messageTrunc", width: 200, sortable: true},
                     ];
                 },
             },
@@ -164,8 +171,6 @@
                             this.items = [];
                             this.showSnack("{{ _('No log files found')}}");
                         }
-                    }).catch(err => {
-                        this.showSnack(err.response?.data);
                     });
                 },
                 getColor(item) {
@@ -206,8 +211,6 @@
                         this.logFiles = this.parseFiles(response?.data);
                         this.logCount = this.logFiles.length;
                         this.availableDates = this.logFiles.map(file => file.label); // Extract available dates
-                    }).catch(err => {
-                        this.showSnack(err.response?.data);
                     });
                 },
 
@@ -239,8 +242,8 @@
                 },
 
 
-                refresh() {
-                    const options = this.options;
+                refresh(options) {
+                    this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
                     if (!!!this.currentLogFile) {
                         this.items = [];
@@ -257,7 +260,6 @@
                         this.itemsLength = this.items.length;
                     }).catch(err => {
                         console.log(err);
-                        this.showSnack(err.response?.data);
                     })
                         .finally(() => {
                             this.loading = false;
@@ -306,7 +308,7 @@
                     this.refresh();
                 },
                 copyToClipboard(item) {
-                    let formatted_item = `time: ${item.timestampFmt} \nlevel: ${item.level} \nmessage: ${item.message} \npathname: ${item.pathname} \nline: ${item.lineno}`;
+                    let formatted_item = `time: ${item.timestampFmt} \nlogger: ${item.logger} \nlevel: ${item.level} \nmessage: ${item.message} \npathname: ${item.pathname} \nline: ${item.lineno}`;
 
                     if (item.exception && Object.keys(item.exception).length > 0) {
                         formatted_item += `\nendpoint: ${item.endpoint || 'n/a'}\n`;
