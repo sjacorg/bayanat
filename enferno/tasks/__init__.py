@@ -13,8 +13,10 @@ from datetime import datetime, timedelta, date
 
 import boto3
 import pandas as pd
+import requests
 from celery import Celery, chain
 from celery.schedules import crontab
+from packaging import version
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -1169,6 +1171,57 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
+
+
+GITHUB_API_URL = "https://api.github.com/repos/sjacorg/bayanat/releases/latest"
+REDIS_KEY = "bayanat:update_info"
+
+
+@celery.task
+def check_for_updates() -> Optional[dict]:
+    """
+    Check for Bayanat updates using the GitHub API.
+
+    This task fetches the latest release information from the Bayanat GitHub repository,
+    compares it with the current version, and stores the update information in Redis.
+
+    Returns:
+        dict: A dictionary containing update information, or None if the check failed.
+    """
+    try:
+        response = requests.get(GITHUB_API_URL)
+        response.raise_for_status()  # Raise an exception for bad responses
+        latest_release = response.json()
+
+        latest_version = latest_release["tag_name"].lstrip("v")
+        current_version = cfg.VERSION
+        print(current_version)
+
+        # Use packaging.version for proper version comparison
+        update_available = version.parse(latest_version) > version.parse(current_version)
+
+        update_info = {
+            "current_version": current_version,
+            "latest_version": latest_version,
+            "update_available": update_available,
+            "release_notes": latest_release["body"],
+            "download_url": latest_release["zipball_url"],
+            "published_at": latest_release["published_at"],
+        }
+
+        # Store update info in Redis
+        rds.set(REDIS_KEY, json.dumps(update_info))
+
+        logger.info(
+            f"Update check completed. Current version: {current_version}, Latest version: {latest_version}, Update available: {update_available}"
+        )
+        return update_info
+    except requests.RequestException as e:
+        logger.error(f"Failed to check for updates: {e}")
+        return None
+    except (KeyError, ValueError) as e:
+        logger.error(f"Error parsing update information: {e}")
+        return None
 
 
 @celery.task

@@ -18,6 +18,25 @@
                     <p>{{ _('Last login') }} — {{ g.user.last_login_at.strftime('%b %d, %Y') }}</p>
                 </v-card-subtitle>
                 {% endif %}
+
+                {% if update_info %}
+
+                <v-card icon="mdi-update"  class="my-3 pa-2 bg-lime-lighten-5 ">
+
+                        <v-card-title>{{ _('Update Available!') }}</v-card-title>
+                    <v-divider></v-divider>
+                        <v-card-item>{{ _('Current Version') }}: {{ update_info.current_version }}</v-card-item>
+                        <v-card-item>{{ _('Latest Version') }}: {{ update_info.latest_version }}</v-card-item>
+                        <v-card-item>{{ _('Release Notes') }}:</v-card-item>
+                        <v-card-text>
+                        <pre>{{ update_info.release_notes }}</pre>
+                            </v-card-text>
+                        <v-card-actions>
+                        <v-btn color="primary" variant="elevated" href="{{ update_info.download_url }}" target="_blank">{{ _('Download Update') }}</v-btn>
+                            </v-card-actions>
+                    </v-card>
+
+                {% endif %}
                 
                 {% if current_user.has_role('Admin') and config.ETL_PATH_IMPORT %}
                 <v-card-text>
@@ -104,14 +123,14 @@
                                 </v-list-item>
                             </v-col>
                         </v-row>
-                        
+
                         <v-row>
                             <v-spacer></v-spacer>
 
-                            <v-btn 
+                            <v-btn
                                 @click="completeSetup"
                                 prepend-icon="mdi-check"
-                                class="ma-3" 
+                                class="ma-3"
                                 color="primary">
                                 {{ _('Complete Setup') }}
                             </v-btn>
@@ -120,7 +139,7 @@
                     </v-container>
                 </v-card-text>
                 {% endif %}
-            
+
                 <v-sheet class="pa-2 mt-auto text-caption">
                     <p>&copy; 2024 <a href="https://syriaaccountability.org/" target="_blank">{{ _('Syria Justice &amp;
                         Accountability Center (SJAC) ') }}</a> {{ _('All rights reserved.') }}</p>

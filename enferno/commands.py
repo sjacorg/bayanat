@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
-
+import sys
 import click
 from flask.cli import AppGroup
 from flask.cli import with_appcontext
@@ -10,18 +10,68 @@ from flask_security.utils import hash_password
 from enferno.settings import Config
 from enferno.extensions import db
 from enferno.user.models import User, Role
-from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import (
     import_default_data,
     generate_user_roles,
     generate_workflow_statues,
     create_default_location_data,
 )
+from enferno.utils.config_utils import ConfigManager
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
-from sqlalchemy import text
+from enferno.admin.models import MigrationHistory
+from sqlalchemy import event, MetaData, text
+from natsort import natsorted
 
 logger = get_logger()
+
+
+# Function to log table creation
+def log_table_creation(target, connection, tables=None, **kw):
+    if tables is not None:
+        for table in tables:
+            logger.info(f"Creating table: {table.name}")
+
+
+def _mark_migrations_applied() -> None:
+    """
+    Internal function to mark all valid SQL migrations as applied.
+    This should be run when initializing the system for the first time
+    so that all past migrations are marked as applied.
+    """
+    # The migrations directory is inside the enferno package
+    migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
+
+    # Ensure the directory exists
+    if not os.path.exists(migration_dir):
+        click.echo(f"Error: Migration directory '{migration_dir}' not found.")
+        return
+
+    # Get all .sql files in the migrations directory, sorted by natural name
+    migration_files = natsorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
+
+    # Loop through each migration file and mark it as applied
+    for migration_file in migration_files:
+        if not MigrationHistory.is_applied(migration_file):
+            # Record the migration in the database
+            MigrationHistory.record_migration(migration_file)
+            click.echo(f"Migration {migration_file} marked as applied.")
+
+    # Commit the session to ensure all migrations are recorded
+    db.session.commit()
+
+    click.echo("All valid SQL migrations have been marked as applied.")
+
+
+@click.command()
+@with_appcontext
+def mark_migrations_applied() -> None:
+    """
+    Command wrapper to mark all valid SQL migrations as applied.
+    This should be run when initializing the system for the first time
+    so that all past migrations are marked as applied.
+    """
+    _mark_migrations_applied()
 
 
 @click.command()
@@ -38,12 +88,19 @@ def create_db(create_exts: bool) -> None:
         None
     """
     logger.info("Creating database structure")
+
+    # Attach the event listener for table creation
+    metadata = db.metadata
+    event.listen(metadata, "before_create", log_table_creation)
+
     # create db exts if required, needs superuser db permissions
     if create_exts:
         with db.engine.connect() as conn:
             conn.execute(text("CREATE EXTENSION if not exists pg_trgm ;"))
             click.echo("Trigram extension installed successfully")
+            logger.info("Trigram extension installed successfully")
             conn.execute(text("CREATE EXTENSION if not exists postgis ;"))
+            logger.info("Postgis extension installed successfully")
             click.echo("Postgis extension installed successfully")
             conn.commit()
 
@@ -60,6 +117,12 @@ def create_db(create_exts: bool) -> None:
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
 
+    # Mark all migrations as applied on initial DB creation
+    _mark_migrations_applied()
+
+    # Remove the event listener after creation
+    event.remove(metadata, "before_create", log_table_creation)
+
 
 @click.command()
 @with_appcontext
@@ -75,6 +138,64 @@ def import_data() -> None:
     except:
         click.echo("Error importing data.")
         logger.error("Error importing data.")
+
+
+@click.command()
+@click.option("--dry-run", is_flag=True, help="Check for pending migrations without applying them")
+@with_appcontext
+def apply_migrations(dry_run: bool = False) -> None:
+    """
+    Apply all pending SQL migrations in the correct order and mark them as applied.
+    This should be run during application updates when new migrations are present.
+    """
+    migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
+
+    if not os.path.exists(migration_dir):
+        click.echo(f"Error: Migration directory '{migration_dir}' not found.")
+        sys.exit(1)
+
+    migration_files = natsorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
+    pending_migrations = [f for f in migration_files if not MigrationHistory.is_applied(f)]
+
+    if not pending_migrations:
+        click.echo("No pending migrations to apply.")
+        return
+
+    if dry_run:
+        click.echo("Pending migrations:")
+        for migration in pending_migrations:
+            click.echo(f"  - {migration}")
+        return
+
+    connection = db.session.connection()
+    trans = connection.begin()
+
+    try:
+        click.echo("Starting migration process...")
+        for migration_file in pending_migrations:
+            migration_path = os.path.join(migration_dir, migration_file)
+            with open(migration_path, "r") as sql_file:
+                migration_sql = sql_file.read()
+
+            problematic_commands = ["CREATE DATABASE", "DROP DATABASE", "VACUUM"]
+            if any(cmd in migration_sql.upper() for cmd in problematic_commands):
+                click.echo(
+                    f"Warning: Migration {migration_file} contains commands that cannot be rolled back!"
+                )
+                click.echo("Consider splitting these operations into separate migrations.")
+
+            connection.execute(text(migration_sql))
+            click.echo(f"Applied migration: {migration_file}")
+            MigrationHistory.record_migration(migration_file)
+
+        trans.commit()
+        click.echo("[Success] All pending migrations have been applied.")
+
+    except Exception as e:
+        trans.rollback()
+        click.echo("[Failed] Rolling back all migrations due to error.")
+        click.echo(f"Error details: {str(e)}")
+        sys.exit(1)
 
 
 @click.command()

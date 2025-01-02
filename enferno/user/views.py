@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Any, Literal, Optional
 
 import requests
@@ -7,17 +6,21 @@ from flask import Blueprint, request, session, redirect, g, Response, current_ap
 from flask.templating import render_template
 from flask_security import auth_required, login_user, current_user
 from flask_security.forms import LoginForm
+from flask_security.signals import password_changed, user_authenticated
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
 from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
-from enferno.user.models import User, Session
-from flask_security.signals import password_changed, user_authenticated
+from enferno.user.models import User, Session, Role
+from enferno.tasks import check_for_updates
+from enferno.utils.logging_utils import get_logger
+from enferno.extensions import rds
 
 bp_user = Blueprint("users", __name__, static_folder="../static")
 
 client = WebApplicationClient(cfg.GOOGLE_CLIENT_ID)
+logger = get_logger()
 
 
 @bp_user.before_app_request
@@ -155,7 +158,17 @@ def account() -> str:
     """
     Main dashboard endpoint.
     """
-    return render_template("dashboard.html")
+
+    update_info_bytes = rds.get("bayanat:update_info")
+    update_info = None
+    if update_info_bytes is not None:
+        try:
+            update_info = json.loads(update_info_bytes.decode())
+        except json.JSONDecodeError as e:
+            update_info = update_info_bytes.decode()
+            current_app.logger.error(f"Failed to parse update_information: {str(e)}")
+
+    return render_template("dashboard.html", update_info=update_info)
 
 
 @bp_user.route("/settings/")
@@ -232,10 +245,19 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
             "device": request.user_agent.string,  # Full user-agent string
         },
     }
+
     # Create a new Session object and add it to the database
     new_session = Session(**session_data)
     new_session.save()
+    logger.debug(f"New session created for user ID: {user.id}")
 
     # Check if multiple sessions are disabled
     if current_app.config.get("DISABLE_MULTIPLE_SESSIONS", False):
         user.logout_other_sessions()
+        logger.info(f"Other sessions terminated for user ID: {user.id}")
+
+    # Check for updates if user is admin
+    if user.has_role(Role.ADMIN):
+        logger.info("Checking for updates...")
+        check_for_updates.delay()
+        logger.info("Update check triggered successfully.")

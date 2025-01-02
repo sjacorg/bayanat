@@ -20,6 +20,8 @@ def uia_username_mapper(identity):
 class Config(object):
     """Base configuration."""
 
+    VERSION = "2.1.0"
+
     BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5000/")
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
