@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from enferno.admin.models import GeoLocationType
+from enferno.admin.models import Activity, Bulletin, GeoLocationType
 from tests.factories import (
     ActorFactory,
     BulletinFactory,
@@ -13,6 +13,7 @@ from tests.factories import (
     create_source,
     create_profile_for,
     create_geolocation,
+    restrict_to_roles,
 )
 
 
@@ -113,6 +114,9 @@ def create_simple_bulletin(session):
     session.add(bulletin)
     session.commit()
     yield bulletin
+    bulletin.roles = []
+    bulletin.assigned_to = None
+    session.commit()
 
 
 @pytest.fixture(scope="function")
@@ -142,6 +146,14 @@ def create_full_bulletin(
     session.add(bulletin)
     session.commit()
     yield bulletin
+    bulletin.roles = []
+    bulletin.sources = []
+    bulletin.labels = []
+    bulletin.ver_labels = []
+    bulletin.events = []
+    bulletin.assigned_to = None
+    bulletin.assigned_to_id = None
+    session.commit()
 
 
 @pytest.fixture(scope="function")
@@ -154,3 +166,6 @@ def create_related_bulletin(session):
     b2.relate_bulletin(b1, json.dumps({}), False)
     b3.relate_bulletin(b1, json.dumps({}), False)
     yield b1, b2, b3
+    for b in [b1, b2, b3]:
+        b.roles = []
+    session.commit()

@@ -33,6 +33,8 @@ const Visualization = Vue.defineComponent({
         })
         .catch((err) => {
           console.error(err);
+          this.$emit('error', handleRequestError(err));
+          this.hide();
           return null; // Return null to indicate an error
         })
         .finally(() => {
@@ -69,7 +71,8 @@ const Visualization = Vue.defineComponent({
         })
         .catch((error) => {
           console.error('Error fetching graph data from Redis:', error);
-          this.$emit('error', 'Failed to load graph data');
+          this.hide();
+          this.$emit('error', handleRequestError(error));
         })
         .finally(() => {
           this.loading = false;

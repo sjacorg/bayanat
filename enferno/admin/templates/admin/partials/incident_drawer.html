@@ -17,5 +17,5 @@
       
       <incident-card v-if="incidentDrawer && incident" :show-edit="true" :close="true" @edit="editItem" :log="true" :diff="true" @close="incidentDrawer=false" :incident="incident"></incident-card>
       <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
-    <visualization ref="viz"></visualization>
+    <visualization ref="viz" @error="showSnack($event)"></visualization>
     </v-navigation-drawer>  

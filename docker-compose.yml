@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   postgres:
     container_name: postgres
@@ -48,11 +46,11 @@ services:
         - ROLE=flask
         - ENV_FILE=${ENV_FILE:-.env}
     volumes:
-      - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media:rw'
-      - './enferno/imports:/app/enferno/imports:rw'
-      - './logs:/app/logs:rw'
+      - '${PWD}/backups:/app/backups/:rw'
+      - '${MEDIA_PATH:-./enferno/media}:/app/enferno/media/:rw'
+      - '${PWD}/enferno/imports:/app/enferno/imports/:rw'
+      - '${PWD}/logs/:/app/logs/:rw'
       - '${PWD}/config.json:/app/config.json:rw'
-      - '${PWD}/reload.ini:/app/reload.ini:rw'
       - '${PWD}/${ENV_FILE:-.env}:/app/.env:ro'
     depends_on:
       postgres:
@@ -69,7 +67,6 @@ services:
 
   celery:
     container_name: celery
-    image: celery
     build:
       context: .
       dockerfile: ./flask/Dockerfile

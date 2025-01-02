@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>{{ _(' Setup Bayanat') }}</title>
+    <meta name="description" content=""/>
+    <meta name="author" content="{{ _('Syria Justice and Accountability Center') }}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="/static/css/vuetify.min.css"/>
+    <link rel="stylesheet" href="/static/css/app.css"/>
+    <link rel="stylesheet" href="/static/font/mdi/css/materialdesignicons.css"/>
+    <link rel="stylesheet" href="/static/css/leaflet.css">
+    <link rel="stylesheet" href="/static/leaflet-fullscreen/leaflet.fullscreen.css">
+
+    <!-- favicon -->
+
+    <link rel="apple-touch-icon" sizes="57x57" href="/static/img/favicon/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/static/img/favicon/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/img/favicon/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/static/img/favicon/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/img/favicon/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/img/favicon/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/static/img/favicon/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/img/favicon/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
+    <link rel="manifest" crossorigin="use-credentials" href="/static/img/favicon/manifest.json">
+    <meta name="msapplication-TileImage" content="/static/img/favicon/ms-icon-144x144.png">
+
+
+</head>
+
+<body>
+
+
+<div id="app" class="h-screen security">
+    <v-app v-cloak class="h-screen overflow-auto">
+        <v-layout>
+            <v-main class="overflow-auto">
+                <v-container>
+                    <v-card>
+                        <v-toolbar color="primary" title="Bayanat Setup Wizard">
+
+                        </v-toolbar>
+                        <v-card-text>
+                            <v-stepper-vertical v-model="step">
+                                <template v-slot:default="{ step }">
+                                    <v-stepper-vertical-item
+                                            :complete="step > 1"
+                                            title="{{ _('Welcome to Bayanat!') }}"
+                                            value="1">
+                                        <v-card variant="flat" class="pa-4">
+                                            <div class="mb-5">
+                                                {{ _('Welcome to your Bayanat server. This wizard will guide you through a few basic steps 
+                                                to set up your Bayanat server. You can start using your Bayanat server afterwards. You can use the default settings in this wizard without any change, and all these settings can be easily changed later on.') }}
+                                            </div>
+                                        </v-card>
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" @click="next">{{ _('Proceed') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev></template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 2"
+                                            title="First Admin User"
+                                            value="2"
+                                            :disabled="adminCreated">
+
+                                        <v-card variant="flat" :disabled="adminCreated" class="pa-4">
+                                            <v-form @submit.prevent="createSuperAdmin">
+                                                <div class="mb-5">
+                                                    {{ _('Create your first admin account. This account will have unrestricted
+                                                    access to all features and settings in Bayanat.') }}
+                                                </div>
+
+                                                <v-text-field
+                                                        v-model="username"
+                                                        label="Username"
+                                                        required
+                                                ></v-text-field>
+                                                <v-text-field
+                                                        v-model="password"
+                                                        label="Password"
+                                                        type="password"
+                                                        required
+                                                ></v-text-field>
+                                                <v-btn :loading="loading" :disabled="loading" color="primary" variant="flat" type="submit">
+                                                    {{ _('Create Admin Account') }}
+                                                </v-btn>
+                                            </v-form>
+                                        </v-card>
+
+                                        <template v-slot:next></template>
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 3"
+                                            title="{{ _('Language') }}"
+                                            value="3">
+
+                                        <v-card-text>
+                                            <v-btn-toggle divided variant="outlined" color="primary" mandatory class="mb-3"
+                                                          v-model="cfg.BABEL_DEFAULT_LOCALE">
+                                                <v-btn size="small" v-for="(name, code) in languages"
+                                                       :value="code">
+                                                    ${name}
+                                                </v-btn>
+                                            </v-btn-toggle>
+
+                                            <p class="text-caption">{{ _('Changes default interface language for all users. Users can still choose their own interface language.') }}</p>
+                                        </v-card-text>
+
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" @click="next">{{ _('Proceed') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 4"
+                                            title="{{ _('Default Data') }}"
+                                            value="4"
+                                            :disabled="dataImported">
+
+                                        <div class="mb-5">
+                                            {{ _('Would you like to import Bayanat\'s default component data? This will allow your team to quickly start using Bayanat\'s default component data such as: Violations categories, Event types, Countries and Nationalities, GeoLocation types, Media category and relationships types. You can modify or delete these later.') }}
+                                        </div>
+
+                                            <v-btn color="primary" variant="flat" @click="importDefaultData"
+                                               :loading="loading" :disabled="loading || dataImported">
+                                               {{ _('Import Default Data') }}
+                                            </v-btn>
+
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" @click="next">{{ _('Skip') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 5"
+                                            title="{{ _('Location') }}"
+
+                                            value="5"
+                                    >
+                                        <div class="mb-5">
+                                            {{ _('Customize Bayanat\'s location data to suit the country and context of your team\'s investigations.') }}
+                                        </div>
+
+                                        <h2 class="mt-3 subtitle-2 mb-2">{{ _('Default Map Position') }}</h2>
+                                        <span class="text-caption">{{ _('Changes default center position for all maps in Bayanat.') }}</span>
+                                        <geo-map style="z-index:200" v-model="cfg.GEO_MAP_DEFAULT_CENTER"
+                                                    :map-height="300"></geo-map>
+                                        
+                                        <h2 class="mt-3 subtitle-2 mb-2">{{ _('Satellite Imagery') }}</h2>
+                                        <span class="text-caption">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satellite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</span>
+                                        <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
+                                                        persistent-hint
+                                                        hint="{{ _('API key for Google Maps. Adding a key enables satellite imagery in Bayanat\'s maps.') }}"
+                                                        v-model="cfg.GOOGLE_MAPS_API_KEY"></v-text-field>
+                                        
+                                        <h2 class="mt-3 subtitle-2 mb-2">{{ _('Administrative Divisions') }}</h2>
+                                        <span class="text-caption">{{ _('Bayanat ships with the Syrian administrative divisions by default. Change the names of the administrative divisions to match the country your team will be working on.') }}</span>
+                                        <editable-table title=""
+                                                        class="mt-3"
+                                                        :item-headers="alHeaders"
+                                                        :allow-add="false"
+                                                        save-endpoint="/admin/api/location-admin-level"
+                                                        load-endpoint="/admin/api/location-admin-levels/?per_page=1000">
+                                        </editable-table>
+
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" @click="next">{{ _('Proceed') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 6"
+                                            title="{{ _('Storage') }}"
+
+                                            value="6"
+                                    >
+                                        <v-card-text>
+                                            <h2 class="mt-1 subtitle-2 mb-2">{{ _('Media Storage') }}</h2>
+                                            <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
+                                            
+                                            <v-btn-toggle v-model="cfg.FILESYSTEM_LOCAL" divided variant="outlined" color="primary" mandatory class="my-3 mb-9">
+                                                <v-btn :value="1">{{ _('Local Filesystem') }}</v-btn>
+                                                <v-btn :value="0">{{ _('S3 Storage') }}</v-btn>
+                                            </v-btn-toggle>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="!cfg.FILESYSTEM_LOCAL" class="pa-4 ">
+                                                    <v-text-field label="{{ _('AWS Access Key ID') }}"
+                                                                  v-model="cfg.AWS_ACCESS_KEY_ID"></v-text-field>
+                                                    <v-text-field label="{{ _('AWS Access Key Secret') }}"
+                                                                  v-model="cfg.AWS_SECRET_ACCESS_KEY"></v-text-field>
+                                                    <v-text-field label="{{ _('S3 Bucket Name') }}"
+                                                                  v-model="cfg.S3_BUCKET"></v-text-field>
+                                                    <v-text-field label="{{ _('S3 Region') }}"
+                                                                  v-model="cfg.AWS_REGION"></v-text-field>
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+                                        </v-card-text>
+
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" @click="next">{{ _('Proceed') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 7"
+                                            title="{{ _('Security') }}"
+                                            value="7"
+                                    >
+
+                                        <v-card-text>
+
+                                            <h2 class="mt-1 subtitle-2 mb-2">{{ _('Password Policies') }}</h2>
+                                            <v-card-text>
+
+                                                <v-text-field class="mb-9" type="number"
+                                                            label="{{ _('Password Minimum Length') }}"
+                                                            persistent-hint
+                                                            hint="{{ _('Minimum required length for passwords.') }}"
+                                                            suffix="characters"
+                                                            v-model.number="cfg.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
+
+                                                <h3 class="mt-1 subtitle-2 mb-2">{{ _('Password Strength') }}</h3>
+
+                                                <p class="text-caption">{{ _('Bayanat uses zxcvbn password strength estimator to calculate a password score. \'Medium\' corresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. \'Strong\' corresponds to a score of 3, we recommend this setting for online Bayanat installations. \'Very Strong\' corresponds to a zxcvbn score of 4 and offers the highest level of protection.') }}</p>
+
+                                                <v-sheet width="400">
+                                                    
+                                                    <v-slider
+                                                            v-model="cfg.SECURITY_ZXCVBN_MINIMUM_SCORE"
+                                                            min="2"
+                                                            max="4"
+                                                            hint="{{ _('') }}"
+                                                            persistent-hint
+                                                            color="primary"
+                                                            show-ticks="always"
+                                                            :ticks="{
+                                                                '2': 'Medium',
+                                                                '3': 'Strong',
+                                                                '4': 'Very Strong'}"
+                                                            :tick-size="4"
+                                                            step="1"
+                                                    ></v-slider>
+                                                </v-sheet>
+                                                
+                                            </v-card-text>
+
+                                            <h2 class="mt-1 subtitle-2 mb-2">{{ _('Two Factor Authentication Policies') }}</h2>
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Force all users to enroll in two factor authentication.') }}"
+                                                      v-model="cfg.SECURITY_TWO_FACTOR_REQUIRED">
+                                            </v-switch>
+                                        </v-card-text>
+
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" @click="next">{{ _('Proceed') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 8"
+                                            title="{{ _('Access Control') }}"
+                                            value="8"
+                                    >
+
+                                        <v-card-text>
+
+                                            <p class="text-caption">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behavior can be changed with the following settings.') }}</p>
+
+                                            <v-switch color="primary" class="mb-9"
+                                                      label="{{ _('Restrictive Access Control') }}" persistent-hint
+                                                      hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
+                                                      v-model="cfg.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
+                                            <v-switch color="primary" class="mb-9"
+                                                      label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
+                                                      v-model="cfg.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
+                                            
+                                        </v-card-text>
+
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" @click="next">{{ _('Proceed') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 9"
+                                            title="{{ _('Import/Export Tools') }}"
+                                            value="9"
+                                    >
+
+                                        <v-card-text>
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Media Import Tool') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
+                                                      v-model="cfg.ETL_TOOL"></v-switch>
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Sheet Import Tool') }}"
+                                                      persistent-hint
+                                                      hint="{{ _('Enables dynamic import of spreadsheets into Actors.') }}"
+                                                      v-model="cfg.SHEET_IMPORT"></v-switch>
+                                            <v-switch color="primary" class="mb-9" label="{{ _('Export Tool') }}"
+                                                      v-model="cfg.EXPORT_TOOL" persistent-hint
+                                                      hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Administrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
+                                        </v-card-text>
+
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" @click="next">{{ _('Proceed') }}</v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            :complete="step > 10"
+                                            title="{{ _('Retention Periods') }}"
+                                            value="10"
+                                    >
+
+                                        <v-card-text>
+                                            <v-text-field class="mb-9" type="number"
+                                                          label="{{ _('Activity Retention Period') }}" persistent-hint
+                                                          hint="{{ _('Period after which activities will be deleted.') }}"
+                                                          suffix="days"
+                                                          v-model.number="cfg.ACTIVITIES_RETENTION"></v-text-field>
+                                            <v-text-field class="mb-9" type="number"
+                                                          label="{{ _('Export Expiry Time') }}" persistent-hint
+                                                          hint="{{ _('Period after which exports will expired and be deleted.') }}"
+                                                          suffix="hours"
+                                                          v-model.number="cfg.EXPORT_DEFAULT_EXPIRY"></v-text-field>
+
+                                            <v-text-field class="mb-9" type="number"
+                                                          label="{{ _('Session Data Retention Period') }}" persistent-hint
+                                                          hint="{{ _('Period after which session data will be deleted.') }}"
+                                                          suffix="days"
+                                                          v-model.number="cfg.SESSION_RETENTION_PERIOD"></v-text-field>
+                                        </v-card-text>
+
+                                        <template v-slot:next>
+                                            <v-btn :color="overlay ? 'amber' : 'primary'" variant="flat" @click="finishSetup" :disable="overlay" :loading="overlay">
+                                               {{ _('Finish Setup') }}
+                                            </v-btn>
+                                        </template>
+
+                                        <template v-slot:prev="{ prev }">
+                                            <v-btn @click="prev">{{ _('Go Back') }}</v-btn>
+                                        </template>
+                                    </v-stepper-vertical-item>
+
+                                    <v-stepper-vertical-item
+                                            title="Ready!"
+                                            value="11"
+                                    >
+                                        <v-card variant="flat" class="pa-4">
+
+                                            <div>
+                                                {{ _('Your Bayanat server is now ready to use!') }}
+                                            </div>
+                                            
+                                        </v-card>
+                                        <template v-slot:next="{ next }">
+                                            <v-btn color="primary" variant="flat" href="/dashboard/">
+                                                {{ _('Proceed to dashboard') }}
+                                            </v-btn>
+                                        </template>
+
+                                        <template v-slot:prev></template>
+                                    </v-stepper-vertical-item>
+                                </template>
+                            </v-stepper-vertical>
+                        </v-card-text>
+                    </v-card>
+                </v-container>
+            </v-main>
+
+
+        </v-layout>
+
+        <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
+            <v-row class="align-center justify-center">
+                <v-progress-circular
+                        class="mr-3"
+                        color="white"
+                        indeterminate
+                        size="32"
+                ></v-progress-circular>
+            </v-row>
+            <v-row class="align-center justify-center">
+                {{ _('Restarting Bayanat to new settings to take effect, please wait...') }}
+            </v-row>
+            <v-row class="align-center justify-center">
+                {{ _('This can take up to a minute. If it takes longer, please restart Bayanat manually.') }}
+            </v-row>
+    
+        </v-overlay>
+
+        <v-snackbar v-model="snackbar" multi-line>
+
+            <span v-html="snackMessage"></span>
+
+            <template #actions>
+                <v-btn icon="mdi-close" variant="text" @click="snackbar = false"></v-btn>
+
+            </template>
+        </v-snackbar>
+        
+    </v-app>
+</div>
+
+{% if config.DEBUG %}
+    <script src="/static/js/vue.global.js"></script>
+{% else %}
+    <script src="/static/js/vue.global.prod.js"></script>
+{% endif %}
+
+<script src="/static/js/vuetify.min.js"></script>
+<script src="/static/js/axios.min.js"></script>
+<script src="/static/js/mixins/reauth-mixin.js"></script>
+<script src="/static/js/mixins/global-mixin.js"></script>
+<script src="/static/js/vue-router.global.js"></script>
+<script src="/static/js/leaflet.js"></script>
+<script src="/static/js/vue2-leaflet.min.js"></script>
+
+<script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
+
+<script src="/static/js/components/GeoMap.js"></script>
+<script src="/static/js/components/EditableTable.js"></script>
+<script>
+    {%  include 'admin/jsapi.jinja2' %}
+</script>
+
+
+<div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
+<script>
+    window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
+    const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
+</script>
+
+
+
+{% block js %}
+    <script type="module">
+
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+
+        const vuetify = createVuetify({
+            theme: {
+                defaultTheme: 'light',
+                themes: {
+                    light: {
+                        dark: false,
+                        colors: {
+                            primary: '#439d92',
+                        }
+                    },
+                },
+            },
+        });
+
+        const app = createApp({
+            delimiters: ['${', '}'],
+            components: {
+                EditableTable
+            },
+            data() {
+                return {
+                    languages: languages,
+                    snackbar: false,
+                    snackMessage: '',
+                    step: 1,
+                    activeTab: null,
+                    loading: false,
+                    overlay: false,
+                    finished: false,
+                    username: '',
+                    password: '',
+                    importData: false,
+                    dataImported: false,
+                    cfg: {
+                        FILESYSTEM_LOCAL: 1,
+                        AWS_ACCESS_KEY_ID: '',
+                        AWS_SECRET_ACCESS_KEY: '',
+                        BABEL_DEFAULT_LOCALE: '{{ config.BABEL_DEFAULT_LOCALE }}',
+                        GEO_MAP_DEFAULT_CENTER: null
+                    },
+                    adminCreated: false,
+                    defaultSettings: {},
+
+                    alHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Code')}}", value: "code"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Actions')}}", value: "actions"},
+
+                    ],
+                }
+            },
+            mounted() {
+                window.vm = this;
+                this.checkProgress();
+                this.fetchDefaultSettings();
+            },
+            methods: {
+
+                showSnack(message) {
+                    this.snackMessage = message;
+                    this.snackbar = true;
+                },
+
+                checkProgress() {
+                    this.loading = true;
+                    Promise.all([
+                        axios.get('/api/check-admin'),
+                        axios.get('/api/check-data-imported')
+                    ]).then(([adminResponse, dataResponse]) => {
+                        this.adminCreated = adminResponse.data.status === 'exists';
+                        this.dataImported = dataResponse.data.status === 'imported';
+                    }).catch(error => {
+                        console.error('Error checking progress:', error);
+                        if (error.response && error.response.status === 403) {
+                            window.location.href = '/login'; // Redirect to login on 403 error
+                        } else {
+                            this.showSnack('Error checking progress. Please try again.');
+                        }
+                    }).finally(() => {
+                        this.loading = false;
+                    });
+                },
+
+                fetchDefaultSettings() {
+                    axios.get('/api/default-config')
+                        .then(response => {
+                            this.defaultSettings = response.data;
+                            this.cfg = {...this.cfg, ...this.defaultSettings};
+                        })
+                        .catch(error => {
+                            console.error('Error fetching default settings:', error);
+                        });
+                },
+
+                importDefaultData() {
+                    this.loading = true;
+                    axios.post('/api/import-data')
+                        .then(response => {
+                            this.dataImported = true;
+                            this.step = 5; // Move to the next step only if import is successful
+                        })
+                        .catch(error => {
+                            console.error('Error importing data:', error);
+                            if (error.response && error.response.status === 403) {
+                                window.location.href = '/login'; // Redirect to login on 403 error
+                            } else {
+                                this.showSnack('Error importing data. Please try again.');
+                            }
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+
+                createSuperAdmin() {
+                    this.loading = true;
+                    this.error = '';
+
+                    axios.post('/api/create-admin', {
+                        username: this.username,
+                        password: this.password
+                    })
+                        .then(response => {
+                            console.log(response.data);
+                            this.adminCreated = true;
+                            this.step = 3;
+                        })
+                        .catch(error => {
+                            console.error('Error creating admin:', error);
+                            if (error.response && error.response.data && error.response.data.description) {
+                                this.error = error.response.data.description;
+                            } else {
+                                this.error = 'Error creating admin. Please try again.';
+                            }
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+
+                waitForRelaod() {
+                    setTimeout(() => {
+                        axios.get('/').then(res => {
+                            this.showSnack("{{_('Bayanat reloaded successfully.')}}");
+                            this.overlay = false;
+                            this.step = 11;
+                        }).catch(err => {
+                            this.waitForRelaod();
+                        });
+                    }, 5000)
+                },
+
+                reloadApp() {
+                    this.overlay = true;
+                    axios.post('/admin/api/reload/')
+                    this.waitForRelaod();
+                },
+
+                finishSetup() {
+                    this.loading = true;
+                    axios.put('/api/complete-setup/', {
+                        conf: this.cfg
+                    })
+                    .then(response => {
+                        this.reloadApp();
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        if (error.response && error.response.status === 403) {
+                            window.location.href = '/login'; // Redirect to login on 403 error
+                        } else {
+                            this.showSnack('Error saving configuration. Please try again.');
+                        }
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+                }
+            },
+        });
+
+        app.component('geo-map', GeoMap);
+
+        app.use(vuetify).mount('#app');
+
+    </script>
+{% endblock %}
+
+
+</body>
+</html>

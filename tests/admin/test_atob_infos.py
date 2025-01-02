@@ -1,10 +1,10 @@
 import pytest
 
 from enferno.admin.models import AtobInfo
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from tests.factories import AtobInfoFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_first_or_fail,
 )
 
@@ -43,7 +43,7 @@ atobinfos_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -70,7 +70,7 @@ post_atobinfo_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -99,7 +99,7 @@ put_atobinfo_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -136,7 +136,7 @@ delete_atobinfo_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 

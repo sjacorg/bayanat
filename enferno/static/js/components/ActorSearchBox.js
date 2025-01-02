@@ -352,6 +352,7 @@ const ActorSearchBox = Vue.defineComponent({
 
               ></search-field>
 
+            <v-switch color="primary" v-model="q.childsources" :label="translations.includeChildSources_"></v-switch>
 
             </v-col>
           </v-row>
@@ -382,6 +383,8 @@ const ActorSearchBox = Vue.defineComponent({
                   :label="translations.excludeLabels_"
               ></search-field>
 
+              <v-switch color="primary" v-model="q.childlabels" :label="translations.includeChildLabels_"></v-switch>
+
 
             </v-col>
           </v-row>
@@ -410,6 +413,7 @@ const ActorSearchBox = Vue.defineComponent({
                   :multiple="true"
                   :label="translations.excludeVerLabels_"
               ></search-field>
+              <v-switch color="primary" v-model="q.childverlabels" :label="translations.includeChildVerLabels_"></v-switch>
             </v-col>
           </v-row>
 

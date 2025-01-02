@@ -7,99 +7,64 @@ msgstr ""
 "Project-Id-Version: Bayanat\n"
 "Language: fa\n"
 
-#: enferno/admin/templates/nav-bar.html:39
-msgid "Account Settings"
-msgstr "تنظیمات حساب"
-
 #: enferno/admin/templates/nav-bar.html:72
 msgid "Logout"
 msgstr "خروج"
 
-#: enferno/admin/templates/admin/activity.html:94
-#: enferno/admin/templates/admin/actors.html:534
-#: enferno/admin/templates/admin/bulletins.html:537
-#: enferno/admin/templates/admin/eventtypes.html:211
-#: enferno/admin/templates/admin/incidents.html:495
-#: enferno/admin/templates/admin/labels.html:286
-#: enferno/admin/templates/admin/locations.html:209
-#: enferno/admin/templates/admin/roles.html:231
-#: enferno/admin/templates/admin/sources.html:233
-#: enferno/admin/templates/admin/system-administration.html:686
-#: enferno/admin/templates/admin/users.html:306
-#: enferno/data_import/templates/import-log.html:172
-#: enferno/data_import/templates/media-import.html:408
-#: enferno/data_import/templates/sheets-import.html:908
-#: enferno/deduplication/templates/deduplication.html:148
-#: enferno/export/templates/export-dashboard.html:151
-msgid "Rows per page"
-msgstr "تعداد ردیف در هر صفحه"
-
-#: enferno/admin/templates/admin/actors.html:72
+#: enferno/admin/templates/admin/actors.html:63
 msgid "All Actors"
 msgstr "همه عاملان"
 
-#: enferno/admin/templates/admin/actors.html:75
-#: enferno/admin/templates/admin/bulletins.html:86
-#: enferno/admin/templates/admin/incidents.html:72
+#: enferno/admin/templates/admin/actors.html:66
+#: enferno/admin/templates/admin/bulletins.html:74
+#: enferno/admin/templates/admin/incidents.html:65
 msgid "Assigned to me"
 msgstr "تخصیص‌یافته به من"
 
-#: enferno/admin/templates/admin/actors.html:78
-#: enferno/admin/templates/admin/bulletins.html:90
-#: enferno/admin/templates/admin/incidents.html:75
+#: enferno/admin/templates/admin/actors.html:69
+#: enferno/admin/templates/admin/bulletins.html:78
+#: enferno/admin/templates/admin/incidents.html:68
 msgid "My Review List"
 msgstr "فهرست بازبینی‌های من"
 
-#: enferno/admin/templates/admin/actors.html:91
-#: enferno/admin/templates/admin/bulletins.html:106
-#: enferno/admin/templates/admin/incidents.html:94
+#: enferno/admin/templates/admin/actors.html:82
+#: enferno/admin/templates/admin/bulletins.html:94
+#: enferno/admin/templates/admin/incidents.html:82
 #: enferno/admin/templates/admin/jsapi.jinja2:64
 #: enferno/admin/templates/admin/labels.html:37
 #: enferno/admin/templates/admin/locations.html:41
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:86
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:93
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:71
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:84
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:88
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:69
 #: enferno/admin/templates/admin/sources.html:35
 msgid "Search"
 msgstr "جستجو"
 
-#: enferno/admin/templates/admin/actors.html:98
+#: enferno/admin/templates/admin/actors.html:89
 #: enferno/admin/templates/admin/jsapi.jinja2:19
 msgid "New Actor"
 msgstr "عامل جدید"
 
-#: enferno/admin/templates/admin/actors.html:121
-#: enferno/admin/templates/admin/bulletins.html:142
-#: enferno/admin/templates/admin/incidents.html:129
+#: enferno/admin/templates/admin/actors.html:118
+#: enferno/admin/templates/admin/bulletins.html:135
+#: enferno/admin/templates/admin/incidents.html:121
 msgid "Bulk update"
 msgstr "به‌ روزرسانی انبوه"
 
-#: enferno/admin/templates/admin/actors.html:156
-#: enferno/admin/templates/admin/bulletins.html:176
-#: enferno/admin/templates/admin/incidents.html:166
-msgid "About"
-msgstr "درباره"
-
-#: enferno/admin/templates/admin/actors.html:156
-#: enferno/admin/templates/admin/bulletins.html:176
-#: enferno/admin/templates/admin/incidents.html:166
-msgid "results"
-msgstr "نتایج"
-
 #: enferno/admin/templates/admin/actors.html:157
-#: enferno/admin/templates/admin/bulletins.html:177
-#: enferno/admin/templates/admin/incidents.html:167
+#: enferno/admin/templates/admin/bulletins.html:174
+#: enferno/admin/templates/admin/incidents.html:160
 msgid "seconds"
 msgstr "ثانیه"
 
-#: enferno/admin/templates/admin/actors.html:163
-#: enferno/admin/templates/admin/bulletins.html:184
-#: enferno/admin/templates/admin/incidents.html:174
+#: enferno/admin/templates/admin/actors.html:150
+#: enferno/admin/templates/admin/bulletins.html:167
+#: enferno/admin/templates/admin/incidents.html:154
 msgid "Selected items"
 msgstr "موارد انتخاب شده"
 
-#: enferno/admin/templates/admin/actors.html:554
-#: enferno/admin/templates/admin/bulletins.html:576
+#: enferno/admin/templates/admin/actors.html:544
+#: enferno/admin/templates/admin/bulletins.html:561
 #: enferno/admin/templates/admin/component-data.html:277
 #: enferno/admin/templates/admin/component-data.html:285
 #: enferno/admin/templates/admin/component-data.html:291
@@ -110,72 +75,64 @@ msgstr "موارد انتخاب شده"
 #: enferno/admin/templates/admin/component-data.html:327
 #: enferno/admin/templates/admin/component-data.html:333
 #: enferno/admin/templates/admin/eventtypes.html:203
-#: enferno/admin/templates/admin/incidents.html:529
+#: enferno/admin/templates/admin/incidents.html:514
 #: enferno/admin/templates/admin/jsapi.jinja2:119
 #: enferno/admin/templates/admin/labels.html:269
-#: enferno/admin/templates/admin/locations.html:203
+#: enferno/admin/templates/admin/locations.html:206
 #: enferno/admin/templates/admin/partials/actor_dialog.html:13
 #: enferno/admin/templates/admin/roles.html:216
-#: enferno/admin/templates/admin/system-administration.html:724
-#: enferno/admin/templates/admin/system-administration.html:734
-#: enferno/admin/templates/admin/users.html:262
+#: enferno/admin/templates/admin/system-administration.html:732
+#: enferno/admin/templates/admin/system-administration.html:742
+#: enferno/admin/templates/admin/users.html:307
 #: enferno/data_import/templates/import-log.html:162
-#: enferno/deduplication/templates/deduplication.html:117
+#: enferno/deduplication/templates/deduplication.html:188
 #: enferno/export/templates/export-dashboard.html:143
+#: enferno/templates/setup_wizard.html:540
 msgid "ID"
 msgstr "شناسه"
 
-#: enferno/admin/templates/admin/actors.html:556
+#: enferno/admin/templates/admin/actors.html:546
 #: enferno/admin/templates/admin/jsapi.jinja2:86
-#: enferno/admin/templates/admin/jsapi.jinja2:188
-#: enferno/admin/templates/admin/partials/actor_dialog.html:63
-#: enferno/admin/templates/admin/partials/actor_dialog.html:522
+#: enferno/admin/templates/admin/jsapi.jinja2:187
+#: enferno/admin/templates/admin/partials/actor_dialog.html:62
+#: enferno/admin/templates/admin/partials/actor_dialog.html:520
 #: enferno/admin/templates/admin/roles.html:217
-#: enferno/admin/templates/admin/users.html:265
-#: enferno/data_import/templates/media-import.html:391
+#: enferno/admin/templates/admin/users.html:310
 #: enferno/data_import/templates/sheets-import.html:250
-#: enferno/data_import/templates/sheets-import.html:463
-#: enferno/data_import/templates/sheets-import.html:910
+#: enferno/data_import/templates/sheets-import.html:465
+#: enferno/data_import/templates/sheets-import.html:912
 msgid "Name"
 msgstr "نام"
 
-#: enferno/admin/templates/admin/actors.html:558
-#: enferno/admin/templates/admin/bulletins.html:580
-#: enferno/admin/templates/admin/incidents.html:532
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:24
+#: enferno/admin/templates/admin/actors.html:548
+#: enferno/admin/templates/admin/bulletins.html:565
+#: enferno/admin/templates/admin/incidents.html:517
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:30
 #: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:31
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:22
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:29
 msgid "Assigned To"
 msgstr "تخصیص یافته به"
 
-#: enferno/admin/templates/admin/actors.html:542
-#: enferno/admin/templates/admin/bulletins.html:546
-#: enferno/admin/templates/admin/incidents.html:503
-#: enferno/admin/templates/admin/users.html:193
-#: enferno/admin/templates/admin/users.html:315
-msgid "Roles"
-msgstr "نقش‌ها"
-
-#: enferno/admin/templates/admin/activity.html:253
-#: enferno/admin/templates/admin/actors.html:561
-#: enferno/admin/templates/admin/bulletins.html:583
-#: enferno/admin/templates/admin/incidents.html:535
-#: enferno/admin/templates/admin/jsapi.jinja2:242
-#: enferno/admin/templates/admin/partials/actor_dialog.html:904
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:57
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:56
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:55
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:271
+#: enferno/admin/templates/admin/activity.html:260
+#: enferno/admin/templates/admin/actors.html:551
+#: enferno/admin/templates/admin/bulletins.html:568
+#: enferno/admin/templates/admin/incidents.html:520
+#: enferno/admin/templates/admin/jsapi.jinja2:241
+#: enferno/admin/templates/admin/partials/actor_dialog.html:897
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:60
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:60
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:59
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:274
 #: enferno/admin/templates/admin/partials/incident_dialog.html:243
 #: enferno/data_import/templates/import-log.html:166
 #: enferno/data_import/templates/sheets-import.html:18
-#: enferno/deduplication/templates/deduplication.html:123
+#: enferno/deduplication/templates/deduplication.html:193
 #: enferno/export/templates/export-dashboard.html:151
 msgid "Status"
 msgstr "وضعیت"
 
-#: enferno/admin/templates/admin/actors.html:562
-#: enferno/admin/templates/admin/bulletins.html:586
+#: enferno/admin/templates/admin/actors.html:552
+#: enferno/admin/templates/admin/bulletins.html:571
 #: enferno/admin/templates/admin/component-data.html:280
 #: enferno/admin/templates/admin/component-data.html:287
 #: enferno/admin/templates/admin/component-data.html:294
@@ -186,34 +143,35 @@ msgstr "وضعیت"
 #: enferno/admin/templates/admin/component-data.html:330
 #: enferno/admin/templates/admin/component-data.html:336
 #: enferno/admin/templates/admin/eventtypes.html:210
-#: enferno/admin/templates/admin/incidents.html:536
+#: enferno/admin/templates/admin/incidents.html:521
 #: enferno/admin/templates/admin/labels.html:279
-#: enferno/admin/templates/admin/locations.html:211
+#: enferno/admin/templates/admin/locations.html:214
 #: enferno/admin/templates/admin/roles.html:222
 #: enferno/admin/templates/admin/sources.html:223
-#: enferno/admin/templates/admin/system-administration.html:727
-#: enferno/admin/templates/admin/system-administration.html:736
-#: enferno/admin/templates/admin/users.html:268
+#: enferno/admin/templates/admin/system-administration.html:735
+#: enferno/admin/templates/admin/system-administration.html:744
+#: enferno/admin/templates/admin/users.html:314
+#: enferno/templates/setup_wizard.html:543
 msgid "Actions"
 msgstr "اقدامات"
 
-#: enferno/admin/templates/admin/bulletins.html:82
+#: enferno/admin/templates/admin/bulletins.html:70
 msgid "All Bulletins"
 msgstr "همه بولتن‌ها"
 
-#: enferno/admin/templates/admin/bulletins.html:118
+#: enferno/admin/templates/admin/bulletins.html:106
 #: enferno/admin/templates/admin/jsapi.jinja2:17
 msgid "New Bulletin"
 msgstr "بولتن جدید"
 
-#: enferno/admin/templates/admin/bulletins.html:287
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:67
+#: enferno/admin/templates/admin/bulletins.html:274
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:71
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:90
 #: enferno/admin/templates/admin/partials/review_dialog.html:43
 msgid "Ref"
 msgstr "مرجع"
 
-#: enferno/admin/templates/admin/bulletins.html:577
+#: enferno/admin/templates/admin/bulletins.html:562
 #: enferno/admin/templates/admin/component-data.html:279
 #: enferno/admin/templates/admin/component-data.html:286
 #: enferno/admin/templates/admin/component-data.html:292
@@ -225,11 +183,11 @@ msgstr "مرجع"
 #: enferno/admin/templates/admin/component-data.html:334
 #: enferno/admin/templates/admin/eventtypes.html:55
 #: enferno/admin/templates/admin/eventtypes.html:204
-#: enferno/admin/templates/admin/incidents.html:530
+#: enferno/admin/templates/admin/incidents.html:515
 #: enferno/admin/templates/admin/jsapi.jinja2:124
 #: enferno/admin/templates/admin/labels.html:59
 #: enferno/admin/templates/admin/labels.html:270
-#: enferno/admin/templates/admin/locations.html:204
+#: enferno/admin/templates/admin/locations.html:207
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:81
 #: enferno/admin/templates/admin/partials/event_dialog.html:68
 #: enferno/admin/templates/admin/partials/incident_dialog.html:39
@@ -238,9 +196,10 @@ msgstr "مرجع"
 #: enferno/admin/templates/admin/partials/video_player_dialog.html:58
 #: enferno/admin/templates/admin/sources.html:59
 #: enferno/admin/templates/admin/sources.html:216
-#: enferno/admin/templates/admin/system-administration.html:726
-#: enferno/admin/templates/admin/system-administration.html:735
-#: enferno/data_import/templates/sheets-import.html:648
+#: enferno/admin/templates/admin/system-administration.html:734
+#: enferno/admin/templates/admin/system-administration.html:743
+#: enferno/data_import/templates/sheets-import.html:650
+#: enferno/templates/setup_wizard.html:542
 msgid "Title"
 msgstr "عنوان"
 
@@ -251,10 +210,6 @@ msgstr "آپلود برگه / انتخاب نقشه"
 #: enferno/data_import/templates/sheets-import.html:14
 msgid "Fields Map"
 msgstr "نقشه فیلدها"
-
-#: enferno/data_import/templates/sheets-import.html:26
-msgid "Bulk Upload & Import"
-msgstr "آپلود و وارد کردن انبوه"
 
 #: enferno/data_import/templates/sheets-import.html:28
 #: enferno/data_import/templates/sheets-import.html:202
@@ -278,12 +233,12 @@ msgstr "دسترسی به نقشه موجود"
 msgid "Continue"
 msgstr "ادامه"
 
-#: enferno/data_import/templates/media-import.html:130
+#: enferno/data_import/templates/media-import.html:129
 #: enferno/data_import/templates/sheets-import.html:105
 msgid "Back"
 msgstr "بازگشت"
 
-#: enferno/data_import/templates/media-import.html:110
+#: enferno/data_import/templates/media-import.html:109
 #: enferno/data_import/templates/sheets-import.html:126
 msgid "Next"
 msgstr "بعدی"
@@ -322,7 +277,7 @@ msgid "Delete"
 msgstr "حذف"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:120
-#: enferno/admin/templates/admin/partials/actor_dialog.html:376
+#: enferno/admin/templates/admin/partials/actor_dialog.html:372
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:26
 #: enferno/admin/templates/admin/sources.html:78
 #: enferno/admin/templates/admin/sources.html:217
@@ -330,69 +285,59 @@ msgstr "حذف"
 msgid "Origin ID"
 msgstr "شناسه مبدأ"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:64
+#: enferno/admin/templates/admin/partials/actor_dialog.html:63
 #: enferno/data_import/templates/sheets-import.html:265
 msgid "Name (AR)"
 msgstr "نام (AR)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:74
-#: enferno/admin/templates/admin/partials/actor_dialog.html:118
+#: enferno/admin/templates/admin/partials/actor_dialog.html:73
+#: enferno/admin/templates/admin/partials/actor_dialog.html:117
 #: enferno/data_import/templates/sheets-import.html:268
 #: enferno/templates/security/wan_register.html:161
 msgid "Nickname"
 msgstr "نام مستعار"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:75
-#: enferno/admin/templates/admin/partials/actor_dialog.html:119
+#: enferno/admin/templates/admin/partials/actor_dialog.html:74
+#: enferno/admin/templates/admin/partials/actor_dialog.html:118
 #: enferno/data_import/templates/sheets-import.html:271
 msgid "Nickname (AR)"
 msgstr "نام مستعار (AR)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:146
-#: enferno/admin/templates/admin/partials/actor_dialog.html:87
+#: enferno/admin/templates/admin/jsapi.jinja2:145
+#: enferno/admin/templates/admin/partials/actor_dialog.html:86
 #: enferno/data_import/templates/sheets-import.html:276
 msgid "First Name"
 msgstr "نام کوچک"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:88
+#: enferno/admin/templates/admin/partials/actor_dialog.html:87
 #: enferno/data_import/templates/sheets-import.html:279
 msgid "First Name (AR)"
 msgstr "نام کوچک (AR)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:152
-#: enferno/data_import/templates/sheets-import.html:289
-msgid "Middle/Father's Name"
-msgstr "نام میانی/ نام پدر"
-
-#: enferno/admin/templates/admin/partials/actor_dialog.html:158
-#: enferno/data_import/templates/sheets-import.html:292
-msgid "Middle/Father's Name (AR)"
-msgstr "نام میانی/ نام پدر (AR)"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:148
-#: enferno/admin/templates/admin/partials/actor_dialog.html:105
+#: enferno/admin/templates/admin/jsapi.jinja2:147
+#: enferno/admin/templates/admin/partials/actor_dialog.html:104
 #: enferno/data_import/templates/sheets-import.html:290
 msgid "Last Name"
 msgstr "نام خانوادگی"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:106
+#: enferno/admin/templates/admin/partials/actor_dialog.html:105
 #: enferno/data_import/templates/sheets-import.html:293
 msgid "Last Name (AR)"
 msgstr "نام خانوادگی (AR)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:150
-#: enferno/admin/templates/admin/partials/actor_dialog.html:141
+#: enferno/admin/templates/admin/jsapi.jinja2:149
+#: enferno/admin/templates/admin/partials/actor_dialog.html:140
 #: enferno/data_import/templates/sheets-import.html:302
 msgid "Mother's Name"
 msgstr "نام مادر"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:142
+#: enferno/admin/templates/admin/partials/actor_dialog.html:141
 #: enferno/data_import/templates/sheets-import.html:305
 msgid "Mother's Name (AR)"
 msgstr "نام مادر (AR)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:123
-#: enferno/admin/templates/admin/partials/actor_dialog.html:400
+#: enferno/admin/templates/admin/partials/actor_dialog.html:396
 #: enferno/admin/templates/admin/partials/incident_dialog.html:49
 #: enferno/admin/templates/admin/roles.html:85
 #: enferno/admin/templates/admin/roles.html:219
@@ -401,11 +346,11 @@ msgid "Description"
 msgstr "شرح"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:126
-#: enferno/admin/templates/admin/partials/actor_dialog.html:416
+#: enferno/admin/templates/admin/partials/actor_dialog.html:412
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:106
-#: enferno/admin/templates/admin/partials/review_dialog.html:98
+#: enferno/admin/templates/admin/partials/review_dialog.html:102
 #: enferno/admin/templates/admin/sources.html:26
-#: enferno/data_import/templates/media-import.html:202
+#: enferno/data_import/templates/media-import.html:201
 #: enferno/data_import/templates/sheets-import.html:364
 #: enferno/templates/nav-drawer.html:19
 msgid "Sources"
@@ -414,11 +359,11 @@ msgstr "منابع"
 #: enferno/admin/templates/admin/jsapi.jinja2:127
 #: enferno/admin/templates/admin/labels.html:27
 #: enferno/admin/templates/admin/labels.html:97
-#: enferno/admin/templates/admin/partials/actor_dialog.html:429
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:127
+#: enferno/admin/templates/admin/partials/actor_dialog.html:426
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:128
 #: enferno/admin/templates/admin/partials/incident_dialog.html:97
-#: enferno/admin/templates/admin/partials/review_dialog.html:74
-#: enferno/data_import/templates/media-import.html:168
+#: enferno/admin/templates/admin/partials/review_dialog.html:76
+#: enferno/data_import/templates/media-import.html:167
 #: enferno/data_import/templates/sheets-import.html:366
 #: enferno/templates/nav-drawer.html:22
 msgid "Labels"
@@ -426,126 +371,109 @@ msgstr "برچسب‌ها"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:128
 #: enferno/admin/templates/admin/labels.html:112
-#: enferno/admin/templates/admin/partials/actor_dialog.html:441
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:140
-#: enferno/admin/templates/admin/partials/review_dialog.html:87
-#: enferno/data_import/templates/media-import.html:179
+#: enferno/admin/templates/admin/partials/actor_dialog.html:439
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:142
+#: enferno/admin/templates/admin/partials/review_dialog.html:90
+#: enferno/data_import/templates/media-import.html:178
 #: enferno/data_import/templates/sheets-import.html:368
 msgid "Verified Labels"
 msgstr "برچسب‌های تایید شده"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:76
-#: enferno/admin/templates/admin/jsapi.jinja2:151
-#: enferno/admin/templates/admin/partials/actor_dialog.html:158
+#: enferno/admin/templates/admin/jsapi.jinja2:150
+#: enferno/admin/templates/admin/partials/actor_dialog.html:157
 #: enferno/data_import/templates/sheets-import.html:311
 msgid "Sex"
 msgstr "جنسیت"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:77
-#: enferno/admin/templates/admin/partials/actor_dialog.html:169
+#: enferno/admin/templates/admin/partials/actor_dialog.html:168
 #: enferno/data_import/templates/sheets-import.html:313
 msgid "Minor/Adult"
 msgstr "خردسال/ بزرگسال"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:78
-#: enferno/admin/templates/admin/partials/actor_dialog.html:180
+#: enferno/admin/templates/admin/partials/actor_dialog.html:179
 #: enferno/data_import/templates/sheets-import.html:315
 msgid "Civilian/Non Civilian"
 msgstr "غیرنظامی/ نظامی"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:79
-#: enferno/admin/templates/admin/jsapi.jinja2:154
+#: enferno/admin/templates/admin/jsapi.jinja2:153
 #: enferno/data_import/templates/sheets-import.html:213
 #: enferno/data_import/templates/sheets-import.html:221
 msgid "Actor Type"
 msgstr "نوع عامل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:154
-#: enferno/admin/templates/admin/partials/actor_dialog.html:342
-#: enferno/data_import/templates/sheets-import.html:354
-msgid "Date of Birth"
-msgstr "تاریخ تولد"
-
 #: enferno/admin/templates/admin/jsapi.jinja2:155
-#: enferno/admin/templates/admin/partials/actor_dialog.html:358
-#: enferno/data_import/templates/sheets-import.html:360
-msgid "Place of Birth"
-msgstr "محل تولد"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:157
-#: enferno/admin/templates/admin/partials/actor_dialog.html:371
-#: enferno/data_import/templates/sheets-import.html:362
-msgid "Place of Residence"
-msgstr "محل اقامت"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:156
 #: enferno/admin/templates/admin/partials/actor_dialog.html:191
 #: enferno/data_import/templates/sheets-import.html:319
 msgid "Place of Origin"
 msgstr "کشور مبدأ"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:129
-#: enferno/admin/templates/admin/jsapi.jinja2:341
-#: enferno/admin/templates/admin/jsapi.jinja2:348
+#: enferno/admin/templates/admin/jsapi.jinja2:355
+#: enferno/admin/templates/admin/jsapi.jinja2:362
 #: enferno/admin/templates/admin/partials/event_dialog.html:3
-#: enferno/data_import/templates/sheets-import.html:642
+#: enferno/data_import/templates/sheets-import.html:644
 msgid "Events"
 msgstr "رویدادها"
 
-#: enferno/admin/templates/admin/partials/event_dialog.html:135
-#: enferno/data_import/templates/sheets-import.html:654
-#: enferno/data_import/templates/sheets-import.html:660
+#: enferno/admin/templates/admin/partials/event_dialog.html:133
+#: enferno/data_import/templates/sheets-import.html:656
+#: enferno/data_import/templates/sheets-import.html:662
 msgid "Event Type"
 msgstr "نوع رویداد"
 
-#: enferno/admin/templates/admin/actors.html:269
-#: enferno/admin/templates/admin/bulletins.html:291
+#: enferno/admin/templates/admin/actors.html:260
+#: enferno/admin/templates/admin/bulletins.html:278
 #: enferno/admin/templates/admin/eventtypes.html:83
 #: enferno/admin/templates/admin/eventtypes.html:208
-#: enferno/admin/templates/admin/incidents.html:271
+#: enferno/admin/templates/admin/incidents.html:252
 #: enferno/admin/templates/admin/jsapi.jinja2:139
 #: enferno/admin/templates/admin/labels.html:75
 #: enferno/admin/templates/admin/labels.html:271
-#: enferno/admin/templates/admin/partials/actor_dialog.html:891
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:86
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:98
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:82
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:256
-#: enferno/admin/templates/admin/partials/event_dialog.html:92
+#: enferno/admin/templates/admin/partials/actor_dialog.html:884
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:89
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:102
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:86
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:259
+#: enferno/admin/templates/admin/partials/event_dialog.html:90
 #: enferno/admin/templates/admin/partials/export_drawer.html:66
 #: enferno/admin/templates/admin/partials/incident_dialog.html:228
-#: enferno/admin/templates/admin/partials/related_actors_grid.html:42
-#: enferno/admin/templates/admin/partials/related_bulletins_grid.html:46
-#: enferno/admin/templates/admin/partials/related_incidents_grid.html:43
+#: enferno/admin/templates/admin/partials/related_actors_grid.html:43
+#: enferno/admin/templates/admin/partials/related_bulletins_grid.html:51
+#: enferno/admin/templates/admin/partials/related_incidents_grid.html:49
 #: enferno/admin/templates/admin/sources.html:90
 #: enferno/admin/templates/admin/sources.html:219
-#: enferno/data_import/templates/sheets-import.html:669
+#: enferno/data_import/templates/sheets-import.html:671
 msgid "Comments"
 msgstr "نظرات"
 
-#: enferno/admin/templates/admin/partials/event_dialog.html:121
-#: enferno/data_import/templates/sheets-import.html:671
+#: enferno/admin/templates/admin/partials/event_dialog.html:119
+#: enferno/data_import/templates/sheets-import.html:673
+#: enferno/templates/setup_wizard.html:156
 msgid "Location"
 msgstr "محل"
 
-#: enferno/admin/templates/admin/partials/event_dialog.html:144
-#: enferno/data_import/templates/sheets-import.html:675
+#: enferno/admin/templates/admin/partials/event_dialog.html:142
+#: enferno/data_import/templates/sheets-import.html:677
 msgid "From"
 msgstr "از"
 
-#: enferno/admin/templates/admin/partials/event_dialog.html:147
-#: enferno/data_import/templates/sheets-import.html:677
+#: enferno/admin/templates/admin/partials/event_dialog.html:145
+#: enferno/data_import/templates/sheets-import.html:679
 msgid "To"
 msgstr "به"
 
-#: enferno/admin/templates/admin/partials/event_dialog.html:155
-#: enferno/data_import/templates/sheets-import.html:679
+#: enferno/admin/templates/admin/partials/event_dialog.html:153
+#: enferno/data_import/templates/sheets-import.html:681
 msgid "Estimated Time"
 msgstr "زمان تخمینی"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:71
 #: enferno/admin/templates/admin/jsapi.jinja2:72
-#: enferno/admin/templates/admin/jsapi.jinja2:160
+#: enferno/admin/templates/admin/jsapi.jinja2:159
 #: enferno/admin/templates/admin/partials/actor_dialog.html:203
 #: enferno/data_import/templates/sheets-import.html:324
 msgid "Occupation"
@@ -557,7 +485,7 @@ msgid "Occupation (AR)"
 msgstr "شغل (AR)"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:73
-#: enferno/admin/templates/admin/jsapi.jinja2:161
+#: enferno/admin/templates/admin/jsapi.jinja2:160
 #: enferno/admin/templates/admin/partials/actor_dialog.html:215
 #: enferno/data_import/templates/sheets-import.html:331
 msgid "Position"
@@ -568,27 +496,17 @@ msgstr "سمت شغلی"
 msgid "Position (AR)"
 msgstr "سمت شغلی (AR)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:162
+#: enferno/admin/templates/admin/jsapi.jinja2:161
 #: enferno/data_import/templates/sheets-import.html:349
 msgid "Spoken Dialects"
 msgstr "گویش‌های زبانی"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:481
-#: enferno/data_import/templates/sheets-import.html:441
-msgid "Spoken Dialects (AR)"
-msgstr "گویش‌های زبانی (AR)"
-
 #: enferno/admin/templates/admin/jsapi.jinja2:75
-#: enferno/admin/templates/admin/jsapi.jinja2:163
+#: enferno/admin/templates/admin/jsapi.jinja2:162
 #: enferno/admin/templates/admin/partials/actor_dialog.html:232
 #: enferno/data_import/templates/sheets-import.html:337
 msgid "Family Status"
 msgstr "وضعیت خانوادگی"
-
-#: enferno/admin/templates/admin/partials/actor_dialog.html:510
-#: enferno/data_import/templates/sheets-import.html:447
-msgid "Family Status (AR)"
-msgstr "وضعیت خانوادگی (AR)"
 
 #: enferno/admin/templates/admin/component-data.html:25
 #: enferno/admin/templates/admin/component-data.html:102
@@ -601,63 +519,63 @@ msgstr "اطلاعات قومی"
 msgid "Nationality"
 msgstr "ملیت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:167
+#: enferno/admin/templates/admin/jsapi.jinja2:166
 msgid "National ID Card"
 msgstr "کارت شناسایی ملی"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:138
-#: enferno/admin/templates/admin/partials/actor_dialog.html:384
+#: enferno/admin/templates/admin/partials/actor_dialog.html:380
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:43
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:213
-#: enferno/data_import/templates/sheets-import.html:410
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:216
+#: enferno/data_import/templates/sheets-import.html:412
 msgid "Source Link"
 msgstr "لینک منبع"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:389
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:221
-#: enferno/data_import/templates/sheets-import.html:425
+#: enferno/admin/templates/admin/partials/actor_dialog.html:385
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:224
+#: enferno/data_import/templates/sheets-import.html:427
 msgid "Private"
 msgstr "خصوصی"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:32
 #: enferno/admin/templates/admin/jsapi.jinja2:136
-#: enferno/admin/templates/admin/partials/actor_dialog.html:452
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:231
-#: enferno/data_import/templates/sheets-import.html:427
+#: enferno/admin/templates/admin/partials/actor_dialog.html:450
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:234
+#: enferno/data_import/templates/sheets-import.html:429
 msgid "Publish Date"
 msgstr "تاریخ انتشار"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:33
 #: enferno/admin/templates/admin/jsapi.jinja2:137
-#: enferno/admin/templates/admin/partials/actor_dialog.html:460
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:235
-#: enferno/data_import/templates/sheets-import.html:429
+#: enferno/admin/templates/admin/partials/actor_dialog.html:458
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:238
+#: enferno/data_import/templates/sheets-import.html:431
 msgid "Documentation Date"
 msgstr "تاریخ مستندسازی"
 
-#: enferno/data_import/templates/sheets-import.html:707
+#: enferno/data_import/templates/sheets-import.html:709
 msgid "Sheet file:"
 msgstr "فایل برگه:"
 
-#: enferno/data_import/templates/sheets-import.html:709
-#: enferno/data_import/templates/sheets-import.html:717
+#: enferno/data_import/templates/sheets-import.html:711
+#: enferno/data_import/templates/sheets-import.html:719
 msgid "Selected"
 msgstr "انتخاب شده"
 
-#: enferno/data_import/templates/sheets-import.html:713
+#: enferno/data_import/templates/sheets-import.html:715
 msgid "Map:"
 msgstr "نقشه:"
 
-#: enferno/data_import/templates/sheets-import.html:737
+#: enferno/data_import/templates/sheets-import.html:739
 msgid "Optional: Upload more sheets to process"
 msgstr "اختیاری: برگه‌های بیشتری را برای پردازش آپلود کنید"
 
-#: enferno/data_import/templates/media-import.html:155
-#: enferno/data_import/templates/sheets-import.html:753
+#: enferno/data_import/templates/media-import.html:154
+#: enferno/data_import/templates/sheets-import.html:755
 msgid "Access Roles"
 msgstr "دسترسی به نقش‌ها"
 
-#: enferno/data_import/templates/sheets-import.html:759
+#: enferno/data_import/templates/sheets-import.html:761
 msgid "Process File(s)"
 msgstr "پردازش فایل(ها)"
 
@@ -673,52 +591,52 @@ msgstr "افزودن داده"
 msgid "Finish"
 msgstr "پایان"
 
-#: enferno/data_import/templates/media-import.html:80
+#: enferno/data_import/templates/media-import.html:79
 msgid "Upload files"
 msgstr "آپلود فایل‌ها"
 
-#: enferno/data_import/templates/media-import.html:83
+#: enferno/data_import/templates/media-import.html:82
 msgid "Manual web upload"
 msgstr "آپلود دستی از اینترنت"
 
-#: enferno/data_import/templates/media-import.html:92
+#: enferno/data_import/templates/media-import.html:91
 msgid "Process path"
 msgstr "مسیر پردازش"
 
-#: enferno/data_import/templates/media-import.html:138
+#: enferno/data_import/templates/media-import.html:137
 msgid "Process"
 msgstr "پردازش"
 
-#: enferno/data_import/templates/media-import.html:144
+#: enferno/data_import/templates/media-import.html:143
 msgid "Attach data to files"
 msgstr "ضمیمه کردن داده‌ها به فایل‌ها"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:131
-#: enferno/admin/templates/admin/jsapi.jinja2:339
+#: enferno/admin/templates/admin/jsapi.jinja2:353
 #: enferno/admin/templates/admin/locations.html:29
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:155
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:158
 #: enferno/admin/templates/admin/partials/incident_dialog.html:108
-#: enferno/admin/templates/admin/partials/review_dialog.html:62
-#: enferno/data_import/templates/media-import.html:191
+#: enferno/admin/templates/admin/partials/review_dialog.html:63
+#: enferno/data_import/templates/media-import.html:190
 #: enferno/templates/nav-drawer.html:14
 msgid "Locations"
 msgstr "مکان‌ها"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:29
 #: enferno/admin/templates/admin/partials/export_drawer.html:56
-#: enferno/data_import/templates/media-import.html:210
+#: enferno/data_import/templates/media-import.html:209
 msgid "Refs"
 msgstr "مراجع"
 
-#: enferno/data_import/templates/media-import.html:221
+#: enferno/data_import/templates/media-import.html:220
 msgid "Optimize videos"
 msgstr "بهینه‌سازی ویدیوها"
 
-#: enferno/data_import/templates/media-import.html:225
+#: enferno/data_import/templates/media-import.html:224
 msgid "Parse PDF & MS Word files"
 msgstr "تجزیه فایل‌های PDF و MS Word"
 
-#: enferno/data_import/templates/media-import.html:230
+#: enferno/data_import/templates/media-import.html:229
 msgid "Scan images for text"
 msgstr "اسکن تصاویر برای تشخیص متن"
 
@@ -727,21 +645,21 @@ msgstr "اسکن تصاویر برای تشخیص متن"
 #: enferno/admin/templates/admin/labels.html:158
 #: enferno/admin/templates/admin/labels.html:209
 #: enferno/admin/templates/admin/locations.html:97
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:104
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:110
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:89
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:102
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:105
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:87
 #: enferno/admin/templates/admin/partials/media_dialog.html:92
 #: enferno/admin/templates/admin/roles.html:98
 #: enferno/admin/templates/admin/roles.html:151
 #: enferno/admin/templates/admin/sources.html:104
 #: enferno/admin/templates/admin/sources.html:156
-#: enferno/admin/templates/admin/system-administration.html:647
-#: enferno/data_import/templates/media-import.html:282
-#: enferno/data_import/templates/media-import.html:308
+#: enferno/admin/templates/admin/system-administration.html:652
+#: enferno/data_import/templates/media-import.html:281
+#: enferno/data_import/templates/media-import.html:307
 msgid "Cancel"
 msgstr "لغو"
 
-#: enferno/data_import/templates/media-import.html:283
+#: enferno/data_import/templates/media-import.html:282
 msgid "Scan"
 msgstr "اسکن"
 
@@ -756,13 +674,13 @@ msgstr "انواع رویداد"
 #: enferno/admin/templates/admin/labels.html:299
 #: enferno/admin/templates/admin/sources.html:46
 #: enferno/admin/templates/admin/sources.html:245
-#: enferno/admin/templates/admin/users.html:291
+#: enferno/admin/templates/admin/users.html:338
 msgid "New Item"
 msgstr "مورد جدید"
 
 #: enferno/admin/templates/admin/eventtypes.html:62
 #: enferno/admin/templates/admin/labels.html:66
-#: enferno/admin/templates/admin/partials/event_dialog.html:77
+#: enferno/admin/templates/admin/partials/event_dialog.html:76
 #: enferno/admin/templates/admin/partials/media_dialog.html:59
 #: enferno/admin/templates/admin/partials/video_player_dialog.html:65
 msgid "Title (AR)"
@@ -783,16 +701,16 @@ msgstr "برای بولتن‌ها"
 #: enferno/admin/templates/admin/labels.html:165
 #: enferno/admin/templates/admin/labels.html:215
 #: enferno/admin/templates/admin/locations.html:101
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:105
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:111
-#: enferno/admin/templates/admin/partials/event_dialog.html:167
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:90
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:103
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:106
+#: enferno/admin/templates/admin/partials/event_dialog.html:165
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:88
 #: enferno/admin/templates/admin/roles.html:106
 #: enferno/admin/templates/admin/roles.html:157
 #: enferno/admin/templates/admin/sources.html:111
 #: enferno/admin/templates/admin/sources.html:163
-#: enferno/admin/templates/admin/system-administration.html:533
-#: enferno/admin/templates/admin/users.html:226
+#: enferno/admin/templates/admin/system-administration.html:538
+#: enferno/admin/templates/admin/users.html:271
 #: enferno/templates/change-password.html:23
 msgid "Save"
 msgstr "ذخیره"
@@ -825,7 +743,7 @@ msgstr "عنوان (AR)"
 #: enferno/admin/templates/admin/eventtypes.html:227
 #: enferno/admin/templates/admin/labels.html:299
 #: enferno/admin/templates/admin/sources.html:245
-#: enferno/admin/templates/admin/users.html:291
+#: enferno/admin/templates/admin/users.html:338
 msgid "Edit Item"
 msgstr "ویرایش مورد"
 
@@ -838,7 +756,7 @@ msgid "Edit Actor"
 msgstr "ویرایش عامل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:22
-#: enferno/deduplication/templates/deduplication.html:118
+#: enferno/deduplication/templates/deduplication.html:189
 msgid "Query"
 msgstr "درخواست"
 
@@ -869,10 +787,6 @@ msgstr "درج مراجع"
 #: enferno/admin/templates/admin/jsapi.jinja2:31
 msgid "Exclude Refs"
 msgstr "حذف مراجع"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:35
-msgid "Assigned user"
-msgstr "کاربر تخصیص داده شده"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:39
 msgid "Unassigned"
@@ -942,14 +856,6 @@ msgstr "درج مکان‌ها"
 msgid "Exclude locations (All)"
 msgstr "حذف مکان‌ها (همه)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:55
-msgid "Include residence locations (Any)"
-msgstr "درج مکان‌های سکونت (هرکدام)"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:56
-msgid "Exclude residence locations (All)"
-msgstr "حذف مکان‌های سکونت (همه)"
-
 #: enferno/admin/templates/admin/jsapi.jinja2:58
 msgid "Include origin locations (Any)"
 msgstr "درج مکان‌های مبدأ (هر کدام)"
@@ -967,16 +873,16 @@ msgid "Event type"
 msgstr "نوع رویداد"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:63
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:71
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:78
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:57
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:69
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:73
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:55
 msgid "Clear Search"
 msgstr "پاک کردن جستجو"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:65
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:73
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:80
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:58
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:71
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:75
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:56
 msgid "Save Search"
 msgstr "ذخیره جستجو"
 
@@ -996,14 +902,6 @@ msgstr "گویش‌های زبانی"
 msgid "Ethnography"
 msgstr "قومیت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:81
-msgid "Place of birth"
-msgstr "محل تولد"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:82
-msgid "Date of birth"
-msgstr "تاریخ تولد"
-
 #: enferno/admin/templates/admin/jsapi.jinja2:82
 msgid "Yes"
 msgstr "بله"
@@ -1013,8 +911,8 @@ msgid "No"
 msgstr "خیر"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:84
-#: enferno/admin/templates/admin/jsapi.jinja2:368
-#: enferno/admin/templates/admin/jsapi.jinja2:372
+#: enferno/admin/templates/admin/jsapi.jinja2:382
+#: enferno/admin/templates/admin/jsapi.jinja2:386
 msgid "Unknown"
 msgstr "نامعلوم"
 
@@ -1034,9 +932,9 @@ msgstr "اطلاعات تماس (تلفن، ایمیل، آدرس)"
 msgid "Relationship"
 msgstr "روابط"
 
-#: enferno/admin/templates/admin/actors.html:555
+#: enferno/admin/templates/admin/actors.html:545
 #: enferno/admin/templates/admin/jsapi.jinja2:91
-#: enferno/admin/templates/admin/system-logs.html:140
+#: enferno/admin/templates/admin/system-logs.html:141
 msgid "Type"
 msgstr "نوع"
 
@@ -1051,7 +949,7 @@ msgstr "طول جغرافیایی"
 #: enferno/admin/templates/admin/jsapi.jinja2:94
 #: enferno/admin/templates/admin/labels.html:93
 #: enferno/admin/templates/admin/labels.html:272
-#: enferno/admin/templates/admin/locations.html:206
+#: enferno/admin/templates/admin/locations.html:209
 #: enferno/admin/templates/admin/sources.html:72
 #: enferno/admin/templates/admin/sources.html:220
 msgid "Parent"
@@ -1062,7 +960,7 @@ msgstr "والد"
 msgid "Postal Code"
 msgstr "کدپستی"
 
-#: enferno/admin/templates/admin/incidents.html:204
+#: enferno/admin/templates/admin/incidents.html:185
 #: enferno/admin/templates/admin/jsapi.jinja2:121
 msgid "Edit"
 msgstr "ویرایش"
@@ -1070,10 +968,6 @@ msgstr "ویرایش"
 #: enferno/admin/templates/admin/jsapi.jinja2:122
 msgid "Visualize"
 msgstr "نمایش تصویری"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:121
-msgid "Assigned User:"
-msgstr "کاربر تخصیص داده شده:"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:125
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:72
@@ -1087,22 +981,19 @@ msgstr "رسانه‌ها"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:132
 #: enferno/admin/templates/admin/partials/edit_related_bulletins.html:4
-#: enferno/admin/templates/admin/partials/incident_dialog.html:171
-#: enferno/admin/templates/admin/partials/review_dialog.html:112
+#: enferno/admin/templates/admin/partials/review_dialog.html:116
 msgid "Related Bulletins"
 msgstr "بولتن‌های مرتبط"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:133
 #: enferno/admin/templates/admin/partials/edit_related_actors.html:3
-#: enferno/admin/templates/admin/partials/incident_dialog.html:141
-#: enferno/admin/templates/admin/partials/review_dialog.html:119
+#: enferno/admin/templates/admin/partials/review_dialog.html:123
 msgid "Related Actors"
 msgstr "عاملان مرتبط"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:134
 #: enferno/admin/templates/admin/partials/edit_related_incidents.html:3
-#: enferno/admin/templates/admin/partials/incident_dialog.html:200
-#: enferno/admin/templates/admin/partials/review_dialog.html:125
+#: enferno/admin/templates/admin/partials/review_dialog.html:129
 msgid "Related Incidents"
 msgstr "وقایع مرتبط"
 
@@ -1114,634 +1005,420 @@ msgstr "اطلاعات روابط"
 msgid "Log History"
 msgstr "سابقه گزارش‌‌ها"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:144
-#: enferno/admin/templates/admin/users.html:92
+#: enferno/admin/templates/admin/jsapi.jinja2:143
+#: enferno/admin/templates/admin/users.html:132
 msgid "Full Name"
 msgstr "نام و نام خانوادگی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:144
-msgid "Nick Name"
-msgstr "نام مستعار"
-
-#: enferno/admin/templates/admin/partials/actor_dialog.html:97
+#: enferno/admin/templates/admin/partials/actor_dialog.html:96
 msgid "Middle Name"
 msgstr "نام میانی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:152
+#: enferno/admin/templates/admin/jsapi.jinja2:151
 msgid "Age"
 msgstr "سن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:153
-#: enferno/admin/templates/admin/jsapi.jinja2:373
+#: enferno/admin/templates/admin/jsapi.jinja2:152
+#: enferno/admin/templates/admin/jsapi.jinja2:387
 msgid "Civilian"
 msgstr "غیرنظامی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:165
+#: enferno/admin/templates/admin/jsapi.jinja2:164
 msgid "Ethnographic Info"
 msgstr "اطلاعات قومیتی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:166
+#: enferno/admin/templates/admin/jsapi.jinja2:165
 #: enferno/admin/templates/admin/partials/actor_dialog.html:268
 #: enferno/data_import/templates/sheets-import.html:347
 msgid "Nationalities"
 msgstr "ملیت‌ها"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:169
+#: enferno/admin/templates/admin/jsapi.jinja2:168
 msgid "Overview"
 msgstr "مرور کلی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:172
+#: enferno/admin/templates/admin/jsapi.jinja2:171
 #: enferno/admin/templates/admin/partials/incident_dialog.html:81
 msgid "Claimed Violations Categories"
 msgstr "دسته‌بندی تعرضات ادعا شده"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:173
+#: enferno/admin/templates/admin/jsapi.jinja2:172
 #: enferno/admin/templates/admin/partials/incident_dialog.html:67
 msgid "Potential violation categories"
 msgstr "دسته‌بندی تعرضات احتمالی"
 
-#: enferno/admin/templates/admin/actors.html:414
-#: enferno/admin/templates/admin/jsapi.jinja2:180
+#: enferno/admin/templates/admin/actors.html:402
+#: enferno/admin/templates/admin/jsapi.jinja2:179
 msgid "Missing Person"
 msgstr "شخص گمشده"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:182
-#: enferno/admin/templates/admin/partials/actor_dialog.html:479
-#: enferno/data_import/templates/sheets-import.html:441
+#: enferno/admin/templates/admin/jsapi.jinja2:181
+#: enferno/admin/templates/admin/partials/actor_dialog.html:477
+#: enferno/data_import/templates/sheets-import.html:443
 msgid "Last Address"
 msgstr "آخرین آدرس"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:183
-#: enferno/admin/templates/admin/partials/actor_dialog.html:483
-#: enferno/data_import/templates/sheets-import.html:443
+#: enferno/admin/templates/admin/jsapi.jinja2:182
+#: enferno/admin/templates/admin/partials/actor_dialog.html:481
+#: enferno/data_import/templates/sheets-import.html:445
 msgid "Marriage History"
 msgstr "سوابق ازدواج"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:184
+#: enferno/admin/templates/admin/jsapi.jinja2:183
 msgid "Bio Children"
 msgstr "فرزندان زیستی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:185
-#: enferno/admin/templates/admin/partials/actor_dialog.html:490
-#: enferno/data_import/templates/sheets-import.html:448
+#: enferno/admin/templates/admin/jsapi.jinja2:184
+#: enferno/admin/templates/admin/partials/actor_dialog.html:488
+#: enferno/data_import/templates/sheets-import.html:450
 msgid "Pregnant at Disappearance"
 msgstr "باردار در زمان ناپدید شدن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:186
+#: enferno/admin/templates/admin/jsapi.jinja2:185
 msgid "Months Pregnant at Disappearance"
 msgstr "ماه‌‌های بارداری در زمان ناپدید شدن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:187
-#: enferno/admin/templates/admin/partials/actor_dialog.html:507
-#: enferno/data_import/templates/sheets-import.html:452
+#: enferno/admin/templates/admin/jsapi.jinja2:186
+#: enferno/admin/templates/admin/partials/actor_dialog.html:505
+#: enferno/data_import/templates/sheets-import.html:454
 msgid "Missing Relatives"
 msgstr "خویشاوندان گمشده"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:189
-#: enferno/admin/templates/admin/partials/actor_dialog.html:525
-#: enferno/data_import/templates/sheets-import.html:465
+#: enferno/admin/templates/admin/jsapi.jinja2:188
+#: enferno/admin/templates/admin/partials/actor_dialog.html:523
+#: enferno/data_import/templates/sheets-import.html:467
 msgid "Address"
 msgstr "آدرس"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:190
-#: enferno/admin/templates/admin/partials/actor_dialog.html:527
-#: enferno/data_import/templates/sheets-import.html:467
+#: enferno/admin/templates/admin/jsapi.jinja2:189
+#: enferno/admin/templates/admin/partials/actor_dialog.html:525
+#: enferno/data_import/templates/sheets-import.html:469
 msgid "Phone"
 msgstr "تلفن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:191
-#: enferno/admin/templates/admin/partials/actor_dialog.html:531
-#: enferno/admin/templates/admin/users.html:103
-#: enferno/admin/templates/admin/users.html:264
-#: enferno/data_import/templates/sheets-import.html:469
+#: enferno/admin/templates/admin/jsapi.jinja2:190
+#: enferno/admin/templates/admin/partials/actor_dialog.html:529
+#: enferno/admin/templates/admin/users.html:143
+#: enferno/admin/templates/admin/users.html:309
+#: enferno/data_import/templates/sheets-import.html:471
 msgid "Email"
 msgstr "ایمیل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:192
-#: enferno/admin/templates/admin/partials/actor_dialog.html:538
+#: enferno/admin/templates/admin/jsapi.jinja2:191
+#: enferno/admin/templates/admin/partials/actor_dialog.html:536
 msgid "Seen in a detention center?"
 msgstr "در بازداشتگاه دیده شده؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:193
-#: enferno/admin/templates/admin/partials/actor_dialog.html:545
+#: enferno/admin/templates/admin/jsapi.jinja2:192
+#: enferno/admin/templates/admin/partials/actor_dialog.html:541
 msgid "Injured around time of disappearance?"
 msgstr "در زمان ناپدید شدن مجروح شده؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:194
-#: enferno/admin/templates/admin/partials/actor_dialog.html:553
+#: enferno/admin/templates/admin/jsapi.jinja2:193
+#: enferno/admin/templates/admin/partials/actor_dialog.html:548
 msgid "Known to be dead?"
 msgstr "معلوم شده که مرده است؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:195
-#: enferno/admin/templates/admin/partials/actor_dialog.html:559
+#: enferno/admin/templates/admin/jsapi.jinja2:194
+#: enferno/admin/templates/admin/partials/actor_dialog.html:554
 msgid "Details about circumstances of death"
 msgstr "جزئیات در مورد شرایط مرگ"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:196
-#: enferno/admin/templates/admin/partials/actor_dialog.html:565
+#: enferno/admin/templates/admin/jsapi.jinja2:195
+#: enferno/admin/templates/admin/partials/actor_dialog.html:560
 msgid "Personal Items (watch,ring,chains etc)"
 msgstr "اقلام شخصی (ساعت، حلقه، زنجیر و غیره)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:197
-#: enferno/admin/templates/admin/partials/actor_dialog.html:573
-#: enferno/data_import/templates/sheets-import.html:497
+#: enferno/admin/templates/admin/jsapi.jinja2:196
+#: enferno/admin/templates/admin/partials/actor_dialog.html:568
+#: enferno/data_import/templates/sheets-import.html:499
 msgid "Height"
 msgstr "قد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:198
-#: enferno/admin/templates/admin/partials/actor_dialog.html:581
-#: enferno/data_import/templates/sheets-import.html:499
+#: enferno/admin/templates/admin/jsapi.jinja2:197
+#: enferno/admin/templates/admin/partials/actor_dialog.html:576
+#: enferno/data_import/templates/sheets-import.html:501
 msgid "Weight"
 msgstr "وزن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:199
-#: enferno/admin/templates/admin/partials/actor_dialog.html:588
-#: enferno/data_import/templates/sheets-import.html:501
+#: enferno/admin/templates/admin/jsapi.jinja2:198
+#: enferno/admin/templates/admin/partials/actor_dialog.html:583
+#: enferno/data_import/templates/sheets-import.html:503
 msgid "Physique"
 msgstr "جثه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:200
-#: enferno/data_import/templates/sheets-import.html:503
+#: enferno/admin/templates/admin/jsapi.jinja2:199
+#: enferno/data_import/templates/sheets-import.html:505
 msgid "Hair Loss"
 msgstr "ریزش مو"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:201
-#: enferno/data_import/templates/sheets-import.html:508
+#: enferno/admin/templates/admin/jsapi.jinja2:200
+#: enferno/data_import/templates/sheets-import.html:510
 msgid "Hair Type"
 msgstr "نوع مو"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:202
-#: enferno/data_import/templates/sheets-import.html:510
+#: enferno/admin/templates/admin/jsapi.jinja2:201
+#: enferno/data_import/templates/sheets-import.html:512
 msgid "Hair Length"
 msgstr "قد مو"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:203
-#: enferno/data_import/templates/sheets-import.html:512
+#: enferno/admin/templates/admin/jsapi.jinja2:202
+#: enferno/data_import/templates/sheets-import.html:514
 msgid "Hair Color"
 msgstr "رنگ مو"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:204
-#: enferno/data_import/templates/sheets-import.html:514
+#: enferno/admin/templates/admin/jsapi.jinja2:203
+#: enferno/data_import/templates/sheets-import.html:516
 msgid "Facial Hair"
 msgstr "موی صورت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:205
-#: enferno/admin/templates/admin/partials/actor_dialog.html:653
+#: enferno/admin/templates/admin/jsapi.jinja2:204
+#: enferno/admin/templates/admin/partials/actor_dialog.html:648
 msgid "Notes on posture and walking style"
 msgstr "نکاتی در مورد وضعیت و سبک راه رفتن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:206
-#: enferno/admin/templates/admin/partials/actor_dialog.html:675
+#: enferno/admin/templates/admin/jsapi.jinja2:205
+#: enferno/admin/templates/admin/partials/actor_dialog.html:670
 msgid "Skin Markings"
 msgstr "نشانه‌های پوستی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:207
-#: enferno/admin/templates/admin/partials/actor_dialog.html:655
+#: enferno/admin/templates/admin/partials/actor_dialog.html:650
 msgid "Handness"
 msgstr "راست دست یا چپ دست"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:208
-#: enferno/admin/templates/admin/partials/actor_dialog.html:661
-#: enferno/data_import/templates/sheets-import.html:522
+#: enferno/admin/templates/admin/jsapi.jinja2:207
+#: enferno/admin/templates/admin/partials/actor_dialog.html:656
+#: enferno/data_import/templates/sheets-import.html:524
 msgid "Glasses"
 msgstr "عینکی بودن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:209
-#: enferno/data_import/templates/sheets-import.html:524
+#: enferno/admin/templates/admin/jsapi.jinja2:208
+#: enferno/data_import/templates/sheets-import.html:526
 msgid "Eye Color"
 msgstr "رنگ چشم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:210
-#: enferno/admin/templates/admin/partials/actor_dialog.html:690
-#: enferno/data_import/templates/sheets-import.html:536
+#: enferno/admin/templates/admin/jsapi.jinja2:209
+#: enferno/admin/templates/admin/partials/actor_dialog.html:684
+#: enferno/data_import/templates/sheets-import.html:538
 msgid "Distinctive characteristics (congenital)"
 msgstr "ویژگی‌های متمایز (مادرزادی)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:211
-#: enferno/admin/templates/admin/partials/actor_dialog.html:695
-#: enferno/data_import/templates/sheets-import.html:538
+#: enferno/admin/templates/admin/jsapi.jinja2:210
+#: enferno/admin/templates/admin/partials/actor_dialog.html:689
+#: enferno/data_import/templates/sheets-import.html:540
 msgid "Distinctive characteristics (acquired)"
 msgstr "ویژگی‌های متمایز (اکتسابی)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:212
-#: enferno/admin/templates/admin/partials/actor_dialog.html:702
+#: enferno/admin/templates/admin/jsapi.jinja2:211
+#: enferno/admin/templates/admin/partials/actor_dialog.html:696
 msgid "Physical habits"
 msgstr "عادات بدنی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:213
-#: enferno/admin/templates/admin/partials/actor_dialog.html:707
-#: enferno/data_import/templates/sheets-import.html:544
+#: enferno/admin/templates/admin/jsapi.jinja2:212
+#: enferno/admin/templates/admin/partials/actor_dialog.html:701
+#: enferno/data_import/templates/sheets-import.html:546
 msgid "Other comments"
 msgstr "توضیحات دیکر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:213
-#: enferno/data_import/templates/sheets-import.html:595
-msgid "Physician\\u2019s name and contact"
-msgstr "نام و اطلاعات تماس پزشک"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:215
-#: enferno/data_import/templates/sheets-import.html:550
+#: enferno/admin/templates/admin/jsapi.jinja2:214
+#: enferno/data_import/templates/sheets-import.html:552
 msgid "Fractures / Injuries"
 msgstr "شکستگی‌ها / جراحات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:216
+#: enferno/admin/templates/admin/jsapi.jinja2:215
 msgid "Implants "
 msgstr "اعضای مصنوعی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:217
-#: enferno/data_import/templates/sheets-import.html:557
+#: enferno/admin/templates/admin/jsapi.jinja2:216
+#: enferno/data_import/templates/sheets-import.html:559
 msgid "Congenital malformations"
 msgstr "ناهنجاری‌های مادرزادی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:218
+#: enferno/admin/templates/admin/jsapi.jinja2:217
 msgid "Pain and / or ailments"
 msgstr "درد و / یا بیماری"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:219
-#: enferno/data_import/templates/sheets-import.html:564
+#: enferno/admin/templates/admin/jsapi.jinja2:218
+#: enferno/data_import/templates/sheets-import.html:566
 msgid "Other medical conditions"
 msgstr "سایر شرایط پزشکی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:220
-#: enferno/data_import/templates/sheets-import.html:569
+#: enferno/admin/templates/admin/jsapi.jinja2:219
+#: enferno/data_import/templates/sheets-import.html:571
 msgid "Accidents"
 msgstr "تصادفات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:221
-#: enferno/data_import/templates/sheets-import.html:571
+#: enferno/admin/templates/admin/jsapi.jinja2:220
+#: enferno/data_import/templates/sheets-import.html:573
 msgid "Prescription drugs taken"
 msgstr "داروهای تجویزی مصرف شده"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:222
-#: enferno/admin/templates/admin/partials/actor_dialog.html:771
-#: enferno/data_import/templates/sheets-import.html:576
+#: enferno/admin/templates/admin/jsapi.jinja2:221
+#: enferno/admin/templates/admin/partials/actor_dialog.html:765
+#: enferno/data_import/templates/sheets-import.html:578
 msgid "Smoker"
 msgstr "سیگاری"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:223
+#: enferno/admin/templates/admin/jsapi.jinja2:222
 msgid "Is there a Dental Record"
 msgstr "آیا پرونده دندانپزشکی وجود دارد؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:223
-#: enferno/admin/templates/admin/partials/actor_dialog.html:1235
-msgid "Dentist’s name and contact"
-msgstr "نام و اطلاعات تماس دندانپزشک"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:225
-#: enferno/data_import/templates/sheets-import.html:584
+#: enferno/admin/templates/admin/jsapi.jinja2:224
+#: enferno/data_import/templates/sheets-import.html:586
 msgid "Teeth features"
 msgstr "ویژگی‌های دندان‌ها"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:226
-#: enferno/data_import/templates/sheets-import.html:589
+#: enferno/admin/templates/admin/jsapi.jinja2:225
+#: enferno/data_import/templates/sheets-import.html:591
 msgid "Dental problems"
 msgstr "مشکلات دندانی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:227
-#: enferno/data_import/templates/sheets-import.html:591
+#: enferno/admin/templates/admin/jsapi.jinja2:226
+#: enferno/data_import/templates/sheets-import.html:593
 msgid "Dental treatments"
 msgstr "درمان‌های دندانپزشکی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:228
+#: enferno/admin/templates/admin/jsapi.jinja2:227
 msgid "Dental habits"
 msgstr "عادت‌های دندانی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:229
-#: enferno/admin/templates/admin/partials/actor_dialog.html:811
+#: enferno/admin/templates/admin/jsapi.jinja2:228
+#: enferno/admin/templates/admin/partials/actor_dialog.html:805
 msgid "Case status"
 msgstr "وضعیت پرونده"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:230
+#: enferno/admin/templates/admin/jsapi.jinja2:229
 msgid "Reporters"
 msgstr "گزارش‌دهندگان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:231
-#: enferno/admin/templates/admin/partials/actor_dialog.html:832
+#: enferno/admin/templates/admin/jsapi.jinja2:230
+#: enferno/admin/templates/admin/partials/actor_dialog.html:825
 msgid "Identified by (responsible institution)"
 msgstr "شناسایی شده توسط (موسسه مسئول)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:232
-#: enferno/admin/templates/admin/partials/actor_dialog.html:838
+#: enferno/admin/templates/admin/jsapi.jinja2:231
+#: enferno/admin/templates/admin/partials/actor_dialog.html:831
 msgid "Was the family notified?"
 msgstr "آیا خانواده مطلع شده؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:233
-#: enferno/data_import/templates/sheets-import.html:634
+#: enferno/admin/templates/admin/jsapi.jinja2:232
+#: enferno/data_import/templates/sheets-import.html:636
 msgid "Location of reburial"
 msgstr "محل دفن مجدد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:234
-#: enferno/admin/templates/admin/partials/actor_dialog.html:519
-#: enferno/data_import/templates/sheets-import.html:457
+#: enferno/admin/templates/admin/jsapi.jinja2:233
+#: enferno/admin/templates/admin/partials/actor_dialog.html:517
+#: enferno/data_import/templates/sheets-import.html:459
 msgid "Details of the person who saw them last"
 msgstr "مشخصات فردی که آخرین بار او را دیده است"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:236
+#: enferno/admin/templates/admin/jsapi.jinja2:235
 msgid "Contact"
 msgstr "اطلاعات تماس"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:241
-#: enferno/admin/templates/admin/jsapi.jinja2:280
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:231
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:235
-#: enferno/admin/templates/admin/partials/event_dialog.html:144
-#: enferno/admin/templates/admin/partials/event_dialog.html:147
+#: enferno/admin/templates/admin/jsapi.jinja2:240
+#: enferno/admin/templates/admin/jsapi.jinja2:279
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:234
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:238
+#: enferno/admin/templates/admin/partials/event_dialog.html:142
+#: enferno/admin/templates/admin/partials/event_dialog.html:145
 msgid "Time"
 msgstr "زمان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:245
+#: enferno/admin/templates/admin/jsapi.jinja2:244
 #: enferno/templates/nav-drawer.html:6
 msgid "Actors"
 msgstr "عاملان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:246
+#: enferno/admin/templates/admin/jsapi.jinja2:245
 #: enferno/templates/nav-drawer.html:3
 msgid "Bulletins"
 msgstr "بولتن‌ها"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:247
+#: enferno/admin/templates/admin/jsapi.jinja2:246
 #: enferno/templates/nav-drawer.html:9
 msgid "Incidents"
 msgstr "وقایع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:248
+#: enferno/admin/templates/admin/jsapi.jinja2:247
 msgid "Double click on a node to expand graph, click and hold CTRL to view"
 msgstr "روی یک گره دوبار کلیک کنید تا نمودار باز شود، برای مشاهده کلیک کنید و CTRL را نگه دارید"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:267
-#: enferno/admin/templates/admin/jsapi.jinja2:402
+#: enferno/admin/templates/admin/jsapi.jinja2:266
+#: enferno/admin/templates/admin/jsapi.jinja2:416
 msgid "Maybe"
 msgstr "شاید"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:268
-#: enferno/admin/templates/admin/jsapi.jinja2:403
+#: enferno/admin/templates/admin/jsapi.jinja2:267
+#: enferno/admin/templates/admin/jsapi.jinja2:417
 msgid "Likely"
 msgstr "احتمال دارد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:269
-#: enferno/admin/templates/admin/jsapi.jinja2:404
+#: enferno/admin/templates/admin/jsapi.jinja2:268
+#: enferno/admin/templates/admin/jsapi.jinja2:418
 msgid "Certain"
 msgstr "قطعی است"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:391
-msgid "Other"
-msgstr "دیگری"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:356
+#: enferno/admin/templates/admin/jsapi.jinja2:370
 msgid "Person"
 msgstr "شخص"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:357
+#: enferno/admin/templates/admin/jsapi.jinja2:371
 msgid "Entity"
 msgstr "موجودیت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:361
+#: enferno/admin/templates/admin/jsapi.jinja2:375
 msgid "Male"
 msgstr "مرد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:362
+#: enferno/admin/templates/admin/jsapi.jinja2:376
 msgid "Female"
 msgstr "زن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:366
+#: enferno/admin/templates/admin/jsapi.jinja2:380
 msgid "Minor"
 msgstr "خردسال"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:367
+#: enferno/admin/templates/admin/jsapi.jinja2:381
 msgid "Adult"
 msgstr "بزرگسال"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:374
+#: enferno/admin/templates/admin/jsapi.jinja2:388
 msgid "Non-Civilian"
 msgstr "نظامی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:375
+#: enferno/admin/templates/admin/jsapi.jinja2:389
 msgid "Police"
 msgstr "پلیس"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:376
+#: enferno/admin/templates/admin/jsapi.jinja2:390
 msgid "Other Security Forces"
 msgstr "سایر نیروهای امنیتی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:176
-#: enferno/admin/templates/admin/jsapi.jinja2:340
+#: enferno/admin/templates/admin/jsapi.jinja2:175
+#: enferno/admin/templates/admin/jsapi.jinja2:354
 msgid "Geo Markers"
 msgstr "نشانگرهای جغرافیایی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:177
+#: enferno/admin/templates/admin/jsapi.jinja2:176
 msgid "Add Geo Marker"
 msgstr "افزودن نشانگر جغرافیایی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:340
-msgid "Very thin"
-msgstr "بسیار لاغر"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:341
-msgid "Thin"
-msgstr "لاغر"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:342
-msgid "Average"
-msgstr "متوسط"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:343
-msgid "Muscular"
-msgstr "عضلانی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:344
-msgid "Overweight"
-msgstr "دارای اضافه وزن"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:345
-msgid "Obese"
-msgstr "چاق"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:349
-msgid "Pregnant"
-msgstr "باردار"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:350
-msgid "Not Pregnant"
-msgstr "باردار نیست"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:352
-msgid "Not Applicable"
-msgstr "صدق نمی‌کند"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:353
-msgid "The Question Was Not Asked"
-msgstr "سوال پرسیده نشده"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:363
-msgid "Full"
-msgstr "کامل"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:364
-msgid "Bald"
-msgstr "طاس"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:365
-msgid "Partial hair loss"
-msgstr "موها تا حدی ریخته"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:369
-msgid "Straight"
-msgstr "صاف"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:370
-msgid "Wavy"
-msgstr "موجدار"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:371
-msgid "Curly"
-msgstr "فر"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:372
-msgid "Very curly"
-msgstr "خیلی فر"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:377
-msgid "Very short"
-msgstr "خیلی کوتاه"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:378
-msgid "Short"
-msgstr "کوتاه"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:379
-msgid "Medium"
-msgstr "متوسط"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:380
-msgid "Long"
-msgstr "بلند"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:381
-msgid "Very long"
-msgstr "خیلی بلند"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:385
-#: enferno/admin/templates/admin/jsapi.jinja2:426
-msgid "Black"
-msgstr "مشکی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:386
-#: enferno/admin/templates/admin/jsapi.jinja2:427
-msgid "Brown"
-msgstr "قهوه‌ای"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:387
-msgid "Blonde"
-msgstr "طلایی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:388
-#: enferno/admin/templates/admin/jsapi.jinja2:430
-msgid "Grey"
-msgstr "خاکستری"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:389
-msgid "Turning grey"
-msgstr "رو به خاکستری شدن"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:390
-msgid "Red"
-msgstr "قرمز"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:394
-msgid "none"
-msgstr "هیچ کدام"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:395
-msgid "Beard"
-msgstr "ریش"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:396
-msgid "Moustache"
-msgstr "سبیل"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:397
-msgid "Beard and moustache"
-msgstr "ریش و سبیل"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:398
-msgid "Goatee"
-msgstr "ریش بزی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:399
-msgid "Whiskers"
-msgstr "ریش کنار صورت"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:403
-msgid "Scar"
-msgstr "جای زخم"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:404
-msgid "Tattoo"
-msgstr "خالکوبی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:405
-msgid "piercing"
-msgstr "سوراخ کردن بدن برای زیورآلات"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:406
-msgid "Mole"
-msgstr "خال"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:407
-msgid "Birthmarks"
-msgstr "لکه‌های پوستی مادرزادی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:408
-msgid "Cuts"
-msgstr "بریدگی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:412
-msgid "Right"
-msgstr "راست"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:413
-msgid "Left"
-msgstr "چپ"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:414
-msgid "Both Hands"
-msgstr "هر دو دست"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:422
-msgid "Question Not Asked"
-msgstr "سوال پرسیده نشده"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:428
-msgid "Green"
-msgstr "سبز"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:429
-msgid "Blue"
-msgstr "آبی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:434
-msgid "Missing"
-msgstr "گمشده"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:435
-msgid "Identified"
-msgstr "شناخته شده"
-
-#: enferno/admin/templates/admin/incidents.html:69
+#: enferno/admin/templates/admin/incidents.html:62
 msgid "All Incidents"
 msgstr "همه وقایع"
 
-#: enferno/admin/templates/admin/incidents.html:101
-#: enferno/admin/templates/admin/incidents.html:670
+#: enferno/admin/templates/admin/incidents.html:89
+#: enferno/admin/templates/admin/incidents.html:663
 msgid "New Incident"
 msgstr "واقعه جدید"
 
-#: enferno/admin/templates/admin/incidents.html:670
+#: enferno/admin/templates/admin/incidents.html:663
 msgid "Edit Incident"
 msgstr "ویرایش واقعه"
 
 #: enferno/admin/templates/admin/labels.html:82
-#: enferno/admin/templates/admin/partials/event_dialog.html:101
+#: enferno/admin/templates/admin/partials/event_dialog.html:98
 msgid "Comments (AR)"
 msgstr "نظرات (AR)"
 
@@ -1773,34 +1450,30 @@ msgid "Offline"
 msgstr "آفلاین"
 
 #: enferno/admin/templates/admin/locations.html:52
-#: enferno/admin/templates/admin/locations.html:255
+#: enferno/admin/templates/admin/locations.html:258
 msgid "New Location"
 msgstr "مکان جدید"
 
-#: enferno/admin/templates/admin/locations.html:205
+#: enferno/admin/templates/admin/locations.html:208
 #: enferno/admin/templates/admin/partials/location_dialog.html:49
 msgid "Full Location"
 msgstr "موقعیت مکانی کامل"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:109
-#: enferno/admin/templates/admin/locations.html:207
+#: enferno/admin/templates/admin/locations.html:210
 #: enferno/admin/templates/admin/partials/location_dialog.html:64
 msgid "Location Type"
 msgstr "نوع مکان"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:110
-#: enferno/admin/templates/admin/locations.html:208
+#: enferno/admin/templates/admin/locations.html:211
 #: enferno/admin/templates/admin/partials/location_dialog.html:81
 msgid "Admin Level"
 msgstr "سطح مدیریتی"
 
-#: enferno/admin/templates/admin/locations.html:255
+#: enferno/admin/templates/admin/locations.html:258
 msgid "Edit Location"
 msgstr "ویرایش مکان"
-
-#: enferno/admin/templates/admin/roles.html:31
-msgid "Role Groups"
-msgstr "گروه‌های نقش"
 
 #: enferno/admin/templates/admin/roles.html:34
 #: enferno/admin/templates/admin/roles.html:253
@@ -1819,13 +1492,9 @@ msgstr "رنگ"
 msgid "Edit Group"
 msgstr "ویرایش گروه"
 
-#: enferno/admin/templates/admin/sources.html:84
-#: enferno/admin/templates/admin/sources.html:239
-msgid "ETL ID"
-msgstr "ETL ID"
-
 #: enferno/admin/templates/admin/component-data.html:278
-#: enferno/admin/templates/admin/system-administration.html:725
+#: enferno/admin/templates/admin/system-administration.html:733
+#: enferno/templates/setup_wizard.html:541
 msgid "Code"
 msgstr "کد"
 
@@ -1837,55 +1506,55 @@ msgstr "کاربران سیستم"
 msgid "New User"
 msgstr "کاربر جدید"
 
-#: enferno/admin/templates/admin/users.html:122
-#: enferno/templates/security/login_user.html:42
+#: enferno/admin/templates/admin/users.html:162
+#: enferno/templates/security/login_user.html:46
 #: enferno/templates/security/two_factor_verify_password.html:15
 #: enferno/templates/security/verify.html:20
 msgid "Password"
 msgstr "رمز عبور"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:428
-#: enferno/admin/templates/admin/users.html:180
+#: enferno/admin/templates/admin/jsapi.jinja2:442
+#: enferno/admin/templates/admin/users.html:221
 msgid "Active"
 msgstr "فعال"
 
-#: enferno/admin/templates/admin/users.html:186
+#: enferno/admin/templates/admin/users.html:227
 msgid "Can view usernames"
 msgstr "می‌تواند نام‌های کاربری را ببیند"
 
-#: enferno/admin/templates/admin/users.html:190
+#: enferno/admin/templates/admin/users.html:231
 msgid "Can view simple history"
 msgstr "می‌تواند تاریخچه ساده را ببیند"
 
-#: enferno/admin/templates/admin/users.html:194
+#: enferno/admin/templates/admin/users.html:235
 msgid "Can view Full History"
 msgstr "می‌تواند تاریخچه کامل را ببیند"
 
-#: enferno/admin/templates/admin/users.html:198
+#: enferno/admin/templates/admin/users.html:239
 msgid "Can self assign"
 msgstr "می‌تواند به خودش تخصیص دهد"
 
-#: enferno/admin/templates/admin/users.html:203
+#: enferno/admin/templates/admin/users.html:244
 msgid "Can edit Locations"
 msgstr "می‌تواند مکان‌ها را ویرایش کند"
 
-#: enferno/admin/templates/admin/partials/event_dialog.html:166
-#: enferno/admin/templates/admin/users.html:224
-#: enferno/templates/security/login_user.html:91
+#: enferno/admin/templates/admin/partials/event_dialog.html:164
+#: enferno/admin/templates/admin/users.html:269
+#: enferno/templates/security/login_user.html:107
 msgid "Close"
 msgstr "بستن"
 
-#: enferno/admin/templates/admin/users.html:151
-#: enferno/admin/templates/admin/users.html:263
+#: enferno/admin/templates/admin/users.html:191
+#: enferno/admin/templates/admin/users.html:308
 #: enferno/templates/security/forgot_password.html:10
 msgid "Username"
 msgstr "نام کاربری"
 
-#: enferno/admin/templates/admin/users.html:266
+#: enferno/admin/templates/admin/users.html:311
 msgid "Google ID"
 msgstr "شناسه گوگل"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:24
+#: enferno/admin/templates/admin/partials/actor_dialog.html:22
 msgid "Save Actor"
 msgstr "ذخیره عامل"
 
@@ -1893,18 +1562,6 @@ msgstr "ذخیره عامل"
 #: enferno/admin/templates/admin/partials/incident_dialog.html:150
 msgid "Search & Relate Actors"
 msgstr "جستجو و مرتبط کردن عاملان"
-
-#: enferno/admin/templates/admin/partials/actor_dialog.html:618
-#: enferno/admin/templates/admin/partials/actor_dialog.html:729
-#: enferno/admin/templates/admin/partials/actor_dialog.html:833
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:256
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:362
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:468
-#: enferno/admin/templates/admin/partials/incident_dialog.html:208
-#: enferno/admin/templates/admin/partials/incident_dialog.html:314
-#: enferno/admin/templates/admin/partials/incident_dialog.html:419
-msgid "Relationship Information"
-msgstr "اطلاعات روابط"
 
 #: enferno/admin/templates/admin/partials/related_actors_grid.html:11
 #: enferno/admin/templates/admin/partials/related_bulletins_grid.html:14
@@ -1914,7 +1571,7 @@ msgstr "احتمال"
 
 #: enferno/admin/templates/admin/partials/related_actors_grid.html:25
 #: enferno/admin/templates/admin/partials/related_bulletins_grid.html:29
-#: enferno/admin/templates/admin/partials/related_incidents_grid.html:26
+#: enferno/admin/templates/admin/partials/related_incidents_grid.html:28
 msgid "Related As"
 msgstr "مرتبط به عنوان"
 
@@ -1928,96 +1585,96 @@ msgstr "جستجو و مرتبط کردن بولتن‌ها"
 msgid "Search & Relate Incidents"
 msgstr "جستجو و مرتبط کردن وقایع"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:472
+#: enferno/admin/templates/admin/partials/actor_dialog.html:470
 msgid "Missing Person Profile"
 msgstr "پروفایل شخص گمشده"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:502
+#: enferno/admin/templates/admin/partials/actor_dialog.html:500
 msgid "Months Pregnant at time of disappearance"
 msgstr "ماه‌های بارداری در زمان ناپدید شدن"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:598
+#: enferno/admin/templates/admin/partials/actor_dialog.html:593
 msgid "Hair loss"
 msgstr "ریزش مو"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:611
+#: enferno/admin/templates/admin/partials/actor_dialog.html:606
 msgid "Hair type"
 msgstr "نوع مو"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:620
+#: enferno/admin/templates/admin/partials/actor_dialog.html:615
 msgid "Hair length"
 msgstr "قد مو"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:629
+#: enferno/admin/templates/admin/partials/actor_dialog.html:624
 msgid "Hair color"
 msgstr "رنگ مو"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:638
+#: enferno/admin/templates/admin/partials/actor_dialog.html:633
 msgid "Facial hair"
 msgstr "موی صورت"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:667
+#: enferno/admin/templates/admin/partials/actor_dialog.html:662
 msgid "Eye color"
 msgstr "رنگ چشم"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:715
+#: enferno/admin/templates/admin/partials/actor_dialog.html:709
 msgid "Physician’s name and contact"
 msgstr "نام و اطلاعات تماس پزشک"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:720
+#: enferno/admin/templates/admin/partials/actor_dialog.html:714
 msgid "Fractures / Injuries (indicate place, side, circumstances, age at the time of injury, treatment)"
 msgstr "شکستگی‌ها / آسیب‌دیدگی‌ها (محل، سمت، شرایط، سن در زمان آسیب، درمان‌های انجام شده)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:728
+#: enferno/admin/templates/admin/partials/actor_dialog.html:722
 msgid "Implants (pacemakers, orthopedic prostheses, screws or metal plates, etc...) with date or age"
 msgstr "ایمپلنت (پیس‌میکر، پروتزهای ارتوپدی، پیچ یا صفحات فلزی و غیره) با تاریخ یا سن"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:733
+#: enferno/admin/templates/admin/partials/actor_dialog.html:727
 msgid "Congenital malformations (indicate type and whether there is more than one relative with the same pathology)"
 msgstr "ناهنجاری‌های مادرزادی (نوع و داشتن بیش از یک خویشاوند با شرایط مشابه را ذکر کنید)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:741
-#: enferno/data_import/templates/sheets-import.html:562
+#: enferno/admin/templates/admin/partials/actor_dialog.html:735
+#: enferno/data_import/templates/sheets-import.html:564
 msgid "Pain and/or ailments"
 msgstr "درد و/ یا بیماری"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:746
+#: enferno/admin/templates/admin/partials/actor_dialog.html:740
 msgid "Other medical conditions (specify type and age of occurrence)"
 msgstr "سایر شرایط پزشکی (نوع و سن در زمان وقوع را مشخص کنید)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:754
+#: enferno/admin/templates/admin/partials/actor_dialog.html:748
 msgid "Accidents (indicate age of occurrence)"
 msgstr "تصادفات (سن در زمان وقوع را ذکر کنید)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:759
+#: enferno/admin/templates/admin/partials/actor_dialog.html:753
 msgid "Prescription drugs taken (indicate at what age and reason)"
 msgstr "داروهای تجویزی (سن در زمان تجویز و دلیل تجویز را بیان کنید)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:778
+#: enferno/admin/templates/admin/partials/actor_dialog.html:772
 msgid "Is there a Dental Record?"
 msgstr "آیا پرونده دندانپزشکی وجود دارد؟"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:788
+#: enferno/admin/templates/admin/partials/actor_dialog.html:782
 msgid "Teeth features (spacing, extra teeth, missing teeth, overbite, etc...)"
 msgstr "ویژگی‌های دندان‌ها (فاصله، دندان‌های اضافی، دندان‌های از دست رفته، بیش از حد جلو بودن دندان‌ها و...)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:797
+#: enferno/admin/templates/admin/partials/actor_dialog.html:791
 msgid "Dental problems (absences, infections, bleeding, etc...)"
 msgstr "مشکلات دندانی (فقدان دندان، عفونت، خونریزی و...)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:802
+#: enferno/admin/templates/admin/partials/actor_dialog.html:796
 msgid "Dental treatments (extractions, fillings, etc...) with dates"
 msgstr "درمان‌های دندانپزشکی (کشیدن، پرکردن و ...) با ذکر تاریخ"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:807
+#: enferno/admin/templates/admin/partials/actor_dialog.html:801
 msgid "Dental habits (toothpicks, smoking, etc...)"
 msgstr "عادات دندانی (استفاده از خلال دندان، سیگار کشیدن و...)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:844
+#: enferno/admin/templates/admin/partials/actor_dialog.html:837
 msgid "Location of reburial (full address)"
 msgstr "محل دفن مجدد (آدرس کامل)"
 
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:218
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:221
 msgid "Not Available"
 msgstr "در دسترس نیست"
 
@@ -2027,52 +1684,48 @@ msgstr "در دسترس نیست"
 msgid "Bulk Update"
 msgstr "به روزرسانی انبوه"
 
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:39
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:45
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:37
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:46
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:47
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:45
 msgid "Peer Reviewer"
 msgstr "بازبین همتا"
 
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:75
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:71
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:88
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:70
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:78
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:75
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:92
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:74
 msgid "Replace"
 msgstr "جایگزینی"
 
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:95
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:98
 msgid "Bulk Update Actors"
 msgstr "به روزرسانی انبوه عاملان"
 
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:105
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:109
 msgid "Bulk Update Bulletins"
 msgstr "به روزرسانی انبوه بولتن‌ها"
 
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:75
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:79
 msgid "Assign Related Items"
 msgstr "تخصیص موارد مرتبط"
 
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:76
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:80
 msgid "Restrict Related Items"
 msgstr "محدود کردن موارد مرتبط"
 
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:91
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:95
 msgid "Bulk Update Incidents"
 msgstr "به روز‌رسانی انبوه وقایع"
 
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:97
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:103
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:83
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:95
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:98
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:81
 msgid "Name this search"
 msgstr "نامگذاری این جستجو"
 
 #: enferno/admin/templates/admin/partials/bulletin_dialog.html:51
 msgid "Save Bulletin"
 msgstr "ذخیره بولتن"
-
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:56
-msgid "Original Title (AR)"
-msgstr "عنوان اصلی (AR)"
 
 #: enferno/admin/templates/admin/partials/event_dialog.html:55
 msgid "Event"
@@ -2105,32 +1758,32 @@ msgid "Tags"
 msgstr "برچسب‌ها"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:105
-#: enferno/admin/templates/admin/partials/review_dialog.html:136
+#: enferno/admin/templates/admin/partials/review_dialog.html:140
 msgid "Needs Review"
 msgstr "نیازمند بازبینی"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:104
-#: enferno/admin/templates/admin/partials/review_dialog.html:138
+#: enferno/admin/templates/admin/partials/review_dialog.html:142
 msgid "No Review Needed"
 msgstr "بدون نیاز به بازبینی"
 
-#: enferno/deduplication/templates/deduplication.html:15
+#: enferno/deduplication/templates/deduplication.html:34
 msgid "Start"
 msgstr "شروع"
 
-#: enferno/deduplication/templates/deduplication.html:20
+#: enferno/deduplication/templates/deduplication.html:39
 msgid "Stop"
 msgstr "توقف"
 
-#: enferno/deduplication/templates/deduplication.html:119
+#: enferno/deduplication/templates/deduplication.html:190
 msgid "Match"
 msgstr "همخوان"
 
-#: enferno/deduplication/templates/deduplication.html:120
+#: enferno/deduplication/templates/deduplication.html:191
 msgid "Distance"
 msgstr "فاصله"
 
-#: enferno/deduplication/templates/deduplication.html:122
+#: enferno/deduplication/templates/deduplication.html:192
 msgid "Data"
 msgstr "داده‌ها"
 
@@ -2147,15 +1800,15 @@ msgstr "رمز عبور جدید"
 msgid "Confirm Password"
 msgstr "تایید رمز عبور"
 
-#: enferno/templates/dashboard.html:11
+#: enferno/templates/dashboard.html:10
 msgid "Welcome"
 msgstr "خوش آمدید"
 
-#: enferno/templates/dashboard.html:19
+#: enferno/templates/dashboard.html:18
 msgid "Last login"
 msgstr "آخرین ورود"
 
-#: enferno/templates/dashboard.html:32
+#: enferno/templates/dashboard.html:126
 msgid "All rights reserved."
 msgstr "تمامی حقوق محفوظ است."
 
@@ -2171,29 +1824,9 @@ msgstr "وارد کردن رسانه‌ها"
 msgid "Sheets Import"
 msgstr "وارد کردن برگه‌ها"
 
-#: enferno/templates/nav-drawer.html:219
-msgid "Deduplication Dashbaord"
-msgstr "دشبورد حذف داده‌های تکراری"
-
-#: enferno/templates/settings.html:16
-msgid "Settings"
-msgstr "تنظیمات"
-
-#: enferno/templates/settings.html:21
-msgid "User Interface"
-msgstr "رابط کاربری"
-
-#: enferno/templates/settings.html:24
-msgid "Dark Mode"
-msgstr "حالت تیره"
-
 #: enferno/admin/templates/nav-bar.html:43
 msgid "Interface Language"
 msgstr "زبان رابط کاربری"
-
-#: enferno/templates/settings.html:38
-msgid "Profile Settings"
-msgstr "تنظیمات پروفایل"
 
 #: enferno/templates/change-password.html:6
 #: enferno/templates/security/change_password.html:25
@@ -2201,38 +1834,15 @@ msgstr "تنظیمات پروفایل"
 msgid "Change Password"
 msgstr "تغییر رمز عبور"
 
-#: enferno/admin/templates/admin/system-administration.html:21
+#: enferno/admin/templates/admin/system-administration.html:20
 #: enferno/templates/settings_drawer.html:56
+#: enferno/templates/setup_wizard.html:235
 msgid "Security"
 msgstr "امنیت"
 
 #: enferno/templates/settings_drawer.html:62
 msgid "Setup Two-Factor Auth"
 msgstr "تنظیم احراز هویت دو مرحله‌ای"
-
-#: enferno/templates/security/two_factor_setup.html:38
-msgid "Two-factor authentication adds an extra layer of security to your account"
-msgstr "احراز هویت دو مرحله‌ای یک لایه امنیتی اضافی به حساب شما اضافه می‌کند"
-
-#: enferno/templates/security/two_factor_setup.html:41
-msgid "In addition to your username and password, you'll need to use a code that your phone will generate"
-msgstr "علاوه بر نام کاربری و رمز عبور خود، باید از کدی که در گوشی‌تان ایجاد می‌شود استفاده کنید."
-
-#: enferno/templates/security/two_factor_setup.html:58
-msgid "To complete logging in, please enter the code sent to your mail"
-msgstr "برای تکمیل ورود لطفاً کد ارسال شده به ایمیلتان را وارد کنید"
-
-#: enferno/templates/security/two_factor_setup.html:64
-msgid "Open an authenticator app on your device and scan the following QRcode, or enter the code below manually:"
-msgstr "یک برنامه احراز هویت را در دستگاه خود باز کنید و کد QR زیر را اسکن کنید یا کد را به صورت دستی اینجا وارد کنید:"
-
-#: enferno/templates/security/two_factor_setup.html:67
-msgid "Two factor authentication code"
-msgstr "کد احراز هویت دو مرحله‌ای"
-
-#: enferno/templates/security/two_factor_setup.html:76
-msgid "To Which Phone Number Should We Send Code To?"
-msgstr "کد را به کدام شماره تلفن ارسال کنیم؟"
 
 #: enferno/templates/security/two_factor_verify_code.html:9
 msgid "Two-factor Authentication"
@@ -2290,55 +1900,51 @@ msgstr "درخواست ارسال کد یکبارمصرف"
 msgid "Please re-authenticate"
 msgstr "لطفا دوباره احراز هویت کنید"
 
-#: enferno/admin/templates/admin/activity.html:22
+#: enferno/admin/templates/admin/activity.html:27
 msgid "System Activity"
 msgstr "فعالیت سیستم"
 
-#: enferno/admin/templates/admin/activity.html:250
+#: enferno/admin/templates/admin/activity.html:257
 msgid "Date"
 msgstr "تاریخ"
 
-#: enferno/admin/templates/admin/activity.html:251
-#: enferno/admin/templates/admin/jsapi.jinja2:285
+#: enferno/admin/templates/admin/activity.html:258
+#: enferno/admin/templates/admin/jsapi.jinja2:284
 #: enferno/data_import/templates/import-log.html:163
 msgid "User"
 msgstr "کاربر"
 
-#: enferno/admin/templates/admin/activity.html:252
+#: enferno/admin/templates/admin/activity.html:259
 msgid "Action"
 msgstr "عمل"
 
-#: enferno/admin/templates/admin/activity.html:254
+#: enferno/admin/templates/admin/activity.html:261
 msgid "Subject"
 msgstr "موضوع"
 
-#: enferno/admin/templates/admin/activity.html:102
-msgid "Tag"
-msgstr "برچسب"
-
-#: enferno/admin/templates/admin/actors.html:134
-#: enferno/admin/templates/admin/bulletins.html:155
-#: enferno/admin/templates/admin/incidents.html:143
+#: enferno/admin/templates/admin/actors.html:131
+#: enferno/admin/templates/admin/bulletins.html:148
+#: enferno/admin/templates/admin/incidents.html:135
 msgid "Export"
 msgstr "خروجی گرفتن"
 
-#: enferno/admin/templates/admin/actors.html:273
-#: enferno/admin/templates/admin/bulletins.html:295
-#: enferno/admin/templates/admin/incidents.html:218
-#: enferno/admin/templates/admin/incidents.html:276
+#: enferno/admin/templates/admin/actors.html:264
+#: enferno/admin/templates/admin/bulletins.html:282
+#: enferno/admin/templates/admin/incidents.html:199
+#: enferno/admin/templates/admin/incidents.html:257
 msgid "Assign to self"
 msgstr "تخصیص به خود"
 
-#: enferno/admin/templates/admin/incidents.html:234
+#: enferno/admin/templates/admin/incidents.html:215
 #: enferno/admin/templates/admin/partials/review_dialog.html:5
 msgid "Add Review"
 msgstr "افزودن نظر"
 
-#: enferno/admin/templates/admin/actors.html:266
+#: enferno/admin/templates/admin/actors.html:257
 msgid "Self Assign Actor"
 msgstr "عامل با امکان تخصیص به خود"
 
-#: enferno/admin/templates/admin/bulletins.html:280
+#: enferno/admin/templates/admin/bulletins.html:267
 msgid "Self Assign Bulletin"
 msgstr "بولتن با امکان تخصیص به خود"
 
@@ -2348,104 +1954,101 @@ msgstr "زبان برگه را انتخاب کنید"
 
 #: enferno/data_import/templates/sheets-import.html:235
 #: enferno/data_import/templates/sheets-import.html:252
-#: enferno/data_import/templates/sheets-import.html:412
+#: enferno/data_import/templates/sheets-import.html:414
 msgid "Make it Unique!"
 msgstr "آن را منحصر به فرد کنید!"
 
-#: enferno/data_import/templates/sheets-import.html:450
+#: enferno/data_import/templates/sheets-import.html:452
 msgid "Months Pregnant"
 msgstr "تعداد ماه‌های بارداری"
 
-#: enferno/data_import/templates/sheets-import.html:475
+#: enferno/data_import/templates/sheets-import.html:477
 msgid "Seen in a detention center"
 msgstr "در یک بازداشتگاه دیده شده"
 
-#: enferno/admin/templates/admin/activity.html:256
-#: enferno/data_import/templates/sheets-import.html:477
-#: enferno/data_import/templates/sheets-import.html:482
-#: enferno/data_import/templates/sheets-import.html:490
+#: enferno/admin/templates/admin/activity.html:263
+#: enferno/data_import/templates/sheets-import.html:479
+#: enferno/data_import/templates/sheets-import.html:484
+#: enferno/data_import/templates/sheets-import.html:492
 msgid "Details"
 msgstr "جزئیات"
 
-#: enferno/data_import/templates/sheets-import.html:480
+#: enferno/data_import/templates/sheets-import.html:482
 msgid "Injured around time of disappearance"
 msgstr "در زمان ناپدید شدن مجروح شده"
 
-#: enferno/data_import/templates/sheets-import.html:488
+#: enferno/data_import/templates/sheets-import.html:490
 msgid "Known to be dead"
 msgstr "معلوم شده که مرده است"
 
-#: enferno/data_import/templates/sheets-import.html:492
+#: enferno/data_import/templates/sheets-import.html:494
 msgid "Personal Items"
 msgstr "لوازم شخصی"
 
-#: enferno/data_import/templates/sheets-import.html:518
+#: enferno/data_import/templates/sheets-import.html:520
 msgid "Notes on posture"
 msgstr "نکاتی در مورد حالت بدن"
 
-#: enferno/data_import/templates/sheets-import.html:520
+#: enferno/admin/templates/admin/jsapi.jinja2:206
+#: enferno/data_import/templates/sheets-import.html:522
 msgid "Handedness"
 msgstr "دست غالب"
 
-#: enferno/data_import/templates/sheets-import.html:528
+#: enferno/data_import/templates/sheets-import.html:530
 msgid "Skin Markings Options"
 msgstr "گزینه‌های علامت‌های روی پوست"
 
-#: enferno/data_import/templates/sheets-import.html:530
+#: enferno/data_import/templates/sheets-import.html:532
 msgid "Skin Markings Details"
 msgstr "جزئیات علامت‌‌های روی پوست"
 
-#: enferno/data_import/templates/sheets-import.html:542
+#: enferno/data_import/templates/sheets-import.html:544
 msgid "Physical Habits"
 msgstr "عادات جسمی"
 
-#: enferno/data_import/templates/sheets-import.html:555
+#: enferno/data_import/templates/sheets-import.html:557
 msgid "Implants"
 msgstr "اعضای مصنوعی"
 
-#: enferno/data_import/templates/sheets-import.html:578
+#: enferno/data_import/templates/sheets-import.html:580
 msgid "Dental Record"
 msgstr "پرونده دندانپزشکی"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:783
+#: enferno/admin/templates/admin/partials/actor_dialog.html:777
 msgid "Dentist\\u2019s name and contact"
 msgstr "نام و اطلاعات تماس دندانپزشک"
 
-#: enferno/data_import/templates/sheets-import.html:593
+#: enferno/data_import/templates/sheets-import.html:595
 msgid "Dental Habits"
 msgstr "عادات دندانی"
 
-#: enferno/data_import/templates/sheets-import.html:595
+#: enferno/data_import/templates/sheets-import.html:597
 msgid "Case Status"
 msgstr "وضعیت پرونده"
 
-#: enferno/data_import/templates/sheets-import.html:606
+#: enferno/data_import/templates/sheets-import.html:608
 msgid "Reporter name"
 msgstr "نام گزارش‌دهنده"
 
-#: enferno/data_import/templates/sheets-import.html:608
+#: enferno/data_import/templates/sheets-import.html:610
 msgid "Reporter contact"
 msgstr "اطلاعات تماس گزارش‌دهنده"
 
-#: enferno/data_import/templates/sheets-import.html:610
+#: enferno/data_import/templates/sheets-import.html:612
 msgid "Reporter relationship"
 msgstr "رابطه گزارش‌دهنده"
 
-#: enferno/data_import/templates/sheets-import.html:630
+#: enferno/data_import/templates/sheets-import.html:632
 msgid "Identified by"
 msgstr "شناسایی شده توسط"
 
-#: enferno/data_import/templates/sheets-import.html:632
+#: enferno/data_import/templates/sheets-import.html:634
 msgid "Family Notified"
 msgstr "خانواده مطلع شده"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:27
 msgid "Contains"
 msgstr "حاوی"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:37
-msgid "Search in a signle event"
-msgstr "جستجو در یک رویداد خاص"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:55
 msgid "Radius"
@@ -2456,9 +2059,9 @@ msgid "Geospatial"
 msgstr "مکان جغرافیایی"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:66
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:85
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:92
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:70
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:83
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:87
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:68
 msgid "Save As New"
 msgstr "ذخیره به عنوان جدید"
 
@@ -2467,9 +2070,9 @@ msgid "Delete Search"
 msgstr "حذف جستجو"
 
 #: enferno/admin/templates/admin/jsapi.jinja2:68
-#: enferno/admin/templates/admin/partials/actor_advsearch.html:79
-#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:86
-#: enferno/admin/templates/admin/partials/incident_advsearch.html:64
+#: enferno/admin/templates/admin/partials/actor_advsearch.html:77
+#: enferno/admin/templates/admin/partials/bulletin_advsearch.html:81
+#: enferno/admin/templates/admin/partials/incident_advsearch.html:62
 msgid "Update Search"
 msgstr "به روزرسانی جستجو"
 
@@ -2477,67 +2080,59 @@ msgstr "به روزرسانی جستجو"
 msgid "Main Incident"
 msgstr "واقعه اصلی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:281
-msgid "Birth Place"
-msgstr "محل تولد"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:282
-msgid "Residence Place"
-msgstr "محل اقامت"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:347
+#: enferno/admin/templates/admin/jsapi.jinja2:361
 msgid "Origin Place"
 msgstr "کشور مبدأ"
 
-#: enferno/admin/templates/admin/incidents.html:268
+#: enferno/admin/templates/admin/incidents.html:249
 msgid "Self Assign Incident"
 msgstr "تخصیص واقعه به خود"
 
-#: enferno/admin/templates/admin/actors.html:776
-#: enferno/admin/templates/admin/bulletins.html:812
-#: enferno/admin/templates/admin/incidents.html:722
+#: enferno/admin/templates/admin/actors.html:779
+#: enferno/admin/templates/admin/bulletins.html:810
+#: enferno/admin/templates/admin/incidents.html:723
 msgid "It looks like you have been editing something. "
 msgstr "به نظر می‌رسد در حال ویرایش چیزی بوده‌اید."
 
-#: enferno/admin/templates/admin/actors.html:777
-#: enferno/admin/templates/admin/bulletins.html:813
-#: enferno/admin/templates/admin/incidents.html:723
+#: enferno/admin/templates/admin/actors.html:780
+#: enferno/admin/templates/admin/bulletins.html:811
+#: enferno/admin/templates/admin/incidents.html:724
 msgid "If you leave before saving, your changes will be lost."
 msgstr "اگر قبل از ذخیره کردن خارج شوید، تغییراتی که دادید از بین می‌رود."
 
-#: enferno/admin/templates/admin/incidents.html:863
+#: enferno/admin/templates/admin/incidents.html:870
 msgid "Incident assigned successfully."
 msgstr "واقعه با موفقیت تخصیص داده شد."
 
-#: enferno/admin/templates/admin/actors.html:1044
-#: enferno/admin/templates/admin/bulletins.html:1032
-#: enferno/admin/templates/admin/incidents.html:913
+#: enferno/admin/templates/admin/actors.html:1055
+#: enferno/admin/templates/admin/bulletins.html:1038
+#: enferno/admin/templates/admin/incidents.html:920
 msgid "Bulk Update is finished!"
 msgstr "به روزرسانی انبوه به پایان رسید!"
 
-#: enferno/admin/templates/admin/actors.html:1290
-#: enferno/admin/templates/admin/bulletins.html:1268
-#: enferno/admin/templates/admin/incidents.html:1134
+#: enferno/admin/templates/admin/actors.html:1303
+#: enferno/admin/templates/admin/bulletins.html:1276
+#: enferno/admin/templates/admin/incidents.html:1144
 msgid "This item is restricted."
 msgstr "این مورد محدود شده است."
 
-#: enferno/admin/templates/admin/actors.html:1522
-#: enferno/admin/templates/admin/bulletins.html:1517
-#: enferno/admin/templates/admin/incidents.html:1418
-#: enferno/admin/templates/admin/jsapi.jinja2:313
-#: enferno/admin/templates/admin/locations.html:378
+#: enferno/admin/templates/admin/actors.html:1528
+#: enferno/admin/templates/admin/bulletins.html:1518
+#: enferno/admin/templates/admin/incidents.html:1420
+#: enferno/admin/templates/admin/jsapi.jinja2:312
+#: enferno/admin/templates/admin/locations.html:381
 #: enferno/data_import/templates/import-log.html:252
 #: enferno/data_import/templates/import-log.html:266
 #: enferno/export/templates/export-dashboard.html:212
 msgid "Oops! We couldn't find this item."
 msgstr "اوه! ما نتوانستیم این مورد را پیدا کنیم."
 
-#: enferno/admin/templates/admin/actors.html:1537
-#: enferno/admin/templates/admin/bulletins.html:1530
+#: enferno/admin/templates/admin/actors.html:1543
+#: enferno/admin/templates/admin/bulletins.html:1531
 #: enferno/admin/templates/admin/eventtypes.html:270
-#: enferno/admin/templates/admin/incidents.html:1432
+#: enferno/admin/templates/admin/incidents.html:1434
 #: enferno/admin/templates/admin/labels.html:354
-#: enferno/admin/templates/admin/locations.html:480
+#: enferno/admin/templates/admin/locations.html:485
 #: enferno/admin/templates/admin/roles.html:301
 #: enferno/admin/templates/admin/sources.html:303
 msgid "Are you sure you want to delete this item?"
@@ -2557,11 +2152,11 @@ msgstr "سطوح مدیریتی مکان"
 msgid "Location Types"
 msgstr "انواع مکان"
 
-#: enferno/admin/templates/admin/users.html:67
+#: enferno/admin/templates/admin/users.html:107
 msgid "View Only"
 msgstr "فقط قابل مشاهده"
 
-#: enferno/admin/templates/admin/users.html:209
+#: enferno/admin/templates/admin/users.html:250
 msgid "Can Request Exports"
 msgstr "می‌تواند درخواست خروجی گرفتن بدهد"
 
@@ -2590,19 +2185,6 @@ msgstr "دسته‌بندی رسانه‌ها"
 #: enferno/admin/templates/admin/partials/video_player_dialog.html:124
 msgid "Attach Media"
 msgstr "ضمیمه کردن فایل رسانه‌ای"
-
-#: enferno/admin/templates/admin/partials/relate_actor_dialog.html:7
-msgid "Search Actors"
-msgstr "جستجوی عاملان"
-
-#: enferno/admin/templates/admin/partials/relate_incident_dialog.html:8
-msgid "Search Incidents"
-msgstr "جستجوی وقایع"
-
-#: enferno/admin/templates/admin/partials/relate_actor_dialog.html:42
-#: enferno/admin/templates/admin/partials/relate_incident_dialog.html:41
-msgid "Done"
-msgstr "انجام شد"
 
 #: enferno/admin/templates/admin/partials/review_dialog.html:8
 msgid "Save Review"
@@ -2643,7 +2225,7 @@ msgstr "# موارد"
 msgid "Format"
 msgstr "فرمت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:307
+#: enferno/admin/templates/admin/jsapi.jinja2:306
 #: enferno/export/templates/export-dashboard.html:65
 #: enferno/export/templates/export-dashboard.html:148
 msgid "Include Media"
@@ -2657,12 +2239,12 @@ msgstr "زمان درخواستی"
 msgid "Expiry time"
 msgstr "زمان انقضا"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:310
+#: enferno/admin/templates/admin/jsapi.jinja2:309
 #: enferno/export/templates/export-dashboard.html:152
 msgid "Download"
 msgstr "دانلود"
 
-#: enferno/templates/dashboard.html:26
+#: enferno/templates/dashboard.html:25
 msgid "Warning: Media Import's path processing is enabled!"
 msgstr "هشدار: پردازش مسیر وارد کرن رسانه فعال است!"
 
@@ -2675,6 +2257,7 @@ msgid "Bayanat | A Data Management Solution by SJAC"
 msgstr "بیانات | یک راهکار مدیریت داده تولید شده توسط SJAC"
 
 #: enferno/templates/layout.html:7 enferno/templates/login-layout.html:7
+#: enferno/templates/setup_wizard.html:7
 msgid "Syria Justice and Accountability Center"
 msgstr "مرکز عدالت و پاسخگویی سوریه"
 
@@ -2682,18 +2265,6 @@ msgstr "مرکز عدالت و پاسخگویی سوریه"
 #: enferno/templates/settings_drawer.html:63
 msgid "Recovery Codes"
 msgstr "کدهای بازیابی"
-
-#: enferno/templates/security/two_factor_setup.html:30
-msgid "Two Factor Auth Setup"
-msgstr "راه اندازی تأیید هویت دو مرحله‌ای"
-
-#: enferno/templates/security/two_factor_setup.html:90
-msgid "Submit Code"
-msgstr "ثبت کد"
-
-#: enferno/templates/security/two_factor_verify_code.html:21
-msgid "Trouble Accessing Your Account?/Lost Mobile/TFA Device?"
-msgstr "در دسترسی به حساب خود مشکل دارید؟/دستگاه تلفن همراه/TFA شما گم شده است؟"
 
 #: enferno/templates/security/mf_recovery.html:20
 #: enferno/templates/security/two_factor_verify_code.html:39
@@ -2703,31 +2274,31 @@ msgstr "در دسترسی به حساب خود مشکل دارید؟/دستگا�
 msgid "Submit"
 msgstr "ثبت"
 
-#: enferno/data_import/templates/media-import.html:96
+#: enferno/data_import/templates/media-import.html:95
 msgid "Process existing files in a path on the server."
 msgstr "فایل های موجود را در یک مسیر روی سرور پردازش کنید."
 
-#: enferno/data_import/templates/media-import.html:212
+#: enferno/data_import/templates/media-import.html:211
 msgid "Type and enter free tags"
 msgstr "برچسب‌های آزاد را تایپ کرده و وارد کنید"
 
-#: enferno/data_import/templates/media-import.html:233
+#: enferno/data_import/templates/media-import.html:232
 msgid "Tesseract OCR is disabled."
 msgstr "Tesseract OCR غیرفعال است."
 
-#: enferno/data_import/templates/media-import.html:272
+#: enferno/data_import/templates/media-import.html:271
 msgid "Input a sub-path to scan, leave empty to scan the entire allowed path."
 msgstr "یک مسیر فرعی برای اسکن وارد کنید، برای اسکن کل مسیر مجاز را خالی بگذارید."
 
-#: enferno/data_import/templates/media-import.html:275
+#: enferno/data_import/templates/media-import.html:274
 msgid "To scan a sub-path of the allowed path, enter the sub-path only without any parents (e.g. 'videos')."
 msgstr "برای اسکن یک مسیر فرعی از مسیر مجاز، فقط مسیر فرعی را بدون هیچ والدی وارد کنید (مثلاً 'ویدیوها')."
 
-#: enferno/data_import/templates/media-import.html:277
+#: enferno/data_import/templates/media-import.html:276
 msgid "Search recursively"
 msgstr "جستجوی بازگشتی"
 
-#: enferno/data_import/templates/media-import.html:309
+#: enferno/data_import/templates/media-import.html:308
 msgid "Add"
 msgstr "افزودن"
 
@@ -2771,43 +2342,39 @@ msgstr "جستجوی مکان‌ها"
 msgid "Estimated"
 msgstr "تخمینی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:141
-msgid "Select a single date or a range"
-msgstr "یک تاریخ یا محدوده را انتخاب کنید"
-
-#: enferno/admin/templates/admin/jsapi.jinja2:256
+#: enferno/admin/templates/admin/jsapi.jinja2:255
 msgid "Requested On"
 msgstr "درخواست شده در"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:257
+#: enferno/admin/templates/admin/jsapi.jinja2:256
 msgid "Expires On"
 msgstr "منقضی می‌شود در"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:258
+#: enferno/admin/templates/admin/jsapi.jinja2:257
 msgid "Admin Actions"
 msgstr "اقدامات مدیریتی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:259
+#: enferno/admin/templates/admin/jsapi.jinja2:258
 msgid "Approve"
 msgstr "تایید"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:260
+#: enferno/admin/templates/admin/jsapi.jinja2:259
 msgid "Expire Now"
 msgstr "اکنون منقضی می‌شود"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:261
+#: enferno/admin/templates/admin/jsapi.jinja2:260
 msgid "Reject"
 msgstr "رد کردن"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:262
+#: enferno/admin/templates/admin/jsapi.jinja2:261
 msgid "Change Expiry"
 msgstr "زمان انقضا را تغییر دهید"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:263
+#: enferno/admin/templates/admin/jsapi.jinja2:262
 msgid "Set Expiry"
 msgstr "زمان انقضا را تنظیم کنید"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:264
+#: enferno/admin/templates/admin/jsapi.jinja2:263
 msgid "Export Expiry"
 msgstr "انقضای خروجی گرفتن"
 
@@ -2882,344 +2449,301 @@ msgstr "عنوان معکوس (tr)"
 msgid "Meters"
 msgstr "متر"
 
-#: enferno/admin/templates/admin/system-administration.html:19
+#: enferno/admin/templates/admin/system-administration.html:18
 msgid "General"
 msgstr "عمومی"
 
-#: enferno/admin/templates/admin/system-administration.html:20
+#: enferno/admin/templates/admin/system-administration.html:19
+#: enferno/templates/setup_wizard.html:197
 msgid "Storage"
 msgstr "ذخیره‌سازی"
 
-#: enferno/admin/templates/admin/system-administration.html:24
+#: enferno/admin/templates/admin/system-administration.html:23
 msgid "Import Tools"
 msgstr "ابزارهای ورودی"
 
-#: enferno/admin/templates/admin/system-administration.html:25
+#: enferno/admin/templates/admin/system-administration.html:24
+#: enferno/templates/setup_wizard.html:350
 msgid "Export Tool"
 msgstr "ابزار خروجی"
 
-#: enferno/admin/templates/admin/system-administration.html:26
+#: enferno/admin/templates/admin/system-administration.html:25
 msgid "Maps"
 msgstr "نقشه‌ها"
 
-#: enferno/admin/templates/admin/system-administration.html:39
+#: enferno/admin/templates/admin/system-administration.html:38
 msgid "Allows to load different set of items in pages that has data tables"
 msgstr "اجازه می‌دهد که مجموعه‌های مختلفی از آیتم‌ها در صفحاتی که جداول داده دارند بارگذاری شوند"
 
-#: enferno/admin/templates/admin/system-administration.html:41
+#: enferno/admin/templates/admin/system-administration.html:40
 msgid "Items Per Page Options"
 msgstr "گزینه‌های آیتم‌ها در هر صفحه"
 
-#: enferno/admin/templates/admin/system-administration.html:47
+#: enferno/admin/templates/admin/system-administration.html:46
 msgid "Allows to play videos at different speed rates"
 msgstr "امکان پخش ویدیو با سرعت‌های مختلف را می‌دهد"
 
-#: enferno/admin/templates/admin/system-administration.html:48
+#: enferno/admin/templates/admin/system-administration.html:47
 msgid "Video Player Playback Rates"
 msgstr "سرعت‌های پخش توسط پخش‌کننده ویدیو"
 
-#: enferno/admin/templates/admin/system-administration.html:56
-msgid "System Interface Languages"
-msgstr "زبان‌های رابط سیستم"
-
-#: enferno/admin/templates/admin/system-administration.html:57
-msgid "LANGUAGES"
-msgstr "زبان‌ها"
-
-#: enferno/admin/templates/admin/system-administration.html:51
+#: enferno/admin/templates/admin/system-administration.html:50
 msgid "Default Language"
 msgstr "زبان پیش‌فرض"
 
-#: enferno/admin/templates/admin/system-administration.html:59
+#: enferno/admin/templates/admin/system-administration.html:58
+#: enferno/templates/setup_wizard.html:118
 msgid "Changes default interface language for all users. Users can still choose their own interface language."
 msgstr "زبان رابط پیش‌فرض را برای همه کاربران تغییر می‌دهد. کاربران همچنان می‌توانند زبان رابط خود را انتخاب کنند."
 
-#: enferno/admin/templates/admin/system-administration.html:73
-msgid "Missing Persons Extension"
-msgstr "افزونه افراد گمشده"
-
-#: enferno/admin/templates/admin/system-administration.html:74
-msgid "Enables the Missing Persons extension to Actor component. Ideally this setting should be enabled when first setting up the system and not afterwards. Enabling this setting later involves database migrations. This feature can be disabled after being enabled without deleting the data."
-msgstr "افزونه «افراد گمشده» را برای مؤلفه «عامل» فعال می‌کند. در حالت ایده‌آل، این تنظیم باید در اولین راه‌اندازی سیستم فعال شود و نه بعد از آن. فعال کردن این تنظیم بعداً نیازمند انتقال پایگاه داده است. این ویژگی را می‌توان پس از فعال شدن بدون حذف اطلاعات غیرفعال کرد."
-
-#: enferno/admin/templates/admin/system-administration.html:62
+#: enferno/admin/templates/admin/system-administration.html:61
 msgid "Deduplication Tool"
 msgstr "ابزار Deduplication"
 
-#: enferno/admin/templates/admin/system-administration.html:65
+#: enferno/admin/templates/admin/system-administration.html:64
 msgid "Enables integration with Benetech's Deduplication tool."
 msgstr "ادغام با ابزار Deduplication Benetech را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:72
+#: enferno/admin/templates/admin/system-administration.html:71
 msgid "Lowest value of distance to process."
 msgstr "کمترین مقدار فاصله تا پردازش"
 
-#: enferno/admin/templates/admin/system-administration.html:73
+#: enferno/admin/templates/admin/system-administration.html:72
 msgid "Deduplication Low Distance"
 msgstr "Deduplication کم فاصله"
 
-#: enferno/admin/templates/admin/system-administration.html:79
+#: enferno/admin/templates/admin/system-administration.html:78
 msgid "Highest value of distance to process."
 msgstr "بیشترین مقدار فاصله تا پردازش"
 
-#: enferno/admin/templates/admin/system-administration.html:80
+#: enferno/admin/templates/admin/system-administration.html:79
 msgid "Deduplication Max Distance"
 msgstr "حداکثر فاصله Deduplication"
 
-#: enferno/admin/templates/admin/system-administration.html:85
+#: enferno/admin/templates/admin/system-administration.html:84
 msgid "Number of matches to send for processing in every batch. Affects speed of processing and performance of the server."
 msgstr "تعداد موارد همخوان برای ارسال برای پردازش در هر دسته. بر سرعت پردازش و عملکرد سرور تأثیر می گذارد."
 
-#: enferno/admin/templates/admin/system-administration.html:86
+#: enferno/admin/templates/admin/system-administration.html:85
 msgid "Deduplication Batch Size"
 msgstr "حجم دسته Deduplication"
 
-#: enferno/admin/templates/admin/system-administration.html:90
+#: enferno/admin/templates/admin/system-administration.html:89
 msgid "Interval of batches sent for processing. Affects speed of processing and performance of the server."
 msgstr "فاصله دسته‌های ارسال شده برای پردازش. بر سرعت پردازش و عملکرد سرور تأثیر می‌گذارد."
 
-#: enferno/admin/templates/admin/system-administration.html:91
+#: enferno/admin/templates/admin/system-administration.html:90
 msgid "Deduplication Interval"
 msgstr "فواصل Deduplication"
 
-#: enferno/admin/templates/admin/system-administration.html:104
+#: enferno/admin/templates/admin/system-administration.html:108
+#: enferno/templates/setup_wizard.html:202
 msgid "Media Storage"
 msgstr "فضای ذخیره‌سازی رسانه"
 
-#: enferno/admin/templates/admin/system-administration.html:105
-msgid "Storage options for media files uploaded to Bayanat. It's possible to store these files locally on the host or in S3 bucket."
-msgstr "گزینه‌های ذخیره سازی فایل‌های رسانه ای آپلود شده در بیانات. امکان ذخیره این فایل‌ها به صورت محلی در هاست یا در باکت S3 وجود دارد."
-
-#: enferno/admin/templates/admin/system-administration.html:108
+#: enferno/admin/templates/admin/system-administration.html:113
+#: enferno/templates/setup_wizard.html:206
 msgid "Local Filesystem"
 msgstr "سیستم فایل محلی"
 
-#: enferno/admin/templates/admin/system-administration.html:109
+#: enferno/admin/templates/admin/system-administration.html:114
+#: enferno/templates/setup_wizard.html:207
 msgid "S3 Storage"
 msgstr "ذخیره سازی S3"
 
-#: enferno/admin/templates/admin/system-administration.html:116
+#: enferno/admin/templates/admin/system-administration.html:121
+#: enferno/templates/setup_wizard.html:212
 msgid "AWS Access Key ID"
 msgstr "شناسه کلید دسترسی AWS"
 
-#: enferno/admin/templates/admin/system-administration.html:119
+#: enferno/admin/templates/admin/system-administration.html:124
+#: enferno/templates/setup_wizard.html:214
 msgid "AWS Access Key Secret"
 msgstr "رمز کلید دسترسی AWS"
 
-#: enferno/admin/templates/admin/system-administration.html:122
+#: enferno/admin/templates/admin/system-administration.html:127
+#: enferno/templates/setup_wizard.html:216
 msgid "S3 Bucket Name"
 msgstr "نام باکت S3"
 
-#: enferno/admin/templates/admin/system-administration.html:125
+#: enferno/admin/templates/admin/system-administration.html:130
+#: enferno/templates/setup_wizard.html:218
 msgid "S3 Region"
 msgstr "منطقه S3"
 
-#: enferno/admin/templates/admin/system-administration.html:134
+#: enferno/admin/templates/admin/system-administration.html:139
 msgid "Allowed Media Extensions"
 msgstr "پسوندهای مجاز فایل‌های رسانه‌ای"
 
-#: enferno/admin/templates/admin/system-administration.html:136
+#: enferno/admin/templates/admin/system-administration.html:141
 msgid "The system will only allow files uploaded whose extensions are included in this list and reject all other extensions."
 msgstr "این سیستم فقط به فایل‌هایی اجازه آپلود می‌دهد که پسوندهای آن‌ها در این لیست آمده باشد و همه پسوندهای دیگر را رد می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:139
+#: enferno/admin/templates/admin/system-administration.html:144
 msgid "Media Max Upload Size"
 msgstr "حداکثر حجم فایل رسانه‌ای قابل آپلود"
 
-#: enferno/admin/templates/admin/system-administration.html:141
+#: enferno/admin/templates/admin/system-administration.html:146
 msgid "Sets the maximum allowed file size for media uploads."
 msgstr "حداکثر حجم مجاز فایل رسانه‌ای را برای آپلود تنظیم می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:153
+#: enferno/admin/templates/admin/system-administration.html:267
 msgid "Security Freshness"
 msgstr "تازگی امنیتی"
 
-#: enferno/admin/templates/admin/system-administration.html:155
+#: enferno/admin/templates/admin/system-administration.html:269
 msgid "Secure pages will require re-authentication after this time expires."
 msgstr "پس از انقضای این زمان، صفحات ایمن به احراز هویت مجدد نیاز دارند."
 
-#: enferno/admin/templates/admin/system-administration.html:159
+#: enferno/admin/templates/admin/system-administration.html:273
 msgid "Security Freshness Grace Period"
 msgstr "دوره مهلت تازگی امنیت"
 
-#: enferno/admin/templates/admin/system-administration.html:161
+#: enferno/admin/templates/admin/system-administration.html:275
 msgid "Re-authentication will require a second factor after this period."
 msgstr "احراز هویت مجدد پس از این مدت به مرحله دوم نیاز دارد."
 
-#: enferno/admin/templates/admin/system-administration.html:165
+#: enferno/admin/templates/admin/system-administration.html:231
 msgid "Recaptcha Enabled"
 msgstr "Recaptcha فعال شد"
 
-#: enferno/admin/templates/admin/system-administration.html:167
-msgid "Require Google Recaptcha on the login form."
-msgstr "نیاز به Google Recaptcha در فرم ورود به سیستم."
-
-#: enferno/admin/templates/admin/system-administration.html:173
+#: enferno/admin/templates/admin/system-administration.html:239
 msgid "Recaptcha Public Key"
 msgstr "کلید عمومی Recaptcha"
 
-#: enferno/admin/templates/admin/system-administration.html:176
+#: enferno/admin/templates/admin/system-administration.html:242
 msgid "Recaptcha Private Key"
 msgstr "کلید خصوصی Recaptcha"
 
-#: enferno/admin/templates/admin/system-administration.html:181
+#: enferno/admin/templates/admin/system-administration.html:247
 msgid "Enable Google OAuth"
 msgstr "فعال کردن Google OAuth"
 
-#: enferno/admin/templates/admin/system-administration.html:183
+#: enferno/admin/templates/admin/system-administration.html:249
 msgid "Allow users to login using their Google account."
 msgstr "دادن اجازه ورود به کاربران با استفاده از حساب گوگل آنها."
 
-#: enferno/admin/templates/admin/system-administration.html:189
+#: enferno/admin/templates/admin/system-administration.html:255
 msgid "Google Client ID"
 msgstr "شناسه مشتری گوگل"
 
-#: enferno/admin/templates/admin/system-administration.html:192
+#: enferno/admin/templates/admin/system-administration.html:258
 msgid "Google Client Secret"
 msgstr "رمز مشتری گوگل"
 
-#: enferno/admin/templates/admin/system-administration.html:195
+#: enferno/admin/templates/admin/system-administration.html:261
 msgid "Google Discovery URL"
 msgstr "Discovery URL گوگل"
 
-#: enferno/admin/templates/admin/system-administration.html:413
+#: enferno/admin/templates/admin/system-administration.html:415
+#: enferno/templates/setup_wizard.html:342
 msgid "Media Import Tool"
 msgstr "ابزار وارد کردن رسانه"
 
-#: enferno/admin/templates/admin/system-administration.html:415
-msgid "Enable importing and parsing media items in bulk directly into bulletins."
-msgstr "فعال کردن امکان وارد کردن و تجزیه آیتم‌های رسانه‌ای به صورت انبوه مستقیماً در بولتن‌ها."
-
-#: enferno/admin/templates/admin/system-administration.html:422
+#: enferno/admin/templates/admin/system-administration.html:424
 msgid "Media Import Path Scanning"
 msgstr "اسکن مسیر وارد کردن رسانه"
 
-#: enferno/admin/templates/admin/system-administration.html:424
-msgid "Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilise this feature. It should be turned on only when it's needed."
-msgstr "ایجاد امکان اسکن مسیر وارد کردن فایل‌ها در ابزار Media Import Tool. مسیر باید در فایل .env تنظیم شود تا این تنظیمات کار کند. این کار برای اهداف امنیتی انجام می‌شود. هشدار: این یک تنظیم خطرناک است و فقط باید در هنگام نصب فعال شود که بتوان از این ویژگی استفاده کرد. فقط در صورت نیاز باید روشن شود."
-
-#: enferno/admin/templates/admin/system-administration.html:429
+#: enferno/admin/templates/admin/system-administration.html:431
 msgid "Allowed file extensions for the Media Import Tool."
 msgstr "پسوندهای فایل مجاز برای ابزار وارد کردن رسانه."
 
-#: enferno/admin/templates/admin/system-administration.html:431
+#: enferno/admin/templates/admin/system-administration.html:433
 msgid "ETL Video Extensions"
 msgstr "پسوندهای ویدئویی ETL"
 
-#: enferno/admin/templates/admin/system-administration.html:377
-msgid "Enable parsing and extracting text from images and scanned PDF files (requires and external Tesseract library)."
-msgstr "فعال کردن تجزیه و استخراج متن از تصاویر و فایل‌های پی‌دی‌اف اسکن‌شده (نیازمند و کتابخانه خارجی Tesseract)."
-
-#: enferno/admin/templates/admin/system-administration.html:437
+#: enferno/admin/templates/admin/system-administration.html:439
 msgid "Enable OCR"
 msgstr "فعال کردن OCR"
 
-#: enferno/admin/templates/admin/system-administration.html:446
+#: enferno/admin/templates/admin/system-administration.html:448
 msgid "File extensions which will be scanned using Tesseract OCR."
 msgstr "پسوندهای فایلی که با استفاده از Tesseract OCR اسکن خواهند شد."
 
-#: enferno/admin/templates/admin/system-administration.html:448
+#: enferno/admin/templates/admin/system-administration.html:450
 msgid "OCR Extensions"
 msgstr "پسوندهای OCR"
 
-#: enferno/admin/templates/admin/system-administration.html:401
-msgid "Path to Tesseract executable."
-msgstr "مسیر Tesseract قابل اجرا."
-
-#: enferno/admin/templates/admin/system-administration.html:456
+#: enferno/admin/templates/admin/system-administration.html:458
 msgid "Sheet Import"
 msgstr "وارد کردن برگه‌"
 
-#: enferno/admin/templates/admin/system-administration.html:458
-msgid "Enable importing spreadsheets and mapping them to Actors."
-msgstr "فعال کردن ورود برگه‌های صفحات گسترده و بازنمایی آنها به عاملان."
-
-#: enferno/admin/templates/admin/system-administration.html:467
+#: enferno/admin/templates/admin/system-administration.html:469
 msgid "Allowed spreadsheet extensions for Sheets Import Tool."
 msgstr "پسوندهای صفحه‌ گسترده مجاز برای ابزار وارد کردن برگه‌ها."
 
-#: enferno/admin/templates/admin/system-administration.html:468
+#: enferno/admin/templates/admin/system-administration.html:470
 msgid "Allowed Sheets Extensions"
 msgstr "پسوندهای مجاز برگه‌ها"
 
-#: enferno/admin/templates/admin/system-administration.html:484
+#: enferno/admin/templates/admin/system-administration.html:486
 msgid "Export System"
 msgstr "سیستم خروجی گرفتن"
 
-#: enferno/admin/templates/admin/system-administration.html:487
-msgid "Enables Export System."
-msgstr "فعال کردن سیستم خروجی گرفتن"
-
-#: enferno/admin/templates/admin/system-administration.html:507
+#: enferno/admin/templates/admin/system-administration.html:509
 msgid "Maps API Endpoint"
 msgstr "Maps API Endpoint"
 
-#: enferno/admin/templates/admin/system-administration.html:458
-msgid "API provider for Open Street Maps tiles."
-msgstr "ارائه‌دهنده API برای تایل‌های Open Street Maps."
-
-#: enferno/admin/templates/admin/system-administration.html:512
+#: enferno/admin/templates/admin/system-administration.html:517
+#: enferno/templates/setup_wizard.html:171
 msgid "Google Maps API Key"
 msgstr "کلید Google Maps API"
 
-#: enferno/admin/templates/admin/system-administration.html:514
+#: enferno/admin/templates/admin/system-administration.html:519
 msgid "API key for Google Maps. Adding a key enables satalite imagery in Bayanat's maps."
 msgstr "کلید API برای Google Maps. افزودن یک کلید، تصاویر ماهواره‌ای را در نقشه‌های بیانات فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:517
+#: enferno/admin/templates/admin/system-administration.html:522
+#: enferno/templates/setup_wizard.html:164
 msgid "Default Map Position"
 msgstr "موقعیت پیش‌فرض نقشه"
 
-#: enferno/admin/templates/admin/system-administration.html:518
+#: enferno/admin/templates/admin/system-administration.html:523
 msgid "Changes default position for all maps in all components."
 msgstr "تغییر موقعیت پیش‌فرض برای همه نقشه‌ها و در همه اجز."
 
-#: enferno/admin/templates/admin/system-administration.html:12
-#: enferno/admin/templates/admin/system-administration.html:549
+#: enferno/admin/templates/admin/system-administration.html:11
+#: enferno/admin/templates/admin/system-administration.html:554
 msgid "Revision History"
 msgstr "تاریخچه ویرایش‌ها"
 
-#: enferno/admin/templates/admin/system-administration.html:557
+#: enferno/admin/templates/admin/system-administration.html:562
 msgid "Version"
 msgstr "نسخه"
 
-#: enferno/admin/templates/admin/system-administration.html:565
+#: enferno/admin/templates/admin/system-administration.html:570
 msgid "by"
 msgstr "توسط"
 
-#: enferno/admin/templates/admin/system-administration.html:569
+#: enferno/admin/templates/admin/system-administration.html:574
 msgid "Revert to this version"
 msgstr "بازگشت به این نسخه"
 
-#: enferno/admin/templates/admin/system-administration.html:583
+#: enferno/admin/templates/admin/system-administration.html:588
 msgid "Current"
 msgstr "جاری"
 
-#: enferno/admin/templates/admin/system-administration.html:606
+#: enferno/admin/templates/admin/system-administration.html:611
 msgid "Review and Confirm Changes"
 msgstr "بررسی و تایید تغییرات"
 
-#: enferno/admin/templates/admin/system-administration.html:620
+#: enferno/admin/templates/admin/system-administration.html:625
 msgid "Removed"
 msgstr "حذف شده"
 
-#: enferno/admin/templates/admin/system-administration.html:625
+#: enferno/admin/templates/admin/system-administration.html:630
 msgid "Added"
 msgstr "اضافه شده"
 
-#: enferno/admin/templates/admin/system-administration.html:641
+#: enferno/admin/templates/admin/system-administration.html:646
 msgid "No changes detected"
 msgstr "هیچ تغییری شناسایی نشد"
 
-#: enferno/admin/templates/admin/system-administration.html:650
+#: enferno/admin/templates/admin/system-administration.html:655
 msgid "Confirm"
 msgstr "تایید"
 
-#: enferno/admin/templates/admin/system-administration.html:669
-msgid "Restarting Bayanat, please wait..."
-msgstr "در حال راه اندازی مجدد بیانات، لطفا صبر کنید..."
-
-#: enferno/templates/nav-drawer.html:31
+#: enferno/templates/dashboard.html:84 enferno/templates/nav-drawer.html:31
 msgid "Component Data"
 msgstr "داده‌های کامپوننت"
 
@@ -3231,13 +2755,13 @@ msgstr "کاربران و گروه‌ها"
 msgid "Users"
 msgstr "کاربران"
 
-#: enferno/admin/templates/admin/users.html:173
-#: enferno/admin/templates/admin/users.html:267
+#: enferno/admin/templates/admin/users.html:213
+#: enferno/admin/templates/admin/users.html:312
 #: enferno/templates/nav-drawer.html:86
 msgid "Groups"
 msgstr "گروه‌ها"
 
-#: enferno/templates/nav-drawer.html:96
+#: enferno/templates/dashboard.html:102 enferno/templates/nav-drawer.html:96
 msgid "System Settings"
 msgstr "تنظیمات سیستم"
 
@@ -3253,54 +2777,48 @@ msgstr "تاریخ آخرین اصلاح"
 msgid "Event Date"
 msgstr "تاریخ رویداد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:251
+#: enferno/admin/templates/admin/jsapi.jinja2:250
 msgid "Import Date"
 msgstr "تاریخ ورود"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:252
+#: enferno/admin/templates/admin/jsapi.jinja2:251
 #: enferno/data_import/templates/import-log.html:167
 msgid "File"
 msgstr "فایل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:253
+#: enferno/admin/templates/admin/jsapi.jinja2:252
 #: enferno/data_import/templates/import-log.html:29
 #: enferno/templates/nav-drawer.html:41
 msgid "Import Log"
 msgstr "گزارش ورودی‌ها"
 
-#: enferno/admin/templates/admin/system-administration.html:241
+#: enferno/admin/templates/admin/system-administration.html:156
+#: enferno/templates/setup_wizard.html:241
 msgid "Password Policies"
 msgstr "سیاست‌های رمز عبور"
 
-#: enferno/admin/templates/admin/system-administration.html:253
+#: enferno/admin/templates/admin/system-administration.html:166
+#: enferno/templates/setup_wizard.html:251
 msgid "Password Strength"
 msgstr "قدرت رمز عبور"
 
-#: enferno/admin/templates/admin/system-administration.html:274
+#: enferno/admin/templates/admin/system-administration.html:189
 msgid "Force Global Password Reset"
 msgstr "اجبار به بازتعریف سراسری رمز عبور"
 
-#: enferno/admin/templates/admin/system-administration.html:777
+#: enferno/admin/templates/admin/system-administration.html:785
 msgid "Are you sure you want to force a password reset for all users?"
 msgstr "آیا مطمئنید که می‌خواهید همه کاربران را مجبور به بازتعریف رمز عبور کنید؟"
-
-#: enferno/admin/templates/admin/system-administration.html:899
-msgid "App configurations reloaded successfully."
-msgstr "تنظیمات برنامه با موفقیت بارگیری مجدد شد."
-
-#: enferno/admin/templates/admin/users.html:54
-msgid "Password eeset already requested."
-msgstr "بازتعریف رمز عبور قبلاً درخواست شده است."
 
 #: enferno/admin/templates/admin/users.html:39
 msgid "Force password reset."
 msgstr "بازتعریف اجباری رمز عبور"
 
-#: enferno/admin/templates/admin/users.html:51
+#: enferno/admin/templates/admin/users.html:67
 msgid "Password reset requested."
 msgstr "بازتعریف رمز عبور درخواست شد."
 
-#: enferno/admin/templates/admin/users.html:131
+#: enferno/admin/templates/admin/users.html:171
 msgid "Strong Password"
 msgstr "رمز عبور قوی"
 
@@ -3320,21 +2838,21 @@ msgstr "زمان درخواستی"
 msgid "Import Time"
 msgstr "زمان وارد کردن"
 
-#: enferno/data_import/templates/media-import.html:255
-#: enferno/data_import/templates/sheets-import.html:778
+#: enferno/data_import/templates/media-import.html:254
+#: enferno/data_import/templates/sheets-import.html:780
 msgid "Check Import Progress"
 msgstr "پیشرفت وارد کردن را بررسی کنید"
 
-#: enferno/data_import/templates/media-import.html:580
+#: enferno/data_import/templates/media-import.html:591
 msgid "Files were added to queue successfully and will be imported in turn."
 msgstr "فایل ها با موفقیت به صف اضافه شدند و به ترتیب وارد خواهند شد."
 
-#: enferno/data_import/templates/media-import.html:584
-#: enferno/data_import/templates/sheets-import.html:1146
+#: enferno/data_import/templates/media-import.html:595
+#: enferno/data_import/templates/sheets-import.html:1148
 msgid "Error importing rows. Check logs for more information."
 msgstr "خطا در وارد کردن ردیف‌ها. برای اطلاعات بیشتر گزارش‌ها را بررسی کنید."
 
-#: enferno/data_import/templates/sheets-import.html:1141
+#: enferno/data_import/templates/sheets-import.html:1143
 msgid "Rows from file were added to queue successfully and will be imported in turn."
 msgstr "ردیف‌هایی از فایل با موفقیت به صف اضافه شدند و به ترتیب وارد خواهند شد."
 
@@ -3346,47 +2864,33 @@ msgstr "وارد کردن داده‌ها"
 msgid "Setup a Security Key"
 msgstr "راه اندازی یک کلید امنیتی"
 
-#: enferno/templates/security/two_factor_select.html:30
-msgid "Available Second Factor Methods:"
-msgstr "روش‌های موجود برای مرحله دوم:"
-
 #: enferno/templates/security/wan_signin.html:21
 msgid "Sign In Using your Security Key"
 msgstr "با استفاده از کلید امنیتی خود وارد سیستم شوید"
 
-#: enferno/admin/templates/admin/system-administration.html:202
+#: enferno/admin/templates/admin/system-administration.html:196
+#: enferno/templates/setup_wizard.html:277
 msgid "Force 2FA Enrollment"
 msgstr "اجبار به ثبت‌نام با احراز هویت دو مرحله‌ای"
 
-#: enferno/admin/templates/admin/system-administration.html:204
+#: enferno/admin/templates/admin/system-administration.html:198
 msgid "Force users to enroll in two factor authentication"
 msgstr "اجبار کاربران برای ثبت نام با احراز هویت دو مرحله‌ای"
 
-#: enferno/admin/templates/admin/system-administration.html:211
-msgid "Hardware-Enhanced 2FA via WebAuthn & FIDO"
-msgstr "احراز هویت دو مرحله‌ای به کمک سخت‌افزار از طریق WebAuthn و FIDO"
-
-#: enferno/admin/templates/admin/system-administration.html:213
-msgid "Secure your account with FIDO hardware for robust WebAuthn-based 2FA"
-msgstr "حساب خود را با سخت افزار FIDO برای احراز هویت دو مرحله‌ای قوی مبتنی بر WebAuthn ایمن کنید"
-
-#: enferno/admin/templates/admin/system-administration.html:245
+#: enferno/admin/templates/admin/system-administration.html:160
+#: enferno/templates/setup_wizard.html:245
 msgid "Password Minimum Length"
 msgstr "حداقل طول رمز عبور"
 
-#: enferno/admin/templates/admin/system-administration.html:247
+#: enferno/admin/templates/admin/system-administration.html:162
 msgid "Minimum required length for passwords"
 msgstr "حداقل طول مورد نیاز برای رمزهای عبور"
-
-#: enferno/admin/templates/admin/system-administration.html:260
-msgid "0 is weekest, 4 is strongest"
-msgstr "0 ضعیف‌‌ترین و 4 قوی‌ترین است"
 
 #: enferno/admin/templates/admin/users.html:39
 msgid "Password reset already requested."
 msgstr "بازتعریف رمز عبور قبلاً درخواست شده است."
 
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:308
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:311
 msgid "Review"
 msgstr "بازبینی"
 
@@ -3410,12 +2914,12 @@ msgstr "دستورالعمل‌های بازتعریف رمز عبور را ار
 msgid "Send Recovery Instructions"
 msgstr "ارسال دستورالعمل‌های بازیابی"
 
-#: enferno/templates/security/login_user.html:8
+#: enferno/templates/security/login_user.html:12
 msgid "Account Login"
 msgstr "ورود به حساب کاربری"
 
-#: enferno/templates/security/login_user.html:25
-#: enferno/templates/security/login_user.html:72
+#: enferno/templates/security/login_user.html:29
+#: enferno/templates/security/login_user.html:88
 msgid "Login"
 msgstr "ورود"
 
@@ -3428,14 +2932,6 @@ msgstr "کد بازیابی"
 msgid "Back to Login"
 msgstr "بازگشت به صفحه ورود"
 
-#: enferno/templates/security/two_factor_select.html:38
-msgid "Authenticator"
-msgstr "احراز هویت"
-
-#: enferno/templates/security/two_factor_select.html:39
-msgid "Security/Biometric Device"
-msgstr "دستگاه امنیتی/بیومتریک"
-
 #: enferno/templates/security/wan_register.html:45
 msgid "Device Name"
 msgstr "نام دستگاه"
@@ -3444,31 +2940,31 @@ msgstr "نام دستگاه"
 msgid "Add Device"
 msgstr "افزودن دستگاه"
 
-#: enferno/admin/templates/admin/system-administration.html:22
+#: enferno/admin/templates/admin/system-administration.html:21
+#: enferno/templates/setup_wizard.html:306
 msgid "Access Control"
 msgstr "کنترل دسترسی"
 
-#: enferno/admin/templates/admin/system-administration.html:286
+#: enferno/admin/templates/admin/system-administration.html:289
+#: enferno/templates/setup_wizard.html:315
 msgid "Restrictive Access Control"
 msgstr "کنترل دسترسی محدودکننده"
 
-#: enferno/admin/templates/admin/system-administration.html:288
+#: enferno/admin/templates/admin/system-administration.html:291
+#: enferno/templates/setup_wizard.html:316
 msgid "All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access."
 msgstr "دسترسی افرادی به جز ادمین‌ها به همه موارد موجود در پایگاه داده به طور پیش‌فرض محدود شده است، به جز زمانی که مستقیماً به آنها دسترسی داده شود."
 
-#: enferno/admin/templates/admin/system-administration.html:436
+#: enferno/admin/templates/admin/system-administration.html:438
 msgid "Bayanat's Media Import tool can utilize Google's Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package)."
 msgstr "ابزار ورود فایل‌های رسانه‌ای بیانات می‌تواند از موتور Tesseract OCR گوگل استفاده کند. این ابزار امکان تجزیه و استخراج متن از تصاویر و فایل‌های پی‌دی‌اف اسکن‌شده را فراهم می‌کند (نیازمند بسته سیستمی Tesseract است)."
 
-#: enferno/admin/templates/admin/system-administration.html:491
+#: enferno/admin/templates/admin/system-administration.html:493
+#: enferno/templates/setup_wizard.html:377
 msgid "Export Expiry Time"
 msgstr "زمان انقضای خروجی گرفتن"
 
-#: enferno/admin/templates/admin/system-administration.html:493
-msgid "Time after which exports will expired and be deleted"
-msgstr "زمان انقضای خروجی گرفتن"
-
-#: enferno/admin/templates/admin/system-administration.html:509
+#: enferno/admin/templates/admin/system-administration.html:511
 msgid "API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM."
 msgstr "ارائه‌دهنده API برای کاشی‌های Open Street Maps \n"
 "بیانات به طور پیش‌فرض از سرورهای (تایل‌ها) کاشی‌های OpenStreetMaps استفاده می‌کند. این را می‌توان با استفاده از این تنظیم تغییر داد، مثلا برای استفاده آفلاین از OSM."
@@ -3494,104 +2990,105 @@ msgstr "ترجمه‌ها"
 msgid "User Settings"
 msgstr "تنظیمات کاربری"
 
-#: enferno/admin/templates/admin/activity.html:24
+#: enferno/admin/templates/admin/activity.html:29
 msgid "Filter Options"
 msgstr "گزینه‌های فیلترها"
 
-#: enferno/admin/templates/admin/activity.html:33
+#: enferno/admin/templates/admin/activity.html:38
 msgid "Success"
 msgstr "موفق"
 
-#: enferno/admin/templates/admin/activity.html:41
+#: enferno/admin/templates/admin/activity.html:46
 msgid "Denied"
 msgstr "رد شده"
 
-#: enferno/admin/templates/admin/activity.html:58
+#: enferno/admin/templates/admin/activity.html:63
 msgid "Show Query"
 msgstr "نمایش جستجو"
 
-#: enferno/admin/templates/admin/activity.html:68
+#: enferno/admin/templates/admin/activity.html:73
 msgid "Show Items"
 msgstr "نمایش موارد"
 
-#: enferno/admin/templates/admin/activity.html:255
+#: enferno/admin/templates/admin/activity.html:262
 msgid "Class"
 msgstr "کلاس"
 
 #: enferno/admin/templates/admin/actors.html:16
 #: enferno/admin/templates/admin/bulletins.html:21
-#: enferno/admin/templates/admin/incidents.html:11
+#: enferno/admin/templates/admin/incidents.html:15
 msgid "Visualize Results"
 msgstr "نمایش تصویری نتایج"
 
-#: enferno/admin/templates/admin/actors.html:412
+#: enferno/admin/templates/admin/actors.html:400
 msgid "Normal"
 msgstr "طبیعی"
 
-#: enferno/admin/templates/admin/actors.html:413
+#: enferno/admin/templates/admin/actors.html:401
 msgid "Main"
 msgstr "اصلی"
 
-#: enferno/admin/templates/admin/actors.html:559
-#: enferno/admin/templates/admin/bulletins.html:581
-#: enferno/admin/templates/admin/incidents.html:533
+#: enferno/admin/templates/admin/actors.html:549
+#: enferno/admin/templates/admin/bulletins.html:566
+#: enferno/admin/templates/admin/incidents.html:518
 #: enferno/admin/templates/admin/jsapi.jinja2:103
-#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:72
-#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:83
-#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:67
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:75
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:87
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:71
+#: enferno/templates/dashboard.html:53
 msgid "Access Groups"
 msgstr "گروه‌های دسترسی"
 
-#: enferno/admin/templates/admin/actors.html:645
-#: enferno/admin/templates/admin/bulletins.html:663
-#: enferno/admin/templates/admin/incidents.html:605
+#: enferno/admin/templates/admin/actors.html:635
+#: enferno/admin/templates/admin/bulletins.html:648
+#: enferno/admin/templates/admin/incidents.html:590
 msgid "Access Group(s) are required unless unresticted."
 msgstr "گروه(های) دسترسی الزامی است مگر اینکه نامحدود شده باشد."
 
-#: enferno/admin/templates/admin/actors.html:839
+#: enferno/admin/templates/admin/actors.html:863
 msgid "Are you sure you want to delete this profile?"
 msgstr "آیا مطمئنید که می‌خواهید این پروفایل را حذف کنید؟"
 
-#: enferno/admin/templates/admin/actors.html:857
+#: enferno/admin/templates/admin/actors.html:881
 msgid "Main profile already exists."
 msgstr "پروفایل اصلی از قبل وجود دارد."
 
-#: enferno/admin/templates/admin/actors.html:886
+#: enferno/admin/templates/admin/actors.html:910
 msgid "A main profile already exists. Cannot duplicate another main profile."
 msgstr "یک پروفایل اصلی از قبل وجود دارد. نمی‌توان دوباره پروفایل اصلی یکسانی ایجاد کرد."
 
-#: enferno/admin/templates/admin/actors.html:933
-#: enferno/admin/templates/admin/bulletins.html:906
-#: enferno/admin/templates/admin/incidents.html:803
+#: enferno/admin/templates/admin/actors.html:957
+#: enferno/admin/templates/admin/bulletins.html:925
+#: enferno/admin/templates/admin/incidents.html:824
 msgid "Graph is being generated."
 msgstr "نمودار در حال ایجاد شدن است."
 
-#: enferno/admin/templates/admin/actors.html:992
+#: enferno/admin/templates/admin/actors.html:1003
 msgid "Actor assigned successfully."
 msgstr "عامل با موفقیت تخصیص داده شد."
 
-#: enferno/admin/templates/admin/actors.html:1267
-#: enferno/admin/templates/admin/bulletins.html:1249
+#: enferno/admin/templates/admin/actors.html:1280
+#: enferno/admin/templates/admin/bulletins.html:1257
 msgid "Confirm deleting this event?"
 msgstr "حذف این رویداد را تأیید می‌کنید؟"
 
-#: enferno/admin/templates/admin/actors.html:1567
-#: enferno/admin/templates/admin/bulletins.html:1558
-#: enferno/admin/templates/admin/incidents.html:1463
-#: enferno/admin/templates/admin/locations.html:511
+#: enferno/admin/templates/admin/actors.html:1574
+#: enferno/admin/templates/admin/bulletins.html:1560
+#: enferno/admin/templates/admin/incidents.html:1465
+#: enferno/admin/templates/admin/locations.html:516
 msgid "Please review the form for errors."
 msgstr "لطفاً فرم را بررسی کنید تا خطا نداشته باشد."
 
-#: enferno/admin/templates/admin/bulletins.html:660
-#: enferno/admin/templates/admin/incidents.html:601
+#: enferno/admin/templates/admin/bulletins.html:645
+#: enferno/admin/templates/admin/incidents.html:586
 msgid "Original Title is required."
 msgstr "عنوان اصلی الزامی است."
 
-#: enferno/admin/templates/admin/bulletins.html:666
+#: enferno/admin/templates/admin/bulletins.html:651
 msgid "Source link is required unless unavailable."
 msgstr "لینک منبع الزامی است مگر اینکه در دسترس نباشد."
 
-#: enferno/admin/templates/admin/bulletins.html:970
+#: enferno/admin/templates/admin/bulletins.html:976
 msgid "Bulletin assigned successfully."
 msgstr "بولتن با موفقیت تخصیص یافت."
 
@@ -3609,273 +3106,273 @@ msgstr "کاربر تخصیص داده شده"
 msgid "Search Activities"
 msgstr "فعالیت‌های جستجو"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:145
+#: enferno/admin/templates/admin/jsapi.jinja2:144
 msgid "Nickname(s)"
 msgstr "نام مستعار(ها)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:147
+#: enferno/admin/templates/admin/jsapi.jinja2:146
 #: enferno/data_import/templates/sheets-import.html:283
 msgid "Middle Name(s)"
 msgstr "نام میانی (ها)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:149
-#: enferno/admin/templates/admin/partials/actor_dialog.html:130
+#: enferno/admin/templates/admin/jsapi.jinja2:148
+#: enferno/admin/templates/admin/partials/actor_dialog.html:129
 #: enferno/data_import/templates/sheets-import.html:296
 msgid "Father's Name"
 msgstr "نام پدر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:158
+#: enferno/admin/templates/admin/jsapi.jinja2:157
 #: enferno/admin/templates/admin/partials/actor_dialog.html:288
 #: enferno/data_import/templates/sheets-import.html:351
 msgid "ID Number"
 msgstr "شماره کارت شناسایی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:214
-#: enferno/data_import/templates/sheets-import.html:548
+#: enferno/admin/templates/admin/jsapi.jinja2:213
+#: enferno/data_import/templates/sheets-import.html:550
 msgid "Physician's name and contact"
 msgstr "نام و اطلاعات تماس پزشک"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:224
-#: enferno/data_import/templates/sheets-import.html:582
+#: enferno/admin/templates/admin/jsapi.jinja2:223
+#: enferno/data_import/templates/sheets-import.html:584
 msgid "Dentist's name and contact"
 msgstr "نام و اطلاعات تماس دندانپزشک"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:272
-#: enferno/admin/templates/admin/system-logs.html:142
+#: enferno/admin/templates/admin/jsapi.jinja2:271
+#: enferno/admin/templates/admin/system-logs.html:143
 msgid "Message"
 msgstr "پیام"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:273
+#: enferno/admin/templates/admin/jsapi.jinja2:272
 msgid "Stacktrace"
 msgstr "استک تریس (Stacktrace)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:274
-#: enferno/admin/templates/admin/system-logs.html:141
+#: enferno/admin/templates/admin/jsapi.jinja2:273
+#: enferno/admin/templates/admin/system-logs.html:142
 msgid "Endpoint"
 msgstr "اند پوینت (Endpoint)"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:275
+#: enferno/admin/templates/admin/jsapi.jinja2:274
 msgid "User ID"
 msgstr "شناسه کاربر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:276
+#: enferno/admin/templates/admin/jsapi.jinja2:275
 msgid "Line No"
 msgstr "شماره خط"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:277
+#: enferno/admin/templates/admin/jsapi.jinja2:276
 msgid "Path"
 msgstr "مسیر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:278
+#: enferno/admin/templates/admin/jsapi.jinja2:277
 msgid "Error Type"
 msgstr "نوع خطا"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:279
-#: enferno/admin/templates/admin/system-logs.html:139
+#: enferno/admin/templates/admin/jsapi.jinja2:278
+#: enferno/admin/templates/admin/system-logs.html:140
 msgid "Level"
 msgstr "سطح"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:281
+#: enferno/admin/templates/admin/jsapi.jinja2:280
 msgid "Refresh available log files and select latest log file"
 msgstr "بازخوانی فایل‌های گزارش موجود و انتخاب آخرین فایل گزارش"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:282
+#: enferno/admin/templates/admin/jsapi.jinja2:281
 msgid "No log files available"
 msgstr "هیچ فایل گزارشی در دسترس نیست"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:286
+#: enferno/admin/templates/admin/jsapi.jinja2:285
 msgid "Select Type"
 msgstr "انتخاب نوع"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:287
+#: enferno/admin/templates/admin/jsapi.jinja2:286
 msgid "Select Action"
 msgstr "انتخاب عمل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:288
+#: enferno/admin/templates/admin/jsapi.jinja2:287
 msgid "Activity Date"
 msgstr "تاریخ فعالیت"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:291
+#: enferno/admin/templates/admin/jsapi.jinja2:290
 msgid "Select Event Type"
 msgstr "انتخاب نوع رویداد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:294
+#: enferno/admin/templates/admin/jsapi.jinja2:293
 msgid "Exact Match"
 msgstr "مطابقت کامل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:297
+#: enferno/admin/templates/admin/jsapi.jinja2:296
 msgid "Address Line 1"
 msgstr "خط ۱ آدرس"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:298
+#: enferno/admin/templates/admin/jsapi.jinja2:297
 msgid "Address Line 2"
 msgstr "خط ۲ آدرس"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:299
+#: enferno/admin/templates/admin/jsapi.jinja2:298
 msgid "City"
 msgstr "شهر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:300
+#: enferno/admin/templates/admin/jsapi.jinja2:299
 msgid "Street"
 msgstr "خیابان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:301
+#: enferno/admin/templates/admin/jsapi.jinja2:300
 msgid "Street No"
 msgstr "شماره خیابان"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:304
+#: enferno/admin/templates/admin/jsapi.jinja2:303
 msgid "Are you sure you want to delete"
 msgstr "آیا مطمئنید که می‌خواهید حذف کنید؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:316
-#: enferno/admin/templates/admin/jsapi.jinja2:408
+#: enferno/admin/templates/admin/jsapi.jinja2:315
+#: enferno/admin/templates/admin/jsapi.jinja2:422
 msgid "You have been logged out. Please log in again."
 msgstr "شما خارج شده‌اید. لطفا دوباره وارد شوید."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:317
-#: enferno/admin/templates/admin/jsapi.jinja2:409
+#: enferno/admin/templates/admin/jsapi.jinja2:316
+#: enferno/admin/templates/admin/jsapi.jinja2:423
 msgid "Are you sure you want to log out all sessions for this user?"
 msgstr "آیا مطمئنید که می‌خواهید از تمام جلسات (سشن‌های) این کاربر خارج شوید؟"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:318
-#: enferno/admin/templates/admin/jsapi.jinja2:415
+#: enferno/admin/templates/admin/jsapi.jinja2:317
+#: enferno/admin/templates/admin/jsapi.jinja2:429
 msgid "User Permissions"
 msgstr "مجوزهای کاربر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:319
-#: enferno/admin/templates/admin/jsapi.jinja2:416
+#: enferno/admin/templates/admin/jsapi.jinja2:320
+#: enferno/admin/templates/admin/jsapi.jinja2:430
 msgid "Can View Usernames"
 msgstr "می‌تواند نام‌های کاربری را ببیند"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:320
-#: enferno/admin/templates/admin/jsapi.jinja2:417
+#: enferno/admin/templates/admin/jsapi.jinja2:321
+#: enferno/admin/templates/admin/jsapi.jinja2:431
 msgid "Can View Simple History"
 msgstr "می‌تواند تاریخچه ساده را ببیند"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:321
-#: enferno/admin/templates/admin/jsapi.jinja2:418
+#: enferno/admin/templates/admin/jsapi.jinja2:322
+#: enferno/admin/templates/admin/jsapi.jinja2:432
 msgid "Can View Full History"
 msgstr "می‌تواند تاریخچه کامل را ببیند"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:322
-#: enferno/admin/templates/admin/jsapi.jinja2:419
+#: enferno/admin/templates/admin/jsapi.jinja2:323
+#: enferno/admin/templates/admin/jsapi.jinja2:433
 msgid "Can Edit Locations"
 msgstr "می‌تواند مکان‌ها را ویرایش کند"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:323
-#: enferno/admin/templates/admin/jsapi.jinja2:420
+#: enferno/admin/templates/admin/jsapi.jinja2:324
+#: enferno/admin/templates/admin/jsapi.jinja2:434
 msgid "Can Export"
 msgstr "می‌تواند خروجی بگیرد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:324
-#: enferno/admin/templates/admin/jsapi.jinja2:421
+#: enferno/admin/templates/admin/jsapi.jinja2:325
+#: enferno/admin/templates/admin/jsapi.jinja2:435
 msgid "Can Self Assign"
 msgstr "می‌تواند به خودش اختصاص دهد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:325
-#: enferno/admin/templates/admin/jsapi.jinja2:422
+#: enferno/admin/templates/admin/jsapi.jinja2:326
+#: enferno/admin/templates/admin/jsapi.jinja2:436
 msgid "User Sessions"
 msgstr "جلسات کاربر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:326
-#: enferno/admin/templates/admin/jsapi.jinja2:423
+#: enferno/admin/templates/admin/jsapi.jinja2:327
+#: enferno/admin/templates/admin/jsapi.jinja2:437
 msgid "Session"
 msgstr "جلسه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:327
-#: enferno/admin/templates/admin/jsapi.jinja2:424
+#: enferno/admin/templates/admin/jsapi.jinja2:328
+#: enferno/admin/templates/admin/jsapi.jinja2:438
 msgid "IP"
 msgstr "آی پی"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:328
-#: enferno/admin/templates/admin/jsapi.jinja2:425
+#: enferno/admin/templates/admin/jsapi.jinja2:329
+#: enferno/admin/templates/admin/jsapi.jinja2:439
 msgid "User Agent"
 msgstr "عامل کاربر"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:329
-#: enferno/admin/templates/admin/jsapi.jinja2:426
+#: enferno/admin/templates/admin/jsapi.jinja2:330
+#: enferno/admin/templates/admin/jsapi.jinja2:440
 msgid "Started"
 msgstr "آغاز شده"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:330
-#: enferno/admin/templates/admin/jsapi.jinja2:427
+#: enferno/admin/templates/admin/jsapi.jinja2:331
+#: enferno/admin/templates/admin/jsapi.jinja2:441
 msgid "Log off this device"
 msgstr "خروج این دستگاه از سیستم"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:333
+#: enferno/admin/templates/admin/jsapi.jinja2:334
 msgid "View Fullscreen"
 msgstr "مشاهده به صورت تمام‌صفحه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:334
+#: enferno/admin/templates/admin/jsapi.jinja2:335
 msgid "Exit Fullscreen"
 msgstr "خروج از حالت تمام‌صفحه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:380
+#: enferno/admin/templates/admin/jsapi.jinja2:394
 msgid "Single"
 msgstr "مجرد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:381
+#: enferno/admin/templates/admin/jsapi.jinja2:395
 msgid "Married"
 msgstr "متاهل"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:382
+#: enferno/admin/templates/admin/jsapi.jinja2:396
 msgid "Seperated"
 msgstr "جدا شده"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:383
+#: enferno/admin/templates/admin/jsapi.jinja2:397
 msgid "Divorced"
 msgstr "طلاق گرفته"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:384
+#: enferno/admin/templates/admin/jsapi.jinja2:398
 msgid "Widowed"
 msgstr "بیوه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:410
+#: enferno/admin/templates/admin/jsapi.jinja2:424
 msgid "All sessions for the user have been logged out successfully."
 msgstr "تمام جلسات کاربر با موفقیت از سیستم خارج شد."
 
-#: enferno/admin/templates/admin/jsapi.jinja2:411
+#: enferno/admin/templates/admin/jsapi.jinja2:425
 msgid "Logged out session"
 msgstr "جلسه از سیستم خارج شد"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:412
+#: enferno/admin/templates/admin/jsapi.jinja2:426
 msgid "Error fetching sessions"
 msgstr "خطا در فراخوانی جلسات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:413
+#: enferno/admin/templates/admin/jsapi.jinja2:427
 msgid "Error logging out session"
 msgstr "خطا در خروج از جلسه"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:414
+#: enferno/admin/templates/admin/jsapi.jinja2:428
 msgid "Error logging out all sessions for user ID:"
 msgstr "خطا در خروج از همه جلسات برای شناسه کاربری:"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:429
+#: enferno/admin/templates/admin/jsapi.jinja2:443
 msgid "Inactive"
 msgstr "غیر‌فعال"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:430
-#: enferno/admin/templates/admin/users.html:218
+#: enferno/admin/templates/admin/jsapi.jinja2:444
+#: enferno/admin/templates/admin/users.html:263
 msgid "Logout All Sessions"
 msgstr "خروج از تمام جلسات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:517
+#: enferno/admin/templates/admin/jsapi.jinja2:531
 msgid "Error"
 msgstr "خطا"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:518
+#: enferno/admin/templates/admin/jsapi.jinja2:532
 msgid "Warning"
 msgstr "هشدار"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:519
+#: enferno/admin/templates/admin/jsapi.jinja2:533
 msgid "Info"
 msgstr "اطلاعات"
 
-#: enferno/admin/templates/admin/jsapi.jinja2:520
+#: enferno/admin/templates/admin/jsapi.jinja2:534
 msgid "Debug"
 msgstr "اشکال‌زدایی"
 
-#: enferno/admin/templates/admin/locations.html:243
+#: enferno/admin/templates/admin/locations.html:246
 msgid "Title or Title (Ar) is required"
 msgstr "عنوان یا عنوان (Ar) ضروری است"
 
@@ -3895,184 +3392,164 @@ msgstr "برای شناسایی آسان گروه‌ها در جداول داد�
 msgid "Administration Dashboard"
 msgstr "داشبورد مدیریت"
 
-#: enferno/admin/templates/admin/system-administration.html:23
-#: enferno/admin/templates/admin/system-administration.html:302
+#: enferno/admin/templates/admin/system-administration.html:22
 msgid "Activity Monitor"
 msgstr "نظارت بر فعالیت‌‌ها"
 
-#: enferno/admin/templates/admin/system-administration.html:220
+#: enferno/admin/templates/admin/system-administration.html:215
 msgid "Disallow Multiple Concurrent Sessions"
 msgstr "غیرمجاز کردن چند جلسه همزمان"
 
-#: enferno/admin/templates/admin/system-administration.html:222
+#: enferno/admin/templates/admin/system-administration.html:217
 msgid "Prevents users from logging in to multiple devices simultaneously"
 msgstr "از ورود کاربران به چندین دستگاه به طور همزمان جلوگیری می‌کند"
 
-#: enferno/admin/templates/admin/system-administration.html:226
+#: enferno/admin/templates/admin/system-administration.html:222
+#: enferno/templates/setup_wizard.html:383
 msgid "Session Data Retention Period"
 msgstr "دوره نگهداری داده‌های جلسه"
 
-#: enferno/admin/templates/admin/system-administration.html:230
-msgid "7 DAYS"
-msgstr "۷ روز"
-
-#: enferno/admin/templates/admin/system-administration.html:231
-msgid "30 DAYS"
-msgstr "۳۰ روز"
-
-#: enferno/admin/templates/admin/system-administration.html:232
-msgid "90 DAYS"
-msgstr "۹۰ روز"
-
-#: enferno/admin/templates/admin/system-administration.html:233
-msgid "180 DAYS"
-msgstr "۱۸۰ روز"
-
-#: enferno/admin/templates/admin/system-administration.html:234
-msgid "365 DAYS"
-msgstr "۳۶۵ روز"
-
-#: enferno/admin/templates/admin/system-administration.html:235
-msgid "INFINITE"
-msgstr "بی‌نهایت"
-
-#: enferno/admin/templates/admin/system-administration.html:290
+#: enferno/admin/templates/admin/system-administration.html:293
+#: enferno/templates/setup_wizard.html:319
 msgid "Allow Non-Admin Users to Restrict New Items"
 msgstr "اجازه دادن به کاربران غیر ادمین برای محدود کردن موارد جدید"
 
-#: enferno/admin/templates/admin/system-administration.html:292
+#: enferno/admin/templates/admin/system-administration.html:295
+#: enferno/templates/setup_wizard.html:321
 msgid "Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups."
 msgstr "کاربرانی که هیچ امتیاز مدیریتی ندارند، اجازه می‌یابند مواردی را که ایجاد می‌شود محدود کنند. آنها فقط می‌توانند موارد را به یک یا چند گروه دسترسی آنها محدود کنند."
 
-#: enferno/admin/templates/admin/system-administration.html:304
+#: enferno/admin/templates/admin/system-administration.html:306
 msgid "Set users' actions to be logged in the Activity Monitor."
 msgstr "تنظیم ثبت شدن اقدامات کاربران در بخش نظارت بر ‌فعالیت‌ها"
 
-#: enferno/admin/templates/admin/system-administration.html:307
+#: enferno/admin/templates/admin/system-administration.html:309
 msgid "Items created by users."
 msgstr "موارد ایجاد شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:309
+#: enferno/admin/templates/admin/system-administration.html:311
 msgid "This setting will log Actors, Bulletins, Incidents and all other secondary items created by users."
 msgstr "این تنظیم عاملان، بولتن‌ها، حوادث و سایر موارد فرعی ایجاد شده توسط کاربران را ثبت می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:313
+#: enferno/admin/templates/admin/system-administration.html:315
 msgid "Items viewed by users."
 msgstr "موارد مشاهده شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:315
+#: enferno/admin/templates/admin/system-administration.html:317
 msgid "This setting will log all Actors, Bulletins and Incidents viewed by users."
 msgstr "این تنظیم همه عاملان، بولتن‌ها و حوادث مشاهده شده توسط کاربران را ثبت می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:319
+#: enferno/admin/templates/admin/system-administration.html:321
 msgid "Items edited by users."
 msgstr "موارد ویرایش شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:321
+#: enferno/admin/templates/admin/system-administration.html:323
 msgid "This setting will log Actors, Bulletins, Incidents and all other secondary items edited by users."
 msgstr "این تنظیم عاملان، بولتن‌ها، حوادث و سایر موارد فرعی ویرایش شده توسط کاربران را ثبت می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:325
+#: enferno/admin/templates/admin/system-administration.html:327
 msgid "Items deleted by users."
 msgstr "موارد حذف شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:327
+#: enferno/admin/templates/admin/system-administration.html:329
 msgid "This setting will enable logging all secondary items deleted by authorized users. Note: Actors, Bulletins and Incidents cannot be deleted."
 msgstr "این تنظیم ثبت تمام موارد فرعی حذف شده توسط کاربران مجاز را فعال می‌کند. توجه: عاملان، بولتن‌ها و حوادث قابل حذف نیستند."
 
-#: enferno/admin/templates/admin/system-administration.html:331
+#: enferno/admin/templates/admin/system-administration.html:333
 msgid "Items reviewer by users."
 msgstr "موارد بررسی شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:333
+#: enferno/admin/templates/admin/system-administration.html:335
 msgid "This setting will enable logging all items peer-viewed by authorized users."
 msgstr "این تنظیم ثبت همه موارد بررسی شده توسط کاربران مجاز را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:337
+#: enferno/admin/templates/admin/system-administration.html:339
 msgid "Files uploaded by users."
 msgstr "فایل‌های آپلود شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:339
+#: enferno/admin/templates/admin/system-administration.html:341
 msgid "This setting will enable logging all files uploaded users to media storage."
 msgstr "این تنظیم ثبت همه فایل‌های آپلود شده توسط کاربران را در حافظه فایل‌های رسانه‌ای فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:343
+#: enferno/admin/templates/admin/system-administration.html:345
 msgid "Bulk operations queued by users."
 msgstr "عملیات انبوه قرار گرفته در نوبت توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:345
+#: enferno/admin/templates/admin/system-administration.html:347
 msgid "This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents."
 msgstr "این تنظیم ثبت تمام عملیات انبوه انجام شده توسط کاربران مجاز در مورد عاملان، بولتن‌ها و حوادث را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:349
+#: enferno/admin/templates/admin/system-administration.html:351
 msgid "Export requests made by users."
 msgstr "درخواست‌های خروجی گرفتن توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:351
+#: enferno/admin/templates/admin/system-administration.html:353
 msgid "This setting will enable logging all export requests submitted by authorized users."
 msgstr "این تنظیم ثبت تمام درخواست‌های خروجی گرفتن را که توسط کاربران مجاز ارسال شده، فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:355
+#: enferno/admin/templates/admin/system-administration.html:357
 msgid "Export requests approved by users."
 msgstr "درخواست‌های خروجی گرفتن تایید شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:357
+#: enferno/admin/templates/admin/system-administration.html:359
 msgid "This setting will enable logging all export requests approvals by administrators."
 msgstr "این تنظیم ثبت همه تأییدیه‌های درخواست خروجی گرفتن توسط ادمین‌ها را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:361
+#: enferno/admin/templates/admin/system-administration.html:363
 msgid "Export requests rejected by users."
 msgstr "درخواست‌های خروجی گرفتن رد شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:363
+#: enferno/admin/templates/admin/system-administration.html:365
 msgid "This setting will enable logging all export requests rejections by administrators."
 msgstr "این تنظیم ثبت همه درخواست‌های خروجی گرفن رد شده توسط ادمین‌ها را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:367
+#: enferno/admin/templates/admin/system-administration.html:369
 msgid "Export requests downloaded by  users."
 msgstr "درخواست‌های خروجی گرفتن دانلود شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:369
+#: enferno/admin/templates/admin/system-administration.html:371
 msgid "This setting will enable logging all export requests downloads by authorized users."
 msgstr "این تنظیم ثبت تمام درخواست‌های خروجی گرفتن دانلود شده توسط کاربران مجاز را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:373
+#: enferno/admin/templates/admin/system-administration.html:375
 msgid "Search queries made by users."
 msgstr "جست‌وجوهای انجام شده توسط کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:375
+#: enferno/admin/templates/admin/system-administration.html:377
 msgid "This setting will enable logging all searches conducted by users on Actors, Bulletins and Incidents."
 msgstr "این تنظیم ثبت تمام جستجوهای انجام شده توسط کاربران در مورد عاملان، بولتن‌ها و حوادث را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:379
+#: enferno/admin/templates/admin/system-administration.html:381
 msgid "Items self-assigned by users"
 msgstr "مواردی که توسط کاربران به خودشان تخصیص داده شده است"
 
-#: enferno/admin/templates/admin/system-administration.html:381
+#: enferno/admin/templates/admin/system-administration.html:383
 msgid "This setting will enable logging all items self-assigned by users."
 msgstr "این تنظیم ثبت همه مواردی را که توسط کاربران به خودشان تخصیص داده شده اند، فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:385
+#: enferno/admin/templates/admin/system-administration.html:387
 msgid "Logins by users."
 msgstr "ورودهای کاربران"
 
-#: enferno/admin/templates/admin/system-administration.html:387
+#: enferno/admin/templates/admin/system-administration.html:389
 msgid "This setting will enable logging all user login activities."
 msgstr "این تنظیم ثبت تمام فعالیت‌های مربوط به ورود کاربر به سیستم را فعال می‌کند."
 
-#: enferno/admin/templates/admin/system-administration.html:391
+#: enferno/admin/templates/admin/system-administration.html:393
 msgid "Logouts by users."
 msgstr "خروج کاربران از سیستم"
 
-#: enferno/admin/templates/admin/system-administration.html:393
+#: enferno/admin/templates/admin/system-administration.html:395
 msgid "This setting will enable logging all user logout activities. Note: only explicit logout will be logged, users closing their browsers without logging out will not for example."
 msgstr "این تنظیم ثبت تمام فعالیت‌های مربوط به خروج کاربر را فعال می‌کند. توجه: فقط خروج کامل از سیستم ثبت می‌شود. به عنوان مثال، موارد مربوط به کاربرانی بدون خروج از سیستم مرورگر خود را می‌بندند ثبت نمی‌شود."
 
-#: enferno/admin/templates/admin/system-administration.html:398
+#: enferno/admin/templates/admin/system-administration.html:400
+#: enferno/templates/setup_wizard.html:372
 msgid "Activity Retention Period"
 msgstr "دوره نگهداری فعالیت"
 
-#: enferno/admin/templates/admin/system-administration.html:400
+#: enferno/admin/templates/admin/system-administration.html:402
+#: enferno/templates/setup_wizard.html:373
 msgid "Period after which activities will be deleted."
 msgstr "دوره‌ای که پس از آن فعالیت‌ها حذف خواهند شد."
 
@@ -4084,36 +3561,36 @@ msgstr "اطلاعات ثبت شده"
 msgid "Log Date"
 msgstr "تاریخ ثبت"
 
-#: enferno/admin/templates/admin/system-logs.html:138
+#: enferno/admin/templates/admin/system-logs.html:139
 msgid "Timestamp"
 msgstr "برچسب زمانی"
 
-#: enferno/admin/templates/admin/system-logs.html:164
+#: enferno/admin/templates/admin/system-logs.html:165
 msgid "No log files found"
 msgstr "هیچ فایل گزارشی یافته نشد"
 
-#: enferno/admin/templates/admin/system-logs.html:223
+#: enferno/admin/templates/admin/system-logs.html:224
 msgid "Latest"
 msgstr "آخرین"
 
-#: enferno/admin/templates/admin/system-logs.html:319
+#: enferno/admin/templates/admin/system-logs.html:320
 msgid "Copied to clipboard"
 msgstr "در کلیپ بورد کپی شد"
 
-#: enferno/admin/templates/admin/system-logs.html:322
-#: enferno/admin/templates/admin/system-logs.html:326
+#: enferno/admin/templates/admin/system-logs.html:323
+#: enferno/admin/templates/admin/system-logs.html:327
 msgid "Failed to copy to clipboard."
 msgstr "در کلیپ بورد کپی نشد"
 
-#: enferno/admin/templates/admin/users.html:352
+#: enferno/admin/templates/admin/users.html:422
 msgid "Are you sure you want to force password reset for user "
 msgstr "آیا مطمئنید که می‌خواهید کاربر را مجبور به بازتعریف رمز عبور کنید؟"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:98
+#: enferno/admin/templates/admin/partials/actor_dialog.html:97
 msgid "Middle Name (AR)"
 msgstr "نام میانی (AR)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:131
+#: enferno/admin/templates/admin/partials/actor_dialog.html:130
 #: enferno/data_import/templates/sheets-import.html:299
 msgid "Father's Name (AR)"
 msgstr "نام پدر (AR)"
@@ -4123,23 +3600,23 @@ msgstr "نام پدر (AR)"
 msgid "No of Children"
 msgstr "تعداد فرزندان"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:336
+#: enferno/admin/templates/admin/partials/actor_dialog.html:332
 msgid "Profile"
 msgstr "پروفایل"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:337
+#: enferno/admin/templates/admin/partials/actor_dialog.html:333
 msgid "Duplicate Profile"
 msgstr "تکرار پروفایل"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:346
+#: enferno/admin/templates/admin/partials/actor_dialog.html:342
 msgid "Delete Profile"
 msgstr "حذف پروفایل"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:920
+#: enferno/admin/templates/admin/partials/actor_dialog.html:913
 msgid "Restrict Actor to Access Group(s)"
 msgstr "محدود کردن دسترسی عامل به گروه(ها)"
 
-#: enferno/admin/templates/admin/partials/actor_dialog.html:928
+#: enferno/admin/templates/admin/partials/actor_dialog.html:921
 msgid "No Access Access Groups"
 msgstr "بدون دسترسی به گروه‌های دسترسی"
 
@@ -4147,11 +3624,11 @@ msgstr "بدون دسترسی به گروه‌های دسترسی"
 msgid "Original Title (Ar)"
 msgstr "عنوان اصلی (Ar)"
 
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:287
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:290
 msgid "Restrict Bulletin to Access Group(s)"
 msgstr "محدود کردن بولتن به گروه‌(های) دسترسی"
 
-#: enferno/admin/templates/admin/partials/bulletin_dialog.html:295
+#: enferno/admin/templates/admin/partials/bulletin_dialog.html:298
 msgid "No Access Groups"
 msgstr "بدون گروه دسترسی"
 
@@ -4187,16 +3664,16 @@ msgstr "نام(های) میانی (AR)"
 msgid "Actor Profile"
 msgstr "پروفایل عامل"
 
-#: enferno/data_import/templates/sheets-import.html:436
+#: enferno/data_import/templates/sheets-import.html:438
 msgid "Missing Person Details"
 msgstr "جزئیات شخص گمشده"
 
-#: enferno/data_import/templates/sheets-import.html:599
+#: enferno/data_import/templates/sheets-import.html:601
 msgid "Details of the person(s) who reported them missing"
 msgstr "مشخصات فردی (افرادی) که گم شدن شخص را گزارش کرده‌اند"
 
-#: enferno/data_import/templates/sheets-import.html:890
-#: enferno/data_import/templates/sheets-import.html:1103
+#: enferno/data_import/templates/sheets-import.html:892
+#: enferno/data_import/templates/sheets-import.html:1105
 msgid "New Map"
 msgstr "نقشه جدید"
 
@@ -4204,20 +3681,15 @@ msgstr "نقشه جدید"
 msgid "Do not include Media"
 msgstr "شامل رسانه نباشه"
 
-#: enferno/templates/dashboard.html:31
-msgid "Syria Justice &amp;\n"
-"                    Accountability Center (SJAC) "
-msgstr "مرکز دادگستری و پاسخگوسازی سوریه (SJAC)"
-
-#: enferno/templates/dashboard.html:33
+#: enferno/templates/dashboard.html:127
 msgid "Bayanat "
 msgstr "بیانات"
 
-#: enferno/templates/dashboard.html:33
+#: enferno/templates/dashboard.html:127
 msgid "is an open source project by SJAC released under the GNU Affero General Public License (AGPL)."
 msgstr "یک پروژه منبع باز است که توسط SJAC است تحت مجوز عمومی GNU Affero (AGPL) منتشر شده است."
 
-#: enferno/templates/nav-drawer.html:58
+#: enferno/deduplication/templates/deduplication.html:27
 msgid "Deduplication Dashboard"
 msgstr "داشبورد کپی‌برداری"
 
@@ -4241,7 +3713,7 @@ msgstr "روشن"
 msgid "Dark"
 msgstr "تیره"
 
-#: enferno/templates/security/login_user.html:63
+#: enferno/templates/security/login_user.html:79
 msgid "Invalid username or password!"
 msgstr "نام کاربری یا رمزعبور نامعتبر است!"
 
@@ -4288,4 +3760,511 @@ msgstr "دستگاه با موفقیت حذف شد"
 #: enferno/templates/security/wan_signin.html:37
 msgid "Authenticate"
 msgstr "تایید کردن"
+
+#: enferno/admin/templates/admin/actors.html:99
+#: enferno/admin/templates/admin/bulletins.html:115
+#: enferno/admin/templates/admin/incidents.html:101
+#, fuzzy
+msgid "Unselect all"
+msgstr "انتخاب عمل"
+
+#: enferno/admin/templates/admin/actors.html:157
+#: enferno/admin/templates/admin/bulletins.html:173
+#: enferno/admin/templates/admin/incidents.html:160
+#, fuzzy
+msgid "Search time: "
+msgstr "فیلدهای جستجو"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:318
+#, fuzzy
+msgid "User 2FA Methods"
+msgstr "عامل کاربر"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:319
+#: enferno/admin/templates/admin/users.html:79
+#, fuzzy
+msgid "2FA Inactive"
+msgstr "غیر‌فعال"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:338
+#, fuzzy
+msgid "Preview Image"
+msgstr "بازبین"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:339
+msgid "Play Video"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:340
+msgid "Open PDF in PDF Viewer"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:341
+#, fuzzy
+msgid "Download File"
+msgstr "دانلود"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:342
+#, fuzzy
+msgid "Category"
+msgstr "دسته‌بندی رسانه‌ها"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:343
+#, fuzzy
+msgid "Duration"
+msgstr "عمل"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:344
+msgid "Click to copy"
+msgstr ""
+
+#: enferno/admin/templates/admin/jsapi.jinja2:345
+#, fuzzy
+msgid "File Hash"
+msgstr "فایل"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:346
+#, fuzzy
+msgid "Filename"
+msgstr "نام میانی"
+
+#: enferno/admin/templates/admin/system-administration.html:109
+#: enferno/templates/setup_wizard.html:203
+msgid "Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It's also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations)."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:168
+msgid "Bayanat uses zxcvbn password strength estimator to calculate a password score. 'Medium' coresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. 'Strong' corresponds to a score of 3, we recommend this setting for online Bayanat installations. 'Very Strong' corresponds to a zxcvbn score of 4 and offers the highest level of protection."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:194
+#: enferno/templates/setup_wizard.html:276
+#, fuzzy
+msgid "Two Factor Authentication Policies"
+msgstr "کد احراز هویت دو مرحله‌ای"
+
+#: enferno/admin/templates/admin/system-administration.html:204
+#: enferno/templates/setup_wizard.html:285
+#, fuzzy
+msgid "WebAuthn Authentication"
+msgstr "احراز هویت دو مرحله‌ای"
+
+#: enferno/admin/templates/admin/system-administration.html:206
+#: enferno/templates/setup_wizard.html:287
+msgid "Allow use of FIDO hardware and passkeys as second factor."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:212
+#, fuzzy
+msgid "Session Policies"
+msgstr "سیاست‌های رمز عبور"
+
+#: enferno/admin/templates/admin/system-administration.html:223
+#: enferno/templates/setup_wizard.html:384
+#, fuzzy
+msgid "Period after which session data will be deleted."
+msgstr "دوره‌ای که پس از آن فعالیت‌ها حذف خواهند شد."
+
+#: enferno/admin/templates/admin/system-administration.html:228
+msgid "Additional Security Settings"
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:233
+#, fuzzy
+msgid "Add further security to Bayanat's by requiring Google Recaptcha on the login form."
+msgstr "نیاز به Google Recaptcha در فرم ورود به سیستم."
+
+#: enferno/admin/templates/admin/system-administration.html:287
+msgid "By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:417
+#: enferno/templates/setup_wizard.html:344
+#, fuzzy
+msgid "Enables importing and parsing media items in bulk into Bulletins."
+msgstr "فعال کردن امکان وارد کردن و تجزیه آیتم‌های رسانه‌ای به صورت انبوه مستقیماً در بولتن‌ها."
+
+#: enferno/admin/templates/admin/system-administration.html:460
+#: enferno/templates/setup_wizard.html:348
+#, fuzzy
+msgid "Enables dynamic import of spreadsheets into Actors."
+msgstr "فعال کردن ورود برگه‌های صفحات گسترده و بازنمایی آنها به عاملان."
+
+#: enferno/admin/templates/admin/system-administration.html:495
+#: enferno/templates/setup_wizard.html:378
+#, fuzzy
+msgid "Period after which exports will expired and be deleted."
+msgstr "زمان انقضای خروجی گرفتن"
+
+#: enferno/admin/templates/admin/system-administration.html:514
+msgid "Satalite Imagery"
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:515
+msgid "Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satalite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:673
+#: enferno/templates/setup_wizard.html:439
+#, fuzzy
+msgid "Restarting Bayanat to new settings to take effect, please wait..."
+msgstr "در حال راه اندازی مجدد بیانات، لطفا صبر کنید..."
+
+#: enferno/admin/templates/admin/system-administration.html:676
+#: enferno/templates/setup_wizard.html:442
+msgid "This can take up to a minute. If it takes longer, please restart Bayanat manually."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:931
+#: enferno/templates/setup_wizard.html:640
+#, fuzzy
+msgid "Bayanat reloaded successfully."
+msgstr "تنظیمات برنامه با موفقیت بارگیری مجدد شد."
+
+#: enferno/admin/templates/admin/users.html:54
+#: enferno/admin/templates/admin/users.html:258
+msgid "Revoke 2FA"
+msgstr ""
+
+#: enferno/admin/templates/admin/users.html:79
+#, fuzzy
+msgid "2FA Active"
+msgstr "فعال"
+
+#: enferno/admin/templates/admin/users.html:313
+#, fuzzy
+msgid "Two Factor Authentication"
+msgstr "احراز هویت دو مرحله‌ای"
+
+#: enferno/admin/templates/admin/users.html:395
+#, fuzzy
+msgid "Are you sure you want to revoke 2FA for this user?"
+msgstr "آیا مطمئنید که می‌خواهید از تمام جلسات (سشن‌های) این کاربر خارج شوید؟"
+
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:33
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:34
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:32
+#, fuzzy
+msgid "Clear Assignee"
+msgstr "می‌تواند به خودش اختصاص دهد"
+
+#: enferno/admin/templates/admin/partials/bulk_actor_drawer.html:49
+#: enferno/admin/templates/admin/partials/bulk_bulletin_drawer.html:50
+#: enferno/admin/templates/admin/partials/bulk_incident_drawer.html:48
+#, fuzzy
+msgid "Clear Reviewer"
+msgstr "بازبین همتا"
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:141
+#, fuzzy
+msgid "Load Related Actors"
+msgstr "عاملان مرتبط"
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:171
+#, fuzzy
+msgid "Load Related Bulletins"
+msgstr "بولتن‌های مرتبط"
+
+#: enferno/admin/templates/admin/partials/incident_dialog.html:200
+#, fuzzy
+msgid "Load Related Incidents"
+msgstr "وقایع مرتبط"
+
+#: enferno/data_import/templates/media-import.html:389
+#, fuzzy
+msgid "Original Filename"
+msgstr "عنوان اصلی"
+
+#: enferno/data_import/templates/media-import.html:390
+#, fuzzy
+msgid "New Filename"
+msgstr "مورد جدید"
+
+#: enferno/data_import/templates/media-import.html:391
+msgid "MD4"
+msgstr ""
+
+#: enferno/data_import/templates/sheets-import.html:382
+#, fuzzy
+msgid "Separator"
+msgstr "جستجوی عاملان"
+
+#: enferno/deduplication/templates/deduplication.html:291
+#, fuzzy
+msgid " hours"
+msgstr "منابع"
+
+#: enferno/deduplication/templates/deduplication.html:291
+#, fuzzy
+msgid " minutes"
+msgstr "متر"
+
+#: enferno/deduplication/templates/deduplication.html:292
+#, fuzzy
+msgid "Processed: "
+msgstr "پردازش"
+
+#: enferno/deduplication/templates/deduplication.html:292
+#, fuzzy
+msgid "Speed: "
+msgstr "جدا شده"
+
+#: enferno/deduplication/templates/deduplication.html:292
+#, fuzzy
+msgid "/hour"
+msgstr "کوتاه"
+
+#: enferno/deduplication/templates/deduplication.html:292
+msgid "Approx. time to complete: "
+msgstr ""
+
+#: enferno/deduplication/templates/deduplication.html:309
+msgid " of "
+msgstr ""
+
+#: enferno/deduplication/templates/deduplication.html:309
+#, fuzzy
+msgid " items ("
+msgstr "مورد"
+
+#: enferno/deduplication/templates/deduplication.html:309
+#, fuzzy
+msgid " pending)"
+msgstr "سوراخ کردن بدن برای زیورآلات"
+
+#: enferno/templates/dashboard.html:35
+#, fuzzy
+msgid "Manage Users"
+msgstr "کاربر جدید"
+
+#: enferno/templates/dashboard.html:46
+#, fuzzy
+msgid "Users Dashboard"
+msgstr "داشبورد مدیریت"
+
+#: enferno/templates/dashboard.html:64
+#, fuzzy
+msgid "Groups Dashboard"
+msgstr "داشبورد کپی‌برداری"
+
+#: enferno/templates/dashboard.html:73
+#, fuzzy
+msgid "Customize Component Data"
+msgstr "داده‌های کامپوننت"
+
+#: enferno/templates/dashboard.html:76
+msgid "If you haven't imported Bayanat's default data, you'll need to create items for the system lists from the Component Data dashboard. If you have, you still need to create Ethnicities and Dialects for the country(s) your team will be working on."
+msgstr ""
+
+#: enferno/templates/dashboard.html:91
+#, fuzzy
+msgid "More System Settings"
+msgstr "تنظیمات سیستم"
+
+#: enferno/templates/dashboard.html:94
+msgid "This wizard went through a few important settings. Bayanat can be customized even further from the System Settings."
+msgstr ""
+
+#: enferno/templates/dashboard.html:116
+msgid "Complete Setup"
+msgstr ""
+
+#: enferno/templates/dashboard.html:125
+#, fuzzy
+msgid "Syria Justice &amp;\n"
+"                        Accountability Center (SJAC) "
+msgstr "مرکز دادگستری و پاسخگوسازی سوریه (SJAC)"
+
+#: enferno/templates/nav-drawer.html:58
+#, fuzzy
+msgid "Deduplication"
+msgstr "ابزار Deduplication"
+
+#: enferno/templates/setup_wizard.html:5
+#, fuzzy
+msgid " Setup Bayanat"
+msgstr "بیانات"
+
+#: enferno/templates/setup_wizard.html:53
+msgid "Welcome to Bayanat!"
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:57
+msgid "Welcome to your Bayanat server. This wizard will guide you through a few basic steps \n"
+"                                                to set up your Bayanat server. You can start using your Bayanat server afterwards. You can use the default settings in this wizard without any change, and all these settings can be easily changed later on."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:62
+#: enferno/templates/setup_wizard.html:122
+#: enferno/templates/setup_wizard.html:187
+#: enferno/templates/setup_wizard.html:225
+#: enferno/templates/setup_wizard.html:295
+#: enferno/templates/setup_wizard.html:327
+#: enferno/templates/setup_wizard.html:356
+#, fuzzy
+msgid "Proceed"
+msgstr "پردازش"
+
+#: enferno/templates/setup_wizard.html:77
+msgid "Create your first admin account. This account will have unrestricted\n"
+"                                                    access to all features and settings in Bayanat."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:93
+#, fuzzy
+msgid "Create Admin Account"
+msgstr "تاریخ ایجاد"
+
+#: enferno/templates/setup_wizard.html:100
+#: enferno/templates/setup_wizard.html:126
+#: enferno/templates/setup_wizard.html:150
+#: enferno/templates/setup_wizard.html:191
+#: enferno/templates/setup_wizard.html:229
+#: enferno/templates/setup_wizard.html:299
+#: enferno/templates/setup_wizard.html:331
+#: enferno/templates/setup_wizard.html:360
+#: enferno/templates/setup_wizard.html:396
+#, fuzzy
+msgid "Go Back"
+msgstr "بازگشت"
+
+#: enferno/templates/setup_wizard.html:106
+#, fuzzy
+msgid "Language"
+msgstr "زبان‌ها"
+
+#: enferno/templates/setup_wizard.html:132
+#, fuzzy
+msgid "Default Data"
+msgstr "زبان پیش‌فرض"
+
+#: enferno/templates/setup_wizard.html:137
+msgid "Would you like to import Bayanat's default component data? This will allow your team to quickly start using Bayanat's default component data such as: Violations categories, Event types, Countries and Nationalities, GeoLocation types, Media category and relationships types. You can modify or delete these later."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:142
+#, fuzzy
+msgid "Import Default Data"
+msgstr "تاریخ ورود"
+
+#: enferno/templates/setup_wizard.html:146
+#, fuzzy
+msgid "Skip"
+msgstr "آی پی"
+
+#: enferno/templates/setup_wizard.html:161
+msgid "Customize Bayanat's location data to suit the country and context of your team's investigations."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:165
+#, fuzzy
+msgid "Changes default center position for all maps in Bayanat."
+msgstr "تغییر موقعیت پیش‌فرض برای همه نقشه‌ها و در همه اجز."
+
+#: enferno/templates/setup_wizard.html:173
+#, fuzzy
+msgid "API key for Google Maps. Adding a key enables satellite imagery in Bayanat's maps."
+msgstr "کلید API برای Google Maps. افزودن یک کلید، تصاویر ماهواره‌ای را در نقشه‌های بیانات فعال می‌کند."
+
+#: enferno/templates/setup_wizard.html:247
+#, fuzzy
+msgid "Minimum required length for passwords."
+msgstr "حداقل طول مورد نیاز برای رمزهای عبور"
+
+#: enferno/templates/setup_wizard.html:279
+#, fuzzy
+msgid "Force all users to enroll in two factor authentication."
+msgstr "اجبار کاربران برای ثبت نام با احراز هویت دو مرحله‌ای"
+
+#: enferno/templates/setup_wizard.html:337
+#, fuzzy
+msgid "Import/Export Tools"
+msgstr "ابزارهای ورودی"
+
+#: enferno/templates/setup_wizard.html:346
+#, fuzzy
+msgid "Sheet Import Tool"
+msgstr "وارد کردن برگه‌"
+
+#: enferno/templates/setup_wizard.html:366
+#, fuzzy
+msgid "Retention Periods"
+msgstr "دوره نگهداری فعالیت"
+
+#: enferno/templates/setup_wizard.html:391
+#, fuzzy
+msgid "Finish Setup"
+msgstr "پایان"
+
+#: enferno/templates/setup_wizard.html:407
+msgid "Your Bayanat server is now ready to use!"
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:413
+#, fuzzy
+msgid "Proceed to dashboard"
+msgstr "داشبورد کپی‌برداری"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:37
+#, fuzzy
+msgid "Search in a single event"
+msgstr "جستجو در یک رویداد خاص"
+
+#: enferno/admin/templates/admin/jsapi.jinja2:349
+#, fuzzy
+msgid "Include Postal Code"
+msgstr "کدپستی"
+
+#: enferno/admin/templates/admin/system-administration.html:96
+#, fuzzy
+msgid "Advanced Analysis Features"
+msgstr "جستجوی پیشرفته"
+
+#: enferno/admin/templates/admin/system-administration.html:99
+msgid "Advanced features for more efficient analysis."
+msgstr ""
+
+#: enferno/admin/templates/admin/system-administration.html:426
+#, fuzzy
+msgid "Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it's needed."
+msgstr "ایجاد امکان اسکن مسیر وارد کردن فایل‌ها در ابزار Media Import Tool. مسیر باید در فایل .env تنظیم شود تا این تنظیمات کار کند. این کار برای اهداف امنیتی انجام می‌شود. هشدار: این یک تنظیم خطرناک است و فقط باید در هنگام نصب فعال شود که بتوان از این ویژگی استفاده کرد. فقط در صورت نیاز باید روشن شود."
+
+#: enferno/admin/templates/admin/system-administration.html:489
+#: enferno/templates/setup_wizard.html:352
+msgid "Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Administrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard."
+msgstr ""
+
+#: enferno/templates/dashboard.html:38
+msgid "Create user accounts for your team so they can access your Bayanat server. Users Dashboard allow you to manage your user accounts, their access levels and their permissions."
+msgstr ""
+
+#: enferno/templates/dashboard.html:56
+msgid "Create access groups to manage your team's access to your data. You can then add your users to the appropriate access groups and assign these groups to Actor, Bulletins and Incidents that needs to be restricted. Actors and Bulletins can be restricted when imported by the Media and Sheets Import Tools. Access groups of all items can be tweaked any time using bulk updates."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:169
+#, fuzzy
+msgid "Satellite Imagery"
+msgstr "بازبین"
+
+#: enferno/templates/setup_wizard.html:170
+msgid "Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satellite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:176
+#, fuzzy
+msgid "Administrative Divisions"
+msgstr "سطوح مدیریتی مکان"
+
+#: enferno/templates/setup_wizard.html:177
+msgid "Bayanat ships with the Syrian administrative divisions by default. Change the names of the administrative divisions to match the country your team will be working on."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:253
+msgid "Bayanat uses zxcvbn password strength estimator to calculate a password score. 'Medium' corresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. 'Strong' corresponds to a score of 3, we recommend this setting for online Bayanat installations. 'Very Strong' corresponds to a zxcvbn score of 4 and offers the highest level of protection."
+msgstr ""
+
+#: enferno/templates/setup_wizard.html:312
+msgid "By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behavior can be changed with the following settings."
+msgstr ""
 

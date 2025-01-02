@@ -456,6 +456,13 @@ input[type="date"]::-webkit-input-placeholder {
 }
 
 
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+}
+
+
 /* sticky related items headers */
 
 .header-sticky {
@@ -781,4 +788,69 @@ div.jsondiffpatch-child-node-type-array:after {
 
 .security form ul *:has(input[type="radio"]) input {
     scale: 1.3;
+}
+
+.custom-play-icon.dark-play-icon {
+    color: black !important;
+}
+
+.custom-play-icon.light-play-icon {
+    color: white !important;
+}
+
+.v-card--reveal {
+    align-items: center;
+    top: 0;
+    justify-content: center;
+    opacity: .9;
+    position: absolute;
+    width: 100%;
+}
+
+.video-js:has(audio) {
+    background-color: #00000000 !important;
+}
+
+.chip-container {
+    position: relative;
+}
+
+.drop-indicator {
+    position: absolute;
+    width: 2px;  /* Changed from height to width */
+    height: 100%; /* Full height of container */
+    background-color: rgba(var(--v-theme-primary), 0.5);
+    transition: all 0.2s ease;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.drop-indicator.active {
+    opacity: 1;
+}
+
+/* CSS Helpers */
+.overflow-unset {
+    overflow: unset;
+}
+.z-1 {
+    z-index: 1;
+}
+
+/* wrap chips */
+.flex-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.flex-chip {
+    height: auto !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    white-space: normal !important;
+}
+.flex-chip .v-chip__content {
+    overflow-wrap: anywhere;
+    white-space: normal;
 }

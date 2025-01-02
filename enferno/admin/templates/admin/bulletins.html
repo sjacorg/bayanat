@@ -30,10 +30,8 @@
                             v-if="showVisualize"
                             :loading="visualizeLoading"
                             variant="elevated"
-
-
                             class="mb-5 mr-5 position-absolute "
-                            style="right: 20px; bottom: 20px; z-index: 1000;"
+                            style="right: 30px; bottom: 90px; z-index: 1000;"
                     >
 
 
@@ -56,6 +54,7 @@
                             @click:row="rowClick"
                             :items="items"
                             @update:options="refresh"
+                            :page="options.page"
                             :loading="loading"
                             :items-length="itemsLength"
                             :row-props="rowClass"
@@ -107,6 +106,17 @@
                                             class="ma-2"
                                     >{{ _('New Bulletin') }}</v-btn
                                     >
+                                    {% if config.WEB_IMPORT and (current_user.can_import_web or current_user.has_role("Admin")) %}
+                                    <v-btn
+                                            @click="webImportDlg = true"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="ma-2"
+                                    >
+                                        <v-icon left>mdi-web</v-icon>
+                                            {{ _('Import from Web') }}
+                                        </v-btn>
+                                    {% endif %}
                                 {% endif %}
                                 {% include'admin/partials/bulletin_dialog.html' %}
                                 {% include'admin/partials/review_dialog.html' %}
@@ -117,10 +127,10 @@
                                     <v-tooltip location="top" text="{{ _('Unselect all') }}">
                                         <template #activator="{props}">
                                             <v-btn icon="mdi-checkbox-blank-outline"
-                                                @click="selected=[]"
-                                                class="mr-3 ml-1"
-                                                density="compact"
-                                                :="props">
+                                                   @click="selected=[]"
+                                                   class="mr-3 ml-1"
+                                                   density="compact"
+                                                   :="props">
                                             </v-btn>
                                         </template>
                                     </v-tooltip>
@@ -172,7 +182,8 @@
                         </template>
 
                         <template #footer.prepend>
-                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }} ${searchTime} {{ _('seconds') }}</div>
+                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }}
+                                ${searchTime} {{ _('seconds') }}</div>
                         </template>
 
                         <template #item.roles="{item}">
@@ -261,6 +272,7 @@
 
 
                     {% include 'admin/partials/video_player_dialog.html' %}
+                    {% include 'admin/partials/audio_player_dialog.html' %}
 
 
                     <v-dialog width="600" v-model="selfAssignDialog">
@@ -271,8 +283,8 @@
 
                                         small-chips
                                         multiple
-                                        v-model="assignBulletin.ref"
-                                        label="{{ _('Ref') }}"
+                                        v-model="assignBulletin.tags"
+                                        label="{{ _('Tags') }}"
                                         class="mr-2"
                                 ></v-combobox>
                                 <v-textarea v-model="assignBulletin.comments"
@@ -287,6 +299,39 @@
 
                     </v-dialog>
 
+                    <v-dialog v-model="webImportDlg" max-width="600" @update:model-value="webUrl = ''">
+                        <v-card class="pa-3">
+                            <v-card-title class="text-h5">
+                                {{ _('Import from Web') }}
+                            </v-card-title>
+                            
+                            <v-card-text>
+                                <v-row align="center">
+                                    <v-col cols="9">
+                                        <v-text-field
+                                            v-model="webUrl"
+                                            label="{{ _('Enter URL') }}"
+                                            placeholder="https://example.com/article"
+                                            @keydown.enter="submitWebImport"
+                                            autofocus
+                                        ></v-text-field>
+                                    </v-col>
+                                    <v-col cols="3">
+                                        <v-btn
+                                            color="primary"
+                                            variant="elevated"
+                                            :loading="webImportLoading"
+                                            @click="submitWebImport"
+                                            block
+                                        >
+                                            {{ _('Import') }}
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                        </v-card>
+                    </v-dialog>
+
 
                 </v-card-text>
             </v-card>
@@ -298,12 +343,7 @@
 {% endblock %}
 
 {% block outside %}
-    <div class="d-none" data-itob='{{ itobInfo|tojson }}'></div>
-    <div class="d-none" data-itoa='{{ itoaInfo|tojson }}'></div>
-    <div class="d-none" data-atob='{{ atobInfo|tojson }}'></div>
-    <div class="d-none" data-atoa='{{ atoaInfo|tojson }}'></div>
-    <div class="d-none" data-btob='{{ btobInfo|tojson }}'></div>
-    <div class="d-none" data-itoi='{{ itoiInfo|tojson }}'></div>
+
     <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
     <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
 
@@ -415,13 +455,14 @@
                     valid: false,
 
                     translations: translations,
+                    advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
-                    itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
-                    itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
-                    itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
-                    atobInfo: JSON.parse(document.querySelector('[data-atob]').dataset.atob),
-                    btobInfo: JSON.parse(document.querySelector('[data-btob]').dataset.btob),
-                    atoaInfo: JSON.parse(document.querySelector('[data-atoa]').dataset.atoa),
+                    itobInfo: [],
+                    itoaInfo: [],
+                    atobInfo: [],
+                    atoaInfo: [],
+                    btobInfo: [],
+                    itoiInfo: [],
 
 
                     dzOpts: {
@@ -435,6 +476,7 @@
                         thumbnailHeight: 80,
                         parallelUploads: 1,
                         maxFilesize: mediaUploadMaxFileSize,
+                        maxFiles: 1,
 
 
                     },
@@ -474,6 +516,7 @@
 
 
                     dialog: dialog,
+                    saving: false,
                     eventDialog: false,
                     eventParams: {typ: 'for_bulletin'},
                     reviewDialog: false,
@@ -507,7 +550,9 @@
                     bulkBulletinDrawer: false,
 
                     exportDrawer: false,
-                    exportConfig: {},
+                    exportConfig: {
+                        format: 'pdf'
+                    },
                     sources: [],
                     locations: [],
                     labels: [],
@@ -634,7 +679,11 @@
 
 
                     bulletin: {},
-                    bulletinLoader: false
+                    bulletinLoader: false,
+
+                    webImportDlg: false,
+                    webUrl: '',
+                    webImportLoading: false
                 }),
 
                 computed: {
@@ -663,7 +712,7 @@
                         return this.itobInfo;
                     },
                     bulletinRelationMultiple() {
-                    return true;
+                        return true;
                     },
                     actorRelationMultiple() {
                         return true;
@@ -864,7 +913,27 @@
 
                 },
 
+                created() {
+                    this.fetchRelationInfo();
+
+                },
+
                 methods: {
+                    fetchRelationInfo() {
+                        axios.get('/admin/api/relation/info')
+                            .then(response => {
+                                this.itobInfo = response.data.itobInfo;
+                                this.itoaInfo = response.data.itoaInfo;
+                                this.atobInfo = response.data.atobInfo;
+                                this.atoaInfo = response.data.atoaInfo;
+                                this.btobInfo = response.data.btobInfo;
+                                this.itoiInfo = response.data.itoiInfo;
+                            })
+                            .catch(error => {
+                                console.error('Error fetching relation info:', error);
+                                this.showSnack('Error fetching relation info');
+                            });
+                    },
 
                     validateForm() {
                         this.$refs.form.validate().then(valid => {
@@ -907,6 +976,7 @@
                             this.showSnack("{{ _('Graph is being generated.')}}");
                             this.graphTimer = setInterval(this.checkGraphStatus, 3000);
                         }).catch(e => {
+                            this.visualizeLoading = false;
                             console.error(e.message);
                         }).finally(() => {
                         });
@@ -920,18 +990,17 @@
                         axios.post(`/export/api/bulletin/export`, {
                             items: this.selected,
                             config: this.exportConfig
-                        })
-                            .then(response => {
-                                this.showSnack(response.data);
-                            }).catch(error => {
-                            console.error(error.response?.data);
-                            this.showSnack(error.response?.data)
-                        }).finally(() => {
-                            this.loading = false;
+                        }).then(response => {
+                            this.showSnack(response.data);
                             this.exportDrawer = false;
                             this.selected = [];
-                            this.exportConfig = {};
-
+                            this.exportConfig = {
+                                format: 'pdf'
+                            };
+                        }).catch(error => {
+                            console.error(error.response?.data);
+                        }).finally(() => {
+                            this.loading = false;
                         });
                     },
 
@@ -958,8 +1027,6 @@
                             this.showSnack("{{ _('Bulletin assigned successfully.')}}")
                             this.refresh();
 
-                        }).catch(err => {
-                            this.showSnack(err.response.data);
                         }).finally(() => {
                             this.selfAssignDialog = false;
                             this.assignBulletin = {};
@@ -1036,20 +1103,19 @@
                         axios.put(`/admin/api/bulletin/bulk/`, {
                             items: this.selected,
                             bulk: this.bulk
-                        })
-                            .then(response => {
-                                this.loading = false;
-                                this.showSnack(response.data);
-                                this.refresh(this.options);
-                                //reset bulk drawer, and bulk data
-                                this.bulkBulletinDrawer = false;
-                                this.selected = [];
-                                this.bulk = {};
-                                clearInterval(this.bulkTimer);
-                                // if (!this.bulkProcInterval)
-                                this.bulkTimer = setInterval(this.bulkStatus, 3000);
-
-                            });
+                        }).then(response => {
+                            this.showSnack(response.data);
+                            this.refresh();
+                            //reset bulk drawer, and bulk data
+                            this.bulkBulletinDrawer = false;
+                            this.selected = [];
+                            this.bulk = {};
+                            clearInterval(this.bulkTimer);
+                            // if (!this.bulkProcInterval)
+                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
+                        }).finally(() => {
+                            this.loading = false;
+                        });
                     },
 
 
@@ -1065,14 +1131,12 @@
                     doSearch() {
                         this.options.page = 1;
                         this.advSearchExpand = this.advSearchExpand && false;
-
-
                         this.refresh();
-                    }
-                    ,
+                    },
+
                     refresh(options) {
 
-                        this.options = options || this.options;
+                        this.options = options || { ...this.options, page: 1 };
                         this.loading = true;
                         const startTime = new Date()
 
@@ -1084,7 +1148,6 @@
                         }).then(response => {
                             const endTime = new Date()
                             this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                            this.loading = false;
                             this.itemsLength = response.data.total;
                             this.items = response.data.items;
                             this.showVisualize = !(
@@ -1092,9 +1155,8 @@
                                 Object.keys(this.search[0]).length === 0
                             );
 
-                        }).catch(error => {
+                        }).finally(() => {
                             this.loading = false;
-                            this.showSnack(this.parseValidationError(error.response.data));
                         });
 
 
@@ -1156,8 +1218,6 @@
                             if (selectLast === true) {
                                 this.savedSearchSelection = this.searches.at(-1);
                             }
-                        }).catch(error => {
-                            this.showSnack(handleRequestError(error))
                         });
 
                     },
@@ -1174,9 +1234,6 @@
                                 this.queryName = null;
                                 // just reload searches and select the last one
                                 this.loadSearchesFromAPI(true);
-                            })
-                            .catch(error => {
-                                this.showSnack(handleRequestError(error));
                             });
                     },
 
@@ -1185,9 +1242,6 @@
                         axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                             .then(res => {
                                 this.showSnack(res.data);
-                            })
-                            .catch(error => {
-                                this.showSnack(handleRequestError(error));
                             });
                     },
 
@@ -1200,9 +1254,6 @@
                                     this.savedSearchSelection = null;
                                     this.search = [{}];
                                 }
-                            })
-                            .catch(error => {
-                                this.showSnack(handleRequestError(error));
                             });
                     },
 
@@ -1271,9 +1322,6 @@
                             this.bulletin = response.data;
                         }).catch(error => {
                             this.bulletinDrawer = false;
-                            if (error.response) {
-                                this.showSnack(error.response.data)
-                            }
                         }).finally(() => {
                             this.bulletinLoader = false;
                         });
@@ -1496,9 +1544,8 @@
                                 })
 
 
-                            }).catch(error => {
-                                this.showSnack("{{ _('Oops! We couldn\'t find this item.')}}")
-
+                            }).finally(() => {
+                                this.loading = false;
                             });
 
 
@@ -1527,6 +1574,7 @@
 
                             this.unrestricted = false;
                             this.editedIndex = -1;
+                            this.saving = false;
                         }, 300);
                     },
 
@@ -1542,30 +1590,33 @@
                             return;
                         }
 
+                        this.saving = true;
                         if (this.editedItem.id) {
+                            //update record
                             axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
                                 item: this.editedItem
-                            })
-                                .then(response => {
-                                    this.showSnack(response.data);
-                                    this.refresh(this.options);
-                                    this.close();
-                                }).catch(err => {
-                                this.showSnack(this.parseValidationError(err.response?.data));
+                            }).then(response => {
+                                this.showSnack(response.data);
+                                this.refresh();
+                                this.close();
+                            }).catch(err => {
+                                console.error(err.response?.data);
+                                this.saving = false;
                             });
                         } else {
-                            this.items.push(this.editedItem);
                             //create new record
-                            axios.post("/admin/api/bulletin/", {item: this.editedItem})
-                                .then(response => {
-                                    this.showSnack(response.data);
-                                    this.refresh(this.options);
-                                    this.close();
-                                }).catch(err => {
-                                this.showSnack(this.parseValidationError(err.response?.data));
-                            })
+                            axios.post("/admin/api/bulletin/", {
+                                item: this.editedItem
+                            }).then(response => {
+                                this.items.push(this.editedItem);
+                                this.showSnack(response.data);
+                                this.refresh();
+                                this.close();
+                            }).catch(err => {
+                                console.error(err.response?.data);
+                                this.saving = false;
+                            });
                         }
-
                     },
 
                     editEvent(evt, item, index) {
@@ -1706,15 +1757,39 @@
                     },
 
                     clearAssignee() {
-                        if (this.bulk.assigneeClear){
+                        if (this.bulk.assigneeClear) {
                             this.bulk.assigned_to_id = null;
                         }
                     },
 
                     clearReviewer() {
-                        if (this.bulk.reviewerClear){
+                        if (this.bulk.reviewerClear) {
                             this.bulk.first_peer_reviewer_id = null;
                         }
+                    },
+
+                    submitWebImport() {
+                        if (!this.webUrl.trim()) {
+                            this.showSnack('{{ _("Please enter a URL") }}');
+                            return;
+                        }
+
+                        this.webImportLoading = true;
+                        
+                        axios.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
+                            .then(res => {
+                                this.webUrl = ''; // Clear the input
+                                this.webImportDlg = false;
+                                this.showSnack('{{ _("URL import started") }}');
+                                this.refresh(); // Refresh the bulletins list
+                            })
+                            .catch(err => {
+                                this.showSnack(handleRequestError(err));
+                                console.error(err);
+                            })
+                            .finally(() => {
+                                this.webImportLoading = false;
+                            });
                     }
                 }
             })

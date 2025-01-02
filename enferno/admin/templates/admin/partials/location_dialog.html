@@ -1,4 +1,4 @@
-<v-dialog persistent v-if="dialog" v-model="dialog" fullscreen>
+<v-dialog :retain-focus="false" no-click-animation persistent v-if="dialog" v-model="dialog" fullscreen>
     <v-form @submit.prevent="save"  ref="form" v-model="valid">
         <v-card v-if="dialog" class="overflow-hidden card-edit">
             <v-toolbar

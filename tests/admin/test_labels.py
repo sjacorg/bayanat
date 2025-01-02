@@ -1,10 +1,11 @@
 import pytest
 
 from enferno.admin.models import Label
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from tests.factories import LabelFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
+    create_csv_for_entities,
     get_first_or_fail,
 )
 
@@ -36,13 +37,30 @@ def clean_slate_labels(session):
     yield
 
 
+@pytest.fixture(scope="function")
+def create_label_csv():
+    l1 = LabelFactory()
+    l2 = LabelFactory()
+    headers = [
+        "title",
+        "for_actor",
+        "for_bulletin",
+        "for_incident",
+        "for_offline",
+        "verified",
+        "order",
+        "parent_label_id",
+    ]
+    yield from create_csv_for_entities([l1, l2], headers)
+
+
 ##### GET /admin/api/labels #####
 
 labels_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -83,7 +101,7 @@ post_label_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -112,7 +130,7 @@ put_label_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -142,7 +160,7 @@ delete_label_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -162,3 +180,35 @@ def test_delete_label_endpoint(
         assert found_label is None
     else:
         assert found_label
+
+
+##### POST /admin/api/label/import #####
+
+import_label_endpoint_roles = [
+    ("admin_client", 200),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 200),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", import_label_endpoint_roles)
+def test_import_label_endpoint(
+    clean_slate_labels, create_label_csv, request, client_fixture, expected_status
+):
+    client_ = request.getfixturevalue(client_fixture)
+    with open(create_label_csv, "rb") as f:
+        data = {"csv": (f, "test.csv")}
+        response = client_.post(
+            "/admin/api/label/import",
+            content_type="multipart/form-data",
+            data=data,
+            follow_redirects=True,
+        )
+        assert response.status_code == expected_status
+        labels = Label.query.all()
+        if expected_status == 200 and client_fixture == "admin_client":
+            # unauthenticated client redirects to login page with 200
+            assert len(labels) == 2
+        else:
+            assert len(labels) == 0

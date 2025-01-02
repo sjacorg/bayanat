@@ -3,8 +3,10 @@ import hashlib
 import json
 import os
 import shutil
+import tempfile
 import time
 from collections import namedtuple
+from pathlib import Path
 
 from typing import Any, Generator, Literal, Optional
 from datetime import datetime, timedelta, date
@@ -14,6 +16,10 @@ import pandas as pd
 from celery import Celery, chain
 from celery.schedules import crontab
 from sqlalchemy import and_
+from sqlalchemy.sql.expression import func
+import yt_dlp
+from sqlalchemy.orm.attributes import flag_modified
+from yt_dlp.utils import DownloadError
 
 from enferno.admin.models import (
     Bulletin,
@@ -23,6 +29,8 @@ from enferno.admin.models import (
     Activity,
     ActorHistory,
     IncidentHistory,
+    Location,
+    Media,
 )
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
@@ -33,6 +41,8 @@ from enferno.utils.csv_utils import convert_list_attributes
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
+from enferno.utils.data_helpers import get_file_hash
+from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
@@ -54,6 +64,8 @@ celery.conf.update(
 celery.conf.update({"SECRET_KEY": os.environ.get("SECRET_KEY", cfg.SECRET_KEY)})
 celery.conf.broker_connection_retry_on_startup = True
 celery.conf.add_defaults(cfg)
+
+logger = get_logger("celery.tasks")
 
 
 # Class to run tasks within application's context
@@ -101,7 +113,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     Returns:
         None
     """
-    print("processing bulletin bulk update")
+    logger.info(f"Processing Bulletin bulk-update... User ID: {cur_user_id} Total: {len(ids)}")
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -144,13 +156,13 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
                 bulletin.status = status
 
             # Ref
-            ref = bulk.get("ref")
-            if ref:
-                if bulk.get("refReplace") or not bulletin.ref:
-                    bulletin.ref = ref
+            tags = bulk.get("tags")
+            if tags:
+                if bulk.get("tagsReplace") or not bulletin.tags:
+                    bulletin.tags = tags
                 else:
                     # merge refs / remove dups
-                    bulletin.ref = list(set(bulletin.ref + ref))
+                    bulletin.tags = list(set(bulletin.tags + tags))
 
             # Comment (required)
             bulletin.comments = bulk.get("comments", "")
@@ -180,7 +192,6 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # add only to session
             db.session.add(bulletin)
 
-        print("creating revisions ...")
         revmaps = []
         bulletins = Bulletin.query.filter(Bulletin.id.in_(group)).all()
         for bulletin in bulletins:
@@ -199,9 +210,8 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         )
         # perhaps allow a little time out
         time.sleep(0.1)
-        print("Chunk Processed")
 
-    print("Bulletins Bulk Update Successful")
+    logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
 
 @celery.task
@@ -217,6 +227,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     Returns:
         None
     """
+    logger.info(f"Processing Actor bulk-update... User ID: {cur_user_id} Total: {len(ids)}")
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -256,6 +267,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
             if status:
                 actor.status = status
+
+            # Tags
+            tags = bulk.get("tags")
+            if tags:
+                if bulk.get("tagsReplace") or not actor.tags:
+                    actor.tags = tags
+                else:
+                    # merge tags / remove dups
+                    actor.tags = list(set(actor.tags + tags))
 
             # Comment (required)
             actor.comments = bulk.get("comments", "")
@@ -303,9 +323,8 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         )
         # perhaps allow a little time out
         time.sleep(0.25)
-        print("Chunk Processed")
 
-    print("Actors Bulk Update Successful")
+    logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
 
 @celery.task
@@ -321,6 +340,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     Returns:
         None
     """
+    logger.info(f"Processing Incident bulk-update... User ID: {cur_user_id} Total: {len(ids)}")
     # build mappings
     u = {"id": cur_user_id}
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
@@ -443,28 +463,15 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
         # perhaps allow a little time out
         time.sleep(0.25)
-        print("Chunk Processed")
 
-    print("Incidents Bulk Update Successful")
+    logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
 
 
 @celery.task(rate_limit=10)
 def etl_process_file(
     batch_id: t.id, file: str, meta: Any, user_id: t.id, data_import_id: t.id
 ) -> Optional[Literal["done"]]:
-    """
-    ETL process file task.
-
-    Args:
-        - batch_id: Batch ID.
-        - file: File path.
-        - meta: Metadata.
-        - user_id: User ID.
-        - data_import_id: Data Import ID.
-
-    Returns:
-        - "done" if successful.
-    """
+    """ETL process file task."""
     try:
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
@@ -494,13 +501,12 @@ def process_dedup(id: t.id, user_id: t.id) -> None:
     Returns:
         None
     """
-    # print('processing {}'.format(id))
     d = DedupRelation.query.get(id)
     if d:
         d.process(user_id)
         # detect final task and send a refresh message
         if rds.scard("dedq") == 0:
-            rds.publish("dedprocess", 2)
+            rds.set("dedup", 2)
 
 
 @celery.on_after_configure.connect
@@ -519,15 +525,15 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
     if cfg.DEDUP_TOOL == True:
         seconds = int(os.environ.get("DEDUP_INTERVAL", cfg.DEDUP_INTERVAL))
         sender.add_periodic_task(seconds, dedup_cron.s(), name="Deduplication Cron")
-        print("Deduplication periodic task is set up")
+        logger.info("Deduplication periodic task is set up.")
     # Export expiry periodic task
     if "export" in db.metadata.tables.keys():
         sender.add_periodic_task(300, export_cleanup_cron.s(), name="Exports Cleanup Cron")
-        print("Export cleanup periodic task is set up")
+        logger.info("Export cleanup periodic task is set up.")
 
     # activity peroidic task every 24 hours
     sender.add_periodic_task(24 * 60 * 60, activity_cleanup_cron.s(), name="Activity Cleanup Cron")
-    print("Activity cleanup periodic task is set up")
+    logger.info("Activity cleanup periodic task is set up.")
 
     # Backups periodic task
     if cfg.BACKUPS:
@@ -537,7 +543,7 @@ def setup_periodic_tasks(sender: Any, **kwargs: dict[str, Any]) -> None:
             daily_backup_cron.s(),
             name="Backups Cron",
         )
-        print(
+        logger.info(
             f"Backup periodic task is set up. Backups will run at 3:00 every {cfg.BACKUP_INTERVAL} day(s)."
         )
 
@@ -553,19 +559,34 @@ def session_cleanup():
     if cfg.SESSION_RETENTION_PERIOD:
         session_retention_days = int(cfg.SESSION_RETENTION_PERIOD)
         if session_retention_days == 0:
-            print("Session cleanup is disabled")
+            logger.info("Session cleanup is disabled.")
             return
 
         cutoff_date = datetime.utcnow() - timedelta(days=session_retention_days)
         expired_sessions = db.session.query(Session).filter(Session.created_at < cutoff_date)
 
-        print("Cleaning up expired sessions...")
+        logger.info("Cleaning up expired sessions...")
         deleted = expired_sessions.delete(synchronize_session=False)
         if deleted:
             db.session.commit()
-            print(f"{deleted} expired sessions deleted.")
+            logger.info(f"{deleted} expired sessions deleted.")
         else:
-            print("No expired sessions to delete.")
+            logger.info("No expired sessions to delete.")
+
+
+@celery.task
+def start_dedup(user_id) -> None:
+    """
+    Initiates the Deduplication process and queue unprocessed items.
+    """
+    print("Queuing unprocessed matches for deduplication...")
+    items = DedupRelation.query.filter_by(status=0).order_by(func.random())
+    for item in items:
+        # add all item ids to redis with current user id
+        rds.sadd("dedq", f"{item.id}|{user_id}")
+    # activate redis flag to process data
+    rds.set("dedup", 1)
+    print("Starting Deduplication process...")
 
 
 @celery.task
@@ -573,16 +594,16 @@ def dedup_cron() -> None:
     """Deduplication cron task."""
     # shut down processing when we hit 0 items in the queue or when we turn off the processing
     if rds.get("dedup") != b"1" or rds.scard("dedq") == 0:
-        rds.delete("dedup")
-        rds.publish("dedprocess", 0)
+        rds.set("dedup", 0)
         # Pause processing / do nothing
-        print("Process engine - off")
         return
 
+    # clear current processing
+    rds.delete("dedup_processing")
     data = []
-    items = rds.spop("dedq", cfg.DEDUP_BATCH_SIZE).decode("utf-8")
+    items = rds.spop("dedq", cfg.DEDUP_BATCH_SIZE)
     for item in items:
-        data = item.split("|")
+        data = item.decode().split("|")
         process_dedup.delay(data[0], data[1])
 
     update_stats()
@@ -634,15 +655,16 @@ def process_row(
     si.import_row()
 
 
+def reload_app():
+    import os
+    import signal
+
+    os.kill(os.getppid(), signal.SIGHUP)
+
+
 @celery.task
-def reload_app() -> None:
-    """Reload the application."""
-    try:
-        os.system("touch reload.ini")
-        # this workaround will also restart local flask server if it is being used to run bayanat
-        os.system("touch run.py")
-    except Exception as e:
-        print(e)
+def reload_celery():
+    reload_app()
 
 
 # ---- Export tasks ----
@@ -731,11 +753,11 @@ def generate_pdf_files(export_id: t.id) -> t.id | Literal[False]:
 
         export_request.file_id = dir_id
         export_request.save()
-        print(f"---- Export generated successfully for Id: {export_request.id} ----")
+        logger.info(f"Export #{export_request.id} PDF file generated successfully.")
         # pass the ids to the next celery task
         return export_id
     except Exception as e:
-        print(f"Error writing export file: {e}")
+        logger.error(f"Error writing PDF file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
 
@@ -755,7 +777,6 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
     chunks = chunk_list(export_request.items, BULK_CHUNK_SIZE)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
-    print("generating export file .....")
     try:
         with open(f"{file_path}.json", "a") as file:
             file.write("{ \n")
@@ -783,11 +804,11 @@ def generate_json_file(export_id: t.id) -> t.id | Literal[False]:
             file.write("] \n }")
         export_request.file_id = dir_id
         export_request.save()
-        print(f"---- Export File generated successfully for Id: {export_request.id} ----")
+        logger.info(f"Export #{export_request.id} JSON file generated successfully.")
         # pass the ids to the next celery task
         return export_id
     except Exception as e:
-        print(f"Error writing export file: {e}")
+        logger.error(f"Error writing JSON file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
 
@@ -806,8 +827,7 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
     export_request = Export.query.get(export_id)
     file_path, dir_id = Export.generate_export_file()
     export_type = export_request.table
-    print(file_path, dir_id)
-    print("generating export file .....")
+
     try:
         csv_df = pd.DataFrame()
         for id in export_request.items:
@@ -825,23 +845,30 @@ def generate_csv_file(export_id: t.id) -> t.id | Literal[False]:
             elif export_type == "actor":
                 actor = Actor.query.get(id)
                 # adjust list attributes to normal dicts
-                adjusted = convert_list_attributes(actor.to_csv_dict())
-                # normalize
-                df = pd.json_normalize(adjusted)
+                actor_dict = convert_list_attributes(actor.to_csv_dict())
+
+                # If there are profiles, merge them into the actor dict before normalizing
+                if actor.actor_profiles:
+                    flattened = actor.flatten_profiles()
+                    # Merge the first profile data into actor dict
+                    actor_dict.update(flattened if flattened else {})
+
+                # normalize the combined dict
+                df = pd.json_normalize(actor_dict)
                 if csv_df.empty:
                     csv_df = df
                 else:
-                    csv_df = pd.merge(csv_df, df, how="outer")
+                    csv_df = pd.concat([csv_df, df], ignore_index=True)
 
         csv_df.to_csv(f"{file_path}.csv")
 
         export_request.file_id = dir_id
         export_request.save()
-        print(f"---- Export File generated successfully for Id: {export_request.id} ----")
+        logger.info(f"Export #{export_request.id} CSV file generated successfully.")
         # pass the ids to the next celery task
         return export_id
     except Exception as e:
-        print(f"Error writing export file: {e}")
+        logger.error(f"Error writing CSV file for Export #{export_request.id}", exc_info=True)
         clear_failed_export(export_request)
         return False  # to stop chain
 
@@ -884,11 +911,9 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
             target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"
 
             if cfg.FILESYSTEM_LOCAL:
-                print("Downloading file locally")
                 # copy file (including metadata)
                 shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
             else:
-                print("Downloading S3 file")
                 s3 = boto3.client(
                     "s3",
                     aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
@@ -898,7 +923,10 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                 try:
                     s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
                 except Exception as e:
-                    print(f"Error downloading file from s3: {e}")
+                    logger.error(
+                        f"Error downloading Export #{export_request.id} file from S3.",
+                        exc_info=True,
+                    )
 
         time.sleep(0.05)
     return export_request.id
@@ -919,15 +947,15 @@ def generate_export_zip(previous_result: t.id) -> Optional[Literal[False]]:
     if previous_result == False:
         return False
 
-    print("Generating zip archive")
     export_request = Export.query.get(previous_result)
+    logger.info(f"Generating Export #{export_request.id} ZIP archive")
 
     shutil.make_archive(
         f"{Export.export_dir}/{export_request.file_id}",
         "zip",
         f"{Export.export_dir}/{export_request.file_id}",
     )
-    print(f"Export Complete {export_request.file_id}.zip")
+    logger.info(f"Export #{export_request.id} Complete {export_request.file_id}.zip")
 
     # Remove export folder after completion
     shutil.rmtree(f"{Export.export_dir}/{export_request.file_id}")
@@ -954,13 +982,13 @@ def export_cleanup_cron() -> None:
         for export_request in expired_exports:
             export_request.status = "Expired"
             if export_request.save():
-                print(f"Expired Export #{export_request.id}")
+                logger.info(f"Expired Export #{export_request.id}")
                 try:
                     os.remove(f"{Export.export_dir}/{export_request.file_id}.zip")
                 except FileNotFoundError:
-                    print(f"Export #{export_request.id}'s files not found to delete.")
+                    logger.warning(f"Export #{export_request.id}'s files not found to delete.")
             else:
-                print(f"Error expiring Export #{export_request.id}")
+                logger.error(f"Error expiring Export #{export_request.id}")
 
 
 type_map = {"bulletin": Bulletin, "actor": Actor, "incident": Incident}
@@ -974,13 +1002,13 @@ def activity_cleanup_cron() -> None:
     expired_activities = Activity.query.filter(
         datetime.utcnow() - Activity.created_at > cfg.ACTIVITIES_RETENTION
     )
-    print(f"Cleaning up Activities...")
+    logger.info(f"Cleaning up Activities...")
     deleted = expired_activities.delete(synchronize_session=False)
     if deleted:
         db.session.commit()
-        print(f"{deleted} expired activities deleted.")
+        logger.info(f"{deleted} expired activities deleted.")
     else:
-        print("No expired activities to delete.")
+        logger.info("No expired activities to delete.")
 
 
 @celery.task
@@ -993,7 +1021,7 @@ def daily_backup_cron():
     try:
         pg_dump(filepath)
     except:
-        print("Error during daily backups")
+        logger.error("Error during daily backups", exc_info=True)
         return
 
     if cfg.BACKUPS_S3_BUCKET:
@@ -1001,10 +1029,9 @@ def daily_backup_cron():
             try:
                 os.remove(filepath)
             except FileNotFoundError:
-                print(f"Backup file {filename} not found to delete.")
+                logger.error(f"Backup file {filename} not found to delete.", exc_info=True)
             except OSError as e:
-                print("Unable to remove backup file {filename}.")
-                print(str(e))
+                logger.error(f"Unable to remove backup file {filename}.", exc_info=True)
 
 
 ## Query graph visualization tasks
@@ -1046,7 +1073,6 @@ def generate_graph(query_json: Any, entity_type: str, user_id: t.id) -> Optional
     if existing_query_key and existing_query_key.decode() == query_key:
         # Return the existing graph data if query keys match
         existing_graph_data = rds.hget(user_hash_key, "graph_data")
-        print("Returning cached graph")
         return existing_graph_data.decode()
 
     # Generate the graph if no cache hit
@@ -1056,7 +1082,6 @@ def generate_graph(query_json: Any, entity_type: str, user_id: t.id) -> Optional
     rds.hset(user_hash_key, "query_key", query_key)
     rds.hset(user_hash_key, "graph_data", graph_data)
 
-    print("Graph generation complete")
     return graph_data
 
 
@@ -1144,3 +1169,163 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
         current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
+
+
+@celery.task
+def regenerate_locations() -> None:
+    """
+    Regenerate full locations for all entities.
+    """
+    try:
+        rds.set(Location.CELERY_FLAG, 1)
+        Location.regenerate_all_full_locations()
+    finally:
+        rds.delete(Location.CELERY_FLAG)
+
+
+@celery.task
+def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: int) -> None:
+    """Download and process media from web URL."""
+    data_import = DataImport.query.get(import_id)
+    if not data_import:
+        logger.error(f"Invalid import_id: {import_id}")
+        return
+
+    try:
+        # Download the media
+        info, temp_file = _download_media(url)
+
+        # Process the downloaded file
+        final_filename = _process_downloaded_file(temp_file, info)
+
+        # Update import record
+        _update_import_record(data_import, final_filename, info)
+
+        # Start ETL process
+        _start_etl_process(final_filename, url, batch_id, user_id, import_id)
+
+    except ValueError as e:
+        # Handle specific error messages without traceback
+        logger.error(f"Download failed: {str(e)}")
+        data_import.add_to_log(f"Download failed: {str(e)}")
+        data_import.fail()
+    except Exception as e:
+        # Handle other errors with traceback
+        logger.error(f"Download failed: {str(e)}", exc_info=True)
+        data_import.add_to_log(f"Download failed: {str(e)}")
+        data_import.fail()
+
+
+def _get_ytdl_options(with_cookies: bool = False) -> dict:
+    """Get yt-dlp options."""
+    options = {
+        "format": "mp4[height<=1080]/best[ext=mp4]/best",
+        "outtmpl": str(Media.media_dir / "%(id)s.%(ext)s"),
+        "merge_output_format": "mp4",
+        "noplaylist": True,
+        "proxy": cfg.YTDLP_PROXY if cfg.YTDLP_PROXY else None,
+    }
+
+    if with_cookies and hasattr(cfg, "YTDLP_COOKIES"):
+        cookie_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
+        cookie_file.write(cfg.YTDLP_COOKIES)
+        cookie_file.close()
+        options["cookiefile"] = cookie_file.name
+
+    return options
+
+
+def _download_media(url: str) -> tuple[dict, Path]:
+    """Download media using yt-dlp."""
+    try:
+        # First attempt without cookies
+        with yt_dlp.YoutubeDL(_get_ytdl_options()) as ydl:
+            info = ydl.extract_info(url, download=True)
+            temp_file = Path(ydl.prepare_filename(info))
+            return info, temp_file
+
+    except DownloadError as e:
+        error_msg = str(e)
+        if "Unsupported URL:" in error_msg:
+            raise ValueError(
+                f"This URL is not supported or contains no downloadable video content: {url}"
+            )
+
+        # Check for any authentication/login related errors
+        if any(
+            msg in error_msg.lower()
+            for msg in [
+                "age",
+                "confirm your age",
+                "inappropriate",
+                "need to log in",
+                "login",
+                "cookies",
+            ]
+        ):
+            logger.info("Authentication required, retrying with cookies...")
+            try:
+                # Second attempt with cookies
+                with yt_dlp.YoutubeDL(_get_ytdl_options(with_cookies=True)) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    temp_file = Path(ydl.prepare_filename(info))
+                    return info, temp_file
+            except DownloadError:
+                # Don't chain the exception, just raise a new ValueError
+                raise ValueError(
+                    "Failed to download content. Authentication cookies may be expired or invalid."
+                )
+
+        # For other download errors, wrap in ValueError without chaining
+        raise ValueError(f"Download failed: {error_msg}")
+
+
+def _process_downloaded_file(temp_file: Path, info: dict) -> str:
+    """Process downloaded file and return final filename."""
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    final_filename = f"{info.get('id', 'video')}-{timestamp}.mp4"
+    final_path = Media.media_dir / final_filename
+
+    temp_file.rename(final_path)
+    return final_filename
+
+
+def _update_import_record(data_import: DataImport, filename: str, info: dict) -> None:
+    """Update data import record."""
+    file_path = Media.media_dir / filename
+    file_hash = get_file_hash(file_path)
+
+    data_import.file = filename
+    data_import.file_hash = file_hash
+    data_import.data["info"] = info
+    flag_modified(data_import, "data")
+
+    data_import.add_to_log(f"Downloaded file: {filename}")
+    data_import.add_to_log(f"Format: mp4")
+    data_import.add_to_log(f"Duration: {info.get('duration')}s")
+    data_import.save()
+
+
+def _start_etl_process(
+    filename: str, url: str, batch_id: str, user_id: int, import_id: int
+) -> None:
+    """Start ETL process for downloaded file."""
+    file_path = Media.media_dir / filename
+    file_hash = get_file_hash(file_path)
+
+    etl_process_file.delay(
+        batch_id=batch_id,
+        file={
+            "name": filename,
+            "filename": filename,
+            "etag": file_hash,
+            "path": str(file_path),
+            "source_url": url,
+        },
+        meta={
+            "mode": 3,
+            "File:MIMEType": "video/mp4",
+        },
+        user_id=user_id,
+        data_import_id=import_id,
+    )

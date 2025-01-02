@@ -19,6 +19,7 @@
             :items="items"
             :loading="loading"
             @update:options="refresh"
+            :page="options.page"
             :items-length="itemsLength"
             class="elevation-1"
           >
@@ -330,7 +331,7 @@
 
         resetSearch() {
             this.q = {};
-            this.refresh(this.options);
+            this.refresh();
         },
 
 
@@ -341,7 +342,7 @@
         },
 
         refresh(options) {
-          this.options = options || this.options;
+          this.options = options || { ...this.options, page: 1 };
 
           if (this.advSearchOpen){
               this.advSearchOpen = false;
@@ -357,7 +358,6 @@
                     this.items = response.data.items;
                 }).catch(err => {
                     console.error(err);
-                    this.showSnack(err.response?.data);
                 }).finally(() => {
                     this.loading = false;
                 });

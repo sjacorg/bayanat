@@ -2,6 +2,12 @@ import json
 from types import MappingProxyType
 from flask_security import current_user
 
+import logging
+import os
+import shutil
+
+logger = logging.getLogger("app_logger")
+
 
 class ConfigManager:
     CONFIG_FILE_PATH = "config.json"
@@ -19,7 +25,6 @@ class ConfigManager:
             "SECURITY_ZXCVBN_MINIMUM_SCORE": 3,
             "DISABLE_MULTIPLE_SESSIONS": True,
             "SESSION_RETENTION_PERIOD": 30,
-            "SECURITY_WEBAUTHN": False,
             "RECAPTCHA_ENABLED": False,
             "RECAPTCHA_PUBLIC_KEY": "",
             "RECAPTCHA_PRIVATE_KEY": "",
@@ -124,6 +129,17 @@ class ConfigManager:
                 "VIEW": True,
             },
             "ACTIVITIES_RETENTION": 90,
+            "ADV_ANALYSIS": False,
+            "LOCATIONS_INCLUDE_POSTAL_CODE": False,
+            "WEB_IMPORT": False,
+            "YTDLP_PROXY": "",
+            "YTDLP_ALLOWED_DOMAINS": [
+                "youtube.com",
+                "facebook.com",
+                "instagram.com",
+                "twitter.com",
+            ],
+            "YTDLP_COOKIES": "",
         }
     )
 
@@ -134,7 +150,6 @@ class ConfigManager:
             "SECURITY_TWO_FACTOR_REQUIRED": "Enforce 2FA User Enrollment",
             "SECURITY_PASSWORD_LENGTH_MIN": "Minimum Password Length",
             "SECURITY_ZXCVBN_MINIMUM_SCORE": "Password Strength Score",
-            "SECURITY_WEBAUTHN": "2FA with Hardware/FIDO Device",
             "DISABLE_MULTIPLE_SESSIONS": "Disable Multiple Sessions",
             "SESSION_RETENTION_PERIOD": "Session Retention Period",
             "RECAPTCHA_ENABLED": "Recaptcha Enabled",
@@ -175,6 +190,12 @@ class ConfigManager:
             "EXPORT_DEFAULT_EXPIRY": "Export Default Expiry Time",
             "ACTIVITIES": "List of users activities to log.",
             "ACTIVITIES_RETENTION": "Activity Retention Period",
+            "ADV_ANALYSIS": "Advanced Analysis Features",
+            "LOCATIONS_INCLUDE_POSTAL_CODE": "Full Locations Include Postal Code",
+            "WEB_IMPORT": "Web Import",
+            "YTDLP_PROXY": "Proxy URL to use with Web Import",
+            "YTDLP_ALLOWED_DOMAINS": "Allowed Domains for Web Import",
+            "YTDLP_COOKIES": "Cookies to use with Web Import",
         }
     )
 
@@ -183,7 +204,7 @@ class ConfigManager:
             with open(self.CONFIG_FILE_PATH) as file:
                 self.config = json.loads(file.read())
         except EnvironmentError:
-            print("No config file found, Loading default Bayanat configurations")
+            logger.error("No config file found, Loading default Bayanat configurations")
 
     def get_config(self, cfg):
         # custom getter with a fallback
@@ -193,6 +214,16 @@ class ConfigManager:
             return value
         else:
             return ConfigManager.DEFAULT_CONFIG.get(cfg)
+
+    @staticmethod
+    def get_default_config(cfg):
+        return ConfigManager.DEFAULT_CONFIG.get(cfg)
+
+    @staticmethod
+    def get_all_default_configs():
+        return {
+            entry: ConfigManager.get_default_config(entry) for entry in ConfigManager.DEFAULT_CONFIG
+        }
 
     @staticmethod
     def serialize():
@@ -208,7 +239,6 @@ class ConfigManager:
             "SECURITY_TWO_FACTOR_REQUIRED": cfg.SECURITY_TWO_FACTOR_REQUIRED,
             "SECURITY_PASSWORD_LENGTH_MIN": cfg.SECURITY_PASSWORD_LENGTH_MIN,
             "SECURITY_ZXCVBN_MINIMUM_SCORE": cfg.SECURITY_ZXCVBN_MINIMUM_SCORE,
-            "SECURITY_WEBAUTHN": cfg.SECURITY_WEBAUTHN,
             "DISABLE_MULTIPLE_SESSIONS": cfg.DISABLE_MULTIPLE_SESSIONS,
             "SESSION_RETENTION_PERIOD": cfg.SESSION_RETENTION_PERIOD,
             "RECAPTCHA_ENABLED": cfg.RECAPTCHA_ENABLED,
@@ -252,6 +282,12 @@ class ConfigManager:
             "EXPORT_DEFAULT_EXPIRY": int(cfg.EXPORT_DEFAULT_EXPIRY.total_seconds()) / 3600,
             "ACTIVITIES": cfg.ACTIVITIES,
             "ACTIVITIES_RETENTION": int(cfg.ACTIVITIES_RETENTION.total_seconds()) / 86400,
+            "ADV_ANALYSIS": cfg.ADV_ANALYSIS,
+            "LOCATIONS_INCLUDE_POSTAL_CODE": cfg.LOCATIONS_INCLUDE_POSTAL_CODE,
+            "WEB_IMPORT": cfg.WEB_IMPORT,
+            "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
+            "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
+            "YTDLP_COOKIES": cfg.YTDLP_COOKIES or "",
         }
         return conf
 
@@ -261,7 +297,6 @@ class ConfigManager:
 
     @staticmethod
     def write_config(conf):
-        from enferno.tasks import reload_app
         from enferno.admin.models import AppConfig, Activity
 
         # handle secrets
@@ -290,11 +325,43 @@ class ConfigManager:
 
                 with open(ConfigManager.CONFIG_FILE_PATH, "w") as f:
                     f.write(json.dumps(conf, indent=2))
-                    # attempt app reload
-                    reload_app()
-                    return True
+                    logger.info("New configuration saved.")
 
-            except Exception as e:
-                print(e)
+                return True
+
+            except Exception:
+                logger.error("Error writing new configuration.", exc_info=True)
 
         return False
+
+    @staticmethod
+    def restore_default_config():
+        """
+        Restore the default configuration. Backup the current config before restoring.
+        """
+        backup_path = ConfigManager.CONFIG_FILE_PATH + ".backup"
+        try:
+            # Backup current config
+            if os.path.exists(ConfigManager.CONFIG_FILE_PATH):
+                shutil.copy2(ConfigManager.CONFIG_FILE_PATH, backup_path)
+            current_setup_complete = ConfigManager().get_config("SETUP_COMPLETE")
+
+            # Write default config
+            conf = {key: value for key, value in ConfigManager.DEFAULT_CONFIG.items()}
+            conf["SETUP_COMPLETE"] = current_setup_complete
+            with open(ConfigManager.CONFIG_FILE_PATH, "w") as f:
+                json.dump(conf, indent=2, fp=f)
+            logger.info("Default configuration restored.")
+
+            # Remove backup if successful
+            if os.path.exists(backup_path):
+                os.remove(backup_path)
+            return True
+        except Exception as e:
+            logger.error(f"Error restoring default configuration: {str(e)}")
+            if os.path.exists(backup_path):
+                # Restore backup if it exists
+                shutil.copy2(backup_path, ConfigManager.CONFIG_FILE_PATH)
+                os.remove(backup_path)
+                logger.info("Previous configuration restored from backup.")
+            return False

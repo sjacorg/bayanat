@@ -39,9 +39,9 @@
                     <v-combobox
                             chips
                             multiple
-                            v-model="reviewItem.revrefs"
-                            label="{{ _('Ref') }}"
-                            hint="{{ _('Appends the reference to the bulletin (does not remove existing refs)') }}"
+                            v-model="reviewItem.revTags"
+                            label="{{ _('Tags') }}"
+                            hint="{{ _('Appends the tags to the bulletin (does not remove existing tags)') }}"
                     ></v-combobox>
                 </v-card-item>
 
@@ -59,6 +59,7 @@
                                         item-value="id"
                                         v-model="helper.locations"
                                         :multiple="true"
+                                        :show-copy-icon="advFeatures"
                                         label="{{ _('Locations') }}"
                                 ></location-search-field>
 
@@ -71,6 +72,7 @@
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
+                                        :show-copy-icon="advFeatures"
                                         label="{{ _('Labels') }}"
                                 ></search-field>
 
@@ -84,6 +86,7 @@
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
+                                        :show-copy-icon="advFeatures"
                                         label="{{ _('Verified Labels') }}"
                                 ></search-field>
                             </v-col>
@@ -95,6 +98,7 @@
                                         item-title="title"
                                         item-value="id"
                                         :multiple="true"
+                                        :show-copy-icon="advFeatures"
                                         label="{{ _('Sources') }}"
                                 ></search-field>
 

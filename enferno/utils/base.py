@@ -4,6 +4,9 @@ from sqlalchemy.orm import declared_attr
 
 from enferno.extensions import db
 from enferno.utils.date_helper import DateHelper
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger()
 
 
 class DatabaseException(Exception):
@@ -85,6 +88,7 @@ class BaseMixin(object):
             return self
         except Exception as e:
             db.session.rollback()
+            logger.error(f"Error saving {self.__class__.__name__}: {e}")
             # Backwards compatibility
             if raise_exception:
                 raise DatabaseException(f"Error saving {self.__class__.__name__}: {e}")
@@ -98,6 +102,7 @@ class BaseMixin(object):
             return True
         except Exception as e:
             db.session.rollback()
+            logger.error(f"Error deleting {self.__class__.__name__}: {e}")
             # Backwards compatibility
             if raise_exception:
                 raise DatabaseException(f"Error deleting {self.__class__.__name__}: {e}")

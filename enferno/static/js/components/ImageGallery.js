@@ -1,15 +1,22 @@
 const ImageGallery = Vue.defineComponent({
   props: {
     medias: Array,
-    enableDelete: Boolean
+    enableDelete: Boolean,
+    prioritizeVideos: Boolean
   },
-  emits: ['remove-media', 'thumb-click', 'video-click'],
+  emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click'],
   mounted() {
     this.prepareImagesForPhotoswipe().then(() => {
       this.initLightbox();
     });
   },
+  computed: {
+    sortedMedia() {
+      if (this.prioritizeVideos) return this.sortMediaByFileType(this.medias);
 
+      return this.medias;
+    }
+  },
   methods: {
     handleVideo(s3url){
       this.$emit('video-click', s3url)
@@ -17,7 +24,20 @@ const ImageGallery = Vue.defineComponent({
     handleThumb(s3url){
       this.$emit('thumb-click', s3url)
     },
+    sortMediaByFileType(mediaList) {
+      if (!mediaList) return [];
+      // Sort media list by fileType (video first)
+      const sortedMediaList = mediaList.sort((a, b) => {
+        if (a?.fileType?.includes('video')) return -1; // Video should come first
+        if (b?.fileType?.includes('video')) return 1; // Then images
+        return 0; // Leave unchanged if neither is a video
+      });
 
+      return sortedMediaList;
+    },
+    handleAudio(s3url){
+      this.$emit('audio-click', s3url)
+    },
 
     updateMediaState() {
        this.mediasReady += 1;
@@ -74,30 +94,27 @@ const ImageGallery = Vue.defineComponent({
   },
 
   template: `
-    <div>
-      <div class="d-flex flex-wrap" id="lightbox">
+    
+      <div id="lightbox">
         
-        <v-slide-group show-arrows>
-            <v-slide-group-item v-for="(media,index) in medias" :key="media.id">
-              <v-card width="250" height="300" class="mx-3" variant="flat"> 
-                
-              
-          <media-card @ready="updateMediaState" @thumb-click="handleThumb" @video-click="handleVideo" :media="media">
+        <v-sheet class="media-grid">
             
+                
+              <v-sheet  v-for="(media,index) in sortedMedia" :key="media.id">
+                <media-card @ready="updateMediaState" @thumb-click="handleThumb" @video-click="handleVideo" @audio-click="handleAudio" :media="media">
               <template v-slot:actions v-if="enableDelete">
-              <v-spacer></v-spacer>
-              <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red">
-                
-              </v-btn>
+                <v-divider></v-divider>
+                <v-card-actions class="justify-end d-flex">
+                    <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
+                </v-card-actions>
             </template>
-
-            
+           
           </media-card>
-                </v-card>
-            </v-slide-group-item>
-        </v-slide-group>
+                  </v-sheet>
+            
+        </v-sheet>
         
       </div>
-    </div>
+    
   `,
 });

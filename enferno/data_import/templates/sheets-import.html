@@ -105,16 +105,16 @@
                             {{ _('Back') }}
                         </v-btn>
                         <v-spacer></v-spacer>
-                        <v-select dense
-                                  @click:clear="resetFields"
-                                  class="mt-2 mx-2"
-                                  label="{{ _('Load existing map') }}"
-                                  :items="maps"
-                                  item-title="name"
-                                  item-value="id"
-                                  return-object
-                                  @update:model-value="loadMap"
-                                  clearable
+                        <v-select density="compact"
+                                @click:clear="resetFields"
+                                class="mt-2 mx-2"
+                                label="{{ _('Load existing map') }}"
+                                :items="maps"
+                                item-title="name"
+                                item-value="id"
+                                return-object
+                                @update:model-value="loadMap"
+                                clearable
                         >
                         </v-select>
 
@@ -213,13 +213,18 @@
                                                         caption="{{ _('Actor Type') }}"
                                                         v-model="map.dtype"></drop-field>
 
-                                            <v-select v-if="!dynamicAtype" dense
-                                                      class="ml-3 mt-2" :items="translations.actorTypes"
-                                                      item-title="tr"
-                                                      item-value="en"
-                                                      clearable
-                                                      label="{{ _('Actor Type') }}"
-                                                      v-model="map.type"></v-select>
+                                            <v-sheet v-if="!dynamicAtype" class="d-flex align-center ma-2 pa-2" elevation="0">
+                                                <h5 class="text-caption mr-1">{{ _('Actor Type') }}</h5>
+                                                <v-select
+                                                    class="mt-5"
+                                                    density="compact"
+                                                    :items="translations.actorTypes"
+                                                    item-title="tr"
+                                                    item-value="en"
+                                                    clearable
+                                                    v-model="map.type">
+                                                </v-select>
+                                            </v-sheet>
 
                                             <v-icon @click="switchAtype" x-small
                                                     color="primary">mdi-swap-horizontal
@@ -349,6 +354,8 @@
                                                     caption="{{ _('Spoken Dialects') }}"></drop-field>
                                         <drop-field v-model="map.id_number"
                                                     caption="{{ _('ID Number') }}"></drop-field>
+                                        <drop-field v-model="map.tags"
+                                                    caption="{{ _('Tags') }}"></drop-field>
                                     </v-row>
 
                                     <!-- Actor Profile -->
@@ -656,11 +663,18 @@
                                                             caption="{{ _('Event Type') }}"
                                                             v-model="map.events[i].dtype"></drop-field>
 
-                                                <v-select v-if="!dynamicEtype" dense
-                                                            class="ml-3 mt-2" :items="eventtypes"
-                                                            item-title="title" item-value="title"
-                                                            label="{{ _('Event Type') }}"
-                                                            v-model="map.events[i].type"></v-select>
+                                                <v-sheet v-if="!dynamicEtype" class="d-flex align-center ma-2 pa-2" elevation="0">
+                                                    <h5 class="text-caption mr-1">{{ _('Event Type') }}</h5>
+                                                    <v-select
+                                                        class="mt-5"
+                                                        density="compact"
+                                                        :items="eventtypes"
+                                                        item-title="title"
+                                                        item-value="title"
+                                                        v-model="map.events[i].type">
+                                                    </v-select>
+                                                </v-sheet>
+                                                
 
                                                 <v-icon @click="switchEtype" x-small
                                                         color="primary">mdi-swap-horizontal
@@ -705,7 +719,7 @@
 
                         <v-card-text>
                             <v-sheet>
-                                <v-list color="yellow lighten-4" dense>
+                                <v-list color="yellow lighten-4" density="compact">
                                     <v-list-item> {{ _('Sheet file:') }}
                                         <v-chip small dark class="mx-2"
                                                 color="green">{{ _('Selected') }}
@@ -739,7 +753,7 @@
                             {{ _('Optional: Upload more sheets to process') }}
                         </v-card-title>
 
-                        <v-card-text>
+                        <v-card-text class="overflow-y-auto" style="max-height: 45vh">
 
                             <vue-dropzone ref="extradropzone" id="dropzone" class="ma-auto"
                                           :options="dzMoreOpts"
@@ -844,8 +858,8 @@
                     addRemoveLinks: true,
                     thumbnailWidth: 80, // px
                     thumbnailHeight: 80,
-                    maxFiles: 1
-
+                    maxFiles: 1,
+                    maxFilesize: mediaUploadMaxFileSize
                 },
                 dzMoreOpts: {
                     url: '/import/api/csv/upload',
@@ -854,8 +868,8 @@
                     addRemoveLinks: true,
                     thumbnailWidth: 80, // px
                     thumbnailHeight: 80,
-                    maxFiles: null
-
+                    maxFiles: null,
+                    maxFilesize: mediaUploadMaxFileSize
                 },
 
                 lang: 'en',
@@ -1000,7 +1014,7 @@
                             this.backup = this.fields.slice();
                             // since we are mapping, make sure selectedMap is not populated
                             this.selectedMap = null;
-                            this.step = "one";
+                            this.step = "two";
                         }).catch(
                             err => {
                                 console.log(err.response.data)
@@ -1065,13 +1079,15 @@
                 },
 
                 returnToStack(item) {
+                    if (!item || !Array.isArray(item) || item.length === 0) return;
+
                     let field = item.pop();
                     this.fields.indexOf(field) === -1 ? this.fields.unshift(field) : console.log("This item already exists");
 
                 },
 
                 switchAtype() {
-                    if (this.map.dtype && this.dynamicAtype) {
+                    if (this.map.dtype?.length && this.dynamicAtype) {
                         this.returnToStack(this.map.dtype);
                     }
                     if (!this.dynamicAtype) {
@@ -1084,7 +1100,7 @@
                     // use dtype as a way to identify the mode of import
                     if (this.dynamicEtype) {
                         for (const ev of this.map.events) {
-                            if (ev.dtype){
+                            if (ev.dtype?.length){
                                 this.returnToStack(ev.dtype);
                             }   
                         }

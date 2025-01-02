@@ -26,3 +26,8 @@ docs/source
 !docs/source/conf.py
 !docs/source/intro.rst
 backups/*
+
+.cursorrules
+.windsurfrules
+cookies.txt 
+

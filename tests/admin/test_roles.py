@@ -3,8 +3,10 @@ import pytest
 from enferno.user.models import Role
 from tests.factories import RoleFactory
 
+from tests.models.admin import RolesResponseModel
+from tests.test_utils import create_csv_for_entities
+from sqlalchemy import not_
 
-#### PYDANTIC MODELS #####
 
 ##### FIXTURES #####
 
@@ -22,13 +24,28 @@ def create_role(session):
         pass
 
 
+@pytest.fixture(scope="function")
+def clean_slate_roles(session):
+    Role.query.filter(not_(Role.name.in_(["Admin", "DA", "Mod"]))).delete(synchronize_session=False)
+
+
+@pytest.fixture(scope="function")
+def create_role_csv():
+    r1 = RoleFactory()
+    r2 = RoleFactory()
+    r1.name = "Imported Role 1"
+    r2.name = "Imported Role 2"
+    headers = ["name", "color", "description"]
+    yield from create_csv_for_entities([r1, r2], headers)
+
+
 ##### GET /admin/api/roles #####
 
 roles_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -47,7 +64,7 @@ post_role_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -74,7 +91,7 @@ put_role_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -102,7 +119,7 @@ delete_role_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 

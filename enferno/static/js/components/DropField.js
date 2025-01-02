@@ -1,10 +1,10 @@
 const DropField = Vue.defineComponent({
   props: {
     caption: String,
-    samples: [],
-    modelValue: [],
+    samples: Array,
+    modelValue: Array,
   },
-  emits: ['modelValue'],
+  emits: ['update:modelValue'],
   data: function () {
     return {
       colmap: this.modelValue || [],
@@ -38,7 +38,7 @@ const DropField = Vue.defineComponent({
     },
 
     broadcast() {
-      this.$emit('modelValue', this.colmap);
+      this.$emit('update:modelValue', this.colmap);
     },
     removeMe(i) {
       let item = this.colmap.splice(i, 1);

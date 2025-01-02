@@ -68,14 +68,13 @@ const RelatedActorsCard = Vue.defineComponent({
           <actor-result v-for="(item,index) in entity.actor_relations" :key="index"
                         :actor="item.actor">
             <template v-slot:header>
-              <v-sheet color="yellow" class="pa-2">
-                <v-list-item-title variant="flat"  class="text-caption my-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
-                <v-chip v-if="item.probability !== null" size="small" label>{{ probability(item) }}
-                </v-chip>
-                <v-chip class="ma-1" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')"
-                        color="grey" size="small" label>{{ r }}
-                </v-chip>
-                <v-chip v-if="item.comment" color="grey" size="small" label>{{ item.comment }}</v-chip>
+              <v-sheet class="pa-2 border-b d-flex flex-column ga-1">
+                <v-list-item-title variant="flat"  class="text-caption mt-2">{{ translations.relationshipInfo_ }}</v-list-item-title>
+                <div class="mb-2 flex-chips">
+                  <v-chip v-if="item.probability !== null" size="small" label class="flex-chip">{{ probability(item) }}</v-chip>
+                  <v-chip v-if="item?.related_as" v-for="r in extractValuesById(relationInfo, item.related_as, 'title')" class="flex-chip" size="small" label>{{ r }}</v-chip>
+                  <v-chip v-if="item.comment" size="small" label class="flex-chip">{{ item.comment }}</v-chip>
+                </div>
               </v-sheet>
             </template>
           </actor-result>

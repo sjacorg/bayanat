@@ -15,8 +15,8 @@
                                             fixed-header
                                             :headers="headers"
                                             :items="items"
-                                            v-model:options="options"
                                             @update:options="refresh"
+                                            :page="options.page"
                                             :loading="loading"
                                             :items-length="itemsLength"
                                             class="elevation-1"
@@ -33,7 +33,7 @@
                                             @click:clear="resetSearch"
                                             v-model="q"
                                             label="{{ _('Search') }}"
-                                            @keydown.enter="refresh"
+                                            @keydown.enter="refresh()"
                                             ></v-text-field>
 
                                                 <v-spacer></v-spacer>
@@ -256,7 +256,7 @@
 
             methods: {
                 refresh(options) {
-                    this.options = options || this.options;
+                    this.options = options || { ...this.options, page: 1 };
 
                     axios.get(`/admin/api/sources/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&q=${this.q}`).then(response => {
                         this.loading = false;
@@ -328,8 +328,6 @@
                                 this.showSnack(response.data);
                                 this.refresh()
                                 this.close();
-                            }).catch(error => {
-                                this.showSnack(this.parseValidationError(error.response?.data));
                             })
                     } else {
                         this.items.push(this.editedItem);
@@ -341,9 +339,7 @@
                                 this.refresh();
                                 this.close();
 
-                            }).catch(error => {
-                            this.showSnack(this.parseValidationError(error.response?.data));
-                        })
+                            })
                     }
 
                 }

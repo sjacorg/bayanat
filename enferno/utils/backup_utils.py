@@ -2,8 +2,12 @@ import os
 
 from subprocess import check_output
 import boto3
+from flask import current_app
 
 from enferno.settings import Config as cfg
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger()
 
 
 def pg_dump(filepath):
@@ -36,7 +40,6 @@ def upload_to_s3(filepath):
         )
         s3.Bucket(cfg.BACKUPS_S3_BUCKET).upload_file(filepath, filename)
         return True
-    except Exception as e:
-        print("Error uploading backup file to S3")
-        print(str(e))
+    except Exception:
+        logger.error("Error uploading backup file to S3", exc_info=True)
         return False

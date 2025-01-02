@@ -1,0 +1,21 @@
+<v-dialog persistent v-model="audioDialog" max-width="700px">
+    <v-card>
+        <v-toolbar>
+            <v-spacer></v-spacer>
+            <v-btn
+
+                    v-if="close"
+                    @click="closeAudio"
+                    icon="mdi-close"
+                    variant="text"
+            ></v-btn>
+        </v-toolbar>
+
+
+        <v-card-text id="pp" class="mt-3 pt-2">
+
+            <div ref="audioPlayerContainer" class="d-flex justify-center align-center"></div>
+
+        </v-card-text>
+    </v-card>
+</v-dialog>

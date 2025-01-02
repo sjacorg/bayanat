@@ -8,14 +8,20 @@ from pdf2image import convert_from_path
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
-from enferno.utils.data_helpers import get_file_hash
+from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.date_helper import DateHelper
 import arrow, shutil
 from enferno.settings import Config as cfg
 import subprocess
 
 from enferno.utils.base import DatabaseException
+from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
+from enferno.extensions import db
+from sqlalchemy import any_
+from urllib.parse import urlparse
+
+logger = get_logger()
 
 
 def now() -> str:
@@ -30,13 +36,18 @@ if cfg.OCR_ENABLED:
         pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
         tesseract_langs = "+".join(pytesseract.get_languages(config=""))
     except Exception as e:
-        print(
+        logger.error(
             f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
         )
 
 
 class MediaImport:
     """Class to handle media file imports."""
+
+    # Import mode constants
+    MODE_UPLOAD = 1  # Direct file upload mode
+    MODE_SERVER = 2  # Server-side file processing mode
+    MODE_WEB = 3  # Web import mode (e.g. YouTube)
 
     # file: Filestorage class
     def __init__(self, batch_id: t.id, meta: Any, user_id: Any, data_import_id: t.id):
@@ -271,17 +282,65 @@ class MediaImport:
             return False, None, None, None
 
     def process(self, file: str) -> Optional[Any]:
-        # handle file uploads based on mode of ETL
         duration = None
         optimized = False
         text_content = None
         self.data_import.processing()
 
+        # Check for duplicates using centralized helper
+        if file.get("etag"):
+            if media_check_duplicates(etag=file.get("etag"), data_import_id=self.data_import.id):
+                # log duplicate and fail
+                self.data_import.add_to_log(f"Duplicate file detected: {file.get('filename')}")
+                self.data_import.fail()
+                return
+
+        import_mode = self.meta.get("mode")
+
+        # Web import mode
+        if import_mode == self.MODE_WEB:
+            self.data_import.add_to_log(f"Processing web import {file.get('filename')}...")
+
+            filename = file.get("filename")
+            filepath = (Media.media_dir / filename).as_posix()
+            info = exiflib.get_json(filepath)[0]
+
+            # Add YouTube metadata
+            youtube_info = self.data_import.data.get("info", {})
+            if youtube_info:
+                info.update(youtube_info)
+                # Use YouTube title for bulletin
+                info["bulletinTitle"] = youtube_info.get(
+                    "title", os.path.splitext(file.get("name"))[0]
+                )
+
+            # Get file extension and duration
+            _, ext = os.path.splitext(filename)
+            file_ext = ext[1:].lower()
+            self.data_import.add_format(file_ext)
+
+            if file_ext in cfg.ETL_VID_EXT:
+                duration = self.get_duration(filepath)
+                info["vduration"] = duration
+
+            # Upload to S3 if needed
+            if not cfg.FILESYSTEM_LOCAL:
+                self.upload(filepath, os.path.basename(filepath))
+
+            # Bundle info for bulletin creation
+            info["filename"] = filename
+            info["filepath"] = filepath
+            info["source_url"] = file.get("source_url")
+            info["etag"] = file.get("etag")
+
+            self.data_import.add_to_log("Metadata parsed successfully.")
+            self.create_bulletin(info)
+            return
+
         # Server-side mode
-        if self.meta.get("mode") == 2:
+        elif import_mode == self.MODE_SERVER:
             self.data_import.add_to_log(f"Processing {file.get('filename')}...")
 
-            # check here for duplicate to skip unnecessary code execution
             old_path = file.get("path")
 
             # server side mode, need to copy files and generate etags
@@ -332,7 +391,8 @@ class MediaImport:
                 if parsed_text:
                     text_content = parsed_text
 
-        elif self.meta.get("mode") == 1:
+        # Upload mode
+        elif import_mode == self.MODE_UPLOAD:
             self.data_import.add_to_log(f"Processing {file.get('filename')}...")
 
             # we already have the file and the etag
@@ -378,9 +438,7 @@ class MediaImport:
                     text_content = parsed_text
 
         else:
-            self.data_import.add_to_log(
-                f"Invalid import mode {self.meta.get('mode')}. Terminating."
-            )
+            self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
             return
 
@@ -400,7 +458,7 @@ class MediaImport:
             info["text_content"] = text_content
 
         info["etag"] = file.get("etag")
-        if self.meta.get("mode") == 2:
+        if import_mode == self.MODE_SERVER:
             info["old_path"] = old_path
         # pass duration
         if duration:
@@ -411,7 +469,7 @@ class MediaImport:
 
     def create_bulletin(self, info: dict) -> None:
         """
-        creates bulletin from file and its meta data.
+        Creates bulletin from file and its meta data.
 
         Args:
             - info: dictionary containing bulletin info
@@ -420,10 +478,103 @@ class MediaImport:
             - None
         """
         bulletin = Bulletin()
+        db.session.add(bulletin)
+
         # mapping
         bulletin.title = info.get("bulletinTitle")
         bulletin.status = "Machine Created"
         bulletin.comments = f"Created using Media Import Tool. Batch ID: {self.batch_id}."
+
+        # Handle web import specific data
+        is_web_import = self.meta.get("mode") == self.MODE_WEB
+        if is_web_import:
+            # Set source_link to original URL for duplicate checking
+            bulletin.source_link = info.get("source_url")
+            youtube_info = self.data_import.data.get("info", {})
+
+            # Enhanced source handling
+            uploader = youtube_info.get("uploader")
+            uploader_id = youtube_info.get("uploader_id")
+            uploader_url = youtube_info.get("uploader_url")
+            channel_id = youtube_info.get("channel_id")
+            channel_url = youtube_info.get("channel_url")
+            channel = youtube_info.get("channel")
+
+            domain = youtube_info.get("extractor_key")
+            if not domain:
+                url = urlparse(info.get("source_url")).netloc.lower()
+                url = domain[4:] if domain.startswith("www.") else domain
+                domain = url.split(".")[0].first()
+
+            main_source = Source.query.filter(Source.title == domain).first()
+
+            if not main_source:
+                main_source = Source()
+                main_source.title = domain
+                main_source.etl_id = youtube_info.get("webpage_url_domain") or url
+                main_source.save()
+            bulletin.sources.append(main_source)
+
+            source = None
+            # Attempt to find existing source
+            if uploader:
+                source = (
+                    Source.query.filter(Source.etl_id == uploader_id).first()
+                    or Source.query.filter(Source.title == uploader).first()
+                )
+                if not source:
+                    words = []
+                    if uploader_url:
+                        words.append(f"%{uploader_url}%")
+                    if channel_id:
+                        words.append(f"%{channel_id}%")
+                    if channel_url:
+                        words.append(f"%{channel_url}%")
+                    if channel:
+                        words.append(f"%{channel}%")
+                    if words:
+                        source = Source.query.filter(Source.comments.ilike(any_(words))).first()
+
+            # Create new source if none found
+            if not source:
+                source = Source()
+                source.title = uploader
+                source.etl_id = uploader_id
+                source.parent = main_source
+
+                # Build comments only with available info
+                comments = []
+                if channel_id:
+                    comments.append(f"channel_id: {channel_id}")
+                if channel:
+                    comments.append(f"channel: {channel}")
+                if uploader_url:
+                    comments.append(f"uploader_url: {uploader_url}")
+                if channel_url:
+                    comments.append(f"channel_url: {channel_url}")
+                source.comments = " | ".join(comments) if comments else None
+                source.save()
+
+            if source:
+                bulletin.sources.append(source)
+
+            # Set bulletin fields
+            if video_id := youtube_info.get("id"):
+                bulletin.originid = video_id
+            bulletin.source_link = youtube_info.get("webpage_url")
+            bulletin.title = youtube_info.get("fulltitle")
+            bulletin.title_ar = youtube_info.get("fulltitle")
+
+            if upload_date := youtube_info.get("upload_date"):
+                bulletin.publish_date = upload_date
+
+            # Add YouTube info to bulletin meta
+            if youtube_info:
+                bulletin.meta = youtube_info
+                if description := youtube_info.get("description"):
+                    bulletin.description = description
+        else:
+            bulletin.source_link = info.get("old_path")
 
         if info.get("text_content"):
             bulletin.description = info.get("text_content")
@@ -439,11 +590,17 @@ class MediaImport:
         if serial:
             refs.append(str(serial))
 
-        # media for the orginal file
+        # media for the original file
         org_media = Media()
         # mark as undeletable
         org_media.main = True
-        org_media.title = bulletin.title
+
+        # Set media title to video ID for web imports
+        if is_web_import and youtube_info.get("id"):
+            org_media.title = youtube_info.get("id")
+        else:
+            org_media.title = bulletin.title
+
         org_media.media_file = info.get("filename")
         # handle mime type failure
         mime_type = info.get("File:MIMEType")
@@ -499,11 +656,11 @@ class MediaImport:
             ids = [l.get("id") for l in locations]
             bulletin.locations = Location.query.filter(Location.id.in_(ids)).all()
 
-        mrefs = self.meta.get("refs")
+        mrefs = self.meta.get("tags")
 
         if mrefs:
             refs = refs + mrefs
-        bulletin.ref = refs
+        bulletin.tags = refs
 
         # access roles restrictions
         roles = self.meta.get("roles")
@@ -515,7 +672,6 @@ class MediaImport:
 
         user = User.query.get(self.user_id)
 
-        bulletin.source_link = info.get("old_path")
         bulletin.meta = info
 
         try:

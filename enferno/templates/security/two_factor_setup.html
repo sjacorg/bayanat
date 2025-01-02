@@ -135,21 +135,21 @@
                         </v-card-actions>
                     </form>
                 {% else %}
+                    {% if security.webauthn %}
+                        <v-divider class="my-4"></v-divider>
+                        <h3>{{ _fsdomain("Security Keys/Passkeys") }}</h3>
+                        <div class="fs-div">
+                            {{ _fsdomain("Bayanat supports security keys and passkeys.") }}
+                            <v-btn variant="plain" class="text-subtitle-2 px-0"
+                                   href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</v-btn>
+                        </div>
+                    {% endif %}
                     {% if security.support_mfa and security.multi_factor_recovery_codes %}
                         <v-divider class="my-4"></v-divider>
                         <h3>{{ _fsdomain("Recovery Codes") }}</h3>
                         <div class="fs-div">
                             {{ _fsdomain("This application supports setting up recovery codes.") }}
                             <a href="{{ url_for_security('mf_recovery_codes') }}">{{ _fsdomain("You can set them up here.") }}</a>
-                        </div>
-                    {% endif %}
-                    {% if security.webauthn %}
-                        <v-divider class="my-4"></v-divider>
-                        <h3>{{ _fsdomain("WebAuthn") }}</h3>
-                        <div class="fs-div">
-                            {{ _fsdomain("Bayanat supports WebAuthn security keys.") }}
-                            <v-btn variant="plain" class="text-subtitle-2 px-0"
-                                   href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</v-btn>
                         </div>
                     {% endif %}
                 {% endif %}

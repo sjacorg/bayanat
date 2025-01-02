@@ -1,6 +1,5 @@
 from dateutil.parser import parse
-
-from sqlalchemy import or_, not_, and_, func
+from sqlalchemy import or_, not_, and_, any_, all_, func
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -141,52 +140,52 @@ class SearchUtils:
         tsv = q.get("tsv")
         if tsv:
             words = tsv.split(" ")
-            qsearch = [Bulletin.search.ilike("%{}%".format(word)) for word in words]
-            query.extend(qsearch)
+            words = [f"%{w}%" for w in words]
+            query.append(Bulletin.search.ilike(all_(words)))
 
         # exclude  filter
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split(" ")
-            for word in words:
-                query.append(not_(Bulletin.search.ilike("%{}%".format(word))))
+            words = [f"%{w}%" for w in words]
+            query.append(Bulletin.search.notilike(all_(words)))
 
         # ref
-        ref = q.get("ref")
+        ref = q.get("tags")
         exact = q.get("inExact")
 
         if ref:
             # exact match search
             if exact:
                 conditions = [
-                    func.array_to_string(Bulletin.ref, " ").op("~*")(f"\y{r}\y") for r in ref
+                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in ref
                 ]
             else:
-                conditions = [func.array_to_string(Bulletin.ref, " ").ilike(f"%{r}%") for r in ref]
+                conditions = [func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref]
 
             # any operator
-            op = q.get("opref", False)
+            op = q.get("opTags", False)
             if op:
                 query.append(or_(*conditions))
             else:
                 query.append(and_(*conditions))
 
         # exclude ref
-        exref = q.get("exref")
+        exref = q.get("exTags")
         exact = q.get("exExact")
         if exref:
             # exact match
             if exact:
                 conditions = [
-                    ~func.array_to_string(Bulletin.ref, " ").op("~*")(f"\y{r}\y") for r in exref
+                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in exref
                 ]
             else:
                 conditions = [
-                    ~func.array_to_string(Bulletin.ref, " ").ilike(f"%{r}%") for r in exref
+                    ~func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in exref
                 ]
 
             # get all operator
-            opexref = q.get("opexref")
+            opexref = q.get("opExTags")
             if opexref:
                 # De Mogran's
                 query.append(or_(*conditions))
@@ -453,15 +452,41 @@ class SearchUtils:
         tsv = q.get("tsv")
         if tsv:
             words = tsv.split(" ")
-            qsearch = [Actor.search.ilike("%{}%".format(word)) for word in words]
-            query.extend(qsearch)
+            qsearch = []
+
+            for word in words:
+                qsearch.append(
+                    or_(
+                        Actor.search.ilike(f"%{word}%"),
+                        ActorProfile.search.ilike(f"%{word}%"),
+                    )
+                )
+
+            subquery = (
+                Actor.query.join(Actor.actor_profiles).filter(*qsearch).with_entities(Actor.id)
+            )
+            query.append(Actor.id.in_(subquery))
 
         # exclude  filter
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split(" ")
+            conditions = []
+
             for word in words:
-                query.append(not_(Actor.search.ilike("%{}%".format(word))))
+                conditions.append(
+                    or_(
+                        Actor.search.ilike(f"%{word}%"),
+                        ActorProfile.search.ilike(f"%{word}%"),
+                    )
+                )
+
+            subquery = (
+                Actor.query.join(Actor.actor_profiles)
+                .filter(or_(*conditions))
+                .with_entities(Actor.id)
+            )
+            query.append(~Actor.id.in_(subquery))
 
         # nickname
         if search := q.get("nickname"):
@@ -526,62 +551,120 @@ class SearchUtils:
             else:
                 query.extend([Actor.nationalities.any(Country.id == id) for id in ids])
 
-        labels = q.get("labels", [])
-        if labels:
+        if labels := q.get("labels"):
+            recursive = q.get("childlabels", None)
             ids = [item.get("id") for item in labels]
             if q.get("oplabels"):
+                if recursive:
+                    # get ids of children // update ids
+                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = [label for label in result]
+                    all = direct + Label.get_children(direct)
+                    # remove dups
+                    all = list(set(all))
+                    ids = [label.id for label in all]
                 query.append(Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
             else:
-                query.extend(
-                    [
-                        Actor.actor_profiles.any(ActorProfile.labels.any(Label.id == id))
-                        for id in ids
-                    ]
-                )
+                if recursive:
+                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    for label in direct:
+                        children = Label.get_children([label])
+                        # add original label + uniquify list
+                        children = list(set([label] + children))
+                        ids = [child.id for child in children]
+                        query.append(
+                            Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids)))
+                        )
+                else:
+                    query.extend(
+                        [
+                            Actor.actor_profiles.any(ActorProfile.labels.any(Label.id == id))
+                            for id in ids
+                        ]
+                    )
 
         # Excluded labels
-        exlabels = q.get("exlabels", [])
-        if exlabels:
+        if exlabels := q.get("exlabels"):
             ids = [item.get("id") for item in exlabels]
             query.append(~Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
 
-        vlabels = q.get("vlabels", [])
-        if vlabels:
+        if vlabels := q.get("vlabels"):
             ids = [item.get("id") for item in vlabels]
+            recursive = q.get("childverlabels", None)
             if q.get("opvlabels"):
+                # or operator
+                if recursive:
+                    # get ids of children // update ids
+                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = [label for label in result]
+                    all = direct + Label.get_children(direct)
+                    # remove dups
+                    all = list(set(all))
+                    ids = [label.id for label in all]
                 query.append(
                     Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
                 )
             else:
-                query.extend(
-                    [
-                        Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id == id))
-                        for id in ids
-                    ]
-                )
+                # and operator (modify children search logic)
+                if recursive:
+                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    for label in direct:
+                        children = Label.get_children([label])
+                        # add original label + uniquify list
+                        children = list(set([label] + children))
+                        ids = [child.id for child in children]
+                        query.append(
+                            Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
+                        )
+                else:
+                    query.extend(
+                        [
+                            Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id == id))
+                            for id in ids
+                        ]
+                    )
 
         # Excluded vlabels
-        exvlabels = q.get("exvlabels", [])
-        if exvlabels:
+        if exvlabels := q.get("exvlabels"):
             ids = [item.get("id") for item in exvlabels]
             query.append(~Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids))))
 
-        sources = q.get("sources", [])
-        if sources:
+        if sources := q.get("sources"):
             ids = [item.get("id") for item in sources]
+            # children search ?
+            recursive = q.get("childsources", None)
             if q.get("opsources"):
+                if recursive:
+                    # get ids of children // update ids
+                    result = Source.query.filter(Source.id.in_(ids)).all()
+                    direct = [source for source in result]
+                    all = direct + Source.get_children(direct)
+                    # remove dups
+                    all = list(set(all))
+                    ids = [source.id for source in all]
                 query.append(Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
             else:
-                query.extend(
-                    [
-                        Actor.actor_profiles.any(ActorProfile.sources.any(Source.id == id))
-                        for id in ids
-                    ]
-                )
+                # and operator (modify children search logic)
+                if recursive:
+                    direct = Source.query.filter(Source.id.in_(ids)).all()
+                    for source in direct:
+                        children = Source.get_children([source])
+                        # add original label + uniquify list
+                        children = list(set([source] + children))
+                        ids = [child.id for child in children]
+                        query.append(
+                            Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids)))
+                        )
+                else:
+                    query.extend(
+                        [
+                            Actor.actor_profiles.any(ActorProfile.sources.any(Source.id == id))
+                            for id in ids
+                        ]
+                    )
 
         # Excluded sources
-        exsources = q.get("exsources", [])
-        if exsources:
+        if exsources := q.get("exsources"):
             ids = [item.get("id") for item in exsources]
             query.append(~Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
 
@@ -797,15 +880,15 @@ class SearchUtils:
         tsv = q.get("tsv")
         if tsv:
             words = tsv.split(" ")
-            qsearch = [Incident.search.ilike("%{}%".format(word)) for word in words]
-            query.extend(qsearch)
+            words = [f"%{w}%" for w in words]
+            query.append(Incident.search.ilike(all_(words)))
 
         # exclude  filter
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split(" ")
-            for word in words:
-                query.append(not_(Incident.search.ilike("%{}%".format(word))))
+            words = [f"%{w}%" for w in words]
+            query.append(Incident.search.notilike(all_(words)))
 
         labels = q.get("labels", [])
         if len(labels):

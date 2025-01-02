@@ -1,5 +1,5 @@
 # Version
-This threat model is up-to-date with <kbd>Bayanat v2.1</kbd>.
+This threat model is up-to-date with <kbd>Bayanat v2.4</kbd>.
 
 # Goal
 
@@ -361,7 +361,29 @@ By implementing the above Access Control Model, Bayanat system ensures that diff
 
 ### Data Flow Diagram
 
-![settings.png](./assets/threat-model//logs.png){.align-center}
+![logs.png](./assets/threat-model//logs.png){.align-center}
+
+## Setup Wizard data 
+
+### Data Characterization
+
+-   Trust Level Access: 1
+-   Storage: Disk Storage.
+-   Transmission:
+    -   User browser -> Nginx -> SQLAlchemy -> Postgres DB.
+    -   User browser -> Nginx -> Redis DB -> Database.
+-   Execution Environment: Memory
+-   Input:
+    -   Setup Wizard Endpoint.
+-   Output:
+    -   Setup Wizard Endpoint.
+    -   User Login Endpoint.
+    -   System Settings Endpoint.
+
+
+### Data Flow Diagram
+
+![wizard.png](./assets/threat-model//wizard.png){.align-center}
 
 
 # Security Controls
@@ -393,7 +415,8 @@ Bayanat has incorporated several robust security controls to safeguard its syste
 | Bayanat Data<br><br>(“Bulletins”, “Actors”, “Incidents”, “Locations”, “Sources”, “Labels”) | Extra layer of enforced authentication to protect sensitive parts of Bayanat’s platform. |
 | Bayanat Data<br><br>(“Bulletins”, “Actors”, “Incidents”, “Locations”, “Sources”, “Labels”) | Partial input sanitization using Bleach. |
 | Bayanat Data<br><br>(“Bulletins”, “Actors”, “Incidents”, “Locations”, “Sources”, “Labels”) | Input validation using Pydantic. |
-| Bayanat Codebase | Bayant codebase uses Semgrep for continuous static analysis for every release. |
+| Bayanat Data<br><br>(“Bulletins”, “Actors”, “Incidents”) | Card's view_full_history and view_simple_history checks take place in the backend. |
+| Bayanat Codebase | Bayanat codebase uses Semgrep for continuous static analysis for every release. |
 | Bayanat Codebase | All python dependencies are installed using Bayant user privileges with no admin privileges. |
 | Bayanat Codebase | Codebase dependencies are scanned before every release using Dependabot. |
 | Bayanat Codebase | Bayanat uses Google OpenID for authentication and authorization. |
@@ -424,7 +447,6 @@ To prioritize the implementation of recommended security controls, each control 
 | Trust Levels | ./.env access should be limited to only required trust levels to protect least privilege principle. | 3 | 9 | 7 | 60 |
 | Bayanat Codebase | Currently Flask CLI is enabled and can be used for an-authorized access to data or escalate privileges if UI was exploited. It's better to disable it, or protect it with a password. | 5 | 8 | 3 | 19 |
 | Bayanat Codebase | Uploaded files' MIME types should be validated on the server side v.s. current client evaluation side. | 3 | 4 | 6 | 21 |
-| Bayanat Codebase | Bulletin's Card view_full_history and view_simple_history checks should be moved to the server. | 2 | 3 | 3 | 7 |
 | Bayanat Codebase | PUT and DELETE HTTP methods should be disabled and not used on web servers. | 3 | 8 | 7 | 53 |
 | Bayanat Codebase | mf_recovery_codes should be using POST method | 1 | 6 | 6 | 35 |
 | Bayanat Codebase | Disallow * on robots.txt | 1 | 2 | 8 | 15 |

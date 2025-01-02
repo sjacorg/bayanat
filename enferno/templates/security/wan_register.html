@@ -27,7 +27,7 @@
     <v-main>
      <v-container fluid>
         <v-card>
-            <v-toolbar title="{{ _fsdomain("Setup New WebAuthn Security Keys") }}" color="primary">
+            <v-toolbar title="{{ _fsdomain("Security Keys & Passkeys") }}" color="primary">
             </v-toolbar>
 
 
@@ -154,7 +154,7 @@
             {% endif %}
             {% if False %}
                 <v-divider class="my-4"></v-divider>
-                <v-card-title>{{ _fsdomain("Delete Existing WebAuthn Security Key") }}</v-card-title>
+                <v-card-title>{{ _fsdomain("Delete Existing security keys or passkeys") }}</v-card-title>
                 <v-card-text>
                     <form action="{{ url_for_security('wan_delete') }}" method="post" name="wan_delete_form">
                         {{ wan_delete_form.hidden_tag() }}

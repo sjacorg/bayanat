@@ -31,9 +31,12 @@ from enferno.admin.models import (
 )
 from enferno.data_import.models import DataImport
 from enferno.user.models import Role
+from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
 
 from sqlalchemy import and_, or_
+
+logger = get_logger()
 
 
 def get_file_hash(filepath: str) -> str:
@@ -66,7 +69,7 @@ def media_check_duplicates(etag: str, data_import_id: Optional[t.id] = None) -> 
     exists = False
     # checking for existing media or pending or processing imports
     exists = (
-        Media.query.filter(Media.etag == etag).first()
+        Media.query.filter(Media.etag == etag, Media.deleted is not True).first()
         or DataImport.query.filter(
             and_(
                 DataImport.id != data_import_id,
@@ -147,7 +150,6 @@ def import_default_data() -> None:
         (ItoaInfo, "enferno/data/itoa_info.csv"),
         (ItoiInfo, "enferno/data/itoi_info.csv"),
         (Country, "enferno/data/countries.csv"),
-        (Ethnography, "enferno/data/ethnographies.csv"),
         (MediaCategory, "enferno/data/media_categories.csv"),
         (GeoLocationType, "enferno/data/geo_location_types.csv"),
     ]
@@ -189,7 +191,7 @@ def import_csv_to_table(model: t.Model, csv_file_path: str) -> None:
 
     # Skip if model table already contains data
     if db.session.query(model).first():
-        print(f"{model.__name__} table already populated.")
+        logger.info(f"{model.__name__} table already populated.")
         return
 
     # Add each row as a record in the model table
@@ -198,12 +200,18 @@ def import_csv_to_table(model: t.Model, csv_file_path: str) -> None:
         db.session.add(model(**data))
 
     db.session.commit()
-    print(f"Data imported into {model.__name__}.")
+    logger.info(f"Data imported into {model.__name__}.")
 
     # reset id sequence counter
     table = model.__table__
-    query = db.select([db.func.max(table.c.id) + 1])
-    max_id = db.session.execute(query).scalar()
-    db.session.execute("alter sequence source_id_seq restart with :m", {"m": max_id})
+    query = db.select(db.func.max(table.c.id) + 1)
+    max_id = db.session.scalar(query)
+    sequence_name = f"{table.name}_id_seq"
+
+    stmt = db.text("SELECT format('%I', :seq)")
+    quoted_seq = db.session.scalar(stmt, {"seq": sequence_name})
+
+    stmt = db.text(f"ALTER SEQUENCE {quoted_seq} RESTART WITH :val")
+    db.session.execute(stmt, {"val": max_id or 1})
     db.session.commit()
-    print(f"{model.__name__} ID counter updated.")
+    logger.info(f"{model.__name__} ID counter updated.")

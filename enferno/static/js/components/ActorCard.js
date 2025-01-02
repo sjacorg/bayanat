@@ -114,6 +114,21 @@ const ActorCard = Vue.defineComponent({
             this.play();
           },
         );
+        video.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    },
+
+    viewAudio(s3url) {
+      this.iaplayer = true;
+      //solve bug when the player div is not ready yet
+      // wait for vue's next tick
+
+      this.$nextTick(() => {
+        const audio = this.$el.querySelector('#iaplayer video');
+        audio.src = s3url;
+        audio.load();
+        audio.play();
+        audio.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
     },
 
@@ -163,6 +178,7 @@ const ActorCard = Vue.defineComponent({
       hloading: false,
       mapLocations: [],
       iplayer: false,
+      iaplayer: false,
       lightbox: null,
       mediasReady: 0,
     };
@@ -252,9 +268,20 @@ const ActorCard = Vue.defineComponent({
               </template>
               {{ translations.accessRoles_ }}
             </v-tooltip>
-            <v-chip label small v-for="role in actor.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
+            <v-chip label size="small" v-for="role in actor.roles" :color="role.color" class="mx-1">{{ role.name }}</v-chip>
           </v-card>  
           <v-divider v-if="actor.roles?.length" ></v-divider>
+        
+          <v-card v-if="actor.tags?.length" variant="flat" class="ma-2 pa-2 flex-grow-1">
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-icon color="primary" class="mx-2" size="small" v-bind="props">mdi-tag</v-icon>
+              </template>
+              {{ translations.tags_ }}
+            </v-tooltip>
+            <v-chip size="small" v-for="tag in actor.tags" class="caption black--text mx-1 mb-1">{{ tag }}</v-chip>
+          </v-card>
+          <v-divider v-if="actor.tags?.length" ></v-divider>
       
           <v-card v-if="actor.source_link && actor.source_link !='NA'" variant="flat" class=" pa-2 ma-1 d-flex align-center flex-grow-1">
             <v-tooltip location="bottom">
@@ -320,29 +347,28 @@ const ActorCard = Vue.defineComponent({
           <uni-field :caption="translations.position_" :english="actor.position" :arabic="actor.position_ar"></uni-field>
         </div>
 
-        <v-card v-if="actor.dialects?.length" outlined
-                class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey ">
-          <div class="caption grey--text mr-2">{{ translations.spokenDialects_ }}</div>
-          <v-chip size="small" v-for="e in actor.dialects" color="blue-grey" class="caption black--text mx-1">{{ e.title }}
-          </v-chip>
-
+        <v-card :subtitle="translations.spokenDialects_" variant="flat" v-if="actor.dialects?.length"
+                class="mx-2 my-1 pa-2 d-flex align-center">
+          <div class="flex-chips">
+            <v-chip size="small" v-for="e in actor.dialects" class="flex-chip">{{ e.title }}</v-chip>
+          </div>
         </v-card>
 
-        <v-card :subtitle=" translations.ethnographicInfo_" variant="flat" v-if="actor.ethnographies?.length" 
-                class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey ">
-          <div class="caption grey--text mr-2"></div>
-          <v-chip size="small" v-for="e in actor.ethnographies" color="blue-grey" class="caption black--text mx-1">
-            {{ e.title }}
-          </v-chip>
-
+        <v-card :subtitle="translations.ethnographicInfo_" variant="flat" v-if="actor.ethnographies?.length" 
+                class="mx-2 my-1 pa-2 d-flex align-center">
+          <div class="flex-chips">
+            <v-chip size="small" v-for="e in actor.ethnographies" class="flex-chip">
+              {{ e.title }}
+            </v-chip>
+          </div>
         </v-card>
-        <v-card variant="flat"  :subtitle="translations.nationalities_" v-if="actor.nationalities?.length" 
-                class="mx-2 my-1 pa-2 d-flex align-center flex-grow-1" color="grey ">
-          
-          <v-chip size="small" v-for="n in actor.nationalities" color="blue-grey" class="caption black--text mx-1">
-            {{ n.title }}
-          </v-chip>
-
+        <v-card :subtitle="translations.nationalities_" variant="flat"  v-if="actor.nationalities?.length" 
+                class="mx-2 my-1 pa-2 d-flex align-center">
+          <div class="flex-chips">
+            <v-chip size="small" v-for="n in actor.nationalities" class="flex-chip">
+              {{ n.title }}
+            </v-chip>
+          </div>
         </v-card>
 
         <uni-field :caption="translations.idNumber_" :english="actor.id_number"></uni-field>
@@ -362,7 +388,7 @@ const ActorCard = Vue.defineComponent({
           </v-toolbar>
           <v-card-text>
             <div class="px-1">{{ translations.events_ }}</div>
-            <event-card v-for="event in actor.events" :key="event.id" :event="event"></event-card>
+            <event-card v-for="(event, index) in actor.events" :key="event.id" :event="event" :number="index+1"></event-card>
           </v-card-text>
         </v-card>
 
@@ -379,9 +405,16 @@ const ActorCard = Vue.defineComponent({
                   crossorigin="anonymous"
                   height="360" preload="auto"></video>
           </v-card>
+
+          <v-card variant="flat"  v-if="iaplayer" id="iaplayer" class="px-2 my-3">
+          <video :id="'player'+ $.uid" controls
+                 crossorigin="anonymous" poster="/static/img/waveform.png"
+                 class="w-100 mx-auto" preload="auto"></video>
+
+        </v-card>
           
           <v-card-text>
-            <image-gallery :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewVideo"></image-gallery>
+            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewVideo" @audio-click="viewAudio"></image-gallery>
           </v-card-text>
         </v-card>
 
@@ -410,7 +443,7 @@ const ActorCard = Vue.defineComponent({
             <div v-html="actor.review" class="pa-1 my-2  ">
 
             </div>
-            <v-chip small label color="lime">{{ actor.review_action }}</v-chip>
+            <v-chip size="small" label color="lime">{{ actor.review_action }}</v-chip>
           </v-card-text>
         </v-card>
 
@@ -418,7 +451,7 @@ const ActorCard = Vue.defineComponent({
         <v-card v-if="logAllowed()" outline elevation="0" class="ma-2">
           <v-card-text>
             <h3 class="title black--text align-content-center">{{ translations.logHistory_ }}
-              <v-btn fab :loading="hloading" @click="loadRevisions" small class="elevation-0 align-content-center">
+              <v-btn fab :loading="hloading" @click="loadRevisions" size="small" class="elevation-0 align-content-center">
                 <v-icon>mdi-history</v-icon>
               </v-btn>
             </h3>
@@ -433,7 +466,7 @@ const ActorCard = Vue.defineComponent({
 
                 <v-btn v-if="diffAllowed()" v-show="index!==revisions.length-1" @click="showDiff($event,index)"
                        class="mx-1"
-                       color="grey" icon small>
+                       color="grey" icon size="small">
                   <v-icon>mdi-compare</v-icon>
                 </v-btn>
 

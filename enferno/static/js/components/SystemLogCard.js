@@ -56,7 +56,7 @@ const SystemLogCard = Vue.defineComponent({
                         </v-chip>
                     </template>
                 </v-tooltip>
-                
+
                 <!-- Log Level Chip -->
                 <v-tooltip :text="translations.level_">
                     <template v-slot:activator="{ props }">
@@ -74,7 +74,15 @@ const SystemLogCard = Vue.defineComponent({
                         </v-chip>
                     </template>
                 </v-tooltip>
-                
+
+                <!-- Logger -->
+                <v-tooltip :text="translations.logger_">
+                    <template v-slot:activator="{ props }">
+                        <v-chip prepend-icon="mdi-tag" size="small" class="ml-2 my-1" v-bind="props">
+                            {{ log.logger }}
+                        </v-chip>
+                    </template>
+                </v-tooltip>
                 <!-- Error Path -->
                 <v-tooltip :text="translations.path_">
                     <template v-slot:activator="{ props }">

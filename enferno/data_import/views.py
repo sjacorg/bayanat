@@ -16,6 +16,7 @@ from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.tasks import etl_process_file, process_row
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.http_response import HTTPResponse
+from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
 
 imports = Blueprint(
@@ -28,6 +29,8 @@ imports = Blueprint(
 )
 
 PER_PAGE = 50
+
+logger = get_logger()
 
 
 @imports.before_request
@@ -55,7 +58,7 @@ def data_import_dashboard(id: Optional[t.id] = None) -> str:
 
 
 @imports.get("/api/imports/<int:id>")
-def api_import_get(id: t.id) -> Response | tuple[str, Literal[200]]:
+def api_import_get(id: t.id) -> Response:
     """
     Endpoint to get a single log item.
 
@@ -108,7 +111,7 @@ def api_imports() -> Response:
 # Data Import Backend API
 @imports.route("/media/")
 @roles_required("Admin")
-def media_import() -> Response | str:
+def media_import() -> Response:
     """
     Endpoint to render the etl backend.
 
@@ -122,12 +125,7 @@ def media_import() -> Response | str:
 
 @imports.post("/media/path/")
 @roles_required("Admin")
-def path_process() -> (
-    Response
-    | tuple[Literal["Allowed import path is not configured correctly"], Literal[417]]
-    | tuple[Literal["Invalid path specified"], Literal[417]]
-    | tuple[str, Literal[200]]
-):
+def path_process() -> Response:
     """API endpoint to process a path for media import."""
     # Check if path import is enabled and allowed path is set
     if (
@@ -161,7 +159,7 @@ def path_process() -> (
         items = import_path.glob("*")
 
     # return relative path
-    files = [str(file.relative_to(allowed_path)) for file in items]
+    files = [str(file.relative_to(allowed_path)) for file in items if file.is_file()]
 
     output = [{"filename": os.path.basename(file), "path": file} for file in files]
 
@@ -170,7 +168,7 @@ def path_process() -> (
 
 @imports.post("/media/process")
 @roles_required("Admin")
-def etl_process() -> tuple[str, Literal[200]]:
+def etl_process() -> Response:
     """
     process a single file.
 
@@ -222,7 +220,7 @@ def etl_process() -> tuple[str, Literal[200]]:
 # CSV Tool
 @imports.route("/sheets/")
 @roles_required("Admin")
-def csv_dashboard() -> Response | str:
+def csv_dashboard() -> Response:
     """
     Endpoint to render the csv backend.
 
@@ -236,11 +234,7 @@ def csv_dashboard() -> Response | str:
 
 @imports.post("/api/csv/upload")
 @roles_required("Admin")
-def api_local_csv_upload() -> (
-    tuple[Literal["This file type is not allowed"], Literal[415]]
-    | tuple[Response, Literal[200]]
-    | tuple[str, Literal[417]]
-):
+def api_local_csv_upload() -> Response:
     """API endpoint to upload a file for csv import."""
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
     # file pond sends multiple requests for multiple files (handle each request as a separate file )
@@ -261,7 +255,7 @@ def api_local_csv_upload() -> (
         response = {"etag": etag, "filename": filename}
         return Response(json.dumps(response), content_type="application/json"), 200
     except Exception as e:
-        print(e)
+        logger.error(e, exc_info=True)
         return f"Request Failed", 417
 
 
@@ -279,7 +273,7 @@ def api_local_csv_delete() -> str:
 
 @imports.post("/api/csv/analyze")
 @roles_required("Admin")
-def api_csv_analyze() -> str | tuple[Literal["Problem parsing sheet file"], Literal[417]]:
+def api_csv_analyze() -> Response:
     """API endpoint to analyze a csv file."""
     # locate file
     filename = request.json.get("file").get("filename")
@@ -297,7 +291,7 @@ def api_csv_analyze() -> str | tuple[Literal["Problem parsing sheet file"], Lite
 # Excel sheet selector
 @imports.post("/api/xls/sheets")
 @roles_required("Admin")
-def api_xls_sheet() -> str:
+def api_xls_sheet() -> Response:
     """API endpoint to get sheets from an excel file."""
     filename = request.json.get("file").get("filename")
     import_dir = Path(current_app.config.get("IMPORT_DIR"))
@@ -310,9 +304,7 @@ def api_xls_sheet() -> str:
 
 @imports.post("/api/xls/analyze")
 @roles_required("Admin")
-def api_xls_analyze() -> (
-    tuple[Response, Literal[200]] | tuple[Literal["Problem parsing sheet file"], Literal[417]]
-):
+def api_xls_analyze() -> Response:
     """API endpoint to analyze an excel file."""
     # locate file
     filename = request.json.get("file").get("filename")
@@ -331,7 +323,7 @@ def api_xls_analyze() -> (
 
 # Saved Searches
 @imports.route("/api/mappings/")
-def api_mappings() -> tuple[str, Literal[200]]:
+def api_mappings() -> Response:
     """
     Endpoint to get sheet mappings.
 
@@ -344,11 +336,7 @@ def api_mappings() -> tuple[str, Literal[200]]:
 
 @imports.post("/api/mapping/")
 @roles_accepted("Admin")
-def api_mapping_create() -> (
-    tuple[dict[str, Any], Literal[200]]
-    | tuple[Literal["Error creating Mapping"], Literal[417]]
-    | tuple[Literal["Update request missing parameters data"], Literal[417]]
-):
+def api_mapping_create() -> Response:
     """
     API Endpoint save a mapping object.
 
@@ -376,14 +364,7 @@ def api_mapping_create() -> (
 
 @imports.put("/api/mapping/<int:id>")
 @roles_accepted("Admin")
-def api_mapping_update(
-    id: t.id,
-) -> (
-    tuple[dict[str, Any], Literal[200]]
-    | tuple[Literal["Error updating Mapping"], Literal[417]]
-    | tuple[Literal["Update request missing parameters data"], Literal[417]]
-    | Response
-):
+def api_mapping_update(id: t.id) -> Response:
     """
     API Endpoint update a mapping object.
 
@@ -415,7 +396,7 @@ def api_mapping_update(
 
 @imports.post("/api/process-sheet")
 @roles_accepted("Admin")
-def api_process_sheet() -> tuple[str, Literal[200]]:
+def api_process_sheet() -> Response:
     """
     API Endpoint invoke sheet import into target model via a CSV mapping.
 

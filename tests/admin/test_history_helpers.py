@@ -1,6 +1,7 @@
 import pytest
 
 from enferno.admin.models import ActorHistory, BulletinHistory, IncidentHistory, LocationHistory
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from tests.admin.test_actors import clean_slate_actors
 from tests.admin.test_bulletins import clean_slate_bulletins
 from tests.admin.test_incidents import clean_slate_incidents
@@ -18,7 +19,6 @@ from tests.factories import (
 from tests.models.admin import HistoryHelpersResponseModel
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
 )
 
 
@@ -145,7 +145,7 @@ get_actor_history_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -177,7 +177,7 @@ get_bulletin_history_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -209,7 +209,7 @@ get_incident_history_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -241,7 +241,7 @@ get_location_history_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 

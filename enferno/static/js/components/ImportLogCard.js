@@ -1,10 +1,6 @@
 const ImportLogCard = Vue.defineComponent({
   props: ['log'],
 
-  watch: {
-    log: function (val, old) {},
-  },
-
   mounted() {
 
     //convert expiry to localized date
@@ -28,7 +24,6 @@ const ImportLogCard = Vue.defineComponent({
         .catch((error) => {
           console.log(error);
         })
-        .finally(() => {});
     },
 
 
@@ -43,14 +38,11 @@ const ImportLogCard = Vue.defineComponent({
 
   template: `
 
-      <v-card color="grey lighten-3" class="mx-auto pa-8">
-      <v-card color="grey lighten-5" outlined class="header-fixed mx-2">
+      <v-card class="mx-auto pa-8">
+      <v-card variant="tonal" outlined class="header-fixed mx-2">
         <v-card-text>
 
         <v-chip prepend-icon="mdi-account-circle-outline"  size="small" class="pa-2 mx-2 my-2">
-          
-              
-          
           {{log.user['name']}}
         </v-chip>
 
@@ -66,7 +58,7 @@ const ImportLogCard = Vue.defineComponent({
           </v-chip>
 
           <!-- Status chip -->
-              <v-chip color="white lighten-3" size="small" class="mx-2 my-2">
+              <v-chip size="small" class="mx-2 my-2">
                 status: 
                 {{ log.status }}
               </v-chip>
@@ -82,10 +74,10 @@ const ImportLogCard = Vue.defineComponent({
       </div>
 
       <!-- Refs -->
-      <v-card v-if="log.data.ref && log.ref.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
+      <v-card v-if="log?.data?.tags?.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
       color="grey lighten-5">
         <div class="caption grey--text mr-2">{{ translations.ref_ }}</div>
-        <v-chip x-small v-for="r in log.ref" class="caption black--text mx-1">{{ r }}</v-chip>
+        <v-chip x-small v-for="tag in log.data.tags" class="caption black--text mx-1">{{ tag }}</v-chip>
       </v-card>
 
       <!-- Imported Item -->

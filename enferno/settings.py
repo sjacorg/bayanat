@@ -110,7 +110,7 @@ class Config(object):
     SECURITY_TOTP_SECRETS = {"1": os.environ.get("SECURITY_TOTP_SECRETS")}
     SECURITY_TOTP_ISSUER = "Bayanat"
 
-    SECURITY_WEBAUTHN = manager.get_config("SECURITY_WEBAUTHN")
+    SECURITY_WEBAUTHN = True
     SECURITY_WAN_ALLOW_AS_FIRST_FACTOR = False
     SECURITY_WAN_ALLOW_AS_MULTI_FACTOR = True
     SECURITY_WAN_ALLOW_AS_VERIFY = ["first", "secondary"]
@@ -262,10 +262,25 @@ class Config(object):
     BACKUPS_AWS_SECRET_ACCESS_KEY = os.environ.get("BACKUPS_AWS_SECRET_ACCESS_KEY")
     BACKUPS_AWS_REGION = os.environ.get("BACKUPS_AWS_REGION")
 
+    # Setup Wizard
+    SETUP_COMPLETE = manager.get_config("SETUP_COMPLETE")
+
+    ADV_ANALYSIS = manager.get_config("ADV_ANALYSIS")
+
+    # Location Admin Levels
+    LOCATIONS_INCLUDE_POSTAL_CODE = manager.get_config("LOCATIONS_INCLUDE_POSTAL_CODE")
+
+    WEB_IMPORT = manager.get_config("WEB_IMPORT")
+    # YTDLP Proxy Settings
+    YTDLP_PROXY = manager.get_config("YTDLP_PROXY")
+    YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
+    YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
+
 
 class TestConfig(Config):
     """Test configuration."""
 
+    TESTING = True
     POSTGRES_USER = os.environ.get("POSTGRES_USER", "")
     POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
     POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
@@ -316,7 +331,7 @@ class TestConfig(Config):
     DEDUP_LOW_DISTANCE = 0.3
     DEDUP_MAX_DISTANCE = 0.5
     DEDUP_TOOL = False
-    ETL_PATH_IMPORT = False
+    ETL_PATH_IMPORT = True
     ETL_TOOL = True
     ETL_VID_EXT = [
         "webm",
@@ -367,7 +382,7 @@ class TestConfig(Config):
     GOOGLE_CLIENT_ID = "dummy_client_id"
     GOOGLE_CLIENT_SECRET = "dummy_client_secret"
     GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-    GOOGLE_MAPS_API_KEY = "dummy_maps_api_key"
+    GOOGLE_MAPS_API_KEY = "dummy_maps_api_key_for_testing"
     GOOGLE_OAUTH_ENABLED = False
     ITEMS_PER_PAGE_OPTIONS = [10, 30, 100]
     LANGUAGES = {
@@ -395,5 +410,11 @@ class TestConfig(Config):
     SECURITY_WEBAUTHN = True
     SECURITY_ZXCVBN_MINIMUM_SCORE = 3
     SHEETS_ALLOWED_EXTENSIONS = ["csv", "xls", "xlsx"]
-    SHEET_IMPORT = False
+    SHEET_IMPORT = True
     VIDEO_RATES = [0.25, 0.5, 1, 1.5, 2, 4]
+    SETUP_COMPLETE = False
+    IMPORT_DIR = "tests/imports"
+    LOCATIONS_INCLUDE_POSTAL_CODE = False
+    YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
+    YTDLP_COOKIES = ""
+    YTDLP_PROXY = ""

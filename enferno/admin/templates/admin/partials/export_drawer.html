@@ -27,21 +27,15 @@
             <div class="caption mb-2">{{ _('Export format') }}</div>
 
             <v-btn-toggle color="primary" mandatory v-model="exportConfig.format">
-                <v-btn  value="json">
-                    <v-icon left>mdi-code-json</v-icon>
-                    json
-                </v-btn>
-                <v-btn  value="pdf">
-                    <v-icon left>mdi-file-pdf-box</v-icon>
+                <v-btn prepend-icon="mdi-file-pdf-box" value="pdf">
                     pdf
                 </v-btn>
-
-                <v-btn v-if="!exportConfig.hideCSV"  value="csv">
-                    <v-icon left>mdi-file-delimited</v-icon>
+                <v-btn v-if="!exportConfig.hideCSV" prepend-icon="mdi-file-delimited" value="csv">
                     csv
                 </v-btn>
-
-
+                <v-btn prepend-icon="mdi-code-json" value="json">
+                    json
+                </v-btn>
             </v-btn-toggle>
         </v-card-text>
 

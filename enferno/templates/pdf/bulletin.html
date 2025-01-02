@@ -70,7 +70,7 @@
     <section>
         <h4>Description</h4>
         <div class="description">
-            {{ bulletin.description|safe }}
+            {{ bulletin.description | replace('../api/serve/inline/', 'file://' + path + '/media/inline/') | safe  }}
         </div>
     </section>
 

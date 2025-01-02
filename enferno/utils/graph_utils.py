@@ -12,13 +12,8 @@ from enferno.admin.models import (
     Atoa,
     Itoa,
     Itoi,
-    bulletin_locations,
     Location,
-    bulletin_events,
     Event,
-    actor_events,
-    incident_locations,
-    incident_events,
     AtobInfo,
     BtobInfo,
     ItoaInfo,
@@ -27,6 +22,13 @@ from enferno.admin.models import (
     AtoaInfo,
 )
 from enferno.extensions import db
+from enferno.admin.models.tables import (
+    bulletin_locations,
+    incident_locations,
+    actor_events,
+    bulletin_events,
+    incident_events,
+)
 
 class_mapping = {
     "bulletin": Bulletin,

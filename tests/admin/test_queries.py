@@ -1,12 +1,12 @@
 from typing import List
 import pytest
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from enferno.admin.models import Query
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from tests.factories import QueryFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_uid_from_client,
     load_data,
 )
@@ -55,7 +55,7 @@ queries_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -72,8 +72,8 @@ def test_queries_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        queries = parse_obj_as(
-            List[QueryItemModel], convert_empty_strings_to_none(load_data(response))
+        queries = TypeAdapter(List[QueryItemModel]).validate_python(
+            convert_empty_strings_to_none(load_data(response))
         )
         conform_to_schema_or_fail({"queries": queries}, QueriesResponseModel)
 
@@ -84,7 +84,7 @@ query_exists_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -113,7 +113,7 @@ post_query_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -140,7 +140,7 @@ put_query_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 
@@ -170,7 +170,7 @@ delete_query_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("client", 401),
+    ("anonymous_client", 401),
 ]
 
 

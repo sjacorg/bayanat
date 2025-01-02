@@ -104,6 +104,13 @@ h4 {
     background: #fafafa;
 }
 
+.description img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
 .tag {
     background: #f0f0f0;
     border-radius: 5pt;
@@ -200,4 +207,118 @@ article {
 .two-col > div {
 margin: 5pt 0;
 
+}
+
+/* PDF Actor Document Styles */
+.pdf-actor .description {
+    margin: 10px 0;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.pdf-actor .description h5 {
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: #444;
+}
+
+.pdf-actor .profile-content {
+    margin-left: 15px;
+}
+
+.pdf-actor .profile-separator {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #ccc;
+}
+
+.pdf-actor .profile {
+    margin-bottom: 30px;
+}
+
+.pdf-actor .profile h5 {
+    color: #2c3e50;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    border-bottom: 2px solid rgb(67,157,146);
+    padding-bottom: 5px;
+}
+
+.pdf-actor .profile h6 {
+    color: #34495e;
+    font-size: 1.1em;
+    margin: 15px 0 10px 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.pdf-actor .profile-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.pdf-actor .profile-meta dt {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.pdf-actor .profile-meta dd {
+    margin: 0;
+    padding: 3px 0;
+}
+
+.pdf-actor .mp-section {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.pdf-actor .mp-details {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 10px;
+    margin: 10px 0 20px 0;
+}
+
+.pdf-actor .mp-details dt {
+    font-weight: bold;
+    color: #666;
+}
+
+.pdf-actor .mp-details dd {
+    margin: 0;
+    padding: 3px 0;
+}
+
+.pdf-actor .reporters-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.pdf-actor .reporter-details {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.pdf-actor .reporter-details dt {
+    font-weight: bold;
+    color: #495057;
+}
+
+.pdf-actor .reporter-details dd {
+    margin: 0;
+    color: #212529;
+}
+
+.pdf-actor .reporter-separator {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px dashed #dee2e6;
 }

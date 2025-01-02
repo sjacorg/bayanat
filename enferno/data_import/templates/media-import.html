@@ -74,7 +74,6 @@
                                                                    @click="uploadFiles"
                                                                    color="primary"
                                                                    variant="elevated"
-                                                                   size="small"
                                                                    prepend-icon="mdi-upload"
                                                             >
                                                                 {{ _('Upload files') }}
@@ -207,7 +206,7 @@
                                                         <v-combobox
                                                                 small-chips
                                                                 multiple
-                                                                label="{{ _('Refs') }}"
+                                                                label="{{ _('Tags') }}"
                                                                 v-model="refs"
                                                                 hint="{{ _('Type and enter free tags') }}"
 
@@ -367,8 +366,8 @@
                     chunkSize: 500000, // Bytes
                     thumbnailWidth: 80, // px
                     thumbnailHeight: 80,
-                    parallelUploads: 1
-
+                    parallelUploads: 1,
+                    maxFilesize: mediaUploadMaxFileSize,
                 },
 
 
@@ -386,12 +385,12 @@
                     itemsPerPage: 100
                 },
 
-
                 headers: [
-                    {text: "{{_('Name')}}", value: 'filename', sortable: false},
-
-
+                    {title: "{{_('Original Filename')}}", value: 'name', sortable: false},
+                    {title: "{{_('New Filename')}}", value: 'filename', sortable: false},
+                    {title: "{{_('MD4')}}", value: 'etag', sortable: false},
                 ],
+                
                 //etl additional tags
                 labels: [],
                 verLabels: [],
@@ -479,13 +478,25 @@
                     this.selectedItems = [];
                 },
                 preprocess(files) {
-                    files = files.filter(x => this.validFile(x.filename))
-                    for (i = 1; i < files.length; i++) {
-                        files[i].id = i;
+                    const etags = {};
+                    let id = 1;
+                    
+                    return files.reduce((acc, file) => {
+                        if (this.validFile(file.filename) && !etags[file.etag]) {
+                            etags[file.etag] = true;
+                            file.id = id++;
+                            acc.push(file);
+                        }
+                        return acc;
+                    }, []);
+                },
 
+                preprocessPath(files){
+                    files = files.filter(x => this.validFile(x.filename));
+                    for (let i = 0; i < files.length; i++){
+                        files[i].id = i + 1;
                     }
                     return files;
-
                 },
 
                 cancelAppend() {
@@ -495,7 +506,7 @@
 
                 appendFiles() {
                     // in dropzone files are already uploaded and filtered
-                    this.items = this.preprocess(this.files);
+                    this.items = this.preprocess([...this.items, ...this.files]);
                     this.uploadDlg = false;
                     this.files = [];
                     this.mode = 1;
@@ -506,13 +517,9 @@
                     this.loading = true;
 
                     axios.post('/import/media/path/', {path: this.selectedPath, recursive: this.recursive}).then(res => {
-                        this.items = this.preprocess(res.data);
+                        this.items = this.preprocessPath(res.data);
                         this.mode = 2;
 
-                    }).catch(error => {
-                        if (error.response) {
-                            this.showSnack(error.response.data);
-                        }
                     }).finally(() => {
                         this.selectDlg = false;
                         this.loading = false;
@@ -568,7 +575,7 @@
                         ver_labels: this.verLabels,
                         sources: this.sources,
                         locations: this.locations,
-                        refs: this.refs,
+                        tags: this.refs,
                         roles: this.roles,
                         mode: this.mode,
                         optimize: this.optimize,
@@ -579,7 +586,7 @@
                     axios.post('/import/media/process', data).then(res => {
                         this.status = "{{ _('Files were added to queue successfully and will be imported in turn.') }}";
                         this.batch_id = res.data;
-                    }).catch(error => {
+                    }).catch(err => {
                         console.log(err.response.data);
                         this.status = "{{ _('Error importing rows. Check logs for more information.') }}";
                     }).finally(() => {

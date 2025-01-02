@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Union
 
 import arrow
+from flask import current_app
 from sqlalchemy import ARRAY
 from flask_security.decorators import current_user
 
@@ -14,6 +15,10 @@ from enferno.settings import Config as cfg
 from enferno.utils.base import BaseMixin
 from enferno.utils.date_helper import DateHelper
 from itsdangerous import URLSafeSerializer
+
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger()
 
 
 class Export(db.Model, BaseMixin):
@@ -142,7 +147,7 @@ class Export(db.Model, BaseMixin):
         try:
             expires_on = arrow.get(date)
         except Exception as e:
-            print(f"Error saving export #{self.id}: \n {e}")
+            logger.error(f"Error saving export #{self.id}: \n {e}")
 
         if expires_on > arrow.utcnow():
             self.expires_on = expires_on.format("YYYY-MM-DDTHH:mm")

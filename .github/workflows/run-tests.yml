@@ -14,5 +14,11 @@ jobs:
       - name: Create .env file
         run: |
           ./gen-env.sh -d -e .env.test
+      - name: Create config.json file, add allowed path to .env.test file
+        run: |
+          touch config.json
+          echo '{"ETL_PATH_IMPORT": true, "ETL_ALLOWED_PATH": "/app"}' > config.json
+          echo "ETL_PATH_IMPORT=True" >> .env.test
+          echo "ETL_ALLOWED_PATH=/app" >> .env.test
       - name: Bayanat Tests
         run: docker compose -f docker-compose-test.yml --env-file .env.test up --build --exit-code-from bayanat

@@ -1,22 +1,25 @@
 import logging
 from typing import Any
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, inspect
+from sqlalchemy.engine import Engine
 from enferno.settings import Config as cfg
 from enferno.extensions import db
 import enferno.utils.typing as t
+from enferno.utils.logging_utils import get_logger
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-logger = logging.getLogger()
+logger = get_logger()
 
 
 class DBAlignmentChecker:
     """Class to check the alignment of the database with the models."""
 
     def __init__(self):
-        self.engine = create_engine(cfg.SQLALCHEMY_DATABASE_URI)
-        self.metadata = MetaData(bind=self.engine)
+        self.engine: Engine = create_engine(cfg.SQLALCHEMY_DATABASE_URI)
+        self.metadata = MetaData()
         self.metadata.reflect(self.engine)
+        self.inspector = inspect(self.engine)
         self.model_classes = self._get_model_classes()
         self.db_tables = set(self.metadata.tables.keys())
         self.joint_tables = self._get_joint_tables()

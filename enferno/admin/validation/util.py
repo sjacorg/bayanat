@@ -1,10 +1,17 @@
 from functools import wraps
-from typing import List, Type
+from typing import Any, Type, Annotated
 from flask import request
-from pydantic import BaseModel, Field, ValidationError, root_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    GetCoreSchemaHandler,
+    ValidationError,
+    model_validator,
+)
 import bleach
-import enferno.utils.typing as t
 from bleach.css_sanitizer import CSSSanitizer, ALLOWED_CSS_PROPERTIES
+import pydantic_core
 
 
 def sanitize_string(value: str) -> str:
@@ -66,26 +73,42 @@ def sanitize_string(value: str) -> str:
     return value
 
 
-def sanitize():
-    return Field(default=None, sa_field_validate=sanitize_string)
+class SanitizedStr(str):
+    """
+    A self-sanitizing string type for Pydantic models,
+    using sanitize_string on instantiation.
+    """
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type, handler: GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return pydantic_core.core_schema.no_info_after_validator_function(
+            sanitize_string,
+            pydantic_core.core_schema.str_schema(),
+            serialization=pydantic_core.core_schema.str_schema(),
+        )
 
 
-def get_model_aliases(model: t.Model) -> dict:
+SanitizedField = Annotated[SanitizedStr, Field()]
+
+
+def get_model_aliases(model: Type[BaseModel]) -> dict:
     """
     Returns a dictionary of field aliases for the given model.
 
     Args:
-        model: The model object for which to retrieve the field aliases.
+        model: The model class for which to retrieve the field aliases.
 
     Returns:
-        A dictionary where the keys are the field aliases and the values are the field names.
-
+        A dictionary where the keys are the field names and the values are the field aliases.
     """
-    return {field.alias: name for name, field in model.__fields__.items() if field.has_alias}
+    return {
+        name: field.alias for name, field in model.model_fields.items() if field.alias is not None
+    }
 
 
-# decorator function to validate incoming payload with specified pydantic validation
-def validate_with(model: t.Model):
+def validate_with(model: Type[BaseModel]):
     """
     Decorator function that validates the input data using the provided model.
 
@@ -103,50 +126,62 @@ def validate_with(model: t.Model):
         @wraps(f)
         def wrapper(*args, **kwargs):
             try:
-                validated_data = model(**request.json).dict(exclude_unset=True)
+                # Get aliases before validation to handle incoming data
                 aliases = get_model_aliases(model)
+
+                # Replace aliased keys in the incoming data
+                input_data = {aliases.get(k, k): v for k, v in request.json.items()}
+
+                # Convert empty strings to None
+                input_data = convert_empty_strings_to_none(input_data)
+
+                # Validate the data
+                validated_data = model(**input_data).model_dump(exclude_unset=True, by_alias=True)
+
+                # Convert back to original field names for the output
                 reversed_aliases = {v: k for k, v in aliases.items()}
                 output_data = {reversed_aliases.get(k, k): v for k, v in validated_data.items()}
+
             except ValidationError as e:
                 formatted_errors = format_validation_errors(e.errors())
                 return {"message": "Validation failed", "errors": formatted_errors}, 400
-            return f(*args, validated_data=dict(output_data), **kwargs)
+            return f(*args, validated_data=output_data, **kwargs)
 
         return wrapper
 
     return decorator
 
 
-# Function to extract and format validation errors
 def format_validation_errors(errors: list) -> dict:
     """
     Formats the validation errors into a dictionary.
 
     Args:
-        - errors: A list of validation errors.
+        errors: A list of validation errors.
 
     Returns:
-        - A dictionary containing the formatted validation errors, where the keys are the field names and the values are the error messages.
+        A dictionary containing the formatted validation errors, where the keys are the field names and the values are the error messages.
     """
     formatted_errors = {}
     for error in errors:
         loc = error["loc"]
         field = ".".join(str(e) for e in loc)  # Handle nested fields
         msg = error["msg"]
+        type_ = error.get("type")
 
-        if "extra fields not permitted" in msg:
-            formatted_errors[field] = f"Extra field not allowed"
-        elif "field required" in msg:
-            formatted_errors[field] = f"Required field not provided"
-        elif "type error" in msg:
-            formatted_errors[field] = f"Wrong type for field"
+        if type_ == "extra_forbidden":
+            formatted_errors[field] = "Extra field not allowed"
+        elif type_ == "missing":
+            formatted_errors[field] = "Required field not provided"
+        elif type_ == "type_error":
+            formatted_errors[field] = "Wrong type for field"
         else:
             formatted_errors[field] = f"Invalid value for field: {msg}"
 
     return formatted_errors
 
 
-def one_must_exist(field_names: List[str], strict=False) -> Type[BaseModel]:
+def one_must_exist(field_names: list[str], strict=False) -> Type[BaseModel]:
     """
     Returns a dynamically created Pydantic model that enforces the condition that at least one of the specified field names
     must be provided and not empty.
@@ -163,16 +198,34 @@ def one_must_exist(field_names: List[str], strict=False) -> Type[BaseModel]:
     """
 
     class Model(BaseModel):
-        class Config:
-            anystr_strip_whitespace = True
-            extra = "forbid" if strict else "allow"
+        model_config = ConfigDict(extra="forbid" if strict else "allow", str_strip_whitespace=True)
 
-        @root_validator(pre=True, allow_reuse=True)
-        def check_values(cls, values):
-            if not any(
-                values.get(field_name) for field_name in field_names if field_name in values
-            ):
+        @model_validator(mode="before")
+        @classmethod
+        def check_values(cls, data: dict) -> dict:
+            if not any(data.get(field_name) for field_name in field_names if field_name in data):
                 raise ValueError(f"At least one of {field_names} must be provided and not empty.")
-            return values
+            return data
 
     return Model
+
+
+# utility function to recursively set empty strings to None
+def convert_empty_strings_to_none(data: Any) -> Any:
+    """
+    Recursively convert empty strings in a data structure to None.
+
+    Args:
+        - data: The data structure to convert.
+
+    Returns:
+        - The data structure with empty strings converted to None.
+    """
+    if isinstance(data, dict):
+        return {k: convert_empty_strings_to_none(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_empty_strings_to_none(item) for item in data]
+    elif isinstance(data, str) and data == "":
+        return None
+    else:
+        return data

@@ -61,15 +61,18 @@ const GlobalMap = Vue.defineComponent({
 
   methods: {
     generatePopupContent(loc) {
+      function renderIfExists(label, value) {
+        return value ? `${label ? `<b>${label}:</b>` : ''} ${value}` : ''
+      }
       // Simple HTML structure for popup content. Adjust as needed.
       return `<div class="popup-content">
-      <h3 class="text-subtitle-2">${loc.title}</h3>
-      <p>Number: ${loc.number} Parent ID: ${loc.parentId}</p>
-      <p>Coordinates: ${loc.lat?.toFixed(6)}, ${loc.lng?.toFixed(6)}</p>
-      ${loc.full_string ? `<p>${loc.full_string}</p>` : ''}
-      ${loc.main ? `<p>${this.translations.mainIncident_}</p>` : ''}
-      ${loc.geotype ? `<p>Type: ${loc.geotype.title}</p>` : ''}
-      ${loc.eventtype ? `<p>Event Type: ${loc.eventtype}</p>` : ''}
+      <h4>${renderIfExists('', loc.title)}</h4>
+      <div>${renderIfExists(this.translations.number_, loc.number)} ${renderIfExists(this.translations.parentId_, loc.parentId)}</div>
+      <div>${renderIfExists(this.translations.coordinates_, `${loc.lat?.toFixed(6)}, ${loc.lng?.toFixed(6)}`)}</div>
+      <div>${renderIfExists('', loc.full_string)}</div>
+      ${loc.main ? `<div>${this.translations.mainIncident_}</div>` : ''}
+      <div>${renderIfExists(this.translations.type_, loc.geotype?.title)}</div>
+      <div>${renderIfExists(this.translations.eventType_, loc.eventtype)}</div>
     </div>`;
     },
 
@@ -90,8 +93,8 @@ const GlobalMap = Vue.defineComponent({
       this.map.addControl(
         new L.Control.Fullscreen({
           title: {
-            false: 'View Fullscreen',
-            true: 'Exit Fullscreen',
+            false: this.translations.enterFullscreen_,
+            true: this.translations.exitFullscreen_,
           },
         }),
       );

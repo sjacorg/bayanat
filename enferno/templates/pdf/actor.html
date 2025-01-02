@@ -8,405 +8,748 @@
 </head>
 <body>
 
-<div class="container">
+<div class="container pdf-actor">
     <header>
         <img id="logo" src="{{ config.BASE_URL }}static/img/bayanat-h-v2.png" alt="">
-        <div>
-            <div class="id">
-                Actor {{ actor.id }}
-            </div>
-            <p class="meta">
-
-                Publish Date: {{ actor.publish_date.strftime('%Y-%m-%d %H:%M') if actor.publish_date else '' }} <br>
-                Documentation Date: {{ actor.documentation_date if actor.documentation_date else '' }}
-            </p>
+        <div class="id">
+            Actor {{ actor.id }}
         </div>
     </header>
 
-
     <section>
-
-        <dl class="hero">
-
+        {# Common fields for both Entity and Person #}
+        <article>
             <div>
-                <dt>Origin ID</dt>
-                <dd>{{ actor.originid }}</dd>
+                <dt>Type</dt>
+                <dd>{{ actor.type }}</dd>
             </div>
-            <div>
-                <dt>Source Link</dt>
-                <dd>{{ actor.source_link }}</dd>
-            </div>
-        </dl>
-
-    </section>
-    <section>
+        </article>
         <article class="two-col">
             <div>
                 <dt>Name</dt>
-                <dd>{{ actor.name }}</dd>
+                <dd>{{ actor.name or '-' }}</dd>
             </div>
-
             <div>
                 <dt>Name (ar)</dt>
-                <dd>{{ actor.name_ar }}</dd>
+                <dd>{{ actor.name_ar or '-' }}</dd>
             </div>
         </article>
 
         <article class="two-col">
             <div>
                 <dt>Nickname</dt>
-                <dd>{{ actor.nickname }}</dd>
+                <dd>{{ actor.nickname or '-' }}</dd>
             </div>
-
             <div>
                 <dt>Nickname (ar)</dt>
-                <dd>{{ actor.nickname_ar }}</dd>
+                <dd>{{ actor.nickname_ar or '-' }}</dd>
             </div>
         </article>
 
-        <article class="two-col">
-            <div>
-                <dt>First Name</dt>
-                <dd>{{ actor.first_name }}</dd>
-            </div>
+        {% if actor.type == 'Person' %}
+            {# Person-specific fields #}
+            <article class="two-col">
+                <div>
+                    <dt>First Name</dt>
+                    <dd>{{ actor.first_name or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>First Name (ar)</dt>
+                    <dd>{{ actor.first_name_ar or '-' }}</dd>
+                </div>
+            </article>
 
+            <article class="two-col">
+                <div>
+                    <dt>Middle Name</dt>
+                    <dd>{{ actor.middle_name or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Middle Name (ar)</dt>
+                    <dd>{{ actor.middle_name_ar or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Last Name</dt>
+                    <dd>{{ actor.last_name or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Last Name (ar)</dt>
+                    <dd>{{ actor.last_name_ar or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Father's Name</dt>
+                    <dd>{{ actor.father_name or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Father's Name (ar)</dt>
+                    <dd>{{ actor.father_name_ar or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Mother's Name</dt>
+                    <dd>{{ actor.mother_name or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Mother's Name (ar)</dt>
+                    <dd>{{ actor.mother_name_ar or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Sex</dt>
+                    <dd>{{ actor.sex or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Minor/Adult</dt>
+                    <dd>{{ actor.age or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Civilian/Non Civilian</dt>
+                    <dd>{{ actor.civilian or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Family Status</dt>
+                    <dd>{{ actor.family_status or '-' }}</dd>
+                </div>
+            </article>
+
+            {% if actor.origin_place %}
+            <article>
+                <div>
+                    <dt>Origin Place</dt>
+                    <dd>{{ actor.origin_place.title if actor.origin_place else '-' }}</dd>
+                </div>
+            </article>
+            {% endif %}
+
+            <article class="two-col">
+                <div>
+                    <dt>Position</dt>
+                    <dd>{{ actor.position or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Position (ar)</dt>
+                    <dd>{{ actor.position_ar or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Occupation</dt>
+                    <dd>{{ actor.occupation or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>Occupation (ar)</dt>
+                    <dd>{{ actor.occupation_ar or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Number of Children</dt>
+                    <dd>{{ actor.no_children or '-' }}</dd>
+                </div>
+                <div>
+                    <dt>National ID Number</dt>
+                    <dd>{{ actor.id_number or '-' }}</dd>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Ethnographic Information</dt>
+                    <p>
+                    {% if actor.ethnographies %}
+                        {% for e in actor.ethnographies %}
+                            <span class="tag">{{ e.title }}</span>
+                        {% endfor %}
+                    {% else %}
+                        -
+                    {% endif %}
+                    </p>
+                </div>
+
+                <div>
+                    <dt>Nationalities</dt>
+                    <p>
+                    {% if actor.nationalities %}
+                        {% for n in actor.nationalities %}
+                            <span class="tag">{{ n.title }}</span>
+                        {% endfor %}
+                    {% else %}
+                        -
+                    {% endif %}
+                    </p>
+                </div>
+            </article>
+
+            <article class="two-col">
+                <div>
+                    <dt>Dialects</dt>
+                    <p>
+                    {% if actor.dialects %}
+                        {% for d in actor.dialects %}
+                            <span class="tag">{{ d.title }}</span>
+                        {% endfor %}
+                    {% else %}
+                        -
+                    {% endif %}
+                    </p>
+                </div>
+            </article>
+        {% endif %}
+
+        {% if actor.comments %}
+        <article>
             <div>
-                <dt>First Name (ar)</dt>
-                <dd>{{ actor.first_name_ar }}</dd>
+                <dt>Comments</dt>
+                <dd>{{ actor.comments or '-' }}</dd>
             </div>
         </article>
-
-        <article class="two-col">
-            <div>
-                <dt>Middle Name</dt>
-                <dd>{{ actor.middle_name }}</dd>
-            </div>
-
-            <div>
-                <dt>Middle Name (ar)</dt>
-                <dd>{{ actor.middle_name_ar }}</dd>
-            </div>
-        </article>
-
-        <article class="two-col">
-            <div>
-                <dt>Last Name</dt>
-                <dd>{{ actor.last_name }}</dd>
-            </div>
-
-            <div>
-                <dt>Last Name (ar)</dt>
-                <dd>{{ actor.last_name_ar }}</dd>
-            </div>
-        </article>
+        {% endif %}
 
 
-        <article class="two-col">
-            <div>
-                <dt>Sex</dt>
-                <dd>{{ actor.sex }}</dd>
-            </div>
+    <section>
+        <h4>Profile(s)</h4>
+        {% if actor.actor_profiles %}
+            {% for profile in actor.actor_profiles %}
+                <div class="profile">
+                    <h5>
+                        {% if profile.mode == 1 %}
+                            Profile {{ loop.index }}
+                        {% elif profile.mode == 2 %}
+                            Main Profile
+                        {% elif profile.mode == 3 %}
+                            Missing Person Profile
+                        {% endif %}
+                    </h5>
+                    
+                    <dl class="profile-meta">
+                        <div>
+                            <dt>Origin ID</dt>
+                            <dd>{{ profile.originid or '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Source Link</dt>
+                            <dd>{{ profile.source_link or '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Publish Date</dt>
+                            <dd>{{ profile.publish_date.strftime('%Y-%m-%d %H:%M') if profile.publish_date else '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Documentation Date</dt>
+                            <dd>{{ profile.documentation_date.strftime('%Y-%m-%d %H:%M') if profile.documentation_date else '-' }}</dd>
+                        </div>
+                    </dl>
 
-            <div>
-                <dt>Minor/Adult</dt>
-                <dd>{{ actor.age }}</dd>
-            </div>
-        </article>
+                    <div class="profile-content">
+                        {% if profile.description %}
+                            <h6>Description</h6>
+                            <div class="description">
+                                {{ profile.description | replace('../api/serve/inline/', 'file://' + path + '/media/inline/') | safe }}
+                            </div>
+                        {% endif %}
 
-        <article class="two-col">
-            <div>
-                <dt>Civilian/Non Civilian</dt>
-                <dd>{{ actor.civilian }}</dd>
-            </div>
+                        {% if profile.sources %}
+                            <h6>Sources</h6>
+                            <div class="tags">
+                                {% for source in profile.sources %}
+                                    <span class="tag">{{ source.title }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-            <div>
-                <dt>Actor Type</dt>
-                <dd>{{ actor.type }}</dd>
-            </div>
-        </article>
+                        {% if profile.labels %}
+                            <h6>Labels</h6>
+                            <div class="tags">
+                                {% for label in profile.labels %}
+                                    <span class="tag">{{ label.title }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-        <article class="two-col">
+                        {% if profile.ver_labels %}
+                            <h6>Verified Labels</h6>
+                            <div class="tags">
+                                {% for label in profile.ver_labels %}
+                                    <span class="tag">{{ label.title }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-            <div>
-                <dt>Place of Origin</dt>
-                <dd>{{ actor.origin_place.title if actor.origin_place else '-' }} </dd>
-            </div>
-        </article>
+                        {% if profile.mode == 3 %}
+                            {# Missing Person Specific Fields #}
+                            <div class="mp-section">
+                                <h6>Personal Information</h6>
+                                <dl class="mp-details">
+                                    {% if profile.last_address %}
+                                        <dt>Last Known Address</dt>
+                                        <dd>{{ profile.last_address or '-' }}</dd>
+                                    {% endif %}
+                                    
+                                    {% if profile.saw_name or profile.saw_address or profile.saw_email or profile.saw_phone %}
+                                        <dt>Details of Last Person Who Saw Them</dt>
+                                        <dd>
+                                            {% if profile.saw_name %}Name: {{ profile.saw_name }}<br>{% endif %}
+                                            {% if profile.saw_address %}Address: {{ profile.saw_address }}<br>{% endif %}
+                                            {% if profile.saw_email %}Email: {{ profile.saw_email }}<br>{% endif %}
+                                            {% if profile.saw_phone %}Phone: {{ profile.saw_phone }}{% endif %}
+                                        </dd>
+                                    {% endif %}
 
-        <article class="two-col">
-            <div>
-                <dt>Occupation</dt>
-                <dd>{{ actor.occupation }}</dd>
-            </div>
+                                    {% if profile.marriage_history %}
+                                        <dt>Marriage History</dt>
+                                        <dd>{{ profile.marriage_history or '-' }}</dd>
+                                    {% endif %}
 
-            <div>
-                <dt>Occupation (ar)</dt>
-                <dd>{{ actor.occupation_ar }} </dd>
-            </div>
-        </article>
+                                    {% if profile.pregnant_at_disappearance %}
+                                        <dt>Pregnant at Disappearance</dt>
+                                        <dd>{{ profile.pregnant_at_disappearance }}
+                                            {% if profile.months_pregnant %}
+                                                ({{ profile.months_pregnant }} months)
+                                            {% endif %}
+                                        </dd>
+                                    {% endif %}
+                                    <dt>Missing Relatives</dt>
+                                    <dd>{{ 'Yes' if profile.missing_relatives else 'No' }}</dd>
+                                    {# JSONB fields with opts #}
+                                    {% for field in ['social_networks', 'seen_in_detention', 'injured', 'known_dead'] %}
+                                        {% if profile[field] %}
+                                            <dt>{{ field|replace('_', ' ')|title }}</dt>
+                                            <dd>
+                                                {% if profile[field] is string %}
+                                                    {{ profile[field] }}
+                                                {% elif profile[field] is mapping and profile[field].opts%}
+                                                    {% if profile[field].opts is string %}
+                                                        {{ profile[field].opts }}
+                                                    {% else %}
+                                                        {% for opt in profile[field].opts %}
+                                                            {{ opt }}{% if not loop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% elif profile[field] is sequence %}
+                                                    {% for item in profile[field] %}
+                                                        {{ item }}{% if not loop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </dd>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if profile.death_details %}
+                                        <dt>Death Details</dt>
+                                        <dd>{{ profile.death_details }}</dd>
+                                    {% endif %}
+                                    {% if profile.personal_items %}
+                                        <dt>Personal Items</dt>
+                                        <dd>{{ profile.personal_items }}</dd>
+                                    {% endif %}
+                                </dl>
 
-        <article class="two-col">
-            <div>
-                <dt>Position</dt>
-                <dd>{{ actor.position }}</dd>
-            </div>
+                                {% if profile.height or profile.weight or profile.physique or 
+                                    profile.hair_loss or profile.hair_type or profile.hair_length or profile.hair_color or
+                                    profile.facial_hair or profile.eye_color or profile.glasses or profile.posture or
+                                    profile.skin_markings or profile.handedness %}
+                                <h6>Physical Description</h6>
+                                <dl class="mp-details">
+                                    {% if profile.height %}
+                                        <dt>Height</dt>
+                                        <dd>{{ profile.height }} cm</dd>
+                                    {% endif %}
 
-            <div>
-                <dt>Position (ar)</dt>
-                <dd>{{ actor.position_ar }} </dd>
-            </div>
-        </article>
+                                    {% if profile.weight %}
+                                        <dt>Weight</dt>
+                                        <dd>{{ profile.weight }} kg</dd>
+                                    {% endif %}
 
-        <article class="two-col">
-            <div>
-                <dt>Dialects</dt>
-                <dd>{{ actor.dialects }}</dd>
-            </div>
+                                    {% if profile.physique %}
+                                        <dt>Physique</dt>
+                                        <dd>{{ profile.physique }}</dd>
+                                    {% endif %}
 
-            <div>
-                <dt>Dialects (ar)</dt>
-                <dd>{{ actor.dialects_ar }} </dd>
-            </div>
-        </article>
+                                    {% if profile.hair_loss or profile.hair_type or profile.hair_length or profile.hair_color %}
+                                        <dt>Hair Details</dt>
+                                        <dd>
+                                            {% if profile.hair_loss %}Loss: {{ profile.hair_loss }}<br>{% endif %}
+                                            {% if profile.hair_type %}Type: {{ profile.hair_type }}<br>{% endif %}
+                                            {% if profile.hair_length %}Length: {{ profile.hair_length }}<br>{% endif %}
+                                            {% if profile.hair_color %}Color: {{ profile.hair_color }}{% endif %}
+                                        </dd>
+                                    {% endif %}
 
-        <article class="two-col">
-            <div>
-                <dt>Family Status</dt>
-                <dd>{{ actor.family_status }}</dd>
-            </div>
+                                    {% if profile.facial_hair %}
+                                        <dt>Facial Hair</dt>
+                                        <dd>{{ profile.facial_hair }}</dd>
+                                    {% endif %}
 
-            <div>
-                <dt>Family Status (ar)</dt>
-                <dd>{{ actor.family_status_ar }} </dd>
-            </div>
-        </article>
+                                    {% if profile.eye_color %}
+                                        <dt>Eye Color</dt>
+                                        <dd>{{ profile.eye_color }}</dd>
+                                    {% endif %}
 
+                                    {% if profile.glasses %}
+                                        <dt>Glasses</dt>
+                                        <dd>{{ profile.glasses }}</dd>
+                                    {% endif %}
 
-        <article class="two-col">
-            <div>
-                <dt>Ethnographic Information</dt>
-                <p>
-                {% if actor.ethnography %}
-                    {% for e in actor.ethnography %}
-                        <span class="tag">{{ e }}</span>
-                    {% endfor %}
+                                    {% if profile.posture %}
+                                        <dt>Posture</dt>
+                                        <dd>{{ profile.posture }}</dd>
+                                    {% endif %}
+
+                                    {% if profile.skin_markings and profile.skin_markings.opts %}
+                                        <dt>Distinguishing Marks</dt>
+                                        <dd>
+                                            {% for mark in profile.skin_markings.opts %}
+                                                {{ mark }}{% if not loop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </dd>
+                                    {% endif %}
+
+                                    {% if profile.handedness %}
+                                        <dt>Handedness</dt>
+                                        <dd>{{ profile.handedness }}</dd>
+                                    {% endif %}
+                                </dl>
+                                {% endif %}
+
+                                {% if profile.dist_char_con or profile.dist_char_acq or profile.physical_habits or profile.other %}
+                                    <h6>Distinguishing Characteristics</h6>
+                                    <dl class="mp-details">
+                                        {% if profile.dist_char_con %}<dt>Distinguishing Characteristics (Con)</dt><dd>{{ profile.dist_char_con }}</dd>{% endif %}
+                                        {% if profile.dist_char_acq %}<dt>Distinguishing Characteristics (Acq)</dt><dd>{{ profile.dist_char_acq }}</dd>{% endif %}
+                                        {% if profile.physical_habits %}<dt>Physical Habits</dt><dd>{{ profile.physical_habits }}</dd>{% endif %}
+                                        {% if profile.other %}<dt>Other</dt><dd>{{ profile.other }}</dd>{% endif %}
+                                    </dl>
+                                {% endif %}
+
+                                {% if profile.injuries or profile.implants or profile.malforms or profile.pain or 
+                                    profile.other_conditions or profile.accidents or profile.pres_drugs or 
+                                    profile.smoker or profile.phys_name_contact %}
+                                    <h6>Medical Information</h6>
+                                    <dl class="mp-details">
+                                        {% if profile.phys_name_contact %}
+                                            <dt>Physician Name</dt>
+                                            <dd>{{ profile.phys_name_contact }}</dd>
+                                        {% endif %}
+                                        {% if profile.injuries %}
+                                            <dt>Injuries</dt>
+                                            <dd>{{ profile.injuries }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.implants %}
+                                            <dt>Implants</dt>
+                                            <dd>{{ profile.implants }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.malforms %}
+                                            <dt>Physical Conditions</dt>
+                                            <dd>{{ profile.malforms }}</dd>
+                                        {% endif %}
+                                        {% if profile.pain %}
+                                            <dt>Pain</dt>
+                                            <dd>{{ profile.pain }}</dd>
+                                        {% endif %}
+                                        {% if profile.other_conditions %}
+                                            <dt>Other Conditions</dt>
+                                            <dd>{{ profile.other_conditions }}</dd>
+                                        {% endif %}
+                                        {% if profile.accidents %}
+                                            <dt>Accidents</dt>
+                                            <dd>{{ profile.accidents }}</dd>
+                                        {% endif %}
+                                        {% if profile.pres_drugs %}
+                                            <dt>Prescription Drugs</dt>
+                                            <dd>{{ profile.pres_drugs }}</dd>
+                                        {% endif %}
+                                        {% if profile.smoker %}
+                                            <dt>Smoker</dt>
+                                            <dd>{{ profile.smoker }}</dd>
+                                        {% endif %}
+                                    </dl>
+                                {% endif %}
+
+                                {% if profile.dental_record or profile.teeth_features or profile.dentist_info or profile.dental_problems or profile.dental_treatments or profile.dental_habits %}
+                                    <h6>Dental Information</h6>
+                                    <dl class="mp-details">
+                                        {% if profile.dental_record %}
+                                            <dt>Dental Records Available</dt>
+                                            <dd>Yes</dd>
+                                        {% endif %}
+
+                                        {% if profile.dentist_info %}
+                                            <dt>Dentist Information</dt>
+                                            <dd>{{ profile.dentist_info }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.teeth_features %}
+                                            <dt>Dental Features</dt>
+                                            <dd>{{ profile.teeth_features }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.dental_problems %}
+                                            <dt>Dental Problems</dt>
+                                            <dd>{{ profile.dental_problems }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.dental_treatments %}
+                                            <dt>Dental Treatments</dt>
+                                            <dd>{{ profile.dental_treatments }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.dental_habits %}
+                                            <dt>Dental Habits</dt>
+                                            <dd>{{ profile.dental_habits }}</dd>
+                                        {% endif %}
+
+                                    </dl>
+                                {% endif %}
+
+                                {% if profile.case_status or profile.hypothesis_based or profile.hypothesis_status or profile.family_notified or profile.reburial_location %}
+                                    <h6>Case Information</h6>
+                                    <dl class="mp-details">
+                                        <dt>Case Status</dt>
+                                        <dd>{{ profile.case_status }}</dd>
+
+                                        {% if profile.hypothesis_based %}
+                                            <dt>Hypothesis</dt>
+                                            <dd>{{ profile.hypothesis_based }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.hypothesis_status %}
+                                            <dt>Hypothesis Status</dt>
+                                            <dd>{{ profile.hypothesis_status }}</dd>
+                                        {% endif %}
+
+                                        {% if profile.family_notified %}
+                                            <dt>Family Notified</dt>
+                                            <dd>Yes</dd>
+                                        {% endif %}
+
+                                        {% if profile.reburial_location %}
+                                            <dt>Reburial Location</dt>
+                                            <dd>{{ profile.reburial_location }}</dd>
+                                        {% endif %}
+                                    </dl>
+                                {% endif %}
+
+                                {% if profile.reporters %}
+                                    <h6>Reporters</h6>
+                                    <div class="reporters-section">
+                                        {% for reporter in profile.reporters %}
+                                            {% if reporter is mapping %}
+                                                <dl class="reporter-details">
+                                                    {% for key, value in reporter.items() %}
+                                                        {% if value %}
+                                                            <dt>{{ key|replace('_', ' ')|title }}</dt>
+                                                            <dd>{{ value|string or '-' }}</dd>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </dl>
+                                                {% if not loop.last %}<hr class="reporter-separator">{% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not loop.last %}
+                    <hr class="profile-separator">
                 {% endif %}
-                </p>
-            </div>
-
-            <div>
-                <dt>Nationalities</dt>
-                  <p>
-                  {% if actor.nationality %}
-                    {% for e in actor.nationality %}
-                        <span class="tag">{{ e }}</span>
-                    {% endfor %}
-                  {% endif %}
-                </p>
-            </div>
-        </article>
-    <article>
-        <div>
-            <dt>National ID Number</dt>
-            <dd>{{ actor.id_number }}</dd>
-        </div>
-    </article>
-
-
+            {% endfor %}
+        {% else %}
+            <p>No profiles available</p>
+        {% endif %}
     </section>
-    <section>
-        <h4>Description</h4>
-        <div class="description">
-            {{ actor.description|safe }}
-        </div>
-    </section>
-
-    <section>
-        <h4>Labels</h4>
-        {% for label in actor.labels %}
-            <span class="tag">{{ label.title }}</span>
-        {% endfor %}
-    </section>
-
-    <section>
-        <h4>Verified Labels</h4>
-        {% for label in actor.ver_labels %}
-            <span class="tag">{{ label.title }}</span>
-        {% endfor %}
-    </section>
-
-    <section>
-        <h4>Sources</h4>
-        {% for source in actor.sources %}
-            <span class="tag">{{ source.title }}</span>
-        {% endfor %}
-    </section>
-
-
-    <section>
-        <h4>Locations</h4>
-        {% for location in actor.locations %}
-            <span class="tag">{{ location.title }}</span>
-        {% endfor %}
-    </section>
-
     <section class="events">
         <h4>Events</h4>
-        {% for event in actor.events %}
-            <table class="no-break">
-                <tr>
-                    <th>Event Title</th>
-                    <th colspan="2">Event Comments</th>
-                </tr>
-                <tr>
-                    <td>{{ event.title }}</td>
-                    <td colspan="2">{{ event.comment }}</td>
-                </tr>
+        {% if actor.events %}
+            {% for event in actor.events %}
+                <table class="no-break">
+                    <tr>
+                        <th>Event Title</th>
+                        <th colspan="2">Event Comments</th>
+                    </tr>
+                    <tr>
+                        <td>{{ event.title or '-' }}</td>
+                        <td colspan="2">{{ event.comment or '-' }}</td>
+                    </tr>
 
-                <tr>
-                    <th colspan="2">Event Location</th>
-                    <th>Event Type</th>
-                </tr>
-                <tr>
-                    <td colspan="2">{{ event.location.title }}</td>
-                    <td>{{ event.eventtype.title }}</td>
-                </tr>
+                    <tr>
+                        <th colspan="2">Event Location</th>
+                        <th>Event Type</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2">{{ event.location.title or '-' }}</td>
+                        <td>{{ event.eventtype.title or '-' }}</td>
+                    </tr>
 
-                <tr>
-                    <th>From Date</th>
-                    <th>To Date</th>
-                    <th>Estimated?</th>
-                </tr>
-                <tr>
-                    <td>{{ event.from_date.strftime('%Y-%m-%d %H:%M') if event.from_date else '' }}</td>
-                    <td>{{ event.to_date.strftime('%Y-%m-%d %H:%M') if  event.to_date else '' }}</td>
-                    <td>{{ event.estimated }}</td>
-                </tr>
+                    <tr>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                        <th>Estimated?</th>
+                    </tr>
+                    <tr>
+                        <td>{{ event.from_date.strftime('%Y-%m-%d %H:%M') if event.from_date else '-' }}</td>
+                        <td>{{ event.to_date.strftime('%Y-%m-%d %H:%M') if  event.to_date else '-' }}</td>
+                        <td>{{ 'Yes' if event.estimated else 'No' if event.estimated is defined else '-' }}</td>
+                    </tr>
 
-            </table>
-        {% endfor %}
+                </table>
+            {% endfor %}
+        {% else %}
+            <p>No related events</p>
+        {% endif %}
     </section>
 
 
     <section class="related">
         <h4>Related Bulletins</h4>
-        <article>
-            {% for rel in actor.bulletin_relations_dict %}
-                <table class="no-break">
-                    <tr>
-                        <th>ID</th>
-                        <th colspan="2">Title</th>
+        {% if actor.bulletin_relations_dict %}
+            <article>
+                {% for rel in actor.bulletin_relations_dict %}
+                    <table class="no-break">
+                        <tr>
+                            <th>ID</th>
+                            <th colspan="2">Title</th>
 
-                    </tr>
-                    <tr>
-                        <td>{{ rel.bulletin.id }}</td>
-                        <td colspan="2">{{ rel.bulletin.title }}</td>
-                    </tr>
-                    {#                <tr>#}
-                    {#                    <th>Related as</th>#}
-                    {#                    <th>Probability</th>#}
-                    {#                    <th>Comment</th>#}
-                    {#                </tr>#}
-                    {#                <tr>#}
-                    {#                    <td>{{ rel.related_as }}</td>#}
-                    {#                    <td>{{ rel.probability }}</td>#}
-                    {#                    <td>{{ rel.comment }}</td>#}
-                    {#                </tr>#}
+                        </tr>
+                        <tr>
+                            <td>{{ rel.bulletin.id }}</td>
+                            <td colspan="2">{{ rel.bulletin.title or '-' }}</td>
+                        </tr>
+                        {#                <tr>#}
+                        {#                    <th>Related as</th>#}
+                        {#                    <th>Probability</th>#}
+                        {#                    <th>Comment</th>#}
+                        {#                </tr>#}
+                        {#                <tr>#}
+                        {#                    <td>{{ rel.related_as or '-' }}</td>#}
+                        {#                    <td>{{ rel.probability or '-' }}</td>#}
+                        {#                    <td>{{ rel.comment or '-' }}</td>#}
+                        {#                </tr>#}
 
-                </table>
-            {% endfor %}
-        </article>
+                    </table>
+                {% endfor %}
+            </article>
+        {% else %}
+            <p>No related bulletins</p>
+        {% endif %}
     </section>
 
 
     <section class="related">
         <h4>Related Actors</h4>
-        <article>
-            {% for rel in actor.actor_relations_dict %}
-                <table class="no-break">
-                    <tr>
-                        <th>ID</th>
-                        <th colspan="2">Name</th>
+        {% if actor.actor_relations_dict %}
+            <article>
+                {% for rel in actor.actor_relations_dict %}
+                    <table class="no-break">
+                        <tr>
+                            <th>ID</th>
+                            <th colspan="2">Name</th>
 
-                    </tr>
-                    <tr>
-                        <td>{{ rel.actor.id }}</td>
-                        <td colspan="2">{{ rel.actor.name }}</td>
-                    </tr>
-                    {#                <tr>#}
-                    {#                    <th>Related as</th>#}
-                    {#                    <th>Probability</th>#}
-                    {#                    <th>Comment</th>#}
-                    {#                </tr>#}
-                    {#                <tr>#}
-                    {#                    <td>{{ rel.related_as }}</td>#}
-                    {#                    <td>{{ rel.probability }}</td>#}
-                    {#                    <td>{{ rel.comment }}</td>#}
-                    {#                </tr>#}
+                        </tr>
+                        <tr>
+                            <td>{{ rel.actor.id }}</td>
+                            <td colspan="2">{{ rel.actor.name or '-' }}</td>
+                        </tr>
+                        {#                <tr>#}
+                        {#                    <th>Related as</th>#}
+                        {#                    <th>Probability</th>#}
+                        {#                    <th>Comment</th>#}
+                        {#                </tr>#}
+                        {#                <tr>#}
+                        {#                    <td>{{ rel.related_as or '-' }}</td>#}
+                        {#                    <td>{{ rel.probability or '-' }}</td>#}
+                        {#                    <td>{{ rel.comment or '-' }}</td>#}
+                        {#                </tr>#}
 
-                </table>
-            {% endfor %}
-        </article>
+                    </table>
+                {% endfor %}
+            </article>
+        {% else %}
+            <p>No related actors</p>
+        {% endif %}
     </section>
 
 
     <section class="related">
         <h4>Related Incidents</h4>
-        <article>
-            {% for rel in actor.incident_relations_dict %}
-                <table class="no-break">
-                    <tr>
-                        <th>ID</th>
-                        <th colspan="2">Title</th>
+        {% if actor.incident_relations_dict %}
+            <article>
+                {% for rel in actor.incident_relations_dict %}
+                    <table class="no-break">
+                        <tr>
+                            <th>ID</th>
+                            <th colspan="2">Title</th>
 
-                    </tr>
-                    <tr>
-                        <td>{{ rel.incident.id }}</td>
-                        <td colspan="2">{{ rel.incident.title }}</td>
-                    </tr>
-                    {#                <tr>#}
-                    {#                    <th>Related as</th>#}
-                    {#                    <th>Probability</th>#}
-                    {#                    <th>Comment</th>#}
-                    {#                </tr>#}
-                    {#                <tr>#}
-                    {#                    <td>{{ rel.related_as }}</td>#}
-                    {#                    <td>{{ rel.probability }}</td>#}
-                    {#                    <td>{{ rel.comment }}</td>#}
-                    {#                </tr>#}
+                        </tr>
+                        <tr>
+                            <td>{{ rel.incident.id }}</td>
+                            <td colspan="2">{{ rel.incident.title or '-' }}</td>
+                        </tr>
+                        {#                <tr>#}
+                        {#                    <th>Related as</th>#}
+                        {#                    <th>Probability</th>#}
+                        {#                    <th>Comment</th>#}
+                        {#                </tr>#}
+                        {#                <tr>#}
+                        {#                    <td>{{ rel.related_as or '-' }}</td>#}
+                        {#                    <td>{{ rel.probability or '-' }}</td>#}
+                        {#                    <td>{{ rel.comment or '-' }}</td>#}
+                        {#                </tr>#}
 
-                </table>
-            {% endfor %}
-        </article>
+                    </table>
+                {% endfor %}
+            </article>
+        {% else %}
+            <p>No related incidents</p>
+        {% endif %}
     </section>
 
 
     <section class="medias">
         <h4>Medias</h4>
-        <article>
+        {% if actor.medias %}
+            <article>
 
-            <table class="no-break">
-                <tr>
-                    <th>ID</th>
-                    <th>Media File</th>
-                    <th>Type</th>
-
-                </tr>
-                {% for media in actor.medias %}
+                <table class="no-break">
                     <tr>
-                        <td>{{ media.id }}</td>
-                        <td>{{ media.media_file }}</td>
-                        <td>{{ media.media_file_type }}</td>
+                        <th>ID</th>
+                        <th>Media File</th>
+                        <th>Type</th>
+
                     </tr>
-                {% endfor %}
+                    {% for media in actor.medias %}
+                        <tr>
+                            <td>{{ media.id }}</td>
+                            <td>{{ media.media_file or '-' }}</td>
+                            <td>{{ media.media_file_type or '-' }}</td>
+                        </tr>
+                    {% endfor %}
 
 
-            </table>
+                </table>
 
-        </article>
+            </article>
+        {% else %}
+            <p>No related media</p>
+        {% endif %}
     </section>
 </div>
-
-
 </body>
 </html>

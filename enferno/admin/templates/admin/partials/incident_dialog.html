@@ -9,7 +9,7 @@
                 </v-toolbar-title>
                 <template #append>
 
-                    <v-btn variant="outlined" type="button" @click="validateForm" variant="elevated" class="mx-2"
+                    <v-btn variant="elevated" @click="validateForm" :disabled="saving" :loading="saving" class="mx-2"
                     >{{ _('Save Incident') }}
                     </v-btn>
                     <v-btn @click="confirmClose" icon="mdi-close">

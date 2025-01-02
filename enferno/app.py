@@ -33,11 +33,15 @@ from enferno.admin.views import admin
 from enferno.data_import.views import imports
 from enferno.extensions import db, session, babel, rds, debug_toolbar
 from enferno.public.views import bp_public
+from enferno.setup.views import bp_setup
 from enferno.settings import Config
 from enferno.user.forms import ExtendedRegisterForm, ExtendedLoginForm
 from enferno.user.models import User, Role
 from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
+from enferno.utils.logging_utils import get_logger
+
+logger = get_logger()
 
 
 def get_locale():
@@ -120,7 +124,7 @@ def register_signals(app):
 
         if session.get("failed"):
             session.pop("failed")
-            print("login counter cleared")
+            logger.info("login counter cleared")
 
         Activity.create(
             user, Activity.ACTION_LOGIN, Activity.STATUS_SUCCESS, user.to_mini(), "user"
@@ -140,6 +144,8 @@ def register_blueprints(app):
     Args:
         app: Flask application instance
     """
+    if not app.config.get("SETUP_COMPLETE"):
+        app.register_blueprint(bp_setup)  # Register the setup blueprint if setup is not complete
     app.register_blueprint(bp_public)
     app.register_blueprint(bp_user)
     app.register_blueprint(admin)
@@ -151,7 +157,7 @@ def register_blueprints(app):
 
             app.register_blueprint(export)
         except ImportError as e:
-            print(e)
+            app.logger.error(e)
 
     if app.config.get("DEDUP_TOOL"):
         try:
@@ -159,7 +165,7 @@ def register_blueprints(app):
 
             app.register_blueprint(deduplication)
         except ImportError as e:
-            print(e)
+            app.logger.error(e)
 
 
 def register_shellcontext(app):
@@ -218,6 +224,7 @@ def register_commands(app):
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
+    app.cli.add_command(commands.generate_config)
 
 
 def register_errorhandlers(app):
@@ -255,7 +262,7 @@ def handle_uncaught_exception(e):
     if isinstance(e, HTTPException) and e.code < 500:
         return e.get_response()
 
-    current_app.logger.error(
+    logger.error(
         f"user_id: {current_user.id if hasattr(current_user, 'id') else None} endpoint: {request.path if request else None}",
         exc_info=True,
     )

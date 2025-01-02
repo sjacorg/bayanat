@@ -1,30 +1,39 @@
 from enum import Enum
-from pydantic import BaseModel, validator, Field, root_validator, constr
-from typing import Dict, Optional, List, Any
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+    HttpUrl,
+    ValidationInfo,
+)
+from typing import Optional, Any
 from urllib.parse import urlparse
-from pydantic import BaseModel
-from typing import List, Optional
 from dateutil.parser import parse
+import re
+import os
 
 from enferno.admin.constants import Constants
-from enferno.admin.validation.util import one_must_exist, sanitize
+from enferno.admin.validation.util import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
 
-DEFAULT_STRING_FIELD = Field(None, max_length=255)
+DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
+
+BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
+STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 
 class BaseValidationModel(BaseModel):
     """Base class for all validation models."""
 
-    class Config:
-        anystr_strip_whitespace = True
+    model_config = BASE_MODEL_CONFIG
 
 
-class StrictValidationModel(BaseValidationModel):
+class StrictValidationModel(BaseModel):
     """Base class that forbids extra fields in the model."""
 
-    class Config:
-        extra = "forbid"
+    model_config = STRICT_MODEL_CONFIG
 
 
 class PartialUserModel(BaseValidationModel):
@@ -33,9 +42,9 @@ class PartialUserModel(BaseValidationModel):
 
 class PartialRoleModel(BaseValidationModel):
     id: int
-    color: Optional[str]
-    description: Optional[str] = sanitize()
-    name: Optional[str]
+    color: Optional[str] = None
+    description: Optional[SanitizedField] = None
+    name: Optional[str] = None
 
 
 class PartialLocationModel(BaseValidationModel):
@@ -43,7 +52,7 @@ class PartialLocationModel(BaseValidationModel):
 
 
 class PartialGeoLocationTypeModel(BaseValidationModel):
-    id: Optional[int]
+    id: Optional[int] = None
 
 
 class PartialSourceModel(BaseValidationModel):
@@ -55,33 +64,33 @@ class PartialLabelModel(BaseValidationModel):
 
 
 class PartialGeoLocationModel(BaseValidationModel):
-    id: Optional[int]
-    title: constr(min_length=1)  # type: ignore
-    geotype: Optional[PartialGeoLocationTypeModel]
-    main: Optional[bool]
+    id: Optional[int] = None
+    title: str = Field(min_length=1)
+    geotype: Optional[PartialGeoLocationTypeModel] = None
+    main: Optional[bool] = None
     lng: float
     lat: float
-    comment: Optional[str]
+    comment: Optional[str] = None
 
 
 class PartialEventLocationModel(BaseValidationModel):
-    id: Optional[int]
+    id: Optional[int] = None
 
 
 class PartialEventtypeModel(BaseValidationModel):
-    id: Optional[str]
+    id: Optional[int] = None
 
 
 class PartialManyRelationModel(BaseValidationModel):
-    probability: Optional[int]
-    comment: Optional[str]
-    related_as: Optional[List[int]] = Field(default_factory=list)
+    probability: Optional[int] = None
+    comment: Optional[str] = None
+    related_as: Optional[list[int]] = Field(default_factory=list)
 
 
 class PartialSingleRelationModel(BaseValidationModel):
-    probability: Optional[int]
-    comment: Optional[str]
-    related_as: Optional[int]
+    probability: Optional[int] = None
+    comment: Optional[str] = None
+    related_as: Optional[int] = None
 
 
 class PartialBulletinRelationModel(BaseValidationModel):
@@ -133,18 +142,18 @@ class PartialAtoiModel(PartialManyRelationModel):
 
 
 class PartialEventModel(BaseValidationModel):
-    id: Optional[int]
-    title: Optional[str]
-    title_ar: Optional[str]
-    comments: Optional[str]
-    comments_ar: Optional[str]
-    location: Optional[PartialEventLocationModel]
-    eventtype: Optional[PartialEventtypeModel]
-    from_date: Optional[str]
-    to_date: Optional[str]
-    estimated: Optional[bool]
+    id: Optional[int] = None
+    title: Optional[str] = None
+    title_ar: Optional[str] = None
+    comments: Optional[str] = None
+    comments_ar: Optional[str] = None
+    location: Optional[PartialEventLocationModel] = None
+    eventtype: Optional[PartialEventtypeModel] = None
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
+    estimated: Optional[bool] = None
 
-    @validator("from_date", "to_date", pre=True, each_item=True)
+    @field_validator("from_date", "to_date")
     def validate_date(cls, v):
         """
         Validates the date fields.
@@ -162,78 +171,78 @@ class PartialEventModel(BaseValidationModel):
                 raise ValueError(f"Invalid date format: {v}")
         return v
 
-    @validator("to_date", pre=False)
-    def validate_to_date(cls, v, values):
+    @model_validator(mode="after")
+    def validate_to_date(self) -> "PartialEventModel":
         """
         Validates the to_date field.
 
         Returns:
-            str: The validated to_date value.
+            PartialEventModel: The validated model instance.
 
         Raises:
             ValueError: If the to_date is before the from_date.
         """
-        if values.get("from_date") and v:
-            from_date = parse(values["from_date"])
-            to_date = parse(v)
+        if self.from_date and self.to_date:
+            from_date = parse(self.from_date)
+            to_date = parse(self.to_date)
             if to_date < from_date:
                 raise ValueError("to_date must be after from_date")
-        return v
+        return self
 
 
 class PartialMediaCategoryModel(BaseValidationModel):
-    id: Optional[int]
+    id: Optional[int] = None
 
 
 class PartialMediaModel(BaseValidationModel):
-    id: Optional[int]
-    main: Optional[bool]
-    title: Optional[str]
-    title_ar: Optional[str]
-    fileType: Optional[str]
-    filename: Optional[str]
-    etag: Optional[str]
-    time: Optional[str]
-    category: Optional[PartialMediaCategoryModel]
+    id: Optional[int] = None
+    main: Optional[bool] = None
+    title: Optional[str] = None
+    title_ar: Optional[str] = None
+    fileType: Optional[str] = None
+    filename: Optional[str] = None
+    etag: Optional[str] = None
+    time: Optional[Any] = None
+    category: Optional[PartialMediaCategoryModel] = None
 
 
 class BulletinValidationModel(StrictValidationModel):
-    originid: Optional[str]
-    title: constr(min_length=1)  # type: ignore
-    sjac_title: Optional[str]
-    assigned_to: Optional[PartialUserModel]
-    first_peer_reviewer: Optional[PartialUserModel]
-    description: Optional[str] = sanitize()
-    comments: constr(min_length=1)  # type: ignore
-    source_link: constr(min_length=1)  # type: ignore
-    source_link_type: Optional[bool]
-    ref: Optional[List[str]] = []
-    locations: List[PartialLocationModel] = Field(default_factory=list)
-    geoLocations: List[PartialGeoLocationModel] = Field(default_factory=list)
-    sources: List[PartialSourceModel] = Field(default_factory=list)
-    labels: List[PartialLabelModel] = Field(default_factory=list)
-    verLabels: List[PartialLabelModel] = Field(default_factory=list)
-    events: List[PartialEventModel] = Field(default_factory=list)
-    medias: List[PartialMediaModel] = Field(default_factory=list)
-    bulletin_relations: List[PartialBtobModel] = Field(default_factory=list)
-    actor_relations: List[PartialBtoaModel] = Field(default_factory=list)
-    incident_relations: List[PartialBtoiModel] = Field(default_factory=list)
+    originid: Optional[str] = None
+    title: str = Field(min_length=1)
+    sjac_title: Optional[str] = None
+    assigned_to: Optional[PartialUserModel] = None
+    first_peer_reviewer: Optional[PartialUserModel] = None
+    description: Optional[SanitizedField] = None
+    comments: str = Field(min_length=1)
+    source_link: str = Field(min_length=1)
+    source_link_type: Optional[bool] = None
+    tags: Optional[list[str]] = Field(default_factory=list)
+    locations: list[PartialLocationModel] = Field(default_factory=list)
+    geoLocations: list[PartialGeoLocationModel] = Field(default_factory=list)
+    sources: list[PartialSourceModel] = Field(default_factory=list)
+    labels: list[PartialLabelModel] = Field(default_factory=list)
+    verLabels: list[PartialLabelModel] = Field(default_factory=list)
+    events: list[PartialEventModel] = Field(default_factory=list)
+    medias: list[PartialMediaModel] = Field(default_factory=list)
+    bulletin_relations: list[PartialBtobModel] = Field(default_factory=list)
+    actor_relations: list[PartialBtoaModel] = Field(default_factory=list)
+    incident_relations: list[PartialBtoiModel] = Field(default_factory=list)
 
-    publish_date: Optional[str]
-    documentation_date: Optional[str]
-    status: Optional[str]
+    publish_date: Optional[str] = None
+    documentation_date: Optional[str] = None
+    status: Optional[str] = None
 
-    roles: List[PartialRoleModel] = Field(default_factory=list)
+    roles: list[PartialRoleModel] = Field(default_factory=list)
 
-    id: Optional[int]
-    review: Optional[str] = sanitize()
-    review_action: Optional[str]
-    sjac_title_ar: Optional[str]
-    title_ar: Optional[str]
-    updated_at: Optional[str]
-    class_: Optional[str] = Field(None, alias="class")
+    id: Optional[int] = None
+    review: Optional[SanitizedField] = None
+    review_action: Optional[str] = None
+    sjac_title_ar: Optional[str] = None
+    title_ar: Optional[str] = None
+    updated_at: Optional[str] = None
+    class_: Optional[str] = Field(default=None, alias="class")
 
-    @validator("source_link", pre=True)
+    @field_validator("source_link", mode="before")
     def validate_source_link(cls: t, v: str) -> str:
         """
         Validates the source_link field.
@@ -242,18 +251,24 @@ class BulletinValidationModel(StrictValidationModel):
             - v: The value of the source_link field.
 
         Raises:
-            - ValueError: If the source_link is not a valid URL or 'NA'.
+            - ValueError: If the source_link is not a valid URL, a valid file path, or 'NA'.
 
         Returns:
             - The validated source_link value.
         """
         if v and v != "NA":
             parsed_url = urlparse(v)
-            if not all([parsed_url.scheme, parsed_url.netloc]):
-                raise ValueError("source_link must be a valid URL or 'NA'")
+            is_valid_url = all([parsed_url.scheme, parsed_url.netloc])
+
+            unix_pattern = r"^(/[^/\0]+)+/?$"
+
+            is_valid_path = re.match(unix_pattern, v) is not None
+
+            if not is_valid_url and not is_valid_path:
+                raise ValueError("source_link must be a valid URL, a valid file path, or 'NA'")
         return v
 
-    @validator("publish_date", "documentation_date", pre=True, each_item=True)
+    @field_validator("publish_date", "documentation_date", mode="before")
     def validate_date(cls, v):
         """
         Validates the date fields.
@@ -285,64 +300,59 @@ class PartialClaimedViolationModel(BaseValidationModel):
 
 
 class IncidentValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_ar: Optional[str]
-    description: Optional[str] = sanitize()
-    labels: List[PartialLabelModel] = Field(default_factory=list)
-    locations: List[PartialLocationModel] = Field(default_factory=list)
-    potential_violations: List[PartialPotentialViolationModel] = Field(default_factory=list)
-    claimed_violations: List[PartialClaimedViolationModel] = Field(default_factory=list)
-    events: List[PartialEventModel] = Field(default_factory=list)
-    check_ar: Optional[bool]
-    check_ir: Optional[Any]
-    check_br: Optional[Any]
-    actor_relations: List[PartialItoaModel] = Field(default_factory=list)
-    bulletin_relations: List[PartialItobModel] = Field(default_factory=list)
-    incident_relations: List[PartialItoiModel] = Field(default_factory=list)
-    comments: constr(min_length=1)  # type: ignore
-    status: Optional[str]
+    title: str = Field(min_length=1)
+    title_ar: Optional[str] = None
+    description: Optional[SanitizedField] = None
+    labels: list[PartialLabelModel] = Field(default_factory=list)
+    locations: list[PartialLocationModel] = Field(default_factory=list)
+    potential_violations: list[PartialPotentialViolationModel] = Field(default_factory=list)
+    claimed_violations: list[PartialClaimedViolationModel] = Field(default_factory=list)
+    events: list[PartialEventModel] = Field(default_factory=list)
+    check_ar: Optional[bool] = None
+    check_ir: Optional[Any] = None
+    check_br: Optional[Any] = None
+    actor_relations: list[PartialItoaModel] = Field(default_factory=list)
+    bulletin_relations: list[PartialItobModel] = Field(default_factory=list)
+    incident_relations: list[PartialItoiModel] = Field(default_factory=list)
+    comments: str = Field(min_length=1)
+    status: Optional[str] = None
 
     # Below fields are sent by the front-end, dismissed by `from_json`
-    documentation_date: Optional[str]
-    publish_date: Optional[str]
-    assigned_to: Optional[PartialUserModel]
-    first_peer_reviewer: Optional[PartialUserModel]
-    id: Optional[int]
-    class_: Optional[str] = Field(alias="class")
-    review: Optional[str] = sanitize()
-    review_action: Optional[str]
-    updated_at: Optional[str]
-    roles: List[PartialRoleModel] = Field(default_factory=list)
+    documentation_date: Optional[str] = None
+    publish_date: Optional[str] = None
+    assigned_to: Optional[PartialUserModel] = None
+    first_peer_reviewer: Optional[PartialUserModel] = None
+    id: Optional[int] = None
+    class_: Optional[str] = Field(alias="class", default=None)
+    review: Optional[SanitizedField] = None
+    review_action: Optional[str] = None
+    updated_at: Optional[str] = None
+    roles: list[PartialRoleModel] = Field(default_factory=list)
 
-    @validator("actor_relations", pre=False, always=False)
-    def check_actor_relations(cls: t, v: list, values: dict, **kwargs) -> list:
+    @field_validator("actor_relations")
+    @classmethod
+    def check_actor_relations(cls, v: list, info: ValidationInfo) -> list:
         """
         Check the validity of actor_relations field.
 
-        This validator checks if the actor_relations field is provided without the check_ar field.
-        If the actor_relations field is empty, it returns an empty list.
-        If the actor_relations field is not empty and the check_ar field is not present in the values dictionary, it raises a ValueError.
-
         Args:
-        - v: The value of the actor_relations field.
-        - values: The values dictionary containing the other fields up to this validation call.
-        - kwargs: Additional keyword arguments.
-
-        Returns:
-        - The value of the actor_relations field if it is valid.
+            v: The value of the actor_relations field
+            info: ValidationInfo containing the model's data during validation
 
         Raises:
-        - ValueError: If the actor_relations field is provided without the check_ar field.
+            ValueError: If actor_relations provided without check_ar
 
+        Returns:
+            The validated actor_relations list
         """
         if not len(v):
             return []
-        if (v and len(v)) and "check_ar" not in values:
+        if (v and len(v)) and "check_ar" not in info.data:
             raise ValueError("actor_relations provided without check_ar")
         return v
 
-    @validator("bulletin_relations", always=False, pre=False)
-    def check_bulletin_relations(cls: t, v: list, values: dict, **kwargs) -> list:
+    @field_validator("bulletin_relations")
+    def check_bulletin_relations(cls: t, v: list, info: ValidationInfo) -> list:
         """
         Check the validity of bulletin_relations field.
 
@@ -364,12 +374,12 @@ class IncidentValidationModel(StrictValidationModel):
         """
         if not len(v):
             return []
-        if (v and len(v)) and "check_br" not in values:
+        if (v and len(v)) and "check_br" not in info.data:
             raise ValueError("bulletin_relations provided without check_br")
         return v
 
-    @validator("incident_relations", always=True)
-    def check_incident_relations(cls: t, v: list, values: dict, **kwargs) -> list:
+    @field_validator("incident_relations")
+    def check_incident_relations(cls: t, v: list, info: ValidationInfo) -> list:
         """
         Check the validity of incident_relations field.
 
@@ -390,11 +400,11 @@ class IncidentValidationModel(StrictValidationModel):
         """
         if not len(v):
             return []
-        if (v and len(v)) and "check_ir" not in values:
+        if (v and len(v)) and "check_ir" not in info.data:
             raise ValueError("incident_relations provided without check_ir")
         return v
 
-    @validator("publish_date", "documentation_date", pre=True, each_item=True)
+    @field_validator("publish_date", "documentation_date")
     def validate_date(cls, v):
         """
         Validates the date fields.
@@ -430,14 +440,14 @@ class PartialDialectModel(BaseValidationModel):
 
 
 class PartialOriginPlaceModel(BaseValidationModel):
-    id: Optional[int]
+    id: Optional[int] = None
 
 
 class OptsModel(BaseValidationModel):
-    opts: Optional[str]
-    details: Optional[str]
+    opts: Optional[str] = None
+    details: Optional[str] = None
 
-    @validator("opts", pre=True, each_item=False)
+    @field_validator("opts")
     def validate_opts(cls, v):
         """
         Validates the opts field.
@@ -455,10 +465,10 @@ class OptsModel(BaseValidationModel):
 
 
 class SkinMarkingsModel(BaseValidationModel):
-    opts: Optional[List[str]] = Field(default_factory=list)
-    details: Optional[str]
+    opts: Optional[list[str]] = Field(default_factory=list)
+    details: Optional[str] = None
 
-    @validator("opts", pre=True, each_item=False)
+    @field_validator("opts")
     def validate_opts(cls, v):
         """
         Validates the opts field.
@@ -478,86 +488,87 @@ class SkinMarkingsModel(BaseValidationModel):
 
 
 class ReporterModel(BaseValidationModel):
-    name: Optional[str]
-    contact: Optional[str]
-    relationship: Optional[str]
+    name: Optional[str] = None
+    contact: Optional[str] = None
+    relationship: Optional[str] = None
 
 
 class PartialActorProfileModel(BaseValidationModel):
-    id: Optional[int]
-    actor_id: Optional[int]
+    id: Optional[int] = None
+    actor_id: Optional[int] = None
     mode: int = 1
-    originid: Optional[str]
-    description: Optional[str] = sanitize()
+    originid: Optional[str] = None
+    description: Optional[SanitizedField] = None
     source_link: Optional[str] = DEFAULT_STRING_FIELD
-    source_link_type: Optional[bool]
-    publish_date: Optional[str]
-    documentation_date: Optional[str]
-    sources: List[PartialSourceModel] = Field(default_factory=list)
-    labels: List[PartialLabelModel] = Field(default_factory=list)
-    ver_labels: List[PartialLabelModel] = Field(default_factory=list)
+    source_link_type: Optional[bool] = None
+    publish_date: Optional[str] = None
+    documentation_date: Optional[str] = None
+    sources: list[PartialSourceModel] = Field(default_factory=list)
+    labels: list[PartialLabelModel] = Field(default_factory=list)
+    ver_labels: list[PartialLabelModel] = Field(default_factory=list)
     # Fields below are required if mode==3
-    last_address: Optional[str]
-    marriage_history: Optional[str]
-    pregnant_at_disappearance: Optional[str]
-    months_pregnant: Optional[int]
-    missing_relatives: Optional[bool]
-    saw_name: Optional[str]
-    saw_address: Optional[str]
-    saw_email: Optional[str]
-    saw_phone: Optional[str]
-    seen_in_detention: Optional[OptsModel]
-    eye_color: Optional[str]
-    injured: Optional[OptsModel]
-    known_dead: Optional[OptsModel]
-    death_details: Optional[str]
-    personal_items: Optional[str]
-    height: Optional[int]
-    weight: Optional[int]
-    physique: Optional[str]
-    hair_loss: Optional[str]
-    hair_type: Optional[str]
-    hair_length: Optional[str]
-    hair_color: Optional[str]
-    facial_hair: Optional[str]
-    posture: Optional[str]
-    skin_markings: Optional[SkinMarkingsModel]
-    handedness: Optional[str]
-    glasses: Optional[str]
-    dist_char_con: Optional[str]
-    dist_char_acq: Optional[str]
-    physical_habits: Optional[str]
-    other: Optional[str]
-    phys_name_contact: Optional[str]
-    injuries: Optional[str]
-    implants: Optional[str]
-    malforms: Optional[str]
-    pain: Optional[str]
-    other_conditions: Optional[str]
-    accidents: Optional[str]
-    pres_drugs: Optional[str]
-    smoker: Optional[str]
-    dental_record: Optional[bool]
-    dentist_info: Optional[str]
-    teeth_features: Optional[str]
-    dental_problems: Optional[str]
-    dental_treatments: Optional[str]
-    dental_habits: Optional[str]
-    case_status: Optional[str]
-    reporters: Optional[List[ReporterModel]] = Field(default_factory=list)
-    identified_by: Optional[str]
-    family_notified: Optional[bool]
-    hypothesis_based: Optional[str]
-    hypothesis_status: Optional[str]
-    reburial_location: Optional[str]
+    last_address: Optional[str] = None
+    marriage_history: Optional[str] = None
+    pregnant_at_disappearance: Optional[str] = None
+    months_pregnant: Optional[int] = None
+    missing_relatives: Optional[bool] = None
+    saw_name: Optional[str] = None
+    saw_address: Optional[str] = None
+    saw_email: Optional[str] = None
+    saw_phone: Optional[str] = None
+    seen_in_detention: Optional[OptsModel] = None
+    eye_color: Optional[str] = None
+    injured: Optional[OptsModel] = None
+    known_dead: Optional[OptsModel] = None
+    death_details: Optional[str] = None
+    personal_items: Optional[str] = None
+    height: Optional[int] = None
+    weight: Optional[int] = None
+    physique: Optional[str] = None
+    hair_loss: Optional[str] = None
+    hair_type: Optional[str] = None
+    hair_length: Optional[str] = None
+    hair_color: Optional[str] = None
+    facial_hair: Optional[str] = None
+    posture: Optional[str] = None
+    skin_markings: Optional[SkinMarkingsModel] = None
+    handedness: Optional[str] = None
+    glasses: Optional[str] = None
+    dist_char_con: Optional[str] = None
+    dist_char_acq: Optional[str] = None
+    physical_habits: Optional[str] = None
+    other: Optional[str] = None
+    phys_name_contact: Optional[str] = None
+    injuries: Optional[str] = None
+    implants: Optional[str] = None
+    malforms: Optional[str] = None
+    pain: Optional[str] = None
+    other_conditions: Optional[str] = None
+    accidents: Optional[str] = None
+    pres_drugs: Optional[str] = None
+    smoker: Optional[str] = None
+    dental_record: Optional[bool] = None
+    dentist_info: Optional[str] = None
+    teeth_features: Optional[str] = None
+    dental_problems: Optional[str] = None
+    dental_treatments: Optional[str] = None
+    dental_habits: Optional[str] = None
+    case_status: Optional[str] = None
+    reporters: Optional[list[ReporterModel]] = Field(default_factory=list)
+    identified_by: Optional[str] = None
+    family_notified: Optional[bool] = None
+    hypothesis_based: Optional[str] = None
+    hypothesis_status: Optional[str] = None
+    reburial_location: Optional[str] = None
 
-    def validate_opts(v, valid_opts):
+    @classmethod
+    def validate_opts(cls, v, valid_opts):
         if v and len(v):
             if not v.lower() in [x.lower() for x in valid_opts]:
                 raise ValueError(f"Invalid value for opts")
         return v
 
-    @validator("publish_date", "documentation_date", pre=True, each_item=True)
+    @field_validator("publish_date", "documentation_date")
     def validate_date(cls, v):
         """
         Validates the date fields.
@@ -575,8 +586,20 @@ class PartialActorProfileModel(BaseValidationModel):
                 raise ValueError(f"Invalid date format: {v}")
         return v
 
-    @validator("*", pre=False)
-    def validate_all_opts(cls, v, values, field):
+    @field_validator(
+        "pregnant_at_disappearance",
+        "smoker",
+        "handedness",
+        "hair_length",
+        "hair_type",
+        "hair_color",
+        "hair_loss",
+        "facial_hair",
+        "physique",
+        "case_status",
+    )
+    @classmethod
+    def validate_all_opts(cls, v: Any, info: ValidationInfo) -> Any:
         opts_fields = {
             "pregnant_at_disappearance": Constants.PREGNANT_AT_DISAPPEARANCE_OPTS,
             "smoker": Constants.SMOKER_OPTS,
@@ -589,11 +612,12 @@ class PartialActorProfileModel(BaseValidationModel):
             "physique": Constants.PHYSIQUE_OPTS,
             "case_status": Constants.CASE_STATUS_OPTS,
         }
-        if field.name in opts_fields:
+        field_name = info.field_name
+        if field_name in opts_fields:
             try:
-                return PartialActorProfileModel.validate_opts(v, opts_fields[field.name])
+                return PartialActorProfileModel.validate_opts(v, opts_fields[field_name])
             except ValueError as e:
-                raise ValueError(f"{e}: {field.name}")
+                raise ValueError(f"{e}: {field_name}")
         return v
 
 
@@ -619,41 +643,50 @@ class ActorValidationModel(StrictValidationModel):
     position: Optional[str] = DEFAULT_STRING_FIELD
     position_ar: Optional[str] = DEFAULT_STRING_FIELD
     family_status: Optional[str] = DEFAULT_STRING_FIELD
-    no_children: Optional[str] = DEFAULT_STRING_FIELD
-    ethnographies: List[PartialEthnographyModel] = Field(default_factory=list)
-    nationalities: List[PartialNationalityModel] = Field(default_factory=list)
-    dialects: List[PartialDialectModel] = Field(default_factory=list)
+    no_children: Optional[int] = None
+    ethnographies: list[PartialEthnographyModel] = Field(default_factory=list)
+    nationalities: list[PartialNationalityModel] = Field(default_factory=list)
+    dialects: list[PartialDialectModel] = Field(default_factory=list)
     nickname: Optional[str] = DEFAULT_STRING_FIELD
     nickname_ar: Optional[str] = DEFAULT_STRING_FIELD
     id_number: Optional[str] = DEFAULT_STRING_FIELD
-    origin_place: Optional[PartialOriginPlaceModel]
-    events: List[PartialEventModel] = Field(default_factory=list)
-    medias: List[PartialMediaModel] = Field(default_factory=list)
-    actor_relations: List[PartialAtoaModel] = Field(default_factory=list)
-    bulletin_relations: List[PartialAtobModel] = Field(default_factory=list)
-    incident_relations: List[PartialAtoiModel] = Field(default_factory=list)
-    comments: constr(min_length=1)  # type: ignore
+    origin_place: Optional[PartialOriginPlaceModel] = None
+    events: list[PartialEventModel] = Field(default_factory=list)
+    medias: list[PartialMediaModel] = Field(default_factory=list)
+    actor_relations: list[PartialAtoaModel] = Field(default_factory=list)
+    bulletin_relations: list[PartialAtobModel] = Field(default_factory=list)
+    incident_relations: list[PartialAtoiModel] = Field(default_factory=list)
+    comments: str = Field(min_length=1)  # type: ignore
     status: Optional[str] = DEFAULT_STRING_FIELD
-    actor_profiles: List[PartialActorProfileModel] = Field(default_factory=list)
+    actor_profiles: list[PartialActorProfileModel] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
     # Below fields are sent by the frontend, but are not used by the from_json method
-    description: Optional[str] = sanitize()
-    updated_at: Optional[str]
-    documentation_date: Optional[str]
-    publish_date: Optional[str]
+    description: Optional[SanitizedField] = None
+    updated_at: Optional[str] = None
+    documentation_date: Optional[str] = None
+    publish_date: Optional[str] = None
     roles: list[PartialRoleModel] = Field(default_factory=list)
-    age_: Optional[str] = Field(alias="_age")
-    civilian_: Optional[str] = Field(alias="_civilian")
-    sex_: Optional[str] = Field(alias="_sex")
-    type_: Optional[str] = Field(alias="_type")
-    assigned_to: Optional[PartialUserModel]
-    class_: Optional[str] = Field(alias="class")
-    first_peer_reviewer: Optional[PartialUserModel]
-    id: Optional[str]
-    review: Optional[str] = sanitize()
-    review_action: Optional[str]
+    age_: Optional[str] = Field(default=None, alias="_age")
+    civilian_: Optional[str] = Field(default=None, alias="_civilian")
+    sex_: Optional[str] = Field(default=None, alias="_sex")
+    type_: Optional[str] = Field(default=None, alias="_type")
+    assigned_to: Optional[PartialUserModel] = None
+    class_: Optional[str] = Field(default=None, alias="class")
+    first_peer_reviewer: Optional[PartialUserModel] = None
+    id: Optional[int] = None
+    review: Optional[SanitizedField] = None
+    review_action: Optional[str] = None
 
-    @validator("actor_profiles", always=True, pre=False)
+    @field_validator("no_children")
+    def validate_no_children(cls, v):
+        if v is not None and v < 0:
+            raise ValueError("Number of children must be a non-negative integer")
+        elif v is not None and v > 1000:
+            raise ValueError("Number of children must be less than 1000")
+        return v
+
+    @field_validator("actor_profiles")
     def check_actor_profiles(cls: t, v: list) -> list:
         """
         Validator function to check if at least one actor profile is provided.
@@ -672,39 +705,32 @@ class ActorValidationModel(StrictValidationModel):
             raise ValueError("At least one actor profile must be provided")
         return v
 
-    @root_validator(pre=False)
-    def check_name_rules(cls: t, values: dict) -> dict:
+    @model_validator(mode="after")
+    def check_name_rules(self) -> "ActorValidationModel":
         """
         Validates the name rules based on the type of entity.
-
-        Args:
-            - values: The input values to be validated.
 
         Raises:
             - ValueError: If the type is 'entity' and neither name nor name_ar is provided.
             - ValueError: If the type is 'person' and neither first_name, middle_name, last_name nor first_name_ar, middle_name_ar, last_name_ar is provided.
 
         Returns:
-            - The validated values.
+            - The validated model instance.
         """
         # If type is 'entity' either name or name_ar must be provided
-        if values.get("type").lower() == "entity":
-            if not values.get("name") and not values.get("name_ar"):
+        if self.type.lower() == "entity":
+            if not self.name and not self.name_ar:
                 raise ValueError("Either name or name_ar must be provided for entity type")
         else:
-            if not (
-                values.get("first_name") or values.get("middle_name") or values.get("last_name")
-            ) and not (
-                values.get("first_name_ar")
-                or values.get("middle_name_ar")
-                or values.get("last_name_ar")
+            if not (self.first_name or self.middle_name or self.last_name) and not (
+                self.first_name_ar or self.middle_name_ar or self.last_name_ar
             ):
                 raise ValueError(
                     "At least one of first_name, middle_name, last_name or first_name_ar, middle_name_ar, last_name_ar must be provided for person type"
                 )
-        return values
+        return self
 
-    @validator("publish_date", "documentation_date", pre=True, each_item=True)
+    @field_validator("publish_date", "documentation_date")
     def validate_date(cls, v):
         """
         Validates the date fields.
@@ -728,10 +754,10 @@ class ActorRequestModel(BaseValidationModel):
 
 
 class LabelValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_ar: Optional[str]
-    comments: Optional[str]
-    comments_ar: Optional[str]
+    title: str = Field(min_length=1)
+    title_ar: Optional[str] = None
+    comments: Optional[str] = None
+    comments_ar: Optional[str] = None
     verified: Optional[bool] = False
     for_bulletin: Optional[bool] = False
     for_actor: Optional[bool] = False
@@ -739,9 +765,9 @@ class LabelValidationModel(StrictValidationModel):
     for_offline: Optional[bool] = False
     parent: Optional[PartialLabelModel] = None
     # below fields are sent by the frontend, discarded by from_json
-    id: Optional[int]
-    order: Optional[int]
-    updated_at: Optional[str]
+    id: Optional[int] = None
+    order: Optional[int] = None
+    updated_at: Optional[str] = None
 
 
 class LabelRequestModel(BaseValidationModel):
@@ -749,14 +775,14 @@ class LabelRequestModel(BaseValidationModel):
 
 
 class EventtypeValidationModel(one_must_exist(["title", "title_ar"])):
-    title: Optional[str]
-    title_ar: Optional[str]
-    for_actor: Optional[bool]
-    for_bulletin: Optional[bool]
-    comments: Optional[str]
+    title: Optional[str] = None
+    title_ar: Optional[str] = None
+    for_actor: Optional[bool] = None
+    for_bulletin: Optional[bool] = None
+    comments: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
-    id: Optional[int]
-    updated_at: Optional[str]
+    id: Optional[int] = None
+    updated_at: Optional[str] = None
 
 
 class EventtypeRequestModel(BaseValidationModel):
@@ -764,11 +790,12 @@ class EventtypeRequestModel(BaseValidationModel):
 
 
 class PotentialViolationValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
-    title_ar: Optional[str]
-    id: Optional[int]
-    updated_at: Optional[str]
+    title_ar: Optional[str] = None
+    id: Optional[int] = None
+    updated_at: Optional[str] = None
 
 
 class PotentialViolationRequestModel(BaseValidationModel):
@@ -776,11 +803,12 @@ class PotentialViolationRequestModel(BaseValidationModel):
 
 
 class ClaimedViolationValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
-    title_ar: Optional[str]
-    id: Optional[int]
-    updated_at: Optional[str]
+    title_ar: Optional[str] = None
+    id: Optional[int] = None
+    updated_at: Optional[str] = None
 
 
 class ClaimedViolationRequestModel(BaseValidationModel):
@@ -788,15 +816,15 @@ class ClaimedViolationRequestModel(BaseValidationModel):
 
 
 class SourceValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_ar: Optional[str]
-    comments: Optional[str]
-    comments_ar: Optional[str]
-    parent: Optional[PartialSourceModel]
+    title: str = Field(min_length=1)
+    title_ar: Optional[str] = None
+    comments: Optional[str] = None
+    comments_ar: Optional[str] = None
+    parent: Optional[PartialSourceModel] = None
     # sent by the front-end on PUT, but not used by the from_json method
-    id: Optional[int]
-    updated_at: Optional[str]
-    etl_id: Optional[str]
+    id: Optional[int] = None
+    updated_at: Optional[str] = None
+    etl_id: Optional[str] = None
 
 
 class SourceRequestModel(BaseValidationModel):
@@ -806,7 +834,7 @@ class SourceRequestModel(BaseValidationModel):
 class AdminLevelModel(BaseValidationModel):
     id: int
     code: int
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
 
 
 class LatLngModel(BaseValidationModel):
@@ -816,41 +844,42 @@ class LatLngModel(BaseValidationModel):
 
 class LocationTypeModel(BaseValidationModel):
     id: int
-    title: constr(min_length=1)  # type: ignore
-    description: Optional[str] = sanitize()
+    title: str = Field(min_length=1)
+    description: Optional[SanitizedField] = None
 
 
 class LocationValidationModel(one_must_exist(["title", "title_ar"])):
-    title: Optional[str]
-    title_ar: Optional[str]
-    description: Optional[str] = sanitize()
-    parent: Optional[PartialLocationModel]  # type: ignore
-    country: Optional[dict]
-    postal_code: Optional[str]
-    latlng: Optional[LatLngModel]
-    location_type: Optional[LocationTypeModel]
-    admin_level: Optional[
-        AdminLevelModel | str
-    ]  # if the location_type is POI, front end sends an empty str for admin_level
+    title: Optional[str] = None
+    title_ar: Optional[str] = None
+    description: Optional[SanitizedField] = None
+    parent: Optional[PartialLocationModel] = None
+    country: Optional[dict] = None
+    postal_code: Optional[str] = None
+    latlng: Optional[LatLngModel] = None
+    location_type: Optional[LocationTypeModel] = None
+    admin_level: Optional[AdminLevelModel | str] = (
+        None  # if the location_type is POI, front end sends an empty str for admin_level
+    )
 
     # sent by the front-end on PUT, but not used by the from_json method
-    id: Optional[int]
-    updated_at: Optional[str]
-    tags: Optional[List[str]] = Field(default_factory=list)
-    lat: Optional[float]
-    lng: Optional[float]
-    full_location: Optional[str]
-    full_string: Optional[str]
-    ctitle: Optional[str]
+    id: Optional[int] = None
+    updated_at: Optional[str] = None
+    tags: Optional[list[str]] = Field(default_factory=list)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    full_location: Optional[str] = None
+    full_string: Optional[str] = None
+    ctitle: Optional[str] = None
 
-    @validator("admin_level", always=True, pre=False)
-    def check_admin_level(cls: t, v: Any, values: dict) -> Any:
+    @field_validator("admin_level")
+    @classmethod
+    def check_admin_level(cls, v: Any, info: ValidationInfo) -> Any:
         """
         Validates the 'admin_level' field if location_type is AdminLevel.
 
         Args:
             - v: The value of the 'admin_level' field.
-            - values: The dictionary of values for the model up to this validation call.
+            - info: ValidationInfo object containing the current fields being validated.
 
         Raises:
             - ValueError: If 'admin_level' is not a valid AdminLevelModel or if it is not provided.
@@ -858,10 +887,8 @@ class LocationValidationModel(one_must_exist(["title", "title_ar"])):
         Returns:
             - The validated value of 'admin_level'.
         """
-        if (
-            values.get("location_type")
-            and values["location_type"].title == "Administrative Location"
-        ):
+        location_type = info.data.get("location_type")
+        if location_type and location_type.title == "Administrative Location":
             if isinstance(v, str):
                 raise ValueError("admin_level must be a valid AdminLevelModel, not str")
             if v is None:
@@ -869,7 +896,7 @@ class LocationValidationModel(one_must_exist(["title", "title_ar"])):
         return v
 
 
-LocationValidationModel.update_forward_refs()
+LocationValidationModel.model_rebuild()
 
 
 class LocationRequestModel(BaseValidationModel):
@@ -894,20 +921,20 @@ class PartialCountryModel(BaseValidationModel):
 
 
 class LocationQueryValidationModel(StrictValidationModel):
-    lvl: Optional[int]
-    title: Optional[str]
-    tsv: Optional[str]
-    latlng: Optional[LatLngRadiusModel]
-    location_type: Optional[PartialLocationTypeModel]
-    admin_level: Optional[PartialAdminLevelModel]
-    country: Optional[PartialCountryModel]
-    tags: Optional[str]
-    optags: Optional[bool]
+    lvl: Optional[int] = None
+    title: Optional[str] = None
+    tsv: Optional[str] = None
+    latlng: Optional[LatLngRadiusModel] = None
+    location_type: Optional[PartialLocationTypeModel] = None
+    admin_level: Optional[PartialAdminLevelModel] = None
+    country: Optional[PartialCountryModel] = None
+    tags: Optional[str] = None
+    optags: Optional[bool] = None
 
 
 class OptionsModel(BaseValidationModel):
-    page: Optional[int]
-    itemsPerPage: Optional[int]
+    page: Optional[int] = None
+    itemsPerPage: Optional[int] = None
 
 
 class LocationQueryRequestModel(BaseValidationModel):
@@ -916,9 +943,14 @@ class LocationQueryRequestModel(BaseValidationModel):
 
 
 class LocationAdminLevelValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     code: int
-    id: Optional[int]
+    display_order: Optional[int] = None
+    id: Optional[int] = None
+
+
+class LocationAdminLevelReorderRequestModel(BaseValidationModel):
+    order: list[int]
 
 
 class LocationAdminLevelRequestModel(BaseValidationModel):
@@ -926,10 +958,10 @@ class LocationAdminLevelRequestModel(BaseValidationModel):
 
 
 class LocationTypeValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     # sent by the front-end on PUT, but not used by the from_json method
-    id: Optional[int]
-    description: Optional[str] = sanitize()
+    id: Optional[int] = None
+    description: Optional[SanitizedField] = None
 
 
 class LocationTypeRequestModel(BaseValidationModel):
@@ -937,12 +969,12 @@ class LocationTypeRequestModel(BaseValidationModel):
 
 
 class CountryValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
-    id: Optional[int]
-    created_at: Optional[str]
-    updated_at: Optional[str]
+    id: Optional[int] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class CountryRequestModel(BaseValidationModel):
@@ -950,12 +982,12 @@ class CountryRequestModel(BaseValidationModel):
 
 
 class ComponentDataMixinValidationModel(BaseValidationModel):
-    id: Optional[int]
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
-    created_at: Optional[str]
-    updated_at: Optional[str]
-    deleted: Optional[bool]
+    id: Optional[int] = None
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    deleted: Optional[bool] = None
 
 
 class ComponentDataMixinRequestModel(BaseValidationModel):
@@ -963,11 +995,11 @@ class ComponentDataMixinRequestModel(BaseValidationModel):
 
 
 class AtoaInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    reverse_title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
-    reverse_title_tr: Optional[str]
-    id: Optional[int]
+    title: str = Field(min_length=1)
+    reverse_title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    reverse_title_tr: Optional[str] = None
+    id: Optional[int] = None
 
 
 class AtoaInfoRequestModel(BaseValidationModel):
@@ -975,11 +1007,11 @@ class AtoaInfoRequestModel(BaseValidationModel):
 
 
 class AtobInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
-    id: Optional[int]
-    reverse_title: Optional[str]
-    reverse_title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    id: Optional[int] = None
+    reverse_title: Optional[str] = None
+    reverse_title_tr: Optional[str] = None
 
 
 class AtobInfoRequestModel(BaseValidationModel):
@@ -987,11 +1019,11 @@ class AtobInfoRequestModel(BaseValidationModel):
 
 
 class BtobInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
-    id: Optional[int]
-    reverse_title: Optional[str]
-    reverse_title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    id: Optional[int] = None
+    reverse_title: Optional[str] = None
+    reverse_title_tr: Optional[str] = None
 
 
 class BtobInfoRequestModel(BaseValidationModel):
@@ -999,11 +1031,11 @@ class BtobInfoRequestModel(BaseValidationModel):
 
 
 class ItoaInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
-    id: Optional[int]
-    reverse_title: Optional[str]
-    reverse_title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    id: Optional[int] = None
+    reverse_title: Optional[str] = None
+    reverse_title_tr: Optional[str] = None
 
 
 class ItoaInfoRequestModel(BaseValidationModel):
@@ -1011,11 +1043,11 @@ class ItoaInfoRequestModel(BaseValidationModel):
 
 
 class ItobInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
-    id: Optional[int]
-    reverse_title: Optional[str]
-    reverse_title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    id: Optional[int] = None
+    reverse_title: Optional[str] = None
+    reverse_title_tr: Optional[str] = None
 
 
 class ItobInfoRequestModel(BaseValidationModel):
@@ -1023,11 +1055,11 @@ class ItobInfoRequestModel(BaseValidationModel):
 
 
 class ItoiInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
-    id: Optional[int]
-    reverse_title: Optional[str]
-    reverse_title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
+    id: Optional[int] = None
+    reverse_title: Optional[str] = None
+    reverse_title_tr: Optional[str] = None
 
 
 class ItoiInfoRequestModel(BaseValidationModel):
@@ -1035,12 +1067,12 @@ class ItoiInfoRequestModel(BaseValidationModel):
 
 
 class MediaCategoryValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
-    id: Optional[int]
-    created_at: Optional[str]
-    updated_at: Optional[str]
+    id: Optional[int] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class MediaCategoryRequestModel(BaseValidationModel):
@@ -1048,12 +1080,12 @@ class MediaCategoryRequestModel(BaseValidationModel):
 
 
 class GeoLocationTypeValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    title_tr: Optional[str]
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
-    id: Optional[int]
-    created_at: Optional[str]
-    updated_at: Optional[str]
+    id: Optional[int] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class GeoLocationTypeRequestModel(BaseValidationModel):
@@ -1065,69 +1097,80 @@ class PartialEventTypeModel(BaseValidationModel):
 
 
 class QueryBaseModel(StrictValidationModel):
-    tsv: Optional[str]
-    extsv: Optional[str]
-    labels: Optional[List[PartialLabelModel]]
-    oplabels: Optional[bool]
-    exlabels: Optional[List[PartialLabelModel]]
-    opvlabels: Optional[bool]
-    vlabels: Optional[List[PartialLabelModel]]
-    exvlabels: Optional[List[PartialLabelModel]]
-    opsources: Optional[bool]
-    sources: Optional[List[PartialSourceModel]]
-    exsources: Optional[List[PartialSourceModel]]
-    locations: Optional[List[PartialLocationModel]]
-    oplocations: Optional[bool]
-    exlocations: Optional[List[PartialLocationModel]]
-    created: Optional[List[str]]
-    updated: Optional[List[str]]
-    docdate: Optional[List[str]]
-    pubdate: Optional[List[str]]
-    singleEvent: Optional[bool]
-    edate: Optional[List[str]]
-    etype: Optional[PartialEventTypeModel]
-    elocation: Optional[PartialLocationModel]
-    roles: Optional[List[int]]
-    norole: Optional[bool]
-    assigned: Optional[List[int]]
-    fpr: Optional[List[int]] = Field(default_factory=list)
-    unassigned: Optional[bool]
-    reviewer: Optional[List[int]]
-    statuses: Optional[List[str]]
-    reviewAction: Optional[str]
-    rel_to_bulletin: Optional[int]
-    rel_to_actor: Optional[int]
-    rel_to_incident: Optional[int]
+    tsv: Optional[str] = None
+    extsv: Optional[str] = None
+    labels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
+    oplabels: Optional[bool] = None
+    exlabels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
+    opvlabels: Optional[bool] = None
+    vlabels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
+    exvlabels: Optional[list[PartialLabelModel]] = Field(default_factory=list)
+    opsources: Optional[bool] = None
+    sources: Optional[list[PartialSourceModel]] = Field(default_factory=list)
+    exsources: Optional[list[PartialSourceModel]] = Field(default_factory=list)
+    locations: Optional[list[PartialLocationModel]] = Field(default_factory=list)
+    oplocations: Optional[bool] = None
+    exlocations: Optional[list[PartialLocationModel]] = Field(default_factory=list)
+    created: Optional[list[str]] = Field(default_factory=list)
+    updated: Optional[list[str]] = Field(default_factory=list)
+    docdate: Optional[list[str]] = Field(default_factory=list)
+    pubdate: Optional[list[str]] = Field(default_factory=list)
+    singleEvent: Optional[bool] = None
+    edate: Optional[list[str]] = Field(default_factory=list)
+    etype: Optional[PartialEventTypeModel] = None
+    elocation: Optional[PartialLocationModel] = None
+    roles: Optional[list[int]] = Field(default_factory=list)
+    norole: Optional[bool] = None
+    assigned: Optional[list[int]] = Field(default_factory=list)
+    fpr: Optional[list[int]] = Field(default_factory=list)
+    unassigned: Optional[bool] = None
+    reviewer: Optional[list[int]] = Field(default_factory=list)
+    statuses: Optional[list[str]] = Field(default_factory=list)
+    reviewAction: Optional[str] = None
+    rel_to_bulletin: Optional[int] = None
+    rel_to_actor: Optional[int] = None
+    rel_to_incident: Optional[int] = None
 
-    @root_validator(pre=True)
-    def check_legacy_fields(cls, values):
+    @model_validator(mode="before")
+    @classmethod
+    def check_legacy_fields(cls, data: dict) -> dict:
         """
         Checks the legacy date and status fields, throws an error if they are present.
+
+        Args:
+            data: The input data dictionary to be validated.
+
+        Raises:
+            ValueError: If any of the legacy fields are present in the input data.
+
+        Returns:
+            The validated data dictionary.
         """
         old_fields = ["createdwithin", "updatedwithin", "docdatewithin", "pubdatewithin", "status"]
         for field in old_fields:
-            if field in values:
+            if field in data:
                 raise ValueError(
                     f"The query sent is incompatible with this version. Please delete and re-create the query."
                 )
-        return values
+        return data
 
-    @validator("updated", "created", "docdate", "pubdate", "edate", pre=True, each_item=True)
+    @field_validator("updated", "created", "docdate", "pubdate", "edate")
     def validate_date(cls, v):
         """
         Validates the date fields.
 
         Returns:
-            str: The validated date value.
+            list[str]: The validated list of date values.
 
         Raises:
-            ValueError: If the date is not a valid date.
+            ValueError: If any date in the list is not a valid date.
         """
         if v:
-            try:
-                parse(v)
-            except ValueError:
-                raise ValueError(f"Invalid date format: {v}")
+            for date in v:
+                try:
+                    parse(date)
+                except ValueError:
+                    raise ValueError(f"Invalid date format: {date}")
         return v
 
 
@@ -1139,26 +1182,26 @@ class BulletinQueryLocTypes(Enum):
 
 class BulletinQueryValidationModel(QueryBaseModel):
     op: Optional[str] = "or"
-    ids: List[int] = Field(default_factory=list)
-    ref: Optional[List[str]] = Field(default_factory=list)
+    ids: list[int] = Field(default_factory=list)
+    tags: Optional[list[str]] = Field(default_factory=list)
     inExact: Optional[bool] = False
-    opref: Optional[bool] = False
-    exref: Optional[List[str]] = Field(default_factory=list)
+    opTags: Optional[bool] = False
+    exTags: Optional[list[str]] = Field(default_factory=list)
     exExact: Optional[bool] = False
-    opexref: Optional[bool] = False
+    opExTags: Optional[bool] = False
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
-    locTypes: Optional[List[str]] = Field(default_factory=list)
-    latlng: Optional[LatLngRadiusModel]
+    locTypes: Optional[list[str]] = Field(default_factory=list)
+    latlng: Optional[LatLngRadiusModel] = None
 
-    @validator("ref", pre=True)
-    def validate_ref(cls, v):
+    @field_validator("tags")
+    def validate_tags(cls, v):
         """
-        Validates the ref field.
+        Validates the tags field.
 
         Returns:
-            List<str>: The validated ref value.
+            list<str>: The validated tags value.
         """
         if isinstance(v, str):
             v = [v]
@@ -1166,16 +1209,16 @@ class BulletinQueryValidationModel(QueryBaseModel):
 
 
 class BulletinQueryRequestModel(BaseValidationModel):
-    q: List[BulletinQueryValidationModel] = Field(default_factory=list)
+    q: list[BulletinQueryValidationModel] = Field(default_factory=list)
 
 
 class EntityReviewValidationModel(BaseValidationModel):
-    review: Optional[str] = sanitize()
-    review_action: Optional[str]
+    review: Optional[SanitizedField] = None
+    review_action: Optional[str] = None
 
 
 class BulletinReviewValidationModel(EntityReviewValidationModel):
-    revrefs: List[str] = Field(default_factory=list)
+    revTags: list[str] = Field(default_factory=list)
 
 
 class BulletinReviewRequestModel(BaseValidationModel):
@@ -1183,47 +1226,57 @@ class BulletinReviewRequestModel(BaseValidationModel):
 
 
 class GenericBulkModel(BaseValidationModel):
-    status: Optional[str]
-    assigned_to_id: Optional[int]
-    first_peer_reviewer_id: Optional[int]
-    comments: Optional[str]
-    roles: List[PartialRoleModel] = Field(default_factory=list)
-    rolesReplace: Optional[bool]
-    assigneeClear: Optional[bool]
-    reviewerClear: Optional[bool]
+    status: Optional[str] = None
+    assigned_to_id: Optional[int] = None
+    first_peer_reviewer_id: Optional[int] = None
+    comments: Optional[str] = None
+    roles: list[PartialRoleModel] = Field(default_factory=list)
+    rolesReplace: Optional[bool] = None
+    assigneeClear: Optional[bool] = None
+    reviewerClear: Optional[bool] = None
 
 
 class BulletinBulkModel(GenericBulkModel):
-    ref: List[str] = Field(default_factory=list)
-    refReplace: Optional[bool]
+    tags: list[str] = Field(default_factory=list)
+    tagsReplace: Optional[bool] = None
+
+
+class ActorBulkModel(GenericBulkModel):
+    tags: list[str] = Field(default_factory=list)
+    tagsReplace: Optional[bool] = None
 
 
 class IncidentBulkModel(GenericBulkModel):
-    assignRelated: Optional[bool]
-    restrictRelated: Optional[bool]
+    assignRelated: Optional[bool] = None
+    restrictRelated: Optional[bool] = None
 
 
 class IncidentBulkUpdateRequestModel(BaseValidationModel):
-    items: List[int]
+    items: list[int] = Field(default_factory=list)
     bulk: IncidentBulkModel
 
 
 class BulletinBulkUpdateRequestModel(BaseValidationModel):
-    items: List[int]
+    items: list[int] = Field(default_factory=list)
     bulk: BulletinBulkModel
 
 
+class ActorBulkUpdateRequestModel(BaseValidationModel):
+    items: list[int] = Field(default_factory=list)
+    bulk: ActorBulkModel
+
+
 class BulkUpdateRequestModel(BaseValidationModel):
-    items: List[int]
+    items: list[int] = Field(default_factory=list)
     bulk: GenericBulkModel
 
 
 class GenericSelfAssignValidationModel(BaseValidationModel):
-    comments: Optional[str]
+    comments: Optional[str] = None
 
 
 class BulletinSelfAssignValidationModel(GenericSelfAssignValidationModel):
-    ref: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
 
 class BulletinSelfAssignRequestModel(BaseValidationModel):
@@ -1253,36 +1306,39 @@ class ActorQueryLocTypes(Enum):
 
 class ActorQueryModel(QueryBaseModel):
     op: Optional[str] = "or"
-    nickname: Optional[str]
-    first_name: Optional[str]
-    middle_name: Optional[str]
-    last_name: Optional[str]
-    father_name: Optional[str]
-    mother_name: Optional[str]
-    opEthno: Optional[bool]
-    ethnography: List[PartialEthnographyModel] = Field(default_factory=list)
-    opNat: Optional[bool]
-    nationality: List[PartialNationalityModel] = Field(default_factory=list)
-    resLocations: List[PartialLocationModel] = Field(default_factory=list)
-    originLocations: List[PartialLocationModel] = Field(default_factory=list)
-    exResLocations: List[PartialLocationModel] = Field(default_factory=list)
-    exOriginLocations: List[PartialLocationModel] = Field(default_factory=list)
-    occupation: Optional[str]
-    position: Optional[str]
-    opDialects: Optional[bool]
-    dialects: List[PartialDialectModel] = Field(default_factory=list)
-    family_status: Optional[str]
-    sex: Optional[str]
-    age: Optional[str]
-    civilian: Optional[str]
-    type_: Optional[str] = Field(alias="type")
-    id_number: Optional[str]
-    locTypes: List[str] = Field(default_factory=list)
-    latlng: Optional[LatLngRadiusModel]
+    nickname: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    opEthno: Optional[bool] = None
+    ethnography: list[PartialEthnographyModel] = Field(default_factory=list)
+    opNat: Optional[bool] = None
+    nationality: list[PartialNationalityModel] = Field(default_factory=list)
+    resLocations: list[PartialLocationModel] = Field(default_factory=list)
+    originLocations: list[PartialLocationModel] = Field(default_factory=list)
+    exResLocations: list[PartialLocationModel] = Field(default_factory=list)
+    exOriginLocations: list[PartialLocationModel] = Field(default_factory=list)
+    occupation: Optional[str] = None
+    position: Optional[str] = None
+    opDialects: Optional[bool] = None
+    dialects: list[PartialDialectModel] = Field(default_factory=list)
+    family_status: Optional[str] = None
+    sex: Optional[str] = None
+    age: Optional[str] = None
+    civilian: Optional[str] = None
+    type_: Optional[str] = Field(default=None, alias="type")
+    id_number: Optional[str] = None
+    locTypes: list[str] = Field(default_factory=list)
+    latlng: Optional[LatLngRadiusModel] = None
+    childlabels: Optional[bool] = False
+    childverlabels: Optional[bool] = False
+    childsources: Optional[bool] = False
 
 
 class ActorQueryRequestModel(BaseValidationModel):
-    q: List[ActorQueryModel] = Field(default_factory=list)
+    q: list[ActorQueryModel] = Field(default_factory=list)
 
 
 class ActorReviewRequestModel(BaseValidationModel):
@@ -1290,22 +1346,23 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 
 class UserValidationModel(StrictValidationModel):
-    email: Optional[str]
-    username: constr(min_length=1)  # type: ignore
-    password: Optional[str]  # Optional on PUT, required on POST
-    name: constr(min_length=1)  # type: ignore
-    roles: List[PartialRoleModel] = Field(default_factory=list)
-    view_usernames: Optional[bool]
-    view_full_history: Optional[bool]
-    view_simple_history: Optional[bool]
-    can_self_assign: Optional[bool]
-    can_edit_locations: Optional[bool]
-    can_export: Optional[bool]
+    email: Optional[str] = None
+    username: str = Field(min_length=1)
+    password: Optional[str] = None  # Optional on PUT, required on POST
+    name: str = Field(min_length=1)
+    roles: list[PartialRoleModel] = Field(default_factory=list)
+    view_usernames: Optional[bool] = None
+    view_full_history: Optional[bool] = None
+    view_simple_history: Optional[bool] = None
+    can_self_assign: Optional[bool] = None
+    can_edit_locations: Optional[bool] = None
+    can_export: Optional[bool] = None
+    can_import_web: Optional[bool] = None
     active: bool
-    force_reset: Optional[str]
-    google_id: Optional[str]
-    id: Optional[int]
-    two_factor_devices: Optional[Any]
+    force_reset: Optional[str] = None
+    google_id: Optional[str] = None
+    id: Optional[int] = None
+    two_factor_devices: Optional[Any] = None
 
 
 class UserRequestModel(BaseValidationModel):
@@ -1313,11 +1370,11 @@ class UserRequestModel(BaseValidationModel):
 
 
 class UserNameCheckValidationModel(BaseValidationModel):
-    item: constr(min_length=1)  # type: ignore
+    item: str = Field(min_length=1)
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: constr(min_length=1)  # type: ignore
+    password: str = Field(min_length=1)
 
 
 class UserForceResetRequestModel(BaseValidationModel):
@@ -1325,10 +1382,10 @@ class UserForceResetRequestModel(BaseValidationModel):
 
 
 class RoleValidationModel(BaseValidationModel):
-    name: constr(min_length=1)  # type: ignore
-    description: Optional[str]
-    color: constr(min_length=1)  # type: ignore
-    id: Optional[int]
+    name: str = Field(min_length=1)
+    description: Optional[str] = None
+    color: str = Field(min_length=1)
+    id: Optional[int] = None
 
 
 class RoleRequestModel(BaseValidationModel):
@@ -1336,12 +1393,12 @@ class RoleRequestModel(BaseValidationModel):
 
 
 class IncidentQueryModel(QueryBaseModel):
-    potentialVCats: List[PartialPotentialViolationModel] = Field(default_factory=list)
-    claimedVCats: List[PartialClaimedViolationModel] = Field(default_factory=list)
+    potentialVCats: list[PartialPotentialViolationModel] = Field(default_factory=list)
+    claimedVCats: list[PartialClaimedViolationModel] = Field(default_factory=list)
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
-    q: Optional[IncidentQueryModel]
+    q: Optional[IncidentQueryModel] = None
 
 
 class IncidentReviewRequestModel(BaseValidationModel):
@@ -1349,15 +1406,412 @@ class IncidentReviewRequestModel(BaseValidationModel):
 
 
 class QueryValidationModel(BaseValidationModel):
-    q: Dict[str, Any] = Field(default_factory=dict)
-    name: Optional[str]
+    q: dict[str, Any] = Field(default_factory=dict)
+    name: Optional[str] = None
     # Optional on PUT, required on POST
-    type_: Optional[str] = Field(alias="type")
+    type_: Optional[str] = Field(alias="type", default=None)
 
 
 class GraphVisualizeRequestModel(BaseValidationModel):
-    q: List[Dict[str, Any]] | Dict[str, Any]
+    q: list[dict[str, Any]] | dict[str, Any]
+
+
+class DefaultMapCenterModel(BaseValidationModel):
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+
+
+class ActivitiesModel(BaseModel):
+    APPROVE: bool = Field(default=False)
+    BULK: bool = Field(default=False)
+    CREATE: bool = Field(default=False)
+    DELETE: bool = Field(default=False)
+    DOWNLOAD: bool = Field(default=False)
+    LOGIN: bool = Field(default=False)
+    LOGOUT: bool = Field(default=False)
+    REJECT: bool = Field(default=False)
+    REQUEST: bool = Field(default=False)
+    REVIEW: bool = Field(default=False)
+    SEARCH: bool = Field(default=False)
+    SELF_ASSIGN: bool = Field(default=False, alias="SELF-ASSIGN")
+    UPDATE: bool = Field(default=False)
+    UPLOAD: bool = Field(default=False)
+    VIEW: bool = Field(default=False)
+
+
+class ConfigValidationModel(StrictValidationModel):
+    SECURITY_TWO_FACTOR_REQUIRED: bool
+    SECURITY_PASSWORD_LENGTH_MIN: int = Field(ge=8)
+    SECURITY_ZXCVBN_MINIMUM_SCORE: int = Field(ge=0, le=4)
+    SESSION_RETENTION_PERIOD: int = Field(ge=0)
+    FILESYSTEM_LOCAL: bool
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    S3_BUCKET: Optional[str] = None
+    AWS_REGION: Optional[str] = None
+    ACCESS_CONTROL_RESTRICTIVE: bool
+    AC_USERS_CAN_RESTRICT_NEW: bool
+    ETL_TOOL: bool
+    SHEET_IMPORT: bool
+    BABEL_DEFAULT_LOCALE: str
+    GOOGLE_MAPS_API_KEY: Optional[str] = None
+    GEO_MAP_DEFAULT_CENTER: DefaultMapCenterModel
+    EXPORT_TOOL: bool
+    EXPORT_DEFAULT_EXPIRY: int = Field(gt=0)
+    ACTIVITIES_RETENTION: int = Field(gt=0)
+    WEB_IMPORT: bool
+
+    @field_validator("MAPS_API_ENDPOINT", "GOOGLE_DISCOVERY_URL", mode="before", check_fields=False)
+    @classmethod
+    def validate_urls(cls, v: str) -> str:
+        if not isinstance(v, str):
+            raise ValueError("Invalid value for MAPS_API_ENDPOINT or GOOGLE_DISCOVERY_URL")
+        try:
+            HttpUrl(v)
+        except ValueError:
+            raise ValueError(f"Invalid URL: {v}")
+        return v
+
+    @field_validator(
+        "MEDIA_ALLOWED_EXTENSIONS",
+        "SHEETS_ALLOWED_EXTENSIONS",
+        "ETL_VID_EXT",
+        "OCR_EXT",
+        check_fields=False,
+    )
+    @classmethod
+    def validate_allowed_extensions(cls, v):
+        if v:
+            for ext in v:
+                if not isinstance(ext, str):
+                    raise ValueError(
+                        "MEDIA_ALLOWED_EXTENSIONS and SHEETS_ALLOWED_EXTENSIONS must be lists of strings"
+                    )
+                if len(ext) < 2 or len(ext) > 4:
+                    raise ValueError(
+                        "Invalid value for MEDIA_ALLOWED_EXTENSIONS or SHEETS_ALLOWED_EXTENSIONS"
+                    )
+        return v
+
+    @field_validator("BABEL_DEFAULT_LOCALE")
+    @classmethod
+    def validate_default_locale(cls, v):
+        if v and not re.match(r"^[a-z]{2}$", v.lower()):
+            raise ValueError("Invalid value for BABEL_DEFAULT_LOCALE")
+        return v
+
+    @field_validator("GOOGLE_MAPS_API_KEY")
+    @classmethod
+    def validate_google_maps_key(cls, v):
+        if not v:
+            return None
+        if not isinstance(v, str):
+            raise ValueError("Invalid value for GOOGLE_MAPS_API_KEY")
+        if len(v) < 30 or len(v) > 60:
+            raise ValueError("Invalid value for GOOGLE_MAPS_API_KEY")
+        return v
+
+    def validate_recaptcha_key(v):
+        if not isinstance(v, str):
+            return None
+        if len(v) < 20 or len(v) > 50:
+            return None
+        return v
+
+    def validate_google_key(v):
+        if not isinstance(v, str):
+            return None
+        if len(v) < 20 or len(v) > 100:
+            return None
+        return v
+
+    def validate_aws_access_key(v):
+        if not isinstance(v, str):
+            return None
+        if len(v) < 16 or len(v) > 64:
+            return None
+        return v
+
+    def validate_aws_secret_key(v):
+        if not isinstance(v, str):
+            return None
+        # Allow MASK String as a valid value
+        if v == "**********":
+            return v
+        if len(v) < 40 or len(v) > 64:
+            return None
+        return v
+
+    def validate_s3_bucket(v):
+        if not isinstance(v, str):
+            return None
+
+        # Check length
+        if len(v) < 3 or len(v) > 63:
+            return None
+
+        # Check for valid characters
+        if not re.match(r"^[a-z0-9][a-z0-9.\-]{1,61}[a-z0-9]$", v):
+            return None
+
+        # Check for adjacent periods
+        if ".." in v:
+            return None
+
+        # Check if formatted as IP address
+        if re.match(r"\d+\.\d+\.\d+\.\d+", v):
+            return None
+
+        # Check for forbidden prefixes
+        forbidden_prefixes = ["xn--", "sthree-", "sthree-configurator", "amzn-s3-demo-"]
+        if any(v.startswith(prefix) for prefix in forbidden_prefixes):
+            return None
+
+        # Check for forbidden suffixes
+        forbidden_suffixes = ["-s3alias", "--ol-s3", ".mrap", "--x-s3"]
+        if any(v.endswith(suffix) for suffix in forbidden_suffixes):
+            return None
+
+        return v
+
+    def validate_aws_region(v):
+        if not isinstance(v, str):
+            return None
+
+        valid_regions = {
+            "us-east-2",
+            "us-east-1",
+            "us-west-1",
+            "us-west-2",
+            "af-south-1",
+            "ap-east-1",
+            "ap-south-2",
+            "ap-southeast-3",
+            "ap-southeast-4",
+            "ap-south-1",
+            "ap-northeast-3",
+            "ap-northeast-2",
+            "ap-southeast-1",
+            "ap-southeast-2",
+            "ap-northeast-1",
+            "ca-central-1",
+            "ca-west-1",
+            "eu-central-1",
+            "eu-west-1",
+            "eu-west-2",
+            "eu-south-1",
+            "eu-west-3",
+            "eu-south-2",
+            "eu-north-1",
+            "eu-central-2",
+            "il-central-1",
+            "me-south-1",
+            "me-central-1",
+            "sa-east-1",
+            "us-gov-east-1",
+            "us-gov-west-1",
+        }
+
+        if v not in valid_regions:
+            return None
+
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_rules(cls, values):
+        if values.get("RECAPTCHA_ENABLED") and not (
+            values.get("RECAPTCHA_PUBLIC_KEY")
+            and cls.validate_recaptcha_key(values.get("RECAPTCHA_PUBLIC_KEY"))
+        ):
+            raise ValueError(
+                "RECAPTCHA_PUBLIC_KEY must be provided and valid if RECAPTCHA_ENABLED is True"
+            )
+        if values.get("RECAPTCHA_ENABLED") and not (
+            values.get("RECAPTCHA_PRIVATE_KEY")
+            and cls.validate_recaptcha_key(values.get("RECAPTCHA_PRIVATE_KEY"))
+        ):
+            raise ValueError(
+                "RECAPTCHA_PRIVATE_KEY must be provided and valid if RECAPTCHA_ENABLED is True"
+            )
+        if values.get("GOOGLE_OAUTH_ENABLED") and not (
+            values.get("GOOGLE_CLIENT_ID")
+            and cls.validate_google_key(values.get("GOOGLE_CLIENT_ID"))
+        ):
+            raise ValueError(
+                "GOOGLE_CLIENT_ID must be provided and valid if GOOGLE_OAUTH_ENABLED is True"
+            )
+        if values.get("GOOGLE_OAUTH_ENABLED") and not (
+            values.get("GOOGLE_CLIENT_SECRET")
+            and cls.validate_google_key(values.get("GOOGLE_CLIENT_SECRET"))
+        ):
+            raise ValueError(
+                "GOOGLE_CLIENT_SECRET must be provided and valid if GOOGLE_OAUTH_ENABLED is True"
+            )
+
+        if not bool(values.get("FILESYSTEM_LOCAL")) and not (
+            values.get("AWS_ACCESS_KEY_ID")
+            and cls.validate_aws_access_key(values.get("AWS_ACCESS_KEY_ID"))
+            and values.get("AWS_SECRET_ACCESS_KEY")
+            and cls.validate_aws_secret_key(values.get("AWS_SECRET_ACCESS_KEY"))
+            and values.get("S3_BUCKET")
+            and cls.validate_s3_bucket(values.get("S3_BUCKET"))
+            and values.get("AWS_REGION")
+            and cls.validate_aws_region(values.get("AWS_REGION"))
+        ):
+            raise ValueError(
+                "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET and AWS_REGION must be provided if FILESYSTEM_LOCAL is False"
+            )
+
+        if (
+            values.get("DEDUP_LOW_DISTANCE")
+            and values.get("DEDUP_MAX_DISTANCE")
+            and values.get("DEDUP_LOW_DISTANCE") > values.get("DEDUP_MAX_DISTANCE")
+        ):
+            raise ValueError("DEDUP_LOW_DISTANCE must be less than or equal to DEDUP_MAX_DISTANCE")
+        return values
+
+
+class FullConfigValidationModel(ConfigValidationModel):
+    SECURITY_FRESHNESS: int = Field(gt=0)
+    SECURITY_FRESHNESS_GRACE_PERIOD: int = Field(ge=0)
+    DISABLE_MULTIPLE_SESSIONS: bool
+    RECAPTCHA_ENABLED: bool
+    RECAPTCHA_PUBLIC_KEY: Optional[str] = None
+    RECAPTCHA_PRIVATE_KEY: Optional[str] = None
+    GOOGLE_OAUTH_ENABLED: bool
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_DISCOVERY_URL: str
+    MEDIA_ALLOWED_EXTENSIONS: list[str] = Field(default_factory=list)
+    MEDIA_UPLOAD_MAX_FILE_SIZE: float = Field(gt=0)
+    SHEETS_ALLOWED_EXTENSIONS: list[str] = Field(default_factory=list)
+    ETL_PATH_IMPORT: bool
+    ETL_VID_EXT: list[str] = Field(default_factory=list)
+    OCR_ENABLED: bool
+    OCR_EXT: list[str] = Field(default_factory=list)
+    DEDUP_TOOL: bool
+    MAPS_API_ENDPOINT: str
+    DEDUP_LOW_DISTANCE: Optional[float] = Field(default=None, ge=0, le=1)
+    DEDUP_MAX_DISTANCE: Optional[float] = Field(default=None, ge=0, le=1)
+    DEDUP_BATCH_SIZE: Optional[int] = Field(default=None, gt=0)
+    DEDUP_INTERVAL: Optional[int] = Field(default=None, gt=0)
+    ITEMS_PER_PAGE_OPTIONS: list[int] = Field(default_factory=list)
+    VIDEO_RATES: list[float] = Field(default_factory=list)
+    ACTIVITIES: ActivitiesModel
+    ADV_ANALYSIS: bool
+    SETUP_COMPLETE: bool = Field(default=True)
+    LOCATIONS_INCLUDE_POSTAL_CODE: bool
+    YTDLP_PROXY: Optional[str] = None
+    YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
+    YTDLP_COOKIES: Optional[str] = None
+
+    @model_validator(mode="before")
+    def ensure_setup_complete(cls, values):
+        values["SETUP_COMPLETE"] = True
+        return values
+
+    @field_validator("ITEMS_PER_PAGE_OPTIONS")
+    @classmethod
+    def validate_page_options(cls, v: list[int]) -> list[int]:
+        if not all(x > 0 for x in v):
+            raise ValueError("All items per page options must be greater than 0")
+        return v
+
+    @field_validator("VIDEO_RATES")
+    @classmethod
+    def validate_video_rates(cls, v: list[float]) -> list[float]:
+        if not all(x > 0 for x in v):
+            raise ValueError("All video rates must be greater than 0")
+        return v
+
+    @field_validator("YTDLP_PROXY")
+    @classmethod
+    def validate_proxy_url(cls, v: Optional[str]) -> Optional[str]:
+        """Validates the proxy URL format."""
+        if not v:
+            return None
+
+        valid_schemes = {"http", "https", "socks4", "socks5", "socks5h"}
+        try:
+            parsed = urlparse(v)
+            if parsed.scheme not in valid_schemes:
+                raise ValueError(f"Proxy URL must start with one of: {', '.join(valid_schemes)}")
+            if not parsed.netloc:
+                raise ValueError("Invalid proxy URL format")
+            # Check if port is provided
+            if ":" not in parsed.netloc.split("@")[-1]:
+                raise ValueError("Proxy URL must include port number")
+            return v
+        except Exception:
+            raise ValueError("Invalid proxy URL format")
+
+    @field_validator("YTDLP_ALLOWED_DOMAINS")
+    @classmethod
+    def validate_domains(cls, v: list[str]) -> list[str]:
+        """Validates domain format."""
+        if not v:
+            return []
+
+        for domain in v:
+            if not re.match(r"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$", domain):
+                raise ValueError(f"Invalid domain format: {domain}")
+        return v
+
+    @field_validator("YTDLP_COOKIES")
+    @classmethod
+    def validate_cookies(cls, v: Optional[str]) -> Optional[str]:
+        """Validates the cookies data format."""
+        if not v:
+            return None
+
+        # Basic validation that it looks like cookie data
+        lines = v.splitlines()
+        for line in lines:
+            if line.strip() and not line.startswith("#"):  # Skip empty lines and comments
+                # Check if line has minimum required tab-separated fields
+                fields = line.split("\t")
+                if len(fields) < 6:
+                    raise ValueError(
+                        "Invalid cookie format. Each line should have domain, flag, path, secure, expiry, name, value"
+                    )
+        return v
 
 
 class ConfigRequestModel(BaseValidationModel):
-    conf: Dict[Any, Any]
+    conf: FullConfigValidationModel
+
+
+class WizardConfigRequestModel(BaseValidationModel):
+    conf: ConfigValidationModel
+
+
+class WebImportValidationModel(StrictValidationModel):
+    url: HttpUrl
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: HttpUrl) -> str:
+        """
+        Validates the URL for web import.
+
+        Args:
+            - v: The URL to validate.
+
+        Raises:
+            - ValueError: If the domain is not allowed.
+
+        Returns:
+            - The validated URL.
+        """
+        # Check domain restrictions
+        domain = v._url.host
+        if domain.startswith("www."):
+            domain = domain[4:]
+        from enferno.settings import Config as cfg
+
+        allowed_domains = cfg.YTDLP_ALLOWED_DOMAINS
+        if not any(domain.endswith(allowed) for allowed in allowed_domains):
+            raise ValueError(f"Imports not allowed from {domain}")
+
+        return str(v)

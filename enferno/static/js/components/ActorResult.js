@@ -13,23 +13,21 @@ const ActorResult = Vue.defineComponent({
       <v-card hover class="ma-2" v-if="!actor.restricted">
         <v-toolbar density="compact" class="d-flex px-2">
           <v-chip color="primary" variant="flat" size="small">{{ translations.id_ }} {{ actor.id }}</v-chip>
-          <v-chip variant="text" class="ml-1"># {{ actor.originid }}</v-chip>
+          <v-chip v-if="actor.originid" variant="text" class="ml-1"># {{ actor.originid }}</v-chip>
           <v-spacer></v-spacer>
           <v-chip variant="text" v-if="actor.publish_date" size="small">{{ actor.publish_date }}</v-chip>
         </v-toolbar>
-        <v-card-title class="text-subtitle-2">{{actor.name}}</v-card-title>
+        <v-card-title class="text-subtitle-2 text-wrap text-break">{{actor.name}}</v-card-title>
         <v-divider></v-divider>
         <slot name="header"></slot>
         <v-card-text>
-                <v-list-item v-if="actor.sources" :title="translations.sources_">
+                <v-list-item v-if="actor.sources?.length" :title="translations.sources_">
                   <v-list-item-subtitle>
-                    <v-chip-group
-                        column
-                    >
-                      <v-chip size="small" v-for="source in actor.sources" :key="source">
+                    <div class="flex-chips">
+                      <v-chip class="flex-chip" size="small" v-for="source in actor.sources" :key="source">
                         {{ source.title }}
                       </v-chip>
-                    </v-chip-group>
+                    </div>
                   </v-list-item-subtitle>
 
                 </v-list-item>
