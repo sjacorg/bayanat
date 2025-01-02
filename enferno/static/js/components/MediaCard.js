@@ -82,39 +82,27 @@ const MediaCard = Vue.defineComponent({
     },
     getVideoDuration() {
       if (this.media.duration) {
-        // If duration is already available, use it
-        this.videoDuration = Number(this.media.duration);
+        this.videoDuration = Number(this.media.duration)
       } else {
         let video = document.createElement('video');
         video.src = this.s3url;
         video.crossOrigin = "anonymous";
-    
-        // Define the event handler function
-        const onLoadedMetadata = () => {
-          // Store the duration
+        video.onloadedmetadata = () => {
           this.videoDuration = video.duration;
-          // Cleanup after getting the duration
-          video.removeEventListener('loadedmetadata', onLoadedMetadata);  // Remove the event listener
+          
           video.src = '';  // Release the video source
           video.load();    // Reset the video element
           video = null;    // Remove the reference to the video element
         };
-    
-        // Attach the event listener using addEventListener
-        video.addEventListener('loadedmetadata', onLoadedMetadata);
       }
-    },    
+    },
     generateVideoThumbnail() {
-      let video = document.createElement('video');
+      const video = document.createElement('video');
       video.src = this.s3url;
       video.crossOrigin = "anonymous";
-    
-      // Define the event handler for 'onloadeddata'
-      const onLoadedData = () => {
+      video.onloadeddata = () => {
         video.currentTime = 1; // Seek to 1 second
-    
-        // Define the event handler for 'onseeked'
-        const onSeeked = () => {
+        video.onseeked = () => {
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
@@ -131,21 +119,12 @@ const MediaCard = Vue.defineComponent({
             brightness += (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
           }
           this.thumbnailBrightness = brightness / (imageData.data.length / 4);
-    
-          // Cleanup after creating the thumbnail
-          video.removeEventListener('loadeddata', onLoadedData); // Remove the 'loadeddata' listener
-          video.removeEventListener('seeked', onSeeked); // Remove the 'onseeked' listener
-          video.src = '';  // Release the video source
-          video.load();    // Reset the video element
-          video = null;    // Remove the reference to the video element
         };
-    
-        // Attach the 'onseeked' event listener
-        video.addEventListener('seeked', onSeeked);
+
+        video.src = '';  // Release the video source
+        video.load();    // Reset the video element
+        video = null;    // Remove the reference to the video element
       };
-    
-      // Attach the 'onloadeddata' event listener
-      video.addEventListener('loadeddata', onLoadedData);
     },
     formatDuration(seconds) {
       const hrs = Math.floor(seconds / 3600);
