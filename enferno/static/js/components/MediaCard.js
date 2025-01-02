@@ -84,15 +84,11 @@ const MediaCard = Vue.defineComponent({
       if (this.media.duration) {
         this.videoDuration = Number(this.media.duration)
       } else {
-        let video = document.createElement('video');
+        const video = document.createElement('video');
         video.src = this.s3url;
         video.crossOrigin = "anonymous";
         video.onloadedmetadata = () => {
           this.videoDuration = video.duration;
-          
-          video.src = '';  // Release the video source
-          video.load();    // Reset the video element
-          video = null;    // Remove the reference to the video element
         };
       }
     },
@@ -120,10 +116,6 @@ const MediaCard = Vue.defineComponent({
           }
           this.thumbnailBrightness = brightness / (imageData.data.length / 4);
         };
-
-        video.src = '';  // Release the video source
-        video.load();    // Reset the video element
-        video = null;    // Remove the reference to the video element
       };
     },
     formatDuration(seconds) {
