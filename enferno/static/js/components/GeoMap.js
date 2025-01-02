@@ -76,7 +76,6 @@ const GeoMap = Vue.defineComponent({
         '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
 
       defaultTile: true,
-      satellite: null,
 
       radiusCircle: null,
     };
@@ -160,13 +159,16 @@ const GeoMap = Vue.defineComponent({
         scrollWheelZoom: false,
       });
 
-      // Add the OpenStreetMap tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(this.map);
+      // Define the OpenStreetMap tile layer
+      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map); // Add as the default layer
 
-      // Add the fullscreen control with improved readability
+      // Define the Google Maps satellite tile layer
+      const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      });
+
+      // Add the fullscreen control
       this.map.addControl(
         new L.Control.Fullscreen({
           title: {
@@ -176,8 +178,15 @@ const GeoMap = Vue.defineComponent({
         }),
       );
 
-      // Initialize the satellite layer (optional: specify options if needed)
-      this.satellite = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+      // Add a layer control for toggling between OSM and Google Maps
+      const baseMaps = {
+        'OpenStreetMap': osmLayer,
+        'Google Satellite': googleLayer,
+      };
+
+      if (window.__GOOGLE_MAPS_API_KEY__) {
+        L.control.layers(baseMaps).addTo(this.map);
+      }
 
       // Add a click event listener to the map for marker setting
       this.map.on('click', this.setMarker);
@@ -246,24 +255,6 @@ const GeoMap = Vue.defineComponent({
           });
         }
       });
-    },
-
-    toggleSatellite() {
-      if (!this.satellite) {
-        // Initialize the satellite layer once and reuse it
-        this.satellite = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        });
-      }
-
-      if (this.defaultTile) {
-        this.map.addLayer(this.satellite);
-        this.defaultTile = false;
-      } else {
-        this.map.removeLayer(this.satellite);
-        this.defaultTile = true;
-      }
     },
 
     clearMarker() {

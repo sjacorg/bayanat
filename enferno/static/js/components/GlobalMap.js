@@ -29,7 +29,6 @@ const GlobalMap = Vue.defineComponent({
         '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
       osmAttribution:
         '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      satellite: null,
       defaultTile: true,
       measureControls: null,
     };
@@ -77,17 +76,22 @@ const GlobalMap = Vue.defineComponent({
     },
 
     initMap() {
-
       this.map = L.map(this.mapId, {
         center: [this.lat, this.lng],
         zoom: this.zoom,
         scrollWheelZoom: false,
       });
 
-      // Add the default tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      // Define the default OSM tile layer
+      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: this.attribution,
-      }).addTo(this.map);
+      }).addTo(this.map); // Add to map initially
+
+      // Define the Google Maps tile layer
+      const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      });
 
       // Add fullscreen control
       this.map.addControl(
@@ -99,26 +103,19 @@ const GlobalMap = Vue.defineComponent({
         }),
       );
 
-      // Initialize the satellite layer if needed
-      // Note: Replace `L.gridLayer.googleMutant` with a suitable alternative for Leaflet if you're not using a plugin for Google Maps tiles
-      this.satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      });
-      this.fitMarkers();
-    },
-    toggleSatellite() {
-      // use subdomains to identify state
-      if (this.defaultTile) {
-        this.defaultTile = false;
-        this.satellite.addTo(this.map);
-      } else {
-        this.defaultTile = true;
-        this.map.removeLayer(this.satellite);
+      // Define the base layers
+      const baseMaps = {
+        'OpenStreetMap': osmLayer,
+        'Google Satellite': googleLayer,
+      };
+
+      // Add layer control to toggle between OSM and Google Maps
+      if (window.__GOOGLE_MAPS_API_KEY__) {
+        L.control.layers(baseMaps).addTo(this.map);
       }
 
-      // Working hack : redraw the tile layer component via Vue key
-      this.mapKey += 1;
+      // Fit markers or other elements
+      this.fitMarkers();
     },
 
     fsHandler() {
