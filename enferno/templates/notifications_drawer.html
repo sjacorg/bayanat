@@ -1,0 +1,33 @@
+<v-navigation-drawer
+        v-model="isNotificationsDrawerVisible"
+        location="right"
+        temporary
+        width="300"
+>
+
+    <v-card variant="flat">
+        <v-toolbar>
+            <v-toolbar-title class="text-h6">
+                {{ _('Notifications') }}
+            </v-toolbar-title>
+            <template #append>
+                <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                        <v-btn v-bind="props" icon="mdi-open-in-app" @click="toggleNotificationsDialog()"></v-btn>
+                    </template>
+                    {{ _('Open notifications dialog') }}
+                </v-tooltip>
+                <v-btn icon="mdi-close" @click="isNotificationsDrawerVisible=false"></v-btn>
+            </template>
+        </v-toolbar>
+
+        <notifications-list
+            :notifications="notifications"
+            :is-initial-loading-notifications="isInitialLoadingNotifications"
+            :has-more-notifications="hasMoreNotifications"
+            :is-loading-more-notifications="isLoadingMoreNotifications"
+            @read-notification="readNotification"
+            @load-notifications="loadNotifications(notificationsPagination)"
+        />
+    </v-card>
+</v-navigation-drawer>

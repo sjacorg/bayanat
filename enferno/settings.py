@@ -270,6 +270,17 @@ class Config(object):
     # Location Admin Levels
     LOCATIONS_INCLUDE_POSTAL_CODE = manager.get_config("LOCATIONS_INCLUDE_POSTAL_CODE")
 
+
+    # Email Settings
+    MAIL_ENABLED = manager.get_config("MAIL_ENABLED")
+    MAIL_SERVER = manager.get_config("MAIL_SERVER")
+    MAIL_PORT = int(manager.get_config("MAIL_PORT"))
+    MAIL_USE_TLS = manager.get_config("MAIL_USE_TLS")
+    MAIL_USE_SSL = manager.get_config("MAIL_USE_SSL")
+    MAIL_USERNAME = manager.get_config("MAIL_USERNAME")
+    MAIL_PASSWORD = manager.get_config("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = manager.get_config("MAIL_DEFAULT_SENDER")
+
     WEB_IMPORT = manager.get_config("WEB_IMPORT")
     # YTDLP Proxy Settings
     YTDLP_PROXY = manager.get_config("YTDLP_PROXY")
@@ -415,6 +426,17 @@ class TestConfig(Config):
     SETUP_COMPLETE = False
     IMPORT_DIR = "tests/imports"
     LOCATIONS_INCLUDE_POSTAL_CODE = False
+
+    # Email test settings
+    MAIL_SERVER = "dummy-smtp-server"
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USE_SSL = False
+    MAIL_USERNAME = "dummy-username"
+    MAIL_PASSWORD = "dummy-password"
+    MAIL_DEFAULT_SENDER = "dummy-sender@example.com"
+
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
     YTDLP_PROXY = ""
+

@@ -157,7 +157,6 @@ def account() -> str:
     """
     return render_template("dashboard.html")
 
-
 @bp_user.route("/settings/")
 @auth_required("session")
 def settings() -> str:

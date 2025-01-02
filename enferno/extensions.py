@@ -8,9 +8,11 @@ from flask_session import Session
 from flask_redis import FlaskRedis
 from flask_babel import Babel
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_mail import Mail
 
 db = SQLAlchemy()
 session = Session()
 rds = FlaskRedis()
 babel = Babel()
 debug_toolbar = DebugToolbarExtension()
+mail = Mail()
