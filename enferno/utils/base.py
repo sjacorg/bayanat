@@ -24,6 +24,11 @@ class BaseMixin(object):
         :param column_name: name of db column
         :return: tuple : serialized representation or None with a True/False flag if operation is successful
         """
+        # First try to get dynamic fields
+        dynamic_fields = self.get_dynamic_fields()
+        if column_name in dynamic_fields:
+            return dynamic_fields[column_name]
+
         columns = self.__table__.columns
 
         # for this custom class attribute, manually attach table name
@@ -49,6 +54,18 @@ class BaseMixin(object):
                     return [item.to_dict() for item in cls]
         else:
             return f"---- needs implementation -----> {column_name}"
+
+    def get_dynamic_fields(self):
+        """Get all dynamic fields for this entity type"""
+        from enferno.admin.models.DynamicField import DynamicField
+
+        # Get the entity type from the table name
+        entity_type = self.__tablename__.rstrip("s")  # Remove trailing 's' for plural
+
+        # Query dynamic fields for this entity type
+        dynamic_fields = DynamicField.query.filter_by(entity_type=entity_type, active=True).all()
+
+        return {field.name: getattr(self, field.name, None) for field in dynamic_fields}
 
     def serialize_relationship(self, relationship):
         return [rel.to_dict() for rel in relationship] if relationship else []
@@ -108,6 +125,20 @@ class BaseMixin(object):
                 raise DatabaseException(f"Error deleting {self.__class__.__name__}: {e}")
             else:
                 return False
+
+    def to_dict(self, mode=None):
+        """Base implementation of to_dict that includes dynamic fields"""
+        # Get basic fields from table columns
+        data = {
+            "id": self.id,
+            "created_at": DateHelper.serialize_datetime(self.created_at),
+            "updated_at": DateHelper.serialize_datetime(self.updated_at),
+        }
+
+        # Add dynamic fields
+        data.update(self.get_dynamic_fields())
+
+        return data
 
 
 class ComponentDataMixin(BaseMixin):

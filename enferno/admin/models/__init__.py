@@ -11,6 +11,7 @@ from .Btob import Btob
 from .BtobInfo import BtobInfo
 from .Bulletin import Bulletin
 from .BulletinHistory import BulletinHistory
+from .DynamicField import DynamicField
 from .ClaimedViolation import ClaimedViolation
 from .Country import Country
 from .Dialect import Dialect

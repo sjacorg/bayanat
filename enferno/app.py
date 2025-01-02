@@ -78,6 +78,12 @@ def create_app(config_object=Config):
     register_shellcontext(app)
     register_commands(app)
     register_signals(app)
+
+    # Initialize dynamic models within an application context
+    # Commented out for later handling
+    # with app.app_context():
+    #     initialize_models()
+
     return app
 
 
@@ -224,6 +230,7 @@ def register_commands(app):
     app.cli.add_command(commands.reset)
     app.cli.add_command(commands.i18n_cli)
     app.cli.add_command(commands.check_db_alignment)
+    app.cli.add_command(commands.test_dynamic_fields)
     app.cli.add_command(commands.generate_config)
 
 
