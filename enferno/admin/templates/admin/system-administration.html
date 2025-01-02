@@ -439,6 +439,54 @@
                                                               label="{{ _('Enable OCR') }}"
                                                               v-model="eitem.OCR_ENABLED"></v-switch>
 
+                                                    <v-switch color="primary" class="mb-9" 
+                                                              label="{{ _('Enable Transcription') }}"
+                                                              persistent-hint
+                                                              hint="{{ _('Enables transcription of media files using OpenAI\'s Whisper model.') }}"
+                                                              v-model="eitem.TRANSCRIPTION_ENABLED"></v-switch>
+
+                                                    <v-slide-y-transition>
+                                                        <v-sheet v-show="eitem.TRANSCRIPTION_ENABLED"
+                                                                 class=" pa-4 grey lighten-4">
+                                                            <v-combobox class="mb-9" chips
+                                                                        persistent-hint
+                                                                        hint="{{ _('Whisper model to use for transcription.') }}"
+                                                                        :items="whisperModelsCombo"
+                                                                        item-value="model_name"
+                                                                        item-title="title"
+                                                                        :return-object="false"
+                                                                        label="{{ _('Whisper Model') }}"
+                                                                        v-model="eitem.WHISPER_MODEL"></v-combobox>
+
+                                                            <v-card variant="flat" class="mb-9">
+                                                                <v-card-title class="text-subtitle-1 py-3">{{ _('Available Models') }}</v-card-title>
+                                                                <v-data-table
+                                                                    :headers="[
+                                                                        { title: '{{ _('Model') }}', key: 'model_label', value: item => translations.whisperModels.find(m => m.en === item.model_label)?.tr || item.model_label },
+                                                                        { title: '{{ _('Parameters') }}', key: 'param_size' },
+                                                                        { title: '{{ _('Est. VRAM') }}', key: 'est_vram' },
+                                                                        { title: '{{ _('Multi-Language Support') }}', key: 'english_only' }
+                                                                    ]"
+                                                                    :items="whisperModels"
+                                                                    :items-per-page="-1"
+                                                                    density="compact"
+                                                                    hide-default-footer
+                                                                >
+                                                                    <template v-slot:item.model_label="{ item }">
+                                                                        ${translations.whisperModels.find(m => m.en === item.model_label)?.tr || item.model_label}
+                                                                    </template>
+                                                                    <template v-slot:item.param_size="{ item }">
+                                                                        ${(item.param_size / 1_000_000).toFixed(0)} M
+                                                                    </template>
+                                                                    <template v-slot:item.english_only="{ item }">
+                                                                        ${item.model_name.includes('.en') ? '✗ ({{ _('English only') }})' : '✓'}
+                                                                    </template>
+                                                                </v-data-table>
+                                                            </v-card>
+                                                        
+                                                        </v-sheet>
+                                                    </v-slide-y-transition>
+
                                                     <v-slide-y-transition>
                                                         <v-sheet v-show="eitem.OCR_ENABLED"
                                                                  class=" pa-4 grey lighten-4">
@@ -796,6 +844,7 @@
                 revisions: [],
                 revisionLoading: null,
                 translations: window.translations,
+                whisperModels: [],
 
 
             }),
@@ -814,12 +863,29 @@
 
                 //load configuration
                 this.loadConfiguration();
-
+                this.loadWhisperModels();
                 this.loadRevisions()
 
             },
 
+            computed: {
+                whisperModelsCombo(){
+                    return this.whisperModels.map(model => ({
+                        title: translations.whisperModels.find(m => m.en === model.model_label)?.tr || model.model_label,
+                        model_name: model.model_name
+                    }));
+                }
+            },
+
             methods: {
+                loadWhisperModels(){
+                    axios.get('/admin/api/whisper/models/').then(res => {
+                        this.whisperModels = res.data.models;
+                    }).catch(err => {
+                        this.showSnack(err?.response?.data);
+                        console.error(err);
+                    })
+                },
 
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
