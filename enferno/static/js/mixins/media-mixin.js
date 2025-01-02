@@ -301,64 +301,34 @@ let mediaMixin = {
       this.closeVideo();
     },
 
-    initializePlayer(s3url) {
+    initializePlayer(media) {
       // Cleanup existing player if it exists
-      if (this.videoPlayer) {
-        this.disposeVideoPlayer();
-      }
+      this.disposeVideoPlayer();
 
-      const videoElement = document.createElement('video');
-      videoElement.id = 'player';
-      videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
-      videoElement.setAttribute('crossorigin', 'anonymous');
-      videoElement.setAttribute('controls', '');
-
-      videoElement.setAttribute('width', '620');
-      videoElement.setAttribute('height', '348');
+      const videoElement = buildVideoElement();
 
       const playerContainer = this.$refs.playerContainer; // Ensure you have a ref="playerContainer" on the container element
       playerContainer.prepend(videoElement);
 
-      this.videoPlayer = videojs(videoElement, {
-        controls: true,
-        preload: 'auto',
-        playbackRates: [0.5, 1, 1.5, 2],
-      });
+      this.videoPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
 
-      this.setVideoSource(s3url);
+      this.videoPlayer.src({ src: media.s3url, type: media?.fileType ?? 'video/mp4' });
+      this.videoPlayer.on('loadedmetadata', this.handleMetaData);
     },
 
-    initializeAudioPlayer(s3url) {
+    initializeAudioPlayer(media) {
       // Cleanup existing player if it exists
-      if (this.audioPlayer) {
-        this.disposeAudioPlayer();
-      }
+      this.disposeAudioPlayer();
 
-      const audioElement = document.createElement('video');
+      const audioElement = buildVideoElement();
       audioElement.poster = '/static/img/waveform.png';
-      audioElement.id = 'audioPlayer';
-      audioElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
-      audioElement.setAttribute('crossorigin', 'anonymous');
-      audioElement.setAttribute('controls', '');
 
       const playerContainer = this.$refs.audioPlayerContainer; // Ensure you have a ref="audioPlayerContainer" on the container element
       playerContainer.prepend(audioElement);
 
-      this.audioPlayer = videojs(audioElement, {
-        controls: true,
-        preload: 'auto',
-      });
+      this.audioPlayer = videojs(audioElement, DEFAULT_VIDEOJS_OPTIONS);
 
-      this.setAudioSource(s3url);
-    },
-
-    setVideoSource(s3url) {
-      this.videoPlayer.src({ src: s3url, type: 'video/mp4' });
-      this.videoPlayer.on('loadedmetadata', this.handleMetaData);
-    },
-
-    setAudioSource(s3url) {
-      this.audioPlayer.src({ src: s3url, type: 'audio/mpeg' });
+      this.audioPlayer.src({ src: media.s3url, type: media?.fileType ?? 'audio/mpeg' });
       this.audioPlayer.on('loadedmetadata', this.handleAudioMetaData);
     },
 
@@ -381,34 +351,33 @@ let mediaMixin = {
     },
 
     disposeVideoPlayer() {
-      if (this.videoPlayer) {
-        this.videoPlayer.dispose();
-        this.videoPlayer = null;
-      }
+      this.videoPlayer?.dispose?.();
+      this.videoPlayer = null;
     },
 
-    viewPlayer(s3url) {
+    disposeAudioPlayer() {
+      this.audioPlayer?.dispose?.();
+      this.audioPlayer = null;
+    },
+
+    viewPlayer(media) {
       this.videoDialog = true;
       this.screenshots = [];
       this.$nextTick(() => {
-        this.initializePlayer(s3url);
+        this.initializePlayer(media);
       });
     },
 
-    viewAudioPlayer(s3url) {
-      console.log('viewAudioPlayer', s3url);
+    viewAudioPlayer(media) {
       this.audioDialog = true;
       this.screenshots = [];
       this.$nextTick(() => {
-        this.initializeAudioPlayer(s3url);
+        this.initializeAudioPlayer(media);
       });
     },
 
     closeAudio() {
-      if (this.audioPlayer) {
-        this.audioPlayer.dispose();
-        this.audioPlayer = null;
-      }
+      this.disposeAudioPlayer();
       this.audioDialog = false;
     },
 

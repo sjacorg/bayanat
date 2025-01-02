@@ -71,10 +71,10 @@ const MediaCard = Vue.defineComponent({
         case 'image':
           break;
         case 'video':
-          this.$emit('video-click', this.s3url);
+          this.$emit('video-click', this.media);
           break;
         case 'audio':
-          this.$emit('audio-click', this.s3url);
+          this.$emit('audio-click', this.media);
           break;
         default:
           this.downloadFile();
