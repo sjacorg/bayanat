@@ -1,7 +1,7 @@
 from flask import request, redirect, Blueprint, send_from_directory, Response, jsonify
 from typing import Optional
 from enferno.utils.logging_utils import get_logger
-from enferno.extensions import db
+from enferno.extensions import db, limiter
 from flask_wtf.csrf import generate_csrf
 
 bp_public = Blueprint("public", __name__, static_folder="../static")
@@ -22,6 +22,7 @@ def static_from_root() -> Response:
 
 
 @bp_public.route("/csrf")
+@limiter.limit("15 per minute, 100 per hour")
 def get_csrf_token() -> Response:
     """Get CSRF token for form submission."""
     token = generate_csrf()
