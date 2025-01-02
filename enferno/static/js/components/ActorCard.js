@@ -3,7 +3,7 @@ const ActorCard = Vue.defineComponent({
   emits: ['edit', 'close'],
 
   mounted() {
-    this.disposeVideoPlayer();
+    this.disposeMediaPlayer();
     this.fetchData();
   },
 
@@ -86,43 +86,50 @@ const ActorCard = Vue.defineComponent({
       this.$emit('thumb-click', s3url);
     },
 
-    disposeVideoPlayer() {
-      this.videoPlayer?.dispose?.();
-      this.videoPlayer = null;
+    disposeMediaPlayer() {
+      this.mediaPlayer?.dispose?.();
+      this.mediaPlayer = null;
     },
 
     viewVideo(media) {
-      this.disposeVideoPlayer();
+      this.disposeMediaPlayer();
 
       const videoElement = buildVideoElement();
 
       const playerContainer = this.$refs.playerContainer;
       playerContainer.prepend(videoElement);
 
-      this.videoPlayer = videojs(
+      this.mediaPlayer = videojs(
         videoElement,
         DEFAULT_VIDEOJS_OPTIONS
       );
-      this.videoPlayer.src({
+      this.mediaPlayer.src({
         type: media?.fileType ?? 'video/mp4',
         src: media.s3url
       });
-      this.videoPlayer.play();
+      this.mediaPlayer.play();
       videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
     viewAudio(media) {
-      this.iaplayer = true;
-      //solve bug when the player div is not ready yet
-      // wait for vue's next tick
+      this.disposeMediaPlayer();
 
-      this.$nextTick(() => {
-        const audio = this.$el.querySelector('#iaplayer video');
-        audio.src = media.s3url;
-        audio.load();
-        audio.play();
-        audio.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const audioElement = buildVideoElement();
+      audioElement.poster = '/static/img/waveform.png';
+
+      const playerContainer = this.$refs.playerContainer;
+      playerContainer.prepend(audioElement);
+
+      this.mediaPlayer = videojs(
+        audioElement,
+        DEFAULT_VIDEOJS_OPTIONS
+      );
+      this.mediaPlayer.src({
+        type: media?.fileType ?? 'video/mpeg',
+        src: media.s3url
       });
+      this.mediaPlayer.play();
+      audioElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
     loadRevisions() {
@@ -170,8 +177,7 @@ const ActorCard = Vue.defineComponent({
       show: false,
       hloading: false,
       mapLocations: [],
-      videoPlayer: null,
-      iaplayer: false,
+      mediaPlayer: null,
       lightbox: null,
       mediasReady: 0,
     };
@@ -394,12 +400,6 @@ const ActorCard = Vue.defineComponent({
           </v-toolbar>
 
           <div ref="playerContainer" class="px-2 my-3"></div>
-
-          <div  v-if="iaplayer" id="iaplayer" class="px-2 my-3">
-            <video controls
-                 crossorigin="anonymous" poster="/static/img/waveform.png"
-                 class="w-100 mx-auto" preload="auto"></video>
-          </div>
           
           <v-card-text>
             <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewVideo" @audio-click="viewAudio"></image-gallery>
