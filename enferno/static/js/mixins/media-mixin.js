@@ -343,7 +343,7 @@ let mediaMixin = {
     },
 
     handleAudioMetaData() {
-      const audioElement = this.audioPlayer.el().querySelector('audio');
+      const audioElement = this.audioPlayer.el().querySelector('video');
       this.audioMeta = {
         filename: audioElement.src.getFilename(),
         time: audioElement.currentTime,
