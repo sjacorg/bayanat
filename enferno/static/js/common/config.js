@@ -470,7 +470,7 @@ dataUriToBlob = function (dataURI) {
 // Media players
 const DEFAULT_VIDEOJS_OPTIONS = {
     controls: true,
-    preload: 'none',
+    preload: 'auto',
     playbackRates: VIDEO_RATES,
     fluid: true,
 }
