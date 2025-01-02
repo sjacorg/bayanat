@@ -3,6 +3,8 @@ on:
   push:
     branches:
     - main
+    - prod
+    - dev
     paths:
     - requirements.txt
   schedule:

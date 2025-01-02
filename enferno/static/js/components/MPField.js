@@ -28,10 +28,10 @@ const MPField = Vue.defineComponent({
       return this.field;
     },
     show() {
-      if (this.type === 1) {
-        return !!this.field;
+      if (this.type == 2) {
+        return Array.isArray(this.field) && this.field.length && Object.keys(this.field[0]).length;
       }
-      return Array.isArray(this.field) && this.field.length && Object.keys(this.field[0]).length;
+      return !!this.field;      
     },
   },
   methods: {

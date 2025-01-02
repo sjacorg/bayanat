@@ -98,7 +98,7 @@ const BulletinSearchBox = Vue.defineComponent({
               ></v-text-field>
               <div class="d-flex align-center">
                 <v-combobox
-                    v-model="q.ref"
+                    v-model="q.tags"
                     :label="translations.inRef_"
                     multiple
                     chips
@@ -107,7 +107,7 @@ const BulletinSearchBox = Vue.defineComponent({
                     clearable
                 ></v-combobox>
 
-                <v-checkbox :label="translations.any_" dense v-model="q.opref" color="primary" small
+                <v-checkbox :label="translations.any_" dense v-model="q.opTags" color="primary" small
                             class="mx-3"></v-checkbox>
                 <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
                             class="mx-3"></v-checkbox>
@@ -117,7 +117,7 @@ const BulletinSearchBox = Vue.defineComponent({
               <div class="d-flex align-center">
 
                 <v-combobox
-                    v-model="q.exref"
+                    v-model="q.exTags"
                     :label="translations.exRef_"
                     multiple
                     chips
@@ -125,7 +125,7 @@ const BulletinSearchBox = Vue.defineComponent({
                     clearable
                 ></v-combobox>
 
-                <v-checkbox :label="translations.all_" dense v-model="q.opexref" color="primary" small
+                <v-checkbox :label="translations.all_" dense v-model="q.opExTags" color="primary" small
                             class="mx-3"></v-checkbox>
                 <v-checkbox :label="translations.exactMatch_" dense v-model="q.exExact" color="primary" small
                             class="mx-3"></v-checkbox>

@@ -5,7 +5,7 @@ const MediaCard = Vue.defineComponent({
       required: true
     }
   },
-  emits: ['video-click', 'ready'],
+  emits: ['video-click', 'audio-click', 'ready'],
   data() {
     return {
       s3url: '',
@@ -20,6 +20,7 @@ const MediaCard = Vue.defineComponent({
       const fileType = this.media.fileType;
       if (['image/jpeg', 'image/png', 'image/gif'].includes(fileType)) return 'image';
       if (['video/webm', 'video/mp4', 'video/ogg'].includes(fileType)) return 'video';
+      if (['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'].includes(fileType)) return 'audio';
       if (['application/pdf'].includes(fileType)) return 'pdf';
       return 'unknown';
     },
@@ -28,6 +29,7 @@ const MediaCard = Vue.defineComponent({
         image: 'mdi-image',
         video: 'mdi-video',
         pdf: 'mdi-file-pdf-box',
+        audio: 'mdi-music-box',
         unknown: 'mdi-file-download'
       };
     },
@@ -39,6 +41,7 @@ const MediaCard = Vue.defineComponent({
         case 'image': return this.translations.image_preview_;
         case 'video': return this.translations.video_preview_;
         case 'pdf': return this.translations.pdf_preview_;
+        case 'audio': return this.translations.audio_preview_;
         default: return this.translations.file_preview_;
       }
     }
@@ -70,6 +73,9 @@ const MediaCard = Vue.defineComponent({
         case 'video':
           this.$emit('video-click', this.s3url);
           break;
+        case 'audio':
+          this.$emit('audio-click', this.s3url);
+          break;
         default:
           this.downloadFile();
       }
@@ -84,6 +90,7 @@ const MediaCard = Vue.defineComponent({
     generateVideoThumbnail() {
       const video = document.createElement('video');
       video.src = this.s3url;
+      video.crossOrigin = "anonymous";
       video.onloadeddata = () => {
         video.currentTime = 1; // Seek to 1 second
         video.onseeked = () => {
@@ -136,7 +143,7 @@ const MediaCard = Vue.defineComponent({
         <v-tooltip location="bottom">
           <template v-slot:activator="{ props }">
             <v-chip prepend-icon="mdi-tag" variant="plain" v-if="media.category" size="small" v-bind="props">
-              {{ media.category }}
+              {{ media.category.title }}
             </v-chip>
           </template>
           <span>{{ translations.category_ }}</span>
@@ -175,6 +182,21 @@ const MediaCard = Vue.defineComponent({
             <v-card v-else-if="mediaType === 'pdf'" height="180"
                     class="d-flex align-center justify-center bg-grey-lighten-2">
               <v-icon size="64" color="red">mdi-file-pdf-box</v-icon>
+            </v-card>
+
+            <!-- Audio preview -->
+            <v-card v-else-if="mediaType === 'audio'" height="180" class="d-flex align-center justify-center bg-grey-lighten-2">
+              <div class="d-flex align-center justify-center fill-height position-relative">
+                <v-icon size="128" color="primary">mdi-music-box</v-icon>
+                <v-btn
+                  icon="mdi-play-circle"
+                  variant="text"
+                  size="x-large"
+                  :class="['custom-play-icon', 'dark-play-icon']"
+                  class="position-absolute"
+                  style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
+                ></v-btn>
+              </div>
             </v-card>
 
             <!-- Other file types preview -->

@@ -1,0 +1,152 @@
+<v-dialog v-model="isSignInDialogVisible" max-width="400" persistent>
+    <v-form v-if="signInStep === 'sign-in'" @submit.prevent="signIn">
+        <v-card prepend-icon="mdi-lock" title="{{ _('Session Expired') }}" subtitle="{{ _('Please sign in again to continue.') }}">
+            <v-card-text>
+                <v-row dense>
+                    <v-col cols="12">
+                        <v-text-field
+                            v-model="signInForm.username"
+                            prepend-icon="mdi-account"
+                            variant="underlined"
+                            label="{{ _('Login') }}*"
+                            required
+                            {% if current_user and current_user.username %}
+                                disabled
+                            {% endif %}
+                        ></v-text-field>
+                    </v-col>
+
+                    <v-col cols="12">
+                        <v-text-field
+                            v-model="signInForm.password"
+                            prepend-icon="mdi-lock-question"
+                            variant="underlined"
+                            label="{{ _('Password') }}*"
+                            type="password"
+                            required
+                        ></v-text-field>
+                    </v-col>
+                </v-row>
+
+                <v-alert
+                    v-if="this.signInErrorMessage"
+                    type="error"
+                    dense
+                    dismissible
+                    class="mt-2"
+                >
+                    ${this.signInErrorMessage}
+                </v-alert>
+
+                <v-btn variant="plain" class="text-body-2" size="sm" href="/logout">{{ _("Logout") }}</v-btn>
+            </v-card-text>
+                
+            <v-divider></v-divider>
+            
+            <v-card-actions>
+                <v-btn
+                    type="submit"
+                    color="primary"
+                    text="{{ _('Login') }}"
+                    size="large"
+                    block
+                    variant="flat"
+                    :loading="isSignInDialogLoading"
+                ></v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-form>
+    <v-form v-if="signInStep === '2fa-select'" @submit.prevent="select2FAMethod">
+        <v-card prepend-icon="mdi-lock" title="{{ _('Choose the 2FA method') }}" subtitle="{{ _('Choose one of the methods below') }}">
+            <v-card-text>
+                <v-container fluid>
+                    <v-radio-group v-model="twoFaSelectForm">
+                        <v-radio value="authenticator">
+                            <template v-slot:label>
+                                <div>{{ _('Authenticator') }}</div>
+                            </template>
+                        </v-radio>
+                        <v-radio value="webauthn">
+                            <template v-slot:label>
+                                <div>{{ _('Security Keys or Passkeys') }}</div>
+                            </template>
+                        </v-radio>
+                    </v-radio-group>
+                </v-container>
+
+                <v-alert v-if="this.signInErrorMessage" type="error" dense dismissible class="mt-2">
+                    ${this.signInErrorMessage}
+                </v-alert>
+
+                <v-btn variant="plain" class="text-body-2" size="sm" href="/logout">{{ _("Logout") }}</v-btn>
+            </v-card-text>
+                
+            <v-divider></v-divider>
+            
+            <v-card-actions>
+                <v-btn
+                    type="submit"
+                    color="primary"
+                    text="{{ _('Select') }}"
+                    size="large"
+                    block
+                    variant="flat"
+                    :disabled="!twoFaSelectForm"
+                    :loading="isSignInDialogLoading"
+                ></v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-form>
+    <v-form v-if="signInStep === 'authenticator'" @submit.prevent="submitAuthenticatorCode">
+        <v-card title="{{ _('Authenticator') }}"
+            subtitle="{{ _('Please enter your authentication code') }}">
+            <template #prepend>
+                <v-btn v-if="twoFaSelectForm" variant="flat" icon="mdi-arrow-left" @click="goBackToSignIn"></v-btn>
+                <v-icon v-else>mdi-key</v-icon>
+            </template>
+
+            <v-card-text>
+                <v-row dense>
+                    <v-col cols="12">
+                        <v-text-field v-model="verificationCode" prepend-icon="mdi-account" variant="underlined"
+                            label="{{ _('Code') }}*" required></v-text-field>
+                    </v-col>
+                </v-row>
+    
+                <v-alert v-if="this.signInErrorMessage" type="error" dense dismissible class="mt-2">
+                    ${this.signInErrorMessage}
+                </v-alert>
+
+                <v-btn variant="plain" class="text-body-2" size="sm" href="/logout">{{ _("Logout") }}</v-btn>
+            </v-card-text>
+    
+            <v-divider></v-divider>
+    
+            <v-card-actions>
+                <v-btn type="submit" color="primary" text="{{ _('Submit') }}" size="large" block variant="flat"
+                    :loading="isSignInDialogLoading"></v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-form>
+    <v-form v-if="signInStep === 'webauthn'" @submit.prevent="submitWebauthn">
+        <v-card title="{{ _('Security Keys/Passkeys') }}"
+            subtitle="{{ _('Sign In Using your Security Key or Passkey') }}">
+            <template #prepend>
+                <v-btn v-if="twoFaSelectForm" variant="flat" icon="mdi-arrow-left" @click="goBackToSignIn"></v-btn>
+                <v-icon v-else>mdi-key</v-icon>
+            </template>
+
+            <v-card-text>
+                <v-alert v-if="this.signInErrorMessage" type="error" dense dismissible class="mt-2">
+                    ${this.signInErrorMessage}
+                </v-alert>
+
+                <v-btn variant="plain" class="text-body-2" size="sm" href="/logout">{{ _("Logout") }}</v-btn>
+            </v-card-text>
+    
+            <v-card-actions>
+                <v-btn type="submit" color="primary" text="{{ _('Authenticate') }}" size="large" block variant="flat" :loading="isSignInDialogLoading"></v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-form>
+</v-dialog>

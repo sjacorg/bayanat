@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 import os
 from traceback import TracebackException
+from celery.signals import after_setup_logger, after_setup_task_logger
 
 cfg = Config()
 
@@ -29,6 +30,7 @@ class JsonFormatter(logging.Formatter):
             "timestamp": record.created,
             "level": record.levelname,
             "message": record.getMessage(),
+            "logger": record.name,
             "pathname": os.path.relpath(record.pathname),
             "lineno": record.lineno,
         }
@@ -53,10 +55,29 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(record_dict)
 
 
-def get_logger():
+def get_logger(name="app_logger"):
     """Get a logger instance."""
-    logger = logging.getLogger("app_logger")
+    logger = logging.getLogger(name)
     logger.setLevel(cfg.LOG_LEVEL)
+
+    # Only add handler if it doesn't exist to prevent duplicate logging
+    if not logger.handlers:
+        handler = TimedRotatingFileHandler(
+            os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
+            when="midnight",
+            backupCount=cfg.LOG_BACKUP_COUNT,
+        )
+        handler.setFormatter(JsonFormatter())
+        logger.addHandler(handler)
+
+    return logger
+
+
+@after_setup_logger.connect
+def setup_celery_logger(logger, *args, **kwargs):
+    """Configure the Celery logger to use our existing logging setup."""
+    # Remove default handlers to prevent duplicate logging
+    logger.handlers = []
 
     handler = TimedRotatingFileHandler(
         os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
@@ -65,8 +86,13 @@ def get_logger():
     )
     handler.setFormatter(JsonFormatter())
     logger.addHandler(handler)
+    logger.setLevel(cfg.LOG_LEVEL)
 
-    return logger
+
+@after_setup_task_logger.connect
+def setup_task_logger(logger, *args, **kwargs):
+    """Configure the Celery task logger to use our existing logging setup."""
+    setup_celery_logger(logger)
 
 
 def get_log_filenames():

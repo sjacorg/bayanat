@@ -16,7 +16,7 @@
                                     :items="items"
                                     :loading="loading"
                                     @update:options="refresh"
-                                    v-model:options="options"
+                                    :page="options.page"
                                     :items-length="itemsLength"
                             >
                                 <template v-slot:top>
@@ -264,7 +264,7 @@
 
             methods: {
                 refresh(options) {
-                    this.options = options || this.options;
+                    this.options = options || { ...this.options, page: 1 };
 
                     axios.get(`/admin/api/roles/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
                         this.loading = false;
@@ -278,7 +278,7 @@
                     reqData.append('csv', this.csvFile)
                     axios.post('/admin/api/role/import/', reqData).then(response => {
                         this.imDialog = false;
-                        this.refresh(this.options);
+                        this.refresh();
                         this.showSnack(response.data);
                     })
 
@@ -304,7 +304,7 @@
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.items.splice(index, 1);
-                                this.refresh(this.options);
+                                this.refresh();
                             }).catch(error => {
                             this.showSnack(error.response.data);
                         });
@@ -325,11 +325,9 @@
                         axios.put(`/admin/api/role/${this.editedItem.id}`, {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
-                                this.refresh(this.options)
+                                this.refresh()
                                 this.close();
-                            }).catch(error => {
-                            this.showSnack(this.parseValidationError(error.response.data));
-                        });
+                            });
                         } else {
                         this.items.push(this.editedItem);
 
@@ -338,13 +336,10 @@
                             .then(response => {
 
                                 this.showSnack(response.data);
-                                this.refresh(this.options)
+                                this.refresh()
                                 this.close()
-                            }).catch(error => {
-                            this.showSnack(this.parseValidationError(error.response.data));
-                        });
+                            });
                     }
-
                 }
             }
         });

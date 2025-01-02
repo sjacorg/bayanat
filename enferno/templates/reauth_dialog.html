@@ -1,0 +1,46 @@
+<v-dialog v-model="isReauthDialogVisible" max-width="400" persistent>
+    <v-form @submit.prevent="submitReauth">
+        <v-card prepend-icon="mdi-lock" title="{{ _('Verify Password') }}" subtitle="{{ _('You must re-authenticate to continue.') }}">
+            <v-card-text>
+                <v-row dense>
+                    <v-col cols="12">
+                        <v-text-field
+                            v-model="signInForm.password"
+                            prepend-icon="mdi-lock-question"
+                            variant="underlined"
+                            label="{{ _('Password') }}*"
+                            type="password"
+                            required
+                        ></v-text-field>
+                    </v-col>
+                </v-row>
+
+                <v-alert
+                    v-if="this.signInErrorMessage"
+                    type="error"
+                    dense
+                    dismissible
+                    class="mt-2"
+                >
+                    ${this.signInErrorMessage}
+                </v-alert>
+            </v-card-text>
+                
+            <v-divider></v-divider>
+            
+            <v-card-actions>
+                <v-spacer></v-spacer>
+                
+                <v-btn
+                    type="submit"
+                    color="primary"
+                    text="{{ _('Login') }}"
+                    size="large"
+                    block
+                    variant="flat"
+                    :loading="isSignInDialogLoading"
+                ></v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-form>
+</v-dialog>

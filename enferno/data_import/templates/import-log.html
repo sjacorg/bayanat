@@ -1,5 +1,7 @@
 {% extends 'layout.html' %}
-
+{% block css %}
+<link rel="stylesheet" href="/static/js/videojs/video-js.css">
+{% endblock %}
 {% block content %}
 
             {% include 'log_dialog.html' %}
@@ -21,6 +23,7 @@
                                             :loading="loading"
                                             :items-length="itemsLength"
                                             @update:options="refresh"
+                                            :page="options.page"
                                             class="elevation-1"
                                     >
 
@@ -45,30 +48,22 @@
 
                                         <template v-slot:item.preview="{item}">
                                             <v-btn
-                                                @click.stop=""
                                                 v-if="item.table=='bulletin' && item.item_id > 0"
-                                                @click="previewItem('/admin/api/bulletin/'+item.item_id)"
-                                                color="grey lighten-2"
+                                                @click.stop="previewItem('/admin/api/bulletin/'+item.item_id)"
                                                 elevation="0"
                                                 class="mx-2"
+                                                prepend-icon="mdi-file-document-multiple"
                                             >
-                                                <v-icon color="grey darken-2" left>
-                                                    mdi-file-document-multiple
-                                                </v-icon>
                                                 ${item.item_id}
                                             </v-btn>
 
                                             <v-btn
-                                                @click.stop=""
                                                 v-if="item.table=='actor' && item.item_id > 0"
-                                                @click="previewItem('/admin/api/actor/'+item.item_id)"
-                                                color="grey lighten-2"
+                                                @click.stop="previewItem('/admin/api/actor/'+item.item_id)"
                                                 elevation="0"
                                                 class="mx-2"
+                                                prepend-icon="mdi-account-multiple"
                                             >
-                                                <v-icon color="grey darken-2" left x-small>
-                                                    mdi-account-multiple
-                                                </v-icon>
                                                 ${item.item_id}
                                             </v-btn>
                                         </template>
@@ -115,6 +110,7 @@
 <script src="/static/js/components/PdfViewer.js"></script>
 <script src="/static/js/components/GlobalMap.js"></script>
 <script src="/static/js/components/Visualization.js"></script>
+<script src="/static/js/videojs/video.min.js"></script>
 <script src="/static/js/element-resize-detector.min.js"></script>
 <script src="/static/js/force-graph.min.js"></script>
 <script src="/static/js/components/PreviewCard.js"></script>
@@ -141,6 +137,13 @@
             data: () => ({
 
                 translations: translations,
+
+                itobInfo: [],
+                itoaInfo: [],
+                itoiInfo: [],
+                atobInfo: [],
+                btobInfo: [],
+                atoaInfo: [],
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
@@ -208,13 +211,29 @@
                 }
             })
         },
-
+        created() {
+            this.fetchRelationInfo();
+        },
         methods: {
-
+            fetchRelationInfo() {
+                axios.get('/admin/api/relation/info')
+                    .then(response => {
+                        this.itobInfo = response.data.itobInfo;
+                        this.itoaInfo = response.data.itoaInfo;
+                        this.atobInfo = response.data.atobInfo;
+                        this.atoaInfo = response.data.atoaInfo;
+                        this.btobInfo = response.data.btobInfo;
+                        this.itoiInfo = response.data.itoiInfo;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching relation info:', error);
+                        this.showSnack('Error fetching relation info');
+                    });
+            },
 
 
             refresh(options) {
-                this.options = options || this.options;
+                this.options = options || { ...this.options, page: 1 };
                 this.loading = true;
                 let url = `/import/api/imports/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
 
@@ -309,12 +328,12 @@
         app.component('actor-profiles', ActorProfiles);
         app.component('actor-card', ActorCard);
         app.component('incident-card', IncidentCard);
-        app.component('EventCard', EventCard);
-        app.component('ImageGallery', ImageGallery);
+        app.component('event-card', EventCard);
+        app.component('image-gallery', ImageGallery);
 
-        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
-        app.component('RelatedActorsCard', RelatedActorsCard);
-        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
+        app.component('related-incidents-card', RelatedBulletinsCard);
+        app.component('related-actors-card', RelatedActorsCard);
+        app.component('related-bulletins-card', RelatedIncidentsCard);
 
         app.component('mp-card', MPCard);
 

@@ -16,7 +16,7 @@
                                             height="calc(100vh - 260px)"
                                             fixed-header
                                             @update:options="refresh"
-                                            v-model:options="options"
+                                            :page="options.page"
                                             :headers="headers"
                                             :items="items"
                                             :loading="loading"
@@ -311,7 +311,7 @@
 
             methods: {
                 refresh(options) {
-                    this.options = options || this.options;
+                    this.options = options || { ...this.options, page: 1 };
 
                     axios.get(`/admin/api/labels/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&fltr=all&q=${this.q}`).then(response => {
                         this.loading = false;
@@ -386,12 +386,7 @@
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh()
-                            }).catch(error => {
-                            if (error.response) {
-                                this.showSnack(error.response.data);;
-                            }
-
-                        });
+                            });
                     }
                     this.close();
                 }

@@ -1,4 +1,5 @@
 const globalMixin = {
+  mixins: [reauthMixin],
   computed: {
     allowedDateFrom() {
       if (this.editedEvent?.to_date){
@@ -57,13 +58,18 @@ const globalMixin = {
       },
     },
   }),
-
   created () {
+    document.addEventListener('global-axios-error', this.showSnack);
+
+    if (!window.__username__) return;
+
     axios.get('/settings/load').then(res => {
       this.settings = res.data;
     });
   },
-
+  beforeUnmount() {
+    document.removeEventListener('global-axios-error', this.showSnack);
+  },
   methods: {
     localDate: function (dt) {
       if (dt === null || dt === '') {
@@ -76,7 +82,11 @@ const globalMixin = {
     },
     // Snack Bar
     showSnack(message) {
-      this.snackMessage = message;
+      if (typeof message === 'string') {
+        this.snackMessage = message;
+      } else {
+        this.snackMessage = handleRequestError(message?.detail ?? message);
+      }
       this.snackbar = true;
     },
 

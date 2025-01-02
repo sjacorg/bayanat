@@ -102,21 +102,38 @@ axios.interceptors.response.use(
         return response;
     },
     function (error) {
-        // Do something with response error
-        if (error.response) {
-            if (error.response.status == 403) {
-                //location.href="/logout";
-            }
+        const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
+        document.dispatchEvent(globalRequestErrorEvent);
+        // Check for session expiration errors (401 Unauthorized)
+        if ([401].includes(error?.response?.status)) {
+            const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });
+            document.dispatchEvent(authenticationRequiredEvent);
         }
         return Promise.reject(error);
     },
 );
 
 function handleRequestError(error) {
-    if (error.response) {
+    if (error?.response?.data?.response?.errors) {
+        return error?.response?.data?.response?.errors?.join('\n') || 'An error occurred.';
+    } else if (error?.response?.data?.errors) {
+        const errors = error?.response?.data?.errors;
+        let message = '';
+        for(const field in errors){
+            let fieldName = field;
+            if (fieldName.startsWith('item.')){
+                fieldName = fieldName.substring(5);
+            }
+            message += `<strong style="color:#b71c1c;">[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]:</strong> ${errors[field]}<br/>`;
+        }
+        return message;
+    } else if (error?.response?.data) {
+        if (error?.response?.data?.includes('<!DOCTYPE html>')) return 'An error occurred.'
         return error.response.data || 'An error occurred.';
     } else if (error.request) {
         return 'No response from server. Contact an admin.';
+    } else if (error?.message) {
+        return error.message || 'An error occurred.';
     } else {
         return 'Request failed. Check your network connection.';
     }

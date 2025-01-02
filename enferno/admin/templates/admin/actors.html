@@ -47,6 +47,7 @@
                             @click:row="rowClick"
                             :items="items"
                             @update:options="refresh"
+                            :page="options.page"
                             :loading="loading"
                             :items-length="itemsLength"
                             :row-props="rowClass"
@@ -250,6 +251,7 @@
                                       ref="relateIncidents"></relate-incidents>
 
                     {% include 'admin/partials/video_player_dialog.html' %}
+                    {% include 'admin/partials/audio_player_dialog.html' %}
 
 
                     <v-dialog width="600" v-model="selfAssignDialog">
@@ -454,7 +456,6 @@
                 eventParams: {typ: 'for_actor'},
                 reviewDialog: false,
                 reviewKey: 0,
-                videoDialog: false,
                 playerOptions: {},
 
                 // search and relate actor dialog vars
@@ -482,7 +483,9 @@
                 bulkActorDrawer: false,
 
                 exportDrawer: false,
-                exportConfig: {},
+                exportConfig: {
+                    format: 'pdf'
+                },
 
                 sources: [],
                 locations: [],
@@ -633,6 +636,16 @@
 
                 accessRule() {
                     return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
+                },
+                integerRule() {
+                    return [
+                        value => {
+                            if (value === null || value === undefined || value === '') return true;
+                            if (/^\d+$/.test(value)) return true
+
+                            return "{{ _('Please enter a valid number.') }}"
+                        },
+                    ]
                 },
 
                 bulletinRelationTypes() {
@@ -829,7 +842,6 @@
             },
 
             methods: {
-
                  fetchRelationInfo() {
                         axios.get('/admin/api/relation/info')
                             .then(response => {
@@ -957,6 +969,7 @@
                         this.showSnack("{{ _('Graph is being generated.')}}");
                         this.graphTimer = setInterval(this.checkGraphStatus, 3000);
                     }).catch(e => {
+                        this.visualizeLoading = false;
                         console.error(e.message);
                     }).finally(() => {
                     });
@@ -967,18 +980,15 @@
                     axios.post(`/export/api/actor/export`, {
                         items: this.selected,
                         config: this.exportConfig
-                    })
-                        .then(response => {
-                            this.showSnack(response.data);
-                        }).catch(error => {
-                        console.error(error.response?.data);
-                        this.showSnack(error.response?.data)
-                    }).finally(() => {
-                        this.loading = false;
+                    }).then(response => {
+                        this.showSnack(response.data);
                         this.exportDrawer = false;
                         this.selected = [];
-                        this.exportConfig = {};
-
+                        this.exportConfig = {
+                            format: 'pdf'
+                        };
+                    }).finally(() => {
+                        this.loading = false;
                     });
                 },
 
@@ -1003,8 +1013,6 @@
                         this.showSnack("{{ _('Actor assigned successfully.')}}")
                         this.refresh();
 
-                    }).catch(err => {
-                        this.showSnack(err.response.data);
                     }).finally(() => {
                         this.selfAssignDialog = false;
                         this.assignActor = {};
@@ -1067,20 +1075,19 @@
                     axios.put(`/admin/api/actor/bulk/`, {
                         items: this.selected,
                         bulk: this.bulk
-                    })
-                        .then(response => {
-                            this.loading = false;
-                            this.showSnack(response.data);
-                            this.refresh();
-                            //reset bulk drawer, and bulk data
-                            this.bulkActorDrawer = false;
-                            this.selected = [];
-                            this.bulk = {};
-                            clearInterval(this.bulkTimer);
-                            // if (!this.bulkProcInterval)
-                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
-
-                        });
+                    }).then(response => {
+                        this.showSnack(response.data);
+                        this.refresh();
+                        //reset bulk drawer, and bulk data
+                        this.bulkActorDrawer = false;
+                        this.selected = [];
+                        this.bulk = {};
+                        clearInterval(this.bulkTimer);
+                        // if (!this.bulkProcInterval)
+                        this.bulkTimer = setInterval(this.bulkStatus, 3000);
+                    }).finally(() => {
+                        this.loading = false;
+                    });
                 },
 
 
@@ -1111,7 +1118,7 @@
 
 
                 refresh(options) {
-                    this.options = options || this.options;
+                    this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
                     const startTime = new Date();
 
@@ -1121,7 +1128,6 @@
                         q: this.search,
                         options: this.options
                     }).then(response => {
-                        this.loading = false;
                         const endTime = new Date();
                         this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
                         this.itemsLength = response.data.total;
@@ -1130,9 +1136,8 @@
                             this.search.length === 1 &&
                             Object.keys(this.search[0]).length === 0
                         );
-                    }).catch(err => {
+                    }).finally(() => {
                         this.loading = false;
-                        this.showSnack(this.parseValidationError(err.response.data));
                     });
 
 
@@ -1197,9 +1202,7 @@
 
                             }
                         }
-                    ).catch(error => {
-                        this.showSnack(handleRequestError(error))
-                    });
+                    );
 
                 },
 
@@ -1215,9 +1218,6 @@
                             this.queryName = null;
                             // just reload searches and select the last one
                             this.loadSearchesFromAPI(true);
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
                         });
                 },
 
@@ -1226,9 +1226,6 @@
                     axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                         .then(res => {
                             this.showSnack(res.data);
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
                         });
                 },
 
@@ -1241,9 +1238,6 @@
                                 this.savedSearchSelection = null;
                                 this.search = [{}];
                             }
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
                         });
                 },
 
@@ -1317,9 +1311,6 @@
                         this.actorDrawer = true;
                     }).catch(error => {
                         this.actorDrawer = false;
-                        if (error.response) {
-                            this.showSnack(error.response.data)
-                        }
                     }).finally(() => {
                         this.actorLoader = false;
                     });
@@ -1524,9 +1515,6 @@
                             });
 
 
-                        }).catch(error => {
-                            this.showSnack("{{ _('Oops! We couldn\'t find this item.')}}")
-
                         }).finally(() => {
                             this.loading = false;
                         });
@@ -1586,21 +1574,21 @@
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
-                            this.showSnack(this.parseValidationError(err.response?.data))
+                            this.showSnack(handleRequestError(err));
                             this.saving = false;
                         });
                     } else {
-                        this.items.push(this.editedItem);
                         //create new record
                         axios.post("/admin/api/actor/", {
                             item: this.editedItem
                         }).then(response => {
+                            this.items.push(this.editedItem);
                             this.showSnack(response.data);
                             this.refresh();
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
-                            this.showSnack(this.parseValidationError(err.response?.data));
+                            this.showSnack(handleRequestError(err));
                             this.saving = false
                         });
                     }

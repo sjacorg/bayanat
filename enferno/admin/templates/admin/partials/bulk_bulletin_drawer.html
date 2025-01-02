@@ -67,12 +67,12 @@
                             chips
                             closable-chips
                             multiple
-                            v-model="bulk.ref"
-                            label="{{ _('Ref') }}"
+                            v-model="bulk.tags"
+                            label="{{ _('Tags') }}"
                             class="mr-2"
                     ></v-combobox>
 
-                    <v-checkbox v-model="bulk.refReplace" label="{{ _('Replace') }}"></v-checkbox>
+                    <v-checkbox v-model="bulk.tagsReplace" label="{{ _('Replace') }}"></v-checkbox>
                 </div>
 
             </v-card-text>

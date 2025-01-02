@@ -1,5 +1,5 @@
 # Version
-This threat model is up-to-date with <kbd>Bayanat v2.2</kbd>.
+This threat model is up-to-date with <kbd>Bayanat v2.4</kbd>.
 
 # Goal
 

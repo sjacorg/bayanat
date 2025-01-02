@@ -166,15 +166,15 @@
                                         <geo-map style="z-index:200" v-model="cfg.GEO_MAP_DEFAULT_CENTER"
                                                     :map-height="300"></geo-map>
                                         
-                                        <h2 class="mt-3 subtitle-2 mb-2">{{ _('Satalite Imagery') }}</h2>
-                                        <span class="text-caption">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satalite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</span>
+                                        <h2 class="mt-3 subtitle-2 mb-2">{{ _('Satellite Imagery') }}</h2>
+                                        <span class="text-caption">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satellite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</span>
                                         <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
                                                         persistent-hint
                                                         hint="{{ _('API key for Google Maps. Adding a key enables satellite imagery in Bayanat\'s maps.') }}"
                                                         v-model="cfg.GOOGLE_MAPS_API_KEY"></v-text-field>
                                         
-                                        <h2 class="mt-3 subtitle-2 mb-2">{{ _('Administrative Devisions') }}</h2>
-                                        <span class="text-caption">{{ _('Bayanat ships with the Syrian administrative devisions by default. Change the names of the administrative devisions to match the country your team will be working on.') }}</span>
+                                        <h2 class="mt-3 subtitle-2 mb-2">{{ _('Administrative Divisions') }}</h2>
+                                        <span class="text-caption">{{ _('Bayanat ships with the Syrian administrative divisions by default. Change the names of the administrative divisions to match the country your team will be working on.') }}</span>
                                         <editable-table title=""
                                                         class="mt-3"
                                                         :item-headers="alHeaders"
@@ -245,12 +245,12 @@
                                                             label="{{ _('Password Minimum Length') }}"
                                                             persistent-hint
                                                             hint="{{ _('Minimum required length for passwords.') }}"
-                                                            suffix="charachters"
+                                                            suffix="characters"
                                                             v-model.number="cfg.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
 
                                                 <h3 class="mt-1 subtitle-2 mb-2">{{ _('Password Strength') }}</h3>
 
-                                                <p class="text-caption">{{ _('Bayanat uses zxcvbn password strength estimator to calculate a password score. \'Medium\' coresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. \'Strong\' corresponds to a score of 3, we recommend this setting for online Bayanat installations. \'Very Strong\' corresponds to a zxcvbn score of 4 and offers the highest level of protection.') }}</p>
+                                                <p class="text-caption">{{ _('Bayanat uses zxcvbn password strength estimator to calculate a password score. \'Medium\' corresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. \'Strong\' corresponds to a score of 3, we recommend this setting for online Bayanat installations. \'Very Strong\' corresponds to a zxcvbn score of 4 and offers the highest level of protection.') }}</p>
 
                                                 <v-sheet width="400">
                                                     
@@ -277,18 +277,8 @@
                                             <v-switch color="primary" class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
                                                       persistent-hint
                                                       hint="{{ _('Force all users to enroll in two factor authentication.') }}"
-                                                      v-model="cfg.SECURITY_TWO_FACTOR_REQUIRED"
-                                            >
+                                                      v-model="cfg.SECURITY_TWO_FACTOR_REQUIRED">
                                             </v-switch>
-
-                                            <v-switch color="primary" class="mb-9"
-                                                      label="{{ _('WebAuthn Authentication') }}"
-                                                      persistent-hint
-                                                      hint="{{ _('Allow use of FIDO hardware and passkeys as second factor.') }}"
-                                                      v-model="cfg.SECURITY_WEBAUTHN"
-                                            >
-                                            </v-switch>
-                                            
                                         </v-card-text>
 
                                         <template v-slot:next="{ next }">
@@ -309,13 +299,13 @@
 
                                         <v-card-text>
 
-                                            <p class="text-caption">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
+                                            <p class="text-caption">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behavior can be changed with the following settings.') }}</p>
 
                                             <v-switch color="primary" class="mb-9"
                                                       label="{{ _('Restrictive Access Control') }}" persistent-hint
                                                       hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
                                                       v-model="cfg.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
-                                            <v-switch class="mb-9"
+                                            <v-switch color="primary" class="mb-9"
                                                       label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
                                                       persistent-hint
                                                       hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
@@ -349,7 +339,7 @@
                                                       v-model="cfg.SHEET_IMPORT"></v-switch>
                                             <v-switch color="primary" class="mb-9" label="{{ _('Export Tool') }}"
                                                       v-model="cfg.EXPORT_TOOL" persistent-hint
-                                                      hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Adminisrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
+                                                      hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Administrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
                                         </v-card-text>
 
                                         <template v-slot:next="{ next }">
@@ -465,6 +455,7 @@
 
 <script src="/static/js/vuetify.min.js"></script>
 <script src="/static/js/axios.min.js"></script>
+<script src="/static/js/mixins/reauth-mixin.js"></script>
 <script src="/static/js/mixins/global-mixin.js"></script>
 <script src="/static/js/vue-router.global.js"></script>
 <script src="/static/js/leaflet.js"></script>

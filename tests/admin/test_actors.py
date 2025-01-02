@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from enferno.settings import Config as cfg
 from enferno.admin.models import Actor, ActorProfile, Atoa
 from enferno.user.models import User
@@ -19,7 +20,6 @@ from tests.factories import (
 )
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_first_or_fail,
     load_data,
     get_uid_from_client,
@@ -310,7 +310,6 @@ def test_put_actor_endpoint(
     actor_dict["last_name"] = new_last_name
     actor_dict["middle_name"] = new_middle_name
     actor_dict["actor_profiles"] = [{"mode": 1}]
-    actor_dict["no_children"] = str(actor_dict["no_children"])
     response = client_.put(
         f"/admin/api/actor/{actor_id}",
         headers={"content-type": "application/json"},
@@ -359,7 +358,6 @@ def test_put_actor_assigned_endpoint(
         actor_dict["first_name"] = new_first_name
         actor_dict["last_name"] = new_last_name
         actor_dict["middle_name"] = new_middle_name
-        actor_dict["no_children"] = str(actor_dict["no_children"])
         response = client_.put(
             f"/admin/api/actor/{actor_id}",
             headers={"content-type": "application/json"},

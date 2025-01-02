@@ -1,12 +1,12 @@
 import pytest
 
 from enferno.admin.models import Activity
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from enferno.user.models import User
 from tests.admin.test_users import create_user
 from tests.factories import ActivityFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_first_or_fail,
 )
 

@@ -16,7 +16,8 @@
                 <v-text-field name="code" label="{{ _('Recovery Code')}}"></v-text-field>
 
             </v-card-text>
-            <v-card-actions class="justify-end">
+            <v-card-actions class="justify-space-between">
+                <v-btn variant="text" href="/login">{{ _('Back to Login')}}</v-btn>
                 <v-btn type="submit" color="primary" variant="elevated"> {{ _('Submit') }} </v-btn>
             </v-card-actions>
 
@@ -30,10 +31,6 @@
                 </v-card-text>
             {% endif %}
         </form>
-    <v-card-actions class="justify-start">
-        <v-btn variant="plain" prepend-icon="mdi-chevron-left" href="/login">{{ _('Back to Login')}}</v-btn>
-    </v-card-actions>
-
     </v-card>
 
 </v-main>

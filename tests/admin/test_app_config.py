@@ -5,6 +5,8 @@ import pytest
 
 from enferno.admin.models import AppConfig
 from enferno.admin.validation.models import FullConfigValidationModel
+from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.settings import TestConfig
 from enferno.utils.config_utils import ConfigManager
 from tests.factories import AppConfigFactory
 
@@ -12,7 +14,6 @@ from tests.factories import AppConfigFactory
 from tests.models.admin import AppConfigsResponseModel
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_uid_from_client,
 )
 
@@ -82,17 +83,24 @@ def test_configuration(request, client_fixture, expected_status):
 def test_put_configuration(request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     updated_etl_vid_ext = ["mov", "mp4", "test"]
-    current_conf = ConfigManager.serialize()
-    if "LANGUAGES" in current_conf:
-        current_conf.pop("LANGUAGES")
-    updated_conf = {**current_conf, "ETL_VID_EXT": updated_etl_vid_ext}
-    with patch.object(ConfigManager, "write_config", return_value=True) as mock_write_config:
-        response = client_.put(
-            "/admin/api/configuration/",
-            headers={"Content-Type": "application/json"},
-            json={"conf": updated_conf},
-        )
-        assert response.status_code == expected_status
-        if expected_status == 200:
-            called_conf_write_argument = FullConfigValidationModel(**updated_conf).model_dump()
-            mock_write_config.assert_called_once_with(called_conf_write_argument)
+
+    with patch("enferno.settings.Config", TestConfig):
+        current_conf = ConfigManager.serialize()
+        if "LANGUAGES" in current_conf:
+            current_conf.pop("LANGUAGES")
+        updated_conf = {
+            **current_conf,
+            "ETL_VID_EXT": updated_etl_vid_ext,
+        }
+        with patch.object(ConfigManager, "write_config", return_value=True) as mock_write_config:
+            response = client_.put(
+                "/admin/api/configuration/",
+                headers={"Content-Type": "application/json"},
+                json={"conf": updated_conf},
+            )
+            assert response.status_code == expected_status
+            if expected_status == 200:
+                called_conf_write_argument = FullConfigValidationModel(
+                    **convert_empty_strings_to_none(updated_conf)
+                ).model_dump(by_alias=True)
+                mock_write_config.assert_called_once_with(called_conf_write_argument)

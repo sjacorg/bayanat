@@ -20,7 +20,7 @@ from tests.models.admin import (
     ItoaInfoItemModel,
     ItobInfoItemModel,
 )
-from tests.test_utils import convert_empty_strings_to_none, load_data
+from tests.test_utils import load_data
 
 
 tables = [

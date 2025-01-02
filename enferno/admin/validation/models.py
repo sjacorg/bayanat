@@ -2,19 +2,17 @@ from enum import Enum
 from pydantic import (
     BaseModel,
     ConfigDict,
-    ValidationInfo,
+    Field,
     field_validator,
     model_validator,
-    Field,
-    constr,
-    conint,
-    confloat,
     HttpUrl,
+    ValidationInfo,
 )
-from typing import Literal, Optional, Any
+from typing import Optional, Any
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
+import os
 
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
@@ -22,17 +20,20 @@ from enferno.utils.typing import typ as t
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
+BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
+STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
 
 class BaseValidationModel(BaseModel):
     """Base class for all validation models."""
 
-    model_config = ConfigDict(str_strip_whitespace=True)
+    model_config = BASE_MODEL_CONFIG
 
 
-class StrictValidationModel(BaseValidationModel):
+class StrictValidationModel(BaseModel):
     """Base class that forbids extra fields in the model."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
 
 class PartialUserModel(BaseValidationModel):
@@ -64,7 +65,7 @@ class PartialLabelModel(BaseValidationModel):
 
 class PartialGeoLocationModel(BaseValidationModel):
     id: Optional[int] = None
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     geotype: Optional[PartialGeoLocationTypeModel] = None
     main: Optional[bool] = None
     lng: float
@@ -201,21 +202,21 @@ class PartialMediaModel(BaseValidationModel):
     fileType: Optional[str] = None
     filename: Optional[str] = None
     etag: Optional[str] = None
-    time: Optional[str] = None
+    time: Optional[Any] = None
     category: Optional[PartialMediaCategoryModel] = None
 
 
 class BulletinValidationModel(StrictValidationModel):
     originid: Optional[str] = None
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     sjac_title: Optional[str] = None
     assigned_to: Optional[PartialUserModel] = None
     first_peer_reviewer: Optional[PartialUserModel] = None
     description: Optional[SanitizedField] = None
-    comments: constr(min_length=1)  # type: ignore
-    source_link: constr(min_length=1)  # type: ignore
+    comments: str = Field(min_length=1)
+    source_link: str = Field(min_length=1)
     source_link_type: Optional[bool] = None
-    ref: Optional[list[str]] = Field(default_factory=list)
+    tags: Optional[list[str]] = Field(default_factory=list)
     locations: list[PartialLocationModel] = Field(default_factory=list)
     geoLocations: list[PartialGeoLocationModel] = Field(default_factory=list)
     sources: list[PartialSourceModel] = Field(default_factory=list)
@@ -250,15 +251,21 @@ class BulletinValidationModel(StrictValidationModel):
             - v: The value of the source_link field.
 
         Raises:
-            - ValueError: If the source_link is not a valid URL or 'NA'.
+            - ValueError: If the source_link is not a valid URL, a valid file path, or 'NA'.
 
         Returns:
             - The validated source_link value.
         """
         if v and v != "NA":
             parsed_url = urlparse(v)
-            if not all([parsed_url.scheme, parsed_url.netloc]):
-                raise ValueError("source_link must be a valid URL or 'NA'")
+            is_valid_url = all([parsed_url.scheme, parsed_url.netloc])
+
+            unix_pattern = r"^(/[^/\0]+)+/?$"
+
+            is_valid_path = re.match(unix_pattern, v) is not None
+
+            if not is_valid_url and not is_valid_path:
+                raise ValueError("source_link must be a valid URL, a valid file path, or 'NA'")
         return v
 
     @field_validator("publish_date", "documentation_date", mode="before")
@@ -293,7 +300,7 @@ class PartialClaimedViolationModel(BaseValidationModel):
 
 
 class IncidentValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_ar: Optional[str] = None
     description: Optional[SanitizedField] = None
     labels: list[PartialLabelModel] = Field(default_factory=list)
@@ -307,7 +314,7 @@ class IncidentValidationModel(StrictValidationModel):
     actor_relations: list[PartialItoaModel] = Field(default_factory=list)
     bulletin_relations: list[PartialItobModel] = Field(default_factory=list)
     incident_relations: list[PartialItoiModel] = Field(default_factory=list)
-    comments: constr(min_length=1)  # type: ignore
+    comments: str = Field(min_length=1)
     status: Optional[str] = None
 
     # Below fields are sent by the front-end, dismissed by `from_json`
@@ -322,26 +329,21 @@ class IncidentValidationModel(StrictValidationModel):
     updated_at: Optional[str] = None
     roles: list[PartialRoleModel] = Field(default_factory=list)
 
-    @field_validator("actor_relations", mode="after")
-    def check_actor_relations(cls: t, v: list, info: ValidationInfo) -> list:
+    @field_validator("actor_relations")
+    @classmethod
+    def check_actor_relations(cls, v: list, info: ValidationInfo) -> list:
         """
         Check the validity of actor_relations field.
 
-        This validator checks if the actor_relations field is provided without the check_ar field.
-        If the actor_relations field is empty, it returns an empty list.
-        If the actor_relations field is not empty and the check_ar field is not present in the values dictionary, it raises a ValueError.
-
         Args:
-        - v: The value of the actor_relations field.
-        - values: The values dictionary containing the other fields up to this validation call.
-        - kwargs: Additional keyword arguments.
-
-        Returns:
-        - The value of the actor_relations field if it is valid.
+            v: The value of the actor_relations field
+            info: ValidationInfo containing the model's data during validation
 
         Raises:
-        - ValueError: If the actor_relations field is provided without the check_ar field.
+            ValueError: If actor_relations provided without check_ar
 
+        Returns:
+            The validated actor_relations list
         """
         if not len(v):
             return []
@@ -641,7 +643,7 @@ class ActorValidationModel(StrictValidationModel):
     position: Optional[str] = DEFAULT_STRING_FIELD
     position_ar: Optional[str] = DEFAULT_STRING_FIELD
     family_status: Optional[str] = DEFAULT_STRING_FIELD
-    no_children: Optional[str] = DEFAULT_STRING_FIELD
+    no_children: Optional[int] = None
     ethnographies: list[PartialEthnographyModel] = Field(default_factory=list)
     nationalities: list[PartialNationalityModel] = Field(default_factory=list)
     dialects: list[PartialDialectModel] = Field(default_factory=list)
@@ -654,9 +656,10 @@ class ActorValidationModel(StrictValidationModel):
     actor_relations: list[PartialAtoaModel] = Field(default_factory=list)
     bulletin_relations: list[PartialAtobModel] = Field(default_factory=list)
     incident_relations: list[PartialAtoiModel] = Field(default_factory=list)
-    comments: constr(min_length=1)  # type: ignore
+    comments: str = Field(min_length=1)  # type: ignore
     status: Optional[str] = DEFAULT_STRING_FIELD
     actor_profiles: list[PartialActorProfileModel] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
     # Below fields are sent by the frontend, but are not used by the from_json method
     description: Optional[SanitizedField] = None
@@ -674,6 +677,14 @@ class ActorValidationModel(StrictValidationModel):
     id: Optional[int] = None
     review: Optional[SanitizedField] = None
     review_action: Optional[str] = None
+
+    @field_validator("no_children")
+    def validate_no_children(cls, v):
+        if v is not None and v < 0:
+            raise ValueError("Number of children must be a non-negative integer")
+        elif v is not None and v > 1000:
+            raise ValueError("Number of children must be less than 1000")
+        return v
 
     @field_validator("actor_profiles")
     def check_actor_profiles(cls: t, v: list) -> list:
@@ -743,7 +754,7 @@ class ActorRequestModel(BaseValidationModel):
 
 
 class LabelValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_ar: Optional[str] = None
     comments: Optional[str] = None
     comments_ar: Optional[str] = None
@@ -779,7 +790,8 @@ class EventtypeRequestModel(BaseValidationModel):
 
 
 class PotentialViolationValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     title_ar: Optional[str] = None
     id: Optional[int] = None
@@ -791,7 +803,8 @@ class PotentialViolationRequestModel(BaseValidationModel):
 
 
 class ClaimedViolationValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
+    title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     title_ar: Optional[str] = None
     id: Optional[int] = None
@@ -803,7 +816,7 @@ class ClaimedViolationRequestModel(BaseValidationModel):
 
 
 class SourceValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_ar: Optional[str] = None
     comments: Optional[str] = None
     comments_ar: Optional[str] = None
@@ -821,7 +834,7 @@ class SourceRequestModel(BaseValidationModel):
 class AdminLevelModel(BaseValidationModel):
     id: int
     code: int
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
 
 
 class LatLngModel(BaseValidationModel):
@@ -831,7 +844,7 @@ class LatLngModel(BaseValidationModel):
 
 class LocationTypeModel(BaseValidationModel):
     id: int
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     description: Optional[SanitizedField] = None
 
 
@@ -844,9 +857,9 @@ class LocationValidationModel(one_must_exist(["title", "title_ar"])):
     postal_code: Optional[str] = None
     latlng: Optional[LatLngModel] = None
     location_type: Optional[LocationTypeModel] = None
-    admin_level: Optional[
-        AdminLevelModel | str
-    ] = None  # if the location_type is POI, front end sends an empty str for admin_level
+    admin_level: Optional[AdminLevelModel | str] = (
+        None  # if the location_type is POI, front end sends an empty str for admin_level
+    )
 
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
@@ -930,9 +943,14 @@ class LocationQueryRequestModel(BaseValidationModel):
 
 
 class LocationAdminLevelValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     code: int
+    display_order: Optional[int] = None
     id: Optional[int] = None
+
+
+class LocationAdminLevelReorderRequestModel(BaseValidationModel):
+    order: list[int]
 
 
 class LocationAdminLevelRequestModel(BaseValidationModel):
@@ -940,7 +958,7 @@ class LocationAdminLevelRequestModel(BaseValidationModel):
 
 
 class LocationTypeValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
     description: Optional[SanitizedField] = None
@@ -951,7 +969,7 @@ class LocationTypeRequestModel(BaseValidationModel):
 
 
 class CountryValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
@@ -965,7 +983,7 @@ class CountryRequestModel(BaseValidationModel):
 
 class ComponentDataMixinValidationModel(BaseValidationModel):
     id: Optional[int] = None
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -977,8 +995,8 @@ class ComponentDataMixinRequestModel(BaseValidationModel):
 
 
 class AtoaInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
-    reverse_title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
+    reverse_title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     reverse_title_tr: Optional[str] = None
     id: Optional[int] = None
@@ -989,7 +1007,7 @@ class AtoaInfoRequestModel(BaseValidationModel):
 
 
 class AtobInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     id: Optional[int] = None
     reverse_title: Optional[str] = None
@@ -1001,7 +1019,7 @@ class AtobInfoRequestModel(BaseValidationModel):
 
 
 class BtobInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     id: Optional[int] = None
     reverse_title: Optional[str] = None
@@ -1013,7 +1031,7 @@ class BtobInfoRequestModel(BaseValidationModel):
 
 
 class ItoaInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     id: Optional[int] = None
     reverse_title: Optional[str] = None
@@ -1025,7 +1043,7 @@ class ItoaInfoRequestModel(BaseValidationModel):
 
 
 class ItobInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     id: Optional[int] = None
     reverse_title: Optional[str] = None
@@ -1037,7 +1055,7 @@ class ItobInfoRequestModel(BaseValidationModel):
 
 
 class ItoiInfoValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     id: Optional[int] = None
     reverse_title: Optional[str] = None
@@ -1049,7 +1067,7 @@ class ItoiInfoRequestModel(BaseValidationModel):
 
 
 class MediaCategoryValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
@@ -1062,7 +1080,7 @@ class MediaCategoryRequestModel(BaseValidationModel):
 
 
 class GeoLocationTypeValidationModel(StrictValidationModel):
-    title: constr(min_length=1)  # type: ignore
+    title: str = Field(min_length=1)
     title_tr: Optional[str] = None
     # sent by the front-end on PUT, but not used by the from_json method
     id: Optional[int] = None
@@ -1142,16 +1160,17 @@ class QueryBaseModel(StrictValidationModel):
         Validates the date fields.
 
         Returns:
-            str: The validated date value.
+            list[str]: The validated list of date values.
 
         Raises:
-            ValueError: If the date is not a valid date.
+            ValueError: If any date in the list is not a valid date.
         """
         if v:
-            try:
-                parse(v)
-            except ValueError:
-                raise ValueError(f"Invalid date format: {v}")
+            for date in v:
+                try:
+                    parse(date)
+                except ValueError:
+                    raise ValueError(f"Invalid date format: {date}")
         return v
 
 
@@ -1164,25 +1183,25 @@ class BulletinQueryLocTypes(Enum):
 class BulletinQueryValidationModel(QueryBaseModel):
     op: Optional[str] = "or"
     ids: list[int] = Field(default_factory=list)
-    ref: Optional[list[str]] = Field(default_factory=list)
+    tags: Optional[list[str]] = Field(default_factory=list)
     inExact: Optional[bool] = False
-    opref: Optional[bool] = False
-    exref: Optional[list[str]] = Field(default_factory=list)
+    opTags: Optional[bool] = False
+    exTags: Optional[list[str]] = Field(default_factory=list)
     exExact: Optional[bool] = False
-    opexref: Optional[bool] = False
+    opExTags: Optional[bool] = False
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
     locTypes: Optional[list[str]] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel] = None
 
-    @field_validator("ref")
-    def validate_ref(cls, v):
+    @field_validator("tags")
+    def validate_tags(cls, v):
         """
-        Validates the ref field.
+        Validates the tags field.
 
         Returns:
-            list<str>: The validated ref value.
+            list<str>: The validated tags value.
         """
         if isinstance(v, str):
             v = [v]
@@ -1199,7 +1218,7 @@ class EntityReviewValidationModel(BaseValidationModel):
 
 
 class BulletinReviewValidationModel(EntityReviewValidationModel):
-    revrefs: list[str] = Field(default_factory=list)
+    revTags: list[str] = Field(default_factory=list)
 
 
 class BulletinReviewRequestModel(BaseValidationModel):
@@ -1218,8 +1237,13 @@ class GenericBulkModel(BaseValidationModel):
 
 
 class BulletinBulkModel(GenericBulkModel):
-    ref: list[str] = Field(default_factory=list)
-    refReplace: Optional[bool] = None
+    tags: list[str] = Field(default_factory=list)
+    tagsReplace: Optional[bool] = None
+
+
+class ActorBulkModel(GenericBulkModel):
+    tags: list[str] = Field(default_factory=list)
+    tagsReplace: Optional[bool] = None
 
 
 class IncidentBulkModel(GenericBulkModel):
@@ -1237,6 +1261,11 @@ class BulletinBulkUpdateRequestModel(BaseValidationModel):
     bulk: BulletinBulkModel
 
 
+class ActorBulkUpdateRequestModel(BaseValidationModel):
+    items: list[int] = Field(default_factory=list)
+    bulk: ActorBulkModel
+
+
 class BulkUpdateRequestModel(BaseValidationModel):
     items: list[int] = Field(default_factory=list)
     bulk: GenericBulkModel
@@ -1247,7 +1276,7 @@ class GenericSelfAssignValidationModel(BaseValidationModel):
 
 
 class BulletinSelfAssignValidationModel(GenericSelfAssignValidationModel):
-    ref: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
 
 class BulletinSelfAssignRequestModel(BaseValidationModel):
@@ -1318,9 +1347,9 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 class UserValidationModel(StrictValidationModel):
     email: Optional[str] = None
-    username: constr(min_length=1)  # type: ignore
+    username: str = Field(min_length=1)
     password: Optional[str] = None  # Optional on PUT, required on POST
-    name: constr(min_length=1)  # type: ignore
+    name: str = Field(min_length=1)
     roles: list[PartialRoleModel] = Field(default_factory=list)
     view_usernames: Optional[bool] = None
     view_full_history: Optional[bool] = None
@@ -1328,6 +1357,7 @@ class UserValidationModel(StrictValidationModel):
     can_self_assign: Optional[bool] = None
     can_edit_locations: Optional[bool] = None
     can_export: Optional[bool] = None
+    can_import_web: Optional[bool] = None
     active: bool
     force_reset: Optional[str] = None
     google_id: Optional[str] = None
@@ -1340,11 +1370,11 @@ class UserRequestModel(BaseValidationModel):
 
 
 class UserNameCheckValidationModel(BaseValidationModel):
-    item: constr(min_length=1)  # type: ignore
+    item: str = Field(min_length=1)
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: constr(min_length=1)  # type: ignore
+    password: str = Field(min_length=1)
 
 
 class UserForceResetRequestModel(BaseValidationModel):
@@ -1352,9 +1382,9 @@ class UserForceResetRequestModel(BaseValidationModel):
 
 
 class RoleValidationModel(BaseValidationModel):
-    name: constr(min_length=1)  # type: ignore
+    name: str = Field(min_length=1)
     description: Optional[str] = None
-    color: constr(min_length=1)  # type: ignore
+    color: str = Field(min_length=1)
     id: Optional[int] = None
 
 
@@ -1387,8 +1417,8 @@ class GraphVisualizeRequestModel(BaseValidationModel):
 
 
 class DefaultMapCenterModel(BaseValidationModel):
-    lat: confloat(ge=-90, le=90)  # type: ignore
-    lng: confloat(ge=-180, le=180)  # type: ignore
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
 
 
 class ActivitiesModel(BaseModel):
@@ -1411,10 +1441,9 @@ class ActivitiesModel(BaseModel):
 
 class ConfigValidationModel(StrictValidationModel):
     SECURITY_TWO_FACTOR_REQUIRED: bool
-    SECURITY_PASSWORD_LENGTH_MIN: conint(ge=8)  # type: ignore
-    SECURITY_ZXCVBN_MINIMUM_SCORE: conint(ge=0, le=4)  # type: ignore
-    SESSION_RETENTION_PERIOD: conint(ge=0)  # type: ignore
-    SECURITY_WEBAUTHN: bool
+    SECURITY_PASSWORD_LENGTH_MIN: int = Field(ge=8)
+    SECURITY_ZXCVBN_MINIMUM_SCORE: int = Field(ge=0, le=4)
+    SESSION_RETENTION_PERIOD: int = Field(ge=0)
     FILESYSTEM_LOCAL: bool
     AWS_ACCESS_KEY_ID: Optional[str] = None
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
@@ -1425,15 +1454,16 @@ class ConfigValidationModel(StrictValidationModel):
     ETL_TOOL: bool
     SHEET_IMPORT: bool
     BABEL_DEFAULT_LOCALE: str
-    GOOGLE_MAPS_API_KEY: str
+    GOOGLE_MAPS_API_KEY: Optional[str] = None
     GEO_MAP_DEFAULT_CENTER: DefaultMapCenterModel
     EXPORT_TOOL: bool
-    EXPORT_DEFAULT_EXPIRY: conint(gt=0)  # type: ignore
-    ACTIVITIES_RETENTION: conint(gt=0)  # type: ignore
+    EXPORT_DEFAULT_EXPIRY: int = Field(gt=0)
+    ACTIVITIES_RETENTION: int = Field(gt=0)
+    WEB_IMPORT: bool
 
-    @field_validator("MAPS_API_ENDPOINT", "GOOGLE_DISCOVERY_URL", check_fields=False)
+    @field_validator("MAPS_API_ENDPOINT", "GOOGLE_DISCOVERY_URL", mode="before", check_fields=False)
     @classmethod
-    def validate_urls(cls, v):
+    def validate_urls(cls, v: str) -> str:
         if not isinstance(v, str):
             raise ValueError("Invalid value for MAPS_API_ENDPOINT or GOOGLE_DISCOVERY_URL")
         try:
@@ -1505,6 +1535,9 @@ class ConfigValidationModel(StrictValidationModel):
     def validate_aws_secret_key(v):
         if not isinstance(v, str):
             return None
+        # Allow MASK String as a valid value
+        if v == "**********":
+            return v
         if len(v) < 40 or len(v) > 64:
             return None
         return v
@@ -1640,18 +1673,18 @@ class ConfigValidationModel(StrictValidationModel):
 
 
 class FullConfigValidationModel(ConfigValidationModel):
-    SECURITY_FRESHNESS: conint(gt=0)  # type: ignore
-    SECURITY_FRESHNESS_GRACE_PERIOD: conint(ge=0)  # type: ignore
+    SECURITY_FRESHNESS: int = Field(gt=0)
+    SECURITY_FRESHNESS_GRACE_PERIOD: int = Field(ge=0)
     DISABLE_MULTIPLE_SESSIONS: bool
     RECAPTCHA_ENABLED: bool
-    RECAPTCHA_PUBLIC_KEY: Optional[str] = None  # type: ignore
-    RECAPTCHA_PRIVATE_KEY: Optional[str] = None  # type: ignore
+    RECAPTCHA_PUBLIC_KEY: Optional[str] = None
+    RECAPTCHA_PRIVATE_KEY: Optional[str] = None
     GOOGLE_OAUTH_ENABLED: bool
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     GOOGLE_DISCOVERY_URL: str
     MEDIA_ALLOWED_EXTENSIONS: list[str] = Field(default_factory=list)
-    MEDIA_UPLOAD_MAX_FILE_SIZE: confloat(gt=0)  # type: ignore
+    MEDIA_UPLOAD_MAX_FILE_SIZE: float = Field(gt=0)
     SHEETS_ALLOWED_EXTENSIONS: list[str] = Field(default_factory=list)
     ETL_PATH_IMPORT: bool
     ETL_VID_EXT: list[str] = Field(default_factory=list)
@@ -1659,20 +1692,90 @@ class FullConfigValidationModel(ConfigValidationModel):
     OCR_EXT: list[str] = Field(default_factory=list)
     DEDUP_TOOL: bool
     MAPS_API_ENDPOINT: str
-    DEDUP_LOW_DISTANCE: Optional[confloat(ge=0, le=1)] = None  # type: ignore
-    DEDUP_MAX_DISTANCE: Optional[confloat(ge=0, le=1)] = None  # type: ignore
-    DEDUP_BATCH_SIZE: Optional[conint(gt=0)] = None  # type: ignore
-    DEDUP_INTERVAL: Optional[conint(gt=0)] = None  # type: ignore
-    ITEMS_PER_PAGE_OPTIONS: list[conint(gt=0)] = Field(default_factory=list)  # type: ignore
-    VIDEO_RATES: list[confloat(gt=0)] = Field(default_factory=list)  # type: ignore
+    DEDUP_LOW_DISTANCE: Optional[float] = Field(default=None, ge=0, le=1)
+    DEDUP_MAX_DISTANCE: Optional[float] = Field(default=None, ge=0, le=1)
+    DEDUP_BATCH_SIZE: Optional[int] = Field(default=None, gt=0)
+    DEDUP_INTERVAL: Optional[int] = Field(default=None, gt=0)
+    ITEMS_PER_PAGE_OPTIONS: list[int] = Field(default_factory=list)
+    VIDEO_RATES: list[float] = Field(default_factory=list)
     ACTIVITIES: ActivitiesModel
     ADV_ANALYSIS: bool
     SETUP_COMPLETE: bool = Field(default=True)
+    LOCATIONS_INCLUDE_POSTAL_CODE: bool
+    YTDLP_PROXY: Optional[str] = None
+    YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
+    YTDLP_COOKIES: Optional[str] = None
 
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
         return values
+
+    @field_validator("ITEMS_PER_PAGE_OPTIONS")
+    @classmethod
+    def validate_page_options(cls, v: list[int]) -> list[int]:
+        if not all(x > 0 for x in v):
+            raise ValueError("All items per page options must be greater than 0")
+        return v
+
+    @field_validator("VIDEO_RATES")
+    @classmethod
+    def validate_video_rates(cls, v: list[float]) -> list[float]:
+        if not all(x > 0 for x in v):
+            raise ValueError("All video rates must be greater than 0")
+        return v
+
+    @field_validator("YTDLP_PROXY")
+    @classmethod
+    def validate_proxy_url(cls, v: Optional[str]) -> Optional[str]:
+        """Validates the proxy URL format."""
+        if not v:
+            return None
+
+        valid_schemes = {"http", "https", "socks4", "socks5", "socks5h"}
+        try:
+            parsed = urlparse(v)
+            if parsed.scheme not in valid_schemes:
+                raise ValueError(f"Proxy URL must start with one of: {', '.join(valid_schemes)}")
+            if not parsed.netloc:
+                raise ValueError("Invalid proxy URL format")
+            # Check if port is provided
+            if ":" not in parsed.netloc.split("@")[-1]:
+                raise ValueError("Proxy URL must include port number")
+            return v
+        except Exception:
+            raise ValueError("Invalid proxy URL format")
+
+    @field_validator("YTDLP_ALLOWED_DOMAINS")
+    @classmethod
+    def validate_domains(cls, v: list[str]) -> list[str]:
+        """Validates domain format."""
+        if not v:
+            return []
+
+        for domain in v:
+            if not re.match(r"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$", domain):
+                raise ValueError(f"Invalid domain format: {domain}")
+        return v
+
+    @field_validator("YTDLP_COOKIES")
+    @classmethod
+    def validate_cookies(cls, v: Optional[str]) -> Optional[str]:
+        """Validates the cookies data format."""
+        if not v:
+            return None
+
+        # Basic validation that it looks like cookie data
+        lines = v.splitlines()
+        for line in lines:
+            if line.strip() and not line.startswith("#"):  # Skip empty lines and comments
+                # Check if line has minimum required tab-separated fields
+                fields = line.split("\t")
+                if len(fields) < 6:
+                    raise ValueError(
+                        "Invalid cookie format. Each line should have domain, flag, path, secure, expiry, name, value"
+                    )
+        return v
 
 
 class ConfigRequestModel(BaseValidationModel):
@@ -1681,3 +1784,34 @@ class ConfigRequestModel(BaseValidationModel):
 
 class WizardConfigRequestModel(BaseValidationModel):
     conf: ConfigValidationModel
+
+
+class WebImportValidationModel(StrictValidationModel):
+    url: HttpUrl
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: HttpUrl) -> str:
+        """
+        Validates the URL for web import.
+
+        Args:
+            - v: The URL to validate.
+
+        Raises:
+            - ValueError: If the domain is not allowed.
+
+        Returns:
+            - The validated URL.
+        """
+        # Check domain restrictions
+        domain = v._url.host
+        if domain.startswith("www."):
+            domain = domain[4:]
+        from enferno.settings import Config as cfg
+
+        allowed_domains = cfg.YTDLP_ALLOWED_DOMAINS
+        if not any(domain.endswith(allowed) for allowed in allowed_domains):
+            raise ValueError(f"Imports not allowed from {domain}")
+
+        return str(v)

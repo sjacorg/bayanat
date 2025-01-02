@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch
 from enferno.admin.models import Incident, Itoi
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from enferno.settings import Config as cfg
 from enferno.user.models import User
 from tests.factories import (
@@ -22,7 +23,6 @@ from tests.admin.data.generators import (
 
 from tests.test_utils import (
     conform_to_schema_or_fail,
-    convert_empty_strings_to_none,
     get_first_or_fail,
     load_data,
     get_uid_from_client,

@@ -4,6 +4,8 @@ from unittest.mock import patch
 
 import pytest
 from enferno.utils.config_utils import ConfigManager
+from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
 
 with patch.object(ConfigManager, "CONFIG_FILE_PATH", "config.sample.json"):
     from enferno.settings import TestConfig as cfg
@@ -78,16 +80,29 @@ def setup_db(app):
     )
 
     try:
-        _db.engine.execute("CREATE EXTENSION if not exists pg_trgm ;")
-        _db.engine.execute("CREATE EXTENSION if not exists postgis ;")
+        with _db.engine.connect() as conn:
+            try:
+                conn.execute(text("CREATE EXTENSION if not exists pg_trgm;"))
+                conn.execute(text("CREATE EXTENSION if not exists postgis;"))
+                conn.commit()
+            except ProgrammingError:
+                # Extensions might already exist, continue
+                conn.rollback()
+
         _db.drop_all()
         _db.create_all()
-        generate_user_roles()
-        generate_workflow_statues()
-        create_default_location_data()
+
+        with _db.engine.connect() as conn:
+            generate_user_roles()
+            generate_workflow_statues()
+            create_default_location_data()
+            conn.commit()
+
     except Exception as e:
-        pytest.skip(f"Test database setup failed, {e}")
+        pytest.fail(f"Test database setup failed: {e}")
+
     yield _db
+
     _db.session.remove()
     _db.drop_all()
 
@@ -103,13 +118,14 @@ def setup_db_uninitialized(uninitialized_app):
     )
 
     try:
-        _db.engine.execute("CREATE EXTENSION if not exists pg_trgm ;")
-        _db.engine.execute("CREATE EXTENSION if not exists postgis ;")
-        _db.drop_all()
-        _db.create_all()
-        generate_user_roles()
-        generate_workflow_statues()
-        create_default_location_data()
+        with _db.engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION if not exists pg_trgm;"))
+            conn.execute(text("CREATE EXTENSION if not exists postgis;"))
+            _db.drop_all()
+            _db.create_all()
+            generate_user_roles()
+            generate_workflow_statues()
+            create_default_location_data()
     except Exception as e:
         pass
     yield _db

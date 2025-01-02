@@ -15,6 +15,7 @@
                             @click:row="rowClick"
                             :items-length="itemsLength"
                             @update:options="refresh"
+                            :page="options.page"
                             class="elevation-1"
                     >
                         <template v-slot:top>
@@ -23,10 +24,13 @@
 
                                 <v-spacer></v-spacer>
 
-                                <v-btn @click="createItem" color="primary" variant="elevated"
-                                >{{ _('New User') }}
-                                </v-btn
-                                >
+                                <v-btn @click.once="forceGlobalReset" class="ma-2" color="error" variant="elevated">
+                                    {{ _('Force Global Password Reset') }}
+                                </v-btn>
+
+                                <v-btn @click="createItem" class="ma-2" color="primary" variant="elevated">
+                                    {{ _('New User') }}
+                                </v-btn>
                             </v-toolbar>
                         </template>
 
@@ -36,16 +40,17 @@
                                 mdi-pencil
                             </v-icon>
                             <v-tooltip location="top"
-                                       :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset.') }}'">
+                                       :text="item.force_reset ? '{{ _('Password reset already requested.') }}' : '{{ _('Force password reset') }}'">
                                 <template #activator="{props}">
-                                    <v-btn
+                                    <div v-bind="props" class="d-inline-block">
+                                        <v-btn
                                             :disabled="item.force_reset != null"
                                             @click.stop="forcePassReset(item)"
                                             variant="plain"
-                                            v-bind="props"
                                             size="small"
                                             icon="mdi-lock-reset">
-                                    </v-btn>
+                                        </v-btn>
+                                    </div>
                                 </template>
                             </v-tooltip>
 
@@ -250,6 +255,11 @@
                                             <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Request Exports') }}"
                                                       v-model="editedItem.can_export"></v-switch>
                                         </v-col>
+
+                                        <v-col cols="12" md="3">
+                                            <v-switch :disabled="isAdmin" color="primary" label="{{ _('Can Import from Web') }}"
+                                                      v-model="editedItem.can_import_web"></v-switch>
+                                        </v-col>
                                     </v-row>
                                 </v-container>
                             </v-card-text>
@@ -258,7 +268,7 @@
                                     {{ _('Revoke 2FA') }}
                                 </v-btn>
 
-                                <v-btn @click.once="logoutAllSessions(editedItem.id)" color="error">
+                                <v-btn v-if="editedItem?.id" @click.once="logoutAllUserSessions(editedItem.id)" color="error">
                                     <v-icon left>mdi-logout</v-icon>
                                     {{ _('Logout All Sessions') }}
                                 </v-btn>
@@ -390,6 +400,11 @@
                     });
 
                 },
+                refreshUser(user_id) {
+                    axios.get(`/admin/api/user/${user_id}`).then(response => {
+                        this.user = response.data;
+                    })
+                },
 
                 revoke2fa(userId) {
                     if (confirm(`{{ _('Are you sure you want to revoke 2FA for this user?') }}`)) {
@@ -401,6 +416,7 @@
                                 this.refresh();
                                 this.dialog = false;
 
+                                if (this.userDrawer) this.refreshUser(userId);
                             })
                             .catch(err => {
                                 console.error(err);
@@ -424,8 +440,9 @@
                             {item: item}
                         ).then(res => {
                             this.showSnack(res.data);
-                            this.refresh()
+                            this.refresh();
                             this.close();
+                            if (this.userDrawer) this.refreshUser(item.id);
                         }).catch(err => {
                             console.error(err?.response?.data);
                             this.showsnack(this.parseValidationError(err?.response?.data));
@@ -433,6 +450,44 @@
                     }
 
                 },
+
+                forceGlobalReset() {
+                    if (confirm("{{_('Are you sure you want to force a password reset for all users?')}}")) {
+                        this.loading = true;
+                        axios.post('/admin/api/user/force-reset-all').then(
+                            res => {
+
+                                this.showSnack(res.data);
+                            }
+                        ).catch(
+                            err => {
+                                console.error(err?.response?.data);
+                            }
+                        ).finally(
+                            () => {
+                                this.loading = false;
+                            }
+                        )
+
+                    }
+                },
+
+                logoutAllUserSessions(userId) {
+                    if (window.confirm(this.translations.logoutConfirmation_)) {
+                        axios
+                            .delete(`/admin/api/user/${this.user.id}/sessions/logout`)
+                            .then((response) => {
+                                console.log('All sessions logged out successfully for user ID:', userId);
+                                this.$root.showSnack(this.translations.allSessionsLoggedOut_);
+                                this.resetSessions();
+                                this.fetchSessions();
+                            })
+                            .catch((err) => {
+                                console.error('Error logging out all sessions for user ID:', userId, err);
+                            });
+                    }
+                },
+
                 passwordRules() {
                     if (this.editedItem.id && this.disablePassword) {
                         // edit mode
@@ -496,13 +551,14 @@
                         this.editedItem.can_self_assign = true;
                         this.editedItem.can_edit_locations = true;
                         this.editedItem.can_export = true;
+                        this.editedItem.can_import_web = true;
                         return true;
                     }
                     return false;
                 },
 
                 refresh(options) {
-                    this.options = options || this.options;
+                    this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
                     axios.get(`/admin/api/users/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
                         this.items = res.data.items;

@@ -205,6 +205,7 @@ class User(UserMixin, db.Model, BaseMixin):
     can_self_assign = db.Column(db.Boolean, default=False)
     can_edit_locations = db.Column(db.Boolean, default=False)
     can_export = db.Column(db.Boolean, default=False)
+    can_import_web = db.Column(db.Boolean, default=False)
 
     # oauth
     google_id = db.Column(db.String(255))
@@ -373,7 +374,7 @@ class User(UserMixin, db.Model, BaseMixin):
         self.can_self_assign = item.get("can_self_assign", False)
         self.can_edit_locations = item.get("can_edit_locations", False)
         self.can_export = item.get("can_export", False)
-
+        self.can_import_web = item.get("can_import_web", False)
         self.active = item.get("active")
         return self
 
@@ -444,6 +445,7 @@ class User(UserMixin, db.Model, BaseMixin):
             "can_self_assign": self.can_self_assign,
             "can_edit_locations": self.can_edit_locations,
             "can_export": self.can_export,
+            "can_import_web": self.can_import_web,
             "force_reset": self.security_reset_key,
             "two_factor_devices": self.two_factor_devices,
         }

@@ -62,7 +62,12 @@
                 ></v-select>
             </v-card-text>
 
-
+            <v-card-text>
+                <div class="d-flex">
+                    <v-combobox chips closable-chips multiple v-model="bulk.tags" label="{{ _('Tags') }}" class="mr-2"></v-combobox>
+                    <v-checkbox v-model="bulk.tagsReplace" label="{{ _('Replace') }}"></v-checkbox>
+                </div>
+            </v-card-text>
 
             <v-card-text v-if="has_role(currentUser,'Admin')">
 

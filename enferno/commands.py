@@ -10,6 +10,7 @@ from flask_security.utils import hash_password
 from enferno.settings import Config
 from enferno.extensions import db
 from enferno.user.models import User, Role
+from enferno.utils.config_utils import ConfigManager
 from enferno.utils.data_helpers import (
     import_default_data,
     generate_user_roles,
@@ -18,6 +19,7 @@ from enferno.utils.data_helpers import (
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
+from sqlalchemy import text
 
 logger = get_logger()
 
@@ -38,12 +40,12 @@ def create_db(create_exts: bool) -> None:
     logger.info("Creating database structure")
     # create db exts if required, needs superuser db permissions
     if create_exts:
-        db.engine.execute("CREATE EXTENSION if not exists pg_trgm ;")
-        click.echo("Trigram extension installed successfully")
-        logger.info("Trigram extension installed successfully")
-        db.engine.execute("CREATE EXTENSION if not exists postgis ;")
-        logger.info("Postgis extension installed successfully")
-        click.echo("Postgis extension installed successfully")
+        with db.engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION if not exists pg_trgm ;"))
+            click.echo("Trigram extension installed successfully")
+            conn.execute(text("CREATE EXTENSION if not exists postgis ;"))
+            click.echo("Postgis extension installed successfully")
+            conn.commit()
 
     db.create_all()
     click.echo("Database structure created successfully")
@@ -297,3 +299,17 @@ def check_db_alignment() -> None:
     checker = DBAlignmentChecker()
     checker.check_db_alignment()
     logger.info("Database schema alignment check completed.")
+
+
+@click.command()
+@with_appcontext
+def generate_config() -> None:
+    """Restore the default configuration."""
+    # Check if a config file exists
+    if os.path.exists(ConfigManager.CONFIG_FILE_PATH):
+        verify = click.prompt("A config file already exists. Overwrite? (y/N)", default="n")
+        if verify.lower() != "y":
+            click.echo("Config file not overwritten.")
+            return
+    logger.info("Restoring default configuration.")
+    ConfigManager.restore_default_config()

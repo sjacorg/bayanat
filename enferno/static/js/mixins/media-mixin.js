@@ -1,4 +1,5 @@
 let mediaMixin = {
+  mixins: [reauthMixin],
   data: function () {
     return {
       mediaDialog: false,
@@ -18,9 +19,12 @@ let mediaMixin = {
       mediaTitle__: true,
       upMediaBtnDisabled: true,
       videoDialog: false,
+      audioDialog: false,
       videoPlayer: null,
+      audioPlayer: null,
       playerOptions: {},
       videoMeta: {},
+      audioMeta: {},
       screenshots: [],
       cropper: {
         canvas: null,
@@ -38,7 +42,10 @@ let mediaMixin = {
 
   methods: {
     showError(err, message) {
-      this.showSnack(message);
+      if ([401].includes(err?.xhr?.status)) {
+        this.showLoginDialog();
+      }
+      this.showSnack(handleRequestError({ response: { data: message }}));
     },
 
     fileAdded(file) {
@@ -321,9 +328,38 @@ let mediaMixin = {
       this.setVideoSource(s3url);
     },
 
+    initializeAudioPlayer(s3url) {
+      // Cleanup existing player if it exists
+      if (this.audioPlayer) {
+        this.disposeAudioPlayer();
+      }
+
+      const audioElement = document.createElement('video');
+      audioElement.poster = '/static/img/waveform.png';
+      audioElement.id = 'audioPlayer';
+      audioElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
+      audioElement.setAttribute('crossorigin', 'anonymous');
+      audioElement.setAttribute('controls', '');
+
+      const playerContainer = this.$refs.audioPlayerContainer; // Ensure you have a ref="audioPlayerContainer" on the container element
+      playerContainer.prepend(audioElement);
+
+      this.audioPlayer = videojs(audioElement, {
+        controls: true,
+        preload: 'auto',
+      });
+
+      this.setAudioSource(s3url);
+    },
+
     setVideoSource(s3url) {
       this.videoPlayer.src({ src: s3url, type: 'video/mp4' });
       this.videoPlayer.on('loadedmetadata', this.handleMetaData);
+    },
+
+    setAudioSource(s3url) {
+      this.audioPlayer.src({ src: s3url, type: 'audio/mpeg' });
+      this.audioPlayer.on('loadedmetadata', this.handleAudioMetaData);
     },
 
     handleMetaData() {
@@ -333,6 +369,14 @@ let mediaMixin = {
         time: videoElement.currentTime,
         width: videoElement.videoWidth,
         height: videoElement.videoHeight,
+      };
+    },
+
+    handleAudioMetaData() {
+      const audioElement = this.audioPlayer.el().querySelector('audio');
+      this.audioMeta = {
+        filename: audioElement.src.getFilename(),
+        time: audioElement.currentTime,
       };
     },
 
@@ -349,6 +393,23 @@ let mediaMixin = {
       this.$nextTick(() => {
         this.initializePlayer(s3url);
       });
+    },
+
+    viewAudioPlayer(s3url) {
+      console.log('viewAudioPlayer', s3url);
+      this.audioDialog = true;
+      this.screenshots = [];
+      this.$nextTick(() => {
+        this.initializeAudioPlayer(s3url);
+      });
+    },
+
+    closeAudio() {
+      if (this.audioPlayer) {
+        this.audioPlayer.dispose();
+        this.audioPlayer = null;
+      }
+      this.audioDialog = false;
     },
 
     closeVideo() {

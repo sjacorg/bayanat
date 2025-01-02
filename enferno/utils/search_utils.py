@@ -1,5 +1,5 @@
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, func
+from sqlalchemy import or_, not_, and_, any_, all_, func
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -140,52 +140,52 @@ class SearchUtils:
         tsv = q.get("tsv")
         if tsv:
             words = tsv.split(" ")
-            qsearch = [Bulletin.search.ilike("%{}%".format(word)) for word in words]
-            query.extend(qsearch)
+            words = [f"%{w}%" for w in words]
+            query.append(Bulletin.search.ilike(all_(words)))
 
         # exclude  filter
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split(" ")
-            for word in words:
-                query.append(not_(Bulletin.search.ilike("%{}%".format(word))))
+            words = [f"%{w}%" for w in words]
+            query.append(Bulletin.search.notilike(all_(words)))
 
         # ref
-        ref = q.get("ref")
+        ref = q.get("tags")
         exact = q.get("inExact")
 
         if ref:
             # exact match search
             if exact:
                 conditions = [
-                    func.array_to_string(Bulletin.ref, " ").op("~*")(f"\y{r}\y") for r in ref
+                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in ref
                 ]
             else:
-                conditions = [func.array_to_string(Bulletin.ref, " ").ilike(f"%{r}%") for r in ref]
+                conditions = [func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref]
 
             # any operator
-            op = q.get("opref", False)
+            op = q.get("opTags", False)
             if op:
                 query.append(or_(*conditions))
             else:
                 query.append(and_(*conditions))
 
         # exclude ref
-        exref = q.get("exref")
+        exref = q.get("exTags")
         exact = q.get("exExact")
         if exref:
             # exact match
             if exact:
                 conditions = [
-                    ~func.array_to_string(Bulletin.ref, " ").op("~*")(f"\y{r}\y") for r in exref
+                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in exref
                 ]
             else:
                 conditions = [
-                    ~func.array_to_string(Bulletin.ref, " ").ilike(f"%{r}%") for r in exref
+                    ~func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in exref
                 ]
 
             # get all operator
-            opexref = q.get("opexref")
+            opexref = q.get("opExTags")
             if opexref:
                 # De Mogran's
                 query.append(or_(*conditions))
@@ -471,10 +471,10 @@ class SearchUtils:
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split(" ")
-            qsearch = []
+            conditions = []
 
             for word in words:
-                qsearch.append(
+                conditions.append(
                     or_(
                         Actor.search.ilike(f"%{word}%"),
                         ActorProfile.search.ilike(f"%{word}%"),
@@ -482,7 +482,9 @@ class SearchUtils:
                 )
 
             subquery = (
-                Actor.query.join(Actor.actor_profiles).filter(*qsearch).with_entities(Actor.id)
+                Actor.query.join(Actor.actor_profiles)
+                .filter(or_(*conditions))
+                .with_entities(Actor.id)
             )
             query.append(~Actor.id.in_(subquery))
 
@@ -878,15 +880,15 @@ class SearchUtils:
         tsv = q.get("tsv")
         if tsv:
             words = tsv.split(" ")
-            qsearch = [Incident.search.ilike("%{}%".format(word)) for word in words]
-            query.extend(qsearch)
+            words = [f"%{w}%" for w in words]
+            query.append(Incident.search.ilike(all_(words)))
 
         # exclude  filter
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split(" ")
-            for word in words:
-                query.append(not_(Incident.search.ilike("%{}%".format(word))))
+            words = [f"%{w}%" for w in words]
+            query.append(Incident.search.notilike(all_(words)))
 
         labels = q.get("labels", [])
         if len(labels):

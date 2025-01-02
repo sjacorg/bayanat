@@ -48,6 +48,7 @@
                             :loading="loading"
                             :items-length="itemsLength"
                             @update:options="refresh"
+                            :page="options.page"
                             :row-props="rowClass"
                             show-select
                             item-value="id"
@@ -421,7 +422,6 @@
                 reviewDialog: false,
                 eventParams: {typ: 'for_bulletin'},
                 reviewKey: 0,
-                videoDialog: false,
                 playerOptions: {},
 
 
@@ -453,6 +453,7 @@
 
                 exportDrawer: false,
                 exportConfig: {
+                    format: 'pdf',
                     hideCSV: true,
                     hideMedia: true
                 },
@@ -772,7 +773,6 @@
             },
 
             methods: {
-
                 fetchRelationInfo() {
                     axios.get('/admin/api/relation/info')
                         .then(response => {
@@ -824,6 +824,7 @@
                         this.showSnack("{{ _('Graph is being generated.') }}");
                         this.graphTimer = setInterval(this.checkGraphStatus, 3000);
                     }).catch(e => {
+                        this.visualizeLoading = false;
                         console.error(e.message);
                     }).finally(() => {
                     });
@@ -834,17 +835,19 @@
                     axios.post(`/export/api/incident/export`, {
                         items: this.selected,
                         config: this.exportConfig
-                    })
-                        .then(response => {
-                            this.showSnack(response.data);
-                        }).catch(error => {
-                        console.error(error.response?.data);
-                        this.showSnack(error.response?.data)
-                    }).finally(() => {
-                        this.loading = false;
+                    }).then(response => {
+                        this.showSnack(response.data);
                         this.exportDrawer = false;
                         this.selected = [];
-                        this.exportConfig = {};
+                        this.exportConfig = {
+                            format: 'pdf',
+                            hideCSV: true,
+                            hideMedia: true
+                        };
+                    }).catch(error => {
+                        console.error(error.response?.data);
+                    }).finally(() => {
+                        this.loading = false;
 
                     });
                 },
@@ -870,8 +873,6 @@
                         this.showSnack("{{_('Incident assigned successfully.')}}")
                         this.refresh()
 
-                    }).catch(err => {
-                        this.showSnack(err.response.data);
                     }).finally(() => {
                         this.selfAssignDialog = false;
                         this.assignIncident = {};
@@ -932,20 +933,19 @@
                     axios.put(`/admin/api/incident/bulk/`, {
                         items: this.selected,
                         bulk: this.bulk
-                    })
-                        .then(response => {
-                            this.loading = false;
-                            this.showSnack(response.data);
-                            this.refresh();
-                            //reset bulk drawer, and bulk data
-                            this.bulkIncidentDrawer = false;
-                            this.selected = [];
-                            this.bulk = {};
-                            clearInterval(this.bulkTimer);
-                            // if (!this.bulkProcInterval)
-                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
-
-                        });
+                    }).then(response => {
+                        this.showSnack(response.data);
+                        this.refresh();
+                        //reset bulk drawer, and bulk data
+                        this.bulkIncidentDrawer = false;
+                        this.selected = [];
+                        this.bulk = {};
+                        clearInterval(this.bulkTimer);
+                        // if (!this.bulkProcInterval)
+                        this.bulkTimer = setInterval(this.bulkStatus, 3000);
+                    }).finally(() => {
+                        this.loading = false;
+                    });
                 },
 
 
@@ -986,7 +986,7 @@
 
                 refresh(options) {
 
-                    this.options = options || this.options;
+                    this.options = options || { ...this.options, page: 1 };
 
                     this.loading = true;
                     const startTime = new Date();
@@ -1003,11 +1003,6 @@
                         );
                     }).catch(error => {
                         console.error(error);
-                        if (error.response?.data) {
-                            this.showSnack(this.parseValidationError(error.response.data));
-                        }else{
-                        this.showSnack(handleRequestError(error));
-                        }
                     }).finally(() => {
                         this.loading = false;
                     });
@@ -1051,9 +1046,7 @@
 
                             }
                         }
-                    ).catch(error => {
-                        this.showSnack(handleRequestError(error))
-                    });
+                    );
 
                 },
 
@@ -1069,9 +1062,6 @@
                             this.queryName = null;
                             // just reload searches and select the last one
                             this.loadSearchesFromAPI(true);
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
                         });
                 },
 
@@ -1080,9 +1070,6 @@
                     axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                         .then(res => {
                             this.showSnack(res.data);
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
                         });
                 },
 
@@ -1092,9 +1079,6 @@
                         .then(res => {
                             this.showSnack(res.data);
                             this.searches = this.searches.filter(item => item.id !== id);
-                        })
-                        .catch(error => {
-                            this.showSnack(handleRequestError(error));
                         });
                 },
 
@@ -1126,7 +1110,9 @@
 
 
                 removeEvent: function (evt, index) {
-                    this.editedItem.events.splice(index, 1);
+                    if (confirm("{{ _('Confirm deleting this event?')}}")) {
+                        this.editedItem.events.splice(index, 1);
+                    }
                 },
 
 
@@ -1157,9 +1143,6 @@
                         this.incident = response.data;
                     }).catch(error => {
                         this.incidentDrawer = false;
-                        if (error.response) {
-                            this.showSnack(error.response.data)
-                        }
                     }).finally(() => {
                         this.incidentLoader = false;
                     });
@@ -1416,9 +1399,8 @@
                             });
 
 
-                        }).catch(error => {
-                            this.showSnack("{{_('Oops! We couldn\'t find this item.')}}")
-
+                        }).finally(() => {
+                            this.loading = false;
                         });
 
 
@@ -1477,21 +1459,19 @@
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
-                            this.showSnack(this.parseValidationError(err.response?.data))
                             this.saving = false;
                         });
                     } else {
-                        this.items.push(this.editedItem);
                         //create new record
                         axios.post("/admin/api/incident/", {
                             item: this.editedItem
                         }).then(response => {
+                            this.items.push(this.editedItem);
                             this.showSnack(response.data);
                             this.refresh();
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
-                            this.showSnack(this.parseValidationError(err.response?.data));
                             this.saving = false;
                         });
                     }

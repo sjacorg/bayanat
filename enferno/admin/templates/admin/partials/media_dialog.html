@@ -7,7 +7,6 @@
 
                 <v-btn
                         class="mx-2 white--text"
-
                         icon="mdi-plus-circle"
                         color="primary"
                         @click="addMedia"
@@ -23,8 +22,9 @@
 
 
 
-                <image-gallery :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
+                <image-gallery prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
                                @video-click="viewPlayer"
+                               @audio-click="viewAudioPlayer"
                                @remove-media="removeMedia"
                 ></image-gallery>
 
