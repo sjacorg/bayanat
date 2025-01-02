@@ -91,10 +91,13 @@ const ActorCard = Vue.defineComponent({
       this.mediaPlayer = null;
     },
 
-    viewVideo(media) {
+    viewMedia(media) {
       this.disposeMediaPlayer();
 
       const videoElement = buildVideoElement();
+      if (media.fileType.includes('audio')) {
+        videoElement.poster = '/static/img/waveform.png';
+      }
 
       const playerContainer = this.$refs.playerContainer;
       playerContainer.prepend(videoElement);
@@ -109,27 +112,6 @@ const ActorCard = Vue.defineComponent({
       });
       this.mediaPlayer.play();
       videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    },
-
-    viewAudio(media) {
-      this.disposeMediaPlayer();
-
-      const audioElement = buildVideoElement();
-      audioElement.poster = '/static/img/waveform.png';
-
-      const playerContainer = this.$refs.playerContainer;
-      playerContainer.prepend(audioElement);
-
-      this.mediaPlayer = videojs(
-        audioElement,
-        DEFAULT_VIDEOJS_OPTIONS
-      );
-      this.mediaPlayer.src({
-        type: media?.fileType ?? 'video/mpeg',
-        src: media.s3url
-      });
-      this.mediaPlayer.play();
-      audioElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
     loadRevisions() {
@@ -402,7 +384,7 @@ const ActorCard = Vue.defineComponent({
           <div ref="playerContainer" class="px-2 my-3"></div>
           
           <v-card-text>
-            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewVideo" @audio-click="viewAudio"></image-gallery>
+            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
           </v-card-text>
         </v-card>
 
