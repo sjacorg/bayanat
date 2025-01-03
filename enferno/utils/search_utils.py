@@ -1,7 +1,8 @@
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func
+from sqlalchemy import or_, not_, and_, any_, all_, func, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
+from enferno.extensions import db
 from enferno.admin.models import (
     Bulletin,
     Actor,
@@ -192,6 +193,7 @@ class SearchUtils:
             else:
                 query.append(and_(*conditions))
 
+        # labels
         labels = q.get("labels", [])
         if len(labels):
             ids = [item.get("id") for item in labels]
@@ -201,7 +203,7 @@ class SearchUtils:
                 # or operator
                 if recursive:
                     # get ids of children // update ids
-                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
                     all = direct + Label.get_children(direct)
                     # remove dups
@@ -212,7 +214,7 @@ class SearchUtils:
             else:
                 # and operator (modify children search logic)
                 if recursive:
-                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     for label in direct:
                         children = Label.get_children([label])
                         # add original label + uniquify list
@@ -230,6 +232,7 @@ class SearchUtils:
             ids = [item.get("id") for item in exlabels]
             query.append(~Bulletin.labels.any(Label.id.in_(ids)))
 
+        # vlabels
         vlabels = q.get("vlabels", [])
         if len(vlabels):
             ids = [item.get("id") for item in vlabels]
@@ -239,7 +242,7 @@ class SearchUtils:
                 # or operator
                 if recursive:
                     # get ids of children // update ids
-                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
                     all = direct + Label.get_children(direct)
                     # remove dups
@@ -250,7 +253,7 @@ class SearchUtils:
             else:
                 # and operator (modify children search logic)
                 if recursive:
-                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     for label in direct:
                         children = Label.get_children([label])
                         # add original label + uniquify list
@@ -268,6 +271,7 @@ class SearchUtils:
             ids = [item.get("id") for item in exvlabels]
             query.append(~Bulletin.ver_labels.any(Label.id.in_(ids)))
 
+        # sources
         sources = q.get("sources", [])
         if len(sources):
             ids = [item.get("id") for item in sources]
@@ -277,7 +281,7 @@ class SearchUtils:
                 # or operator
                 if recursive:
                     # get ids of children // update ids
-                    result = Source.query.filter(Source.id.in_(ids)).all()
+                    result = db.session.query(Source).filter(Source.id.in_(ids)).all()
                     direct = [source for source in result]
                     all = direct + Source.get_children(direct)
                     # remove dups
@@ -288,7 +292,7 @@ class SearchUtils:
             else:
                 # and operator (modify children search logic)
                 if recursive:
-                    direct = Source.query.filter(Source.id.in_(ids)).all()
+                    direct = db.session.query(Source).filter(Source.id.in_(ids)).all()
                     for source in direct:
                         children = Source.get_children([source])
                         # add original label + uniquify list
@@ -312,7 +316,7 @@ class SearchUtils:
             if q.get("oplocations"):
                 # get all child locations
                 locs = (
-                    Location.query.with_entities(Location.id)
+                    db.session.query(Location.id)
                     .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
                     .all()
                 )
@@ -399,7 +403,7 @@ class SearchUtils:
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")
         if rel_to_bulletin:
-            bulletin = Bulletin.query.get(int(rel_to_bulletin))
+            bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
             if bulletin:
                 ids = [b.get_other_id(bulletin.id) for b in bulletin.bulletin_relations]
                 query.append(Bulletin.id.in_(ids))
@@ -407,7 +411,7 @@ class SearchUtils:
         # Related to actor search
         rel_to_actor = q.get("rel_to_actor")
         if rel_to_actor:
-            actor = Actor.query.get(int(rel_to_actor))
+            actor = db.session.query(Actor).get(int(rel_to_actor))
             if actor:
                 ids = [b.bulletin_id for b in actor.bulletin_relations]
                 query.append(Bulletin.id.in_(ids))
@@ -415,7 +419,7 @@ class SearchUtils:
         # Related to incident search
         rel_to_incident = q.get("rel_to_incident")
         if rel_to_incident:
-            incident = Incident.query.get(int(rel_to_incident))
+            incident = db.session.query(Incident).get(int(rel_to_incident))
             if incident:
                 ids = [b.bulletin_id for b in incident.bulletin_relations]
                 query.append(Bulletin.id.in_(ids))
@@ -462,9 +466,7 @@ class SearchUtils:
                     )
                 )
 
-            subquery = (
-                Actor.query.join(Actor.actor_profiles).filter(*qsearch).with_entities(Actor.id)
-            )
+            subquery = db.session.query(Actor.id).join(Actor.actor_profiles).filter(*qsearch)
             query.append(Actor.id.in_(subquery))
 
         # exclude  filter
@@ -482,9 +484,7 @@ class SearchUtils:
                 )
 
             subquery = (
-                Actor.query.join(Actor.actor_profiles)
-                .filter(or_(*conditions))
-                .with_entities(Actor.id)
+                db.session.query(Actor.id).join(Actor.actor_profiles).filter(or_(*conditions))
             )
             query.append(~Actor.id.in_(subquery))
 
@@ -557,7 +557,7 @@ class SearchUtils:
             if q.get("oplabels"):
                 if recursive:
                     # get ids of children // update ids
-                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
                     all = direct + Label.get_children(direct)
                     # remove dups
@@ -566,7 +566,7 @@ class SearchUtils:
                 query.append(Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
             else:
                 if recursive:
-                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     for label in direct:
                         children = Label.get_children([label])
                         # add original label + uniquify list
@@ -595,7 +595,7 @@ class SearchUtils:
                 # or operator
                 if recursive:
                     # get ids of children // update ids
-                    result = Label.query.filter(Label.id.in_(ids)).all()
+                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
                     all = direct + Label.get_children(direct)
                     # remove dups
@@ -607,7 +607,7 @@ class SearchUtils:
             else:
                 # and operator (modify children search logic)
                 if recursive:
-                    direct = Label.query.filter(Label.id.in_(ids)).all()
+                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     for label in direct:
                         children = Label.get_children([label])
                         # add original label + uniquify list
@@ -636,7 +636,7 @@ class SearchUtils:
             if q.get("opsources"):
                 if recursive:
                     # get ids of children // update ids
-                    result = Source.query.filter(Source.id.in_(ids)).all()
+                    result = db.session.query(Source).filter(Source.id.in_(ids)).all()
                     direct = [source for source in result]
                     all = direct + Source.get_children(direct)
                     # remove dups
@@ -646,7 +646,7 @@ class SearchUtils:
             else:
                 # and operator (modify children search logic)
                 if recursive:
-                    direct = Source.query.filter(Source.id.in_(ids)).all()
+                    direct = db.session.query(Source).filter(Source.id.in_(ids)).all()
                     for source in direct:
                         children = Source.get_children([source])
                         # add original label + uniquify list
@@ -673,7 +673,7 @@ class SearchUtils:
             ids = [item.get("id") for item in res_locations]
             # get all child locations
             locs = (
-                Location.query.with_entities(Location.id)
+                db.session.query(Location.id)
                 .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
                 .all()
             )
@@ -685,7 +685,7 @@ class SearchUtils:
             ids = [item.get("id") for item in origin_locations]
             # get all child locations
             locs = (
-                Location.query.with_entities(Location.id)
+                db.session.query(Location.id)
                 .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
                 .all()
             )
@@ -842,7 +842,7 @@ class SearchUtils:
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")
         if rel_to_bulletin:
-            bulletin = Bulletin.query.get(int(rel_to_bulletin))
+            bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
             if bulletin:
                 ids = [a.actor_id for a in bulletin.actor_relations]
                 query.append(Actor.id.in_(ids))
@@ -939,7 +939,7 @@ class SearchUtils:
             if q.get("oplocations"):
                 # get all child locations
                 locs = (
-                    Location.query.with_entities(Location.id)
+                    db.session.query(Location.id)
                     .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
                     .all()
                 )
@@ -1026,7 +1026,7 @@ class SearchUtils:
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")
         if rel_to_bulletin:
-            bulletin = Bulletin.query.get(int(rel_to_bulletin))
+            bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
             if bulletin:
                 ids = [i.incident_id for i in bulletin.incident_relations]
                 query.append(Incident.id.in_(ids))
@@ -1034,7 +1034,7 @@ class SearchUtils:
         # Related to actor search
         rel_to_actor = q.get("rel_to_actor")
         if rel_to_actor:
-            actor = Actor.query.get(int(rel_to_actor))
+            actor = db.session.query(Actor).get(int(rel_to_actor))
             if actor:
                 ids = [i.incident_id for i in actor.incident_relations]
                 query.append(Incident.id.in_(ids))
@@ -1042,7 +1042,7 @@ class SearchUtils:
         # Related to incident search
         rel_to_incident = q.get("rel_to_incident")
         if rel_to_incident:
-            incident = Incident.query.get(int(rel_to_incident))
+            incident = db.session.query(Incident).get(int(rel_to_incident))
             if incident:
                 ids = [i.get_other_id(incident.id) for i in incident.incident_relations]
                 query.append(Incident.id.in_(ids))
@@ -1072,7 +1072,9 @@ class SearchUtils:
                 return None
 
             # Directly check if 'lvl' exists in the database and get the object (one query)
-            admin_level = LocationAdminLevel.query.filter(LocationAdminLevel.code == lvl).first()
+            admin_level = (
+                db.session.query(LocationAdminLevel).filter(LocationAdminLevel.code == lvl).first()
+            )
 
             if admin_level:
                 # If the specific location type exists, add it to the query
