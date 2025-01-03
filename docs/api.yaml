@@ -3862,6 +3862,37 @@ paths:
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '404':
           $ref: '#/components/responses/NotFoundTextResponse'
+  /admin/api/bulletin/web:
+    post:
+      operationId: importBulletinFromWeb
+      tags:
+        - Protected
+        - Bulletin Management
+      summary: Import a bulletin from a web URL
+      description: |
+        Import a bulletin from a web URL from an allowed domain.
+        Roles accepted:
+        - Admin
+        - DA
+      security:
+        - SessionCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: URL of the bulletin to import
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
   /admin/api/actor/assign/{id}:
     put:
       operationId: selfAssignActor
