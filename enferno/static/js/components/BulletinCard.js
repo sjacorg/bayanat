@@ -9,7 +9,7 @@ const BulletinCard = Vue.defineComponent({
   },
 
   mounted() {
-    this.removeVideo();
+    this.disposeMediaPlayer();
     if (this.bulletin?.id) {
         this.mapLocations = aggregateBulletinLocations(this.bulletin);
     }
@@ -63,55 +63,36 @@ const BulletinCard = Vue.defineComponent({
         });
     },
 
-    removeVideo() {
-      let video = this.$el.querySelector('#iplayer video');
-      if (video) {
-        video.remove();
-      }
-    },
-
     viewThumb(s3url) {
       this.$emit('thumb-click', s3url);
     },
 
-    viewVideo(s3url) {
-      this.iplayer = true;
-      //solve bug when the player div is not ready yet
-      // wait for vue's next tick
-
-      this.$nextTick(() => {
-        const video = this.$el.querySelector('#iplayer video');
-
-        videojs(
-          video,
-          {
-            playbackRates: VIDEO_RATES,
-            //resizeManager: false
-            fluid: true,
-          },
-          function () {
-            this.reset();
-            this.src(s3url);
-            this.load();
-            this.play();
-          },
-        );
-        video.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
+    disposeMediaPlayer() {
+      this.mediaPlayer?.dispose?.();
+      this.mediaPlayer = null;
     },
 
-    viewAudio(s3url) {
-      this.iaplayer = true;
-      //solve bug when the player div is not ready yet
-      // wait for vue's next tick
+    viewMedia(media) {
+      this.disposeMediaPlayer();
 
-      this.$nextTick(() => {
-        const audio = this.$el.querySelector('#iaplayer video');
-        audio.src = s3url;
-        audio.load();
-        audio.play();
-        audio.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const videoElement = buildVideoElement();
+      if (media.fileType.includes('audio')) {
+        videoElement.poster = '/static/img/waveform.png';
+      }
+
+      const playerContainer = this.$refs.playerContainer;
+      playerContainer.prepend(videoElement);
+
+      this.mediaPlayer = videojs(
+        videoElement,
+        DEFAULT_VIDEOJS_OPTIONS
+      );
+      this.mediaPlayer.src({
+        type: media?.fileType ?? 'video/mp4',
+        src: media.s3url
       });
+      this.mediaPlayer.play();
+      videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
     showDiff(e, index) {
@@ -144,8 +125,8 @@ const BulletinCard = Vue.defineComponent({
       show: false,
       hloading: false,
       mapLocations: [],
-      iplayer: false,
-      iaplayer: false,
+      mediaPlayer: null,
+      videoDialog: this.videoDialog,
 
       // image viewer
       lightbox: null,
@@ -367,23 +348,12 @@ const BulletinCard = Vue.defineComponent({
         <v-toolbar density="compact">
             <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
         </v-toolbar>
-        <v-card variant="flat"  v-if="iplayer" id="iplayer" class="px-2 my-3">
-          <video :id="'player'+ $.uid" controls class="video-js vjs-default-skin vjs-big-play-centered "
-                 crossorigin="anonymous"
-                 height="360" preload="auto"></video>
 
-        </v-card>
-
-        <v-card variant="flat"  v-if="iaplayer" id="iaplayer" class="px-2 my-3">
-          <video :id="'player'+ $.uid" controls
-                 crossorigin="anonymous" poster="/static/img/waveform.png"
-                 class="w-100 mx-auto" preload="auto"></video>
-
-        </v-card>
+        <div ref="playerContainer" class="px-2 my-3"></div>
         
         <v-card-text>
           
-          <image-gallery prioritize-videos :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewVideo" @audio-click="viewAudio"></image-gallery>
+          <image-gallery prioritize-videos :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
         </v-card-text>
       </v-card>
 

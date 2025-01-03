@@ -71,21 +71,26 @@ const MediaCard = Vue.defineComponent({
         case 'image':
           break;
         case 'video':
-          this.$emit('video-click', this.s3url);
+          this.$emit('video-click', this.media);
           break;
         case 'audio':
-          this.$emit('audio-click', this.s3url);
+          this.$emit('audio-click', this.media);
           break;
         default:
           this.downloadFile();
       }
     },
     getVideoDuration() {
-      const video = document.createElement('video');
-      video.src = this.s3url;
-      video.onloadedmetadata = () => {
-        this.videoDuration = video.duration;
-      };
+      if (this.media.duration) {
+        this.videoDuration = Number(this.media.duration)
+      } else {
+        const video = document.createElement('video');
+        video.src = this.s3url;
+        video.crossOrigin = "anonymous";
+        video.onloadedmetadata = () => {
+          this.videoDuration = video.duration;
+        };
+      }
     },
     generateVideoThumbnail() {
       const video = document.createElement('video');
