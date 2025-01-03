@@ -39,3 +39,4 @@ from .Query import Query
 from .Settings import Settings
 from .Source import Source
 from .WorkflowStatus import WorkflowStatus
+from .Notification import Notification

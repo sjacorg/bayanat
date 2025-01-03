@@ -1702,6 +1702,14 @@ class FullConfigValidationModel(ConfigValidationModel):
     ADV_ANALYSIS: bool
     SETUP_COMPLETE: bool = Field(default=True)
     LOCATIONS_INCLUDE_POSTAL_CODE: bool
+    MAIL_ENABLED: bool
+    MAIL_SERVER: Optional[str] = None
+    MAIL_PORT: Optional[int] = None
+    MAIL_USE_TLS: Optional[bool] = None
+    MAIL_USE_SSL: Optional[bool] = None
+    MAIL_USERNAME: Optional[str] = None
+    MAIL_PASSWORD: Optional[str] = None
+    MAIL_DEFAULT_SENDER: Optional[str] = None
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
@@ -1709,6 +1717,17 @@ class FullConfigValidationModel(ConfigValidationModel):
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        if values.get("MAIL_ENABLED"):
+            if (
+                not values.get("MAIL_SERVER")
+                or not values.get("MAIL_PORT")
+                or not values.get("MAIL_USERNAME")
+                or not values.get("MAIL_PASSWORD")
+                or not values.get("MAIL_DEFAULT_SENDER")
+            ):
+                raise ValueError(
+                    "MAIL_SERVER, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD must be provided if MAIL_ENABLED is True"
+                )
         return values
 
     @field_validator("ITEMS_PER_PAGE_OPTIONS")

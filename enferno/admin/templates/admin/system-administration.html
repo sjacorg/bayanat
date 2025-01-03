@@ -34,6 +34,7 @@
                                 <v-tab value="export">{{ _('Export Tool') }}</v-tab>
                                 <v-tab value="maps">{{ _('Maps') }}</v-tab>
                                 <v-tab value="locations">{{ _('Locations') }}</v-tab>
+                                <v-tab value="mail">{{ _('Mail') }}</v-tab>
                             </v-tabs>
                         </v-card-title>
                         <v-card-text class="pa-4">
@@ -568,6 +569,7 @@
                                         </v-card-text>
                                     </v-card>
                                 </v-window-item>
+
                                 <v-window-item value="locations">
                                     <v-card :disabled="loading" :loading="loading">
                                         <v-card-text>
@@ -579,6 +581,60 @@
                                         </v-card-text>
                                     </v-card>
                                 </v-window-item>
+
+                                <v-window-item value="mail">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+                                            <v-switch color="primary" label="{{ _('Enable Mail System') }}"
+                                                      v-model="eitem.MAIL_ENABLED"
+                                                      persistent-hint
+                                                      hint="{{ _('Enables sending emails from Bayanat.') }}">
+                                            </v-switch>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.MAIL_ENABLED" class=" pa-4 grey lighten-4">
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Server') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('SMTP server for sending emails.') }}"
+                                                                  v-model="eitem.MAIL_SERVER"></v-text-field>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Port') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Port for SMTP server.') }}"
+                                                                  v-model.number="eitem.MAIL_PORT"></v-text-field>
+
+                                                    <v-switch color="primary" label="{{ _('Use TLS') }}"
+                                                              v-model="eitem.MAIL_USE_TLS"
+                                                              persistent-hint
+                                                              hint="{{ _('Use TLS for SMTP server.') }}"></v-switch>
+
+                                                    <v-switch color="primary" label="{{ _('Use SSL') }}"
+                                                              v-model="eitem.MAIL_USE_SSL"
+                                                              persistent-hint
+                                                              hint="{{ _('Use SSL for SMTP server.') }}"></v-switch>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Username') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Username for SMTP server.') }}"
+                                                                  v-model="eitem.MAIL_USERNAME"></v-text-field>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Password') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Password for SMTP server.') }}"
+                                                                  v-model="eitem.MAIL_PASSWORD"></v-text-field>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Default Sender') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Default sender for emails.') }}"
+                                                                  v-model="eitem.MAIL_DEFAULT_SENDER"></v-text-field>
+
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+                                            
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
+
                             </v-window>
 
 

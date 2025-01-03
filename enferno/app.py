@@ -31,7 +31,7 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import db, session, babel, rds, debug_toolbar
+from enferno.extensions import db, session, babel, rds, debug_toolbar, mail
 from enferno.public.views import bp_public
 from enferno.setup.views import bp_setup
 from enferno.settings import Config
@@ -107,6 +107,7 @@ def register_extensions(app):
     session.init_app(app)
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
+    mail.init_app(app)
 
 
 def register_signals(app):

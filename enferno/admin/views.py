@@ -24,6 +24,8 @@ from flask_security.twofactor import tf_disable
 import shortuuid
 from urllib.parse import urlparse
 
+from enferno.admin.models.Notification import Notification
+from enferno.utils.notification_utils import NotificationUtils
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
@@ -5765,6 +5767,125 @@ def api_logs() -> Response:
             return "Error sending log file", 417
     else:
         return "Log file not found", 404
+
+
+# Notifications
+@admin.route("/api/notifications")
+def api_notifications() -> Response:
+    """
+    Endpoint to return paginated notifications for the current user.
+
+    Returns:
+        - JSON response containing notifications and pagination info
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    status = request.args.get("status")
+
+    # Query notifications for current user, ordered by creation date descending
+    notifications_query = (
+        db.session.query(Notification)
+        .filter(Notification.user_id == current_user.id)
+        .order_by(Notification.created_at.desc())
+    )
+
+    if status:
+        read_status = status.lower() == "read"
+        notifications_query = notifications_query.filter(Notification.read_status == read_status)
+
+    # Paginate the results
+    paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
+    unread_count = (
+        db.session.query(Notification)
+        .filter(Notification.user_id == current_user.id, Notification.read_status == False)
+        .count()
+    )
+
+    response = {
+        "items": [notification.to_dict() for notification in paginated_notifications.items],
+        "currentPage": page,
+        "perPage": per_page,
+        "total": paginated_notifications.total,
+        "hasMore": paginated_notifications.has_next,
+        "unreadCount": unread_count,
+    }
+
+    return jsonify(response)
+
+
+# TODO: Remove this endpoint
+@admin.post("/api/notifications/send")
+def api_send_notification() -> Response:
+    """Testing endpoint to send a notification to the current user."""
+    NotificationUtils.send_notification(
+        current_user, "Test Notification", "This is a test notification"
+    )
+    return "Notification sent", 200
+
+
+# TODO: Remove this endpoint
+@admin.post("/api/notifications/send-email")
+def api_send_email_notification() -> Response:
+    """Testing endpoint to send an email notification to the current user."""
+    NotificationUtils.send_notification(
+        current_user,
+        "Test Email Notification",
+        "This is a test email notification",
+        delivery_method="email",
+    )
+    return "Email notification sent", 200
+
+
+@admin.route("/api/notifications/unread/count")
+def api_notifications_unread_count() -> Response:
+    """
+    Endpoint to get the count of unread notifications for the current user.
+
+    Returns:
+        - JSON response containing the count of unread notifications
+        Example: {"unread_count": 5}
+    """
+    unread_count = (
+        db.session.query(Notification)
+        .filter(Notification.user_id == current_user.id, Notification.read_status == False)
+        .count()
+    )
+
+    return jsonify({"unread_count": unread_count})
+
+
+@admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
+def api_mark_notification_read(notification_id: int) -> Response:
+    """
+    Endpoint to mark a specific notification as read.
+
+    Args:
+        notification_id: ID of the notification to mark as read
+
+    Returns:
+        - Success response if notification is marked as read
+        - Error response if notification doesn't exist or user doesn't have permission
+    """
+    notification = db.session.get(Notification, notification_id)
+
+    if not notification:
+        return HTTPResponse.NOT_FOUND
+
+    # Verify the notification belongs to the current user
+    if notification.user_id != current_user.id:
+        return HTTPResponse.FORBIDDEN
+
+    try:
+        notification.mark_as_read()
+        return (
+            jsonify(
+                {"message": "Notification marked as read", "notification": notification.to_dict()}
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.error(f"Error marking notification as read: {str(e)}", exc_info=True)
+        return HTTPResponse.INTERNAL_SERVER_ERROR
 
 
 @admin.post("/api/bulletin/web")
