@@ -57,6 +57,9 @@ class Config(object):
     celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/2"
     result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/3"
 
+    # Rate Limiting
+    RATE_LIMIT_STORAGE_URI = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/4"
+
     # Security
     SECURITY_REGISTERABLE = manager.get_config("SECURITY_REGISTERABLE")
     SECURITY_RECOVERABLE = manager.get_config("SECURITY_RECOVERABLE")
@@ -300,6 +303,7 @@ class TestConfig(Config):
     celery_broker_url = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/14"
     result_backend = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/13"
     SESSION_REDIS = redis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/12")
+    RATE_LIMIT_STORAGE_URI = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/11"
 
     # Add missing keys with dummy values
     ACCESS_CONTROL_RESTRICTIVE = False
