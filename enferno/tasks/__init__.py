@@ -15,6 +15,7 @@ import boto3
 import pandas as pd
 from celery import Celery, chain
 from celery.schedules import crontab
+from celery.signals import worker_ready
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -1184,6 +1185,31 @@ def regenerate_locations() -> None:
 
 
 @celery.task
+def load_whisper_model():
+    try:
+        # check if whisper is already downloaded
+        if os.path.exists(os.path.expanduser("~/.cache/whisper/base.pt")) and os.path.isfile(
+            os.path.expanduser("~/.cache/whisper/base.pt")
+        ):
+            logger.info("Whisper model already downloaded")
+            return
+        logger.info("Downloading Whisper model...")
+        import whisper
+
+        whisper.load_model("base")
+        logger.info("Whisper model loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load Whisper model: {e}")
+
+
+@worker_ready.connect
+def load_whisper_model_on_startup(sender, **kwargs):
+    if cfg.TRANSCRIPTION_ENABLED:
+        load_whisper_model.delay()
+    else:
+        logger.info("Whisper model not loaded, transcription is disabled")
+
+
 def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: int) -> None:
     """Download and process media from web URL."""
     data_import = DataImport.query.get(import_id)

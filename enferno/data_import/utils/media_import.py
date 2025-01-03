@@ -1,3 +1,4 @@
+import logging
 import os, boto3
 from typing import Any, Literal, Optional
 import pyexifinfo as exiflib
@@ -5,6 +6,15 @@ from docx import Document
 from pypdf import PdfReader
 from pdf2image import convert_from_path
 
+try:
+    import whisper
+    from whisper.tokenizer import TO_LANGUAGE_CODE
+
+    whisper_available = True
+except ImportError:
+    whisper_available = False
+
+from enferno.admin.constants import Constants
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
@@ -281,10 +291,65 @@ class MediaImport:
         else:
             return False, None, None, None
 
+    def transcribe_video(self, filepath: str, language: str = None) -> Optional[str]:
+        """
+        Transcribes video using Whisper.
+
+        Args:
+            - filepath: Path to the video file
+            - language: Language code to use for transcription
+        Returns:
+            - Transcribed text if successful, None otherwise
+        """
+        whisper_model = whisper.load_model("base") if whisper_available else None
+        if not cfg.TRANSCRIPTION_ENABLED or not whisper_available or not whisper_model:
+            return None
+
+        try:
+            self.data_import.add_to_log(f"Transcribing video...")
+
+            # Configure Whisper's logger to use our logging system
+            whisper_logger = logging.getLogger("whisper")
+            whisper_logger.addHandler(logger.handlers[0])  # Use our JSON formatter
+            whisper_logger.setLevel(logging.INFO)
+
+            if language and language.lower() in TO_LANGUAGE_CODE.values():
+                self.data_import.add_to_log(f"Language: {language}")
+                result = whisper_model.transcribe(
+                    filepath, language=language, word_timestamps=True, verbose=True
+                )
+            else:
+                self.data_import.add_to_log(f"Language: Auto-detect")
+                result = whisper_model.transcribe(filepath, word_timestamps=True, verbose=True)
+
+            if result and result.get("segments"):
+                self.data_import.add_to_log("Video transcription completed successfully.")
+
+                # Format transcription with timestamps for each segment
+                transcription_parts = []
+                for segment in result["segments"]:
+                    start_time = str(arrow.get(segment["start"]).float_timestamp)
+                    end_time = str(arrow.get(segment["end"]).float_timestamp)
+                    text = segment["text"].strip()
+
+                    transcription_parts.append(f"[{start_time}s - {end_time}s] {text}")
+
+                formatted_transcription = "<br />".join(transcription_parts)
+                return f"<br /><br />--- Auto-generated Transcription ---<br /><br />{formatted_transcription}<br /><br />--- End of Transcription ---"
+            else:
+                self.data_import.add_to_log("Transcription completed but no text was generated.")
+            return None
+
+        except Exception as e:
+            self.data_import.add_to_log("Failed to transcribe video.")
+            self.data_import.add_to_log(str(e))
+            return None
+
     def process(self, file: str) -> Optional[Any]:
         duration = None
         optimized = False
         text_content = None
+        transcription = None
         self.data_import.processing()
 
         # Check for duplicates using centralized helper
@@ -442,6 +507,13 @@ class MediaImport:
             self.data_import.fail()
             return
 
+        if self.meta.get("transcription") and (
+            info.get("File:MIMEType").startswith("video")
+            or info.get("File:MIMEType").startswith("audio")
+        ):
+            language = self.meta.get("transcription_language")
+            transcription = self.transcribe_video(filepath, language)
+
         # bundle title with json info
         info["bulletinTitle"] = title
         info["filename"] = filename
@@ -463,6 +535,9 @@ class MediaImport:
         # pass duration
         if duration:
             info["vduration"] = duration
+
+        if transcription:
+            info["transcription"] = transcription
 
         self.data_import.add_to_log("Metadata parsed successfully.")
         self.create_bulletin(info)
@@ -578,6 +653,12 @@ class MediaImport:
 
         if info.get("text_content"):
             bulletin.description = info.get("text_content")
+
+        if info.get("transcription"):
+            if bulletin.description:
+                bulletin.description += info.get("transcription")
+            else:
+                bulletin.description = info.get("transcription")
 
         create = info.get("EXIF:CreateDate")
         if create:

@@ -24,6 +24,7 @@ from flask_security.twofactor import tf_disable
 import shortuuid
 from urllib.parse import urlparse
 
+from enferno.admin.constants import Constants
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
@@ -5821,3 +5822,17 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return jsonify({"batch_id": data_import.batch_id}), 202
+
+
+@admin.get("/api/whisper/models/")
+def api_whisper_models() -> Response:
+    """Returns the list of whisper models."""
+    return jsonify({"models": Constants.WHISPER_MODEL_OPTS})
+
+
+@admin.get("/api/whisper/languages/")
+def api_whisper_languages() -> Response:
+    """Returns the list of whisper languages."""
+    from whisper.tokenizer import TO_LANGUAGE_CODE
+
+    return jsonify({"languages": TO_LANGUAGE_CODE})

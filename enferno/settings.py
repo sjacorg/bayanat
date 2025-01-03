@@ -270,7 +270,9 @@ class Config(object):
     # Location Admin Levels
     LOCATIONS_INCLUDE_POSTAL_CODE = manager.get_config("LOCATIONS_INCLUDE_POSTAL_CODE")
 
+    TRANSCRIPTION_ENABLED = manager.get_config("TRANSCRIPTION_ENABLED")
     WEB_IMPORT = manager.get_config("WEB_IMPORT")
+    WHISPER_MODEL = manager.get_config("WHISPER_MODEL")
     # YTDLP Proxy Settings
     YTDLP_PROXY = manager.get_config("YTDLP_PROXY")
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
