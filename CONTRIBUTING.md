@@ -34,7 +34,7 @@ These tools are integrated into our development workflow via pre-commit hooks.
 
 ### Prerequisites
 
-The required libraries and hooks are defined in `dev-requirements.txt` and `package.json`.
+The required libraries and hooks are defined in `requirements-dev.txt` and `package.json`.
 
 
 ### Installation
@@ -42,7 +42,7 @@ The required libraries and hooks are defined in `dev-requirements.txt` and `pack
 1. Install Pre-commit and black:
 
    ```bash
-   pip install -r dev-requirements.txt
+   pip install -r requirements-dev.txt
    ```
 
 2. Install Node.js dependencies:
@@ -87,7 +87,7 @@ The configuration for each tool is as follows:
 
 Bayanat comes with e2e tests using pytest and pydantic models. To run the tests, install the dependencies with
 ```bash
-pip install -r dev-requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 Bayanat tests require a separate test database to be setup before running any tests.
