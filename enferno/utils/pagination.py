@@ -34,7 +34,6 @@ def paginate_query(
     per_page: int = 20,
     cursor: Optional[str] = None,
     cursor_column: str = "id",
-    estimate_count: bool = True,
 ) -> PaginationResult:
     """
     Flexible pagination that supports both cursor and offset based pagination
@@ -45,58 +44,28 @@ def paginate_query(
         per_page: Items per page
         cursor: Optional cursor value for cursor-based pagination
         cursor_column: Column to use for cursor pagination
-        estimate_count: Whether to use estimated count for better performance
     """
-    # If cursor provided, use cursor-based pagination
+    # Get items for current page plus one extra to check if there's more
     if cursor:
-        # Decode cursor value
-        cursor_value = cursor
-
-        # Add cursor filter
+        # Cursor-based pagination (2.x)
         filtered_query = query.filter(
-            getattr(query.column_descriptions[0]["type"], cursor_column) > cursor_value
+            getattr(query.column_descriptions[0]["type"], cursor_column) > cursor
         )
-
-        # Get items
         items = filtered_query.limit(per_page + 1).all()
-
-        # Check if there are more items
-        has_next = len(items) > per_page
-        if has_next:
-            items = items[:-1]
-            next_cursor = str(getattr(items[-1], cursor_column))
-        else:
-            next_cursor = None
-
-        # Add estimated count
-        total = None
-        if estimate_count:
-            total = query.session.scalar(select(func.count()).select_from(query.subquery()))
-
-        return PaginationResult(
-            items=items, total=total, next_cursor=next_cursor, per_page=per_page
-        )
-
-    # Otherwise use offset pagination
     else:
+        # Offset-based pagination (1.x compatibility)
         offset = (page - 1) * per_page
-
-        # Get items for current page plus one extra to check if there's more
         items = query.offset(offset).limit(per_page + 1).all()
 
-        # Check if there are more items
-        has_next = len(items) > per_page
-        if has_next:
-            items = items[:-1]
-            next_cursor = str(getattr(items[-1], cursor_column))
-        else:
-            next_cursor = None
+    # Check if there are more items
+    has_next = len(items) > per_page
+    if has_next:
+        items = items[:-1]
+        next_cursor = str(getattr(items[-1], cursor_column))
+    else:
+        next_cursor = None
 
-        # Always use fast statistics-based counting
-        total = None
-        if estimate_count:
-            total = query.session.scalar(select(func.count()).select_from(query.subquery()))
+    # Get total count
+    total = query.session.scalar(select(func.count()).select_from(query.subquery()))
 
-        return PaginationResult(
-            items=items, total=total, next_cursor=next_cursor, per_page=per_page
-        )
+    return PaginationResult(items=items, total=total, next_cursor=next_cursor, per_page=per_page)
