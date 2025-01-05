@@ -125,6 +125,7 @@ from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
+from enferno.utils.pagination import paginate_query
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -2851,6 +2852,7 @@ def api_bulletins(validated_data: dict) -> Response:
             "bulletin",
         )
 
+    # Build query with search utils
     su = SearchUtils(validated_data, cls="bulletin")
     queries, ops = su.get_query()
     result = Bulletin.query.filter(*queries.pop(0))
@@ -2865,18 +2867,27 @@ def api_bulletins(validated_data: dict) -> Response:
             elif nextOp == "intersect":
                 result = result.intersect(Bulletin.query.filter(*nextQuery))
 
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
-    result = result.order_by(Bulletin.updated_at.desc()).paginate(
-        page=page, per_page=per_page, count=True
+    # Get pagination params
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", PER_PAGE, type=int)
+    cursor = request.args.get("cursor", None)
+
+    # Apply pagination using the new utility
+    result = paginate_query(
+        query=result.order_by(Bulletin.updated_at.desc()),
+        page=page,
+        per_page=per_page,
+        cursor=cursor,
+        cursor_column="id",
     )
 
     # Select json encoding type
     mode = request.args.get("mode", "1")
     response = {
         "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": per_page,
+        "perPage": result.per_page,
         "total": result.total,
+        "nextCursor": result.next_cursor,
     }
 
     return Response(json.dumps(response), content_type="application/json"), 200
