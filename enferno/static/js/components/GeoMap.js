@@ -160,7 +160,7 @@ const GeoMap = Vue.defineComponent({
       });
 
       // Define the OpenStreetMap tile layer
-      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map); // Add as the default layer
+      const osmLayer = L.tileLayer(this.mapsApiEndpoint).addTo(this.map); // Add as the default layer
 
       // Define the Google Maps satellite tile layer
       const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
