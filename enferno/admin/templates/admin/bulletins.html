@@ -53,16 +53,15 @@
                             :headers="headers"
                             @click:row="rowClick"
                             :items="items"
-                            @update:options="refresh"
-                            :page="options.page"
                             :loading="loading"
-                            :items-length="itemsLength"
                             :row-props="rowClass"
                             show-select
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
                             class="elevation-1"
+                            hide-default-footer
+                            :items-length="computedItemsLength"
                     >
 
                         <template #top>
@@ -181,10 +180,24 @@
 
                         </template>
 
-                        <template #footer.prepend>
-                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }}
-                                ${searchTime} {{ _('seconds') }}</div>
+                        <template #bottom>
+                            <div class="d-flex flex-column align-center w-100">
+                                <div class="ma-2 d-flex">{{ _('Search time: ') }}
+                                    ${searchTime} {{ _('seconds') }}</div>
+                                <v-btn
+                                    v-show="nextCursor !== null"
+                                    @click="loadMore"
+                                    color="primary"
+                                    variant="elevated"
+                                    class="my-2"
+                                    :loading="loading"
+                                >
+                                    {{ _('Load More') }}
+                                </v-btn>
+                            </div>
                         </template>
+
+                        <template v-slot:no-data></template>
 
                         <template #item.roles="{item}">
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
@@ -464,6 +477,10 @@
                     btobInfo: [],
                     itoiInfo: [],
 
+                    nextCursor: null,
+                    perPage: 20,
+                    items: [],
+                    selected: [],
 
                     dzOpts: {
                         url: '/admin/api/media/chunk',
@@ -512,7 +529,7 @@
                     graphTimer: null,
 
 
-                    fsloading: true,
+                    fsloading: false,
 
 
                     dialog: dialog,
@@ -584,7 +601,7 @@
                     tinyConfig: tinyConfig,
 
 
-                    loading: true,
+                    loading: false,
                     parentLoading: false,
                     csvFile: null,
                     options: {},
@@ -687,6 +704,11 @@
                 }),
 
                 computed: {
+                    computedItemsLength() {
+                        // If we have a nextCursor, there are more items to load
+                        // So we return current items length + 1 to indicate more items
+                        return this.nextCursor ? this.items.length + 1 : this.items.length;
+                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)
@@ -842,7 +864,6 @@
                 },
                 mounted: function () {
 
-
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
                         axios.get('/admin/api/roles/').then(res => {
@@ -852,8 +873,9 @@
                             console.error(e.message);
                         });
                     {% endif  %}
-
-
+                    
+                    // Load initial data
+                    this.refresh();
 
                     // display confirmation alert if edit dialog is open.
                     let self = this;
@@ -1129,38 +1151,57 @@
 
                     },
                     doSearch() {
-                        this.options.page = 1;
                         this.advSearchExpand = this.advSearchExpand && false;
                         this.refresh();
                     },
 
-                    refresh(options) {
+                    refresh() {
+                        this.items = [];
+                        this.nextCursor = null;
+                        this.loadMore();
+                    },
 
-                        this.options = options || { ...this.options, page: 1 };
+                    loadMore() {
+                        if (this.loading) return;
+                        
                         this.loading = true;
                         const startTime = new Date()
 
-                        let url = `/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
+                        let url = `/admin/api/bulletins/?per_page=${this.perPage}`;
+                        if (this.nextCursor) {
+                            url += `&cursor=${this.nextCursor}`;
+                        }
 
                         axios.post(url, {
                             q: this.search,
-                            options: this.options
+                            cursor: this.nextCursor
                         }).then(response => {
                             const endTime = new Date()
                             this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                            this.itemsLength = response.data.total;
-                            this.items = response.data.items;
+                            
+                            // If this is a fresh load (no nextCursor), replace items
+                            // Otherwise append new items
+                            if (!this.nextCursor) {
+                                this.items = response.data.items;
+                            } else {
+                                this.items = [...this.items, ...response.data.items];
+                            }
+                            
+                            // Set nextCursor from response
+                            this.nextCursor = response.data.nextCursor;
+                            
                             this.showVisualize = !(
                                 this.search.length === 1 &&
                                 Object.keys(this.search[0]).length === 0
                             );
-
+                        }).catch(error => {
+                            console.error('Error loading bulletins:', error);
+                            this.showSnack('Error loading bulletins');
                         }).finally(() => {
                             this.loading = false;
                         });
-
-
                     },
+
                     removeQueryAt(i) {
 
                         this.search.splice(i, 1);
@@ -1180,7 +1221,7 @@
 
                     resetSearch() {
                         this.resetQuery();
-                        this.doSearch();
+                        this.refresh();
                     },
 
                     openSaveQueryDialog() {
@@ -1264,12 +1305,11 @@
 
                     allBulletins() {
                         this.search = [{}];
-                        this.doSearch();
+                        this.refresh();
 
                     },
                     myAssigned() {
-                        q = {};
-                        this.options.page = 1;
+                        let q = {};
                         q.assigned = [this.currentUser.id];
                         q.statuses = ["Assigned"];
                         this.search = [q];
@@ -1277,11 +1317,10 @@
                     },
 
                     myReview() {
-                        q = {};
-                        this.options.page = 1;
+                        let q = {};
                         q.reviewer = [this.currentUser.id];
                         q.statuses = ["Peer Review Assigned"];
-                        this.search = [q]
+                        this.search = [q];
                         this.refresh();
                     },
 

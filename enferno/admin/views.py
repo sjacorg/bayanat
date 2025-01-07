@@ -2868,29 +2868,25 @@ def api_bulletins(validated_data: dict) -> Response:
                 result = result.intersect(Bulletin.query.filter(*nextQuery))
 
     # Get pagination params
-    page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", PER_PAGE, type=int)
     cursor = request.args.get("cursor", None)
+    # print total number of items
+    print(f"Total number of items: {result.count()}")
 
     # Apply pagination using the new utility
     result = paginate_query(
-        query=result.order_by(Bulletin.updated_at.desc()),
-        page=page,
+        query=result,
         per_page=per_page,
         cursor=cursor,
         cursor_column="id",
+        descending=True,  # Optional, since it's the default
     )
 
-    # Select json encoding type
+    # Convert items to dict with specified mode
     mode = request.args.get("mode", "1")
-    response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": result.per_page,
-        "total": result.total,
-        "nextCursor": result.next_cursor,
-    }
+    result.items = [item.to_dict(mode=mode) for item in result.items]
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return Response(json.dumps(result.to_dict()), content_type="application/json"), 200
 
 
 @admin.post("/api/bulletin/")
