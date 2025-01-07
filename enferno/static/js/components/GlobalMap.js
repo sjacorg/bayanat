@@ -7,85 +7,50 @@ const GlobalMap = Vue.defineComponent({
       default: true,
     },
   },
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    const translations = window.translations
+    const mapId = 'map-' + Vue.getCurrentInstance().uid
+    const map = Vue.shallowRef(null)
+    const locations = Vue.ref(props.modelValue?.length ? props.modelValue : [])
+    const mapHeight = 300
+    const zoom = 10
+    // Marker cluster
+    const markerGroup = Vue.shallowRef(null)
+    // Event routes
+    const eventLinks = Vue.shallowRef(null)
+    const lat = geoMapDefaultCenter.lat
+    const lng =  geoMapDefaultCenter.lng
+    const attribution = '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    const measureControls = Vue.shallowRef(null)
 
-  data: function () {
-    return {
-      translations: window.translations,
-      mapId: 'map-' + this.$.uid,
-      map: null,
-      locations: this.modelValue?.length ? this.modelValue : [],
-      mapHeight: 300,
-      zoom: 10,
-      mapKey: 0,
-      // Marker cluster
-      markerGroup: null,
-      // Event routes
-      eventLinks: null,
-      mapsApiEndpoint: mapsApiEndpoint,
-      subdomains: null,
-      lat: geoMapDefaultCenter.lat,
-      lng: geoMapDefaultCenter.lng,
-      attribution:
-        '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      osmAttribution:
-        '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      defaultTile: true,
-      measureControls: null,
-    };
-  },
-
-  mounted() {
-
-
-    this.initMap();
-  },
-
-  watch: {
-    modelValue(val, old) {
-
-      if (val?.length || val !== old) {
-        this.locations = val;
-        this.fitMarkers();
-      }
-      if (val.length === 0) {
-        this.map.setView([this.lat, this.lng]);
-      }
-    },
-
-    locations() {
-
-      this.$emit('update:modelValue', this.locations);
-    },
-  },
-
-  methods: {
-    generatePopupContent(loc) {
+    function generatePopupContent(loc) {
       function renderIfExists(label, value) {
         return value ? `${label ? `<b>${label}:</b>` : ''} ${value}` : ''
       }
       // Simple HTML structure for popup content. Adjust as needed.
       return `<div class="popup-content">
       <h4>${renderIfExists('', loc.title)}</h4>
-      <div>${renderIfExists(this.translations.number_, loc.number)} ${renderIfExists(this.translations.parentId_, loc.parentId)}</div>
-      <div>${renderIfExists(this.translations.coordinates_, `${loc.lat?.toFixed(6)}, ${loc.lng?.toFixed(6)}`)}</div>
+      <div>${renderIfExists(translations.number_, loc.number)} ${renderIfExists(translations.parentId_, loc.parentId)}</div>
+      <div>${renderIfExists(translations.coordinates_, `${loc.lat?.toFixed(6)}, ${loc.lng?.toFixed(6)}`)}</div>
       <div>${renderIfExists('', loc.full_string)}</div>
-      ${loc.main ? `<div>${this.translations.mainIncident_}</div>` : ''}
-      <div>${renderIfExists(this.translations.type_, loc.geotype?.title)}</div>
-      <div>${renderIfExists(this.translations.eventType_, loc.eventtype)}</div>
+      ${loc.main ? `<div>${translations.mainIncident_}</div>` : ''}
+      <div>${renderIfExists(translations.type_, loc.geotype?.title)}</div>
+      <div>${renderIfExists(translations.eventType_, loc.eventtype)}</div>
     </div>`;
-    },
+    }
 
-    initMap() {
-      this.map = L.map(this.mapId, {
-        center: [this.lat, this.lng],
-        zoom: this.zoom,
+    function initMap() {
+      map.value = L.map(mapId, {
+        center: [lat, lng],
+        zoom: zoom,
         scrollWheelZoom: false,
       });
 
       // Define the default OSM tile layer
-      const osmLayer = L.tileLayer(this.mapsApiEndpoint, {
-        attribution: this.attribution,
-      }).addTo(this.map); // Add to map initially
+      const osmLayer = L.tileLayer(mapsApiEndpoint, {
+        attribution: attribution,
+      }).addTo(map.value); // Add to map initially
 
       // Define the Google Maps tile layer
       const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
@@ -94,11 +59,11 @@ const GlobalMap = Vue.defineComponent({
       });
 
       // Add fullscreen control
-      this.map.addControl(
+      map.value.addControl(
         new L.Control.Fullscreen({
           title: {
-            false: this.translations.enterFullscreen_,
-            true: this.translations.exitFullscreen_,
+            false: translations.enterFullscreen_,
+            true: translations.exitFullscreen_,
           },
         }),
       );
@@ -111,42 +76,33 @@ const GlobalMap = Vue.defineComponent({
 
       // Add layer control to toggle between OSM and Google Maps
       if (window.__GOOGLE_MAPS_API_KEY__) {
-        L.control.layers(baseMaps).addTo(this.map);
+        L.control.layers(baseMaps).addTo(map.value);
       }
 
       // Fit markers or other elements
-      this.fitMarkers();
-    },
+      fitMarkers();
+    }
 
-    fsHandler() {
-      //allow some time for the map to enter/exit fullscreen
-      setTimeout(() => this.fitMarkers(), 500);
-    },
-
-    redraw() {
-      this.map.invalidateSize();
-    },
-
-    fitMarkers() {
+    function fitMarkers() {
       // construct a list of markers to build a feature group
 
-      if (this.markerGroup) {
-        this.map.removeLayer(this.markerGroup);
+      if (markerGroup.value) {
+        map.value.removeLayer(markerGroup.value);
       }
 
-      this.markerGroup = L.markerClusterGroup({
+      markerGroup.value = L.markerClusterGroup({
         maxClusterRadius: 20,
       });
-      if (this.locations?.length) {
+      if (locations.value?.length) {
         let eventLocations = [];
 
-        const locationsWithCoordinates = this.locations.filter(loc => loc.lat && loc.lng);
+        const locationsWithCoordinates = locations.value.filter(loc => loc.lat && loc.lng);
 
         for (const loc of locationsWithCoordinates) {
 
           let mainStr = false;
           if (loc.main) {
-            mainStr = this.translations.mainIncident_;
+            mainStr = translations.mainIncident_;
             loc.color = '#000000';
           }
 
@@ -165,18 +121,18 @@ const GlobalMap = Vue.defineComponent({
             eventLocations.push(loc);
           }
 
-          marker.bindPopup(this.generatePopupContent(loc));
+          marker.bindPopup(generatePopupContent(loc));
 
-          this.markerGroup.addLayer(marker);
+          markerGroup.value.addLayer(marker);
         }
 
         // Add event linestring links if any available
         if (eventLocations.length > 1) {
-          this.addEventRouteLinks(eventLocations);
+          addEventRouteLinks(eventLocations);
         }
 
-        if (!this.measureControls) {
-          this.measureControls = L.control.polylineMeasure({
+        if (!measureControls.value) {
+          measureControls.value = L.control.polylineMeasure({
             position: 'topleft',
             unit: 'kilometres',
             fixedLine: {
@@ -195,33 +151,33 @@ const GlobalMap = Vue.defineComponent({
             showUnitControl: true,
           });
 
-          this.measureControls.addTo(this.map);
+          measureControls.value.addTo(map.value);
         }
 
         // Fit map of bounds of clusterLayer
-        let bounds = this.markerGroup.getBounds();
-        this.markerGroup.addTo(this.map);
-        if (bounds.isValid()){
-        this.map.fitBounds(bounds, { padding: [20, 20] });
+        let bounds = markerGroup.value.getBounds();
+        markerGroup.value.addTo(map.value);
+        if (bounds.isValid()) {
+          map.value.fitBounds(bounds, { padding: [20, 20] });
         }
 
 
-        if (this.map.getZoom() > 14) {
+        if (map.value.getZoom() > 14) {
           // flyout of center when map is zoomed in too much (single marker or many dense markers)
 
-          this.map.flyTo(this.map.getCenter(), 10, { duration: 1 });
+          map.value.flyTo(map.value.getCenter(), 10, { duration: 1 });
         }
       }
 
-      this.map.invalidateSize();
-    },
+      map.value.invalidateSize();
+    }
 
-    addEventRouteLinks(eventLocations) {
+    function addEventRouteLinks(eventLocations) {
       // Remove existing eventRoute linestrings
-      if (this.eventLinks) {
-        this.map.removeLayer(this.eventLinks);
+      if (eventLinks.value) {
+        map.value.removeLayer(eventLinks.value);
       }
-      this.eventLinks = L.layerGroup({}).addTo(this.map);
+      eventLinks.value = L.layerGroup({}).addTo(map.value);
 
       for (let i = 0; i < eventLocations.length - 1; i++) {
         const startCoord = [eventLocations[i].lat, eventLocations[i].lng];
@@ -237,11 +193,11 @@ const GlobalMap = Vue.defineComponent({
             weight: 1,
             opacity: 1,
             fillOpacity: 0.8,
-          }).addTo(this.eventLinks);
+          }).addTo(eventLinks.value);
           continue; // Skip to the next iteration
         }
 
-        const midpointCoord = this.getCurveMidpointFromCoords(startCoord, endCoord);
+        const midpointCoord = getCurveMidpointFromCoords(startCoord, endCoord);
 
         // Create bezier curve path between events
         const curve = L.curve(['M', startCoord, 'Q', midpointCoord, endCoord], {
@@ -250,7 +206,7 @@ const GlobalMap = Vue.defineComponent({
           opacity: 0.4,
           dashArray: '5',
           animate: { duration: 15000, iterations: Infinity },
-        }).addTo(this.eventLinks);
+        }).addTo(eventLinks.value);
 
         const curveMidPoints = curve.trace([0.8]);
         const arrowIcon = L.icon({
@@ -260,13 +216,13 @@ const GlobalMap = Vue.defineComponent({
         });
 
         curveMidPoints.forEach((point) => {
-          const rotationAngle = this.getVectorDegrees(startCoord, endCoord);
-          L.marker(point, { icon: arrowIcon, rotationAngle: rotationAngle }).addTo(this.eventLinks);
+          const rotationAngle = getVectorDegrees(startCoord, endCoord);
+          L.marker(point, { icon: arrowIcon, rotationAngle: rotationAngle }).addTo(eventLinks.value);
         });
       }
-    },
+    }
 
-    getCurveMidpointFromCoords(startCoord, endCoord) {
+    function getCurveMidpointFromCoords(startCoord, endCoord) {
       const offsetX = endCoord[1] - startCoord[1],
         offsetY = endCoord[0] - startCoord[0];
 
@@ -282,18 +238,40 @@ const GlobalMap = Vue.defineComponent({
         midpointLat = r2 * Math.sin(theta2) + startCoord[0];
 
       return [midpointLat, midpointLng];
-    },
+    }
 
-    getVectorDegrees(start, end) {
+    function getVectorDegrees(start, end) {
       const dx = end[0] - start[0];
       const dy = end[1] - start[1];
       return Math.atan2(dy, dx) * (180 / Math.PI);
-    },
-  },
+    }
 
-  beforeUnmount() {
-    if (this.map) {
-      this.map.remove();
+    Vue.onMounted(() => {
+      initMap();
+    });
+    Vue.onUnmounted(() => {
+      map?.remove?.()
+    });
+
+    Vue.watch(() => props.modelValue, (val, old) => {
+      if (val?.length || val !== old) {
+        locations.value = val;
+        fitMarkers();
+      }
+      if (val.length === 0) {
+        map.value.setView([lat.value, lng.value]);
+      }
+    });
+
+    // Watch for changes in `locations`
+    Vue.watch(locations, () => {
+      emit('update:modelValue', locations.value);
+    });
+
+    return {
+      translations,
+      mapId,
+      mapHeight
     }
   },
 
