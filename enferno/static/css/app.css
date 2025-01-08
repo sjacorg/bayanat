@@ -44,6 +44,7 @@
 
 .v-application {
     font-family: "Roboto", sans-serif;
+    background-color: rgba(var(--v-theme-background), 1);
 }
 
 .v-application .headline,
