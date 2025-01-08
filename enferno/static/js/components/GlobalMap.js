@@ -259,7 +259,7 @@ const GlobalMap = Vue.defineComponent({
         fitMarkers();
       }
       if (val.length === 0) {
-        map.value.setView([lat.value, lng.value]);
+        map.value.setView([lat, lng]);
       }
     });
 
