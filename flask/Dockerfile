@@ -20,7 +20,7 @@ ENV PYTHONUNBUFFERED=1
 RUN python3.12 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY ./requirements.txt  /app/requirements.txt
+COPY ./requirements/requirements.txt  /app/requirements.txt
 
 RUN . /opt/venv/bin/activate
 
