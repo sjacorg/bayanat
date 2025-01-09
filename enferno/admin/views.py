@@ -2867,6 +2867,16 @@ def api_bulletins(validated_data: dict) -> Response:
             elif nextOp == "intersect":
                 result = result.intersect(Bulletin.query.filter(*nextQuery))
 
+    # Compile to raw SQL with parameters inlined
+    compiled_sql = str(result.statement.compile(compile_kwargs={"literal_binds": True}))
+
+    # Run EXPLAIN ANALYZE on the raw SQL
+    from sqlalchemy import text
+
+    explained = db.session.execute(text(f"EXPLAIN (ANALYZE, BUFFERS) {compiled_sql}")).fetchall()
+    for row in explained:
+        logger.info(row[0])
+
     # Get pagination params
     per_page = request.args.get("per_page", PER_PAGE, type=int)
     cursor = request.args.get("cursor", None)
