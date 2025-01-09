@@ -147,7 +147,7 @@ class Bulletin(db.Model, BaseMixin):
     # metadata
     meta = db.Column(JSONB)
 
-    tsv = db.Column(TSVECTOR)
+    tsv = db.Column(TSVECTOR, db.Computed("to_tsvector('simple', search)"))
 
     search = db.Column(
         db.Text,
@@ -173,6 +173,7 @@ class Bulletin(db.Model, BaseMixin):
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
         ),
+        db.Index("ix_bulletin_tsv", "tsv", postgresql_using="gin"),
     )
 
     # custom method to create new revision in history table

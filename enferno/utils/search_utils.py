@@ -144,12 +144,20 @@ class SearchUtils:
             words = [f"%{w}%" for w in words]
             query.append(Bulletin.search.ilike(all_(words)))
 
-        # exclude  filter
+        # exclude filter
         extsv = q.get("extsv")
         if extsv:
-            words = extsv.split(" ")
-            words = [f"%{w}%" for w in words]
-            query.append(Bulletin.search.notilike(all_(words)))
+            words = extsv.split()
+            # Convert words to a proper tsquery expression
+            exclude_terms = []
+            for word in words:
+                # Escape special characters and wrap in quotes if needed
+                word = word.replace("'", "''")
+                exclude_terms.append(f"!{word}")
+
+            exclude_query = " & ".join(exclude_terms)
+            # Use text() to create raw SQL expression
+            query.append(Bulletin.tsv.op("@@")(func.to_tsquery("simple", exclude_query)))
 
         # ref
         ref = q.get("tags")
