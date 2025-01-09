@@ -64,9 +64,9 @@
                                                 address system of the country you\'re working on.') }}</div>
                                             <draggable v-model="lalChips" :item-key="'id'" class="d-flex flex-wrap ga-2 mt-4 mb-8" @end="onDragEnd">
                                                 <template #item="{element}">
-                                                    <v-chip border variant="text">
-                                                        <v-icon left small>mdi-drag</v-icon>
-                                                        <span v-text="element.title"></span>
+                                                    <v-chip border variant="text" size="default">
+                                                        <v-icon left size="x-large">mdi-drag</v-icon>
+                                                        <span class="text-body-2 ml-2" v-text="element.title"></span>
                                                     </v-chip>
                                                 </template>
                                             </draggable>
