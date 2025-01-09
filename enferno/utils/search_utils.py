@@ -144,20 +144,14 @@ class SearchUtils:
             words = [f"%{w}%" for w in words]
             query.append(Bulletin.search.ilike(all_(words)))
 
-        # exclude filter
+        # exclude filter using trigram index
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split()
-            # Convert words to a proper tsquery expression
-            exclude_terms = []
-            for word in words:
-                # Escape special characters and wrap in quotes if needed
-                word = word.replace("'", "''")
-                exclude_terms.append(f"!{word}")
-
-            exclude_query = " & ".join(exclude_terms)
-            # Use text() to create raw SQL expression
-            query.append(Bulletin.tsv.op("@@")(func.to_tsquery("simple", exclude_query)))
+            # Combine all exclusions into a single NOT ILIKE condition
+            combined_pattern = "|".join(words)
+            if combined_pattern:
+                query.append(~Bulletin.search.ilike(f"%{combined_pattern}%"))
 
         # ref
         ref = q.get("tags")
