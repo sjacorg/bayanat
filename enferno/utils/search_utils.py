@@ -273,42 +273,41 @@ class SearchUtils:
 
         # sources
         sources = q.get("sources", [])
-        if len(sources):
+        if sources:
             ids = [item.get("id") for item in sources]
-            # children search ?
             recursive = q.get("childsources", None)
-            if q.get("opsources"):
-                # or operator
-                if recursive:
-                    # get ids of children // update ids
-                    result = db.session.query(Source).filter(Source.id.in_(ids)).all()
-                    direct = [source for source in result]
-                    all = direct + Source.get_children(direct)
-                    # remove dups
-                    all = list(set(all))
-                    ids = [source.id for source in all]
 
-                query.append(Bulletin.sources.any(Source.id.in_(ids)))
+            if recursive:
+                # Instead of multiple queries + loops
+                all_ids = Source.get_descendant_ids(ids)
+                print("all_ids", all_ids)
             else:
-                # and operator (modify children search logic)
-                if recursive:
-                    direct = db.session.query(Source).filter(Source.id.in_(ids)).all()
-                    for source in direct:
-                        children = Source.get_children([source])
-                        # add original label + uniquify list
-                        children = list(set([source] + children))
-                        ids = [child.id for child in children]
-                        query.append(Bulletin.sources.any(Source.id.in_(ids)))
+                all_ids = ids
 
-                else:
-                    # non-recursive (apply and on all ids)
-                    query.extend([Bulletin.sources.any(Source.id == id) for id in ids])
+            # if opsources is True => OR condition across all source IDs
+            # else => AND condition for each source ID
+            if q.get("opsources"):
+                query.append(Bulletin.sources.any(Source.id.in_(all_ids)))
+            else:
+                # For AND logic, you might do .extend() of multiple filters
+                # but here's a quick approach for the "AND" of many IDs
+                # (i.e. Bulletin must have all of these sources):
+                subqueries = [Bulletin.sources.any(Source.id == x) for x in all_ids]
+                query.extend(subqueries)
 
         # Excluded sources
         exsources = q.get("exsources", [])
-        if len(exsources):
+        if exsources:
             ids = [item.get("id") for item in exsources]
-            query.append(~Bulletin.sources.any(Source.id.in_(ids)))
+            recursive = q.get("childexsources", None)  # or some key you define
+
+            if recursive:
+                all_ids = Source.get_descendant_ids(ids)
+            else:
+                all_ids = ids
+
+            # filter out bulletins that have any of these source IDs
+            query.append(~Bulletin.sources.any(Source.id.in_(all_ids)))
 
         locations = q.get("locations", [])
         if locations:

@@ -55,9 +55,9 @@ class Source(db.Model, BaseMixin):
             "etl_id": self.etl_id,
             "parent": {"id": self.parent.id, "title": self.parent.title} if self.parent else None,
             "comments": self.comments,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
         }
 
     def __repr__(self) -> str:
@@ -169,3 +169,33 @@ class Source(db.Model, BaseMixin):
         db.session.commit()
 
         return ""
+
+    @staticmethod
+    def get_descendant_ids(source_ids: list[int]) -> list[int]:
+        """
+        Returns the list of all source IDs that are children (recursively)
+        of the given sources, including the given source_ids themselves.
+        """
+
+        if not source_ids:
+            return []
+
+        # A simple recursive CTE to collect all children
+        query = """
+        WITH RECURSIVE desc_source AS (
+            SELECT id, parent_id
+            FROM source
+            WHERE id = ANY(:source_ids)
+            UNION ALL
+            SELECT s.id, s.parent_id
+            FROM source s
+            INNER JOIN desc_source ds on s.parent_id = ds.id
+        )
+        SELECT id FROM desc_source;
+        """
+
+        with db.engine.connect() as conn:
+            result = conn.execute(text(query), {"source_ids": source_ids}).fetchall()
+
+        # result is a list of RowTuples, so just extract the IDs
+        return [row[0] for row in result]
