@@ -7,306 +7,252 @@
 
         <v-container fluid>
             <v-row>
-                <v-col cols="12" sm="6" md="3" class="px-0">
-                    <v-card border flat class="py-5">
-                        <v-tabs v-model="selectedParentTab" direction="vertical">
-                            <v-tab value="location" class="justify-start text-none text-subtitle-2">
+                <v-col cols="12" sm="12" md="4" lg="3" class="px-0">
+                    <v-card border flat rounded class="py-5">
+                        <v-tabs height="64" v-model="selectedParentTab" direction="vertical">
+                            <v-tab class="px-7" value="location" class="justify-start text-none text-subtitle-2">
                                 {{ _('Location') }}
                             </v-tab>
-                            <v-tab value="countries-and-languages" class="justify-start text-none text-subtitle-2">
+                            <v-tab class="px-7" value="countries-and-languages" class="justify-start text-none text-subtitle-2">
                                 {{ _('Countries and Languages') }}
                             </v-tab>
-                            <v-tab value="relations" class="justify-start text-none text-subtitle-2">
+                            <v-tab class="px-7" value="relations" class="justify-start text-none text-subtitle-2">
                                 {{ _('Relations') }}
                             </v-tab>
-                            <v-tab value="media-categories" class="justify-start text-none text-subtitle-2">
+                            <v-tab class="px-7" value="media-categories" class="justify-start text-none text-subtitle-2">
                                 {{ _('Media Categories') }}
                             </v-tab>
-                            <v-tab value="geo-location" class="justify-start text-none text-subtitle-2">
+                            <v-tab class="px-7" value="geo-location" class="justify-start text-none text-subtitle-2">
                                 {{ _('Geo Location') }}
                             </v-tab>
-                            <v-tab value="violation-categories" class="justify-start text-none text-subtitle-2">
+                            <v-tab class="px-7" value="violation-categories" class="justify-start text-none text-subtitle-2">
                                 {{ _('Violation Categories') }}
                             </v-tab>
                         </v-tabs>
                     </v-card>
                 </v-col>
 
-                <v-col>
-                    <v-card border flat>
+                <v-col cols="12" sm="12" md="8" lg="9">
+                    <v-card border flat rounded>
                         <v-window v-model="selectedParentTab">
-                            <v-window-item value="location" class="pa-1">
-                                <v-tabs v-model="locationTab">
-                                    <v-tab value="administrative-levels">
+                            <v-window-item value="location">
+                                <v-tabs height="64" v-model="locationTab">
+                                    <v-tab class="px-7" value="administrative-levels">
                                         {{ _('Administrative Levels') }}
                                     </v-tab>
-                                    <v-tab value="location-types">
+                                    <v-tab class="px-7" value="location-types">
                                         {{ _('Location Types') }}
                                     </v-tab>
                                 </v-tabs>
+                                <v-divider></v-divider>
     
                                 <v-window v-model="locationTab">
-                                    <v-window-item value="administrative-levels" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table ref="locationAdminLevelsTable" title="{{ _('Location Administrative Levels') }}"
-                                                    :item-headers="alHeaders" :editable-columns="['title']"
-                                                    :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
-                                                    delete-endpoint="/admin/api/location-admin-level" save-endpoint="/admin/api/location-admin-level"
-                                                    load-endpoint="/admin/api/location-admin-levels/?per_page=1000"
-                                                    @items-updated="onLocationAdminLevelsUpdated">
-                                                </editable-table>
-                                                <v-divider class="my-4"></v-divider>
-                                                <!-- Add toolbar template -->
-                                                <v-toolbar flat>
-                                                    <h3 class="text-h6 mb-2">{{ _('Full Location Text Format') }}</h3>
-                                                </v-toolbar>
-                                                <div class="text-caption">{{ _('These settings control how the full location text of each Location is
-                                                    formatted and generated from its title and its parents. You can customize this order to match the
-                                                    address system of the country you\'re working on.') }}</div>
-                                                <draggable v-model="lalChips" :item-key="'id'" class="d-flex flex-wrap" @end="onDragEnd">
-                                                    <template #item="{element}">
-                                                        <v-chip class="ma-2">
-                                                            <v-icon left small>mdi-drag</v-icon>
-                                                            <span v-text="element.title"></span>
-                                                        </v-chip>
-                                                    </template>
-                                                </draggable>
-                                                <div class="text-caption">
-                                                    {{ _('You can change the option to include postal codes in format of the full location text in the
-                                                    system settings.') }}
+                                    <v-window-item value="administrative-levels">
+                                        <editable-table ref="locationAdminLevelsTable" title="{{ _('Location Administrative Levels') }}"
+                                            :item-headers="alHeaders" :editable-columns="['title']"
+                                            :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
+                                            delete-endpoint="/admin/api/location-admin-level" save-endpoint="/admin/api/location-admin-level"
+                                            load-endpoint="/admin/api/location-admin-levels/?per_page=1000"
+                                            @items-updated="onLocationAdminLevelsUpdated">
+                                        </editable-table>
+                                        <v-divider class="my-4"></v-divider>
+                                        <!-- Add toolbar template -->
+                                        <v-card flat class="pa-5">
+                                            <h3 class="text-subtitle-1 mb-2">{{ _('Full Location Text Format') }}</h3>
+                                            <div class="text-caption" style="max-width: 716px;">{{ _('These settings control how the full location text of each Location is
+                                                formatted and generated from its title and its parents. You can customize this order to match the
+                                                address system of the country you\'re working on.') }}</div>
+                                            <draggable v-model="lalChips" :item-key="'id'" class="d-flex flex-wrap ga-2 mt-4 mb-8" @end="onDragEnd">
+                                                <template #item="{element}">
+                                                    <v-chip border variant="text">
+                                                        <v-icon left small>mdi-drag</v-icon>
+                                                        <span v-text="element.title"></span>
+                                                    </v-chip>
+                                                </template>
+                                            </draggable>
+                                            
+                                            <div class="d-flex align-center ga-5 mt-4">
+                                                <template v-if="isOrderChanged || true">
+                                                    <v-btn color="secondary" @click="revertOrder"
+                                                        prepend-icon="mdi-undo">
+                                                        {{ _('Revert Changes') }}
+                                                    </v-btn>
+                                                    <v-btn color="primary" prepend-icon="mdi-check"
+                                                        @click="reorderLocationAdminLevels">
+                                                        {{ _('Save Order') }}
+                                                    </v-btn>
+                                                </template>
+                                                <v-btn color="warning" prepend-icon="mdi-refresh"
+                                                    @click="regenerateLocations">
+                                                    {{ _('Regenerate') }}
+                                                </v-btn>
+                                                <div class="text-caption" style="max-width: 400px;">
+                                                    {{ _('You can change the option to include postal codes in format of the full location text in the system settings.') }}
                                                 </div>
-                                                <div class="d-flex align-center justify-end mt-4">
-                                                    <div v-if="isOrderChanged" class="me-2">
-                                                        <v-btn color="secondary" variant="elevated" size="small" @click="revertOrder"
-                                                            prepend-icon="mdi-undo" class="me-2">
-                                                            {{ _('Revert Changes') }}
-                                                        </v-btn>
-                                                        <v-btn color="primary" variant="elevated" size="small" prepend-icon="mdi-check"
-                                                            @click="reorderLocationAdminLevels">
-                                                            {{ _('Save Order') }}
-                                                        </v-btn>
-                                                    </div>
-                                                    <div>
-                                                        <v-btn color="warning" variant="elevated" size="small" prepend-icon="mdi-refresh"
-                                                            @click="regenerateLocations">
-                                                            {{ _('Regenerate Full Location Texts') }}
-                                                        </v-btn>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <v-card class="pa-2 mt-2 mb-3" color="info" v-if="showLalWarning">
-                                                        <v-card-text>
-                                                            <v-icon>mdi-information</v-icon>
-                                                            {{ _('You must Re-generate Full Location Texts for the new format to take effect.') }}
-                                                        </v-card-text>
-                                                    </v-card>
-                                                </div>
-                                            </v-card-text>
+                                            </div>
+                                            <div>
+                                                <v-card class="pa-2 mt-5 mb-3" color="info" v-if="showLalWarning || true">
+                                                    <v-card-text>
+                                                        <v-icon>mdi-information</v-icon>
+                                                        {{ _('You must Re-generate Full Location Texts for the new format to take effect.') }}
+                                                    </v-card-text>
+                                                </v-card>
+                                            </div>
                                         </v-card>
                                     </v-window-item>
                                     
-                                    <v-window-item value="location-types" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Location Types') }}" :item-headers="ltHeaders" :no-action-ids="[1,2]"
-                                                    delete-endpoint="/admin/api/location-type" save-endpoint="/admin/api/location-type"
-                                                    load-endpoint="/admin/api/location-types/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="location-types">
+                                        <editable-table title="{{ _('Location Types') }}" :item-headers="ltHeaders" :no-action-ids="[1,2]"
+                                            delete-endpoint="/admin/api/location-type" save-endpoint="/admin/api/location-type"
+                                            load-endpoint="/admin/api/location-types/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                 </v-window>
                             </v-window-item>
     
-                            <v-window-item value="countries-and-languages" class="pa-1">
-                                <v-tabs v-model="countriesTab">
-                                    <v-tab value="countries">
+                            <v-window-item value="countries-and-languages">
+                                <v-tabs height="64" v-model="countriesTab">
+                                    <v-tab class="px-7" value="countries">
                                         {{ _('Countries') }}
                                     </v-tab>
-                                    <v-tab value="ethnographic-info">
+                                    <v-tab class="px-7" value="ethnographic-info">
                                         {{ _('Ethnographic Information') }}
                                     </v-tab>
-                                    <v-tab value="dialects">
+                                    <v-tab class="px-7" value="dialects">
                                         {{ _('Dialects') }}
                                     </v-tab>
                                 </v-tabs>
+                                <v-divider></v-divider>
                                 
                                 <v-window v-model="countriesTab">
-                                    <v-window-item value="countries" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Countries') }}" :item-headers="countryHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/country"
-                                                    save-endpoint="/admin/api/country" load-endpoint="/admin/api/countries/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="countries">
+                                        <editable-table title="{{ _('Countries') }}" :item-headers="countryHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/country"
+                                            save-endpoint="/admin/api/country" load-endpoint="/admin/api/countries/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="ethnographic-info" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Ethnographic Information') }}" :item-headers="ethnoHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/ethnography"
-                                                    save-endpoint="/admin/api/ethnography" load-endpoint="/admin/api/ethnographies/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="ethnographic-info">
+                                        <editable-table title="{{ _('Ethnographic Information') }}" :item-headers="ethnoHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/ethnography"
+                                            save-endpoint="/admin/api/ethnography" load-endpoint="/admin/api/ethnographies/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="dialects" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Dialects') }}" :item-headers="dialectHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/dialect"
-                                                    save-endpoint="/admin/api/dialect" load-endpoint="/admin/api/dialects/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="dialects">
+                                        <editable-table title="{{ _('Dialects') }}" :item-headers="dialectHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/dialect"
+                                            save-endpoint="/admin/api/dialect" load-endpoint="/admin/api/dialects/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                 </v-window>
                             </v-window-item>
     
-                            <v-window-item value="relations" class="pa-1">
-                                <v-tabs v-model="relationsTab">
-                                    <v-tab value="actor-to-actor">
+                            <v-window-item value="relations">
+                                <v-tabs height="64" v-model="relationsTab">
+                                    <v-tab class="px-7" value="actor-to-actor">
                                         {{ _('Actor to Actor') }}
                                     </v-tab>
-                                    <v-tab value="actor-to-bulletin">
+                                    <v-tab class="px-7" value="actor-to-bulletin">
                                         {{ _('Actor to Bulletin') }}
                                     </v-tab>
-                                    <v-tab value="bulletin-to-bulletin">
+                                    <v-tab class="px-7" value="bulletin-to-bulletin">
                                         {{ _('Bulletin to Bulletin') }}
                                     </v-tab>
-                                    <v-tab value="incident-to-bulletin">
+                                    <v-tab class="px-7" value="incident-to-bulletin">
                                         {{ _('Incident to Bulletin') }}
                                     </v-tab>
-                                    <v-tab value="incident-to-actor">
+                                    <v-tab class="px-7" value="incident-to-actor">
                                         {{ _('Incident to Actor') }}
                                     </v-tab>
-                                    <v-tab value="incident-to-incident">
+                                    <v-tab class="px-7" value="incident-to-incident">
                                         {{ _('Incident to Incident') }}
                                     </v-tab>
                                 </v-tabs>
+                                <v-divider></v-divider>
 
                                 <v-window v-model="relationsTab">
-                                    <v-window-item value="actor-to-actor" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Actor to Actor Relations') }}" :item-headers="revRelationHeaders"
-                                                    :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
-                                                    delete-endpoint="/admin/api/atoainfo" save-endpoint="/admin/api/atoainfo"
-                                                    load-endpoint="/admin/api/atoainfos/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="actor-to-actor">
+                                        <editable-table title="{{ _('Actor to Actor Relations') }}" :item-headers="revRelationHeaders"
+                                            :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
+                                            delete-endpoint="/admin/api/atoainfo" save-endpoint="/admin/api/atoainfo"
+                                            load-endpoint="/admin/api/atoainfos/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="actor-to-bulletin" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Actor to Bulletin Relations') }}" :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/atobinfo"
-                                                    save-endpoint="/admin/api/atobinfo" load-endpoint="/admin/api/atobinfos/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="actor-to-bulletin">
+                                        <editable-table title="{{ _('Actor to Bulletin Relations') }}" :item-headers="relationHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/atobinfo"
+                                            save-endpoint="/admin/api/atobinfo" load-endpoint="/admin/api/atobinfos/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="bulletin-to-bulletin" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Bulletin to Bulletin Relations') }}" :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/btobinfo"
-                                                    save-endpoint="/admin/api/btobinfo" load-endpoint="/admin/api/btobinfos/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="bulletin-to-bulletin">
+                                        <editable-table title="{{ _('Bulletin to Bulletin Relations') }}" :item-headers="relationHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/btobinfo"
+                                            save-endpoint="/admin/api/btobinfo" load-endpoint="/admin/api/btobinfos/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="incident-to-bulletin" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Incident to Bulletin Relations') }}" :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itobinfo"
-                                                    save-endpoint="/admin/api/itobinfo" load-endpoint="/admin/api/itobinfos/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="incident-to-bulletin">
+                                        <editable-table title="{{ _('Incident to Bulletin Relations') }}" :item-headers="relationHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itobinfo"
+                                            save-endpoint="/admin/api/itobinfo" load-endpoint="/admin/api/itobinfos/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="incident-to-actor" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Incident to Actor Relations') }}" :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoainfo"
-                                                    save-endpoint="/admin/api/itoainfo" load-endpoint="/admin/api/itoainfos/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="incident-to-actor">
+                                        <editable-table title="{{ _('Incident to Actor Relations') }}" :item-headers="relationHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoainfo"
+                                            save-endpoint="/admin/api/itoainfo" load-endpoint="/admin/api/itoainfos/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="incident-to-incident" class="pa-1">
-                                        <v-card>
-                                            <v-card-text>
-                                                <editable-table title="{{ _('Incident to Incident Relations') }}" :item-headers="relationHeaders"
-                                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoiinfo"
-                                                    save-endpoint="/admin/api/itoiinfo" load-endpoint="/admin/api/itoiinfos/?per_page=1000">
-                                                </editable-table>
-                                            </v-card-text>
-                                        </v-card>
+                                    <v-window-item value="incident-to-incident">
+                                        <editable-table title="{{ _('Incident to Incident Relations') }}" :item-headers="relationHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoiinfo"
+                                            save-endpoint="/admin/api/itoiinfo" load-endpoint="/admin/api/itoiinfos/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                 </v-window>
                             </v-window-item>
-                            <v-window-item value="media-categories" class="pa-1">
-                                <v-card>
-                                    <v-card-text>
-                                        <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
-                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/mediacategory"
-                                            save-endpoint="/admin/api/mediacategory" load-endpoint="/admin/api/mediacategories/?per_page=1000">
-                                        </editable-table>
-                                    </v-card-text>
-                                </v-card>
+                            <v-window-item value="media-categories">
+                                <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
+                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/mediacategory"
+                                    save-endpoint="/admin/api/mediacategory" load-endpoint="/admin/api/mediacategories/?per_page=1000">
+                                </editable-table>
                             </v-window-item>
-                            <v-window-item value="geo-location" class="pa-1">
-                                <v-card>
-                                    <v-card-text>
-                                        <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
-                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/geolocationtype"
-                                            save-endpoint="/admin/api/geolocationtype" load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
-                                        </editable-table>
-                                    </v-card-text>
-                                </v-card>
+                            <v-window-item value="geo-location">
+                                <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
+                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/geolocationtype"
+                                    save-endpoint="/admin/api/geolocationtype" load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
+                                </editable-table>
                             </v-window-item>
-                            <v-window-item value="violation-categories" class="pa-1">
-                                <v-tabs v-model="violationsTab">
-                                    <v-tab value="potential-violation">
+                            <v-window-item value="violation-categories">
+                                <v-tabs height="64" v-model="violationsTab">
+                                    <v-tab class="px-7" value="potential-violation">
                                         {{ _('Potential Violation') }}
                                     </v-tab>
-                                    <v-tab value="claimed-violation">
+                                    <v-tab class="px-7" value="claimed-violation">
                                         {{ _('Claimed Violation') }}
                                     </v-tab>
                                 </v-tabs>
+                                <v-divider></v-divider>
 
                                 <v-window v-model="violationsTab">
-                                    <v-window-item value="potential-violation" class="pa-1">
-                                        <v-card>
-                                            <editable-table title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
-                                                :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/potentialviolation"
-                                                save-endpoint="/admin/api/potentialviolation"
-                                                load-endpoint="/admin/api/potentialviolation/?per_page=1000">
-                                            </editable-table>
-                                        </v-card>
+                                    <v-window-item value="potential-violation">
+                                        <editable-table title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/potentialviolation"
+                                            save-endpoint="/admin/api/potentialviolation"
+                                            load-endpoint="/admin/api/potentialviolation/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                     
-                                    <v-window-item value="claimed-violation" class="pa-1">
-                                        <v-card>
-                                            <editable-table title="{{ _('Claimed Violation Categories') }}" :item-headers="claimedHeaders"
-                                                :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/claimedviolation"
-                                                save-endpoint="/admin/api/claimedviolation" load-endpoint="/admin/api/claimedviolation/?per_page=1000">
-                                            </editable-table>
-                                        </v-card>
+                                    <v-window-item value="claimed-violation">
+                                        <editable-table title="{{ _('Claimed Violation Categories') }}" :item-headers="claimedHeaders"
+                                            :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/claimedviolation"
+                                            save-endpoint="/admin/api/claimedviolation" load-endpoint="/admin/api/claimedviolation/?per_page=1000">
+                                        </editable-table>
                                     </v-window-item>
                                 </v-window>
                             </v-window-item>

@@ -44,7 +44,7 @@ const EditableTable = Vue.defineComponent({
   },
   template: `
       <div>
-        <v-data-table :headers="itemHeaders" :items="itemList" :items-per-page-options="$root.itemsPerPageOptions" class="elevation-1">
+        <v-data-table :headers="itemHeaders" :items="itemList" :items-per-page-options="$root.itemsPerPageOptions">
         
           <template v-slot:top>
             <v-toolbar :title="title" class="d-flex justify-space-between align-center" color="white">
