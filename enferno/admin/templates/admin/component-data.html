@@ -72,7 +72,7 @@
                                             </draggable>
                                             
                                             <div class="d-flex align-center ga-5 mt-4">
-                                                <template v-if="isOrderChanged || true">
+                                                <template v-if="isOrderChanged">
                                                     <v-btn color="secondary" @click="revertOrder"
                                                         prepend-icon="mdi-undo">
                                                         {{ _('Revert Changes') }}
@@ -91,7 +91,7 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <v-card class="pa-2 mt-5 mb-3" color="info" v-if="showLalWarning || true">
+                                                <v-card class="pa-2 mt-5 mb-3" color="info" v-if="showLalWarning">
                                                     <v-card-text>
                                                         <v-icon>mdi-information</v-icon>
                                                         {{ _('You must Re-generate Full Location Texts for the new format to take effect.') }}
