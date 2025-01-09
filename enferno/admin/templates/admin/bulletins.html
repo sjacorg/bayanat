@@ -328,6 +328,28 @@
                                         </v-btn>
                                     </v-col>
                                 </v-row>
+                                <v-row>
+                                    <v-col cols="6">
+                                        <v-switch v-model="transcription"
+                                                  :disabled="!__TRANSCRIPTION_ENABLED__"
+                                                  label="{{ _('Transcribe audio/video') }}"></v-switch>
+                                        <div v-if="!__TRANSCRIPTION_ENABLED__">
+                                            <v-icon left>mdi-information-outline</v-icon>
+                                            {{ _('Transcription is disabled.') }}
+                                        </div>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-select
+                                            v-if="transcription && __TRANSCRIPTION_ENABLED__"
+                                            v-model="transcriptionLanguage"
+                                            :items="whisperLanguageOptions"
+                                            label="{{ _('Language:') }}"
+                                            item-title="title"
+                                            item-value="value"
+                                            class="mt-2"
+                                        ></v-select>
+                                    </v-col>
+                                </v-row>
                             </v-card-text>
                         </v-card>
                     </v-dialog>
@@ -358,6 +380,7 @@
     <script src="/static/js/tinymce-vue.min.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/whisper-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -429,6 +452,7 @@
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
+        window.__TRANSCRIPTION_ENABLED__ = ('{{ config.TRANSCRIPTION_ENABLED }}' === 'True');
 
 
         const {createApp} = Vue;
@@ -439,7 +463,7 @@
                 delimiters: delimiters,
 
 
-                mixins: [mediaMixin, globalMixin],
+                mixins: [mediaMixin, globalMixin, whisperMixin],
 
 
                 components: {
@@ -453,6 +477,9 @@
                     helper: {}, // helper object for review items
 
                     valid: false,
+
+                    transcription: false,
+                    transcriptionLanguage: null,
 
                     translations: translations,
                     advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
@@ -1776,7 +1803,11 @@
 
                         this.webImportLoading = true;
                         
-                        axios.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
+                        axios.post('/admin/api/bulletin/web', { 
+                            url: this.webUrl.trim(),
+                            transcription: this.transcription,
+                            transcriptionLanguage: this.transcriptionLanguage
+                        })
                             .then(res => {
                                 this.webUrl = ''; // Clear the input
                                 this.webImportDlg = false;

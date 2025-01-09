@@ -5816,9 +5816,17 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     data_import.add_to_log(f"Started download from {url}")
     data_import.save()
 
+    transcription = validated_data.get("transcription", False)
+    transcription_language = validated_data.get("transcription_language", None)
+
     # Start async download
     download_media_from_web.delay(
-        url=url, user_id=current_user.id, batch_id=data_import.batch_id, import_id=data_import.id
+        url=url,
+        user_id=current_user.id,
+        batch_id=data_import.batch_id,
+        import_id=data_import.id,
+        transcription=transcription,
+        transcription_language=transcription_language,
     )
 
     return jsonify({"batch_id": data_import.batch_id}), 202

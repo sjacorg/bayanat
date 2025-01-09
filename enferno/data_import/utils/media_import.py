@@ -398,6 +398,12 @@ class MediaImport:
             info["source_url"] = file.get("source_url")
             info["etag"] = file.get("etag")
 
+            if self.meta.get("transcription"):
+                transcription = self.transcribe_video(
+                    filepath, self.meta.get("transcription_language")
+                )
+                info["transcription"] = transcription
+
             self.data_import.add_to_log("Metadata parsed successfully.")
             self.create_bulletin(info)
             return

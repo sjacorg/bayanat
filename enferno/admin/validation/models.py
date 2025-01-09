@@ -1801,6 +1801,8 @@ class WizardConfigRequestModel(BaseValidationModel):
 
 class WebImportValidationModel(StrictValidationModel):
     url: HttpUrl
+    transcription: bool = Field(default=False)
+    transcriptionLanguage: Optional[str] = None
 
     @field_validator("url")
     @classmethod

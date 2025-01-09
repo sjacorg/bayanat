@@ -1210,7 +1210,15 @@ def load_whisper_model_on_startup(sender, **kwargs):
         logger.info("Whisper model not loaded, transcription is disabled")
 
 
-def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: int) -> None:
+@celery.task
+def download_media_from_web(
+    url: str,
+    user_id: int,
+    batch_id: str,
+    import_id: int,
+    transcription: bool = False,
+    transcription_language: Optional[str] = None,
+) -> None:
     """Download and process media from web URL."""
     data_import = DataImport.query.get(import_id)
     if not data_import:
@@ -1228,7 +1236,9 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         _update_import_record(data_import, final_filename, info)
 
         # Start ETL process
-        _start_etl_process(final_filename, url, batch_id, user_id, import_id)
+        _start_etl_process(
+            final_filename, url, batch_id, user_id, import_id, transcription, transcription_language
+        )
 
     except ValueError as e:
         # Handle specific error messages without traceback
@@ -1333,7 +1343,13 @@ def _update_import_record(data_import: DataImport, filename: str, info: dict) ->
 
 
 def _start_etl_process(
-    filename: str, url: str, batch_id: str, user_id: int, import_id: int
+    filename: str,
+    url: str,
+    batch_id: str,
+    user_id: int,
+    import_id: int,
+    transcription: bool = False,
+    transcription_language: Optional[str] = None,
 ) -> None:
     """Start ETL process for downloaded file."""
     file_path = Media.media_dir / filename
@@ -1351,6 +1367,8 @@ def _start_etl_process(
         meta={
             "mode": 3,
             "File:MIMEType": "video/mp4",
+            "transcription": transcription,
+            "transcription_language": transcription_language,
         },
         user_id=user_id,
         data_import_id=import_id,
