@@ -21,6 +21,10 @@ const EditableTable = Vue.defineComponent({
       type: String,
       default: 'Editable Table',
     },
+    addButtonLabel: {
+      type: String,
+      default: 'Add new',
+    },
     allowAdd: {
       type: Boolean,
       default: true,
@@ -47,9 +51,10 @@ const EditableTable = Vue.defineComponent({
         <v-data-table :headers="itemHeaders" :items="itemList" :items-per-page-options="$root.itemsPerPageOptions">
         
           <template v-slot:top>
-            <v-toolbar :title="title" class="d-flex justify-space-between align-center" color="white">
+            <v-toolbar class="d-flex justify-space-between align-center" color="white">
+              <v-toolbar-title class="text-subtitle-1">{{ title }}</v-toolbar-title>
 
-              <v-btn v-if="allowAdd" icon="mdi-plus" @click="itemAdd" class="mx-3" variant="elevated" color="primary" size="x-small"></v-btn>
+              <v-btn class="text-none text-body-2 font-weight-regular" v-if="allowAdd" prepend-icon="mdi-plus-circle" @click="itemAdd" class="mx-3" variant="elevated" color="primary">{{ addButtonLabel }}</v-btn>
             </v-toolbar>
           </template>
 
@@ -66,14 +71,14 @@ const EditableTable = Vue.defineComponent({
           </template>
 
           <template v-slot:item.actions="{ item }">
-            <div v-if="isActionable(item)">
+            <div class="d-inline-flex ga-6" v-if="isActionable(item)">
               <template v-if="item.id === editableItem.id">
-                <v-icon size="small" class="mr-3" @click="itemCancel">mdi-window-close</v-icon>
-                <v-icon size="small" @click="itemSave(item)">mdi-content-save</v-icon>
+                <v-icon size="large" @click="itemCancel">mdi-window-close</v-icon>
+                <v-icon size="large" @click="itemSave(item)">mdi-content-save</v-icon>
               </template>
               <template v-else>
-                <v-icon v-if="isEditable(item)" size="small" class="mr-3" @click="itemEdit(item)">mdi-pencil</v-icon>
-                <v-icon v-if="deleteEndpoint && isDeletable(item)" size="small" @click="itemDelete(item)">mdi-delete</v-icon>
+              <v-icon v-if="deleteEndpoint && isDeletable(item)" size="large" @click="itemDelete(item)">mdi-delete</v-icon>
+              <v-icon v-if="isEditable(item)" size="large" @click="itemEdit(item)">mdi-pencil</v-icon>
               </template>
             </div>
           </template>
