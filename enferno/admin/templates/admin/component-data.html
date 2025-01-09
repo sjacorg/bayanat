@@ -3,7 +3,7 @@
 
 <v-main style="overflow: scroll;">
     <div class="my-6 mx-5">
-        <h1 class="text-h6">{{ _('Component Data Management') }}</h1>
+        <h1 class="text-h6 mb-1">{{ _('Component Data Management') }}</h1>
 
         <v-container fluid>
             <v-row>
@@ -77,12 +77,12 @@
                                                         prepend-icon="mdi-undo">
                                                         {{ _('Revert Changes') }}
                                                     </v-btn>
-                                                    <v-btn color="primary" prepend-icon="mdi-check"
+                                                    <v-btn color="warning" prepend-icon="mdi-check"
                                                         @click="reorderLocationAdminLevels">
                                                         {{ _('Save Order') }}
                                                     </v-btn>
                                                 </template>
-                                                <v-btn color="warning" prepend-icon="mdi-refresh"
+                                                <v-btn color="primary" prepend-icon="mdi-refresh"
                                                     @click="regenerateLocations">
                                                     {{ _('Regenerate') }}
                                                 </v-btn>
