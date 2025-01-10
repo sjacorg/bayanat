@@ -36,7 +36,7 @@ class Export(db.Model, BaseMixin):
     file_format = db.Column(db.String, nullable=False)
     include_media = db.Column(db.Boolean, default=False)
     file_id = db.Column(db.String)
-    ref = db.Column(ARRAY(db.String))
+    tags = db.Column(ARRAY(db.String), nullable=False, default=[])
     comment = db.Column(db.Text)
     status = db.Column(db.String, nullable=False, default="Pending")
     approver_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -84,7 +84,7 @@ class Export(db.Model, BaseMixin):
         self.requester = current_user
         self.table = table
         self.items = items
-        self.ref = cfg.get("ref") if "ref" in cfg else []
+        self.tags = cfg.get("tags") if "tags" in cfg else []
         self.comment = cfg.get("comment")
         self.file_format = cfg.get("format")
         self.include_media = cfg.get("includeMedia")
@@ -105,17 +105,17 @@ class Export(db.Model, BaseMixin):
             "file_format": self.file_format,
             "status": self.status,
             "comment": self.comment,
-            "ref": self.ref or None,
+            "tags": self.tags or None,
             "file_id": self.file_id,
-            "expires_on": DateHelper.serialize_datetime(self.expires_on)
-            if self.expires_on
-            else None,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
-            "created_at": DateHelper.serialize_datetime(self.created_at)
-            if self.created_at
-            else None,
+            "expires_on": (
+                DateHelper.serialize_datetime(self.expires_on) if self.expires_on else None
+            ),
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
+            "created_at": (
+                DateHelper.serialize_datetime(self.created_at) if self.created_at else None
+            ),
             "expired": self.expired,
             "uid": self.unique_id,
             "items": self.items,
