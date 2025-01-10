@@ -10,7 +10,7 @@
                     <v-col cols="12" sm="12" md="4" lg="3" class="px-0">
                         <v-card border flat rounded class="py-5">
                             <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
-                                <v-tab v-for="(tab, key) in mainTabs" :key="key" :value="key" class="px-7 justify-start text-none text-subtitle-2">
+                                <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key" class="px-7 justify-start text-none text-subtitle-2">
                                     ${tab.text}
                                 </v-tab>
                             </v-tabs>
@@ -20,7 +20,7 @@
                         <v-card border flat rounded>
                             <v-card-title class="d-flex flex-column position-sticky py-0 px-4 bg-surface top-0 z-1">
                                 <div class="d-flex my-3">
-                                    ${mainTabs[tab]?.text}
+                                    ${tabsMap[tab]?.text}
                                     <v-spacer></v-spacer>
                                     <div class="d-flex ga-4">
                                         <v-btn prepend-icon="mdi-restore" color="primary" @click="loadDefaults" variant="outlined">
@@ -745,7 +745,7 @@
 
             data: () => ({
 
-                tab: null,
+                tab: window.location.hash.replace('#', ''),
                 drawer: drawer,
                 eitem: {
                     ACTIVITIES:{},
@@ -775,7 +775,7 @@
 
                 options: {},
 
-                mainTabs: {
+                tabsMap: {
                     general: { text: "{{ _('General') }}" },
                     storage: { text: "{{ _('Storage') }}" },
                     security: { text: "{{ _('Security') }}" },
@@ -826,6 +826,10 @@
                 page() {
 
                     this.loadRevisions();
+                },
+                tab(newTab) {
+                    const fullPath = `${window.location.pathname}${window.location.search}`
+                    this.$router.replace(`${fullPath}#${newTab}`)
                 }
 
             },
@@ -1011,8 +1015,8 @@
             }
         });
         app.component('geo-map', GeoMap);
-
-        app.use(vuetify).mount('#app');
+        
+        app.use(router).use(vuetify).mount('#app');
 
     </script>
 
