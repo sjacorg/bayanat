@@ -47,6 +47,7 @@ const vuetifyConfig = {
                     rv: '#910C0A',
                     gv: '#9ECCC3',
                     pv: '#295651',
+                    background: '#FAFAFA',
                 },
             },
             dark: {
