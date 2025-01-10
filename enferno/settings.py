@@ -276,6 +276,24 @@ class Config(object):
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
 
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": int(os.environ.get("SQLALCHEMY_POOL_SIZE", 10)),
+        "max_overflow": int(os.environ.get("SQLALCHEMY_MAX_OVERFLOW", 20)),
+        "pool_timeout": int(os.environ.get("SQLALCHEMY_POOL_TIMEOUT", 30)),
+        "pool_recycle": int(os.environ.get("SQLALCHEMY_POOL_RECYCLE", 1800)),
+        "execution_options": {
+            "statement_timeout": int(os.environ.get("SQLALCHEMY_STATEMENT_TIMEOUT", 30000)),
+            "max_row_buffer": int(os.environ.get("SQLALCHEMY_MAX_ROW_BUFFER", 100)),
+        },
+        "connect_args": {
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5,
+            "application_name": "bayanat",
+        },
+    }
+
 
 class TestConfig(Config):
     """Test configuration."""
