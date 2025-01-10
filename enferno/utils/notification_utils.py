@@ -5,17 +5,9 @@ from enferno.extensions import db
 from pydantic import BaseModel, model_validator
 from pydantic import ConfigDict
 from enferno.utils.logging_utils import get_logger
-from flask import render_template_string
-from enferno.extensions import mail
-from flask_mail import Message
-import logging
+from enferno.utils.email_utils import EmailUtils
 
 logger = get_logger()
-
-# Configure Flask-Mail's logger to use our custom logger
-mail_logger = logging.getLogger("flask_mail")
-mail_logger.parent = logger
-mail_logger.propagate = True
 
 
 class NotificationDeliveryStrategy(ABC):
@@ -26,34 +18,21 @@ class NotificationDeliveryStrategy(ABC):
 
 class EmailNotificationDeliveryStrategy(NotificationDeliveryStrategy):
     def send(self, notification: Notification) -> bool:
-        try:
-            # TODO: Support custom templates/jinja2 templates
-
-            if not notification.user.email:
-                logger.error("User has no email address")
-                return False
-
-            # Create the email message
-            msg = Message(
-                subject=notification.title,
-                recipients=[notification.user.email],
-                # Plain text version
-                body=f"{notification.title}\n\n{notification.message}",
-            )
-
-            # Send the email
-            mail.send(msg)
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to send email notification: {str(e)}", exc_info=True)
+        if not notification.user.email:
+            logger.error("User has no email address")
             return False
+
+        return EmailUtils.send_email(
+            recipient=notification.user.email,
+            subject=notification.title,
+            body=f"{notification.title}\n\n{notification.message}",
+        )
 
 
 class SmsNotificationDeliveryStrategy(NotificationDeliveryStrategy):
     def send(self, notification: Notification) -> bool:
         # TODO: Implement SMS delivery
-        return True
+        raise NotImplementedError("SMS delivery is not implemented")
 
 
 class InternalNotificationDeliveryStrategy(NotificationDeliveryStrategy):
