@@ -8,19 +8,6 @@ const validationRules = {
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
-        VTextField: {
-            variant: 'outlined'
-        },
-        VSelect: {
-            variant: 'outlined'
-        },
-        VTextarea: {
-            variant: 'outlined'
-        },
-        VCombobox: {
-            variant: 'outlined'
-
-        },
         VChip: {
             size: 'small'
         },
