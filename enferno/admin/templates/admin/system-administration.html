@@ -124,33 +124,35 @@
 
 
                                 <v-window-item value="storage">
-                                    <v-card :disabled="loading" :loading="loading">
-                                        <v-card-text>
-                                            <h2 class="mt-1 subtitle-2 mb-2">{{ _('Media Storage') }}</h2>
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                        <div style="max-width: 823px;">
+                                            <h4 class="subtitle-2 mb-1">{{ _('Settings') }}</h4>
                                             <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
                                             <v-btn-toggle divided variant="outlined" color="primary" mandatory
                                                             v-model="eitem.FILESYSTEM_LOCAL"
                                                             class="my-3 mb-9">
-                                                <v-btn :value="1">{{ _('Local Filesystem') }}</v-btn>
-                                                <v-btn :value="0">{{ _('S3 Storage') }}</v-btn>
+                                                <v-btn :value="true">{{ _('Local Filesystem') }}</v-btn>
+                                                <v-btn :value="false">{{ _('S3 Storage') }}</v-btn>
                                             </v-btn-toggle>
 
                                             <v-slide-y-transition>
-                                                <v-sheet v-show="!eitem.FILESYSTEM_LOCAL"
-                                                            class="pa-4 grey lighten-4">
-
-                                                    <v-text-field label="{{ _('AWS Access Key ID') }}"
-                                                                    v-model="eitem.AWS_ACCESS_KEY_ID"></v-text-field>
-
-                                                    <v-text-field label="{{ _('AWS Access Key Secret') }}"
-                                                                    v-model="eitem.AWS_SECRET_ACCESS_KEY"></v-text-field>
-
-                                                    <v-text-field label="{{ _('S3 Bucket Name') }}"
-                                                                    v-model="eitem.S3_BUCKET"></v-text-field>
-
-                                                    <v-text-field label="{{ _('S3 Region') }}"
-                                                                    v-model="eitem.AWS_REGION"></v-text-field>
-
+                                                <v-sheet v-show="!eitem.FILESYSTEM_LOCAL">
+                                                    <v-row>
+                                                        <v-col cols="6">
+                                                            <v-text-field label="{{ _('AWS Access Key ID') }}"
+                                                                            v-model="eitem.AWS_ACCESS_KEY_ID"></v-text-field>
+                                                        </v-col>
+                                                        <v-col cols="6">
+                                                            <v-text-field label="{{ _('AWS Access Key Secret') }}"
+                                                                            v-model="eitem.AWS_SECRET_ACCESS_KEY"></v-text-field>
+                                                        </v-col>
+                                                        <v-col cols="6">
+                                                            <v-text-field label="{{ _('S3 Bucket Name') }}" v-model="eitem.S3_BUCKET"></v-text-field>
+                                                        </v-col>
+                                                        <v-col cols="6">
+                                                            <v-text-field label="{{ _('S3 Region') }}" v-model="eitem.AWS_REGION"></v-text-field>
+                                                        </v-col>
+                                                    </v-row>
                                                 </v-sheet>
                                             </v-slide-y-transition>
 
@@ -165,8 +167,7 @@
                                                             label="{{ _('Media Max Upload Size') }}"
                                                             persistent-hint
                                                             hint="{{ _('Sets the maximum allowed file size for media uploads.') }}"></v-text-field>
-
-                                        </v-card-text>
+                                        </div>
                                     </v-card>
                                 </v-window-item>
 
@@ -290,7 +291,7 @@
 
                                 <v-window-item value="control">
 
-                                    <v-card :disabled="loading" :loading="loading">
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-card-text>
                                             <p class="text-caption">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
 
@@ -308,7 +309,7 @@
                                 </v-window-item>
 
                                 <v-window-item value="logging">
-                                    <v-card :disabled="loading" :loading="loading">
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-card-text>
                                             <p class="caption">{{
                                                     _('Set users\' actions to be logged in the Activity Monitor.')
@@ -417,7 +418,7 @@
 
 
                                 <v-window-item value="import">
-                                    <v-card :disabled="loading" :loading="loading">
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-card-text>
 
                                             <v-switch color="primary" class="mb-9" label="{{ _('Media Import Tool') }}"
@@ -529,7 +530,7 @@
 
 
                                 <v-window-item value="export">
-                                    <v-card :disabled="loading" :loading="loading">
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-card-text>
                                             <v-switch color="primary" class="mb-9" label="{{ _('Export System') }}"
                                                         v-model="eitem.EXPORT_TOOL"
@@ -551,7 +552,7 @@
 
 
                                 <v-window-item value="maps">
-                                    <v-card :disabled="loading" :loading="loading">
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-card-text>
 
                                             <v-text-field class="mb-9" label="{{ _('Maps API Endpoint') }}"
@@ -577,7 +578,7 @@
                                     </v-card>
                                 </v-window-item>
                                 <v-window-item value="locations">
-                                    <v-card :disabled="loading" :loading="loading">
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-card-text>
                                             <h4 class="mt-3 subtitle-2 mb-2">{{ _('Full Location Generation Settings') }}</h4>
                                             <v-switch color="primary" label="{{ _('Include Postal Codes in Full Location Text Format') }}"
