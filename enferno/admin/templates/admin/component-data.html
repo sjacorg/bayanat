@@ -397,41 +397,33 @@
                     },
                     deep: true
                 },
-                ' tabState.main'(parentKey) {
-                    // Set the main tab key
+                'tabState.main'(parentKey) {
                     this.tabState.main = parentKey;
 
-                    // Determine if there are nested tabs for the selected main tab
-                    const nestedTabs = this.tabsMap?.[parentKey]?.nestedTabsMap;
+                    const hasNestedTabs = this.tabsMap?.[parentKey] && 'nestedTabsMap' in this.tabsMap[parentKey]
 
-                    // If nested tabs exist, check and update the child tab
-                    if (nestedTabs) {
-                        const { child } = this.tabState;
+                    if (hasNestedTabs) {
+                        const childKey = this.tabState.child
 
-                        // If the child doesn't exist in the nested tabs, select the first available child tab
-                        if (!(child in nestedTabs)) {
-                            this.tabState.child = Object.keys(nestedTabs).find(Boolean);
+                        const childKeyExists = this.tabsMap?.[parentKey]?.nestedTabsMap && childKey in this.tabsMap[parentKey].nestedTabsMap
+
+                        if (!childKeyExists) {
+                            this.tabState.child = Object.keys(this.tabsMap[parentKey].nestedTabsMap).find(Boolean)
                         }
                     } else {
-                        // If no nested tabs, clear the child tab
-                        this.tabState.child = null;
+                        this.tabState.child = null
                     }
 
-                    // Construct the hash link based on main and child tabs
-                    const hash = `#${[this.tabState.main, this.tabState.child].filter(Boolean).join('/')}`;
+                    const hash = `#${[this.tabState.main, this.tabState.child].filter(Boolean).join('/')}`
 
-                    // Replace the route with the updated hash
-                    this.$router.replace({ name: 'component-data', hash });
+                    this.$router.replace({ name: 'component-data', hash })
                 },
                 'tabState.child'(childKey) {
-                    // Set the child tab key directly
                     this.tabState.child = childKey;
 
-                    // Build the hash for the URL based on the main and child tabs
-                    const hash = `#${[this.tabState.main, childKey].filter(Boolean).join('/')}`;
+                    const hash = `#${[this.tabState.main, this.tabState.child].filter(Boolean).join('/')}`
 
-                    // Update the route with the new hash
-                    this.$router.replace({ name: 'component-data', hash });
+                    this.$router.replace({ name: 'component-data', hash })
                 }
             },
 
