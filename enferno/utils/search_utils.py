@@ -121,235 +121,181 @@ class SearchUtils:
         """Build a query for the activity model."""
         return self.activity_query(self.search)
 
-    def bulletin_query(self, q: dict) -> list:
-        """
-        Build a query for the bulletin model.
-
-        Args:
-            - q: The search query.
-
-        Returns:
-            - A list of query conditions.
-        """
-        query = []
+    def bulletin_query(self, q: dict):
+        """Build a select statement for bulletin search"""
+        stmt = select(Bulletin)
+        conditions = []
 
         # Support query using a range of ids
-        ids = q.get("ids")
-        if ids:
-            query.append(Bulletin.id.in_(ids))
+        if ids := q.get("ids"):
+            conditions.append(Bulletin.id.in_(ids))
 
-        tsv = q.get("tsv")
-        if tsv:
+        # Text search
+        if tsv := q.get("tsv"):
             words = tsv.split(" ")
             words = [f"%{w}%" for w in words]
-            query.append(Bulletin.search.ilike(all_(words)))
+            conditions.append(Bulletin.search.ilike(all_(words)))
 
-        # exclude  filter
-        extsv = q.get("extsv")
-        if extsv:
+        # Exclude text search
+        if extsv := q.get("extsv"):
             words = extsv.split(" ")
             words = [f"%{w}%" for w in words]
-            query.append(Bulletin.search.notilike(all_(words)))
+            conditions.append(Bulletin.search.notilike(all_(words)))
 
-        # ref
-        ref = q.get("tags")
-        exact = q.get("inExact")
-
-        if ref:
-            # exact match search
+        # Tags
+        if ref := q.get("tags"):
+            exact = q.get("inExact")
             if exact:
-                conditions = [
+                tag_conditions = [
                     func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in ref
                 ]
             else:
-                conditions = [func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref]
+                tag_conditions = [
+                    func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref
+                ]
 
             # any operator
-            op = q.get("opTags", False)
-            if op:
-                query.append(or_(*conditions))
+            if q.get("opTags", False):
+                conditions.append(or_(*tag_conditions))
             else:
-                query.append(and_(*conditions))
+                conditions.append(and_(*tag_conditions))
 
-        # exclude ref
-        exref = q.get("exTags")
-        exact = q.get("exExact")
-        if exref:
-            # exact match
+        # Exclude tags
+        if exref := q.get("exTags"):
+            exact = q.get("exExact")
             if exact:
-                conditions = [
+                tag_conditions = [
                     ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in exref
                 ]
             else:
-                conditions = [
+                tag_conditions = [
                     ~func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in exref
                 ]
 
-            # get all operator
             opexref = q.get("opExTags")
             if opexref:
-                # De Mogran's
-                query.append(or_(*conditions))
+                conditions.append(or_(*tag_conditions))
             else:
-                query.append(and_(*conditions))
+                conditions.append(and_(*tag_conditions))
 
-        # labels
-        labels = q.get("labels", [])
-        if len(labels):
+        # Labels
+        if labels := q.get("labels", []):
             ids = [item.get("id") for item in labels]
-            # children search ?
             recursive = q.get("childlabels", None)
             if q.get("oplabels"):
-                # or operator
                 if recursive:
-                    # get ids of children // update ids
                     result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
-                    all = direct + Label.get_children(direct)
-                    # remove dups
-                    all = list(set(all))
-                    ids = [label.id for label in all]
-
-                query.append(Bulletin.labels.any(Label.id.in_(ids)))
+                    all_labels = direct + Label.get_children(direct)
+                    all_labels = list(set(all_labels))
+                    ids = [label.id for label in all_labels]
+                conditions.append(Bulletin.labels.any(Label.id.in_(ids)))
             else:
-                # and operator (modify children search logic)
                 if recursive:
                     direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     for label in direct:
                         children = Label.get_children([label])
-                        # add original label + uniquify list
                         children = list(set([label] + children))
                         ids = [child.id for child in children]
-                        query.append(Bulletin.labels.any(Label.id.in_(ids)))
-
+                        conditions.append(Bulletin.labels.any(Label.id.in_(ids)))
                 else:
-                    # non-recursive (apply and on all ids)
-                    query.extend([Bulletin.labels.any(Label.id == id) for id in ids])
+                    conditions.extend([Bulletin.labels.any(Label.id == id) for id in ids])
 
         # Excluded labels
-        exlabels = q.get("exlabels", [])
-        if len(exlabels):
+        if exlabels := q.get("exlabels", []):
             ids = [item.get("id") for item in exlabels]
-            query.append(~Bulletin.labels.any(Label.id.in_(ids)))
+            conditions.append(~Bulletin.labels.any(Label.id.in_(ids)))
 
-        # vlabels
-        vlabels = q.get("vlabels", [])
-        if len(vlabels):
+        # Verification labels
+        if vlabels := q.get("vlabels", []):
             ids = [item.get("id") for item in vlabels]
-            # children search ?
             recursive = q.get("childverlabels", None)
             if q.get("opvlabels"):
-                # or operator
                 if recursive:
-                    # get ids of children // update ids
                     result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
-                    all = direct + Label.get_children(direct)
-                    # remove dups
-                    all = list(set(all))
-                    ids = [label.id for label in all]
-
-                query.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
+                    all_labels = direct + Label.get_children(direct)
+                    all_labels = list(set(all_labels))
+                    ids = [label.id for label in all_labels]
+                conditions.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
             else:
-                # and operator (modify children search logic)
                 if recursive:
                     direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     for label in direct:
                         children = Label.get_children([label])
-                        # add original label + uniquify list
                         children = list(set([label] + children))
                         ids = [child.id for child in children]
-                        query.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
-
+                        conditions.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
                 else:
-                    # non-recursive (apply and on all ids)
-                    query.extend([Bulletin.ver_labels.any(Label.id == id) for id in ids])
+                    conditions.extend([Bulletin.ver_labels.any(Label.id == id) for id in ids])
 
-        # Excluded vlabels
-        exvlabels = q.get("exvlabels", [])
-        if len(exvlabels):
+        # Excluded verification labels
+        if exvlabels := q.get("exvlabels", []):
             ids = [item.get("id") for item in exvlabels]
-            query.append(~Bulletin.ver_labels.any(Label.id.in_(ids)))
+            conditions.append(~Bulletin.ver_labels.any(Label.id.in_(ids)))
 
-        # sources
-        sources = q.get("sources", [])
-        if len(sources):
+        # Sources
+        if sources := q.get("sources", []):
             ids = [item.get("id") for item in sources]
-            # children search ?
             recursive = q.get("childsources", None)
             if q.get("opsources"):
-                # or operator
                 if recursive:
-                    # get ids of children // update ids
                     result = db.session.query(Source).filter(Source.id.in_(ids)).all()
                     direct = [source for source in result]
-                    all = direct + Source.get_children(direct)
-                    # remove dups
-                    all = list(set(all))
-                    ids = [source.id for source in all]
-
-                query.append(Bulletin.sources.any(Source.id.in_(ids)))
+                    all_sources = direct + Source.get_children(direct)
+                    all_sources = list(set(all_sources))
+                    ids = [source.id for source in all_sources]
+                conditions.append(Bulletin.sources.any(Source.id.in_(ids)))
             else:
-                # and operator (modify children search logic)
                 if recursive:
                     direct = db.session.query(Source).filter(Source.id.in_(ids)).all()
                     for source in direct:
                         children = Source.get_children([source])
-                        # add original label + uniquify list
                         children = list(set([source] + children))
                         ids = [child.id for child in children]
-                        query.append(Bulletin.sources.any(Source.id.in_(ids)))
-
+                        conditions.append(Bulletin.sources.any(Source.id.in_(ids)))
                 else:
-                    # non-recursive (apply and on all ids)
-                    query.extend([Bulletin.sources.any(Source.id == id) for id in ids])
+                    conditions.extend([Bulletin.sources.any(Source.id == id) for id in ids])
 
         # Excluded sources
-        exsources = q.get("exsources", [])
-        if len(exsources):
+        if exsources := q.get("exsources", []):
             ids = [item.get("id") for item in exsources]
-            query.append(~Bulletin.sources.any(Source.id.in_(ids)))
+            conditions.append(~Bulletin.sources.any(Source.id.in_(ids)))
 
-        locations = q.get("locations", [])
-        if locations:
+        # Locations
+        if locations := q.get("locations", []):
             ids = [item.get("id") for item in locations]
             if q.get("oplocations"):
-                # get all child locations
                 locs = (
                     db.session.query(Location.id)
                     .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
                     .all()
                 )
                 loc_ids = [loc.id for loc in locs]
-                query.append(Bulletin.locations.any(Location.id.in_(loc_ids)))
+                conditions.append(Bulletin.locations.any(Location.id.in_(loc_ids)))
             else:
-                # get combined lists of ids for each location
                 id_mix = [Location.get_children_by_id(id) for id in ids]
-                query.extend(Bulletin.locations.any(Location.id.in_(i)) for i in id_mix)
+                conditions.extend(Bulletin.locations.any(Location.id.in_(i)) for i in id_mix)
 
         # Excluded locations
-        exlocations = q.get("exlocations", [])
-        if len(exlocations):
+        if exlocations := q.get("exlocations", []):
             ids = [item.get("id") for item in exlocations]
-            query.append(~Bulletin.locations.any(Location.id.in_(ids)))
+            conditions.append(~Bulletin.locations.any(Location.id.in_(ids)))
 
-        # publish date
+        # Dates
         if pubdate := q.get("pubdate", None):
-            query.append(date_between_query(Bulletin.publish_date, pubdate))
+            conditions.append(date_between_query(Bulletin.publish_date, pubdate))
 
-        # documentation date
         if docdate := q.get("docdate", None):
-            query.append(date_between_query(Bulletin.documentation_date, docdate))
+            conditions.append(date_between_query(Bulletin.documentation_date, docdate))
 
-        # creation date
         if created := q.get("created", None):
-            query.append(date_between_query(Bulletin.created_at, created))
+            conditions.append(date_between_query(Bulletin.created_at, created))
 
-        # modified date
         if updated := q.get("updated", None):
-            query.append(date_between_query(Bulletin.updated_at, updated))
+            conditions.append(date_between_query(Bulletin.updated_at, updated))
 
-        # event search
+        # Events
         single_event = q.get("singleEvent", None)
         event_dates = q.get("edate", None)
         event_type = q.get("etype", None)
@@ -358,88 +304,80 @@ class SearchUtils:
         if event_dates or event_type or event_location:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
-            conditions = Event.get_event_filters(
+            event_conditions = Event.get_event_filters(
                 dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
             )
-
             if single_event:
-                query.append(Bulletin.events.any(and_(*conditions)))
+                conditions.append(Bulletin.events.any(and_(*event_conditions)))
             else:
-                query.extend([Bulletin.events.any(condition) for condition in conditions])
+                conditions.extend(
+                    [Bulletin.events.any(condition) for condition in event_conditions]
+                )
 
         # Access Roles
-        roles = q.get("roles")
-
-        if roles:
-            query.append(Bulletin.roles.any(Role.id.in_(roles)))
+        if roles := q.get("roles"):
+            conditions.append(Bulletin.roles.any(Role.id.in_(roles)))
         if q.get("norole"):
-            query.append(~Bulletin.roles.any())
+            conditions.append(~Bulletin.roles.any())
 
-        # assigned user(s)
-        assigned = q.get("assigned", [])
-        if assigned:
-            query.append(Bulletin.assigned_to_id.in_(assigned))
+        # Assignments
+        if assigned := q.get("assigned", []):
+            conditions.append(Bulletin.assigned_to_id.in_(assigned))
 
-        # unassigned
-        unassigned = q.get("unassigned", None)
-        if unassigned:
-            query.append(Bulletin.assigned_to == None)
+        if q.get("unassigned"):
+            conditions.append(Bulletin.assigned_to == None)
 
         # First peer reviewer
-        fpr = q.get("reviewer", [])
-        if fpr:
-            query.append(Bulletin.first_peer_reviewer_id.in_(fpr))
+        if fpr := q.get("reviewer", []):
+            conditions.append(Bulletin.first_peer_reviewer_id.in_(fpr))
 
-        # workflow statuses
-        statuses = q.get("statuses", [])
-        if statuses:
-            query.append(Bulletin.status.in_(statuses))
+        # Workflow statuses
+        if statuses := q.get("statuses", []):
+            conditions.append(Bulletin.status.in_(statuses))
 
-        # review status
-        review_action = q.get("reviewAction", None)
-        if review_action:
-            query.append(Bulletin.review_action == review_action)
+        # Review status
+        if review_action := q.get("reviewAction", None):
+            conditions.append(Bulletin.review_action == review_action)
 
-        # Related to bulletin search
-        rel_to_bulletin = q.get("rel_to_bulletin")
-        if rel_to_bulletin:
+        # Relations
+        if rel_to_bulletin := q.get("rel_to_bulletin"):
             bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
             if bulletin:
                 ids = [b.get_other_id(bulletin.id) for b in bulletin.bulletin_relations]
-                query.append(Bulletin.id.in_(ids))
+                conditions.append(Bulletin.id.in_(ids))
 
-        # Related to actor search
-        rel_to_actor = q.get("rel_to_actor")
-        if rel_to_actor:
+        if rel_to_actor := q.get("rel_to_actor"):
             actor = db.session.query(Actor).get(int(rel_to_actor))
             if actor:
                 ids = [b.bulletin_id for b in actor.bulletin_relations]
-                query.append(Bulletin.id.in_(ids))
+                conditions.append(Bulletin.id.in_(ids))
 
-        # Related to incident search
-        rel_to_incident = q.get("rel_to_incident")
-        if rel_to_incident:
+        if rel_to_incident := q.get("rel_to_incident"):
             incident = db.session.query(Incident).get(int(rel_to_incident))
             if incident:
                 ids = [b.bulletin_id for b in incident.bulletin_relations]
-                query.append(Bulletin.id.in_(ids))
+                conditions.append(Bulletin.id.in_(ids))
 
         # Geospatial search
         loc_types = q.get("locTypes")
         latlng = q.get("latlng")
 
         if loc_types and latlng and (radius := latlng.get("radius")):
-            conditions = []
+            geo_conditions = []
             if "locations" in loc_types:
-                conditions.append(Bulletin.geo_query_location(latlng, radius))
+                geo_conditions.append(Bulletin.geo_query_location(latlng, radius))
             if "geomarkers" in loc_types:
-                conditions.append(Bulletin.geo_query_geo_location(latlng, radius))
+                geo_conditions.append(Bulletin.geo_query_geo_location(latlng, radius))
             if "events" in loc_types:
-                conditions.append(Bulletin.geo_query_event_location(latlng, radius))
+                geo_conditions.append(Bulletin.geo_query_event_location(latlng, radius))
 
-            query.append(or_(*conditions))
+            conditions.append(or_(*geo_conditions))
 
-        return query
+        # Apply all conditions to statement
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        return [stmt], []  # Return format compatible with existing code
 
     def actor_query(self, q: dict) -> list:
         """
