@@ -9,24 +9,9 @@
             <v-row>
                 <v-col cols="12" sm="12" md="4" lg="3" class="px-0">
                     <v-card border flat rounded class="py-5">
-                        <v-tabs height="40" v-model="selectedParentTab" selected-class="bg-surface-light" direction="vertical">
-                            <v-tab value="location" class="px-7 justify-start text-none text-subtitle-2">
-                                {{ _('Location') }}
-                            </v-tab>
-                            <v-tab value="countries-and-languages" class="px-7 justify-start text-none text-subtitle-2">
-                                {{ _('Countries and Languages') }}
-                            </v-tab>
-                            <v-tab value="relations" class="px-7 justify-start text-none text-subtitle-2">
-                                {{ _('Relations') }}
-                            </v-tab>
-                            <v-tab value="media-categories" class="px-7 justify-start text-none text-subtitle-2">
-                                {{ _('Media Categories') }}
-                            </v-tab>
-                            <v-tab value="geo-location" class="px-7 justify-start text-none text-subtitle-2">
-                                {{ _('Geo Location') }}
-                            </v-tab>
-                            <v-tab value="violation-categories" class="px-7 justify-start text-none text-subtitle-2">
-                                {{ _('Violation Categories') }}
+                        <v-tabs mandatory height="40" v-model="tabState.main" selected-class="bg-surface-light" direction="vertical">
+                            <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key" class="px-7 justify-start text-none text-subtitle-2">
+                                ${tab.text}
                             </v-tab>
                         </v-tabs>
                     </v-card>
@@ -34,19 +19,16 @@
 
                 <v-col cols="12" sm="12" md="8" lg="9">
                     <v-card border flat rounded>
-                        <v-window v-model="selectedParentTab">
+                        <v-window v-model="tabState.main">
                             <v-window-item value="location">
-                                <v-tabs height="64" v-model="locationTab">
-                                    <v-tab class="px-7" value="administrative-levels">
-                                        {{ _('Administrative Levels') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="location-types">
-                                        {{ _('Location Types') }}
+                                <v-tabs mandatory height="64" v-model="tabState.child">
+                                    <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
+                                        ${childTab.text}
                                     </v-tab>
                                 </v-tabs>
                                 <v-divider></v-divider>
     
-                                <v-window v-model="locationTab">
+                                <v-window v-model="tabState.child">
                                     <v-window-item value="administrative-levels">
                                         <editable-table ref="locationAdminLevelsTable" title="{{ _('Location Administrative Levels') }}"
                                             :item-headers="alHeaders" :editable-columns="['title']"
@@ -110,21 +92,15 @@
                                 </v-window>
                             </v-window-item>
     
-                            <v-window-item value="countries-and-languages">
-                                <v-tabs height="64" v-model="countriesTab">
-                                    <v-tab class="px-7" value="countries">
-                                        {{ _('Countries') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="ethnographic-info">
-                                        {{ _('Ethnographic Information') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="dialects">
-                                        {{ _('Dialects') }}
+                            <v-window-item value="countries">
+                                <v-tabs mandatory height="64" v-model="tabState.child">
+                                    <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
+                                        ${childTab.text}
                                     </v-tab>
                                 </v-tabs>
                                 <v-divider></v-divider>
                                 
-                                <v-window v-model="countriesTab">
+                                <v-window v-model="tabState.child">
                                     <v-window-item value="countries">
                                         <editable-table title="{{ _('Countries') }}" :item-headers="countryHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/country"
@@ -149,29 +125,14 @@
                             </v-window-item>
     
                             <v-window-item value="relations">
-                                <v-tabs height="64" v-model="relationsTab">
-                                    <v-tab class="px-7" value="actor-to-actor">
-                                        {{ _('Actor to Actor') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="actor-to-bulletin">
-                                        {{ _('Actor to Bulletin') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="bulletin-to-bulletin">
-                                        {{ _('Bulletin to Bulletin') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="incident-to-bulletin">
-                                        {{ _('Incident to Bulletin') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="incident-to-actor">
-                                        {{ _('Incident to Actor') }}
-                                    </v-tab>
-                                    <v-tab class="px-7" value="incident-to-incident">
-                                        {{ _('Incident to Incident') }}
+                                <v-tabs mandatory height="64" v-model="tabState.child">
+                                    <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
+                                        ${childTab.text}
                                     </v-tab>
                                 </v-tabs>
                                 <v-divider></v-divider>
 
-                                <v-window v-model="relationsTab">
+                                <v-window v-model="tabState.child">
                                     <v-window-item value="actor-to-actor">
                                         <editable-table title="{{ _('Actor to Actor Relations') }}" :item-headers="revRelationHeaders"
                                             :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
@@ -216,20 +177,20 @@
                                     </v-window-item>
                                 </v-window>
                             </v-window-item>
-                            <v-window-item value="media-categories">
+                            <v-window-item value="media">
                                 <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
                                     :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/mediacategory"
                                     save-endpoint="/admin/api/mediacategory" load-endpoint="/admin/api/mediacategories/?per_page=1000">
                                 </editable-table>
                             </v-window-item>
-                            <v-window-item value="geo-location">
+                            <v-window-item value="geolocation">
                                 <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
                                     :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/geolocationtype"
                                     save-endpoint="/admin/api/geolocationtype" load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
                                 </editable-table>
                             </v-window-item>
-                            <v-window-item value="violation-categories">
-                                <v-tabs height="64" v-model="violationsTab">
+                            <v-window-item value="violation">
+                                <v-tabs mandatory height="64" v-model="tabState.child">
                                     <v-tab class="px-7" value="potential-violation">
                                         {{ _('Potential Violation') }}
                                     </v-tab>
@@ -239,7 +200,7 @@
                                 </v-tabs>
                                 <v-divider></v-divider>
 
-                                <v-window v-model="violationsTab">
+                                <v-window v-model="tabState.child">
                                     <v-window-item value="potential-violation">
                                         <editable-table title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/potentialviolation"
@@ -293,98 +254,140 @@
             components: {
                 EditableTable
             },
-            data: () => ({
-                translations: window.translations,
-                itemsPerPageOptions: window.itemsPerPageOptions,
-                drawer: drawer,
-                selectedParentTab: null,
-                locationTab: null,
-                countriesTab: null,
-                relationsTab: null,
-                violationsTab: null,
-                alHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Code')}}", value: "code"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
+            mounted() {
+                this.setInitialTabStateKey()
+            },
+            data() {
+                return {
+                    translations: window.translations,
+                    itemsPerPageOptions: window.itemsPerPageOptions,
+                    drawer: drawer,
+                    tabState: {
+                        main: null,
+                        child: null,
+                    },
+                    tabsMap: {
+                        location: {
+                            text: "{{ _('Location') }}",
+                            nestedTabsMap: {
+                                ['administrative-levels']: { text: "{{ _('Administrative Levels') }}" },
+                                ['location-types']: { text: "{{ _('Location Types') }}" }
+                            }
+                        },
+                        countries: {
+                            text: "{{ _('Countries and Languages') }}",
+                            nestedTabsMap: {
+                                countries: { text: "{{ _('Countries') }}" },
+                                ['ethnographic-info']: { text: "{{ _('Ethnographic Information') }}" },
+                                dialects: { text: "{{ _('Dialects') }}" },
+                            }
+                        },
+                        relations: {
+                            text: "{{ _('Relations') }}",
+                            nestedTabsMap: {
+                                ['actor-to-actor']: { text: "{{ _('Actor to Actor') }}" },
+                                ['actor-to-bulletin']: { text: "{{ _('Actor to Bulletin') }}" },
+                                ['bulletin-to-bulletin']: { text: "{{ _('Bulletin to Bulletin') }}" },
+                                ['incident-to-bulletin']: { text: "{{ _('Incident to Bulletin') }}" },
+                                ['incident-to-actor']: { text: "{{ _('Incident to Actor') }}" },
+                                ['incident-to-incident']: { text: "{{ _('Incident to Incident') }}" },
+                            }
+                        },
+                        media: { text: "{{ _('Media Categories') }}" },
+                        geolocation: { text: "{{ _('Geo Location') }}" },
+                        violation: {
+                            text: "{{ _('Violation Categories') }}",
+                            nestedTabsMap: {
+                                ['potential-violation']: { text: "{{ _('Potential Violation') }}" },
+                                ['claimed-violation']: { text: "{{ _('Claimed Violation') }}" }
+                            }
+                        },
+                    },
 
-                ],
+                    alHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Code')}}", value: "code"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
 
-                ltHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    ],
 
-                countryHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    ltHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
 
-                ethnoHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    countryHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
 
-                dialectHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    ethnoHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
 
-                relationHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
-                revRelationHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Reverse Title')}}", value: "reverse_title"},
-                    {title: "{{_('Reverse Title (tr)')}}", value: "reverse_title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    dialectHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
 
-                mediaHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
-                geoHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    relationHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
+                    revRelationHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Reverse Title')}}", value: "reverse_title"},
+                        {title: "{{_('Reverse Title (tr)')}}", value: "reverse_title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
 
-                potentialHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    mediaHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
+                    geoHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
 
-                claimedHeaders: [
-                    {title: "{{_('ID')}}", value: "id"},
-                    {title: "{{_('Title')}}", value: "title"},
-                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
-                    {title: "{{_('Actions')}}", value: "actions", align: "end"},
-                ],
+                    potentialHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
 
-                noDeleteIdsForLocationAdminLevels: [],
-                locationAdminLevels: [],
-                lalChips: [],
-                showLalWarning: false,
-                cachedOrder: [],
-            }),
+                    claimedHeaders: [
+                        {title: "{{_('ID')}}", value: "id"},
+                        {title: "{{_('Title')}}", value: "title"},
+                        {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                        {title: "{{_('Actions')}}", value: "actions", align: "end"},
+                    ],
+
+                    noDeleteIdsForLocationAdminLevels: [],
+                    locationAdminLevels: [],
+                    lalChips: [],
+                    showLalWarning: false,
+                    cachedOrder: [],
+                }
+            },
 
             watch: {
                 locationAdminLevels: {
@@ -394,6 +397,34 @@
                     },
                     deep: true
                 },
+                'tabState.main'(parentKey) {
+                    this.tabState.main = parentKey;
+
+                    const hasNestedTabs = 'nestedTabsMap' in this.tabsMap?.[parentKey]
+
+                    if (hasNestedTabs) {
+                        const childKey = this.tabState.child
+
+                        const childKeyExists = this.tabsMap?.[parentKey]?.nestedTabsMap && childKey in this.tabsMap[parentKey].nestedTabsMap
+
+                        if (!childKeyExists) {
+                            this.tabState.child = Object.keys(this.tabsMap[parentKey].nestedTabsMap).find(Boolean)
+                        }
+                    } else {
+                        this.tabState.child = null
+                    }
+
+                    const hash = `#${[this.tabState.main, this.tabState.child].filter(Boolean).join('/')}`
+
+                    this.$router.replace({ name: 'component-data', hash })
+                },
+                'tabState.child'(childKey) {
+                    this.tabState.child = childKey;
+
+                    const hash = `#${[this.tabState.main, this.tabState.child].filter(Boolean).join('/')}`
+
+                    this.$router.replace({ name: 'component-data', hash })
+                }
             },
 
             computed: {
@@ -403,6 +434,10 @@
             },
 
             methods: {
+                setInitialTabStateKey() {
+                    this.tabState.main = window.location.hash.replace('#', '').split('/')[0]
+                    this.tabState.child = window.location.hash.replace('#', '').split('/')[1]
+                },
                 onDragEnd() {
                     if (this.isOrderChanged) {
                         this.showLalWarning = true;
@@ -443,7 +478,7 @@
             }
         });
         app.component('draggable', draggable);
-        app.use(vuetify).mount('#app');
+        app.use(router).use(vuetify).mount('#app');
     </script>
 {% endblock %}
 

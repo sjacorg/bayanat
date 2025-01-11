@@ -161,6 +161,7 @@ const routes = [
     {path: '/import/log/', name: 'logs', component: Vue.defineComponent({})},
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
+    { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
 
 ];
 

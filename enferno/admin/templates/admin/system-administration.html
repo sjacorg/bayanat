@@ -736,7 +736,7 @@
 
             data: () => ({
 
-                tab: null,
+                tab: window.location.hash.replace('#', ''),
                 drawer: drawer,
                 eitem: {
                     ACTIVITIES:{},
@@ -991,7 +991,7 @@
         });
         app.component('geo-map', GeoMap);
 
-        app.use(vuetify).mount('#app');
+        app.use(router).use(vuetify).mount('#app');
 
     </script>
 
