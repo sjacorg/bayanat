@@ -2844,46 +2844,28 @@ def api_bulletins(validated_data: dict) -> Response:
 
     # Build query with search utils
     su = SearchUtils(validated_data, cls="bulletin")
-    result = su.get_query()
+    query = su.get_query()
 
     # Add ordering to the select statement
-    result = result.order_by(desc(Bulletin.id))
+    query = query.order_by(desc(Bulletin.id))
 
-    # Execute query and get total count
-    total = db.session.execute(select(func.count()).select_from(result.subquery())).scalar()
-
-    # Get pagination params and apply
+    # Get pagination params
     per_page = request.args.get("per_page", PER_PAGE, type=int)
     cursor = request.args.get("cursor", None)
 
-    if cursor:
-        result = result.where(Bulletin.id < int(cursor))
-    result = result.limit(per_page + 1)
+    # Use pagination utility
+    pagination = paginate_query(
+        query=query, db_session=db.session, per_page=per_page, cursor=cursor, id_column=Bulletin.id
+    )
 
-    # Execute query
-    items = db.session.execute(result).scalars().all()
-
-    # Handle pagination
-    has_next = len(items) > per_page
-    if has_next:
-        items = items[:-1]
-        next_cursor = str(items[-1].id)
-    else:
-        next_cursor = None
-
-    # Convert items to dict
+    # Convert items to dict with specified mode
     mode = request.args.get("mode", "1")
-    items = [item.to_dict(mode=mode) for item in items]
+    items_dict = [item.to_dict(mode=mode) for item in pagination.items]
 
-    response = {
-        "items": items,
-        "total": total,
-        "perPage": per_page,
-        "hasNext": has_next,
-        "nextCursor": next_cursor,
-    }
+    # Replace items with dictionary version
+    pagination.items = items_dict
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return Response(json.dumps(pagination.to_dict()), content_type="application/json"), 200
 
 
 @admin.post("/api/bulletin/")

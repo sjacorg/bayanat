@@ -1,102 +1,72 @@
-from typing import TypeVar, Generic, List, Optional, Any, Dict
-from enferno.utils.logging_utils import get_logger
+from typing import TypeVar, Generic, List, Optional, Any, Dict, Tuple
+from sqlalchemy import select, func
+from sqlalchemy.sql import Select
+from dataclasses import dataclass
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import DeclarativeBase
 
-logger = get_logger()
-
-T = TypeVar("T")
+T = TypeVar("T", bound=DeclarativeBase)
 
 
-class PaginationResult(Generic[T]):
-    """A generic class that handles pagination results with typed items.
+@dataclass
+class CursorPaginationResult(Generic[T]):
+    """Represents paginated results with cursor-based navigation."""
 
-    Stores paginated items along with metadata like total count and cursor information.
-    """
-
-    def __init__(
-        self,
-        items: List[T],
-        total: Optional[int] = None,
-        next_cursor: Optional[str] = None,
-        per_page: int = 20,
-    ):
-        """Initialize a new PaginationResult instance.
-
-        Args:
-            items: List of paginated items
-            total: Optional total count of all items
-            next_cursor: Optional cursor for next page
-            per_page: Number of items per page (default: 20)
-        """
-        self.items = items
-        self.total = total
-        self.next_cursor = next_cursor
-        self.per_page = per_page
+    items: List[T]
+    total: int
+    per_page: int
+    has_next: bool
+    next_cursor: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert pagination result to a dictionary format for frontend use.
-
-        Returns:
-            Dict containing items, total count, items per page, and next cursor
-        """
+        """Convert pagination result to dictionary format."""
         return {
             "items": self.items,
-            "total": self.total if self.total is not None else len(self.items),
+            "total": self.total,
             "perPage": self.per_page,
+            "hasNext": self.has_next,
             "nextCursor": self.next_cursor,
         }
 
 
 def paginate_query(
-    query,
-    per_page: int = 20,
-    cursor: Optional[str] = None,
-    cursor_column: str = "id",
-    descending: bool = True,
-) -> PaginationResult:
-    """Paginate a database query using cursor-based pagination.
+    query: Select, db_session, per_page: int, cursor: Optional[str] = None, id_column=None
+) -> CursorPaginationResult:
+    """
+    Generic cursor-based pagination for SQLAlchemy queries.
 
     Args:
-        query: The database query to paginate
+        query: Base SQLAlchemy select statement
+        db_session: SQLAlchemy session
         per_page: Number of items per page
-        cursor: Optional cursor value for pagination
-        cursor_column: Column name to use for cursor (default: 'id')
-        descending: Sort order (default: True for DESC)
+        cursor: Optional cursor for pagination
+        id_column: Column to use for cursor (defaults to model's id column)
 
     Returns:
-        PaginationResult containing the paginated items and metadata
+        CursorPaginationResult containing paginated items and metadata
     """
-    model_class = query.column_descriptions[0]["type"]
+    # Get total count
+    count_query = select(func.count()).select_from(query.subquery())
+    total = db_session.execute(count_query).scalar()
 
-    # Apply consistent sorting
-    query = query.order_by(
-        getattr(model_class, cursor_column).desc()
-        if descending
-        else getattr(model_class, cursor_column).asc()
-    )
-
-    # Handle cursor-based filtering
+    # Apply cursor if provided
     if cursor:
-        try:
-            cursor_value = int(cursor)
-            operator = "<" if descending else ">"
-            filtered_query = query.filter(
-                getattr(model_class, cursor_column).__lt__(cursor_value)
-                if descending
-                else getattr(model_class, cursor_column).__gt__(cursor_value)
-            )
-            logger.debug(f"SQL Query: {filtered_query}")
-            items = filtered_query.limit(per_page + 1).all()
-        except (ValueError, TypeError):
-            items = query.limit(per_page + 1).all()
-    else:
-        items = query.limit(per_page + 1).all()
+        query = query.where(id_column < int(cursor))
 
-    # Determine if there's a next page and prepare next cursor
+    # Get one extra item to determine if there's a next page
+    query = query.limit(per_page + 1)
+
+    # Execute query
+    items = db_session.execute(query).scalars().all()
+
+    # Handle pagination metadata
     has_next = len(items) > per_page
     if has_next:
-        items = items[:-1]  # Remove the extra item we fetched
-        next_cursor = str(getattr(items[-1], cursor_column))
+        items = items[:-1]
+        next_cursor = str(items[-1].id)
     else:
         next_cursor = None
 
-    return PaginationResult(items=items, total=None, next_cursor=next_cursor, per_page=per_page)
+    return CursorPaginationResult(
+        items=items, total=total, per_page=per_page, has_next=has_next, next_cursor=next_cursor
+    )
