@@ -55,7 +55,21 @@ class SearchUtils:
     def get_query(self):
         """Get the query for the given class."""
         if self.cls == "bulletin":
-            return self.build_bulletin_query()
+            main_stmt, _ = self.bulletin_query(self.search[0])
+            result = main_stmt
+
+            # Handle nested queries
+            if len(self.search) > 1:
+                for i in range(1, len(self.search)):
+                    stmt, _ = self.bulletin_query(self.search[i])
+                    op = self.search[i].get("op", "or")
+                    if op == "and":
+                        result = result.intersect(stmt)
+                    elif op == "or":
+                        result = result.union(stmt)
+
+            return result
+
         elif self.cls == "actor":
             return self.build_actor_query()
         elif self.cls == "incident":
@@ -69,25 +83,6 @@ class SearchUtils:
     def to_dict(self):
         """Return the search arguments."""
         return self.args
-
-    def build_bulletin_query(self):
-        """Build a query for the bulletin model."""
-        main = self.bulletin_query(self.search[0])
-        if len(self.search) == 1:
-            return [main], []
-        # link queries starting from second item
-        ops = []
-        queries = [main]
-
-        for i in range(1, len(self.search)):
-            q = self.bulletin_query(self.search[i])
-            op = self.search[i].get("op", "or")
-            if op == "and":
-                ops.append("intersect")
-            elif op == "or":
-                ops.append("union")
-            queries.append(q)
-        return queries, ops
 
     def build_actor_query(self):
         """Build a query for the actor model."""
@@ -373,11 +368,10 @@ class SearchUtils:
 
             conditions.append(or_(*geo_conditions))
 
-        # Apply all conditions to statement
         if conditions:
             stmt = stmt.where(and_(*conditions))
 
-        return [stmt], []  # Return format compatible with existing code
+        return stmt, conditions
 
     def actor_query(self, q: dict) -> list:
         """

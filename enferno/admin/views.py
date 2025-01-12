@@ -17,7 +17,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, select, func
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
@@ -2831,16 +2831,6 @@ def bulletins(id: Optional[t.id]) -> str:
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
 @validate_with(BulletinQueryRequestModel)
 def api_bulletins(validated_data: dict) -> Response:
-    """
-    Returns bulletins in JSON format, allows search and paging.
-
-    Args:
-        - validated_data: validated data from the request.
-
-    Returns:
-        - response: Response object
-        - status code: 200
-    """
     # log search query
     q = validated_data.get("q", None)
     if q and q != [{}]:
@@ -2854,39 +2844,46 @@ def api_bulletins(validated_data: dict) -> Response:
 
     # Build query with search utils
     su = SearchUtils(validated_data, cls="bulletin")
-    queries, ops = su.get_query()
-    result = Bulletin.query.filter(*queries.pop(0))
+    result = su.get_query()
 
-    # nested queries
-    if len(queries) > 0:
-        while queries:
-            nextOp = ops.pop(0)
-            nextQuery = queries.pop(0)
-            if nextOp == "union":
-                result = result.union(Bulletin.query.filter(*nextQuery))
-            elif nextOp == "intersect":
-                result = result.intersect(Bulletin.query.filter(*nextQuery))
+    # Add ordering to the select statement
+    result = result.order_by(desc(Bulletin.id))
 
-    # Get pagination params
+    # Execute query and get total count
+    total = db.session.execute(select(func.count()).select_from(result.subquery())).scalar()
+
+    # Get pagination params and apply
     per_page = request.args.get("per_page", PER_PAGE, type=int)
     cursor = request.args.get("cursor", None)
-    # print total number of items
-    print(f"Total number of items: {result.count()}")
 
-    # Apply pagination using the new utility
-    result = paginate_query(
-        query=result,
-        per_page=per_page,
-        cursor=cursor,
-        cursor_column="id",
-        descending=True,  # Optional, since it's the default
-    )
+    if cursor:
+        result = result.where(Bulletin.id < int(cursor))
+    result = result.limit(per_page + 1)
 
-    # Convert items to dict with specified mode
+    # Execute query
+    items = db.session.execute(result).scalars().all()
+
+    # Handle pagination
+    has_next = len(items) > per_page
+    if has_next:
+        items = items[:-1]
+        next_cursor = str(items[-1].id)
+    else:
+        next_cursor = None
+
+    # Convert items to dict
     mode = request.args.get("mode", "1")
-    result.items = [item.to_dict(mode=mode) for item in result.items]
+    items = [item.to_dict(mode=mode) for item in items]
 
-    return Response(json.dumps(result.to_dict()), content_type="application/json"), 200
+    response = {
+        "items": items,
+        "total": total,
+        "perPage": per_page,
+        "hasNext": has_next,
+        "nextCursor": next_cursor,
+    }
+
+    return Response(json.dumps(response), content_type="application/json"), 200
 
 
 @admin.post("/api/bulletin/")
