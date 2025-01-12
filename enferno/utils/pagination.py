@@ -1,9 +1,9 @@
-from typing import TypeVar, Generic, List, Optional, Any, Dict, Tuple
+from typing import TypeVar, Generic, List, Optional, Any, Dict
 from sqlalchemy import select, func
 from sqlalchemy.sql import Select
 from dataclasses import dataclass
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
+from enferno.extensions import db
 
 T = TypeVar("T", bound=DeclarativeBase)
 
@@ -30,40 +30,28 @@ class CursorPaginationResult(Generic[T]):
 
 
 def paginate_query(
-    query: Select, db_session, per_page: int, cursor: Optional[str] = None, id_column=None
+    query: Select, per_page: int, cursor: Optional[str] = None, id_column=None
 ) -> CursorPaginationResult:
-    """
-    Generic cursor-based pagination for SQLAlchemy queries.
-
-    Args:
-        query: Base SQLAlchemy select statement
-        db_session: SQLAlchemy session
-        per_page: Number of items per page
-        cursor: Optional cursor for pagination
-        id_column: Column to use for cursor (defaults to model's id column)
-
-    Returns:
-        CursorPaginationResult containing paginated items and metadata
-    """
+    """Generic cursor-based pagination for SQLAlchemy queries."""
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
-    total = db_session.execute(count_query).scalar()
+    total = db.session.execute(count_query).scalar()
 
-    # Apply cursor if provided
+    # Always order by id descending for consistent pagination
+    query = query.order_by(id_column.desc())
+
+    # If cursor provided, get items with id strictly less than cursor
     if cursor:
-        query = query.where(id_column < int(cursor))
+        query = query.where(id_column < int(cursor))  # Strict less than to avoid duplicates
 
     # Get one extra item to determine if there's a next page
-    query = query.limit(per_page + 1)
-
-    # Execute query
-    items = db_session.execute(query).scalars().all()
+    items = db.session.execute(query.limit(per_page + 1)).scalars().all()
 
     # Handle pagination metadata
     has_next = len(items) > per_page
     if has_next:
-        items = items[:-1]
-        next_cursor = str(items[-1].id)
+        items = items[:-1]  # Remove the extra item
+        next_cursor = str(items[-1].id) if items else None
     else:
         next_cursor = None
 
