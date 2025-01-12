@@ -1210,6 +1210,7 @@ class BulletinQueryValidationModel(QueryBaseModel):
 
 class BulletinQueryRequestModel(BaseValidationModel):
     q: list[BulletinQueryValidationModel] = Field(default_factory=list)
+    cursor: Optional[str] = None
 
 
 class EntityReviewValidationModel(BaseValidationModel):
