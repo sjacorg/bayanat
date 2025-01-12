@@ -55,19 +55,26 @@ class SearchUtils:
     def get_query(self):
         """Get the query for the given class."""
         if self.cls == "bulletin":
-            main_stmt, _ = self.bulletin_query(self.search[0])
-            result = main_stmt
+            # Get conditions from first query
+            main_stmt, conditions = self.bulletin_query(self.search[0])
+            final_conditions = conditions
 
-            # Handle nested queries
+            # Handle nested queries by combining conditions
             if len(self.search) > 1:
                 for i in range(1, len(self.search)):
-                    stmt, _ = self.bulletin_query(self.search[i])
+                    _, next_conditions = self.bulletin_query(self.search[i])
                     op = self.search[i].get("op", "or")
-                    if op == "and":
-                        result = result.intersect(stmt)
-                    elif op == "or":
-                        result = result.union(stmt)
 
+                    if op == "and":
+                        final_conditions.extend(next_conditions)
+                    elif op == "or":
+                        # Combine conditions with OR
+                        final_conditions = [or_(*conditions, *next_conditions)]
+
+            # Build final query with all conditions and default sorting
+            result = select(Bulletin)
+            if final_conditions:
+                result = result.where(and_(*final_conditions))
             return result
 
         elif self.cls == "actor":
