@@ -2831,7 +2831,7 @@ def bulletins(id: Optional[t.id]) -> str:
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
 @validate_with(BulletinQueryRequestModel)
 def api_bulletins(validated_data: dict) -> Response:
-    # log search query
+    # Log search query
     q = validated_data.get("q", None)
     if q and q != [{}]:
         Activity.create(
@@ -2842,27 +2842,18 @@ def api_bulletins(validated_data: dict) -> Response:
             "bulletin",
         )
 
-    # Build query with search utils
     su = SearchUtils(validated_data, cls="bulletin")
     query = su.get_query()
 
-    # Add ordering to the select statement
-    query = query.order_by(desc(Bulletin.id))
-
-    # Get pagination params
-    per_page = request.args.get("per_page", PER_PAGE, type=int)
-    cursor = request.args.get("cursor", None)
-
-    # Use pagination utility
     pagination = paginate_query(
-        query=query, db_session=db.session, per_page=per_page, cursor=cursor, id_column=Bulletin.id
+        query=query,
+        per_page=PER_PAGE,
+        cursor=validated_data.get("cursor"),
+        id_column=Bulletin.id,
     )
 
-    # Convert items to dict with specified mode
     mode = request.args.get("mode", "1")
     items_dict = [item.to_dict(mode=mode) for item in pagination.items]
-
-    # Replace items with dictionary version
     pagination.items = items_dict
 
     return Response(json.dumps(pagination.to_dict()), content_type="application/json"), 200
