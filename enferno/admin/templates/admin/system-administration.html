@@ -17,7 +17,7 @@
                         </v-card>
                     </v-col>
                     <v-col cols="12" sm="12" md="8" lg="9">
-                        <v-card border flat rounded>
+                        <v-card border flat rounded class="h-100">
                             <v-card-title class="d-flex flex-column position-sticky py-0 px-4 bg-surface top-0 z-1">
                                 <div class="d-flex my-3">
                                     ${tabsMap[tab]?.text}
@@ -419,126 +419,128 @@
 
                                 <v-window-item value="import">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
-                                        <v-card-text>
+                                        <h4 class="subtitle-2 mb-n1">{{ _('Media import tool') }}</h4>
+                                        <v-switch color="primary"
+                                                    persistent-hint
+                                                    density="compact"
+                                                    hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
+                                                    v-model="eitem.ETL_TOOL"></v-switch>
 
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Media Import Tool') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
-                                                        v-model="eitem.ETL_TOOL"></v-switch>
-
-                                            <v-slide-y-transition>
-                                                <v-sheet v-show="eitem.ETL_TOOL" class=" pa-4 grey lighten-4">
-                                                    <v-switch color="primary"
-                                                            class="mb-9"
-                                                            label="{{ _('Media Import Path Scanning') }}"
-                                                            persistent-hint
-                                                            hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
-                                                            v-model="eitem.ETL_PATH_IMPORT"></v-switch>
-
-                                                    <v-combobox class="mb-9" multiple chips
+                                        <v-slide-y-transition>
+                                            <v-sheet v-show="eitem.ETL_TOOL" class="mt-4">
+                                                <v-row>
+                                                    <v-col cols="12" lg="6">
+                                                        <h4 class="subtitle-2 mb-n1">{{ _('Media import path scanning') }}</h4>
+                                                        <v-switch color="primary"
                                                                 persistent-hint
-                                                                hint="{{ _('Allowed file extensions for the Media Import Tool.') }}"
-                                                                :items="eitem.ETL_VID_EXT"
-                                                                label="{{ _('ETL Video Extensions') }}"
-                                                                v-model="eitem.ETL_VID_EXT"></v-combobox>
-
-                                                    <v-switch color="primary" class="mb-9"
-                                                                persistent-hint
-                                                                hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
-                                                                label="{{ _('Enable OCR') }}"
-                                                                v-model="eitem.OCR_ENABLED"></v-switch>
-
-                                                    <v-slide-y-transition>
-                                                        <v-sheet v-show="eitem.OCR_ENABLED"
-                                                                    class=" pa-4 grey lighten-4">
-
-                                                            <v-combobox class="mb-9" multiple chips
-                                                                        persistent-hint
-                                                                        hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}"
-                                                                        :items="eitem.OCR_EXT"
-                                                                        label="{{ _('OCR Extensions') }}"
-                                                                        v-model="eitem.OCR_EXT"></v-combobox>
-                                                        </v-sheet>
-
-                                                    </v-slide-y-transition>
-                                                </v-sheet>
-                                            </v-slide-y-transition>
-
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Sheet Import') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('Enables dynamic import of spreadsheets into Actors.') }}"
-                                                        v-model="eitem.SHEET_IMPORT"></v-switch>
-
-                                            <v-slide-y-transition>
-                                                <v-sheet v-show="eitem.SHEET_IMPORT"
-                                                            class=" pa-4 grey lighten-4">
-
-                                                    <v-combobox class="mb-9" multiple chips
-                                                                persistent-hint
-                                                                hint="{{ _('Allowed spreadsheet extensions for Sheets Import Tool.') }}"
-                                                                label="{{ _('Allowed Sheets Extensions') }}"
-                                                                :items="eitem.SHEETS_ALLOWED_EXTENSIONS"
-                                                                v-model="eitem.SHEETS_ALLOWED_EXTENSIONS"></v-combobox>
-
-                                                </v-sheet>
-                                            </v-slide-y-transition>
-
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Web Import') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('Enables import of videos from online sources into Bulletins.') }}"
-                                                        v-model="eitem.WEB_IMPORT"></v-switch>
-
-                                            <v-slide-y-transition>
-                                                <v-sheet v-show="eitem.WEB_IMPORT"
-                                                            class=" pa-4 grey lighten-4">
-
-                                                    <v-text-field class="mb-9" 
-                                                                    label="{{ _('Web Import Proxy') }}"
+                                                                density="compact"
+                                                                hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
+                                                                v-model="eitem.ETL_PATH_IMPORT"></v-switch>
+        
+                                                        <v-combobox class="mt-3" multiple chips
                                                                     persistent-hint
-                                                                    hint="{{ _('Proxy URL to use when importing media from web sources (e.g. socks5://user:pass@host:port).') }}"
-                                                                    v-model="eitem.YTDLP_PROXY"></v-text-field>
+                                                                    hint="{{ _('Allowed file extensions for the Media Import Tool.') }}"
+                                                                    :items="eitem.ETL_VID_EXT"
+                                                                    label="{{ _('ETL Video Extensions') }}"
+                                                                    v-model="eitem.ETL_VID_EXT"></v-combobox>
+                                                    </v-col>
+                                                    <v-col cols="12" lg="6">
+                                                        <h4 class="subtitle-2 mb-n1">{{ _('Enable OCR') }}</h4>
+                                                        <v-switch color="primary"
+                                                                    persistent-hint
+                                                                    hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
+                                                                    density="compact"
+                                                                    v-model="eitem.OCR_ENABLED"></v-switch>
+        
+                                                        <v-combobox class="mt-3" multiple chips
+                                                                    persistent-hint
+                                                                    hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}"
+                                                                    :items="eitem.OCR_EXT"
+                                                                    label="{{ _('OCR Extensions') }}"
+                                                                    v-model="eitem.OCR_EXT"></v-combobox>
+                                                    </v-col>
+                                                </v-row>
 
-                                                    <v-textarea class="mb-9" 
-                                                                label="{{ _('Web Import Cookies') }}"
-                                                                persistent-hint
-                                                                hint="{{ _('Cookie data for authenticated web imports (in Netscape/Mozilla format).') }}"
-                                                                auto-grow
-                                                                rows="3"
-                                                                v-model="eitem.YTDLP_COOKIES"></v-textarea>
+                                            </v-sheet>
+                                        </v-slide-y-transition>
+                                        
+                                        <v-divider class="my-8"></v-divider>
 
-                                                    <v-slide-y-transition>
-                                                        <v-sheet>
-                                                            <v-combobox class="mb-9" 
-                                                                        multiple 
-                                                                        chips
-                                                                        label="{{ _('Allowed Domains') }}"
+                                        <h4 class="subtitle-2 mb-n1">{{ _('Sheet import') }}</h4>
+                                        <v-switch color="primary"
+                                                    persistent-hint
+                                                    density="compact"
+                                                    hint="{{ _('Enables dynamic import of spreadsheets into Actors.') }}"
+                                                    v-model="eitem.SHEET_IMPORT"></v-switch>
+
+                                        <v-slide-y-transition>
+                                            <v-sheet v-show="eitem.SHEET_IMPORT" class="mt-4">
+                                                <v-combobox multiple chips
+                                                            persistent-hint
+                                                            hint="{{ _('Allowed spreadsheet extensions for Sheets Import Tool.') }}"
+                                                            label="{{ _('Allowed Sheets Extensions') }}"
+                                                            :items="eitem.SHEETS_ALLOWED_EXTENSIONS"
+                                                            v-model="eitem.SHEETS_ALLOWED_EXTENSIONS"></v-combobox>
+                                            </v-sheet>
+                                        </v-slide-y-transition>
+
+                                        <v-divider class="my-8"></v-divider>
+
+                                        <h4 class="subtitle-2 mb-n1">{{ _('Web import') }}</h4>
+                                        <v-switch color="primary"
+                                                    persistent-hint
+                                                    density="compact"
+                                                    hint="{{ _('Enables import of videos from online sources into Bulletins.') }}"
+                                                    v-model="eitem.WEB_IMPORT"></v-switch>
+
+                                        <v-slide-y-transition>
+                                            <v-sheet v-show="eitem.WEB_IMPORT" class="mt-4">
+                                                <v-row>
+                                                    <v-col cols="12" lg="6">
+                                                        <v-text-field 
+                                                                        label="{{ _('Web Import Proxy') }}"
                                                                         persistent-hint
-                                                                        hint="{{ _('List of domains from which media can be imported. Check yt-dlp\'s repository (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list of supported websites.') }}"
-                                                                        :items="eitem.YTDLP_ALLOWED_DOMAINS"
-                                                                        v-model="eitem.YTDLP_ALLOWED_DOMAINS">
-                                                            </v-combobox>
-                                                        </v-sheet>
-                                                    </v-slide-y-transition>
+                                                                        hint="{{ _('Proxy URL to use when importing media from web sources (e.g. socks5://user:pass@host:port).') }}"
+                                                                        v-model="eitem.YTDLP_PROXY"></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="12" lg="6">
+                                                        <v-textarea label="{{ _('Web Import Cookies') }}" persistent-hint
+                                                            hint="{{ _('Cookie data for authenticated web imports (in Netscape/Mozilla format).') }}" auto-grow rows="1"
+                                                            v-model="eitem.YTDLP_COOKIES"></v-textarea>
+                                                    </v-col>
+                                                </v-row>
 
-                                                </v-sheet>
-                                            </v-slide-y-transition>
+                                                <v-slide-y-transition>
+                                                    <v-sheet>
+                                                        <v-combobox class="mt-3"
+                                                                    multiple 
+                                                                    chips
+                                                                    label="{{ _('Allowed Domains') }}"
+                                                                    persistent-hint
+                                                                    hint="{{ _('List of domains from which media can be imported. Check yt-dlp\'s repository (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list of supported websites.') }}"
+                                                                    :items="eitem.YTDLP_ALLOWED_DOMAINS"
+                                                                    v-model="eitem.YTDLP_ALLOWED_DOMAINS">
+                                                        </v-combobox>
+                                                    </v-sheet>
+                                                </v-slide-y-transition>
 
-                                        </v-card-text>
-
+                                            </v-sheet>
+                                        </v-slide-y-transition>
                                     </v-card>
                                 </v-window-item>
 
 
                                 <v-window-item value="export">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
-                                        <v-card-text>
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Export System') }}"
+                                        <div style="max-width: 424px;">
+                                            <h4 class="subtitle-2 mb-n1">{{ _('Export system') }}</h4>
+                                            <v-switch density="compact" color="primary" class="mb-4"
                                                         v-model="eitem.EXPORT_TOOL"
                                                         persistent-hint
                                                         hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Administrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
                                             <v-slide-y-transition>
                                                 <v-sheet v-show="eitem.EXPORT_TOOL">
-                                                    <v-text-field class="mb-9" type="number"
+                                                    <v-text-field type="number"
                                                                     label="{{ _('Export Expiry Time') }}"
                                                                     persistent-hint
                                                                     hint="{{ _('Period after which exports will expired and be deleted.') }}"
@@ -546,46 +548,44 @@
                                                                     v-model.number="eitem.EXPORT_DEFAULT_EXPIRY"></v-text-field>
                                                 </v-sheet>
                                             </v-slide-y-transition>
-                                        </v-card-text>
+                                        </div>
                                     </v-card>
                                 </v-window-item>
 
 
                                 <v-window-item value="maps">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
-                                        <v-card-text>
+                                        <v-text-field class="mb-9" label="{{ _('Map API endpoint') }}"
+                                                        persistent-hint
+                                                        hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
+                                                        v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
 
-                                            <v-text-field class="mb-9" label="{{ _('Maps API Endpoint') }}"
-                                                            persistent-hint
-                                                            hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
-                                                            v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
+                                        <h4 class="subtitle-2 mb-1">{{ _('Satalite Imagery') }}</h4>
+                                        <p class="text-caption text-muted mb-3">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satalite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</p>
 
-                                            <h2 class="mt-3 subtitle-2 mb-2">{{ _('Satalite Imagery') }}</h2>
-                                            <v-card-item class="text-caption my-2">{{ _('Bayanat uses OpenStreetMaps by default. Optionally, it is able to show satalite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps API Key.') }}</v-card-item>
+                                        <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
+                                                        persistent-hint
+                                                        hint="{{ _('API key for Google Maps. Adding a key enables satalite imagery in Bayanat\'s maps.') }}"
+                                                        v-model="eitem.GOOGLE_MAPS_API_KEY"></v-text-field>
 
-                                            <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}"
-                                                            persistent-hint
-                                                            hint="{{ _('API key for Google Maps. Adding a key enables satalite imagery in Bayanat\'s maps.') }}"
-                                                            v-model="eitem.GOOGLE_MAPS_API_KEY"></v-text-field>
+                                        <h4 class="subtitle-2">{{ _('Default Map Position') }}</h4>
+                                        <span class="text-caption text-muted">{{ _('Changes default position for all maps in all components.') }}</span>
 
-                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Default Map Position') }}</h4>
-                                            <span class="caption">{{ _('Changes default position for all maps in all components.') }}</span>
-
+                                        <div class="mx-n4">
                                             <geo-map style="z-index:200" v-model="eitem.GEO_MAP_DEFAULT_CENTER"
                                                         :map-height="300"></geo-map>
-
-                                        </v-card-text>
+                                        </div>
                                     </v-card>
                                 </v-window-item>
                                 <v-window-item value="locations">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
-                                        <v-card-text>
-                                            <h4 class="mt-3 subtitle-2 mb-2">{{ _('Full Location Generation Settings') }}</h4>
-                                            <v-switch color="primary" label="{{ _('Include Postal Codes in Full Location Text Format') }}"
+                                        <div style="max-width: 408px;">
+                                            <h4 class="subtitle-2 mb-n1">{{ _('Include postal code generation settings') }}</h4>
+                                            <v-switch density="compact" color="primary"
                                                         v-model="eitem.LOCATIONS_INCLUDE_POSTAL_CODE"
                                                         persistent-hint
                                                         hint="{{ _('Include postal codes in the format of full location text of all entries. Note: you must regenerate full locations from the Component Data dashboard for this change to take effect.') }}"></v-switch>
-                                        </v-card-text>
+                                        </div>
                                     </v-card>
                                 </v-window-item>
                             </v-window>

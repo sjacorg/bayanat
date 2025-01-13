@@ -888,3 +888,6 @@ div.jsondiffpatch-child-node-type-array:after {
         color: rgba(var(--v-theme-table-body), 1);
     }
 }
+.v-input .v-messages__message {
+    line-height: normal;
+}
