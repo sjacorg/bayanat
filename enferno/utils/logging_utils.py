@@ -77,19 +77,15 @@ def get_logger(name="app_logger"):
 @after_setup_logger.connect
 def setup_celery_logger(logger, *args, **kwargs):
     """Configure the Celery logger to use our existing logging setup."""
-    # Remove default handlers to prevent duplicate logging
-    logger.handlers = []
     if cfg.CELERY_LOG_ENABLED:
         handler = TimedRotatingFileHandler(
             os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
             when="midnight",
             backupCount=cfg.LOG_BACKUP_COUNT,
         )
-    else:
-        handler = logging.NullHandler()
-    handler.setFormatter(JsonFormatter())
-    logger.addHandler(handler)
-    logger.setLevel(cfg.LOG_LEVEL)
+        handler.setFormatter(JsonFormatter())
+        logger.addHandler(handler)
+        logger.setLevel(cfg.LOG_LEVEL)
 
 
 @after_setup_task_logger.connect
