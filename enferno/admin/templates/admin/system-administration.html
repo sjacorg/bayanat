@@ -23,7 +23,7 @@
                                     ${tabsMap[tab]?.text}
                                     <v-spacer></v-spacer>
                                     <div class="d-flex ga-4">
-                                        <v-btn class="outlined-btn" prepend-icon="mdi-restore" color="primary" @click="loadDefaults" variant="outlined">
+                                        <v-btn class="outlined-btn" prepend-icon="mdi-restore" @click="loadDefaults" variant="outlined">
                                             {{ _('Restore Default Settings') }}
                                         </v-btn>
                                         <v-btn class="outlined-btn" prepend-icon="mdi-history" @click="showRevisions=!showRevisions" variant="outlined">
@@ -34,7 +34,7 @@
                                             variant="elevated"
                                             color="primary"
                                             prepend-icon="mdi-check"
-                                        >{{ _('Save') }}</v-btn>    
+                                        >{{ _('Save changes') }}</v-btn>    
                                     </div>
                                 </div>
                             </v-card-title>
@@ -77,10 +77,9 @@
                                         <v-divider class="my-4"></v-divider>
 
                                         <h4 class="subtitle-2 mb-n1">{{ _('Deduplication tool') }}</h4>
-                                        <v-switch color="primary"
+                                        <v-switch
                                                     v-model="eitem.DEDUP_TOOL"
                                                     persistent-hint
-                                                    density="compact"
                                                     hint="{{ _('Enables integration with Benetech\'s Deduplication tool.') }}"></v-switch>
 
                                         <v-slide-y-transition class="mt-5">
@@ -114,10 +113,9 @@
                                         <v-divider class="my-4"></v-divider>
 
                                         <h4 class="subtitle-2 mb-n1">{{ _('Advanced analysis features') }}</h4>
-                                        <v-switch color="primary"
+                                        <v-switch
                                                     v-model="eitem.ADV_ANALYSIS"
                                                     persistent-hint
-                                                    density="compact"
                                                     hint="{{ _('Advanced features for more efficient analysis.') }}"></v-switch>
                                     </v-card>
                                 </v-window-item>
@@ -210,7 +208,7 @@
 
                                         <h2 class="mt-1 subtitle-2 mb-2">{{ _('Two Factor Authentication Policies') }}</h2>
                                         <v-card-text>
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
+                                            <v-switch class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
                                                         persistent-hint
                                                         hint="{{ _('Force users to enroll in two factor authentication') }}"
                                                         v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
@@ -220,7 +218,7 @@
 
                                         <h2 class="mt-1 subtitle-2 mb-2">{{ _('Session Policies') }}</h2>
                                         <v-card-text>
-                                            <v-switch color="primary" class="mb-9"
+                                            <v-switch class="mb-9"
                                                                 label="{{ _('Disallow Multiple Concurrent Sessions') }}"
                                                                 persistent-hint
                                                                 hint="{{ _('Prevents users from logging in to multiple devices simultaneously') }}"
@@ -237,7 +235,7 @@
                                         <h2 class="mt-1 subtitle-2 mb-2">{{ _('Additional Security Settings') }}</h2>
                                         <v-card-text>
 
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Recaptcha Enabled') }}"
+                                            <v-switch class="mb-9" label="{{ _('Recaptcha Enabled') }}"
                                                         persistent-hint
                                                         hint="{{ _('Add further security to Bayanat\'s by requiring Google Recaptcha on the login form.') }}"
                                                         v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
@@ -253,7 +251,7 @@
                                                 </v-sheet>
                                             </v-slide-y-transition>
 
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Enable Google OAuth') }}"
+                                            <v-switch class="mb-9" label="{{ _('Enable Google OAuth') }}"
                                                         persistent-hint
                                                         hint="{{ _('Allow users to login using their Google account.') }}"
                                                         v-model="eitem.GOOGLE_OAUTH_ENABLED"></v-switch>
@@ -295,11 +293,11 @@
                                         <v-card-text>
                                             <p class="text-caption">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
 
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Restrictive Access Control') }}"
+                                            <v-switch class="mb-9" label="{{ _('Restrictive Access Control') }}"
                                                         persistent-hint
                                                         hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
                                                         v-model="eitem.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
-                                            <v-switch color="primary" class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
+                                            <v-switch class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
                                                         persistent-hint
                                                         hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
                                                         v-model="eitem.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
@@ -310,109 +308,139 @@
 
                                 <v-window-item value="logging">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
-                                        <v-card-text>
-                                            <p class="caption">{{
-                                                    _('Set users\' actions to be logged in the Activity Monitor.')
-                                                }}</p>
+                                        <p class="text-caption text-muted mb-6">{{ _('Set users\' actions to be logged in the Activity Monitor.') }}</p>
 
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Items created by users.') }}"
+                                        <h4 class="subtitle-2 mb-3">{{ _('Items') }}</h4>
+                                        <v-row class="mb-9">
+                                            <v-col cols="12" md="4" lg="2">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Items created') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch
                                                     persistent-hint
                                                     hint="{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items created by users.') }}"
                                                     v-model="eitem.ACTIVITIES['CREATE']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Items viewed by users.') }}"
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="2">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Items viewed') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch
                                                     persistent-hint
                                                     hint="{{ _('This setting will log all Actors, Bulletins and Incidents viewed by users.') }}"
                                                     v-model="eitem.ACTIVITIES['VIEW']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Items edited by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="2">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Items edited') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items edited by users.') }}"
                                                     v-model="eitem.ACTIVITIES['UPDATE']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Items deleted by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="2">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Items deleted') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all secondary items deleted by authorized users. Note: Actors, Bulletins and Incidents cannot be deleted.') }}"
                                                     v-model="eitem.ACTIVITIES['DELETE']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Items reviewed by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="2">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Items reviewed') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all items peer-viewed by authorized users.') }}"
                                                     v-model="eitem.ACTIVITIES['REVIEW']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Files uploaded by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                        </v-row>
+                                        
+                                        <h4 class="subtitle-2 mb-3">{{ _('Files') }}</h4>
+                                        <v-row class="mb-9">
+                                            <v-col cols="12" md="4" lg="4">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Files uploaded') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all files uploaded users to media storage.') }}"
                                                     v-model="eitem.ACTIVITIES['UPLOAD']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Bulk operations queued by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="4">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Bulk operations queued') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}"
                                                     v-model="eitem.ACTIVITIES['BULK']">
                                                 </v-switch>
+                                            </v-col>
+                                        </v-row>
 
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests made by users.') }}"
-                                                    persistent-hint
+                                        <h4 class="subtitle-2 mb-3">{{ _('Export') }}</h4>
+                                        <v-row class="mb-9">
+                                            <v-col cols="12" md="4" lg="3">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Export requests made') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests submitted by authorized users.') }}"
                                                     v-model="eitem.ACTIVITIES['REQUEST']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests approved by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="3">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Export requests approved') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests approvals by administrators.') }}"
                                                     v-model="eitem.ACTIVITIES['APPROVE']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests rejected by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="3">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Export requests rejected') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests rejections by administrators.') }}"
                                                     v-model="eitem.ACTIVITIES['REJECT']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Export requests downloaded by  users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="3">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Export requests downloaded') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests downloads by authorized users.') }}"
                                                     v-model="eitem.ACTIVITIES['DOWNLOAD']">
                                                 </v-switch>
+                                            </v-col>
+                                        </v-row>
 
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Search queries made by users.') }}"
-                                                    persistent-hint
-                                                    hint="{{ _('This setting will enable logging all searches conducted by users on Actors, Bulletins and Incidents.') }}"
-                                                    v-model="eitem.ACTIVITIES['SEARCH']">
-                                                </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Items self-assigned by users') }}"
-                                                    persistent-hint
-                                                    hint="{{ _('This setting will enable logging all items self-assigned by users.') }}"
-                                                    v-model="eitem.ACTIVITIES['SELF-ASSIGN']">
-                                                </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Logins by users.') }}"
-                                                    persistent-hint
+                                        <h4 class="subtitle-2 mb-3">{{ _('Login/Logout') }}</h4>
+                                        <v-row class="mb-9">
+                                            <v-col cols="12" md="4" lg="4">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Logins') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all user login activities.') }}"
                                                     v-model="eitem.ACTIVITIES['LOGIN']">
                                                 </v-switch>
-
-                                                <v-switch color="primary" class="mb-9" label="{{ _('Logouts by users.') }}"
-                                                    persistent-hint
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="4">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Logouts') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all user logout activities. Note: only explicit logout will be logged, users closing their browsers without logging out will not for example.') }}"
                                                     v-model="eitem.ACTIVITIES['LOGOUT']">
                                                 </v-switch>
-
-                                                <v-text-field class="mb-9" type="number"
-                                                    label="{{ _('Activity Retention Period') }}"
-                                                    persistent-hint
-                                                    hint="{{ _('Period after which activities will be deleted.') }}"
-                                                    suffix="days"
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="4">
+                                                <v-text-field class="mb-9" type="number" label="{{ _('Activity Retention Period') }}" persistent-hint
+                                                    hint="{{ _('Period after which activities will be deleted.') }}" suffix="days"
                                                     v-model.number="eitem.ACTIVITIES_RETENTION"></v-text-field>
+                                            </v-col>
+                                        </v-row>
 
-                                        </v-card-text>
+                                        <h4 class="subtitle-2 mb-3">{{ _('Other') }}</h4>
+                                        <v-row class="mb-9">
+                                            <v-col cols="12" md="4" lg="4">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Search queries made') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
+                                                    hint="{{ _('This setting will enable logging all searches conducted by users on Actors, Bulletins and Incidents.') }}"
+                                                    v-model="eitem.ACTIVITIES['SEARCH']">
+                                                </v-switch>
+                                            </v-col>
+                                            <v-col cols="12" md="4" lg="4">
+                                                <div class="text-body-2 mb-n1"><strong>{{ _('Items self-assigned') }}</strong>{{ _(' by users.') }}</div>
+                                                <v-switch persistent-hint
+                                                    hint="{{ _('This setting will enable logging all items self-assigned by users.') }}"
+                                                    v-model="eitem.ACTIVITIES['SELF-ASSIGN']">
+                                                </v-switch>
+                                            </v-col>
+                                        </v-row>                                        
                                     </v-card>
                                 </v-window-item>
 
@@ -420,9 +448,8 @@
                                 <v-window-item value="import">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <h4 class="subtitle-2 mb-n1">{{ _('Media import tool') }}</h4>
-                                        <v-switch color="primary"
+                                        <v-switch
                                                     persistent-hint
-                                                    density="compact"
                                                     hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
                                                     v-model="eitem.ETL_TOOL"></v-switch>
 
@@ -431,9 +458,8 @@
                                                 <v-row>
                                                     <v-col cols="12" lg="6">
                                                         <h4 class="subtitle-2 mb-n1">{{ _('Media import path scanning') }}</h4>
-                                                        <v-switch color="primary"
+                                                        <v-switch
                                                                 persistent-hint
-                                                                density="compact"
                                                                 hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
                                                                 v-model="eitem.ETL_PATH_IMPORT"></v-switch>
         
@@ -446,10 +472,9 @@
                                                     </v-col>
                                                     <v-col cols="12" lg="6">
                                                         <h4 class="subtitle-2 mb-n1">{{ _('Enable OCR') }}</h4>
-                                                        <v-switch color="primary"
+                                                        <v-switch
                                                                     persistent-hint
                                                                     hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
-                                                                    density="compact"
                                                                     v-model="eitem.OCR_ENABLED"></v-switch>
         
                                                         <v-combobox class="mt-3" multiple chips
@@ -467,9 +492,8 @@
                                         <v-divider class="my-8"></v-divider>
 
                                         <h4 class="subtitle-2 mb-n1">{{ _('Sheet import') }}</h4>
-                                        <v-switch color="primary"
+                                        <v-switch
                                                     persistent-hint
-                                                    density="compact"
                                                     hint="{{ _('Enables dynamic import of spreadsheets into Actors.') }}"
                                                     v-model="eitem.SHEET_IMPORT"></v-switch>
 
@@ -487,9 +511,8 @@
                                         <v-divider class="my-8"></v-divider>
 
                                         <h4 class="subtitle-2 mb-n1">{{ _('Web import') }}</h4>
-                                        <v-switch color="primary"
+                                        <v-switch
                                                     persistent-hint
-                                                    density="compact"
                                                     hint="{{ _('Enables import of videos from online sources into Bulletins.') }}"
                                                     v-model="eitem.WEB_IMPORT"></v-switch>
 
@@ -534,7 +557,7 @@
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 424px;">
                                             <h4 class="subtitle-2 mb-n1">{{ _('Export system') }}</h4>
-                                            <v-switch density="compact" color="primary" class="mb-4"
+                                            <v-switch class="mb-4"
                                                         v-model="eitem.EXPORT_TOOL"
                                                         persistent-hint
                                                         hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Administrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
@@ -581,7 +604,7 @@
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 408px;">
                                             <h4 class="subtitle-2 mb-n1">{{ _('Include postal code generation settings') }}</h4>
-                                            <v-switch density="compact" color="primary"
+                                            <v-switch 
                                                         v-model="eitem.LOCATIONS_INCLUDE_POSTAL_CODE"
                                                         persistent-hint
                                                         hint="{{ _('Include postal codes in the format of full location text of all entries. Note: you must regenerate full locations from the Component Data dashboard for this change to take effect.') }}"></v-switch>
@@ -690,7 +713,7 @@
                 </div>
 
                 <v-sheet v-else class=" text-center mt-3 align-center">
-                    <v-icon color="primary" left>mdi-alert</v-icon>
+                    <v-icon left>mdi-alert</v-icon>
                     {{ _('No changes detected') }}
                 </v-sheet>
 
@@ -699,7 +722,7 @@
             <v-card-actions class="pa-4 justify-center">
                 <v-btn @click.stop="confirmDialog=false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
                 </v-btn>
-                <v-btn variant="elevated" :disabled="!configDiff" @click.stop="saveConfiguration" color="primary" class="ml-4">
+                <v-btn variant="elevated" :disabled="!configDiff" @click.stop="saveConfiguration" class="ml-4">
                     {{ _('Confirm') }}
                 </v-btn>
             </v-card-actions>

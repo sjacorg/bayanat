@@ -30,6 +30,10 @@ const vuetifyConfig = {
         VChip: {
             size: 'small'
         },
+        VSwitch: {
+            color: 'primary',
+            density: 'compact'
+        },
         VDataTableServer: {
             itemsPerPageOptions: window.itemsPerPageOptions,
         },
