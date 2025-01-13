@@ -5774,6 +5774,10 @@ def api_logs() -> Response:
 def api_notifications() -> Response:
     """
     Endpoint to return paginated notifications for the current user.
+    Accepts query parameters:
+    - page: page number (default: 1)
+    - per_page: number of notifications per page (default: 10)
+    - status: status of the notifications to filter by (default: all, can be "read" or "unread", any other value will return all notifications)
 
     Returns:
         - JSON response containing notifications and pagination info
@@ -5790,8 +5794,10 @@ def api_notifications() -> Response:
     )
 
     if status:
-        read_status = status.lower() == "read"
-        notifications_query = notifications_query.filter(Notification.read_status == read_status)
+        if status.lower() == "read":
+            notifications_query = notifications_query.filter(Notification.read_status == True)
+        elif status.lower() == "unread":
+            notifications_query = notifications_query.filter(Notification.read_status == False)
 
     # Paginate the results
     paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
@@ -5811,29 +5817,6 @@ def api_notifications() -> Response:
     }
 
     return jsonify(response)
-
-
-# TODO: Remove this endpoint
-@admin.post("/api/notifications/send")
-def api_send_notification() -> Response:
-    """Testing endpoint to send a notification to the current user."""
-    NotificationUtils.send_notification(
-        current_user, "Test Notification", "This is a test notification"
-    )
-    return "Notification sent", 200
-
-
-# TODO: Remove this endpoint
-@admin.post("/api/notifications/send-email")
-def api_send_email_notification() -> Response:
-    """Testing endpoint to send an email notification to the current user."""
-    NotificationUtils.send_notification(
-        current_user,
-        "Test Email Notification",
-        "This is a test email notification",
-        delivery_method="email",
-    )
-    return "Email notification sent", 200
 
 
 @admin.route("/api/notifications/unread/count")
