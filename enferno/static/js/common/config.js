@@ -180,6 +180,7 @@ const routes = [
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
     { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
+    { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
 
 ];
 

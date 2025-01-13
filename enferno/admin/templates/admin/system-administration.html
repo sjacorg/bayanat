@@ -23,11 +23,11 @@
                                     ${tabsMap[tab]?.text}
                                     <v-spacer></v-spacer>
                                     <div class="d-flex ga-4">
-                                        <v-btn class="outlined-btn" prepend-icon="mdi-restore" @click="loadDefaults" variant="outlined">
-                                            {{ _('Restore Default Settings') }}
+                                        <v-btn class="outlined-btn" color="primary" prepend-icon="mdi-restore" @click="loadDefaults" variant="outlined">
+                                            {{ _('Restore default settings') }}
                                         </v-btn>
                                         <v-btn class="outlined-btn" prepend-icon="mdi-history" @click="showRevisions=!showRevisions" variant="outlined">
-                                            {{ _('Revision History') }}
+                                            {{ _('Revision history') }}
                                         </v-btn>
                                         <v-btn
                                             @click.stop="showConfigDiff"
@@ -640,53 +640,31 @@
 
     >
 
-        <v-card :loading="revisionLoading">
-            <v-card-title>{{ _('Revision History') }}</v-card-title>
-            <v-card-text>
-                <v-sheet  
-                    v-for="(config, i) in revisions" 
-                    :key="i"
-                    class="ma-1 pa-2 d-flex align-center justify-lg-space-between">
-                    
-                    <span class="font-weight-bold">
-                        {{ _('Version') }} ${config.id}
-                    </span>
-                    
-                    <span class="caption ml-2 font-italic">
-                        ${config.created_at}
-                    </span>
-                    
-                    <span v-if="config.user?.name" class="ml-2 caption">
-                        - {{ _('by') }} ${config.user.name}
-                    </span>
-
-                    <template v-if="i !== 0">
+        <v-card flat>
+            <v-card-title class="pa-6">{{ _('Revision History') }}</v-card-title>
+            <v-data-table-server
+                fixed-header
+                :headers="revisionsState.headers"
+                :items="revisionsState.items"
+                :loading="revisionsState.loading"
+                @update:options="loadRevisions"
+                :page="revisionsState.currentPage"
+                :items-length="revisionsState.itemsLength"
+            >
+                <template v-slot:item.version="{ item }">${item.id}</template>
+                <template v-slot:item.username="{ item }">${item.user.name}</template>
+                <template v-slot:item.actions="{ item, index }">
+                    <span v-if="index === 0" class="font-italic">{{ _('Current') }}</span>
+                    <template v-else>
                         <v-tooltip location="top" text="{{ _('Revert to this version') }}">
                             <template #activator="{props}">
-                                <v-btn 
-                                    :="props" 
-                                    icon="mdi-history" 
-                                    variant="text" 
-                                    size="small"
-                                    @click.stop="revertVersion(config)">
+                                <v-btn :="props" icon="mdi-history" variant="text" size="small" @click.stop="revertVersion(item)">
                                 </v-btn>
                             </template>
                         </v-tooltip>
                     </template>
-                    
-                    <template v-else>
-                        <span  class="font-italic caption grey--text">{{ _('Current') }}</span>
-                    </template>
-                </v-sheet>
-            </v-card-text>
-
-            <v-card-actions class="justify-center">
-                <v-pagination
-                        v-model="page"
-                        :length="totalPages"
-                        rounded="circle"
-                ></v-pagination>
-            </v-card-actions>
+                </template>
+            </v-data-table-server>
         </v-card>
 
 
@@ -788,10 +766,21 @@
 
                 // nav drawer
                 showRevisions: false,
-
-                page: 1,
-                totalPages: 0,
-
+                revisionsState: {
+                    headers: [
+                        { title: "{{ _('Version') }}", value: 'version' },
+                        { title: "{{ _('Edit time') }}", value: 'created_at' },
+                        { title: "{{ _('Username') }}", value: 'username' },
+                        { title: "{{ _('Actions') }}", value: 'actions' },
+                    ],
+                    currentPage: 1,
+                    itemsLength: 0,
+                    loading: false,
+                    initialPagination: {
+                        page: 1,
+                        per_page: 4
+                    }
+                },
 
                 configLabels: [],
 
@@ -847,10 +836,6 @@
                 alItem: {},
 
                 ltItem: {},
-
-
-                revisions: [],
-                revisionLoading: null,
                 translations: window.translations,
 
 
@@ -858,10 +843,6 @@
 
 
             watch: {
-                page() {
-
-                    this.loadRevisions();
-                },
                 tab(newTab) {
                     const fullPath = `${window.location.pathname}${window.location.search}`
                     this.$router.replace(`${fullPath}#${newTab}`)
@@ -871,12 +852,8 @@
 
 
             mounted() {
-
                 //load configuration
                 this.loadConfiguration();
-
-                this.loadRevisions()
-
             },
 
             methods: {
@@ -989,32 +966,26 @@
 
                 },
 
-                loadRevisions() {
-                    this.revisionLoading = true;
-                    const config = {
-                        params: {
-                            page: this.page,
-                            per_page: 4
-                        }
+                loadRevisions(options) {
+                    const params = {
+                        ...this.revisionsState.initialPagination,
+                        ...options,
+                        per_page: options?.itemsPerPage ?? 10
                     };
-
-                    axios.get('/admin/api/appconfig/', config)
-                        .then(res => {
-                            this.revisions = res.data.items;
-
-                            const items_per_page = 5;
-                            this.totalPages = Math.ceil(res.data.total / items_per_page);
-
-                        })
-                        .catch(err => {
-                            this.showSnack(err?.response?.data);
-                            console.error(err.response.data)
-                        }).finally(() => {
-                        this.revisionLoading = false
-                    })
+                    delete params.itemsPerPage;
+                    
+                    this.revisionsState.loading = true;
+                    axios.get(`/admin/api/appconfig/`, { params }).then(response => {
+                        this.revisionsState.itemsLength = response.data.total;
+                        this.revisionsState.items = response.data.items;
+                    }).catch(err => {
+                        console.error(err);
+                    }).finally(() => {
+                        this.revisionsState.loading = false;
+                    });
                 },
 
-                waitForRelaod() {
+                waitForReload() {
                     setTimeout(() => {
                         axios.get('/').then(res => {
                             this.overlay = false;
@@ -1023,7 +994,7 @@
                             this.showSnack("{{_('Bayanat reloaded successfully.')}}");
                             // reset settings
                         }).catch(err => {
-                            this.waitForRelaod();
+                            this.waitForReload();
                         });
                     }, 5000)
                 },
@@ -1031,7 +1002,7 @@
                 reloadApp() {
                     this.overlay = true;
                     axios.post('/admin/api/reload/')
-                    this.waitForRelaod();
+                    this.waitForReload();
                 },
 
                 saveConfiguration() {

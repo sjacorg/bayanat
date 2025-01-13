@@ -625,14 +625,14 @@
                         });
                 },
 
-                waitForRelaod() {
+                waitForReload() {
                     setTimeout(() => {
                         axios.get('/').then(res => {
                             this.showSnack("{{_('Bayanat reloaded successfully.')}}");
                             this.overlay = false;
                             this.step = 11;
                         }).catch(err => {
-                            this.waitForRelaod();
+                            this.waitForReload();
                         });
                     }, 5000)
                 },
@@ -640,7 +640,7 @@
                 reloadApp() {
                     this.overlay = true;
                     axios.post('/admin/api/reload/')
-                    this.waitForRelaod();
+                    this.waitForReload();
                 },
 
                 finishSetup() {
