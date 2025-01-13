@@ -1188,15 +1188,16 @@ def regenerate_locations() -> None:
 def load_whisper_model():
     try:
         # check if whisper is already downloaded
-        if os.path.exists(os.path.expanduser("~/.cache/whisper/base.pt")) and os.path.isfile(
-            os.path.expanduser("~/.cache/whisper/base.pt")
-        ):
+        whisper_model = cfg.WHISPER_MODEL
+        if os.path.exists(
+            os.path.expanduser(f"~/.cache/whisper/{whisper_model}.pt")
+        ) and os.path.isfile(os.path.expanduser(f"~/.cache/whisper/{whisper_model}.pt")):
             logger.info("Whisper model already downloaded")
             return
         logger.info("Downloading Whisper model...")
         import whisper
 
-        whisper.load_model("base")
+        whisper.load_model(whisper_model)
         logger.info("Whisper model loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load Whisper model: {e}")
