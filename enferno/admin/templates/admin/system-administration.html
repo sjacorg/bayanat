@@ -34,6 +34,7 @@
                                             variant="elevated"
                                             color="primary"
                                             prepend-icon="mdi-check"
+                                            :disabled="!hasChanges"
                                         >{{ _('Save changes') }}</v-btn>    
                                     </div>
                                 </div>
@@ -757,7 +758,6 @@
             mixins: [globalMixin],
 
             data: () => ({
-
                 tab: window.location.hash.replace('#', ''),
                 drawer: drawer,
                 eitem: {
@@ -785,8 +785,8 @@
                 configLabels: [],
 
                 // use this to perform diff operations and compare configurations
-                diffPatch: null,
-
+                diffPatch: jsondiffpatch.create({}),
+                
                 //store current config before it is updated
                 exconfig: {},
                 configDiff: '',
@@ -850,6 +850,13 @@
 
             },
 
+            computed: {
+                hasChanges() {
+                    const delta = this.diffPatch.diff(this.exconfig, this.eitem);
+                    return delta !== undefined;
+                },
+            },
+
 
             mounted() {
                 //load configuration
@@ -910,8 +917,6 @@
 
 
                 showConfigDiff() {
-
-                    this.diffPatch = jsondiffpatch.create({});
                     const delta = this.diffPatch.diff(this.exconfig, this.eitem);
 
                     if (delta) {
