@@ -23,10 +23,10 @@
                                     ${tabsMap[tab]?.text}
                                     <v-spacer></v-spacer>
                                     <div class="d-flex ga-4">
-                                        <v-btn prepend-icon="mdi-restore" color="primary" @click="loadDefaults" variant="outlined">
+                                        <v-btn class="outlined-btn" prepend-icon="mdi-restore" color="primary" @click="loadDefaults" variant="outlined">
                                             {{ _('Restore Default Settings') }}
                                         </v-btn>
-                                        <v-btn prepend-icon="mdi-history" @click="showRevisions=!showRevisions" variant="outlined">
+                                        <v-btn class="outlined-btn" prepend-icon="mdi-history" @click="showRevisions=!showRevisions" variant="outlined">
                                             {{ _('Revision History') }}
                                         </v-btn>
                                         <v-btn
