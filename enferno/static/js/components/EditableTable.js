@@ -54,7 +54,7 @@ const EditableTable = Vue.defineComponent({
             <v-toolbar class="d-flex justify-space-between align-center" color="white">
               <v-toolbar-title class="text-subtitle-1">{{ title }}</v-toolbar-title>
 
-              <v-btn class="text-none text-body-2 font-weight-regular mx-3" v-if="allowAdd" prepend-icon="mdi-plus-circle" @click="itemAdd" variant="elevated" color="primary">{{ addButtonLabel }}</v-btn>
+              <v-btn class="mx-3" v-if="allowAdd" prepend-icon="mdi-plus-circle" @click="itemAdd" variant="elevated" color="primary">{{ addButtonLabel }}</v-btn>
             </v-toolbar>
           </template>
 

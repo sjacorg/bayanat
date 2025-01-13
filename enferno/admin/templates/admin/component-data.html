@@ -41,7 +41,7 @@
                                         <!-- Add toolbar template -->
                                         <v-card flat class="px-5 pb-5 pt-1">
                                             <h3 class="text-subtitle-1 mb-2">{{ _('Full Location Text Format') }}</h3>
-                                            <div class="text-caption" style="max-width: 716px;">{{ _('These settings control how the full location text of each Location is
+                                            <div class="text-caption text-muted" style="max-width: 716px;">{{ _('These settings control how the full location text of each Location is
                                                 formatted and generated from its title and its parents. You can customize this order to match the
                                                 address system of the country you\'re working on.') }}</div>
                                             <draggable v-model="lalChips" :item-key="'id'" class="d-flex flex-wrap ga-2 mt-4 mb-8" @end="onDragEnd">
@@ -53,24 +53,22 @@
                                                 </template>
                                             </draggable>
                                             
-                                            <div class="d-flex align-center ga-5 mt-4">
-                                                <template v-if="isOrderChanged">
-                                                    <v-btn color="secondary" @click="revertOrder"
-                                                        prepend-icon="mdi-undo">
-                                                        {{ _('Revert Changes') }}
-                                                    </v-btn>
-                                                    <v-btn color="warning" prepend-icon="mdi-check"
-                                                        @click="reorderLocationAdminLevels">
-                                                        {{ _('Save Order') }}
-                                                    </v-btn>
-                                                </template>
-                                                <v-btn color="primary" prepend-icon="mdi-refresh"
+                                            <div class="d-flex justify-end align-center ga-5 mt-4">
+                                                <div class="text-caption text-right text-muted" style="max-width: 400px;">
+                                                    {{ _('You can change the option to include postal codes in format of the full location text in the system settings.') }}
+                                                </div>
+                                                <v-btn v-if="isOrderChanged" variant="outlined" @click="revertOrder" class="outlined-btn"
+                                                    prepend-icon="mdi-history">
+                                                    {{ _('Revert changes') }}
+                                                </v-btn>
+                                                <v-btn color="primary" variant="outlined" prepend-icon="mdi-refresh" class="outlined-btn"
                                                     @click="regenerateLocations">
                                                     {{ _('Regenerate') }}
                                                 </v-btn>
-                                                <div class="text-caption" style="max-width: 400px;">
-                                                    {{ _('You can change the option to include postal codes in format of the full location text in the system settings.') }}
-                                                </div>
+                                                <v-btn v-if="isOrderChanged" color="primary" prepend-icon="mdi-check"
+                                                    @click="reorderLocationAdminLevels">
+                                                    {{ _('Save order') }}
+                                                </v-btn>
                                             </div>
                                             <div>
                                                 <v-card class="pa-2 mt-5 mb-3" color="info" v-if="showLalWarning">
