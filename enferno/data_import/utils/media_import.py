@@ -59,6 +59,14 @@ class MediaImport:
     MODE_SERVER = 2  # Server-side file processing mode
     MODE_WEB = 3  # Web import mode (e.g. YouTube)
 
+    _whisper_model = None
+
+    @classmethod
+    def get_whisper_model(cls):
+        if not cls._whisper_model and whisper_available and cfg.TRANSCRIPTION_ENABLED:
+            cls._whisper_model = whisper.load_model(cfg.WHISPER_MODEL)
+        return cls._whisper_model
+
     # file: Filestorage class
     def __init__(self, batch_id: t.id, meta: Any, user_id: Any, data_import_id: t.id):
         self.meta = meta
@@ -301,7 +309,7 @@ class MediaImport:
         Returns:
             - Transcribed text if successful, None otherwise
         """
-        whisper_model = whisper.load_model("base") if whisper_available else None
+        whisper_model = self.get_whisper_model()
         if not cfg.TRANSCRIPTION_ENABLED or not whisper_available or not whisper_model:
             return None
 
