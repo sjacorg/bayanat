@@ -27,7 +27,7 @@ def flush_redis_after_tests():
 
     yield
     # Code here will execute after all tests are done
-    redis_dbs = [15, 14, 13, 12, 11]
+    redis_dbs = [15, 14, 13, 12]
     for db in redis_dbs:
         r = redis.Redis(
             db=db,
