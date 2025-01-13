@@ -8,6 +8,25 @@ const validationRules = {
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
+        VBtn: {
+            rounded: 'lg',
+            class: 'bayanat-btn'
+        },
+        VTab: {
+            VBtn: {
+                class: '', // Remove the custom classes from tab buttons
+                rounded: 'none', // Reset the border radius
+            },
+        },
+        VBtnGroup: {
+            VBtn: {
+                class: '', // Remove the custom classes from tab buttons
+                rounded: 'none', // Reset the border radius
+            },
+        },
+        VTable: {
+            class: 'bayanat-table', // Remove the custom classes from tab buttons
+        },
         VChip: {
             size: 'small'
         },
@@ -35,6 +54,10 @@ const vuetifyConfig = {
                     gv: '#9ECCC3',
                     pv: '#295651',
                     background: '#FAFAFA',
+                    muted: '#79747E',
+                    border: '#D9D9D9',
+                    'table-header': '#9E9E9E',
+                    'table-body': '#666666'
                 },
             },
             dark: {
@@ -50,6 +73,10 @@ const vuetifyConfig = {
                     lime: '#303030',
                     teal: '#008080',
                     // You might need to adjust or add additional custom colors here
+                    muted: '#A59E99',
+                    border: '#444444',
+                    'table-header': '#B0B0B0',
+                    'table-body': '#ffffffb3'
                 },
             },
         },
@@ -148,7 +175,7 @@ const routes = [
     {path: '/import/log/', name: 'logs', component: Vue.defineComponent({})},
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
-    {path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({})},
+    { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
 
 ];
 

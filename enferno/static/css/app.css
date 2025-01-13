@@ -867,3 +867,24 @@ div.jsondiffpatch-child-node-type-array:after {
     overflow-wrap: anywhere;
     white-space: normal;
 }
+
+/* Custom styles for new bayanat design */
+.bayanat-btn {
+    box-shadow: none;
+    text-transform: none;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+}
+.outlined-btn {
+    border: thin solid rgba(var(--v-theme-border), 1);
+}
+.bayanat-table {
+    th {
+        color: rgba(var(--v-theme-table-header), 1);
+    }
+    td {
+        color: rgba(var(--v-theme-table-body), 1);
+    }
+}
