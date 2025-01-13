@@ -171,138 +171,150 @@
 
 
                                 <v-window-item value="security">
-                                    <v-card :disabled="loading" :loading="loading" >
-
-                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Password Policies') }}</h2>
-                                        <v-card-text>
-
-                                            <v-text-field class="mb-9" type="number"
-                                                            label="{{ _('Password Minimum Length') }}"
-                                                            persistent-hint
-                                                            hint="{{ _('Minimum required length for passwords') }}"
-                                                            suffix="charachters"
-                                                            v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
-
-                                            <h3 class="mt-1 subtitle-2 mb-2">{{ _('Password Strength') }}</h3>
-
-                                            <p class="text-caption">{{ _('Bayanat uses zxcvbn password strength estimator to calculate a password score. \'Medium\' coresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. \'Strong\' corresponds to a score of 3, we recommend this setting for online Bayanat installations. \'Very Strong\' corresponds to a zxcvbn score of 4 and offers the highest level of protection.') }}</p>
-
-                                            <v-sheet width="400">
-                                                <v-slider
-                                                        v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
-                                                        min="2"
-                                                        max="4"
-                                                        hint="{{ _('') }}"
-                                                        persistent-hint
-                                                        color="primary"
-                                                        show-ticks="always"
-                                                        :ticks="{
-                                                            2: 'Medium',
-                                                            3: 'Strong',
-                                                            4: 'Very Strong'}"
-                                                        :tick-size="4"
-                                                        step="1"
-                                                ></v-slider>
-                                            </v-sheet>
-                                        </v-card-text>
-
-                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Two Factor Authentication Policies') }}</h2>
-                                        <v-card-text>
-                                            <v-switch class="mb-9" label="{{ _('Force 2FA Enrollment') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('Force users to enroll in two factor authentication') }}"
-                                                        v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED"
-                                            >
-                                            </v-switch>
-                                        </v-card-text>
-
-                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Session Policies') }}</h2>
-                                        <v-card-text>
-                                            <v-switch class="mb-9"
-                                                                label="{{ _('Disallow Multiple Concurrent Sessions') }}"
+                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                        <v-row>
+                                            <v-col cols="12" lg="3">
+                                                <h4 class="subtitle-2 mb-1">{{ _('Password Policies') }}</h4>
+                                                <v-text-field class="mb-9" type="number"
+                                                                label="{{ _('Password Minimum Length') }}"
                                                                 persistent-hint
-                                                                hint="{{ _('Prevents users from logging in to multiple devices simultaneously') }}"
-                                                                v-model="eitem.DISABLE_MULTIPLE_SESSIONS">
-                                                    </v-switch>
+                                                                hint="{{ _('Minimum required length for passwords') }}"
+                                                                suffix="charachters"
+                                                                v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12" lg="6">
+                                                <h4 class="subtitle-2 mb-1">{{ _('Password Strength') }}</h4>                
+                                                <v-slider
+                                                    v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
+                                                    min="2"
+                                                    max="4"
+                                                    color="primary"
+                                                    show-ticks="always"
+                                                    :ticks="{
+                                                        2: 'Medium',
+                                                        3: 'Strong',
+                                                        4: 'Very Strong'}"
+                                                    :tick-size="4"
+                                                    step="1"
+                                                    style="max-width: 340px;"
+                                                ></v-slider>
+                                                <p class="text-caption text-muted">{{ _('Bayanat uses zxcvbn password strength estimator to calculate a password score. \'Medium\' coresponds to a zxcvbn score of 2 and is suitable for offline Bayanat installation. \'Strong\' corresponds to a score of 3, we recommend this setting for online Bayanat installations. \'Very Strong\' corresponds to a zxcvbn score of 4 and offers the highest level of protection.') }}</p>
+                                            </v-col>
+                                        </v-row>
 
-                                            <v-text-field class="mb-9" type="number"
-                                                            label="{{ _('Session Data Retention Period') }}" persistent-hint
-                                                            hint="{{ _('Period after which session data will be deleted.') }}"
-                                                            suffix="days"
-                                                            v-model.number="eitem.SESSION_RETENTION_PERIOD"></v-text-field>
-                                        </v-card-text>
+                                        <v-divider></v-divider>
 
-                                        <h2 class="mt-1 subtitle-2 mb-2">{{ _('Additional Security Settings') }}</h2>
-                                        <v-card-text>
+                                        <h4 class="subtitle-2 mb-1">{{ _('Two Factor Authentication Policies') }}</h4>
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
+                                                <h4 class="text-body-2 mb-n1">{{ _('Force 2FA enrollment') }}</h4>
+                                                <v-switch
+                                                    persistent-hint
+                                                    hint="{{ _('Force users to enroll in two factor authentication') }}"
+                                                    v-model="eitem.SECURITY_TWO_FACTOR_REQUIRED">
+                                                </v-switch>
+                                            </v-col>
+                                        </v-row>
 
-                                            <v-switch class="mb-9" label="{{ _('Recaptcha Enabled') }}"
+                                        <v-divider></v-divider>
+
+                                        <h4 class="subtitle-2 mb-1">{{ _('Session policies') }}</h4>
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
+                                                <h4 class="text-body-2 mb-n1">{{ _('Disallow multiple concurrent sessions') }}</h4>
+                                                <v-switch persistent-hint
+                                                    hint="{{ _('Prevents users from logging in to multiple devices simultaneously') }}"
+                                                    v-model="eitem.DISABLE_MULTIPLE_SESSIONS">
+                                                </v-switch>
+                                            </v-col>
+                                            <v-col cols="12" lg="4">
+                                                <v-text-field type="number" label="{{ _('Session Data Retention Period') }}" persistent-hint
+                                                    hint="{{ _('Period after which session data will be deleted.') }}" suffix="days"
+                                                    v-model.number="eitem.SESSION_RETENTION_PERIOD"></v-text-field>
+                                            </v-col>
+                                        </v-row>
+
+                                        <v-divider></v-divider>
+
+                                        
+
+                                        <h2 class="subtitle-2 mb-1">{{ _('Additional Security Settings') }}</h2>
+                                        <v-row>
+                                            <v-col>
+                                                <h4 class="text-body-2 mb-n1">{{ _('Disallow multiple concurrent sessions') }}</h4>
+                                            </v-col>
+                                        </v-row>
+                                        <v-switch class="mb-9" label="{{ _('Recaptcha Enabled') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('Add further security to Bayanat\'s by requiring Google Recaptcha on the login form.') }}"
+                                                    v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
+
+                                        <v-slide-y-transition>
+                                            <v-sheet v-show="eitem.RECAPTCHA_ENABLED"
+                                                        class="pa-4 grey lighten-4">
+                                                <v-text-field label="{{ _('Recaptcha Public Key') }}"
+                                                                v-model="eitem.RECAPTCHA_PUBLIC_KEY"></v-text-field>
+
+                                                <v-text-field label="{{ _('Recaptcha Private Key') }}"
+                                                                v-model="eitem.RECAPTCHA_PRIVATE_KEY"></v-text-field>
+                                            </v-sheet>
+                                        </v-slide-y-transition>
+
+                                        <v-switch class="mb-9" label="{{ _('Enable Google OAuth') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('Allow users to login using their Google account.') }}"
+                                                    v-model="eitem.GOOGLE_OAUTH_ENABLED"></v-switch>
+
+                                        <v-slide-y-transition>
+                                            <v-sheet v-show="eitem.GOOGLE_OAUTH_ENABLED"
+                                                        class="pa-4 grey lighten-4">
+                                                <v-text-field label="{{ _('Google Client ID') }}"
+                                                                v-model="eitem.GOOGLE_CLIENT_ID"></v-text-field>
+
+                                                <v-text-field label="{{ _('Google Client Secret') }}"
+                                                                v-model="eitem.GOOGLE_CLIENT_SECRET"></v-text-field>
+
+                                                <v-text-field label="{{ _('Google Discovery URL') }}"
+                                                                v-model="eitem.GOOGLE_DISCOVERY_URL"></v-text-field>
+                                            </v-sheet>
+                                        </v-slide-y-transition>
+
+                                        <v-text-field class="mb-9" type="number"
+                                                        label="{{ _('Security Freshness') }}"
                                                         persistent-hint
-                                                        hint="{{ _('Add further security to Bayanat\'s by requiring Google Recaptcha on the login form.') }}"
-                                                        v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
-
-                                            <v-slide-y-transition>
-                                                <v-sheet v-show="eitem.RECAPTCHA_ENABLED"
-                                                            class="pa-4 grey lighten-4">
-                                                    <v-text-field label="{{ _('Recaptcha Public Key') }}"
-                                                                    v-model="eitem.RECAPTCHA_PUBLIC_KEY"></v-text-field>
-
-                                                    <v-text-field label="{{ _('Recaptcha Private Key') }}"
-                                                                    v-model="eitem.RECAPTCHA_PRIVATE_KEY"></v-text-field>
-                                                </v-sheet>
-                                            </v-slide-y-transition>
-
-                                            <v-switch class="mb-9" label="{{ _('Enable Google OAuth') }}"
+                                                        hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
+                                                        suffix="minutes"
+                                                        v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
+                                        <v-text-field class="mb-9" type="number"
+                                                        label="{{ _('Security Freshness Grace Period') }}"
                                                         persistent-hint
-                                                        hint="{{ _('Allow users to login using their Google account.') }}"
-                                                        v-model="eitem.GOOGLE_OAUTH_ENABLED"></v-switch>
-
-                                            <v-slide-y-transition>
-                                                <v-sheet v-show="eitem.GOOGLE_OAUTH_ENABLED"
-                                                            class="pa-4 grey lighten-4">
-                                                    <v-text-field label="{{ _('Google Client ID') }}"
-                                                                    v-model="eitem.GOOGLE_CLIENT_ID"></v-text-field>
-
-                                                    <v-text-field label="{{ _('Google Client Secret') }}"
-                                                                    v-model="eitem.GOOGLE_CLIENT_SECRET"></v-text-field>
-
-                                                    <v-text-field label="{{ _('Google Discovery URL') }}"
-                                                                    v-model="eitem.GOOGLE_DISCOVERY_URL"></v-text-field>
-                                                </v-sheet>
-                                            </v-slide-y-transition>
-
-                                            <v-text-field class="mb-9" type="number"
-                                                            label="{{ _('Security Freshness') }}"
-                                                            persistent-hint
-                                                            hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
-                                                            suffix="minutes"
-                                                            v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
-                                            <v-text-field class="mb-9" type="number"
-                                                            label="{{ _('Security Freshness Grace Period') }}"
-                                                            persistent-hint
-                                                            hint="{{ _('Re-authentication will require a second factor after this period.') }}"
-                                                            suffix="minutes"
-                                                            v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
-                                        </v-card-text>
-
+                                                        hint="{{ _('Re-authentication will require a second factor after this period.') }}"
+                                                        suffix="minutes"
+                                                        v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
                                     </v-card>
                                 </v-window-item>
 
                                 <v-window-item value="control">
 
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
-                                        <v-card-text>
-                                            <p class="text-caption">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
+                                        <p class="text-caption text-muted mb-6" style="max-width: 823px;">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
 
-                                            <v-switch class="mb-9" label="{{ _('Restrictive Access Control') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
-                                                        v-model="eitem.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
-                                            <v-switch class="mb-9" label="{{ _('Allow Non-Admin Users to Restrict New Items') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
-                                                        v-model="eitem.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
-                                        </v-card-text>
-
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
+                                                <h4 class="subtitle-2 mb-n1">{{ _('Restrictive access control') }}</h4>
+                                                <v-switch
+                                                    persistent-hint
+                                                    hint="{{ _('All items in the database will be restricted by default to all non-administrators, except when they are explicitly given access.') }}"
+                                                    v-model="eitem.ACCESS_CONTROL_RESTRICTIVE"></v-switch>
+                                            </v-col>
+                                            <v-col cols="12" lg="4">
+                                                <h4 class="subtitle-2 mb-n1">{{ _('Allow non-admin users to restrict new items') }}</h4>
+                                                <v-switch
+                                                    persistent-hint
+                                                    hint="{{ _('Users with no administrative privileges will be allowed to restrict items they create. They can only restrict items to one or more of their own access groups.') }}"
+                                                    v-model="eitem.AC_USERS_CAN_RESTRICT_NEW"></v-switch>
+                                            </v-col>
+                                        </v-row>
                                     </v-card>
                                 </v-window-item>
 
