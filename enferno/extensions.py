@@ -24,5 +24,5 @@ limiter = Limiter(
     strategy="moving-window",
     headers_enabled=True,
     retry_after="delta-seconds",
-    storage_uri=cfg.RATE_LIMIT_STORAGE_URI,
+    storage_uri=cfg.REDIS_URL,
 )

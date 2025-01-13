@@ -14,9 +14,9 @@ from enferno.settings import Config as prod_cfg
 
 # Because the app context is not available when the extensions are initialized,
 # Flask-Limiter extension directly uses the config object to initialize the storage.
-# We need to patch the production config directly before importing create_app
-# to use the test config for rate limiting
-with patch.object(prod_cfg, "RATE_LIMIT_STORAGE_URI", cfg.RATE_LIMIT_STORAGE_URI):
+# We need to patch the production config before importing create_app to use the
+# test config for rate limiting
+with patch.object(prod_cfg, "REDIS_URL", cfg.REDIS_URL):
     from enferno.app import create_app
 
 
