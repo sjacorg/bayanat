@@ -2860,15 +2860,8 @@ def api_bulletins(validated_data: dict) -> Response:
         query = query.where(Bulletin.id < cursor)
     query = query.limit(per_page)
 
-    # Add options to eagerly load required relationships
-    query = query.options(
-        joinedload(Bulletin.assigned_to),
-        joinedload(Bulletin.roles),
-        joinedload(Bulletin.sources),
-    )
-
     result = db.session.execute(query)
-    items = result.scalars().unique().all()  # Use unique() to ensure unique rows
+    items = result.scalars().unique().all()
 
     # Minimal serialization for list view
     serialized_items = [
@@ -2881,11 +2874,9 @@ def api_bulletins(validated_data: dict) -> Response:
                 if item.assigned_to
                 else None
             ),
-            "roles": (
-                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
-                if item.roles
-                else []
-            ),
+            "roles": [
+                {"id": role.id, "name": role.name, "color": role.color} for role in item.roles
+            ],
             "_status": item.status,
             "review_action": item.review_action,
         }
@@ -2897,7 +2888,6 @@ def api_bulletins(validated_data: dict) -> Response:
     response = {
         "items": serialized_items,
         "nextCursor": str(next_cursor) if next_cursor else None,
-        # "total": total if not cursor else None,
     }
 
     return jsonify(response)

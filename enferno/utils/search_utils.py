@@ -1,6 +1,7 @@
 from dateutil.parser import parse
 from sqlalchemy import or_, not_, and_, any_, all_, func, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from sqlalchemy.orm import load_only, selectinload
 
 from enferno.extensions import db
 from enferno.admin.models import (
@@ -20,7 +21,7 @@ from enferno.admin.models import (
     ActorProfile,
     Activity,
 )
-from enferno.user.models import Role
+from enferno.user.models import Role, User
 
 
 # helper methods
@@ -125,7 +126,12 @@ class SearchUtils:
 
     def bulletin_query(self, q: dict):
         """Build a select statement for bulletin search"""
-        stmt = select(Bulletin)
+        # Use load_only to select specific fields
+        stmt = select(Bulletin).options(
+            load_only(Bulletin.id, Bulletin.title, Bulletin.status, Bulletin.review_action),
+            selectinload(Bulletin.assigned_to).load_only(User.id, User.name),
+            selectinload(Bulletin.roles).load_only(Role.id, Role.name, Role.color),
+        )
         conditions = []
 
         # Support query using a range of ids
