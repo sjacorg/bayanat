@@ -2851,8 +2851,8 @@ def api_bulletins(validated_data: dict) -> Response:
     query = search.get_query()
 
     # Get total count if no cursor
-    if not cursor:
-        total = db.session.execute(select(func.count()).select_from(query.subquery())).scalar()
+    # if not cursor:
+    #     total = db.session.execute(select(func.count()).select_from(query.subquery())).scalar()
 
     # Build main query
     query = query.order_by(Bulletin.updated_at.desc())
@@ -2897,7 +2897,7 @@ def api_bulletins(validated_data: dict) -> Response:
     response = {
         "items": serialized_items,
         "nextCursor": next_cursor.isoformat() if next_cursor else None,
-        "total": total if not cursor else None,
+        # "total": total if not cursor else None,
     }
 
     return jsonify(response)
