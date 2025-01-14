@@ -22,6 +22,7 @@ const GlobalMap = Vue.defineComponent({
     const lat = geoMapDefaultCenter.lat
     const lng =  geoMapDefaultCenter.lng
     const attribution = '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    const googleAttribution = '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies'
     const measureControls = Vue.shallowRef(null)
 
     function generatePopupContent(loc) {
@@ -54,6 +55,7 @@ const GlobalMap = Vue.defineComponent({
 
       // Define the Google Maps tile layer
       const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        attribution: googleAttribution,
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       });
