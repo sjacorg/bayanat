@@ -18,6 +18,7 @@ from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy import desc, or_, select, func
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
@@ -2842,21 +2843,64 @@ def api_bulletins(validated_data: dict) -> Response:
             "bulletin",
         )
 
-    su = SearchUtils(validated_data, cls="bulletin")
-    query = su.get_query()
+    q = validated_data.get("q", [{}])
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", 20)
 
-    pagination = paginate_query(
-        query=query,
-        per_page=PER_PAGE,
-        cursor=validated_data.get("cursor"),
-        id_column=Bulletin.id,
+    search = SearchUtils({"q": q}, "bulletin")
+    query = search.get_query()
+
+    # Get total count if no cursor
+    if not cursor:
+        total = db.session.execute(select(func.count()).select_from(query.subquery())).scalar()
+
+    # Build main query
+    query = query.order_by(Bulletin.updated_at.desc())
+    if cursor:
+        query = query.where(Bulletin.updated_at < cursor)
+    query = query.limit(per_page)
+
+    # Add options to eagerly load required relationships
+    query = query.options(
+        joinedload(Bulletin.assigned_to),
+        joinedload(Bulletin.roles),
+        joinedload(Bulletin.sources),
     )
 
-    mode = request.args.get("mode", "1")
-    items_dict = [item.to_dict(mode=mode) for item in pagination.items]
-    pagination.items = items_dict
+    result = db.session.execute(query)
+    items = result.scalars().unique().all()  # Use unique() to ensure unique rows
 
-    return Response(json.dumps(pagination.to_dict()), content_type="application/json"), 200
+    # Minimal serialization for list view
+    serialized_items = [
+        {
+            "id": item.id,
+            "title": item.title,
+            "status": item.status,
+            "assigned_to": (
+                {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                if item.assigned_to
+                else None
+            ),
+            "roles": (
+                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
+                if item.roles
+                else []
+            ),
+            "_status": item.status,
+            "review_action": item.review_action,
+        }
+        for item in items
+    ]
+
+    next_cursor = items[-1].updated_at if items else None
+
+    response = {
+        "items": serialized_items,
+        "nextCursor": next_cursor.isoformat() if next_cursor else None,
+        "total": total if not cursor else None,
+    }
+
+    return jsonify(response)
 
 
 @admin.post("/api/bulletin/")
