@@ -2855,9 +2855,9 @@ def api_bulletins(validated_data: dict) -> Response:
     #     total = db.session.execute(select(func.count()).select_from(query.subquery())).scalar()
 
     # Build main query
-    query = query.order_by(Bulletin.updated_at.desc())
+    query = query.order_by(Bulletin.id.desc())
     if cursor:
-        query = query.where(Bulletin.updated_at < cursor)
+        query = query.where(Bulletin.id < cursor)
     query = query.limit(per_page)
 
     # Add options to eagerly load required relationships
@@ -2892,11 +2892,11 @@ def api_bulletins(validated_data: dict) -> Response:
         for item in items
     ]
 
-    next_cursor = items[-1].updated_at if items else None
+    next_cursor = items[-1].id if items else None
 
     response = {
         "items": serialized_items,
-        "nextCursor": next_cursor.isoformat() if next_cursor else None,
+        "nextCursor": str(next_cursor) if next_cursor else None,
         # "total": total if not cursor else None,
     }
 
