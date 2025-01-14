@@ -125,7 +125,6 @@ class SearchUtils:
 
     def bulletin_query(self, q: dict):
         """Build a select statement for bulletin search"""
-        stmt = select(Bulletin)
         conditions = []
 
         # Support query using a range of ids
@@ -375,8 +374,16 @@ class SearchUtils:
 
             conditions.append(or_(*geo_conditions))
 
-        if conditions:
-            stmt = stmt.where(and_(*conditions))
+        # Use CTE to get matching IDs first
+        matching_ids = (
+            select(Bulletin.id)
+            .where(and_(*conditions))
+            .order_by(Bulletin.id.desc())
+            .cte("matching_ids")
+        )
+
+        # Join with full bulletin data
+        stmt = select(Bulletin).join(matching_ids, Bulletin.id == matching_ids.c.id)
 
         return stmt, conditions
 
