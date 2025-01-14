@@ -3887,12 +3887,36 @@ paths:
                   type: string
                   description: URL of the bulletin to import
       responses:
-        '200':
+        '202':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch_id:
+                    type: string
+                    description: Batch ID of the import
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
+        '409':
+          description: Conflict. Media already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                  message:
+                    type: string
+                    description: Error message
+                  bulletin_id:
+                    type: integer
+                    description: ID of the bulletin that already exists
   /admin/api/actor/assign/{id}:
     put:
       operationId: selfAssignActor
