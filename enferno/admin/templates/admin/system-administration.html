@@ -189,13 +189,15 @@
                                                     v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE"
                                                     min="2"
                                                     max="4"
+                                                    :tick-size="4"
+                                                    :thumb-size="14"
+                                                    :track-size="4"
                                                     color="primary"
                                                     show-ticks="always"
                                                     :ticks="{
                                                         2: 'Medium',
                                                         3: 'Strong',
                                                         4: 'Very Strong'}"
-                                                    :tick-size="4"
                                                     step="1"
                                                     style="max-width: 340px;"
                                                 ></v-slider>
