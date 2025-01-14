@@ -236,23 +236,18 @@
                                         </v-row>
 
                                         <v-divider class="my-7"></v-divider>
-
                                         
 
                                         <h4 class="subtitle-2 mb-1">{{ _('Additional Security Settings') }}</h4>
-                                        <v-row>
-                                            <v-col>
-                                                <h4 class="text-body-2 mb-n1">{{ _('Disallow multiple concurrent sessions') }}</h4>
-                                            </v-col>
-                                        </v-row>
-                                        <v-switch class="mb-9" label="{{ _('Recaptcha Enabled') }}"
-                                                    persistent-hint
-                                                    hint="{{ _('Add further security to Bayanat\'s by requiring Google Recaptcha on the login form.') }}"
-                                                    v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
+                                        <h4 class="text-body-2 mb-n1">{{ _('Recaptcha enabled') }}</h4>
+                                        <v-switch
+                                            class="mb-4"
+                                            persistent-hint
+                                            hint="{{ _('Add further security to Bayanat\'s by requiring Google Recaptcha on the login form.') }}"
+                                            v-model="eitem.RECAPTCHA_ENABLED"></v-switch>
 
                                         <v-slide-y-transition>
-                                            <v-sheet v-show="eitem.RECAPTCHA_ENABLED"
-                                                        class="pa-4 grey lighten-4">
+                                            <v-sheet v-show="eitem.RECAPTCHA_ENABLED">
                                                 <v-text-field label="{{ _('Recaptcha Public Key') }}"
                                                                 v-model="eitem.RECAPTCHA_PUBLIC_KEY"></v-text-field>
 
@@ -261,14 +256,17 @@
                                             </v-sheet>
                                         </v-slide-y-transition>
 
-                                        <v-switch class="mb-9" label="{{ _('Enable Google OAuth') }}"
-                                                    persistent-hint
-                                                    hint="{{ _('Allow users to login using their Google account.') }}"
-                                                    v-model="eitem.GOOGLE_OAUTH_ENABLED"></v-switch>
+                                        <v-divider class="my-7"></v-divider>
+
+                                        <h4 class="text-body-2 mb-n1">{{ _('Enable Google OAuth') }}</h4>
+                                        <v-switch
+                                            class="mb-4"
+                                            persistent-hint
+                                            hint="{{ _('Allow users to login using their Google account.') }}"
+                                            v-model="eitem.GOOGLE_OAUTH_ENABLED"></v-switch>
 
                                         <v-slide-y-transition>
-                                            <v-sheet v-show="eitem.GOOGLE_OAUTH_ENABLED"
-                                                        class="pa-4 grey lighten-4">
+                                            <v-sheet v-show="eitem.GOOGLE_OAUTH_ENABLED">
                                                 <v-text-field label="{{ _('Google Client ID') }}"
                                                                 v-model="eitem.GOOGLE_CLIENT_ID"></v-text-field>
 
@@ -280,18 +278,25 @@
                                             </v-sheet>
                                         </v-slide-y-transition>
 
-                                        <v-text-field class="mb-9" type="number"
-                                                        label="{{ _('Security Freshness') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
-                                                        suffix="minutes"
-                                                        v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
-                                        <v-text-field class="mb-9" type="number"
-                                                        label="{{ _('Security Freshness Grace Period') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('Re-authentication will require a second factor after this period.') }}"
-                                                        suffix="minutes"
-                                                        v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
+                                        <v-divider class="my-7"></v-divider>
+
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
+                                                <v-text-field type="number"
+                                                                label="{{ _('Security freshness') }}"
+                                                                persistent-hint
+                                                                hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
+                                                                suffix="minutes"
+                                                                v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12" lg="4">
+                                                <v-text-field class="mb-9" type="number" label="{{ _('Security freshness grace period') }}" persistent-hint
+                                                    hint="{{ _('Re-authentication will require a second factor after this period.') }}" suffix="minutes"
+                                                    v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
+                                            </v-col>
+                                        </v-row>
+
+                                        
                                     </v-card>
                                 </v-window-item>
 
