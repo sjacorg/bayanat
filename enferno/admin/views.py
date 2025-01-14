@@ -127,6 +127,7 @@ from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.pagination import paginate_query
+import orjson
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -2900,7 +2901,7 @@ def api_bulletins(validated_data: dict) -> Response:
         # "total": total if not cursor else None,
     }
 
-    return jsonify(response)
+    return Response(orjson.dumps(response), mimetype="application/json")
 
 
 @admin.post("/api/bulletin/")
