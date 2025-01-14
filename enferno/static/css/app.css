@@ -897,7 +897,6 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 .v-slider-track__tick {
     border-radius: 50%;
-    background-color: rgb(var(--v-theme-surface-light));
 }
 .v-slider-thumb__surface {
     border: 2px solid currentColor;
