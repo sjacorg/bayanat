@@ -141,8 +141,10 @@ class SearchUtils:
         # Exclude text search
         if extsv := q.get("extsv"):
             words = extsv.split(" ")
-            words = [f"%{w}%" for w in words]
-            conditions.append(Bulletin.search.notilike(all_(words)))
+            # Create a subquery to find bulletins containing ANY forbidden word
+            sub = select(Bulletin.id).where(or_(*[Bulletin.search.ilike(f"%{w}%") for w in words]))
+            # Exclude them by id
+            conditions.append(Bulletin.id.not_in(sub))
 
         # Tags
         if ref := q.get("tags"):
