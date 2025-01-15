@@ -1,1 +1,2 @@
 pytesseract==0.3.13
+-r requirements-opt.txt
