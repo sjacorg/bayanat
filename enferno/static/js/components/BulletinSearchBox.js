@@ -99,7 +99,7 @@ const BulletinSearchBox = Vue.defineComponent({
               <div class="d-flex align-center">
                 <v-combobox
                     v-model="q.tags"
-                    :label="translations.inRef_"
+                    :label="translations.inTags_"
                     multiple
                     chips
                     closable-chips
@@ -118,7 +118,7 @@ const BulletinSearchBox = Vue.defineComponent({
 
                 <v-combobox
                     v-model="q.exTags"
-                    :label="translations.exRef_"
+                    :label="translations.exTags_"
                     multiple
                     chips
                     closable-chips
