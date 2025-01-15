@@ -650,39 +650,34 @@
             v-model="showRevisions"
             location="right"
             temporary
-            width="500"
+            width="630"
             clipped
 
     >
-
         <v-card flat>
             <v-card-title class="pa-6">{{ _('Revision History') }}</v-card-title>
-            <v-data-table-server
-                fixed-header
-                :headers="revisionsState.headers"
-                :items="revisionsState.items"
-                :loading="revisionsState.loading"
-                @update:options="loadRevisions"
-                :page="revisionsState.currentPage"
-                :items-length="revisionsState.itemsLength"
-            >
-                <template v-slot:item.version="{ item }">${item.id}</template>
-                <template v-slot:item.username="{ item }">${item.user.name}</template>
-                <template v-slot:item.actions="{ item, index }">
-                    <span v-if="index === 0" class="font-italic">{{ _('Current') }}</span>
-                    <template v-else>
-                        <v-tooltip location="top" text="{{ _('Revert to this version') }}">
-                            <template #activator="{props}">
-                                <v-btn :="props" icon="mdi-history" variant="text" size="small" @click.stop="revertVersion(item)">
-                                </v-btn>
-                            </template>
-                        </v-tooltip>
-                    </template>
-                </template>
-            </v-data-table-server>
+            <v-card-text class="px-6">
+                <v-btn @click="resetRevisions()">Reload</v-btn>
+                <v-infinite-scroll :items="revisionsState.items" @load="loadRevisions">
+                    <v-timeline density="compact" side="end">
+                        <v-timeline-item v-for="(item, index) in revisionsState.items" :key="item" dot-color="primary" size="10">
+                            <div>
+                                <div><b>@${item.user.username}</b> {{ _('updated the settings') }} <span class="text-muted">{{ _('at') }} ${getTimelineDate(item.created_at)}</span></div>
+                                <div v-if="index === 0" class="font-italic">{{ _('Current configuration') }}</div>
+                                <div v-else-if="!diffPatch.diff(this.exconfig, cleanConfig(item.config))" class="font-italic">{{ _('Same as current configuration') }}</div>
+                                <show-details v-else show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+                                    <v-sheet class="change-item pa-2 d-flex align-center" v-for="change in generateConfigDiff(diffPatch.diff(this.exconfig, cleanConfig(item.config)))">
+                                        <span class="body-2 font-weight-bold text--black mr-3">${change.label}</span>
+                                        <span v-html="change.diff"></span>
+                                    </v-sheet>
+                                </show-details>
+                                <v-btn v-if="index !== 0 && diffPatch.diff(this.exconfig, cleanConfig(item.config))" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Reverse to this version') }}</v-btn>
+                            </div>
+                        </v-timeline-item>
+                    </v-timeline>
+                </v-infinite-scroll>
+            </v-card-text>
         </v-card>
-
-
     </v-navigation-drawer>
 
 
@@ -760,6 +755,7 @@
 
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/components/ShowDetails.js"></script>
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         const {createApp} = Vue;
@@ -777,6 +773,8 @@
                 eitem: {
                     ACTIVITIES:{},
                 },
+                isCollapsed: true,
+                infiniteScrollCallback: null,
 
                 // nav drawer
                 showRevisions: false,
@@ -787,12 +785,11 @@
                         { title: "{{ _('Username') }}", value: 'username' },
                         { title: "{{ _('Actions') }}", value: 'actions' },
                     ],
-                    currentPage: 1,
                     itemsLength: 0,
                     loading: false,
-                    initialPagination: {
+                    pagination: {
                         page: 1,
-                        per_page: 4
+                        per_page: 1
                     }
                 },
 
@@ -878,7 +875,6 @@
             },
 
             methods: {
-
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
                         this.eitem = res.data.config;
@@ -893,11 +889,17 @@
                 },
 
                 revertVersion(config) {
-                    this.eitem = structuredClone(config.config);
+                    try {
+                        this.eitem = structuredClone(config.config);
+                    } catch (error) {
+                        console.warn("structuredClone failed, falling back to JSON.parse", error);
+                        this.eitem = JSON.parse(JSON.stringify(config.config));
+                    }
+
                     this.showRevisions = false;
                     this.showConfigDiff();
-
                 },
+
 
                 friendlyDiff(html) {
                     let output = html.replace(/true/ig, 'On');
@@ -907,13 +909,11 @@
 
                 },
                 generateConfigDiff(delta) {
-
-
                     // build a customized diff array to display to the user before saving
                     let diff = [];
+                    if (!delta) return diff;
+
                     for (const k of Object.keys(delta)) {
-
-
                         diff.push(
                             {
                                 label: this.configLabels[k],
@@ -931,7 +931,7 @@
 
 
                 showConfigDiff() {
-                    const delta = this.diffPatch.diff(this.exconfig, this.eitem);
+                    const delta = this.diffPatch.diff(this.cleanConfig(this.exconfig), this.cleanConfig(this.eitem));
 
                     if (delta) {
                         this.configDiff = this.generateConfigDiff(delta);
@@ -986,22 +986,37 @@
                 },
 
                 loadRevisions(options) {
+                    if (options?.done) {
+                        this.infiniteScrollCallback = options?.done;
+                    }
+
                     const params = {
-                        ...this.revisionsState.initialPagination,
-                        ...options,
-                        per_page: options?.itemsPerPage ?? 10
+                        ...this.revisionsState.pagination,
                     };
-                    delete params.itemsPerPage;
                     
                     this.revisionsState.loading = true;
                     axios.get(`/admin/api/appconfig/`, { params }).then(response => {
                         this.revisionsState.itemsLength = response.data.total;
-                        this.revisionsState.items = response.data.items;
+                        if (params.page === 1) {
+                            this.revisionsState.items = response.data.items;
+                        } else {
+                            this.revisionsState.items.push(...response.data.items);
+                        }
+                        
+                        const hasMore = this.revisionsState.items.length < response.data.total;
+                        if (hasMore) this.revisionsState.pagination.page++
+                        options?.done?.(hasMore ? 'ok' : 'empty');
                     }).catch(err => {
                         console.error(err);
+                        options?.done?.('error');
                     }).finally(() => {
                         this.revisionsState.loading = false;
                     });
+                },
+                resetRevisions() {
+                    this.revisionsState.pagination.page = 1;
+                    this.infiniteScrollCallback?.('ok');
+                    this.loadRevisions();
                 },
 
                 waitForReload() {
@@ -1009,7 +1024,7 @@
                         axios.get('/').then(res => {
                             this.overlay = false;
                             this.loadConfiguration();
-                            this.loadRevisions();
+                            this.resetRevisions();
                             this.showSnack("{{_('Bayanat reloaded successfully.')}}");
                             // reset settings
                         }).catch(err => {
@@ -1037,9 +1052,45 @@
                         this.confirmDialog = false;
                     })
                 },
+
+                getTimelineDate(dateString) {
+                    const date = dayjs(dateString);
+                    const today = dayjs();
+
+                    // Check if the date is today
+                    if(date.isSame(today, 'day')) {
+                        // If it's today, show time
+                        return date.format('hh:mm A');
+                    } else {
+                        // Otherwise, include full date and time
+                        return date.format('DD MMM YYYY, hh:mm A');
+                    }
+                },
+
+                replaceNullValues(obj, replacement = '') {
+                    for(const key in obj) {
+                        if (obj[key] === null) {
+                            obj[key] = replacement;
+                        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                            this.replaceNullValues(obj[key], replacement);
+                        }
+                    }
+                    return obj;
+                },
+
+                cleanConfig(oldConfig) {
+                    const config = this.replaceNullValues(oldConfig)
+
+                    if ('SETUP_COMPLETE' in config) {
+                        delete config.SETUP_COMPLETE
+                    }
+
+                    return config
+                }
             }
         });
         app.component('geo-map', GeoMap);
+        app.component('show-details', ShowDetails);
         
         app.use(router).use(vuetify).mount('#app');
 
