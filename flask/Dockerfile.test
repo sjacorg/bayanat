@@ -24,7 +24,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN . /opt/venv/bin/activate
 
 RUN echo "Building Bayanat container."
-RUN pip install -r requirements/requirements-dev.txt
+RUN pip install -r requirements/dev.txt
 RUN ls -la /opt/venv/bin/
 
 COPY ./flask/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
