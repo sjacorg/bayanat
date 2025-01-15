@@ -10,6 +10,15 @@ from sqlalchemy.exc import ProgrammingError
 with patch.object(ConfigManager, "CONFIG_FILE_PATH", "config.sample.json"):
     from enferno.settings import TestConfig as cfg
 
+from enferno.settings import Config as prod_cfg
+
+# Because the app context is not available when the extensions are initialized,
+# Flask-Limiter extension directly uses the config object to initialize the storage.
+# We need to patch the production config before importing create_app to use the
+# test config for rate limiting
+with patch.object(prod_cfg, "REDIS_URL", cfg.REDIS_URL):
+    from enferno.app import create_app
+
 
 @pytest.fixture(scope="session", autouse=True)
 def flush_redis_after_tests():
@@ -32,7 +41,6 @@ def flush_redis_after_tests():
 @pytest.fixture(scope="session")
 def app():
     """Create a Flask app context for testing."""
-    from enferno.app import create_app
     from flask_login import FlaskLoginClient
 
     app = create_app(cfg)
