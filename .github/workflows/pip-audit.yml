@@ -23,4 +23,4 @@ jobs:
           sudo apt install libimage-exiftool-perl
       - uses: pypa/gh-action-pip-audit@v1.0.8
         with:
-          inputs: requirements/requirements.txt requirements/dev.txt requirements/opt.txt
+          inputs: requirements/main.txt requirements/dev.txt requirements/opt.txt
