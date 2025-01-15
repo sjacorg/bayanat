@@ -879,7 +879,7 @@
 
             methods: {
                 loadWhisperModels(){
-                    axios.get('/admin/api/whisper/models/').then(res => {
+                    axios.get('/import/api/whisper/models/').then(res => {
                         this.whisperModels = res.data.models;
                     }).catch(err => {
                         this.showSnack(err?.response?.data);

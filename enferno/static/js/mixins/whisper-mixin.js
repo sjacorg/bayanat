@@ -3,7 +3,7 @@ const whisperMixin = {
     whisperLanguageCodes: null
   }),
   mounted() {
-    axios.get('/admin/api/whisper/languages').then(response => {
+    axios.get('/import/api/whisper/languages').then(response => {
       this.whisperLanguageCodes = response.data.languages;
     }).catch(error => {
       console.error(error);
