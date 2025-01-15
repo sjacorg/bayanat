@@ -88,7 +88,6 @@ def setup_celery_logger(logger, *args, **kwargs):
         logger.addHandler(handler)
     for handler in logger.handlers:
         handler.setLevel(cfg.LOG_LEVEL)
-    print(logger.handlers)
 
 
 @after_setup_task_logger.connect
