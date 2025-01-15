@@ -77,11 +77,6 @@ def get_logger(name="app_logger"):
 @after_setup_logger.connect
 def setup_celery_logger(logger, *args, **kwargs):
     """Configure the Celery logger to use our existing logging setup."""
-    # Set log level first
-    logger.setLevel(cfg.LOG_LEVEL)
-    # Prevent propagation to avoid duplicate logs
-    logger.propagate = False
-
     if cfg.CELERY_LOG_ENABLED:
         handler = TimedRotatingFileHandler(
             os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
@@ -89,6 +84,7 @@ def setup_celery_logger(logger, *args, **kwargs):
             backupCount=cfg.LOG_BACKUP_COUNT,
         )
         handler.setFormatter(JsonFormatter())
+        handler.setLevel(cfg.LOG_LEVEL)
         logger.addHandler(handler)
 
 
