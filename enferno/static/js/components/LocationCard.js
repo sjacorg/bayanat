@@ -131,7 +131,7 @@ const LocationCard = Vue.defineComponent({
         </v-chip>
       </v-card>
       <!-- Refs -->
-      <v-card :subtitle="translations.ref_" v-if="location?.tags?.length" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
+      <v-card :subtitle="translations.tags_" v-if="location?.tags?.length" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
         <div class="flex-chips">
           <v-chip size="x-small" class="flex-chip" v-for="e in location.tags" >{{ e }}</v-chip>
         </div>
