@@ -1,4 +1,4 @@
--r requirements.txt
+-r main.txt
 pytest==7.4.4
 flask_pydantic==0.11.0
 SQLAlchemy-Utils==0.41.1
@@ -6,3 +6,4 @@ pre-commit==3.5.0
 black==24.3.0
 factory-boy==3.3.0
 pytest-sugar==1.0.0
+-r opt.txt
