@@ -8,7 +8,7 @@
             <v-container fluid>
                 <v-row>
                     <v-col cols="12" sm="12" md="4" lg="3" class="px-0">
-                        <v-card border flat rounded class="py-5">
+                        <v-card border flat rounded class="py-5 position-sticky" style="top: 24px;">
                             <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
                                 <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key" class="px-7 justify-start text-none text-subtitle-2">
                                     ${tab.text}
@@ -16,7 +16,7 @@
                             </v-tabs>
                         </v-card>
                     </v-col>
-                    <v-col cols="12" sm="12" md="8" lg="9">
+                    <v-col cols="12" sm="12" md="8" lg="9" class="pl-sm-0 pl-md-4 pr-0">
                         <v-card border flat rounded class="h-100">
                             <v-card-title class="d-flex flex-column position-sticky py-0 px-4 bg-surface top-0 z-1">
                                 <div class="d-flex my-3">
@@ -120,7 +120,6 @@
                                                     hint="{{ _('Advanced features for more efficient analysis.') }}"></v-switch>
                                     </v-card>
                                 </v-window-item>
-
 
                                 <v-window-item value="storage">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
@@ -331,8 +330,8 @@
                                         <p class="text-caption text-muted mb-6">{{ _('Set users\' actions to be logged in the Activity Monitor.') }}</p>
 
                                         <h4 class="subtitle-2 mb-3">{{ _('Items') }}</h4>
-                                        <v-row class="mb-9">
-                                            <v-col cols="12" md="4" lg="2">
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Items created') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch
                                                     persistent-hint
@@ -340,7 +339,7 @@
                                                     v-model="eitem.ACTIVITIES['CREATE']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="2">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Items viewed') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch
                                                     persistent-hint
@@ -348,21 +347,21 @@
                                                     v-model="eitem.ACTIVITIES['VIEW']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="2">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Items edited') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items edited by users.') }}"
                                                     v-model="eitem.ACTIVITIES['UPDATE']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="2">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Items deleted') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all secondary items deleted by authorized users. Note: Actors, Bulletins and Incidents cannot be deleted.') }}"
                                                     v-model="eitem.ACTIVITIES['DELETE']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="2">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Items reviewed') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all items peer-viewed by authorized users.') }}"
@@ -370,17 +369,19 @@
                                                 </v-switch>
                                             </v-col>
                                         </v-row>
+
+                                        <v-divider class="my-6"></v-divider>
                                         
                                         <h4 class="subtitle-2 mb-3">{{ _('Files') }}</h4>
-                                        <v-row class="mb-9">
-                                            <v-col cols="12" md="4" lg="4">
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Files uploaded') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all files uploaded users to media storage.') }}"
                                                     v-model="eitem.ACTIVITIES['UPLOAD']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="4">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Bulk operations queued') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}"
@@ -389,30 +390,32 @@
                                             </v-col>
                                         </v-row>
 
+                                        <v-divider class="my-6"></v-divider>
+
                                         <h4 class="subtitle-2 mb-3">{{ _('Export') }}</h4>
-                                        <v-row class="mb-9">
-                                            <v-col cols="12" md="4" lg="3">
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Export requests made') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests submitted by authorized users.') }}"
                                                     v-model="eitem.ACTIVITIES['REQUEST']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="3">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Export requests approved') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests approvals by administrators.') }}"
                                                     v-model="eitem.ACTIVITIES['APPROVE']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="3">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Export requests rejected') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests rejections by administrators.') }}"
                                                     v-model="eitem.ACTIVITIES['REJECT']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="3">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Export requests downloaded') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all export requests downloads by authorized users.') }}"
@@ -421,46 +424,50 @@
                                             </v-col>
                                         </v-row>
 
+                                        <v-divider class="my-6"></v-divider>
+
                                         <h4 class="subtitle-2 mb-3">{{ _('Login/Logout') }}</h4>
-                                        <v-row class="mb-9">
-                                            <v-col cols="12" md="4" lg="4">
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Logins') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all user login activities.') }}"
                                                     v-model="eitem.ACTIVITIES['LOGIN']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="4">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Logouts') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all user logout activities. Note: only explicit logout will be logged, users closing their browsers without logging out will not for example.') }}"
                                                     v-model="eitem.ACTIVITIES['LOGOUT']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="4">
+                                            <v-col cols="12" lg="4">
                                                 <v-text-field class="mb-9" type="number" label="{{ _('Activity Retention Period') }}" persistent-hint
                                                     hint="{{ _('Period after which activities will be deleted.') }}" suffix="days"
                                                     v-model.number="eitem.ACTIVITIES_RETENTION"></v-text-field>
                                             </v-col>
                                         </v-row>
 
+                                        <v-divider class="my-6"></v-divider>
+
                                         <h4 class="subtitle-2 mb-3">{{ _('Other') }}</h4>
-                                        <v-row class="mb-9">
-                                            <v-col cols="12" md="4" lg="4">
+                                        <v-row>
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Search queries made') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all searches conducted by users on Actors, Bulletins and Incidents.') }}"
                                                     v-model="eitem.ACTIVITIES['SEARCH']">
                                                 </v-switch>
                                             </v-col>
-                                            <v-col cols="12" md="4" lg="4">
+                                            <v-col cols="12" lg="4">
                                                 <div class="text-body-2 mb-n1"><strong>{{ _('Items self-assigned') }}</strong>{{ _(' by users.') }}</div>
                                                 <v-switch persistent-hint
                                                     hint="{{ _('This setting will enable logging all items self-assigned by users.') }}"
                                                     v-model="eitem.ACTIVITIES['SELF-ASSIGN']">
                                                 </v-switch>
                                             </v-col>
-                                        </v-row>                                        
+                                        </v-row>  
                                     </v-card>
                                 </v-window-item>
 
