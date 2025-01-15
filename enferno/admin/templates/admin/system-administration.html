@@ -655,10 +655,9 @@
 
     >
         <v-card flat>
-            <v-card-title class="pa-6">{{ _('Revision History') }}</v-card-title>
+            <v-card-title class="pa-6">{{ _('Revision history') }}</v-card-title>
             <v-card-text class="px-6">
-                <v-btn @click="resetRevisions()">Reload</v-btn>
-                <v-infinite-scroll :items="revisionsState.items" @load="loadRevisions">
+                <v-infinite-scroll empty-text="{{ _('No more items in history') }}" :items="revisionsState.items" @load="loadRevisions">
                     <v-timeline density="compact" side="end">
                         <v-timeline-item v-for="(item, index) in revisionsState.items" :key="item" dot-color="primary" size="10">
                             <div>
@@ -789,7 +788,7 @@
                     loading: false,
                     pagination: {
                         page: 1,
-                        per_page: 1
+                        per_page: 10
                     }
                 },
 
