@@ -5825,6 +5825,7 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
 
 
 @admin.get("/api/whisper/models/")
+@roles_required("Admin")
 def api_whisper_models() -> Response:
     """Returns the list of whisper models."""
     return jsonify({"models": Constants.WHISPER_MODEL_OPTS})
