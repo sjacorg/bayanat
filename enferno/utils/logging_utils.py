@@ -86,6 +86,9 @@ def setup_celery_logger(logger, *args, **kwargs):
         handler.setFormatter(JsonFormatter())
         handler.setLevel(cfg.LOG_LEVEL)
         logger.addHandler(handler)
+    else:
+        for handler in logger.handlers:
+            handler.setLevel(cfg.LOG_LEVEL)
 
 
 @after_setup_task_logger.connect
