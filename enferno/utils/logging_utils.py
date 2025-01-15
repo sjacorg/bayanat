@@ -87,6 +87,7 @@ def setup_celery_logger(logger, *args, **kwargs):
         handler.setLevel(cfg.LOG_LEVEL)
         logger.addHandler(handler)
     else:
+        logger.setLevel(cfg.LOG_LEVEL)
         for handler in logger.handlers:
             handler.setLevel(cfg.LOG_LEVEL)
 
