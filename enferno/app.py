@@ -31,7 +31,7 @@ from enferno.admin.models import (
 )
 from enferno.admin.views import admin
 from enferno.data_import.views import imports
-from enferno.extensions import db, session, babel, rds, debug_toolbar, mail
+from enferno.extensions import db, session, babel, rds, debug_toolbar, mail, limiter
 from enferno.public.views import bp_public
 from enferno.setup.views import bp_setup
 from enferno.settings import Config
@@ -40,6 +40,7 @@ from enferno.user.models import User, Role
 from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.rate_limit_utils import ratelimit_handler
 
 logger = get_logger()
 
@@ -108,6 +109,7 @@ def register_extensions(app):
     babel.init_app(app, locale_selector=get_locale, default_domain="messages", default_locale="en")
     rds.init_app(app)
     mail.init_app(app)
+    limiter.init_app(app)
 
 
 def register_signals(app):
@@ -242,6 +244,8 @@ def register_errorhandlers(app):
 
     for errcode in [401, 404, 500]:
         app.errorhandler(errcode)(render_error)
+
+    app.errorhandler(429)(ratelimit_handler)
 
     app.errorhandler(Exception)(handle_uncaught_exception)
 
