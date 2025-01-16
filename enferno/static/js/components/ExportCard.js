@@ -217,9 +217,9 @@ const ExportCard = Vue.defineComponent({
       </v-card>
 
       <!-- Refs -->
-      <v-card v-if="exp.ref && exp.ref.length" class="ma-2 pa-2 d-flex align-center flex-grow-1">
-        <div class="text-subtitle-2 mr-2">{{ translations.ref_ }}</div>
-        <v-chip size="x-small" v-for="r in exp.ref" class="caption  mx-1">{{ r }}</v-chip>
+      <v-card v-if="exp.tags && exp.tags.length" class="ma-2 pa-2 d-flex align-center flex-grow-1">
+        <div class="text-subtitle-2 mr-2">{{ translations.tags_ }}</div>
+        <v-chip size="x-small" v-for="t in exp.tags" class="caption  mx-1">{{ t }}</v-chip>
       </v-card>
 
       <!-- Comment -->
