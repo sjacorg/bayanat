@@ -1,15 +1,16 @@
 from pathlib import Path
 
 import os
-from typing import Any, Literal, Optional
+from typing import Optional
 
 import shortuuid
-from flask import request, Response, Blueprint, current_app, json
+from flask import jsonify, request, Response, Blueprint, current_app, json
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import safe_join
 
+from enferno.admin.constants import Constants
 from enferno.admin.models import Media
 from enferno.data_import.models import DataImport, Mapping
 from enferno.data_import.utils.sheet_import import SheetImport
@@ -452,3 +453,19 @@ def api_process_sheet() -> Response:
             )
 
     return batch_id, 200
+
+
+@imports.get("/api/whisper/models/")
+@roles_required("Admin")
+def api_whisper_models() -> Response:
+    """Returns the list of whisper models."""
+    return jsonify({"models": Constants.WHISPER_MODEL_OPTS})
+
+
+@imports.get("/api/whisper/languages/")
+@roles_required("Admin")
+def api_whisper_languages() -> Response:
+    """Returns the list of whisper languages."""
+    from whisper.tokenizer import TO_LANGUAGE_CODE
+
+    return jsonify({"languages": TO_LANGUAGE_CODE})
