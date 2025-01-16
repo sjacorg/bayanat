@@ -25,302 +25,331 @@ const GeoMap = Vue.defineComponent({
     },
   },
   emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const translations = window.translations
-    const mapId = 'map-' + Vue.getCurrentInstance().uid
-    const map = Vue.shallowRef(null)
-    const lat = Vue.ref(geoMapDefaultCenter.lat)
-    const lng = Vue.ref(geoMapDefaultCenter.lng)
-    const radius = Vue.ref(props.modelValue?.radius || 1000)
-    const marker = Vue.shallowRef(null)
-    const attribution = '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-    const googleAttribution = '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies'
-    const radiusCircle = Vue.ref(null)
 
-    const mapStyle = Vue.computed(() => ({
-      height: props.mapHeight + 'px',
-      width: '100%',
-    }));
-    const mapCenter = Vue.computed({
+  computed: {
+    mapStyle() {
+      return {
+        height: this.mapHeight + 'px',
+        width: '100%',
+      };
+    },
+
+    mapCenter: {
       get() {
-        if (lat.value && lng.value) {
-          return [lat.value, lng.value];
+        if (this.lat && this.lng) {
+          return [this.lat, this.lng];
         }
         return geoMapDefaultCenter;
       },
-      set() {
-        emitValue();
+      set(value) {
+        [this.lat, this.lng] = value;
+        this.emitValue();
       },
-    })
-    const additionalMarkers = Vue.computed(() => {
-      return props.others && props.modelValue
-        ? props.others.filter(
-          (other) => other.lat !== props.modelValue.lat || other.lng !== props.modelValue.lng,
-        )
-        : [];
-    });
+    },
 
-    function initMap() {
+    additionalMarkers() {
+      return this.others && this.modelValue
+        ? this.others.filter(
+            ({ lat, lng }) => lat !== this.modelValue.lat || lng !== this.modelValue.lng,
+          )
+        : [];
+    },
+  },
+
+  data: function () {
+    return {
+      translations: window.translations,
+      mapId: 'map-' + this.$.uid,
+      mapKey: 0,
+      lat: this.modelValue?.lat,
+      lng: this.modelValue?.lng,
+      radius: this.modelValue?.radius || 1000,
+      subdomains: null,
+      mapsApiEndpoint: mapsApiEndpoint,
+      location: null,
+      attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
+      radiusCircle: null,
+    };
+  },
+
+  watch: {
+    lat(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.updateMap();
+        this.emitValue();
+      }
+    },
+    lng(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.updateMap();
+        this.emitValue();
+      }
+    },
+    radius(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.updateRadiusCircle();
+        this.emitValue();
+      }
+    },
+      modelValue: {
+        deep: true,
+        immediate: true,
+        handler(newVal, oldVal) {
+          if (!newVal) {
+            this.lat = undefined;
+            this.lng = undefined;
+            this.radius = 1000; // reset
+            return;
+          }
+
+          // Update lat if different
+          if (newVal.lat !== this.lat) {
+            this.lat = newVal.lat;
+          }
+
+          // Update lng if different
+          if (newVal.lng !== this.lng) {
+            this.lng = newVal.lng;
+          }
+
+          // Prevent string or negative radius on backend and update radius if different
+          if (typeof newVal.radius !== 'string' && newVal.radius >= 0 && newVal.radius !== this.radius) {
+            this.radius = newVal.radius;
+            this.clearAddRadiusCircle();
+          }
+        },
+      }
+
+  },
+
+  mounted() {
+    this.map = null;
+    this.marker = null;
+    this.initMap();
+    const { lat, lng, radius = 1000 } = this.modelValue || {};
+    if (lat && lng) {
+      this.lat = lat;
+      this.lng = lng;
+      this.radius = radius;
+      this.setOrUpdateMarker(lat, lng);
+      this.updateRadiusCircle();
+      // add additional markers
+      this.addAdditionalMarkers();
+    } else {
+      // Set default center if lat and lng are not provided
+      this.map.setView(geoMapDefaultCenter, 13);
+    }
+  },
+
+  // clean up resize event listener
+
+  methods: {
+    initMap() {
       // Create the map instance
-      map.value = L.map(mapId, {
-        center: mapCenter.value,
+      this.map = L.map(this.mapId, {
+        center: this.mapCenter,
         zoom: 13,
         scrollWheelZoom: false,
       });
 
-      // Define the OpenStreetMap tile layer
-      const osmLayer = L.tileLayer(mapsApiEndpoint, {
-        attribution: attribution,
-      }).addTo(map.value); // Add as the default layer
+      // Add the default tile layer
+      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: this.attribution,
+      }).addTo(this.map);
 
-      // Define the Google Maps satellite tile layer
       const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-        attribution: googleAttribution,
+        attribution: this.googleAttribution,
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       });
 
-      // Add the fullscreen control
-      map.value.addControl(
-        new L.Control.Fullscreen({
-          title: {
-            false: translations.enterFullscreen_,
-            true: translations.exitFullscreen_,
-          },
-        }),
-      );
-
-      // Add a layer control for toggling between OSM and Google Maps
       const baseMaps = {
         'OpenStreetMap': osmLayer,
         'Google Satellite': googleLayer,
       };
 
       if (window.__GOOGLE_MAPS_API_KEY__) {
-        L.control.layers(baseMaps).addTo(map.value);
+        L.control.layers(baseMaps).addTo(this.map);
       }
 
+      // Add the fullscreen control with improved readability
+      this.map.addControl(
+        new L.Control.Fullscreen({
+          title: {
+            false: this.translations.enterFullscreen_,
+            true: this.translations.exitFullscreen_,
+          },
+        }),
+      );
+
       // Add a click event listener to the map for marker setting
-      map.value.on('click', setMarker);
+      this.map.on('click', this.setMarker);
 
       // Update the map with initial lat, lng, and radius
-      updateMap();
+      this.updateMap();
 
       // Ensure the map size adjusts to window resizing for responsive behavior
-      const resizeListener = () => fixMap();
+      const resizeListener = () => this.fixMap();
       window.addEventListener('resize', resizeListener);
 
       // Immediately adjust map size to fit container
-      fixMap();
-    }
-
-    function addAdditionalMarkers() {
-      additionalMarkers.value.forEach((marker) => {
+      this.fixMap();
+    },
+    addAdditionalMarkers() {
+      this.additionalMarkers.forEach((marker) => {
         L.marker([marker.lat, marker.lng], {
           draggable: false,
           opacity: 0.4,
-        }).addTo(map.value);
+        }).addTo(this.map);
       });
-    }
+    },
 
-    function updateMap() {
-      if (lat.value && lng.value && map.value) {
-        map.value.setView([lat.value, lng.value]);
-        setMarker({ latlng: { lat: lat.value, lng: lng.value } });
+    updateMap() {
+      if (this.lat && this.lng && this.map) {
+        this.map.setView([this.lat, this.lng]);
+        this.setMarker({ latlng: { lat: this.lat, lng: this.lng } });
       } else {
-        clearMarker();
+        this.clearMarker();
       }
-    }
+    },
 
-    function updateRadiusCircle() {
-      if (props.radiusControls && lat.value && lng.value) {
-        if (radiusCircle.value) {
-          map.value.removeLayer(radiusCircle.value);
+    updateRadiusCircle() {
+      if (this.radiusControls && this.lat && this.lng) {
+        if (this.radiusCircle) {
+          this.map.removeLayer(this.radiusCircle);
         }
-        radiusCircle.value = L.circle([lat.value, lng.value], {
-          radius: radius.value,
+        this.radiusCircle = L.circle([this.lat, this.lng], {
+          radius: this.radius,
         });
-        map.value.addLayer(radiusCircle.value); // Add this line
+        this.map.addLayer(this.radiusCircle); // Add this line
         debounce(() => {
-          if (radiusCircle.value) {
-            const bounds = radiusCircle.value.getBounds();
-            map.value.fitBounds(bounds);
+          if (this.radiusCircle) {
+            const bounds = this.radiusCircle.getBounds();
+            this.map.fitBounds(bounds);
           }
         }, 250)();
       } else {
-        clearRadiusCircle();
+        this.clearRadiusCircle();
       }
-    }
+    },
 
-    function fixMap() {
-      Vue.nextTick(() => map.value?.invalidateSize?.());
-    }
+    fixMap() {
+      this.$nextTick(() => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
 
-    function clearMarker() {
-      if (marker.value) {
-        map.value.removeLayer(marker.value);
-        marker.value = null; // Clear the reference
+        if (!this.tileLayer) {
+          this.tileLayer = L.tileLayer(this.mapsApiEndpoint, {
+            attribution: this.attribution,
+          }).addTo(this.map);
+
+          this.tileLayer.on('error', function (error) {
+            console.error('Tile layer error:', error);
+          });
+        }
+      });
+    },
+
+    clearMarker() {
+      if (this.marker) {
+        this.map.removeLayer(this.marker);
+        this.marker = null; // Clear the reference
       }
-      if (radiusCircle.value) {
-        map.value.removeLayer(radiusCircle.value);
-        radiusCircle.value = null;
+      if (this.radiusCircle) {
+        this.map.removeLayer(this.radiusCircle);
+        this.radiusCircle = null;
       }
       // Reset lat, lng
-      lat.value = null;
-      lng.value = null;
-    }
+      this.lat = null;
+      this.lng = null;
+    },
 
-    function setMarker(evt) {
-      if (props.editMode) {
+    setMarker(evt) {
+      if (this.editMode) {
         // Clear existing marker
-        if (marker.value) {
-          clearMarker();
+        if (this.marker) {
+          this.clearMarker();
         }
 
         // Set new marker
-        const { lat: latitude, lng: longitude } = evt.latlng;
-        setOrUpdateMarker(latitude, longitude);
-        updateRadiusCircle(); // Add this line
+        const { lat, lng } = evt.latlng;
+        this.setOrUpdateMarker(lat, lng);
+        this.updateRadiusCircle(); // Add this line
 
-        emitValue();
+        this.broadcast();
       }
-    }
+    },
 
-    function setOrUpdateMarker(latitude, longitude) {
+    setOrUpdateMarker(lat, lng) {
       // Clear existing marker
-      if (marker.value) {
-        map.value.removeLayer(marker.value);
+      if (this.marker) {
+        this.map.removeLayer(this.marker);
       }
 
       // Update lat and lng
-      lat.value = latitude;
-      lng.value = longitude;
-
+      this.lat = lat;
+      this.lng = lng;
       // Set new marker
-      marker.value = L.marker([latitude, longitude]).addTo(map.value);
-    }
+      this.marker = L.marker([lat, lng]).addTo(this.map);
+    },
 
-    function clearRadiusCircle() {
-      if (radiusCircle.value) {
-        map.value.removeLayer(radiusCircle.value);
-        radiusCircle.value = null;
+    clearRadiusCircle() {
+      if (this.radiusCircle) {
+        this.map.removeLayer(this.radiusCircle);
+        this.radiusCircle = null;
       }
-    }
+    },
 
-    
-    function clearAddRadiusCircle() {
-      if (!props.radiusControls) {
+    emitValue() {
+      const newValue =
+        this.lat !== null && this.lng !== null
+          ? { lat: this.lat, lng: this.lng, radius: this.radius }
+          : null;
+      this.$emit('update:modelValue', newValue);
+    },
+
+    updateLocation(point) {
+      this.lat = point.lat;
+      this.lng = point.lng;
+    },
+
+    clearAddRadiusCircle() {
+      if (!this.radiusControls) {
         return;
       }
 
       // Remove existing radius circle if it exists
-      if (radiusCircle.value) {
-        map.value.removeLayer(radiusCircle.value);
+      if (this.radiusCircle) {
+        this.map.removeLayer(this.radiusCircle);
       }
 
       // If radius is not provided, return
-      if (!radius.value) {
+      if (!this.radius) {
         return;
       }
 
-      if (!lat.value || !lng.value) {
+      if (!this.lat || !this.lng) {
         return;
       }
-      radiusCircle.value = L.circle([lat.value, lng.value], {
-        radius: radius.value,
-      }).addTo(map.value);
+      this.radiusCircle = L.circle([this.lat, this.lng], {
+        radius: this.radius,
+      }).addTo(this.map);
 
       debounce(() => {
-        const bounds = radiusCircle.value.getBounds();
-        map.value.fitBounds(bounds);
+        const bounds = this.radiusCircle.getBounds();
+        this.map.fitBounds(bounds);
       }, 250)();
-    }
-    
-    function emitValue() {
+    },
+
+    broadcast() {
       const newValue =
-        lat.value !== null && lng.value !== null
-          ? { lat: lat.value, lng: lng.value, radius: radius.value }
+        this.lat !== null && this.lng !== null
+          ? { lat: this.lat, lng: this.lng, radius: this.radius }
           : null;
-      emit('update:modelValue', newValue);
-    }
-
-    Vue.watch(lat, (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        updateMap();
-        emitValue();
-      }
-    });
-
-    // Watch lng changes
-    Vue.watch(lng, (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        updateMap();
-        emitValue();
-      }
-    });
-
-    // Watch radius changes
-    Vue.watch(radius, (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        updateRadiusCircle();
-        emitValue();
-      }
-    });
-
-    Vue.watch(() => props.modelValue, (newVal, oldVal) => {
-      if (!newVal) {
-        lat.value = undefined;
-        lng.value = undefined;
-        radius.value = 1000; // reset
-        return;
-      }
-
-      // Update lat if different
-      if (newVal.lat !== lat.value) {
-        lat.value = newVal.lat;
-      }
-
-      // Update lng if different
-      if (newVal.lng !== lng.value) {
-        lng.value = newVal.lng;
-      }
-
-      // Prevent string or negative radius on backend and update radius if different
-      if (typeof newVal.radius !== 'string' && newVal.radius >= 0 && newVal.radius !== radius.value) {
-        radius.value = newVal.radius;
-        clearAddRadiusCircle();
-      }
-    }, { deep: true, immediate: true });
-
-    Vue.onMounted(() => {
-      initMap();
-      const { lat: nextLat, lng: nextLng, radius: nextRadius = 1000 } = props.modelValue || {};
-      if (nextLat && nextLng) {
-        lat.value = nextLat;
-        lng.value = nextLng;
-        radius.value = nextRadius;
-        setOrUpdateMarker(nextLat, nextLng);
-        updateRadiusCircle();
-        // add additional markers
-        addAdditionalMarkers();
-      } else {
-        // Set default center if lat and lng are not provided
-        map.value.setView(geoMapDefaultCenter, 13);
-      }
-    })
-
-    Vue.onUnmounted(() => {
-      map?.remove?.()
-    });
-
-    return {
-      lat,
-      lng,
-      clearMarker,
-      radius,
-      mapId,
-      mapStyle
-    }
+      this.$emit('update:modelValue', newValue);
+    },
   },
   template: `
       <v-card class="pa-1" elevation="0">
