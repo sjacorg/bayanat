@@ -8,7 +8,7 @@
             <v-container fluid>
                 <v-row>
                     <v-col cols="12" sm="12" md="4" lg="3" class="px-0">
-                        <v-card border flat rounded class="py-5 position-sticky" style="top: 24px;">
+                        <v-card border flat rounded class="py-5 position-sticky top-0">
                             <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
                                 <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key" class="px-7 justify-start text-none text-subtitle-2">
                                     ${tab.text}
@@ -17,8 +17,10 @@
                         </v-card>
                     </v-col>
                     <v-col cols="12" sm="12" md="8" lg="9" class="pl-sm-0 pl-md-4 pr-0">
-                        <v-card border flat rounded class="h-100">
-                            <v-card-title class="d-flex flex-column position-sticky py-0 px-4 bg-surface top-0 z-1">
+                        <div ref="triggerOverlay"></div>
+                        <v-card border flat rounded class="h-100 overflow-visible position-relative">
+                            <v-card-title class="d-flex flex-column position-sticky pa-0 px-4 bg-surface top-0 z-1 overflow-visible">
+                                <div v-if="isOverlayVisible" class="position-absolute bg-surface w-100 pt-6 left-0" style="top: -24px;"></div>
                                 <div class="d-flex my-3">
                                     ${tabsMap[tab]?.text}
                                     <v-spacer></v-spacer>
@@ -38,11 +40,11 @@
                                         >{{ _('Save changes') }}</v-btn>    
                                     </div>
                                 </div>
+                                <v-divider></v-divider>
                             </v-card-title>
-                            <v-divider></v-divider>
-                            <v-window v-model="tab">
-                                <v-window-item :transition="false" :reverse-transition="false" value="general">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                            <div>
+                                <div v-if="tab === 'general'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-row>
                                             <v-col cols="6">
                                                 <h4 class="subtitle-2 mb-1">{{ _('Table settings') }}</h4>
@@ -119,10 +121,10 @@
                                                     persistent-hint
                                                     hint="{{ _('Advanced features for more efficient analysis.') }}"></v-switch>
                                     </v-card>
-                                </v-window-item>
+                                </div>
 
-                                <v-window-item :transition="false" :reverse-transition="false" value="storage">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                <div v-if="tab === 'storage'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 823px;">
                                             <h4 class="subtitle-2 mb-1">{{ _('Settings') }}</h4>
                                             <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
@@ -167,11 +169,11 @@
                                                             hint="{{ _('Sets the maximum allowed file size for media uploads.') }}"></v-text-field>
                                         </div>
                                     </v-card>
-                                </v-window-item>
+                                </div>
 
 
-                                <v-window-item :transition="false" :reverse-transition="false" value="security">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                <div v-if="tab === 'security'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-row>
                                             <v-col cols="12" lg="3">
                                                 <h4 class="subtitle-2 mb-1">{{ _('Password Policies') }}</h4>
@@ -299,11 +301,11 @@
 
                                         
                                     </v-card>
-                                </v-window-item>
+                                </div>
 
-                                <v-window-item :transition="false" :reverse-transition="false" value="control">
+                                <div v-if="tab === 'control'">
 
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <p class="text-caption text-muted mb-6" style="max-width: 823px;">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
 
                                         <v-row>
@@ -323,10 +325,10 @@
                                             </v-col>
                                         </v-row>
                                     </v-card>
-                                </v-window-item>
+                                </div>
 
-                                <v-window-item :transition="false" :reverse-transition="false" value="logging">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                <div v-if="tab === 'logging'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <p class="text-caption text-muted mb-6">{{ _('Set users\' actions to be logged in the Activity Monitor.') }}</p>
 
                                         <h4 class="subtitle-2 mb-3">{{ _('Items') }}</h4>
@@ -469,11 +471,11 @@
                                             </v-col>
                                         </v-row>  
                                     </v-card>
-                                </v-window-item>
+                                </div>
 
 
-                                <v-window-item :transition="false" :reverse-transition="false" value="import">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                <div v-if="tab === 'import'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <h4 class="subtitle-2 mb-n1">{{ _('Media import tool') }}</h4>
                                         <v-switch
                                                     persistent-hint
@@ -587,11 +589,11 @@
                                             </v-sheet>
                                         </v-slide-y-transition>
                                     </v-card>
-                                </v-window-item>
+                                </div>
 
 
-                                <v-window-item :transition="false" :reverse-transition="false" value="export">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                <div v-if="tab === 'export'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 424px;">
                                             <h4 class="subtitle-2 mb-n1">{{ _('Export system') }}</h4>
                                             <v-switch class="mb-4"
@@ -610,11 +612,11 @@
                                             </v-slide-y-transition>
                                         </div>
                                     </v-card>
-                                </v-window-item>
+                                </div>
 
 
-                                <v-window-item :transition="false" :reverse-transition="false" value="maps">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                <div v-if="tab === 'maps'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-text-field class="mb-9" label="{{ _('Map API endpoint') }}"
                                                         persistent-hint
                                                         hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
@@ -636,9 +638,9 @@
                                                         :map-height="300"></geo-map>
                                         </div>
                                     </v-card>
-                                </v-window-item>
-                                <v-window-item :transition="false" :reverse-transition="false" value="locations">
-                                    <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
+                                </div>
+                                <div v-if="tab === 'locations'">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 408px;">
                                             <h4 class="subtitle-2 mb-n1">{{ _('Include postal code generation settings') }}</h4>
                                             <v-switch 
@@ -647,8 +649,8 @@
                                                         hint="{{ _('Include postal codes in the format of full location text of all entries. Note: you must regenerate full locations from the Component Data dashboard for this change to take effect.') }}"></v-switch>
                                         </div>
                                     </v-card>
-                                </v-window-item>
-                            </v-window>
+                                </div>
+                            </div>
                         </v-card>
                     </v-col>
                 </v-row>
@@ -858,8 +860,7 @@
                 ltItem: {},
                 translations: window.translations,
                 whisperModels: [],
-
-
+                isOverlayVisible: false,
             }),
 
 
@@ -875,6 +876,7 @@
                 //load configuration
                 this.loadConfiguration();
                 this.loadWhisperModels();
+                this.setOverlayObserver();
             },
 
             computed: {
@@ -891,6 +893,24 @@
             },
 
             methods: {
+                setOverlayObserver() {
+                    const observer = new IntersectionObserver(
+                        ([entry]) => {
+                            this.isOverlayVisible = !entry.isIntersecting; // Show overlay when the trigger element leaves the viewport
+                        },
+                        {
+                            root: null, // Observe relative to the viewport
+                            threshold: 0, // Trigger when any part of the element is visible
+                        }
+                    );
+                    this.$nextTick(() => {
+                        this.$nextTick(() => {
+                            this.$nextTick(() => {
+                                observer.observe(this.$refs.triggerOverlay);
+                            })
+                        })
+                    })
+                },
                 loadWhisperModels(){
                     axios.get('/import/api/whisper/models/').then(res => {
                         this.whisperModels = res.data.models;
