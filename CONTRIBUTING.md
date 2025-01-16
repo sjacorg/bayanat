@@ -34,7 +34,7 @@ These tools are integrated into our development workflow via pre-commit hooks.
 
 ### Prerequisites
 
-The required libraries and hooks are defined in `dev-requirements.txt` and `package.json`.
+The required libraries and hooks are defined in `requirements/dev.txt` and `package.json`.
 
 
 ### Installation
@@ -42,7 +42,7 @@ The required libraries and hooks are defined in `dev-requirements.txt` and `pack
 1. Install Pre-commit and black:
 
    ```bash
-   pip install -r dev-requirements.txt
+   pip install -r requirements/dev.txt
    ```
 
 2. Install Node.js dependencies:
@@ -83,11 +83,46 @@ The configuration for each tool is as follows:
 - **Black:** Configured via `pyproject.toml`.
 - **Prettier:** Configured via `.prettierrc`.
 
+# Database Migrations
+
+All database migrations should be placed in `enferno/migrations/` using the following conventions:
+
+### Naming Convention
+
+Migration files should be prefixed with a timestamp in `YYYYMMDD_HHMMSS` format, followed by a descriptive name:
+
+```
+enferno/migrations/
+├── 20250113_153045_add_users_table.sql
+├── 20250114_090012_add_index_to_x.sql
+└── 20250114_120501_update_email_constraint.sql
+```
+
+### Creating Migration Files
+
+You can generate the timestamp prefix using either:
+
+Python:
+```python
+from datetime import datetime
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+```
+
+Bash:
+```bash
+date +"%Y%m%d_%H%M%S"
+```
+
+This naming convention ensures:
+- Clear chronological ordering of migrations
+- Prevents filename collisions when multiple developers create migrations
+- Makes it easy to track when changes were introduced
+
 # Tests
 
 Bayanat comes with e2e tests using pytest and pydantic models. To run the tests, install the dependencies with
 ```bash
-pip install -r dev-requirements.txt
+pip install -r requirements/dev.txt
 ```
 
 Bayanat tests require a separate test database to be setup before running any tests.
