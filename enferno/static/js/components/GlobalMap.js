@@ -79,7 +79,7 @@ const GlobalMap = Vue.defineComponent({
       });
 
       // Add the default tile layer
-      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const osmLayer = L.tileLayer(this.mapsApiEndpoint, {
         attribution: this.attribution,
       }).addTo(this.map);
 
