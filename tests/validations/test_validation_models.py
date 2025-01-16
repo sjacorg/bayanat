@@ -94,6 +94,7 @@ class TestListValidations:
             # Test-specific settings
             "ITEMS_PER_PAGE_OPTIONS": [10, 20, 30],
             "VIDEO_RATES": [0.5, 1.0, 1.5],
+            "TRANSCRIPTION_ENABLED": False,
         }
 
         # Test valid configuration
