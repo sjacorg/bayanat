@@ -470,34 +470,7 @@
                                                                         item-title="title"
                                                                         :return-object="false"
                                                                         label="{{ _('Whisper Model') }}"
-                                                                        v-model="eitem.WHISPER_MODEL"></v-combobox>
-
-                                                            <v-card variant="flat" class="mb-9">
-                                                                <v-card-title class="text-subtitle-1 py-3">{{ _('Available Models') }}</v-card-title>
-                                                                <v-data-table
-                                                                    :headers="[
-                                                                        { title: '{{ _('Model') }}', key: 'model_label', value: item => translations.whisperModels.find(m => m.en === item.model_label)?.tr || item.model_label },
-                                                                        { title: '{{ _('Parameters') }}', key: 'param_size' },
-                                                                        { title: '{{ _('Est. VRAM') }}', key: 'est_vram' },
-                                                                        { title: '{{ _('Multi-Language Support') }}', key: 'english_only' }
-                                                                    ]"
-                                                                    :items="whisperModels"
-                                                                    :items-per-page="-1"
-                                                                    density="compact"
-                                                                    hide-default-footer
-                                                                >
-                                                                    <template v-slot:item.model_label="{ item }">
-                                                                        ${translations.whisperModels.find(m => m.en === item.model_label)?.tr || item.model_label}
-                                                                    </template>
-                                                                    <template v-slot:item.param_size="{ item }">
-                                                                        ${(item.param_size / 1_000_000).toFixed(0)} M
-                                                                    </template>
-                                                                    <template v-slot:item.english_only="{ item }">
-                                                                        ${item.model_name.includes('.en') ? '✗ ({{ _('English only') }})' : '✓'}
-                                                                    </template>
-                                                                </v-data-table>
-                                                            </v-card>
-                                                        
+                                                                        v-model="eitem.WHISPER_MODEL"></v-combobox>                                                        
                                                         </v-sheet>
                                                     </v-slide-y-transition>
                                                 </v-sheet>
