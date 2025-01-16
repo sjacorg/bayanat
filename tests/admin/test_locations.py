@@ -92,7 +92,7 @@ location_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -100,13 +100,13 @@ location_endpoint_roles = [
 def test_location_endpoint(create_location, request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     location = get_first_or_fail(Location)
-    response = client_.get(f"/admin/api/location/{location.id}")
+    response = client_.get(
+        f"/admin/api/location/{location.id}", headers={"Accept": "application/json"}
+    )
     assert response.status_code == expected_status
     if expected_status == 200:
         data = convert_empty_strings_to_none(load_data(response))
         conform_to_schema_or_fail(data, LocationItemModel)
-    elif expected_status == 302:
-        assert "login" in response.headers["Location"]
 
 
 ##### POST /admin/api/location #####
@@ -216,7 +216,7 @@ regenerate_location_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -224,7 +224,9 @@ regenerate_location_endpoint_roles = [
 def test_regenerate_location_endpoint(request, client_fixture, expected_status):
     with patch.object(regenerate_locations, "delay") as mock_delay:
         client_ = request.getfixturevalue(client_fixture)
-        response = client_.post("/admin/api/location/regenerate/")
+        response = client_.post(
+            "/admin/api/location/regenerate/", headers={"Accept": "application/json"}
+        )
         assert response.status_code == expected_status
         if expected_status == 200:
             mock_delay.assert_called_once()
