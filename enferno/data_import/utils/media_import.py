@@ -485,6 +485,13 @@ class MediaImport:
         bulletin.status = "Machine Created"
         bulletin.comments = f"Created using Media Import Tool. Batch ID: {self.batch_id}."
 
+        # Handle long video titles
+        if bulletin.title and len(bulletin.title) > 255:
+            bulletin.comments += (
+                f"\nTitle truncated to 255 characters. Original title: {bulletin.title}"
+            )
+            bulletin.title = bulletin.title[:255]
+
         # Handle web import specific data
         is_web_import = self.meta.get("mode") == self.MODE_WEB
         if is_web_import:
