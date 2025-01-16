@@ -871,14 +871,6 @@
 
             },
 
-            computed: {
-                hasChanges() {
-                    const delta = this.diffPatch.diff(this.exconfig, this.eitem);
-                    return delta !== undefined;
-                },
-            },
-
-
             mounted() {
                 //load configuration
                 this.loadConfiguration();
@@ -891,7 +883,11 @@
                         title: translations.whisperModels.find(m => m.en === model.model_label)?.tr || model.model_label,
                         model_name: model.model_name
                     }));
-                }
+                },
+                hasChanges() {
+                    const delta = this.diffPatch.diff(this.exconfig, this.eitem);
+                    return delta !== undefined;
+                },
             },
 
             methods: {
