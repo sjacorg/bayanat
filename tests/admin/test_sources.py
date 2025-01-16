@@ -170,8 +170,7 @@ def test_import_source_endpoint(
         )
         assert response.status_code == expected_status
         sources = Source.query.all()
-        if expected_status == 200 and client_fixture == "admin_client":
-            # unauthenticated client redirects to login page with 200
+        if expected_status == 200:
             assert len(sources) == 2
         else:
             assert len(sources) == 0

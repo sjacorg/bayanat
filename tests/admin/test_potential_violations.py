@@ -179,8 +179,7 @@ def test_import_pv_endpoint(
         )
         assert response.status_code == expected_status
         pvs = PotentialViolation.query.all()
-        if expected_status == 200 and client_fixture == "admin_client":
-            # unauthenticated client redirects to login page with 200
+        if expected_status == 200:
             assert len(pvs) == 2
         else:
             assert len(pvs) == 0

@@ -208,8 +208,7 @@ def test_import_label_endpoint(
         )
         assert response.status_code == expected_status
         labels = Label.query.all()
-        if expected_status == 200 and client_fixture == "admin_client":
-            # unauthenticated client redirects to login page with 200
+        if expected_status == 200:
             assert len(labels) == 2
         else:
             assert len(labels) == 0

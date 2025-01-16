@@ -203,8 +203,7 @@ def test_import_location_endpoint(
         )
         assert response.status_code == expected_status
         locations = Location.query.all()
-        if expected_status == 200 and client_fixture == "admin_client":
-            # unauthenticated client redirects to login page with 200
+        if expected_status == 200:
             assert len(locations) == 2
         else:
             assert len(locations) == 0

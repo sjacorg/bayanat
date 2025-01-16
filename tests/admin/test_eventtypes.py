@@ -189,8 +189,7 @@ def test_import_eventtype_endpoint(
         )
         assert response.status_code == expected_status
         evts = Eventtype.query.all()
-        if expected_status == 200 and client_fixture == "admin_client":
-            # unauthenticated client redirects to login page with 200
+        if expected_status == 200:
             assert len(evts) == 2
         else:
             assert len(evts) == 0

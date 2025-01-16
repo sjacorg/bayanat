@@ -207,12 +207,7 @@ def test_post_csv_upload_endpoint(
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            if client_fixture == "anonymous_client":
-                # we should be redirected to the login page
-                assert "text/html" in response.headers["content-type"]
-                assert "csrf_token" in response.text
-            else:
-                conform_to_schema_or_fail(load_data(response), CsvImportResponseModel)
+            conform_to_schema_or_fail(load_data(response), CsvImportResponseModel)
 
 
 ##### POST /import/api/csv/analyze #####
