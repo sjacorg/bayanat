@@ -1,6 +1,7 @@
 const BulletinCard = Vue.defineComponent({
   props: ['bulletin', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
+  mixins: [mediaMixin],
   watch: {
     bulletin: function (val, old) {
 
@@ -9,19 +10,12 @@ const BulletinCard = Vue.defineComponent({
   },
 
   mounted() {
-    this.disposeMediaPlayer();
     if (this.bulletin?.id) {
         this.mapLocations = aggregateBulletinLocations(this.bulletin);
     }
   },
 
   methods: {
-    updateMediaState() {},
-
-    prepareImagesForPhotoswipe() {},
-
-    initLightbox() {},
-
     translate_status(status) {
       return translate_status(status);
     },
@@ -67,34 +61,6 @@ const BulletinCard = Vue.defineComponent({
       this.$emit('thumb-click', s3url);
     },
 
-    disposeMediaPlayer() {
-      this.mediaPlayer?.dispose?.();
-      this.mediaPlayer = null;
-    },
-
-    viewMedia(media) {
-      this.disposeMediaPlayer();
-
-      const videoElement = buildVideoElement();
-      if (media.fileType.includes('audio')) {
-        videoElement.poster = '/static/img/waveform.png';
-      }
-
-      const playerContainer = this.$refs.playerContainer;
-      playerContainer.prepend(videoElement);
-
-      this.mediaPlayer = videojs(
-        videoElement,
-        DEFAULT_VIDEOJS_OPTIONS
-      );
-      this.mediaPlayer.src({
-        type: media?.fileType ?? 'video/mp4',
-        src: media.s3url
-      });
-      this.mediaPlayer.play();
-      videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    },
-
     showDiff(e, index) {
       this.diffDialog = true;
       //calculate diff
@@ -125,8 +91,6 @@ const BulletinCard = Vue.defineComponent({
       show: false,
       hloading: false,
       mapLocations: [],
-      mediaPlayer: null,
-      videoDialog: this.videoDialog,
 
       // image viewer
       lightbox: null,

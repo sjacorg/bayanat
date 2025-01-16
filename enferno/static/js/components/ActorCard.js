@@ -1,9 +1,8 @@
 const ActorCard = Vue.defineComponent({
   props: ['actor', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
-
+  mixins: [mediaMixin],
   mounted() {
-    this.disposeMediaPlayer();
     this.fetchData();
   },
 
@@ -86,34 +85,6 @@ const ActorCard = Vue.defineComponent({
       this.$emit('thumb-click', s3url);
     },
 
-    disposeMediaPlayer() {
-      this.mediaPlayer?.dispose?.();
-      this.mediaPlayer = null;
-    },
-
-    viewMedia(media) {
-      this.disposeMediaPlayer();
-
-      const videoElement = buildVideoElement();
-      if (media.fileType.includes('audio')) {
-        videoElement.poster = '/static/img/waveform.png';
-      }
-
-      const playerContainer = this.$refs.playerContainer;
-      playerContainer.prepend(videoElement);
-
-      this.mediaPlayer = videojs(
-        videoElement,
-        DEFAULT_VIDEOJS_OPTIONS
-      );
-      this.mediaPlayer.src({
-        type: media?.fileType ?? 'video/mp4',
-        src: media.s3url
-      });
-      this.mediaPlayer.play();
-      videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    },
-
     loadRevisions() {
       this.hloading = true;
       axios
@@ -159,7 +130,6 @@ const ActorCard = Vue.defineComponent({
       show: false,
       hloading: false,
       mapLocations: [],
-      mediaPlayer: null,
       lightbox: null,
       mediasReady: 0,
     };
