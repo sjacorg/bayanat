@@ -501,7 +501,7 @@
                                                         <h4 class="subtitle-2 mb-n1">{{ _('Enable OCR') }}</h4>
                                                         <v-switch
                                                                     persistent-hint
-                                                                    hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This ebables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
+                                                                    hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This enables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
                                                                     v-model="eitem.OCR_ENABLED"></v-switch>
         
                                                         <v-combobox class="mt-3" multiple chips
@@ -510,6 +510,16 @@
                                                                     :items="eitem.OCR_EXT"
                                                                     label="{{ _('OCR Extensions') }}"
                                                                     v-model="eitem.OCR_EXT"></v-combobox>
+                                                    </v-col>
+                                                    <v-col cols="12" lg="6">
+                                                        <h4 class="subtitle-2 mb-n1">{{ _('Enable transcription') }}</h4>
+                                                        <v-switch persistent-hint
+                                                            hint="{{ _('Enables transcription of audio and video files using OpenAI\'s Whisper during import. Bayanat will need to download the specified model below from OpenAI\'s servers. However, the transcription will run locally on the Bayanat server. For more information about the models\' performance, required resources and available language please check:') }} https://github.com/openai/whisper#available-models-and-languages"
+                                                            v-model="eitem.TRANSCRIPTION_ENABLED"></v-switch>
+        
+                                                        <v-combobox class="mb-9" chips persistent-hint hint="{{ _('Whisper model to use for transcription.') }}"
+                                                            :items="whisperModelsCombo" item-value="model_name" item-title="title" :return-object="false"
+                                                            label="{{ _('Whisper Model') }}" v-model="eitem.WHISPER_MODEL"></v-combobox>
                                                     </v-col>
                                                 </v-row>
 
@@ -847,6 +857,7 @@
 
                 ltItem: {},
                 translations: window.translations,
+                whisperModels: [],
 
 
             }),
@@ -871,9 +882,28 @@
             mounted() {
                 //load configuration
                 this.loadConfiguration();
+                this.loadWhisperModels();
+            },
+
+            computed: {
+                whisperModelsCombo(){
+                    return this.whisperModels.map(model => ({
+                        title: translations.whisperModels.find(m => m.en === model.model_label)?.tr || model.model_label,
+                        model_name: model.model_name
+                    }));
+                }
             },
 
             methods: {
+                loadWhisperModels(){
+                    axios.get('/import/api/whisper/models/').then(res => {
+                        this.whisperModels = res.data.models;
+                    }).catch(err => {
+                        this.showSnack(err?.response?.data);
+                        console.error(err);
+                    })
+                },
+
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
                         this.eitem = res.data.config;
