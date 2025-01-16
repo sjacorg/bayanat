@@ -557,3 +557,9 @@ translations['levels'] = {
     "debug": "{{ _('Debug') }}"
 }
 
+translations['whisperModels'] = [
+    {% for model in config.CONSTANTS.WHISPER_MODEL_OPTS %}
+        {"en": "{{ model['model_label'] }}", "tr": "{{ _(model['model_label']) }}"},
+    {% endfor %}
+];
+
