@@ -150,7 +150,7 @@ import_source_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("anonymous_client", 200),
+    ("anonymous_client", 401),
 ]
 
 
@@ -166,6 +166,7 @@ def test_import_source_endpoint(
             content_type="multipart/form-data",
             data=data,
             follow_redirects=True,
+            headers={"Accept": "application/json"},
         )
         assert response.status_code == expected_status
         sources = Source.query.all()
