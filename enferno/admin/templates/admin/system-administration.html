@@ -41,7 +41,7 @@
                             </v-card-title>
                             <v-divider></v-divider>
                             <v-window v-model="tab">
-                                <v-window-item value="general">
+                                <v-window-item :transition="false" :reverse-transition="false" value="general">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-row>
                                             <v-col cols="6">
@@ -121,7 +121,7 @@
                                     </v-card>
                                 </v-window-item>
 
-                                <v-window-item value="storage">
+                                <v-window-item :transition="false" :reverse-transition="false" value="storage">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 823px;">
                                             <h4 class="subtitle-2 mb-1">{{ _('Settings') }}</h4>
@@ -170,7 +170,7 @@
                                 </v-window-item>
 
 
-                                <v-window-item value="security">
+                                <v-window-item :transition="false" :reverse-transition="false" value="security">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-row>
                                             <v-col cols="12" lg="3">
@@ -301,7 +301,7 @@
                                     </v-card>
                                 </v-window-item>
 
-                                <v-window-item value="control">
+                                <v-window-item :transition="false" :reverse-transition="false" value="control">
 
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <p class="text-caption text-muted mb-6" style="max-width: 823px;">{{ _('By default, users can access all items in the Bayanat database, except for items which are restricted from them. Administrators can restrict access to certain items by assigning Access Group(s) to these items. Additionally, only administrators can restrict items. This default behaviour can be changed with the following settings.') }}</p>
@@ -325,7 +325,7 @@
                                     </v-card>
                                 </v-window-item>
 
-                                <v-window-item value="logging">
+                                <v-window-item :transition="false" :reverse-transition="false" value="logging">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <p class="text-caption text-muted mb-6">{{ _('Set users\' actions to be logged in the Activity Monitor.') }}</p>
 
@@ -472,7 +472,7 @@
                                 </v-window-item>
 
 
-                                <v-window-item value="import">
+                                <v-window-item :transition="false" :reverse-transition="false" value="import">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <h4 class="subtitle-2 mb-n1">{{ _('Media import tool') }}</h4>
                                         <v-switch
@@ -590,7 +590,7 @@
                                 </v-window-item>
 
 
-                                <v-window-item value="export">
+                                <v-window-item :transition="false" :reverse-transition="false" value="export">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 424px;">
                                             <h4 class="subtitle-2 mb-n1">{{ _('Export system') }}</h4>
@@ -613,7 +613,7 @@
                                 </v-window-item>
 
 
-                                <v-window-item value="maps">
+                                <v-window-item :transition="false" :reverse-transition="false" value="maps">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <v-text-field class="mb-9" label="{{ _('Map API endpoint') }}"
                                                         persistent-hint
@@ -637,7 +637,7 @@
                                         </div>
                                     </v-card>
                                 </v-window-item>
-                                <v-window-item value="locations">
+                                <v-window-item :transition="false" :reverse-transition="false" value="locations">
                                     <v-card :disabled="loading" :loading="loading" class="px-4 py-8">
                                         <div style="max-width: 408px;">
                                             <h4 class="subtitle-2 mb-n1">{{ _('Include postal code generation settings') }}</h4>
