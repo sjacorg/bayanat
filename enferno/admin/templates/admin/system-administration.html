@@ -517,7 +517,7 @@
                                                             hint="{{ _('Enables transcription of audio and video files using OpenAI\'s Whisper during import. Bayanat will need to download the specified model below from OpenAI\'s servers. However, the transcription will run locally on the Bayanat server. For more information about the models\' performance, required resources and available language please check:') }} https://github.com/openai/whisper#available-models-and-languages"
                                                             v-model="eitem.TRANSCRIPTION_ENABLED"></v-switch>
         
-                                                        <v-combobox class="mb-9" chips persistent-hint hint="{{ _('Whisper model to use for transcription.') }}"
+                                                        <v-combobox class="mt-3" chips persistent-hint hint="{{ _('Whisper model to use for transcription.') }}"
                                                             :items="whisperModelsCombo" item-value="model_name" item-title="title" :return-object="false"
                                                             label="{{ _('Whisper Model') }}" v-model="eitem.WHISPER_MODEL"></v-combobox>
                                                     </v-col>
