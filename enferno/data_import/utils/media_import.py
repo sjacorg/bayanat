@@ -14,7 +14,6 @@ try:
 except ImportError:
     whisper_available = False
 
-from enferno.admin.constants import Constants
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
