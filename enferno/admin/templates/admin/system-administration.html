@@ -899,7 +899,7 @@
                     axios.get('/admin/api/configuration/defaults/').then(res => {
                         this.eitem = res.data.config;
                         this.configLabels = res.data.labels;
-                        this.$root.showSnack(this.translations.defaultsLoaded_);
+                        this.showConfigDiff();
                     }).catch(err => {
                         this.$root.showSnack(err?.response?.data);
                         console.error(err);
