@@ -9,7 +9,6 @@ const notificationMixin = {
   },
   data: () => ({
     // notifications drawer
-    isLoadingNotificationPreferences: false,
     isInitialLoadingNotifications: false,
     isLoadingMoreNotifications: false,
     isNotificationsDrawerVisible: false,
@@ -24,22 +23,13 @@ const notificationMixin = {
       page: 1,
       per_page: 10,
     },
-    notificationPreferences: {
-      security_alerts: false,
-      system_updates: false,
-      internal_notifications: false,
-      sms: false,
-      email: false,
-    },
     notificationIntervalId: null
   }),
 
   created () {
     this.refetchNotifications();
-    this.fetchNotificationPreferences();
 
     this.notificationIntervalId = setInterval(this.refetchNotifications, 60_000);
-    // axios.post('/admin/api/notifications/send')
   },
   beforeUnmount() {
     clearInterval(this.notificationIntervalId);
@@ -153,25 +143,6 @@ const notificationMixin = {
 
       const notificationId = nextNotification.id
       await axios.post(`/admin/api/notifications/${notificationId}/read`)
-    },
-    updateNotificationPreferences: debounce(async function () {
-      /* TODO: Update notification preferences (No endpoint yet) */
-      const payload = this.notificationPreferences
-      console.log(payload)
-      await axios.get('/settings/load')
-    }, 800),
-    async fetchNotificationPreferences() {
-      this.isLoadingNotificationPreferences = true;
-      /* TODO: Fetch notification preferences (No endpoint yet) */
-      await axios.get('/settings/load')
-      this.notificationPreferences = {
-        security_alerts: true,
-        system_updates: true,
-        internal_notifications: true,
-        sms: true,
-        email: true,
-      }
-      this.isLoadingNotificationPreferences = false;
     },
     async fetchUnreadNotificationCount() {
       const response = await axios.get('/admin/api/notifications/unread/count');
