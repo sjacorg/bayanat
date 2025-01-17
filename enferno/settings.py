@@ -270,7 +270,6 @@ class Config(object):
     # Location Admin Levels
     LOCATIONS_INCLUDE_POSTAL_CODE = manager.get_config("LOCATIONS_INCLUDE_POSTAL_CODE")
 
-
     # Email Settings
     MAIL_ENABLED = manager.get_config("MAIL_ENABLED")
     MAIL_SERVER = manager.get_config("MAIL_SERVER")
@@ -281,7 +280,9 @@ class Config(object):
     MAIL_PASSWORD = manager.get_config("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = manager.get_config("MAIL_DEFAULT_SENDER")
 
+    TRANSCRIPTION_ENABLED = manager.get_config("TRANSCRIPTION_ENABLED")
     WEB_IMPORT = manager.get_config("WEB_IMPORT")
+    WHISPER_MODEL = manager.get_config("WHISPER_MODEL")
     # YTDLP Proxy Settings
     YTDLP_PROXY = manager.get_config("YTDLP_PROXY")
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
@@ -439,4 +440,3 @@ class TestConfig(Config):
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
     YTDLP_PROXY = ""
-

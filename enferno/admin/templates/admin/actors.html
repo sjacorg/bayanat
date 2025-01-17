@@ -356,7 +356,7 @@
 
 
     {% if config.GOOGLE_MAPS_API_KEY %}
-        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
 

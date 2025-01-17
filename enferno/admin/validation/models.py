@@ -1710,6 +1710,8 @@ class FullConfigValidationModel(ConfigValidationModel):
     MAIL_USERNAME: Optional[str] = None
     MAIL_PASSWORD: Optional[str] = None
     MAIL_DEFAULT_SENDER: Optional[str] = None
+    TRANSCRIPTION_ENABLED: bool
+    WHISPER_MODEL: Optional[str] = None
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
@@ -1728,6 +1730,17 @@ class FullConfigValidationModel(ConfigValidationModel):
                 raise ValueError(
                     "MAIL_SERVER, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD must be provided if MAIL_ENABLED is True"
                 )
+        return values
+
+    @model_validator(mode="before")
+    def validate_whisper_model(cls, values):
+        if values.get("TRANSCRIPTION_ENABLED"):
+            if not values.get("WHISPER_MODEL"):
+                raise ValueError("WHISPER_MODEL must be provided if TRANSCRIPTION_ENABLED is True")
+            if values.get("WHISPER_MODEL") and values.get("WHISPER_MODEL") not in [
+                model["model_name"] for model in Constants.WHISPER_MODEL_OPTS
+            ]:
+                raise ValueError("Invalid Whisper Model")
         return values
 
     @field_validator("ITEMS_PER_PAGE_OPTIONS")

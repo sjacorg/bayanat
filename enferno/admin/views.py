@@ -5,7 +5,7 @@ import shutil
 import unicodedata
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Literal, Optional, Tuple, Union
+from typing import Any, Optional
 from uuid import uuid4
 from unidecode import unidecode
 
@@ -22,7 +22,6 @@ from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
-from urllib.parse import urlparse
 
 from enferno.admin.models.Notification import Notification
 from enferno.utils.notification_utils import NotificationUtils
