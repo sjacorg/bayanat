@@ -1,7 +1,7 @@
 const ActorCard = Vue.defineComponent({
   props: ['actor', 'close', 'thumb-click', 'active', 'log', 'diff', 'showEdit'],
   emits: ['edit', 'close'],
-
+  mixins: [mediaMixin],
   mounted() {
     this.fetchData();
   },
@@ -81,55 +81,8 @@ const ActorCard = Vue.defineComponent({
       return false;
     },
 
-    removeVideo() {
-      let video = this.$el.querySelector('#iplayer video');
-      if (video) {
-        video.remove();
-      }
-    },
-
     viewThumb(s3url) {
       this.$emit('thumb-click', s3url);
-    },
-
-    viewVideo(s3url) {
-      this.iplayer = true;
-      //solve bug when the player div is not ready yet
-      // wait for vue's next tick
-
-      this.$nextTick(() => {
-        const video = this.$el.querySelector('#iplayer video');
-
-        videojs(
-          video,
-          {
-            playbackRates: VIDEO_RATES,
-            //resizeManager: false
-            fluid: true,
-          },
-          function () {
-            this.reset();
-            this.src(s3url);
-            this.load();
-            this.play();
-          },
-        );
-        video.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
-    },
-
-    viewAudio(s3url) {
-      this.iaplayer = true;
-      //solve bug when the player div is not ready yet
-      // wait for vue's next tick
-
-      this.$nextTick(() => {
-        const audio = this.$el.querySelector('#iaplayer video');
-        audio.src = s3url;
-        audio.load();
-        audio.play();
-        audio.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
     },
 
     loadRevisions() {
@@ -177,8 +130,6 @@ const ActorCard = Vue.defineComponent({
       show: false,
       hloading: false,
       mapLocations: [],
-      iplayer: false,
-      iaplayer: false,
       lightbox: null,
       mediasReady: 0,
     };
@@ -400,21 +351,10 @@ const ActorCard = Vue.defineComponent({
               <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
           </v-toolbar>
 
-          <v-card variant="flat" v-if="iplayer" id="iplayer" class="px-2 my-3">
-            <video :id="'player'+ $.uid" controls class="video-js vjs-default-skin vjs-big-play-centered "
-                  crossorigin="anonymous"
-                  height="360" preload="auto"></video>
-          </v-card>
-
-          <v-card variant="flat"  v-if="iaplayer" id="iaplayer" class="px-2 my-3">
-          <video :id="'player'+ $.uid" controls
-                 crossorigin="anonymous" poster="/static/img/waveform.png"
-                 class="w-100 mx-auto" preload="auto"></video>
-
-        </v-card>
+          <div ref="playerContainer" class="px-2 my-3"></div>
           
           <v-card-text>
-            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewVideo" @audio-click="viewAudio"></image-gallery>
+            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
           </v-card-text>
         </v-card>
 
