@@ -8,7 +8,7 @@
         <v-container fluid>
             <v-row>
                 <v-col cols="12" sm="12" md="4" lg="3" class="px-0">
-                    <v-card border flat rounded class="py-5 position-sticky" style="top: 24px;">
+                    <v-card border flat rounded class="py-5 overflow-y-auto" style="max-height: calc(100dvh - 180px);">
                         <v-tabs mandatory height="40" v-model="tabState.main" selected-class="bg-surface-light" direction="vertical">
                             <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key" class="px-7 justify-start text-none text-subtitle-2">
                                 ${tab.text}
@@ -19,8 +19,8 @@
 
                 <v-col cols="12" sm="12" md="8" lg="9">
                     <v-card border flat rounded>
-                        <v-window v-model="tabState.main">
-                            <v-window-item value="location">
+                        <div>
+                            <div v-if="tabState.main === 'location'">
                                 <v-tabs mandatory height="64" v-model="tabState.child">
                                     <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
                                         ${childTab.text}
@@ -28,8 +28,8 @@
                                 </v-tabs>
                                 <v-divider></v-divider>
     
-                                <v-window v-model="tabState.child">
-                                    <v-window-item value="administrative-levels">
+                                <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                    <div v-if="tabState.child === 'administrative-levels'">
                                         <editable-table ref="locationAdminLevelsTable" title="{{ _('Location Administrative Levels') }}"
                                             :item-headers="alHeaders" :editable-columns="['title']"
                                             :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
@@ -79,18 +79,18 @@
                                                 </v-card>
                                             </div>
                                         </v-card>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="location-types">
+                                    <div v-if="tabState.child === 'location-types'">
                                         <editable-table title="{{ _('Location Types') }}" :item-headers="ltHeaders" :no-action-ids="[1,2]"
                                             delete-endpoint="/admin/api/location-type" save-endpoint="/admin/api/location-type"
                                             load-endpoint="/admin/api/location-types/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
-                                </v-window>
-                            </v-window-item>
+                                    </div>
+                                </div>
+                            </div>
     
-                            <v-window-item value="countries">
+                            <div v-if="tabState.main === 'countries'">
                                 <v-tabs mandatory height="64" v-model="tabState.child">
                                     <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
                                         ${childTab.text}
@@ -98,31 +98,31 @@
                                 </v-tabs>
                                 <v-divider></v-divider>
                                 
-                                <v-window v-model="tabState.child">
-                                    <v-window-item value="countries">
+                                <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                    <div v-if="tabState.child === 'countries'">
                                         <editable-table title="{{ _('Countries') }}" :item-headers="countryHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/country"
                                             save-endpoint="/admin/api/country" load-endpoint="/admin/api/countries/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="ethnographic-info">
+                                    <div v-if="tabState.child === 'ethnographic-info'">
                                         <editable-table title="{{ _('Ethnographic Information') }}" :item-headers="ethnoHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/ethnography"
                                             save-endpoint="/admin/api/ethnography" load-endpoint="/admin/api/ethnographies/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="dialects">
+                                    <div v-if="tabState.child === 'dialects'">
                                         <editable-table title="{{ _('Dialects') }}" :item-headers="dialectHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/dialect"
                                             save-endpoint="/admin/api/dialect" load-endpoint="/admin/api/dialects/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
-                                </v-window>
-                            </v-window-item>
+                                    </div>
+                                </div>
+                            </div>
     
-                            <v-window-item value="relations">
+                            <div v-if="tabState.main === 'relations'">
                                 <v-tabs mandatory height="64" v-model="tabState.child">
                                     <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
                                         ${childTab.text}
@@ -130,64 +130,68 @@
                                 </v-tabs>
                                 <v-divider></v-divider>
 
-                                <v-window v-model="tabState.child">
-                                    <v-window-item value="actor-to-actor">
+                                <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                    <div v-if="tabState.child === 'actor-to-actor'">
                                         <editable-table title="{{ _('Actor to Actor Relations') }}" :item-headers="revRelationHeaders"
                                             :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
                                             delete-endpoint="/admin/api/atoainfo" save-endpoint="/admin/api/atoainfo"
                                             load-endpoint="/admin/api/atoainfos/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="actor-to-bulletin">
+                                    <div v-if="tabState.child === 'actor-to-bulletin'">
                                         <editable-table title="{{ _('Actor to Bulletin Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/atobinfo"
                                             save-endpoint="/admin/api/atobinfo" load-endpoint="/admin/api/atobinfos/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="bulletin-to-bulletin">
+                                    <div v-if="tabState.child === 'bulletin-to-bulletin'">
                                         <editable-table title="{{ _('Bulletin to Bulletin Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/btobinfo"
                                             save-endpoint="/admin/api/btobinfo" load-endpoint="/admin/api/btobinfos/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="incident-to-bulletin">
+                                    <div v-if="tabState.child === 'incident-to-bulletin'">
                                         <editable-table title="{{ _('Incident to Bulletin Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itobinfo"
                                             save-endpoint="/admin/api/itobinfo" load-endpoint="/admin/api/itobinfos/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="incident-to-actor">
+                                    <div v-if="tabState.child === 'incident-to-actor'">
                                         <editable-table title="{{ _('Incident to Actor Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoainfo"
                                             save-endpoint="/admin/api/itoainfo" load-endpoint="/admin/api/itoainfos/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="incident-to-incident">
+                                    <div v-if="tabState.child === 'incident-to-incident'">
                                         <editable-table title="{{ _('Incident to Incident Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoiinfo"
                                             save-endpoint="/admin/api/itoiinfo" load-endpoint="/admin/api/itoiinfos/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
-                                </v-window>
-                            </v-window-item>
-                            <v-window-item value="media">
-                                <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
-                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/mediacategory"
-                                    save-endpoint="/admin/api/mediacategory" load-endpoint="/admin/api/mediacategories/?per_page=1000">
-                                </editable-table>
-                            </v-window-item>
-                            <v-window-item value="geolocation">
-                                <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
-                                    :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/geolocationtype"
-                                    save-endpoint="/admin/api/geolocationtype" load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
-                                </editable-table>
-                            </v-window-item>
-                            <v-window-item value="violation">
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="tabState.main === 'media'">
+                                <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
+                                    <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
+                                        :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/mediacategory"
+                                        save-endpoint="/admin/api/mediacategory" load-endpoint="/admin/api/mediacategories/?per_page=1000">
+                                    </editable-table>
+                                </div>
+                            </div>
+                            <div v-if="tabState.main === 'geolocation'">
+                                <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
+                                    <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
+                                        :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/geolocationtype"
+                                        save-endpoint="/admin/api/geolocationtype" load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
+                                    </editable-table>
+                                </div>
+                            </div>
+                            <div v-if="tabState.main === 'violation'">
                                 <v-tabs mandatory height="64" v-model="tabState.child">
                                     <v-tab class="px-7" value="potential-violation">
                                         {{ _('Potential Violation') }}
@@ -198,24 +202,24 @@
                                 </v-tabs>
                                 <v-divider></v-divider>
 
-                                <v-window v-model="tabState.child">
-                                    <v-window-item value="potential-violation">
+                                <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                    <div v-if="tabState.child === 'potential-violation'">
                                         <editable-table title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/potentialviolation"
                                             save-endpoint="/admin/api/potentialviolation"
                                             load-endpoint="/admin/api/potentialviolation/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
+                                    </div>
                                     
-                                    <v-window-item value="claimed-violation">
+                                    <div v-if="tabState.child === 'claimed-violation'">
                                         <editable-table title="{{ _('Claimed Violation Categories') }}" :item-headers="claimedHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/claimedviolation"
                                             save-endpoint="/admin/api/claimedviolation" load-endpoint="/admin/api/claimedviolation/?per_page=1000">
                                         </editable-table>
-                                    </v-window-item>
-                                </v-window>
-                            </v-window-item>
-                        </v-window>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
@@ -227,10 +231,7 @@
 
 
     {% if config.GOOGLE_MAPS_API_KEY %}
-        {{ '
-<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async
-        defer></script>'|safe }}
-
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
     {% endif %}
     <script src="/static/js/Leaflet.GoogleMutant.js"></script>
     <script src="/static/js/components/EditableTable.js"></script>
@@ -261,8 +262,8 @@
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     drawer: drawer,
                     tabState: {
-                        main: null,
-                        child: null,
+                        main: 'location',
+                        child: 'administrative-levels',
                     },
                     tabsMap: {
                         location: {
@@ -433,6 +434,7 @@
 
             methods: {
                 setInitialTabStateKey() {
+                    if (!window.location.hash) return;
                     this.tabState.main = window.location.hash.replace('#', '').split('/')[0]
                     this.tabState.child = window.location.hash.replace('#', '').split('/')[1]
                 },
