@@ -8,7 +8,7 @@
             <v-container fluid>
                 <v-row>
                     <v-col cols="12" sm="12" md="4" lg="3" class="px-0">
-                        <v-card border flat rounded class="py-5 overflow-y-auto" style="max-height: calc(100dvh - 180px);">
+                        <v-card border flat rounded class="py-5 overflow-y-auto" style="max-height: calc(100dvh - 165px);">
                             <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
                                 <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key" class="px-7 justify-start text-none text-subtitle-2">
                                     ${tab.text}
@@ -38,8 +38,8 @@
                                         >{{ _('Save changes') }}</v-btn>    
                                     </div>
                                 </div>
-                                <v-divider></v-divider>
                             </v-card-title>
+                            <v-divider></v-divider>
                             <div>
                                 <div v-if="tab === 'general'">
                                     <v-card flat :disabled="loading" :loading="loading" class="px-4 py-8 overflow-y-auto" style="max-height: calc(100dvh - 228px);">
