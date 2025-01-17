@@ -8,6 +8,10 @@ const ShowDetails = Vue.defineComponent({
             type: String,
             default: 'Show less',
         },
+        side: {
+            type: String,
+            default: 'start',
+        },
     },
     data() {
         return {
@@ -15,7 +19,7 @@ const ShowDetails = Vue.defineComponent({
         };
     },
     template: `
-    <div>
+    <div :class="['d-flex', { 'flex-column': side === 'start', 'flex-column-reverse': side === 'end' }]">
         <v-expand-transition>
             <div v-show="!isCollapsed">
                 <slot></slot>
@@ -26,6 +30,7 @@ const ShowDetails = Vue.defineComponent({
             :ripple="false"
             class="pa-0"
             height="fit-content"
+            width="fit-content"
             color="primary"
             @click="isCollapsed = !isCollapsed"
         >
