@@ -1,8 +1,17 @@
 // common validation rules
 
 const validationRules = {
-    required: (value) => !!value || 'Required.',
-    min: (v) => v.length >= 6 || 'Min 6 characters',
+    required: (message = window.translations.thisFieldIsRequired_) => {
+        return v => !!v || message;
+    },
+    maxLength: (max, message) => {
+        const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
+        return v => !v || v.length <= max || message || defaultMessage;
+    },
+    minLength: (min, message) => {
+        const defaultMessage = window.translations.mustBeAtLeastCharacters_(min);
+        return v => !v || v.length >= min || message || defaultMessage;
+    },
 };
 
 // global vuetify config object passed to most pages of the system
