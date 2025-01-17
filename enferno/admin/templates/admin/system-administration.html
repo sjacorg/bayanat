@@ -30,7 +30,7 @@
                                             {{ _('Revision history') }}
                                         </v-btn>
                                         <v-btn
-                                            @click.stop="showConfigDiff"
+                                            @click.stop="showConfigDiff()"
                                             variant="elevated"
                                             color="primary"
                                             prepend-icon="mdi-check"
@@ -693,7 +693,7 @@
         <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
                 {{ _('Review and Confirm Changes') }}
-                <v-btn icon="mdi-close" variant="text" @click="saveChangesDialog=false"></v-btn>
+                <v-btn icon="mdi-close" variant="text" @click="closeSaveChangesDialog"></v-btn>
             </v-card-title>
             <v-card-text>
                 <v-sheet class="pa-5" color="yellow lighten-5 d-flex">
@@ -727,7 +727,7 @@
             </v-card-text>
             <v-divider></v-divider>
             <v-card-actions class="pa-4 justify-center">
-                <v-btn @click.stop="saveChangesDialog=false" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
+                <v-btn @click.stop="closeSaveChangesDialog" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
                 </v-btn>
                 <v-btn variant="elevated" :disabled="!configDiff" @click.stop="saveConfiguration" class="ml-4">
                     {{ _('Confirm') }}
@@ -807,6 +807,10 @@
                 //store current config before it is updated
                 exconfig: {},
                 configDiff: '',
+
+                // store config defaults before confirmation of restoration
+                defaultConfig: null,
+                defaultLabels: null,
 
                 overlay: false,
                 saveChangesDialog: false,
@@ -897,8 +901,8 @@
 
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
-                        this.eitem = res.data.config;
-                        this.configLabels = res.data.labels;
+                        this.defaultConfig = res.data.config;
+                        this.defaultLabels = res.data.labels;
                         this.showConfigDiff();
                     }).catch(err => {
                         this.$root.showSnack(err?.response?.data);
@@ -933,10 +937,12 @@
                     let diff = [];
                     if (!delta) return diff;
 
+                    const labels = this.defaultLabels || this.configLabels
+
                     for (const k of Object.keys(delta)) {
                         diff.push(
                             {
-                                label: this.configLabels[k],
+                                label: labels[k],
                                 diff: this.friendlyDiff(jsondiffpatch.formatters.html.format(delta[k]))
 
                             }
@@ -951,7 +957,13 @@
 
 
                 showConfigDiff() {
-                    const delta = this.diffPatch.diff(this.cleanConfig(this.exconfig), this.cleanConfig(this.eitem));
+                    const delta = (() => {
+                        if (this.defaultConfig) {
+                            return this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig))
+                        } else {
+                            return this.diffPatch.diff(this.cleanConfig(this.exconfig), this.cleanConfig(this.eitem))
+                        }
+                    })();
 
                     if (delta) {
                         this.configDiff = this.generateConfigDiff(delta);
@@ -1061,6 +1073,13 @@
 
                 saveConfiguration() {
                     this.overlay = true
+
+                    // If restoring default config set eitem and labels
+                    if (this.defaultConfig && this.defaultLabels) {
+                        this.eitem = res.data.config;
+                        this.configLabels = res.data.labels;
+                    }
+
                     this.preprocessConfig();
                     axios.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
                         this.reloadApp();
@@ -1106,6 +1125,12 @@
                     }
 
                     return config
+                },
+
+                closeSaveChangesDialog() {
+                    this.saveChangesDialog = false;
+                    this.defaultConfig = null;
+                    this.defaultLabels = null;
                 }
             }
         });
