@@ -232,6 +232,24 @@
                                                             {{ _('Tesseract OCR is disabled.') }}
                                                         </div>
                                                     </v-col>
+                                                    <v-col cols="12" md="4">
+                                                        <v-switch v-model="transcription"
+                                                                  :disabled="!__TRANSCRIPTION_ENABLED__"
+                                                                  label="{{ _('Transcribe audio/video files') }}"></v-switch>
+                                                        <div v-if="!__TRANSCRIPTION_ENABLED__">
+                                                            <v-icon left>mdi-information-outline</v-icon>
+                                                            {{ _('Transcription is disabled.') }}
+                                                        </div>
+                                                        <v-select
+                                                            v-if="transcription && __TRANSCRIPTION_ENABLED__"
+                                                            v-model="transcriptionLanguage"
+                                                            :items="whisperLanguageOptions"
+                                                            label="{{ _('Language:') }}"
+                                                            item-title="title"
+                                                            item-value="value"
+                                                            class="mt-2"
+                                                        ></v-select>
+                                                    </v-col>
                                                 </v-row>
                                             </v-card-text>
 
@@ -330,6 +348,7 @@
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/components/SearchField.js" ></script>
+    <script src="/static/js/mixins/whisper-mixin.js" ></script>
 
 
 
@@ -340,6 +359,7 @@
     <script>
         window.__OCR_ENABLED__ = ('{{ config.OCR_ENABLED }}' === 'True');
         window.__ETL_PATH_IMPORT__ = ('{{ config.ETL_PATH_IMPORT }}' === 'True');
+        window.__TRANSCRIPTION_ENABLED__ = ('{{ config.TRANSCRIPTION_ENABLED }}' === 'True');
 
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
@@ -347,7 +367,7 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [globalMixin],
+            mixins: [globalMixin, whisperMixin],
             
             data: () => ({
                 drawer: drawer,
@@ -402,6 +422,8 @@
                 optimize: null,
                 parse: null,
                 ocr: null,
+                transcription: null,
+                transcriptionLanguage: null,
                 selectedItems: [],
                 itemsLength: 100,
                 editedIndex: -1,
@@ -580,7 +602,9 @@
                         mode: this.mode,
                         optimize: this.optimize,
                         parse: this.parse,
-                        ocr: this.ocr
+                        ocr: this.ocr,
+                        transcription: this.transcription,
+                        transcription_language: this.transcriptionLanguage
                     }
 
                     axios.post('/import/media/process', data).then(res => {
