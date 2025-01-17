@@ -466,3 +466,21 @@ dataUriToBlob = function (dataURI) {
 
     return new Blob([ia], {type: mimeString});
 };
+
+// Media players
+const DEFAULT_VIDEOJS_OPTIONS = {
+    controls: true,
+    preload: 'auto',
+    playbackRates: VIDEO_RATES,
+    fluid: true,
+}
+function buildVideoElement() {
+    const videoElement = document.createElement('video');
+    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered w-100';
+    videoElement.setAttribute('crossorigin', 'anonymous');
+    videoElement.setAttribute('controls', '');
+    videoElement.setAttribute('width', '620');
+    videoElement.setAttribute('height', '348');
+
+    return videoElement;
+}
