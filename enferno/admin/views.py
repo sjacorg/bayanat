@@ -125,7 +125,7 @@ from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
-from enferno.utils.search_utils import SearchUtils, SearchUtils2
+from enferno.utils.search_utils import SearchUtils
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -2898,6 +2898,8 @@ def api_bulletins(validated_data: dict) -> Response:
 @roles_accepted("Admin", "DA")
 @validate_with(BulletinSearchModel)
 def api_bulletins2(validated_data: dict) -> Response:
+    from enferno.utils.search_utils import SearchUtils2 as SearchUtils
+
     # Log search query
     q = validated_data.get("q", None)
     if q and q != [{}]:

@@ -1,5 +1,5 @@
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func
+from sqlalchemy import or_, not_, and_, any_, all_, func, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
