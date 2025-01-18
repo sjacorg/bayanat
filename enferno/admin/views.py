@@ -17,7 +17,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, select, func
 from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
@@ -2916,22 +2916,24 @@ def api_bulletins2(validated_data: dict) -> Response:
     per_page = validated_data.get("per_page", 20)
 
     search = SearchUtils({"q": q}, "bulletin")
-    query = search.get_query()
+    base_stmt = search.get_query()
 
-    # Build main query
-    query = query.order_by(Bulletin.id.desc())
+    # Get count from base statement
+    total = db.session.execute(select(func.count()).select_from(base_stmt.subquery())).scalar()
+
+    # Add pagination to base statement
     if cursor:
-        query = query.where(Bulletin.id < cursor)
-    query = query.limit(per_page)
+        base_stmt = base_stmt.where(Bulletin.id < cursor)
+    base_stmt = base_stmt.order_by(Bulletin.id.desc()).limit(per_page)
 
     # Add options to eagerly load required relationships
-    query = query.options(
+    base_stmt = base_stmt.options(
         joinedload(Bulletin.assigned_to),
         joinedload(Bulletin.roles),
         joinedload(Bulletin.sources),
     )
 
-    result = db.session.execute(query)
+    result = db.session.execute(base_stmt)
     items = result.scalars().unique().all()  # Use unique() to ensure unique rows
 
     # Minimal serialization for list view
@@ -2961,6 +2963,7 @@ def api_bulletins2(validated_data: dict) -> Response:
     response = {
         "items": serialized_items,
         "nextCursor": str(next_cursor) if next_cursor else None,
+        "total": total,
     }
 
     return jsonify(response)
