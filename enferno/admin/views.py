@@ -17,7 +17,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, select, func
+from sqlalchemy import desc, or_, select, func, and_
 from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
@@ -696,18 +696,18 @@ def api_potentialviolation_import() -> Response:
 
 
 @lru_cache(maxsize=1000)
-def get_cached_bulletin_count(query_hash: int, base_stmt) -> int:
+def get_cached_bulletin_count(query_hash: int, conditions: tuple) -> int:
     """
     Cache bulletin counts for search queries
 
     Args:
         query_hash: Hash of the query parameters
-        base_stmt: Base SQLAlchemy statement to count
+        conditions: Tuple of filter conditions
 
     Returns:
         Total count of matching bulletins
     """
-    return db.session.execute(select(func.count()).select_from(base_stmt.subquery())).scalar()
+    return db.session.query(func.count(Bulletin.id)).filter(and_(*conditions)).scalar()
 
 
 @admin.route("/api/claimedviolation/", defaults={"page": 1})
@@ -2931,15 +2931,16 @@ def api_bulletins2(validated_data: dict) -> Response:
     per_page = validated_data.get("per_page", 20)
 
     search = SearchUtils({"q": q}, "bulletin")
-    base_stmt = search.get_query()
+    base_stmt, conditions = search.bulletin_query(q[0])
 
     # Only count total for first page
     if not cursor:
         # Create hash of query params for cache key
         query_hash = hash(str(q))
-        total = get_cached_bulletin_count(query_hash, base_stmt)
+        # Convert conditions list to tuple for caching
+        conditions_tuple = tuple(conditions)
+        total = get_cached_bulletin_count(query_hash, conditions_tuple)
     else:
-        # Use cached total for subsequent pages
         total = None
 
     # Add pagination to base statement
