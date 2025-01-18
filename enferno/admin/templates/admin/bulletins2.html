@@ -176,14 +176,16 @@
                                 <v-spacer></v-spacer>
                                 <v-chip v-if="selected.length"
                                 >${selected.length} {{ _('Selected items') }}</v-chip>
-                            </v-toolbar>
+                         
 
                         </template>
 
                         <template #bottom>
                             <div class="d-flex flex-column align-center w-100">
                                 <div class="ma-2 d-flex">{{ _('Search time: ') }}
-                                    ${searchTime} {{ _('seconds') }}</div>
+                                    ${searchTime} {{ _('seconds') }} - ${total} {{ _('Total items') }}
+                                
+                                </div>
                                 <v-btn
                                     v-show="nextCursor !== null"
                                     @click="loadMore"
@@ -481,6 +483,7 @@
                     perPage: 20,
                     items: [],
                     selected: [],
+                    total: 0,
 
                     dzOpts: {
                         url: '/admin/api/media/chunk',
@@ -1183,6 +1186,7 @@
                             // Otherwise append new items
                             if (!this.nextCursor) {
                                 this.items = response.data.items;
+                                this.total = response.data.total; // Set total only on initial load
                             } else {
                                 this.items = [...this.items, ...response.data.items];
                             }
