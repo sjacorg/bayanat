@@ -18,6 +18,7 @@ from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy import desc, or_
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
@@ -106,6 +107,7 @@ from enferno.admin.validation.models import (
     UserPasswordCheckValidationModel,
     UserRequestModel,
     WebImportValidationModel,
+    BulletinSearchModel,
 )
 from enferno.admin.validation.util import validate_with
 from enferno.extensions import rds, db
@@ -123,7 +125,7 @@ from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
-from enferno.utils.search_utils import SearchUtils
+from enferno.utils.search_utils import SearchUtils, SearchUtils2
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -2825,6 +2827,18 @@ def bulletins(id: Optional[t.id]) -> str:
     )
 
 
+@admin.route("/bulletins2/", defaults={"id": None})
+@admin.route("/bulletins2/<int:id>")
+def bulletins2(id: Optional[t.id]) -> str:
+    """Endpoint for bulletins2 management."""
+
+    statuses = [item.to_dict() for item in WorkflowStatus.query.all()]
+    return render_template(
+        "admin/bulletins2.html",
+        statuses=statuses,
+    )
+
+
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
 @validate_with(BulletinQueryRequestModel)
 def api_bulletins(validated_data: dict) -> Response:
@@ -2878,6 +2892,76 @@ def api_bulletins(validated_data: dict) -> Response:
     }
 
     return Response(json.dumps(response), content_type="application/json"), 200
+
+
+@admin.route("/api/bulletins2/", methods=["POST", "GET"])
+@roles_accepted("Admin", "DA")
+@validate_with(BulletinSearchModel)
+def api_bulletins2(validated_data: dict) -> Response:
+    # Log search query
+    q = validated_data.get("q", None)
+    if q and q != [{}]:
+        Activity.create(
+            current_user,
+            Activity.ACTION_SEARCH,
+            Activity.STATUS_SUCCESS,
+            q,
+            "bulletin",
+        )
+
+    q = validated_data.get("q", [{}])
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", 20)
+
+    search = SearchUtils({"q": q}, "bulletin")
+    query = search.get_query()
+
+    # Build main query
+    query = query.order_by(Bulletin.id.desc())
+    if cursor:
+        query = query.where(Bulletin.id < cursor)
+    query = query.limit(per_page)
+
+    # Add options to eagerly load required relationships
+    query = query.options(
+        joinedload(Bulletin.assigned_to),
+        joinedload(Bulletin.roles),
+        joinedload(Bulletin.sources),
+    )
+
+    result = db.session.execute(query)
+    items = result.scalars().unique().all()  # Use unique() to ensure unique rows
+
+    # Minimal serialization for list view
+    serialized_items = [
+        {
+            "id": item.id,
+            "title": item.title,
+            "status": item.status,
+            "assigned_to": (
+                {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                if item.assigned_to
+                else None
+            ),
+            "roles": (
+                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
+                if item.roles
+                else []
+            ),
+            "_status": item.status,
+            "review_action": item.review_action,
+        }
+        for item in items
+    ]
+
+    next_cursor = items[-1].id if items else None
+
+    response = {
+        "items": serialized_items,
+        "nextCursor": str(next_cursor) if next_cursor else None,
+    }
+
+    return jsonify(response)
 
 
 @admin.post("/api/bulletin/")

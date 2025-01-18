@@ -1212,6 +1212,12 @@ class BulletinQueryRequestModel(BaseValidationModel):
     q: list[BulletinQueryValidationModel] = Field(default_factory=list)
 
 
+class BulletinSearchModel(BaseValidationModel):
+    q: Optional[list[dict[str, Any]]] = Field(default_factory=list)
+    cursor: Optional[str] = None
+    per_page: Optional[int] = Field(default=20, gt=0)
+
+
 class EntityReviewValidationModel(BaseValidationModel):
     review: Optional[SanitizedField] = None
     review_action: Optional[str] = None

@@ -1,0 +1,1886 @@
+{% extends 'layout.html' %}
+
+{% block css %}
+    <link rel="stylesheet" href="/static/css/dropzone.min.css">
+    <link rel="stylesheet" href="/static/js/videojs/video-js.css">
+    <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
+
+{% endblock %}
+
+{% block content %}
+
+
+    <v-main>
+        {% include 'admin/partials/bulletin_advsearch.html' %}
+        {% include 'admin/partials/bulletin_drawer.html' %}
+        {% include 'admin/partials/bulk_bulletin_drawer.html' %}
+
+
+        {% include'admin/partials/export_drawer.html' %}
+        <v-container fluid>
+            <v-tooltip text="{{ _('Visualize Results') }}">
+                <template #activator="{props}">
+                    <v-btn
+                            elevation="16"
+                            color="primary"
+                            outlined
+                            icon="mdi-graph"
+                            @click.stop="visualizeResults"
+                            v-bind="props"
+                            v-if="showVisualize"
+                            :loading="visualizeLoading"
+                            variant="elevated"
+                            class="mb-5 mr-5 position-absolute "
+                            style="right: 30px; bottom: 90px; z-index: 1000;"
+                    >
+
+
+                    </v-btn>
+                </template>
+            </v-tooltip>
+
+            <v-card>
+
+                <v-card-text>
+
+
+                    <v-data-table-server
+                            fixed-header
+                            height="calc(100vh - 328px)"
+                            id="bulletins-dt"
+                            v-model="selected"
+                            hover
+                            :headers="headers"
+                            @click:row="rowClick"
+                            :items="items"
+                            :loading="loading"
+                            :row-props="rowClass"
+                            show-select
+                            item-value="id"
+                            select-strategy="page"
+                            item-selectable="selectable"
+                            class="elevation-1"
+                            hide-default-footer
+                            :items-length="computedItemsLength"
+                    >
+
+                        <template #top>
+                            <v-sheet class="ma-3 d-flex align-center">
+                                <v-btn variant="text" class="hidden-sm-and-down" @click="allBulletins"
+                                >{{ _('All Bulletins') }}</v-btn
+                                >
+                                <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
+                                <v-btn variant="text" class="hidden-sm-and-down" @click="myAssigned"
+                                >{{ _('Assigned to me') }}</v-btn
+                                >
+                                <v-divider class="mx-1 hidden-sm-and-down" inset vertical></v-divider>
+                                <v-btn variant="text" @click="myReview" class="mr-2 hidden-sm-and-down"
+                                >{{ _('My Review List') }}</v-btn
+                                >
+
+                                <v-text-field
+                                        class="mx-1"
+                                        density="compact"
+                                        variant="outlined"
+                                        v-model.trim="search[0].tsv"
+                                        @keydown.enter="doSearch"
+                                        hide-details
+                                        @click:clear="resetSearch"
+                                        append-icon="mdi-ballot"
+                                        :append-inner-icon="searchEmpty ? '' : 'mdi-close'"
+                                        @click:append-inner="resetSearch"
+                                        @click:append="toggleAdvSearch"
+                                        prepend-inner-icon="mdi-magnify"
+                                        label="{{ _('Search') }}"
+                                        :bg-color="searchBg"
+                                ></v-text-field>
+
+
+                                <v-spacer></v-spacer>
+                                {% if current_user.roles_in(['Admin','DA']) %}
+                                    <v-btn
+                                            @click="editItem"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="ma-2"
+                                    >{{ _('New Bulletin') }}</v-btn
+                                    >
+                                    {% if config.WEB_IMPORT and (current_user.can_import_web or current_user.has_role("Admin")) %}
+                                    <v-btn
+                                            @click="webImportDlg = true"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="ma-2"
+                                    >
+                                        <v-icon left>mdi-web</v-icon>
+                                            {{ _('Import from Web') }}
+                                        </v-btn>
+                                    {% endif %}
+                                {% endif %}
+                                {% include'admin/partials/bulletin_dialog.html' %}
+                                {% include'admin/partials/review_dialog.html' %}
+                            </v-sheet>
+
+                            <v-toolbar class="px-3" v-if="bulkAllowed() || exportAllowed()">
+                                <template v-if="bulkIcons">
+                                    <v-tooltip location="top" text="{{ _('Unselect all') }}">
+                                        <template #activator="{props}">
+                                            <v-btn icon="mdi-checkbox-blank-outline"
+                                                   @click="selected=[]"
+                                                   class="mr-3 ml-1"
+                                                   density="compact"
+                                                   :="props">
+                                            </v-btn>
+                                        </template>
+                                    </v-tooltip>
+
+                                    <v-btn
+                                            @click="bulkBulletinDrawer=true"
+                                            prepend-icon="mdi-circle-edit-outline"
+                                            color="primary"
+                                            variant="elevated"
+                                            class="mx-2"
+                                            v-if="bulkAllowed()"
+                                    >
+
+                                        {{ _('Bulk update') }}
+                                    </v-btn>
+                                    {% if config.EXPORT_TOOL %}
+                                        <v-btn
+                                                @click="exportDrawer=true"
+                                                color="primary"
+                                                class="mx-2"
+                                                variant="elevated"
+                                                v-if="exportAllowed()"
+                                        >
+                                            <v-icon small left
+                                            >mdi-file-export-outline
+                                            </v-icon>
+                                            {{ _('Export') }}
+                                        </v-btn>
+                                    {% endif %}
+                                </template>
+                                <template>
+                                    <v-progress-circular v-for="job in jobs"
+                                                         size="20" small
+                                                         :indeterminate="job.status!='SUCCESS'"
+
+                                                         :color="job.status=='SUCCESS' ? 'success': 'amber'"
+                                                         :value="job.status=='SUCCESS'?100:null"
+                                                         class="mx-1"
+                                                         stroke="1"
+                                    ></v-progress-circular>
+                                </template>
+                                <v-spacer></v-spacer>
+
+                                <v-spacer></v-spacer>
+                                <v-chip v-if="selected.length"
+                                >${selected.length} {{ _('Selected items') }}</v-chip>
+                            </v-toolbar>
+
+                        </template>
+
+                        <template #bottom>
+                            <div class="d-flex flex-column align-center w-100">
+                                <div class="ma-2 d-flex">{{ _('Search time: ') }}
+                                    ${searchTime} {{ _('seconds') }}</div>
+                                <v-btn
+                                    v-show="nextCursor !== null"
+                                    @click="loadMore"
+                                    color="primary"
+                                    variant="elevated"
+                                    class="my-2"
+                                    :loading="loading"
+                                >
+                                    {{ _('Load More') }}
+                                </v-btn>
+                            </div>
+                        </template>
+
+                        <template v-slot:no-data></template>
+
+                        <template #item.roles="{item}">
+                            <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
+
+                                <template #activator="{props}">
+                                    <v-icon
+                                            :="props"
+                                            size="small"
+                                            :color="role.color || 'grey-lighten-1'"
+                                            icon="mdi-shield-lock"
+                                    >
+                                    </v-icon>
+
+                                </template>
+
+                            </v-tooltip>
+
+                        </template>
+
+                        <template #item.status="{ item }">
+                            ${item.status}
+                            <v-chip
+                                    x-small
+                                    v-if="item.review_action"
+                                    color="grey lighten-4"
+                                    class="secondary--text"
+                            >${item.review_action}
+                            </v-chip
+                            >
+                        </template>
+                        <template #item.action="{ item }">
+
+                            <v-btn size="small"
+                                   variant="plain"
+                                   class="mr-2"
+                                   @click.stop="editItem(item)"
+                                   v-if="editAllowed(item)"
+                                   icon="mdi-pencil"
+                            >
+
+                            </v-btn>
+
+
+                            <v-icon
+
+                                    color="primary lighten-1"
+                                    class="mr-2"
+
+                                    @click.stop="openSelfAssign(item)"
+                                    v-if="selfAssignAllowed(item)"
+                            >
+                                mdi-arrow-left-thin-circle-outline
+                            </v-icon>
+
+
+                            <v-btn
+                                    v-if="reviewAllowed(item)"
+                                    @click.stop="addReview(item)"
+                                    color="gv"
+                                    size="small"
+                                    variant="plain"
+                                    class="mr-2"
+                                    icon="mdi-comment-plus"
+                            >
+                            </v-btn>
+
+                        </template>
+
+
+                        
+                    </v-data-table-server>
+
+                    <v-overlay :value="loading">
+                        <v-progress-circular
+                                indeterminate
+                                size="64"
+                        ></v-progress-circular>
+                    </v-overlay>
+                    <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
+                                      ref="relateBulletins"></relate-bulletins>
+                    <relate-actors @relate="relateActor" :exids="exActors"
+                                   ref="relateActors"></relate-actors>
+                    <relate-incidents @relate="relateIncident" :exids="exIncidents"
+                                      ref="relateIncidents"></relate-incidents>
+
+
+                    {% include 'admin/partials/video_player_dialog.html' %}
+                    {% include 'admin/partials/audio_player_dialog.html' %}
+
+
+                    <v-dialog width="600" v-model="selfAssignDialog">
+                        <v-card class="pa-3">
+                            <v-card-title>{{ _('Self Assign Bulletin') }} #${assignBulletin.id}</v-card-title>
+                            <v-card-text>
+                                <v-combobox
+
+                                        small-chips
+                                        multiple
+                                        v-model="assignBulletin.tags"
+                                        label="{{ _('Tags') }}"
+                                        class="mr-2"
+                                ></v-combobox>
+                                <v-textarea v-model="assignBulletin.comments"
+                                            label="{{ _('Comments') }}"></v-textarea>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-btn :disabled="!assignBulletin.comments" class="ma-auto" @click="selfAssign"
+                                       color="primary">{{ _('Assign to self') }}
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+
+                    </v-dialog>
+
+                    <v-dialog v-model="webImportDlg" max-width="600" @update:model-value="webUrl = ''">
+                        <v-card class="pa-3">
+                            <v-card-title class="text-h5">
+                                {{ _('Import from Web') }}
+                            </v-card-title>
+                            
+                            <v-card-text>
+                                <v-row align="center">
+                                    <v-col cols="9">
+                                        <v-text-field
+                                            v-model="webUrl"
+                                            label="{{ _('Enter URL') }}"
+                                            placeholder="https://example.com/article"
+                                            @keydown.enter="submitWebImport"
+                                            autofocus
+                                        ></v-text-field>
+                                    </v-col>
+                                    <v-col cols="3">
+                                        <v-btn
+                                            color="primary"
+                                            variant="elevated"
+                                            :loading="webImportLoading"
+                                            @click="submitWebImport"
+                                            block
+                                        >
+                                            {{ _('Import') }}
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                        </v-card>
+                    </v-dialog>
+
+
+                </v-card-text>
+            </v-card>
+        </v-container>
+    </v-main>
+
+
+
+{% endblock %}
+
+{% block outside %}
+
+    <div class="d-none" data-statuses='{{ statuses|tojson }}'></div>
+    <div class="d-none" data-allowed-media-types='.{{ ",.".join(config.MEDIA_ALLOWED_EXTENSIONS) }}'></div>
+
+{% endblock %}
+
+{% block js %}
+    <script
+            src="/static/js/tinymce/js/tinymce/tinymce.min.js"
+            referrerpolicy="origin"
+    ></script>
+
+    <script src="/static/js/tinymce-vue.min.js"></script>
+
+    <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/components/GeoMap.js"></script>
+    <script src="/static/js/components/UniField.js"></script>
+    <script src="/static/js/components/DualField.js"></script>
+    <script src="/static/js/components/SearchField.js"></script>
+
+    <script src="/static/js/components/RelatedBulletinsCard.js"></script>
+    <script src="/static/js/components/RelatedActorsCard.js"></script>
+    <script src="/static/js/components/RelatedIncidentsCard.js"></script>
+
+    <script src="/static/js/components/BulletinCard.js"></script>
+    <script src="/static/js/components/ActorProfiles.js"></script>
+    <script src="/static/js/components/ActorCard.js"></script>
+    <script src="/static/js/components/IncidentCard.js"></script>
+
+    <script src="/static/js/components/BulletinSearchBox.js"></script>
+    <script src="/static/js/components/ActorSearchBox.js"></script>
+    <script src="/static/js/components/IncidentSearchBox.js"></script>
+
+
+
+    <script src="/static/js/components/BulletinResult.js"></script>
+    <script src="/static/js/components/ActorResult.js"></script>
+    <script src="/static/js/components/IncidentResult.js"></script>
+
+    <script src="/static/js/components/RelateBulletins.js"></script>
+    <script src="/static/js/components/RelateActors.js"></script>
+    <script src="/static/js/components/RelateIncidents.js"></script>
+
+    <script src="/static/js/components/EventCard.js"></script>
+    <script src="/static/js/components/GlobalMap.js"></script>
+    <script src="/static/js/components/PopDateField.js"></script>
+    <script src="/static/js/components/PopDateTimeField.js"></script>
+    <script src="/static/js/components/PopDateRangeField.js"></script>
+    <script src="/static/js/components/GeoLocations.js"></script>
+    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaCard.js"></script>
+    <script src="/static/js/components/PreviewCard.js"></script>
+
+    <script src="/static/js/actorConfig.js"></script>
+    <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/Visualization.js"></script>
+    <script src="/static/js/element-resize-detector.min.js"></script>
+    <script src="/static/js/force-graph.min.js"></script>
+    <script src="/static/js/dropzone.min.js"></script>
+    <script src="/static/js/components/VueDropzone.js"></script>
+
+
+    <script src="/static/js/components/MPCard.js"></script>
+    <script src="/static/js/components/MPField.js"></script>
+    <script src="/static/js/components/MixI.js"></script>
+    <script src="/static/js/components/MixII.js"></script>
+    <script src="/static/js/components/MixIII.js"></script>
+
+    <script src="/static/js/videojs/video.min.js"></script>
+    <script src="/static/js/croppr/croppr.min.js"></script>
+
+    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
+
+
+    {% if config.GOOGLE_MAPS_API_KEY %}
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+    {% endif %}
+
+
+
+
+
+
+    <script>
+        window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
+        window.__EXPORT_TOOL__ = ('{{ config.EXPORT_TOOL }}' === 'True');
+
+
+        const {createApp} = Vue;
+        const {createVuetify} = Vuetify;
+        const vuetify = createVuetify(vuetifyConfig);
+
+        const app = createApp({
+                delimiters: delimiters,
+
+
+                mixins: [mediaMixin, globalMixin],
+
+
+                components: {
+
+                    "tinymce-editor": Editor, // <- Important part,
+                },
+
+
+                data: () => ({
+
+                    helper: {}, // helper object for review items
+
+                    valid: false,
+
+                    translations: translations,
+                    advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
+
+                    itobInfo: [],
+                    itoaInfo: [],
+                    atobInfo: [],
+                    atoaInfo: [],
+                    btobInfo: [],
+                    itoiInfo: [],
+
+                    nextCursor: null,
+                    perPage: 20,
+                    items: [],
+                    selected: [],
+
+                    dzOpts: {
+                        url: '/admin/api/media/chunk',
+                        acceptedFiles: document.querySelector('[data-allowed-media-types]').dataset.allowedMediaTypes,
+                        addRemoveLinks: true,
+                        chunking: true,
+                        forceChunking: true,
+                        chunkSize: 500000, // Bytes
+                        thumbnailWidth: 80, // px
+                        thumbnailHeight: 80,
+                        parallelUploads: 1,
+                        maxFilesize: mediaUploadMaxFileSize,
+                        maxFiles: 1,
+
+
+                    },
+
+
+                    assignBulletin: {},
+                    selfAssignDialog: false,
+
+                    //global preview dialog
+                    preview: false,
+                    pitem: null,
+                    search: [{}],
+                    queryName: null,
+                    saveQueryDialog: false,
+                    searchPanels: 0,
+                    searches: [],
+                    searchTime: null,
+                    savedSearchSelection: null,
+
+
+                    currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
+                    users: JSON.parse(`{{users|tojson}}`),
+
+                    roles: [],
+                    // advanced search
+                    q: {},
+
+                    advSearchExpand: false,
+                    advSearchMenu: false,
+
+                    showVisualize: false,
+                    visualizeLoading: false,
+                    graphTimer: null,
+
+
+                    fsloading: false,
+
+
+                    dialog: dialog,
+                    saving: false,
+                    eventDialog: false,
+                    eventParams: {typ: 'for_bulletin'},
+                    reviewDialog: false,
+                    reviewKey: 0,
+                    descKey: 0,
+
+
+                    // search and relate bulletin dialog vars
+
+
+                    relateBulletinTerm: "",
+                    relateBulletinResults: [],
+                    selectedRelatedBulletins: [],
+
+                    // search and relate actor dialog vars
+                    relateActorTerm: "",
+                    relateActorResults: [],
+                    selectedRelatedActors: [],
+
+
+                    // search and relate incident dialog vars
+                    relateIncidentDialog: false,
+                    relateIncidentLoader: true,
+                    relateIncidentTerm: "",
+                    relateIncidentResults: [],
+                    selectedRelatedIncidents: [],
+
+
+                    drawer: drawer,
+                    bulletinDrawer: false,
+                    bulkBulletinDrawer: false,
+
+                    exportDrawer: false,
+                    exportConfig: {
+                        format: 'pdf'
+                    },
+                    sources: [],
+                    locations: [],
+                    labels: [],
+                    verLabels: [],
+                    eventtypes: [],
+
+
+                    statuses: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                        .map(s => ({en: s.title, tr: s.title_tr})),
+
+                    statusItems: JSON.parse(document.querySelector('[data-statuses]').dataset.statuses)
+                        .map(s => ({en: s.title, tr: s.title_tr})),
+                    statusDisabled: false,
+
+
+                    //field language switchers
+                    title__: true,
+                    sjac_title__: true,
+                    //events fields
+                    eventTitle__: true,
+                    eventComments__: true,
+
+
+                    //source link extras
+                    source_alt: null,
+                    source_disabled: false,
+
+                    //rich text config
+                    tinyConfig: tinyConfig,
+
+
+                    loading: false,
+                    parentLoading: false,
+                    csvFile: null,
+                    options: {},
+                    searchLoading: {
+                        assigned: false,
+                        first: false,
+                        second: false,
+                        third: false
+                    },
+
+
+                    //event dates popups
+                    eventFromMenu: false,
+                    eventToMenu: false,
+
+                    //bulletin dates popups
+                    publishDateMenu: false,
+                    documentationDateMenu: false,
+
+
+                    headers: [
+                        {title: "{{_('ID')}}", value: "id", width: 12, sortable: true},
+                        {title: "{{_('Title')}}", value: "title", width: 300, sortable: false},
+
+                        {% if (current_user.has_role('Admin') or current_user.has_role('DA')) %}
+                            {title: "{{_('Assigned To')}}", value: "assigned_to.name", width: 130, sortable: false},
+                            {title: "{{_('Access Groups')}}", value: "roles", width: 130, sortable: false},
+                        {% endif %}
+                        {title: "{{_('Status')}}", value: "_status", width: 150, sortable: false},
+
+
+                        {title: "{{_('Actions')}}", value: "action", sortable: false, width: 100}
+
+                    ],
+
+
+                    items: [],
+                    selected: [],
+                    itemsLength: 10,
+
+                    editedIndex: -1,
+                    editedItem: {
+                        title: "",
+                        events: [],
+                        medias: [],
+                        bulletin_relations: [],
+                        actor_relations: [],
+                        incident_relations: []
+                    },
+                    defaultItem: {
+                        title: "",
+                        description: "",
+
+                        // related events
+                        events: [],
+                        // related media
+                        medias: [],
+                        // related bulletins
+                        bulletin_relations: [],
+
+                        // related actors
+                        actor_relations: [],
+
+                        // related incidents
+                        incident_relations: [],
+                        publish_date: '',
+                        documentation_date: '',
+                        roles: []
+                    },
+
+                    reviewItem: {},
+
+                    unrestricted: false,
+
+                    // bulk actions
+                    bulk: {},
+                    bulkIcons: false,
+                    jobs: [],
+                    bulkTimer: 0,
+
+
+                    //events
+                    editedEventIndex: -1,
+                    editedEvent: {
+                        title: ""
+                    },
+                    defaultEvent: {
+                        title: "",
+                        from_date: '',
+                        to_date: ''
+                    },
+
+
+                    bulletin: {},
+                    bulletinLoader: false,
+
+                    webImportDlg: false,
+                    webUrl: '',
+                    webImportLoading: false
+                }),
+
+                computed: {
+                    computedItemsLength() {
+                        // If we have a nextCursor, there are more items to load
+                        // So we return current items length + 1 to indicate more items
+                        return this.nextCursor ? this.items.length + 1 : this.items.length;
+                    },
+                    searchEmpty() {
+                        return this.search.every(search =>
+                            Object.values(search).every(value => !value)
+                        );
+
+                    },
+                    titleRule() {
+                        return [this.editedItem.title ? v => true : v => "{{ _('Original Title is required.')}}"]
+                    },
+                    accessRule() {
+                        return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
+                    },
+                    linkRule() {
+                        return [this.source_alt || this.editedItem.source_link ? v => true : v => "{{ _('Source link is required unless unavailable.')}}"]
+                    },
+                    bulletinRelationTypes() {
+                        return this.btobInfo;
+                    },
+                    actorRelationTypes() {
+                        return this.atobInfo;
+                    },
+                    incidentRelationTypes() {
+                        return this.itobInfo;
+                    },
+                    bulletinRelationMultiple() {
+                        return true;
+                    },
+                    actorRelationMultiple() {
+                        return true;
+                    },
+                    incidentRelationMultiple() {
+                        return false;
+                    },
+
+                    compLocations() {
+                        return aggregateBulletinLocations(this.editedItem);
+                    },
+
+
+                    exBulletins() {
+                        let ids = [];
+
+                        if (this.editedItem?.id) {
+                            ids.push(this.editedItem.id);
+                            if (this.editedItem.bulletin_relations) {
+                                ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
+                            }
+                        } else if (this.reviewItem?.id) {
+                            ids.push(this.reviewItem.id);
+                            if (this.reviewItem.bulletin_relations) {
+                                ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
+                            }
+                        }
+
+                        return ids;
+                    },
+
+                    exActors() {
+                        let ids = [];
+
+                        if (this.editedItem?.id) {
+                            if (this.editedItem.actor_relations) {
+                                ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
+                            }
+                        } else if (this.reviewItem?.id) {
+                            if (this.reviewItem.actor_relations) {
+                                ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
+                            }
+                        }
+
+                        return ids;
+                    },
+
+                    exIncidents() {
+                        let ids = [];
+
+                        if (this.editedItem?.id) {
+                            if (this.editedItem.incident_relations) {
+                                ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
+                            }
+                        } else if (this.reviewItem?.id) {
+                            if (this.reviewItem.incident_relations) {
+                                ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
+                            }
+                        }
+
+                        return ids;
+                    },
+
+
+                    searchBg() {
+                        return this.search.some(s => Object.values(s).some(v => v)) ? 'yellow-lighten-5' : '';
+
+                    },
+
+
+                    formTitle() {
+
+                        return this.editedItem.id ? this.translations.editBulletin_ : this.translations.newBulletin_;
+                    },
+
+                    allowedRoles() {
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return this.roles;
+                        }
+                        return this.currentUser.roles;
+                    },
+
+                },
+
+
+                watch: {
+
+                    bulletinDrawer: function (val) {
+                        if (val === false) {
+                            this.bulletin = {};
+                            if (this.$route.path !== '/admin/bulletins/')
+                                this.$router.push('/admin/bulletins/')
+                        }
+                    },
+
+
+                    selected: {
+                        handler(val) {
+                            this.bulkIcons = !!val.length;
+                        },
+                        deep: true, // Enable deep watching
+                        //  immediate: true
+                    },
+
+
+                    source_alt: function (val) {
+
+                        if (val) {
+                            this.editedItem.source_link = 'NA';
+                            this.source_disabled = true;
+                        } else {
+                            //this.editedItem.source_link = '';
+                            this.source_disabled = false;
+                        }
+                    },
+
+
+                    eventDialog(val) {
+                        val || this.closeEvent();
+                    },
+
+                    mediaDialog(val) {
+                        val || this.closeMedia();
+                    },
+
+
+                },
+                mounted: function () {
+
+                    // populate roles for advanced search for admins
+                    {% if current_user.has_role('Admin') %}
+                        axios.get('/admin/api/roles/').then(res => {
+                            this.roles = res.data.items;
+                        }).catch(e => {
+                            this.roles = [];
+                            console.error(e.message);
+                        });
+                    {% endif  %}
+                    
+                    // Load initial data
+                    this.refresh();
+
+                    // display confirmation alert if edit dialog is open.
+                    let self = this;
+                    window.addEventListener("beforeunload", function (e) {
+                        if (self.dialog) {
+                            const confirmationMessage = "{{ _('It looks like you have been editing something. ')}}"
+                                + "{{ _('If you leave before saving, your changes will be lost.')}}";
+                            (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+                            return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+                        }
+                    });
+
+
+                    if (this.$route.params.id) {
+                        this.showBulletin(this.$route.params.id);
+                    }
+
+                    if (this.$route.query.reltob) {
+                        this.filter_related_to_bulletin(this.$route.query.reltob);
+
+                    }
+
+                    if (this.$route.query.reltoa) {
+                        this.filter_related_to_actor(this.$route.query.reltoa);
+                    }
+
+                    if (this.$route.query.reltoi) {
+                        this.filter_related_to_incident(this.$route.query.reltoi);
+                    }
+
+
+                    this.$router.afterEach((to, from) => {
+
+
+                        if (this.$route.query.reltob) {
+                            this.filter_related_to_bulletin(this.$route.query.reltob);
+                        }
+
+                        if (this.$route.query.reltoa) {
+                            this.filter_related_to_actor(this.$route.query.reltoa);
+                        }
+
+                        if (this.$route.query.reltoi) {
+                            this.filter_related_to_incident(this.$route.query.reltoi);
+                        }
+
+
+                        if (this.$route.params.id) {
+
+                            this.showBulletin(this.$route.params.id);
+                        } else {
+                            this.bulletinDrawer = false;
+                        }
+
+                    })
+
+
+                },
+
+                created() {
+                    this.fetchRelationInfo();
+
+                },
+
+                methods: {
+                    fetchRelationInfo() {
+                        axios.get('/admin/api/relation/info')
+                            .then(response => {
+                                this.itobInfo = response.data.itobInfo;
+                                this.itoaInfo = response.data.itoaInfo;
+                                this.atobInfo = response.data.atobInfo;
+                                this.atoaInfo = response.data.atoaInfo;
+                                this.btobInfo = response.data.btobInfo;
+                                this.itoiInfo = response.data.itoiInfo;
+                            })
+                            .catch(error => {
+                                console.error('Error fetching relation info:', error);
+                                this.showSnack('Error fetching relation info');
+                            });
+                    },
+
+                    validateForm() {
+                        this.$refs.form.validate().then(valid => {
+                            if (valid) {
+                                this.save();
+                            }
+                        });
+                    },
+
+
+                    checkGraphStatus: function () {
+                        axios.get('/admin/api/graph/status', {
+                            params: {
+                                type: 'bulletin'
+                            }
+                        })
+                            .then(res => {
+                                if (res.data.status === 'done') {
+                                    clearInterval(this.graphTimer);
+                                    this.visualizeLoading = false;
+                                    this.$refs.viz.visualizeQuery();
+
+
+                                }
+
+                            })
+                            .catch(error => {
+                                console.error('API check failed:', error);
+                            });
+                    }
+                    ,
+
+                    visualizeResults() {
+                        this.visualizeLoading = true;
+                        axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                            params: {
+                                type: 'bulletin'
+                            }
+                        }).then(res => {
+                            this.showSnack("{{ _('Graph is being generated.')}}");
+                            this.graphTimer = setInterval(this.checkGraphStatus, 3000);
+                        }).catch(e => {
+                            this.visualizeLoading = false;
+                            console.error(e.message);
+                        }).finally(() => {
+                        });
+                    }
+                    ,
+
+
+                    exportRequest() {
+
+                        this.loading = true;
+                        axios.post(`/export/api/bulletin/export`, {
+                            items: this.selected,
+                            config: this.exportConfig
+                        }).then(response => {
+                            this.showSnack(response.data);
+                            this.exportDrawer = false;
+                            this.selected = [];
+                            this.exportConfig = {
+                                format: 'pdf'
+                            };
+                        }).catch(error => {
+                            console.error(error.response?.data);
+                        }).finally(() => {
+                            this.loading = false;
+                        });
+                    },
+
+                    rowClass(row) {
+
+
+                        if (row.item.restricted) {
+                            row.item.selectable = false;
+                            return {class: 'restricted'}
+                        }
+                        return {class: ''}
+                    },
+
+                    openSelfAssign(bulletin) {
+                        this.assignBulletin = {id: bulletin.id};
+                        this.selfAssignDialog = true;
+
+                    },
+
+                    selfAssign() {
+
+
+                        axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
+                            this.showSnack("{{ _('Bulletin assigned successfully.')}}")
+                            this.refresh();
+
+                        }).finally(() => {
+                            this.selfAssignDialog = false;
+                            this.assignBulletin = {};
+
+                        });
+
+                    },
+
+                    filter_related_to_bulletin(id) {
+                        this.bulletinDrawer = false;
+                        this.search = [{rel_to_bulletin: id}];
+                        this.refresh();
+                    },
+
+                    filter_related_to_actor(id) {
+                        this.bulletinDrawer = false;
+                        this.search = [{rel_to_actor: id}];
+                        this.refresh();
+                    },
+
+                    filter_related_to_incident(id) {
+                        this.bulletinDrawer = false;
+                        this.search = [{rel_to_incident: id}];
+                        this.refresh();
+                    },
+
+                    previewItem(endpoint) {
+
+                        axios.get(endpoint).then(res => {
+                            this.pitem = res.data;
+                            this.preview = true;
+
+                        })
+
+
+                    },
+
+                    geoLocationsUpdated() {
+                        if (this.editedItem.geoLocations.length > 0) {
+                            this.editedItem.geoLocations.push(this.editedItem.geoLocations.pop())
+                        }
+
+
+                    },
+
+
+                    bulkStatus() {
+
+                        axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
+                            this.jobs = res.data;
+
+                            if (!this.jobs.length) {
+                                clearInterval(this.bulkTimer);
+                                // default refresh to first page
+                                this.options.page = 1;
+
+                                this.refresh(true);
+                                this.showSnack("{{ _('Bulk Update is finished!')}}")
+                            } else {
+                                //console.log(this.jobs)
+                                for (job of this.jobs) {
+                                    // console.log(job.status)
+                                }
+                            }
+                        });
+
+                    },
+
+
+                    // bulk updates
+
+                    bulk_update() {
+                        this.loading = true;
+                        axios.put(`/admin/api/bulletin/bulk/`, {
+                            items: this.selected,
+                            bulk: this.bulk
+                        }).then(response => {
+                            this.showSnack(response.data);
+                            this.refresh();
+                            //reset bulk drawer, and bulk data
+                            this.bulkBulletinDrawer = false;
+                            this.selected = [];
+                            this.bulk = {};
+                            clearInterval(this.bulkTimer);
+                            // if (!this.bulkProcInterval)
+                            this.bulkTimer = setInterval(this.bulkStatus, 3000);
+                        }).finally(() => {
+                            this.loading = false;
+                        });
+                    },
+
+
+                    // - ------------------ bulletins search methods  ---------------------------------
+
+                    toggleAdvSearch() {
+
+                        this.advSearchExpand = !this.advSearchExpand
+                        this.advSearchMenu = !this.advSearchMenu;
+
+
+                    },
+                    doSearch() {
+                        this.advSearchExpand = this.advSearchExpand && false;
+                        this.refresh();
+                    },
+
+                    refresh() {
+                        this.items = [];
+                        this.nextCursor = null;
+                        this.loadMore();
+                    },
+
+                    loadMore() {
+                        if (this.loading) return;
+                        
+                        this.loading = true;
+                        const startTime = new Date()
+
+                        let url = `/admin/api/bulletins/?per_page=${this.perPage}`;
+                        if (this.nextCursor) {
+                            url += `&cursor=${this.nextCursor}`;
+                        }
+
+                        axios.post(url, {
+                            q: this.search,
+                            cursor: this.nextCursor
+                        }).then(response => {
+                            const endTime = new Date()
+                            this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
+                            
+                            // If this is a fresh load (no nextCursor), replace items
+                            // Otherwise append new items
+                            if (!this.nextCursor) {
+                                this.items = response.data.items;
+                            } else {
+                                this.items = [...this.items, ...response.data.items];
+                            }
+                            
+                            // Set nextCursor from response
+                            this.nextCursor = response.data.nextCursor;
+                            
+                            this.showVisualize = !(
+                                this.search.length === 1 &&
+                                Object.keys(this.search[0]).length === 0
+                            );
+                        }).catch(error => {
+                            console.error('Error loading bulletins:', error);
+                            this.showSnack('Error loading bulletins');
+                        }).finally(() => {
+                            this.loading = false;
+                        });
+                    },
+
+                    removeQueryAt(i) {
+
+                        this.search.splice(i, 1);
+
+                    },
+
+                    addQuery() {
+                        this.search.push({})
+                        this.searchPanels = this.search.length - 1;
+                    },
+
+                    resetQuery() {
+                        this.savedSearchSelection = null;
+                        this.search = [{}];
+                    },
+
+
+                    resetSearch() {
+                        this.resetQuery();
+                        this.refresh();
+                    },
+
+                    openSaveQueryDialog() {
+                        // Separate method to include auto-focus on input
+
+                        this.saveQueryDialog = true;
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                this.$refs.saveQueryInput.focus();
+                            }, 0);
+                        })
+                    },
+
+                    loadSearch(item) {
+
+                        if (item && item.data && Array.isArray(item.data)) {
+                            // Spread item.data if it's an array
+                            this.savedSearchSelection = {...item};
+                            this.search = [...item.data];
+                        } else {
+                            console.error('Invalid item or item.data is not an array');
+                        }
+                        this.$refs.savedSearchDropdown.blur();
+
+                    },
+
+
+                    loadSearchesFromAPI(selectLast = false) {
+                        axios.get('/admin/api/queries/', {
+                            params: {
+                                type: 'bulletin'
+                            }
+                        }).then(res => {
+                            this.searches = res.data;
+                            if (selectLast === true) {
+                                this.savedSearchSelection = this.searches.at(-1);
+                            }
+                        });
+
+                    },
+
+                    saveSearch() {
+                        const newSearch = {q: this.search, name: this.queryName, type: 'bulletin'};
+
+                        axios.post('/admin/api/query/', newSearch)
+                            .then(res => {
+                                this.showSnack(res.data);
+                                this.saveQueryDialog = false;
+
+
+                                this.queryName = null;
+                                // just reload searches and select the last one
+                                this.loadSearchesFromAPI(true);
+                            });
+                    },
+
+
+                    updateSearch() {
+                        axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
+                            .then(res => {
+                                this.showSnack(res.data);
+                            });
+                    },
+
+                    deleteSearch(id) {
+                        axios.delete('/admin/api/query/' + id)
+                            .then(res => {
+                                this.showSnack(res.data);
+                                this.searches = this.searches.filter(item => item.id !== id);
+                                if (this.savedSearchSelection.id == id) {
+                                    this.savedSearchSelection = null;
+                                    this.search = [{}];
+                                }
+                            });
+                    },
+
+                    // - ------------------ end bulletins search methods  ---------------------------------
+
+
+                    /* Bulletins Custom Lists */
+
+                    allBulletins() {
+                        this.search = [{}];
+                        this.refresh();
+
+                    },
+                    myAssigned() {
+                        let q = {};
+                        q.assigned = [this.currentUser.id];
+                        q.statuses = ["Assigned"];
+                        this.search = [q];
+                        this.refresh();
+                    },
+
+                    myReview() {
+                        let q = {};
+                        q.reviewer = [this.currentUser.id];
+                        q.statuses = ["Peer Review Assigned"];
+                        this.search = [q];
+                        this.refresh();
+                    },
+
+
+                    removeEvent: function (evt, index) {
+                        if (confirm("{{ _('Confirm deleting this event?')}}")) {
+                            this.editedItem.events.splice(index, 1);
+                        }
+
+                    },
+
+
+                    //reset initial visible fields to english language
+
+                    resetSwitchers: function () {
+                        this.title__ = true;
+                        this.sjac_title__ = true;
+                    },
+
+
+                    rowClick(e, row) {
+                        const item = row.item;
+
+                        if (item.restricted) {
+                            this.showSnack("{{ _('This item is restricted.')}}")
+                            return
+                        }
+                        const path = `/admin/bulletins/${item.id}`;
+                        if (this.$route.path !== path)
+                            this.$router.push(path);
+
+                    },
+
+                    showBulletin(id) {
+                        this.bulletinLoader = true
+                        this.bulletinDrawer = true;
+                        axios.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
+                            this.bulletin = response.data;
+                        }).catch(error => {
+                            this.bulletinDrawer = false;
+                        }).finally(() => {
+                            this.bulletinLoader = false;
+                        });
+                    },
+
+
+                    searchEventtypes: debounce(function (evt) {
+                        axios
+                            .get(`/admin/api/eventtypes/?q=${evt.target.value}&typ=for_bulletin`)
+                            .then(response => {
+                                this.eventtypes = response.data.items;
+                            });
+                    }, 350),
+
+
+                    handleStatus(bulletin) {
+
+                        if (this.editedItem.id) {
+                            // edit existing bulletin mode
+                            if (this.has_role(this.currentUser, 'Admin')) {
+
+                                this.statusDisabled = false;
+                                return;
+                            }
+
+                            // else is a standard user
+                            this.statusItems = this.statuses;
+
+                            if (this.editedItem.status == 'Assigned' || this.editedItem.status == 'Human Created') {
+                                this.editedItem.status = this.statusItems[2].en;
+                            }
+
+                            if (this.editedItem.status == 'Peer Reviewed') {
+                                this.editedItem.status = this.statusItems[9].en;
+                            }
+
+                            this.statusDisabled = true;
+                        } else {
+                            // new bulletin mode
+
+                            this.editedItem.status = this.statusItems[1].en;
+                            this.statusDisabled = true;
+
+                        }
+
+                    },
+
+
+                    has_role(user, role) {
+                        for (const r of user.roles) {
+                            if (r.name === role) {
+                                return true
+                            }
+                        }
+                        return false;
+                    },
+
+                    bulkAllowed() {
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (this.has_role(this.currentUser, 'Mod')) {
+                            return true;
+                        }
+                        return false;
+                    },
+
+                    exportAllowed() {
+                        if (__EXPORT_TOOL__) {
+                            if (this.has_role(this.currentUser, 'Admin')) {
+                                return true;
+                            }
+                            if (this.currentUser.can_export) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+
+                    editAllowed(bulletin) {
+
+                        if (bulletin.restricted) {
+                            return false;
+                        }
+
+                        if (this.has_role(this.currentUser, 'Admin')) {
+                            return true;
+                        }
+                        if (!this.has_role(this.currentUser, 'DA')) {
+                            return false;
+                        }
+                        const statuses = ['Human Created', 'Assigned', 'Updated', 'Peer Reviewed', 'Revisited'];
+                        if (bulletin.assigned_to && bulletin.assigned_to.id == this.currentUser.id && statuses.includes(bulletin.status)) {
+                            return true
+                        }
+                        return false;
+                    },
+
+                    reviewAllowed(bulletin) {
+
+                        if (bulletin.restricted) {
+                            return false;
+                        }
+
+                        if (!this.currentUser.roles.length) {
+                            return false;
+                        }
+
+                        const statuses = ['Peer Review Assigned', 'Peer Reviewed'];
+                        if (bulletin.first_peer_reviewer && bulletin.first_peer_reviewer.id == this.currentUser.id && statuses.includes(bulletin.status)) {
+                            return true
+                        }
+                        return false;
+                    },
+
+                    selfAssignAllowed(bulletin) {
+
+                        if (bulletin.restricted) {
+                            return false;
+                        }
+
+                        if (this.currentUser.can_self_assign) {
+                            if ((!bulletin.assigned_to) || (bulletin.assigned_to && !bulletin.assigned_to.active)) {
+                                return true
+                            }
+
+                        }
+
+                        return false;
+
+                    },
+
+                    addReview(item) {
+
+                        this.loading = true;
+                        this.reviewDialog = true;
+
+
+                        axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                            this.loading = false;
+                            this.$nextTick(() => {
+                                this.reviewItem = response.data;
+                                this.reviewKey += 1;
+                                // fix bug in vue reactivity with nested object attribs
+
+                                if (!response.data.review) {
+                                    this.reviewItem.review = '';
+                                }
+
+
+                            })
+
+
+                        })
+
+
+                    }
+                    ,
+
+                    saveReview() {
+
+                        axios.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
+                            item: this.reviewItem
+                        })
+                            .then(response => {
+                                this.reviewDialog = false;
+                                this.showSnack(response.data);
+                                this.refresh();
+                            });
+
+                    },
+
+                    adjustDates() {
+
+
+                        if (this.editedItem.publish_date) {
+                            this.editedItem.publish_time = dateFns.format(this.editedItem.publish_date, 'HH:mm');
+                            this.editedItem.publish_date = dateFns.format(this.editedItem.publish_date, 'YYYY-MM-DD')
+                        }
+
+                        if (this.editedItem.documentation_date) {
+                            this.editedItem.documentation_time = dateFns.format(this.editedItem.documentation_date, 'HH:mm');
+                            this.editedItem.documentation_date = dateFns.format(this.editedItem.documentation_date, 'YYYY-MM-DD');
+                        }
+                    },
+
+
+                    editItem(item) {
+
+                        this.bulletinDrawer = false;
+
+
+                        if (!item.id) {
+                            // hack to invoke deep copy and avoid passing attributes by reference
+                            // (resolves data the persists across dialogs)
+                            this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
+                            this.source_alt = null;
+                            this.dialog = true;
+                            this.handleStatus(item);
+                        } else {
+                            // load item from db
+                            this.loading = true;
+                            axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                                this.dialog = true;
+
+                                this.$nextTick(() => {
+                                    this.loading = false
+                                    this.editedItem = response.data;
+                                    //reload tinymce component hack
+                                    this.descKey += 1;
+                                    if (this.editedItem.source_link == 'NA') {
+                                        this.source_alt = true;
+                                    } else {
+                                        this.source_alt = false;
+                                    }
+                                    this.editedItem.comments = '';
+
+                                    this.resetSwitchers();
+                                    this.handleStatus(item);
+                                })
+
+
+                            }).finally(() => {
+                                this.loading = false;
+                            });
+
+
+                        }
+
+
+                    },
+
+                    deleteItem(item) {
+                        const index = this.items.indexOf(item);
+                        const cfm =
+                            confirm("{{ _('Are you sure you want to delete this item?')}}") &&
+                            this.items.splice(index, 1);
+                        if (cfm) {
+                            axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
+                                this.showSnack(response.data);
+                                this.refresh();
+                            });
+                        }
+                    },
+
+                    close() {
+                        this.dialog = false;
+                        setTimeout(() => {
+                            this.editedItem = Object.assign({}, this.defaultItem);
+
+                            this.unrestricted = false;
+                            this.editedIndex = -1;
+                            this.saving = false;
+                        }, 300);
+                    },
+
+                    confirmClose() {
+                        if (confirm(translations.confirm_)) {
+                            this.close();
+                        }
+                    },
+
+                    save() {
+                        if (!this.valid) {
+                            this.showSnack("{{ _('Please review the form for errors.')}}");
+                            return;
+                        }
+
+                        this.saving = true;
+                        if (this.editedItem.id) {
+                            //update record
+                            axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
+                                item: this.editedItem
+                            }).then(response => {
+                                this.showSnack(response.data);
+                                this.refresh();
+                                this.close();
+                            }).catch(err => {
+                                console.error(err.response?.data);
+                                this.saving = false;
+                            });
+                        } else {
+                            //create new record
+                            axios.post("/admin/api/bulletin/", {
+                                item: this.editedItem
+                            }).then(response => {
+                                this.items.push(this.editedItem);
+                                this.showSnack(response.data);
+                                this.refresh();
+                                this.close();
+                            }).catch(err => {
+                                console.error(err.response?.data);
+                                this.saving = false;
+                            });
+                        }
+                    },
+
+                    editEvent(evt, item, index) {
+                        this.eventDialog = true;
+
+                        this.$nextTick(() => {
+                            this.editedEvent = Object.assign({}, item);
+
+                            this.editedEventIndex = index;
+
+                            //reset dual fields display to english
+                            this.eventTitle__ = true;
+                            this.eventComments__ = true;
+
+                        })
+
+                        //this.locations = this.editedItem.locations;
+                    },
+
+                    closeEvent() {
+                        this.eventDialog = false;
+                        setTimeout(() => {
+                            this.editedEvent = Object.assign({}, this.defaultEvent);
+                            this.editedEventIndex = -1;
+                        }, 300);
+                    },
+
+                    saveEvent() {
+
+                        if (this.editedEventIndex > -1) {
+                            Object.assign(
+                                this.editedItem.events[this.editedEventIndex],
+                                this.editedEvent
+                            );
+                            //update record
+                        } else {
+                            this.editedItem.events.push(this.editedEvent);
+                            //create new record
+                        }
+                        this.closeEvent();
+                    },
+
+                    // related bulletins functions --------------------
+
+                    searchRelatedBulletins() {
+
+                        this.$refs.relateBulletins.open();
+                        this.$nextTick(() => {
+                            this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
+                            this.$refs.relateBulletins.reSearch();
+                        });
+
+                    },
+
+                    relateBulletin(bulletin) {
+
+
+                        // get list of existing attached bulletins
+                        let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
+
+                        if (!ex.includes(bulletin.id)) {
+                            relation = {
+                                bulletin: bulletin
+                            };
+                            this.editedItem.bulletin_relations.push(relation);
+                        }
+                    },
+
+                    removeBulletin: function (evt, index) {
+                        if (confirm(translations.confirm_)) {
+                            this.editedItem.bulletin_relations.splice(index, 1);
+                        }
+                    },
+
+
+                    // -------------------------------------------------
+
+
+                    // related actors functions ------------------------
+
+                    searchRelatedActors() {
+                        this.$refs.relateActors.open();
+                        this.$nextTick(() => {
+                            this.$refs.relateActors.q = {tsv: this.relateActorTerm};
+                            this.$refs.relateActors.reSearch();
+                        });
+
+                    },
+                    relateActor(actor) {
+                        // get list of existing attached actors
+                        let ex = this.editedItem.actor_relations.map(x => x.actor.id);
+
+                        if (!ex.includes(actor.id)) {
+                            relation = {
+                                actor: actor
+                            };
+                            this.editedItem.actor_relations.push(relation);
+                            this.relateActorResults.removeById(actor.id);
+                        }
+                    },
+
+                    removeActor: function (evt, index) {
+                        if (confirm(translations.confirm_)) {
+                            this.editedItem.actor_relations.splice(index, 1);
+                        }
+                    },
+
+
+                    // related incidents functions ------------------------
+
+                    searchRelatedIncidents() {
+
+                        this.$refs.relateIncidents.open();
+                        this.$nextTick(() => {
+                            this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
+                            this.$refs.relateIncidents.reSearch();
+                        });
+
+                    },
+                    relateIncident(incident) {
+
+                        // get list of existing attached actors
+                        let ex = this.editedItem.incident_relations.map(x => x.incident.id);
+
+                        if (!ex.includes(incident.id)) {
+                            relation = {
+                                incident: incident
+                            };
+                            this.editedItem.incident_relations.push(relation);
+                            this.relateIncidentResults.removeById(incident.id);
+                        }
+                    },
+
+                    removeIncident: function (evt, index) {
+                        if (confirm(translations.confirm_)) {
+                            this.editedItem.incident_relations.splice(index, 1);
+                        }
+                    },
+
+                    clearAssignee() {
+                        if (this.bulk.assigneeClear) {
+                            this.bulk.assigned_to_id = null;
+                        }
+                    },
+
+                    clearReviewer() {
+                        if (this.bulk.reviewerClear) {
+                            this.bulk.first_peer_reviewer_id = null;
+                        }
+                    },
+
+                    submitWebImport() {
+                        if (!this.webUrl.trim()) {
+                            this.showSnack('{{ _("Please enter a URL") }}');
+                            return;
+                        }
+
+                        this.webImportLoading = true;
+                        
+                        axios.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
+                            .then(res => {
+                                this.webUrl = ''; // Clear the input
+                                this.webImportDlg = false;
+                                this.showSnack('{{ _("URL import started") }}');
+                                this.refresh(); // Refresh the bulletins list
+                            })
+                            .catch(err => {
+                                this.showSnack(handleRequestError(err));
+                                console.error(err);
+                            })
+                            .finally(() => {
+                                this.webImportLoading = false;
+                            });
+                    }
+                }
+            })
+        ;
+
+
+        app.component('SearchField', SearchField);
+        app.component('UniField', UniField);
+        app.component('DualField', DualField);
+        app.component('LocationSearchField', LocationSearchField);
+        app.component('GeoMap', GeoMap);
+        app.component('RelateBulletins', RelateBulletins);
+        app.component('RelateActors', RelateActors);
+        app.component('RelateIncidents', RelateIncidents);
+        app.component('BulletinResult', BulletinResult);
+        app.component('BulletinSearchBox', BulletinSearchBox);
+        app.component('ActorSearchBox', ActorSearchBox);
+        app.component('IncidentSearchBox', IncidentSearchBox);
+        app.component('ActorResult', ActorResult);
+        app.component('IncidentResult', IncidentResult);
+
+        app.component('VueDropzone', VueDropzone);
+
+        app.component('RelatedBulletinsCard', RelatedBulletinsCard);
+        app.component('RelatedActorsCard', RelatedActorsCard);
+        app.component('RelatedIncidentsCard', RelatedIncidentsCard);
+
+        app.component('BulletinCard', BulletinCard);
+        app.component('ActorCard', ActorCard);
+        app.component('IncidentCard', IncidentCard);
+        app.component('EventCard', EventCard);
+        app.component('PopDateField', PopDateField);
+        app.component('PopDateRangeField', PopDateRangeField);
+        app.component('PopDateTimeField', PopDateTimeField);
+        app.component('GeoLocations', GeoLocations);
+        app.component('GlobalMap', GlobalMap);
+        app.component('ImageGallery', ImageGallery);
+        app.component('MediaCard', MediaCard);
+        app.component('Visualization', Visualization);
+        app.component('PdfViewer', PdfViewer);
+        app.component('PreviewCard', PreviewCard);
+        app.component('mix-i', MixI);
+        app.component('mix-ii', MixII);
+        app.component('mix-iii', MixIII);
+        app.component('mp-field', MPField);
+        app.component('mp-card', MPCard);
+        app.component('ActorProfiles', ActorProfiles);
+
+
+        app.use(router);
+        app.use(vuetify).mount('#app');
+
+        window.app = app;
+    </script>
+{% endblock %}
