@@ -2941,37 +2941,55 @@ def api_bulletins2(validated_data: dict) -> Response:
     else:
         total = None
 
-    # Add pagination and joins only for data fetch
+    # Get sorted IDs first in a subquery
+    id_subquery = (
+        select(Bulletin.id).where(and_(*conditions)).order_by(Bulletin.id.desc()).limit(per_page)
+    )
     if cursor:
-        base_stmt = base_stmt.where(Bulletin.id < cursor)
+        id_subquery = id_subquery.where(Bulletin.id < cursor)
 
-    # Only need basic query without joins since we're using minimal serialization
-    base_stmt = base_stmt.order_by(Bulletin.id.desc()).limit(per_page)
+    # Then fetch only needed fields
+    base_stmt = (
+        select(
+            Bulletin.id,
+            Bulletin.title,
+            Bulletin.status,
+            Bulletin.assigned_to_id,
+            Bulletin.review_action,
+            Role.id.label("role_id"),
+            Role.name.label("role_name"),
+            Role.color.label("role_color"),
+        )
+        .outerjoin(Bulletin.roles)
+        .where(Bulletin.id.in_(id_subquery))
+    )
 
     result = db.session.execute(base_stmt)
-    items = result.scalars().all()
+    items = result.all()
 
-    # Minimal serialization for list view
-    serialized_items = [
-        {
-            "id": item.id,
-            "title": item.title,
-            "status": item.status,
-            "assigned_to": (
-                {"id": item.assigned_to_id, "name": item.assigned_to.name}
-                if item.assigned_to_id
-                else None
-            ),
-            "roles": (
-                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
-                if item.roles
-                else []
-            ),
-            "_status": item.status,
-            "review_action": item.review_action,
-        }
-        for item in items
-    ]
+    # Group by bulletin and collect roles
+    bulletin_map = {}
+    for item in items:
+        if item.id not in bulletin_map:
+            bulletin_map[item.id] = {
+                "id": item.id,
+                "title": item.title,
+                "status": item.status,
+                "assigned_to": (
+                    {"id": item.assigned_to_id, "name": item.assigned_to.name}
+                    if item.assigned_to_id
+                    else None
+                ),
+                "roles": [],
+                "_status": item.status,
+                "review_action": item.review_action,
+            }
+        if item.role_id:  # Add role if exists
+            bulletin_map[item.id]["roles"].append(
+                {"id": item.role_id, "name": item.role_name, "color": item.role_color}
+            )
+
+    serialized_items = list(bulletin_map.values())
 
     next_cursor = items[-1].id if items else None
 
