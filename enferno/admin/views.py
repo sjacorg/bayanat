@@ -2933,30 +2933,23 @@ def api_bulletins2(validated_data: dict) -> Response:
     search = SearchUtils({"q": q}, "bulletin")
     base_stmt, conditions = search.bulletin_query(q[0])
 
-    # Only count total for first page
+    # Only count total for first page using simpler query
     if not cursor:
-        # Create hash of query params for cache key
         query_hash = hash(str(q))
-        # Convert conditions list to tuple for caching
         conditions_tuple = tuple(conditions)
         total = get_cached_bulletin_count(query_hash, conditions_tuple)
     else:
         total = None
 
-    # Add pagination to base statement
+    # Add pagination and joins only for data fetch
     if cursor:
         base_stmt = base_stmt.where(Bulletin.id < cursor)
+
+    # Only need basic query without joins since we're using minimal serialization
     base_stmt = base_stmt.order_by(Bulletin.id.desc()).limit(per_page)
 
-    # Add options to eagerly load required relationships
-    base_stmt = base_stmt.options(
-        joinedload(Bulletin.assigned_to),
-        joinedload(Bulletin.roles),
-        joinedload(Bulletin.sources),
-    )
-
     result = db.session.execute(base_stmt)
-    items = result.scalars().unique().all()  # Use unique() to ensure unique rows
+    items = result.scalars().all()
 
     # Minimal serialization for list view
     serialized_items = [
@@ -2965,8 +2958,8 @@ def api_bulletins2(validated_data: dict) -> Response:
             "title": item.title,
             "status": item.status,
             "assigned_to": (
-                {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                if item.assigned_to
+                {"id": item.assigned_to_id, "name": item.assigned_to.name}
+                if item.assigned_to_id
                 else None
             ),
             "roles": (
