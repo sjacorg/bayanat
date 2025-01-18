@@ -4,7 +4,7 @@ import os
 import shutil
 import unicodedata
 from datetime import datetime, timedelta
-from functools import wraps
+from functools import wraps, lru_cache
 from typing import Any, Optional
 from uuid import uuid4
 from unidecode import unidecode
@@ -693,6 +693,21 @@ def api_potentialviolation_import() -> Response:
         return "Success", 200
     else:
         return "Error", 400
+
+
+@lru_cache(maxsize=1000)
+def get_cached_bulletin_count(query_hash: int, base_stmt) -> int:
+    """
+    Cache bulletin counts for search queries
+
+    Args:
+        query_hash: Hash of the query parameters
+        base_stmt: Base SQLAlchemy statement to count
+
+    Returns:
+        Total count of matching bulletins
+    """
+    return db.session.execute(select(func.count()).select_from(base_stmt.subquery())).scalar()
 
 
 @admin.route("/api/claimedviolation/", defaults={"page": 1})
@@ -2918,8 +2933,14 @@ def api_bulletins2(validated_data: dict) -> Response:
     search = SearchUtils({"q": q}, "bulletin")
     base_stmt = search.get_query()
 
-    # Get count from base statement
-    total = db.session.execute(select(func.count()).select_from(base_stmt.subquery())).scalar()
+    # Only count total for first page
+    if not cursor:
+        # Create hash of query params for cache key
+        query_hash = hash(str(q))
+        total = get_cached_bulletin_count(query_hash, base_stmt)
+    else:
+        # Use cached total for subsequent pages
+        total = None
 
     # Add pagination to base statement
     if cursor:
