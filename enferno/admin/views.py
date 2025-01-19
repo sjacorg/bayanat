@@ -2959,8 +2959,10 @@ def api_bulletins2(validated_data: dict) -> Response:
             Role.id.label("role_id"),
             Role.name.label("role_name"),
             Role.color.label("role_color"),
+            User.name.label("assigned_to_name"),
         )
         .outerjoin(Bulletin.roles)
+        .outerjoin(Bulletin.assigned_to.of_type(User))
         .where(Bulletin.id.in_(id_subquery))
         .order_by(Bulletin.id.desc())  # Maintain order from subquery
     )
@@ -2977,7 +2979,7 @@ def api_bulletins2(validated_data: dict) -> Response:
                 "title": item.title,
                 "status": item.status,
                 "assigned_to": (
-                    {"id": item.assigned_to_id, "name": item.assigned_to.name}
+                    {"id": item.assigned_to_id, "name": item.assigned_to_name}
                     if item.assigned_to_id
                     else None
                 ),
