@@ -2913,11 +2913,11 @@ def api_bulletins(validated_data: dict) -> Response:
 @roles_accepted("Admin", "DA")
 @validate_with(BulletinSearchModel)
 def api_bulletins2(validated_data: dict) -> Response:
-    from enferno.utils.search_utils import SearchUtils2 as SearchUtils
+    from enferno.utils.search_utils2 import SearchUtils
 
     # Log search query
-    q = validated_data.get("q", None)
-    if q and q != [{}]:
+    q = validated_data.get("q", [{}])
+    if q != [{}]:
         Activity.create(
             current_user,
             Activity.ACTION_SEARCH,
@@ -2926,7 +2926,6 @@ def api_bulletins2(validated_data: dict) -> Response:
             "bulletin",
         )
 
-    q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", 20)
 
@@ -2942,13 +2941,14 @@ def api_bulletins2(validated_data: dict) -> Response:
         total = None
 
     # Get sorted IDs first in a subquery
-    id_subquery = (
-        select(Bulletin.id).where(and_(*conditions)).order_by(Bulletin.id.desc()).limit(per_page)
-    )
-    if cursor:
-        id_subquery = id_subquery.where(Bulletin.id < cursor)
+    id_subquery = select(Bulletin.id).where(and_(*conditions)).order_by(Bulletin.id.desc())
 
-    # Then fetch only needed fields
+    if cursor:
+        id_subquery = id_subquery.where(Bulletin.id < int(cursor))
+
+    id_subquery = id_subquery.limit(per_page)
+
+    # Then fetch only needed fields for the selected IDs
     base_stmt = (
         select(
             Bulletin.id,
@@ -2962,6 +2962,7 @@ def api_bulletins2(validated_data: dict) -> Response:
         )
         .outerjoin(Bulletin.roles)
         .where(Bulletin.id.in_(id_subquery))
+        .order_by(Bulletin.id.desc())  # Maintain order from subquery
     )
 
     result = db.session.execute(base_stmt)
@@ -2990,8 +2991,7 @@ def api_bulletins2(validated_data: dict) -> Response:
             )
 
     serialized_items = list(bulletin_map.values())
-
-    next_cursor = items[-1].id if items else None
+    next_cursor = min(bulletin_map.keys()) if bulletin_map else None
 
     response = {
         "items": serialized_items,
