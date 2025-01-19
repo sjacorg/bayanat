@@ -1,6 +1,7 @@
 from dateutil.parser import parse
 from sqlalchemy import or_, not_, and_, any_, all_, func, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from datetime import timedelta
 
 from enferno.admin.models import (
     Bulletin,
@@ -36,12 +37,12 @@ def date_between_query(field: ColumnElement, dates: list) -> BinaryExpression:
     Returns:
         - A binary expression for the date range query.
     """
-    start_date = parse(dates[0]).date()
+    start_date = parse(dates[0])
     if len(dates) == 1:
-        end_date = start_date
+        end_date = start_date + timedelta(days=1)
     else:
-        end_date = parse(dates[1]).date()
-    return func.date(field).between(start_date, end_date)
+        end_date = parse(dates[1]) + timedelta(days=1)
+    return field.between(start_date, end_date)
 
 
 class SearchUtils:

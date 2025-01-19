@@ -2962,6 +2962,7 @@ def api_bulletins2(validated_data: dict) -> Response:
         )
         .outerjoin(Bulletin.roles)
         .where(Bulletin.id.in_(id_subquery))
+        .order_by(Bulletin.id.desc())  #  preserve sorting
     )
 
     result = db.session.execute(base_stmt)
