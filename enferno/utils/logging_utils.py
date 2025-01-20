@@ -60,33 +60,34 @@ def get_logger(name="app_logger"):
     logger = logging.getLogger(name)
     logger.setLevel(cfg.LOG_LEVEL)
 
-    # Only add handler if it doesn't exist to prevent duplicate logging
-    if not logger.handlers:
+    if cfg.APP_LOG_ENABLED:
         handler = TimedRotatingFileHandler(
             os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
             when="midnight",
             backupCount=cfg.LOG_BACKUP_COUNT,
         )
         handler.setFormatter(JsonFormatter())
-        logger.addHandler(handler)
+    else:
+        handler = logging.NullHandler()
 
+    logger.handlers = [handler]
     return logger
 
 
 @after_setup_logger.connect
 def setup_celery_logger(logger, *args, **kwargs):
     """Configure the Celery logger to use our existing logging setup."""
-    # Remove default handlers to prevent duplicate logging
-    logger.handlers = []
-
-    handler = TimedRotatingFileHandler(
-        os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
-        when="midnight",
-        backupCount=cfg.LOG_BACKUP_COUNT,
-    )
-    handler.setFormatter(JsonFormatter())
-    logger.addHandler(handler)
-    logger.setLevel(cfg.LOG_LEVEL)
+    if cfg.CELERY_LOG_ENABLED:
+        handler = TimedRotatingFileHandler(
+            os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
+            when="midnight",
+            backupCount=cfg.LOG_BACKUP_COUNT,
+        )
+        handler.setFormatter(JsonFormatter())
+        handler.setLevel(cfg.LOG_LEVEL)
+        logger.handlers = [handler]
+    for handler in logger.handlers:
+        handler.setLevel(cfg.LOG_LEVEL)
 
 
 @after_setup_task_logger.connect
