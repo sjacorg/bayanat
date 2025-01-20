@@ -30,7 +30,7 @@
     
                                 <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                     <div v-if="tabState.child === 'administrative-levels'">
-                                        <editable-table ref="locationAdminLevelsTable" title="{{ _('Location Administrative Levels') }}"
+                                        <editable-table height="calc(100vh - 628px)" title="{{ _('Location Administrative Levels') }}"
                                             :item-headers="alHeaders" :editable-columns="['title']"
                                             :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
                                             delete-endpoint="/admin/api/location-admin-level" save-endpoint="/admin/api/location-admin-level"
@@ -82,7 +82,7 @@
                                     </div>
                                     
                                     <div v-if="tabState.child === 'location-types'">
-                                        <editable-table title="{{ _('Location Types') }}" :item-headers="ltHeaders" :no-action-ids="[1,2]"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Location Types') }}" :item-headers="ltHeaders" :no-action-ids="[1,2]"
                                             delete-endpoint="/admin/api/location-type" save-endpoint="/admin/api/location-type"
                                             load-endpoint="/admin/api/location-types/?per_page=1000">
                                         </editable-table>
@@ -100,21 +100,21 @@
                                 
                                 <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                     <div v-if="tabState.child === 'countries'">
-                                        <editable-table title="{{ _('Countries') }}" :item-headers="countryHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Countries') }}" :item-headers="countryHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/country"
                                             save-endpoint="/admin/api/country" load-endpoint="/admin/api/countries/?per_page=1000">
                                         </editable-table>
                                     </div>
                                     
                                     <div v-if="tabState.child === 'ethnographic-info'">
-                                        <editable-table title="{{ _('Ethnographic Information') }}" :item-headers="ethnoHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Ethnographic Information') }}" :item-headers="ethnoHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/ethnography"
                                             save-endpoint="/admin/api/ethnography" load-endpoint="/admin/api/ethnographies/?per_page=1000">
                                         </editable-table>
                                     </div>
                                     
                                     <div v-if="tabState.child === 'dialects'">
-                                        <editable-table title="{{ _('Dialects') }}" :item-headers="dialectHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Dialects') }}" :item-headers="dialectHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/dialect"
                                             save-endpoint="/admin/api/dialect" load-endpoint="/admin/api/dialects/?per_page=1000">
                                         </editable-table>
@@ -132,7 +132,7 @@
 
                                 <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                     <div v-if="tabState.child === 'actor-to-actor'">
-                                        <editable-table title="{{ _('Actor to Actor Relations') }}" :item-headers="revRelationHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Actor Relations') }}" :item-headers="revRelationHeaders"
                                             :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
                                             delete-endpoint="/admin/api/atoainfo" save-endpoint="/admin/api/atoainfo"
                                             load-endpoint="/admin/api/atoainfos/?per_page=1000">
@@ -140,35 +140,35 @@
                                     </div>
                                     
                                     <div v-if="tabState.child === 'actor-to-bulletin'">
-                                        <editable-table title="{{ _('Actor to Bulletin Relations') }}" :item-headers="relationHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Bulletin Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/atobinfo"
                                             save-endpoint="/admin/api/atobinfo" load-endpoint="/admin/api/atobinfos/?per_page=1000">
                                         </editable-table>
                                     </div>
                                     
                                     <div v-if="tabState.child === 'bulletin-to-bulletin'">
-                                        <editable-table title="{{ _('Bulletin to Bulletin Relations') }}" :item-headers="relationHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Bulletin to Bulletin Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/btobinfo"
                                             save-endpoint="/admin/api/btobinfo" load-endpoint="/admin/api/btobinfos/?per_page=1000">
                                         </editable-table>
                                     </div>
                                     
                                     <div v-if="tabState.child === 'incident-to-bulletin'">
-                                        <editable-table title="{{ _('Incident to Bulletin Relations') }}" :item-headers="relationHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Bulletin Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itobinfo"
                                             save-endpoint="/admin/api/itobinfo" load-endpoint="/admin/api/itobinfos/?per_page=1000">
                                         </editable-table>
                                     </div>
                                     
                                     <div v-if="tabState.child === 'incident-to-actor'">
-                                        <editable-table title="{{ _('Incident to Actor Relations') }}" :item-headers="relationHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Actor Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoainfo"
                                             save-endpoint="/admin/api/itoainfo" load-endpoint="/admin/api/itoainfos/?per_page=1000">
                                         </editable-table>
                                     </div>
                                     
                                     <div v-if="tabState.child === 'incident-to-incident'">
-                                        <editable-table title="{{ _('Incident to Incident Relations') }}" :item-headers="relationHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Incident Relations') }}" :item-headers="relationHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/itoiinfo"
                                             save-endpoint="/admin/api/itoiinfo" load-endpoint="/admin/api/itoiinfos/?per_page=1000">
                                         </editable-table>
@@ -177,7 +177,7 @@
                             </div>
                             <div v-if="tabState.main === 'media'">
                                 <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
-                                    <editable-table title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
+                                    <editable-table height="calc(100vh - 307px)" title="{{ _('Media Categories') }}" :item-headers="mediaHeaders"
                                         :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/mediacategory"
                                         save-endpoint="/admin/api/mediacategory" load-endpoint="/admin/api/mediacategories/?per_page=1000">
                                     </editable-table>
@@ -185,7 +185,7 @@
                             </div>
                             <div v-if="tabState.main === 'geolocation'">
                                 <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
-                                    <editable-table title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
+                                    <editable-table height="calc(100vh - 307px)" title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
                                         :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/geolocationtype"
                                         save-endpoint="/admin/api/geolocationtype" load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
                                     </editable-table>
@@ -204,7 +204,7 @@
 
                                 <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                     <div v-if="tabState.child === 'potential-violation'">
-                                        <editable-table title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Potential Violation Categories') }}" :item-headers="potentialHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/potentialviolation"
                                             save-endpoint="/admin/api/potentialviolation"
                                             load-endpoint="/admin/api/potentialviolation/?per_page=1000">
@@ -212,7 +212,7 @@
                                     </div>
                                     
                                     <div v-if="tabState.child === 'claimed-violation'">
-                                        <editable-table title="{{ _('Claimed Violation Categories') }}" :item-headers="claimedHeaders"
+                                        <editable-table height="calc(100vh - 375px)" title="{{ _('Claimed Violation Categories') }}" :item-headers="claimedHeaders"
                                             :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/claimedviolation"
                                             save-endpoint="/admin/api/claimedviolation" load-endpoint="/admin/api/claimedviolation/?per_page=1000">
                                         </editable-table>
