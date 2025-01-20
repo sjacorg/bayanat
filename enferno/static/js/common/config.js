@@ -151,7 +151,7 @@ function handleRequestError(error) {
         }
         return message;
     } else if (error?.response?.data) {
-        if (error?.response?.data?.includes('<!DOCTYPE html>')) return 'An error occurred.'
+        if (error?.response?.data?.toLowerCase()?.includes('<!doctype html>')) return 'An error occurred.'
         return error.response.data || 'An error occurred.';
     } else if (error.request) {
         return 'No response from server. Contact an admin.';
