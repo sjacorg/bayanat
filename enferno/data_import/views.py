@@ -8,7 +8,7 @@ from flask import jsonify, request, Response, Blueprint, current_app, json
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy.orm.attributes import flag_modified
-import unidecode
+from unidecode import unidecode
 from werkzeug.utils import safe_join
 
 from enferno.admin.constants import Constants
