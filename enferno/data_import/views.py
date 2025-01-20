@@ -466,6 +466,10 @@ def api_whisper_models() -> Response:
 @roles_required("Admin")
 def api_whisper_languages() -> Response:
     """Returns the list of whisper languages."""
-    from whisper.tokenizer import TO_LANGUAGE_CODE
+    try:
+        from whisper.tokenizer import TO_LANGUAGE_CODE
 
-    return jsonify({"languages": TO_LANGUAGE_CODE})
+        return jsonify({"languages": TO_LANGUAGE_CODE})
+    except Exception as e:
+        logger.error(e, exc_info=True)
+        return "Error getting whisper languages", 417
