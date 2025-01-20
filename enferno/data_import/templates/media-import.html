@@ -482,7 +482,7 @@
                     const file = parseResponse(needle);
 
 
-
+                    console.log(file);
                     // parse the response in xhr
                     this.files.push(file);
 
@@ -582,16 +582,7 @@
 
                     this.step = "3";
 
-                    let files;
-                    if (this.mode == 2) {
-                        files = this.selectedItems.map(x => {
-                            x.name = x.filename;
-                            return x
-                        })
-
-                    } else {
-                        files = this.selectedItems;
-                    }
+                    let files = this.selectedItems;
                     let data = {
                         files: files,
                         labels: this.labels,
