@@ -183,7 +183,7 @@
                         <template #bottom>
                             <div class="d-flex flex-column align-center w-100">
                                 <div class="ma-2 d-flex">{{ _('Search time: ') }}
-                                    ${searchTime} {{ _('seconds') }} - ${total} {{ _('Total items') }}
+                                    ${searchTime} {{ _('seconds') }} - {{ _('Page') }} ${currentPage} - ${total} {{ _('Total items') }}
                                 
                                 </div>
                                 <v-btn
@@ -484,6 +484,7 @@
                     items: [],
                     selected: [],
                     total: 0,
+                    currentPage: 1,
 
                     dzOpts: {
                         url: '/admin/api/media/chunk',
@@ -1161,6 +1162,7 @@
                     refresh() {
                         this.items = [];
                         this.nextCursor = null;
+                        this.currentPage = 1;
                         this.loadMore();
                     },
 
@@ -1186,9 +1188,11 @@
                             // Otherwise append new items
                             if (!this.nextCursor) {
                                 this.items = response.data.items;
-                                this.total = response.data.total; // Set total only on initial load
+                                this.total = response.data.total;
+                                this.currentPage = 1;
                             } else {
                                 this.items = [...this.items, ...response.data.items];
+                                this.currentPage++;
                             }
                             
                             // Set nextCursor from response
