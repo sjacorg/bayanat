@@ -3,6 +3,7 @@ let mediaMixin = {
   data: function () {
     return {
       mediaDialog: false,
+      media: null,
       medias: [],
       mediaCats: translations.mediaCats,
       editedMediaIndex: -1,
@@ -20,8 +21,7 @@ let mediaMixin = {
       upMediaBtnDisabled: true,
       videoDialog: false,
       audioDialog: false,
-      videoPlayer: null,
-      audioPlayer: null,
+      mediaPlayer: null,
       playerOptions: {},
       videoMeta: {},
       audioMeta: {},
@@ -104,7 +104,7 @@ let mediaMixin = {
         return;
       }
 
-      const video = this.videoPlayer.el().getElementsByTagName('video')[0];
+      const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
       video.pause();
 
       this.cropper.canvas = document.createElement('canvas');
@@ -131,7 +131,7 @@ let mediaMixin = {
       const img = document.querySelector('.croppr-image');
 
       const id = this.screenshots.length;
-      const video = this.videoPlayer.el().getElementsByTagName('video')[0];
+      const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
 
       let media = {
         width: crop.width,
@@ -184,12 +184,12 @@ let mediaMixin = {
 
     snapshot() {
       let id = this.screenshots.length;
-      if (!this.videoPlayer || !this.videoPlayer.isReady_) {
-        this.showSnack('Error: Video player is not initialized or not ready.');
+      if (!this.mediaPlayer || !this.mediaPlayer.isReady_) {
+        this.showSnack('Error: Media player is not initialized or not ready.');
         return;
       }
 
-      const video = this.videoPlayer.el().getElementsByTagName('video')[0];
+      const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
 
       video.pause();
 
@@ -298,123 +298,56 @@ let mediaMixin = {
     attachSnapshots() {
       let preparedSnapshots = this.prepareSnapshotsForAttachment();
       this.attachPreparedSnapshots(preparedSnapshots);
-      this.closeVideo();
+      this.disposeMediaPlayer();
     },
 
-    initializePlayer(s3url) {
+    viewMedia(media) {
       // Cleanup existing player if it exists
-      if (this.videoPlayer) {
-        this.disposeVideoPlayer();
+      this.disposeMediaPlayer();
+      this.media = media;
+
+      const videoElement = buildVideoElement();
+      if (media.fileType.includes('audio')) {
+        videoElement.poster = '/static/img/waveform.png';
       }
-
-      const videoElement = document.createElement('video');
-      videoElement.id = 'player';
-      videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
-      videoElement.setAttribute('crossorigin', 'anonymous');
-      videoElement.setAttribute('controls', '');
-
-      videoElement.setAttribute('width', '620');
-      videoElement.setAttribute('height', '348');
 
       const playerContainer = this.$refs.playerContainer; // Ensure you have a ref="playerContainer" on the container element
       playerContainer.prepend(videoElement);
 
-      this.videoPlayer = videojs(videoElement, {
-        controls: true,
-        preload: 'auto',
-        playbackRates: [0.5, 1, 1.5, 2],
-      });
+      this.mediaPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
 
-      this.setVideoSource(s3url);
-    },
-
-    initializeAudioPlayer(s3url) {
-      // Cleanup existing player if it exists
-      if (this.audioPlayer) {
-        this.disposeAudioPlayer();
-      }
-
-      const audioElement = document.createElement('video');
-      audioElement.poster = '/static/img/waveform.png';
-      audioElement.id = 'audioPlayer';
-      audioElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
-      audioElement.setAttribute('crossorigin', 'anonymous');
-      audioElement.setAttribute('controls', '');
-
-      const playerContainer = this.$refs.audioPlayerContainer; // Ensure you have a ref="audioPlayerContainer" on the container element
-      playerContainer.prepend(audioElement);
-
-      this.audioPlayer = videojs(audioElement, {
-        controls: true,
-        preload: 'auto',
-      });
-
-      this.setAudioSource(s3url);
-    },
-
-    setVideoSource(s3url) {
-      this.videoPlayer.src({ src: s3url, type: 'video/mp4' });
-      this.videoPlayer.on('loadedmetadata', this.handleMetaData);
-    },
-
-    setAudioSource(s3url) {
-      this.audioPlayer.src({ src: s3url, type: 'audio/mpeg' });
-      this.audioPlayer.on('loadedmetadata', this.handleAudioMetaData);
+      this.mediaPlayer.src({ src: media.s3url, type: media?.fileType ?? 'video/mp4' });
+      this.mediaPlayer.on('loadedmetadata', this.handleMetaData);
+      this.mediaPlayer.play();
+      videoElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
     handleMetaData() {
-      const videoElement = this.videoPlayer.el().querySelector('video');
+      const videoElement = this.mediaPlayer.el().querySelector('video');
       this.videoMeta = {
-        filename: videoElement.src.getFilename() + '.jpg',
+        filename: videoElement.src.getFilename(),
         time: videoElement.currentTime,
         width: videoElement.videoWidth,
         height: videoElement.videoHeight,
       };
     },
 
-    handleAudioMetaData() {
-      const audioElement = this.audioPlayer.el().querySelector('audio');
-      this.audioMeta = {
-        filename: audioElement.src.getFilename(),
-        time: audioElement.currentTime,
-      };
+    disposeMediaPlayer() {
+      this.mediaPlayer?.dispose?.();
+      this.mediaPlayer = null;
+      this.media = null;
     },
-
-    disposeVideoPlayer() {
-      if (this.videoPlayer) {
-        this.videoPlayer.dispose();
-        this.videoPlayer = null;
+    
+    viewMediaPlayerDialog(media) {
+      if (media.fileType.includes('video')) {
+        this.videoDialog = true;
+      } else {
+        this.audioDialog = true;
       }
-    },
-
-    viewPlayer(s3url) {
-      this.videoDialog = true;
       this.screenshots = [];
       this.$nextTick(() => {
-        this.initializePlayer(s3url);
+        this.viewMedia(media);
       });
-    },
-
-    viewAudioPlayer(s3url) {
-      console.log('viewAudioPlayer', s3url);
-      this.audioDialog = true;
-      this.screenshots = [];
-      this.$nextTick(() => {
-        this.initializeAudioPlayer(s3url);
-      });
-    },
-
-    closeAudio() {
-      if (this.audioPlayer) {
-        this.audioPlayer.dispose();
-        this.audioPlayer = null;
-      }
-      this.audioDialog = false;
-    },
-
-    closeVideo() {
-      this.disposeVideoPlayer();
-      this.videoDialog = false;
     },
 
     addMedia(media, item, index) {
@@ -425,7 +358,6 @@ let mediaMixin = {
 
       //reset dual fields display to english
       this.mediaTitle__ = true;
-
       this.mediaDialog = true;
       //this.locations = this.editedItem.locations;
     },
@@ -436,8 +368,10 @@ let mediaMixin = {
       }
     },
 
-    closeMedia() {
+    closeMediaDialog() {
       this.editedMedia.files = [];
+      this.videoDialog = false;
+      this.audioDialog = false;
       this.mediaDialog = false;
       setTimeout(() => {
         this.editedMedia = Object.assign({}, this.defaultMedia);
@@ -466,7 +400,7 @@ let mediaMixin = {
       }
 
       this.$refs.dropzone.dz.removeAllFiles();
-      this.closeMedia();
+      this.closeMediaDialog();
     },
 
     onFileUploaded(error, file) {
