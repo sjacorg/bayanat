@@ -481,17 +481,10 @@ class MediaImport:
         db.session.add(bulletin)
 
         # mapping
-        bulletin.title = info.get("bulletinTitle")
-        bulletin.status = "Machine Created"
+        title = info.get("bulletinTitle")
         bulletin.comments = f"Created using Media Import Tool. Batch ID: {self.batch_id}."
-
-        # Handle long video titles
-        if bulletin.title and len(bulletin.title) > 255:
-            bulletin.comments += (
-                f"\nTitle truncated to 255 characters. Original title: {bulletin.title}"
-            )
-            bulletin.title = bulletin.title[:255]
-
+        bulletin.status = "Machine Created"
+        bulletin.title = title[:255]
         # Handle web import specific data
         is_web_import = self.meta.get("mode") == self.MODE_WEB
         if is_web_import:
@@ -569,8 +562,7 @@ class MediaImport:
             if video_id := youtube_info.get("id"):
                 bulletin.originid = video_id
             bulletin.source_link = youtube_info.get("webpage_url")
-            bulletin.title = youtube_info.get("fulltitle")
-            bulletin.title_ar = youtube_info.get("fulltitle")
+            title = youtube_info.get("fulltitle")
 
             if upload_date := youtube_info.get("upload_date"):
                 bulletin.publish_date = upload_date
@@ -606,7 +598,7 @@ class MediaImport:
         if is_web_import and youtube_info.get("id"):
             org_media.title = youtube_info.get("id")
         else:
-            org_media.title = bulletin.title
+            org_media.title = title
 
         org_media.media_file = info.get("filename")
         # handle mime type failure
@@ -634,7 +626,7 @@ class MediaImport:
         # additional media for optimized video
         if info.get("new_filename"):
             new_media = Media()
-            new_media.title = bulletin.title
+            new_media.title = title
             new_media.media_file = info.get("new_filename")
             new_media.media_file_type = "video/mp4"
             new_media.etag = info.get("new_etag")
@@ -680,6 +672,13 @@ class MediaImport:
         user = User.query.get(self.user_id)
 
         bulletin.meta = info
+
+        if len(title) > 255:
+            title = title[:255]
+            bulletin.comments += f"Title truncated to 255 characters. Original title: {title}"
+        bulletin.title = title
+        if is_web_import:
+            bulletin.title_ar = title
 
         try:
             bulletin.save(raise_exception=True)
