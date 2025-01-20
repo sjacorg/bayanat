@@ -674,9 +674,8 @@ class MediaImport:
         bulletin.meta = info
 
         if len(title) > 255:
-            title = title[:255]
             bulletin.comments += f"Title truncated to 255 characters. Original title: {title}"
-        bulletin.title = title
+        bulletin.title = title[:255]
         if is_web_import:
             bulletin.title_ar = title
 
