@@ -2,7 +2,7 @@
 
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
-        return v => isNonEmpty(v) || message;
+        return v => hasValue(v) || message;
     },
     maxLength: (max, message) => {
         const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
@@ -19,7 +19,7 @@ const validationRules = {
 };
 
 // Helper functions
-function isNonEmpty(value) {
+function hasValue(value) {
     return Array.isArray(value) ? value.length > 0 : !!value;
 }
 
