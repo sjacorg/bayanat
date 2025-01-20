@@ -8,6 +8,7 @@ from flask import jsonify, request, Response, Blueprint, current_app, json
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy.orm.attributes import flag_modified
+import unidecode
 from werkzeug.utils import safe_join
 
 from enferno.admin.constants import Constants
@@ -246,14 +247,15 @@ def api_local_csv_upload() -> Response:
         if not Media.validate_file_extension(f.filename, allowed_extensions):
             return "This file type is not allowed", 415
         # final file
-        filename = Media.generate_file_name(f.filename)
+        decoded = unidecode(f.filename)
+        filename = Media.generate_file_name(decoded)
         filepath = (import_dir / filename).as_posix()
         f.save(filepath)
 
         # get md5 hash
         etag = get_file_hash(filepath)
 
-        response = {"etag": etag, "filename": filename}
+        response = {"etag": etag, "filename": filename, "original_filename": f.filename}
         return Response(json.dumps(response), content_type="application/json"), 200
     except Exception as e:
         logger.error(e, exc_info=True)

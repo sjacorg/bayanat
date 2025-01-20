@@ -546,6 +546,9 @@ class MediaImport:
         if transcription:
             info["transcription"] = transcription
 
+        if file.get("original_filename"):
+            info["original_filename"] = file.get("original_filename")
+
         self.data_import.add_to_log("Metadata parsed successfully.")
         self.create_bulletin(info)
 
@@ -666,6 +669,16 @@ class MediaImport:
                 bulletin.description += info.get("transcription")
             else:
                 bulletin.description = info.get("transcription")
+
+        if info.get("original_filename") and info.get("filename") != info.get("original_filename"):
+            if bulletin.description:
+                bulletin.description += (
+                    f"<br /><strong>Original filename:</strong> {info.get('original_filename')}"
+                )
+            else:
+                bulletin.description = (
+                    f"<strong>Original filename:</strong> {info.get('original_filename')}"
+                )
 
         create = info.get("EXIF:CreateDate")
         if create:

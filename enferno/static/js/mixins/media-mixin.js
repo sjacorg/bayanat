@@ -83,6 +83,9 @@ let mediaMixin = {
 
       file.etag = response.etag;
       file.filename = response.filename;
+      if(response.original_filename) {
+        file.original_filename = response.original_filename;
+      }
       if(this.editedItem.medias.some(m => m.etag === file.etag)) {
         this.showSnack(file.name + ' is already uploaded. Skipping...');
         this.$refs.dropzone.dz.removeFile(file);
