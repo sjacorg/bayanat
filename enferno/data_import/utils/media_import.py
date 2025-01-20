@@ -39,15 +39,18 @@ def now() -> str:
 
 
 if cfg.OCR_ENABLED:
-    from pytesseract import image_to_string, pytesseract
-
     try:
-        pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
-        tesseract_langs = "+".join(pytesseract.get_languages(config=""))
+        from pytesseract import image_to_string, pytesseract
+
+        try:
+            pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
+            tesseract_langs = "+".join(pytesseract.get_languages(config=""))
+        except Exception as e:
+            logger.error(
+                f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
+            )
     except Exception as e:
-        logger.error(
-            f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
-        )
+        logger.error(f"Error importing pytesseract: {e}", exc_info=True)
 
 
 class MediaImport:
