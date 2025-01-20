@@ -2,18 +2,32 @@
 
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
-        return v => !!v || message;
+        return v => isNonEmpty(v) || message;
     },
     maxLength: (max, message) => {
         const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
-        return v => !v || v.length <= max || message || defaultMessage;
+        return v => isValidLength(v, max, "max") || message || defaultMessage;
     },
     minLength: (min, message) => {
         const defaultMessage = window.translations.mustBeAtLeastCharacters_(min);
-        return v => !v || v.length >= min || message || defaultMessage;
+        return v => isValidLength(v, min, "min") || message || defaultMessage;
+    },
+    integer: (message) => {
+        const defaultMessage = window.translations.pleaseEnterAValidNumber_;
+        return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
 };
 
+// Helper functions
+function isNonEmpty(value) {
+    return Array.isArray(value) ? value.length > 0 : !!value;
+}
+
+function isValidLength(value, limit, type) {
+    if (!value) return true; // Allow empty values
+    const length = Array.isArray(value) ? value.length : value.length;
+    return type === "max" ? length <= limit : length >= limit;
+}
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
