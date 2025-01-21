@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+from sqlalchemy import ARRAY
 from enferno.admin.models.utils import check_roles
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
@@ -26,7 +27,9 @@ class Notification(db.Model, BaseMixin):
     message = db.Column(db.Text, nullable=False)
     notification_type = db.Column(db.String, nullable=False, default=TYPE_GENERAL)
     read_status = db.Column(db.Boolean, default=False)
-    delivery_method = db.Column(db.String, nullable=False, default=DELIVERY_METHOD_INTERNAL)
+    delivery_methods = db.Column(
+        ARRAY(db.String), nullable=False, default=[DELIVERY_METHOD_INTERNAL]
+    )
     read_at = db.Column(db.DateTime)
     is_urgent = db.Column(db.Boolean, default=False)
 
@@ -52,12 +55,12 @@ class Notification(db.Model, BaseMixin):
             "read_status": self.read_status,
             "read_at": DateHelper.serialize_datetime(self.read_at) if self.read_at else None,
             "is_urgent": self.is_urgent,
-            "created_at": DateHelper.serialize_datetime(self.created_at)
-            if self.created_at
-            else None,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "created_at": (
+                DateHelper.serialize_datetime(self.created_at) if self.created_at else None
+            ),
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
         }
 
     def to_json(self) -> str:

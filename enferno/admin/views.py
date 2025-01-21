@@ -24,7 +24,6 @@ from flask_security.twofactor import tf_disable
 import shortuuid
 
 from enferno.admin.models.Notification import Notification
-from enferno.utils.notification_utils import NotificationUtils
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
