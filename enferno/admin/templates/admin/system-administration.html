@@ -671,7 +671,7 @@
                     <v-timeline density="compact" side="end" align="start">
                         <v-timeline-item v-for="(item, index) in revisionsState.items" :key="item" dot-color="primary" size="10">
                             <div class="mt-n1">
-                                <div><b>@${item.user.username}</b> {{ _('updated the settings') }} <span class="text-muted">{{ _('at') }} ${getTimelineDate(item.created_at)}</span></div>
+                                <div><b>@${item.user.username}</b> {{ _('updated the settings') }} <span class="text-muted">{{ _('at') }} ${getFormattedDate(item.created_at)}</span></div>
                                 <div v-if="index === 0" class="font-italic">{{ _('Current configuration') }}</div>
                                 <div v-else-if="!diffPatch.diff(this.exconfig, cleanConfig(item.config))" class="font-italic">{{ _('Same as current configuration') }}</div>
                                 <show-details v-else show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
@@ -690,7 +690,7 @@
         <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
                 {{ _('Review and Confirm Changes') }}
-                <v-btn icon="mdi-close" variant="text" @click="closeSaveChangesDialog"></v-btn>
+                <v-btn icon="mdi-close" variant="text" @click="closeSaveDialog"></v-btn>
             </v-card-title>
             <v-card-text>
                 <v-sheet class="pa-5" color="yellow lighten-5 d-flex">
@@ -720,13 +720,43 @@
             </v-card-text>
             <v-divider></v-divider>
             <v-card-actions class="pa-4 justify-center">
-                <v-btn @click.stop="closeSaveChangesDialog" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
+                <v-btn @click.stop="closeSaveDialog" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
                 </v-btn>
                 <v-btn variant="elevated" :disabled="!configDiff" @click.stop="saveConfiguration" class="ml-4">
                     {{ _('Confirm') }}
                 </v-btn>
             </v-card-actions>
 
+        </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="revertChangesDialog" max-width="511">
+        <v-card>
+            <v-card-title class="d-flex justify-space-between align-center">
+                {{ _('Are you sure you want to revert to this version?') }}
+            </v-card-title>
+            <v-card-text class="pa-4">
+                <div class="mb-5">
+                    {{ _('Version settings changed by') }} <b>@${defaultConfig?.user?.username}</b> {{ _('at') }} ${getFormattedDate(defaultConfig?.created_at)}
+                </div>
+
+                <show-details v-if="configDiff" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}" side="end">
+                    <diff-renderer class="mt-2" :diff="configDiff"></diff-renderer>
+                </show-details>
+
+                <v-sheet v-else class=" text-center mt-3 align-center">
+                    <v-icon left>mdi-alert</v-icon>
+                    {{ _('No changes detected') }}
+                </v-sheet>
+
+            </v-card-text>
+            <v-card-actions class="pa-4 justify-end">
+                <v-btn variant="flat" @click="closeSaveDialog">{{ _('Cancel') }}
+                </v-btn>
+                <v-btn variant="elevated" color="primary" :disabled="!configDiff" @click.stop="saveConfiguration" class="ml-4">
+                    {{ _('Confirm') }}
+                </v-btn>
+            </v-card-actions>
         </v-card>
     </v-dialog>
 
@@ -804,10 +834,10 @@
 
                 // store config defaults before confirmation of restoration
                 defaultConfig: null,
-                defaultLabels: null,
 
                 overlay: false,
                 saveChangesDialog: false,
+                revertChangesDialog: false,
 
                 loading: true,
 
@@ -895,8 +925,7 @@
 
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
-                        this.defaultConfig = res.data.config;
-                        this.defaultLabels = res.data.labels;
+                        this.defaultConfig = res.data;
                         this.showConfigDiff();
                     }).catch(err => {
                         this.$root.showSnack(err?.response?.data);
@@ -908,14 +937,14 @@
 
                 revertVersion(config) {
                     try {
-                        this.eitem = structuredClone(config.config);
+                        this.defaultConfig = { ...config, config: structuredClone(config.config) };
                     } catch (error) {
                         console.warn("structuredClone failed, falling back to JSON.parse", error);
-                        this.eitem = JSON.parse(JSON.stringify(config.config));
+                        this.defaultConfig = { ...config, config: JSON.parse(JSON.stringify(config.config)) };
                     }
 
                     this.showRevisions = false;
-                    this.showConfigDiff();
+                    this.showRevertConfigDiff();
                 },
 
 
@@ -931,7 +960,7 @@
                     let diff = [];
                     if (!delta) return diff;
 
-                    const labels = this.defaultLabels || this.configLabels
+                    const labels = this.defaultConfig?.labels || this.configLabels
 
                     for (const k of Object.keys(delta)) {
                         diff.push(
@@ -953,7 +982,7 @@
                 showConfigDiff() {
                     const delta = (() => {
                         if (this.defaultConfig) {
-                            return this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig))
+                            return this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig?.config))
                         } else {
                             return this.diffPatch.diff(this.cleanConfig(this.exconfig), this.cleanConfig(this.eitem))
                         }
@@ -967,7 +996,24 @@
 
 
                     this.saveChangesDialog = true;
+                },
 
+                showRevertConfigDiff() {
+                    const delta = (() => {
+                        if (this.defaultConfig) {
+                            return this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig?.config))
+                        } else {
+                            return this.diffPatch.diff(this.cleanConfig(this.exconfig), this.cleanConfig(this.eitem))
+                        }
+                    })();
+
+                    if (delta) {
+                        this.configDiff = this.generateConfigDiff(delta);
+                    } else {
+                        this.configDiff = null;
+                    }
+
+                    this.revertChangesDialog = true;
                 },
 
                 adaptResponse(eitem) {
@@ -1067,11 +1113,10 @@
 
                 saveConfiguration() {
                     this.overlay = true
-
+                    
                     // If restoring default config set eitem and labels
-                    if (this.defaultConfig && this.defaultLabels) {
-                        this.eitem = res.data.config;
-                        this.configLabels = res.data.labels;
+                    if (this.defaultConfig) {
+                        this.eitem = this.defaultConfig?.config;
                     }
 
                     this.preprocessConfig();
@@ -1082,12 +1127,13 @@
                         this.overlay = false;
                         this.addToCallbackQueueIfReauthRequired(e, this.saveConfiguration);
                     }).finally(() => {
-                        this.saveChangesDialog = false;
+                        this.closeSaveDialog()
                     })
                 },
 
-                getTimelineDate(dateString) {
-                    const date = dayjs(dateString);
+                getFormattedDate(dateString) {
+                    const nextDateString = dateString?.includes('Z') ? dateString : `${dateString}Z`
+                    const date = dayjs(nextDateString);
                     const today = dayjs();
 
                     // Check if the date is today
@@ -1113,18 +1159,14 @@
 
                 cleanConfig(oldConfig) {
                     const config = this.replaceNullValues(oldConfig)
-
-                    if ('SETUP_COMPLETE' in config) {
-                        delete config.SETUP_COMPLETE
-                    }
-
+                    delete config.SETUP_COMPLETE
                     return config
                 },
 
-                closeSaveChangesDialog() {
+                closeSaveDialog() {
                     this.saveChangesDialog = false;
+                    this.revertChangesDialog = false;
                     this.defaultConfig = null;
-                    this.defaultLabels = null;
                 }
             }
         });
