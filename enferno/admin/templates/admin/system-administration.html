@@ -675,10 +675,7 @@
                                 <div v-if="index === 0" class="font-italic">{{ _('Current configuration') }}</div>
                                 <div v-else-if="!diffPatch.diff(this.exconfig, cleanConfig(item.config))" class="font-italic">{{ _('Same as current configuration') }}</div>
                                 <show-details v-else show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-                                    <v-sheet class="change-item pa-2 d-flex align-center" v-for="change in generateConfigDiff(diffPatch.diff(this.exconfig, cleanConfig(item.config)))">
-                                        <span class="body-2 font-weight-bold text--black mr-3">${change.label}</span>
-                                        <span v-html="change.diff"></span>
-                                    </v-sheet>
+                                    <diff-renderer :diff="generateConfigDiff(diffPatch.diff(this.exconfig, cleanConfig(item.config)))"></diff-renderer>
                                 </show-details>
                                 <v-btn v-if="index !== 0 && diffPatch.diff(this.exconfig, cleanConfig(item.config))" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Reverse to this version') }}</v-btn>
                             </div>
@@ -712,11 +709,7 @@
             </v-card-text>
             <v-card-text class="pa-4">
                 <div v-if="configDiff">
-                    <v-sheet class="change-item my-3 pa-2 d-flex align-center" v-for="change in configDiff">
-                        <span class="body-2 font-weight-bold text--black mr-3">${change.label}</span>
-                        <span v-html="change.diff"></span>
-
-                    </v-sheet>
+                    <diff-renderer :diff="configDiff"></diff-renderer>
                 </div>
 
                 <v-sheet v-else class=" text-center mt-3 align-center">
@@ -762,6 +755,7 @@
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/ShowDetails.js"></script>
+    <script src="/static/js/components/DiffRenderer.js"></script>
     <script>
         window.__GOOGLE_MAPS_API_KEY__ = '{{ config.GOOGLE_MAPS_API_KEY }}';
         const {createApp} = Vue;
@@ -1136,6 +1130,7 @@
         });
         app.component('geo-map', GeoMap);
         app.component('show-details', ShowDetails);
+        app.component('diff-renderer', DiffRenderer);
         
         app.use(router).use(vuetify).mount('#app');
 
