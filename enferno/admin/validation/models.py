@@ -1719,6 +1719,10 @@ class FullConfigValidationModel(ConfigValidationModel):
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        return values
+
+    @model_validator(mode="before")
+    def validate_mail_settings(cls, values):
         if values.get("MAIL_ENABLED"):
             if (
                 not values.get("MAIL_SERVER")
