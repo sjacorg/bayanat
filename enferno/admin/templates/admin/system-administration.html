@@ -891,7 +891,6 @@
                     const fullPath = `${window.location.pathname}${window.location.search}`
                     this.$router.replace(`${fullPath}#${newTab}`)
                 }
-
             },
 
             mounted() {
@@ -939,7 +938,6 @@
                     try {
                         this.defaultConfig = { ...config, config: structuredClone(config.config) };
                     } catch (error) {
-                        console.warn("structuredClone failed, falling back to JSON.parse", error);
                         this.defaultConfig = { ...config, config: JSON.parse(JSON.stringify(config.config)) };
                     }
 
@@ -972,10 +970,7 @@
                         )
                     }
 
-
                     return diff;
-
-
                 },
 
 
@@ -999,13 +994,7 @@
                 },
 
                 showRevertConfigDiff() {
-                    const delta = (() => {
-                        if (this.defaultConfig) {
-                            return this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig?.config))
-                        } else {
-                            return this.diffPatch.diff(this.cleanConfig(this.exconfig), this.cleanConfig(this.eitem))
-                        }
-                    })();
+                    const delta = this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig?.config));
 
                     if (delta) {
                         this.configDiff = this.generateConfigDiff(delta);
