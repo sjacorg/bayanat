@@ -23,8 +23,8 @@
 
 
                 <image-gallery prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
-                               @video-click="viewPlayer"
-                               @audio-click="viewAudioPlayer"
+                               @video-click="viewMediaPlayerDialog"
+                               @audio-click="viewMediaPlayerDialog"
                                @remove-media="removeMedia"
                 ></image-gallery>
 
@@ -89,7 +89,7 @@
         </v-card-text>
         <v-card-actions class="pa-5">
             <v-spacer></v-spacer>
-            <v-btn color="grey lighten-1" text @click="closeMedia">{{ _('Cancel') }}</v-btn>
+            <v-btn color="grey lighten-1" text @click="closeMediaDialog">{{ _('Cancel') }}</v-btn>
             <v-btn
                     color="primary"
                     variant="elevated"
