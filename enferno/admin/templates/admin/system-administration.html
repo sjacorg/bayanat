@@ -983,25 +983,14 @@
                         }
                     })();
 
-                    if (delta) {
-                        this.configDiff = this.generateConfigDiff(delta);
-                    } else {
-                        this.configDiff = null;
-                    }
-
-
+                    this.configDiff = delta ? this.generateConfigDiff(delta) : null;
                     this.saveChangesDialog = true;
                 },
 
                 showRevertConfigDiff() {
                     const delta = this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig?.config));
 
-                    if (delta) {
-                        this.configDiff = this.generateConfigDiff(delta);
-                    } else {
-                        this.configDiff = null;
-                    }
-
+                    this.configDiff = delta ? this.generateConfigDiff(delta) : null;
                     this.revertChangesDialog = true;
                 },
 
