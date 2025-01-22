@@ -330,12 +330,12 @@
                                 this.close();
                             })
                     } else {
-                        this.items.push(this.editedItem);
                         //create new record
                         axios
-                            .post("/admin/api/source/", {item: this.editedItem})
-                            .then(response => {
-                                this.showSnack(response.data);
+                        .post("/admin/api/source/", {item: this.editedItem})
+                        .then(response => {
+                                this.items.push(response.data.data);
+                                this.showSnack(response.data.message);
                                 this.refresh();
                                 this.close();
 
