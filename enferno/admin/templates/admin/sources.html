@@ -332,8 +332,8 @@
                     } else {
                         //create new record
                         axios
-                        .post("/admin/api/source/", {item: this.editedItem})
-                        .then(response => {
+                            .post("/admin/api/source/", {item: this.editedItem})
+                            .then(response => {
                                 this.items.push(response.data.data);
                                 this.showSnack(response.data.message);
                                 this.refresh();
