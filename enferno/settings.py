@@ -7,6 +7,7 @@ import redis
 from dotenv import load_dotenv, find_dotenv
 
 from enferno.utils.config_utils import ConfigManager
+from enferno.utils.notification_settings import NotificationSettings
 
 load_dotenv(find_dotenv())
 manager = ConfigManager()
@@ -288,6 +289,8 @@ class Config(object):
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
 
+    NOTIFICATIONS = NotificationSettings.get_config()
+
 
 class TestConfig(Config):
     """Test configuration."""
@@ -440,3 +443,4 @@ class TestConfig(Config):
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
     YTDLP_PROXY = ""
+    NOTIFICATIONS = NotificationSettings.get_config()

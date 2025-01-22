@@ -27,9 +27,7 @@ class Notification(db.Model, BaseMixin):
     message = db.Column(db.Text, nullable=False)
     notification_type = db.Column(db.String, nullable=False, default=TYPE_GENERAL)
     read_status = db.Column(db.Boolean, default=False)
-    delivery_methods = db.Column(
-        ARRAY(db.String), nullable=False, default=[DELIVERY_METHOD_INTERNAL]
-    )
+    delivery_method = db.Column(db.String, nullable=False, default=DELIVERY_METHOD_INTERNAL)
     read_at = db.Column(db.DateTime)
     is_urgent = db.Column(db.Boolean, default=False)
 

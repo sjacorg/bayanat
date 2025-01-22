@@ -150,6 +150,78 @@ class ConfigManager:
                 "twitter.com",
             ],
             "YTDLP_COOKIES": "",
+            "NOTIFICATIONS": {
+                "NEW_USER": {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                "UPDATE_USER": {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                "NEW_GROUP": {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                "SYSTEM_SETTINGS_CHANGE": {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                "LOGIN_NEW_COUNTRY": {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                "UNAUTHORIZED_ACTION": {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                "ADMIN_CREDENTIALS_CHANGE": {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                "ITEM_DELETED": {
+                    "email_enabled": False,
+                    "category": "security",
+                },
+                "NEW_EXPORT": {
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                "EXPORT_APPROVED": {
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                "NEW_BATCH": {
+                    "in_app_enabled": False,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                "BATCH_STATUS": {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                "BULK_OPERATION_STATUS": {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                "WEB_IMPORT_STATUS": {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                "NEW_ASSIGNMENT": {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                "REVIEW_NEEDED": {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+            },
         }
     )
 
@@ -216,6 +288,7 @@ class ConfigManager:
             "YTDLP_PROXY": "Proxy URL to use with Web Import",
             "YTDLP_ALLOWED_DOMAINS": "Allowed Domains for Web Import",
             "YTDLP_COOKIES": "Cookies to use with Web Import",
+            "NOTIFICATIONS": "Notification Events",
         }
     )
 
@@ -318,6 +391,7 @@ class ConfigManager:
             "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
             "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
             "YTDLP_COOKIES": cfg.YTDLP_COOKIES or "",
+            "NOTIFICATIONS": cfg.NOTIFICATIONS,
         }
         return conf
 

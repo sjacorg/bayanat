@@ -1,4 +1,5 @@
 from enum import Enum
+from enferno.utils.notification_settings import NotificationSettings
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -1439,6 +1440,11 @@ class ActivitiesModel(BaseModel):
     VIEW: bool = Field(default=False)
 
 
+class NotificationConfigModel(BaseValidationModel):
+    email_enabled: Optional[bool] = None
+    in_app_enabled: Optional[bool] = None
+
+
 class ConfigValidationModel(StrictValidationModel):
     SECURITY_TWO_FACTOR_REQUIRED: bool
     SECURITY_PASSWORD_LENGTH_MIN: int = Field(ge=8)
@@ -1715,6 +1721,16 @@ class FullConfigValidationModel(ConfigValidationModel):
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
+    NOTIFICATIONS: dict[str, NotificationConfigModel] = Field(default_factory=dict)
+
+    @field_validator("NOTIFICATIONS")
+    @classmethod
+    def validate_notifications(
+        cls, v: dict[str, NotificationConfigModel]
+    ) -> dict[str, NotificationConfigModel]:
+        config_dict = {k: v[k].model_dump() for k in v}
+        config_dict = NotificationSettings.prune_read_only_settings(config_dict)
+        return {k: NotificationConfigModel(**v) for k, v in config_dict.items()}
 
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
