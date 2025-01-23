@@ -1,5 +1,5 @@
 const globalMixin = {
-  mixins: [reauthMixin],
+  mixins: [reauthMixin, notificationMixin],
   computed: {
     allowedDateFrom() {
       if (this.editedEvent?.to_date){
@@ -125,7 +125,15 @@ const globalMixin = {
             this.showSnack(err.body);
         });
     },
+    toggleUserSettingsDrawer() {
+      // Toggle the settings drawer
+      this.settingsDrawer = !this.settingsDrawer;
 
+      // Close the notifications drawer if the settings drawer is open
+      if (this.settingsDrawer) {
+        this.isNotificationsDrawerVisible = false;
+      }
+    },
     updateLang(l) {
       this.settings.language = l
       this.saveSettings();
