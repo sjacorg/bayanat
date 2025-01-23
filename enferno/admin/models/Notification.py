@@ -1,7 +1,5 @@
 from datetime import datetime
 from typing import Any
-from sqlalchemy import ARRAY
-from enferno.admin.models.utils import check_roles
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
