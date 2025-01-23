@@ -20,6 +20,7 @@ class NotificationSettings:
         If no config is provided, generates a valid default config without app-managed read-only fields.
         """
         conf = NotificationSettings._enforce_locked_settings(conf)
+        print(conf)
         # Prune read-only settings
         # Prune security events
         for event in [
@@ -32,12 +33,13 @@ class NotificationSettings:
             conf.pop(event)
         # Prune locked fields and locked information
         for event in conf:
+            print(f"{event}: {conf[event]}")
             if conf[event]["email_locked"]:
                 conf[event].pop("email_enabled")
             if conf[event]["in_app_locked"]:
                 conf[event].pop("in_app_enabled")
-            conf[event].pop("in_app_locked")
             conf[event].pop("email_locked")
+            conf[event].pop("in_app_locked")
         return conf
 
     @staticmethod
@@ -128,10 +130,9 @@ class NotificationSettings:
         conf["UNAUTHORIZED_ACTION"]["in_app_enabled"] = True
         conf["UNAUTHORIZED_ACTION"]["in_app_locked"] = True
         conf["UNAUTHORIZED_ACTION"]["email_locked"] = False
-        conf["ADMIN_CREDENTIALS_CHANGE"]["in_app_enabled"] = True
-        conf["ADMIN_CREDENTIALS_CHANGE"]["in_app_locked"] = True
-        conf["ITEM_DELETED"]["in_app_enabled"] = True
-        conf["ITEM_DELETED"]["in_app_locked"] = True
+        conf["ADMIN_CREDENTIALS_CHANGE"]["in_app_locked"] = False
+        conf["ADMIN_CREDENTIALS_CHANGE"]["email_locked"] = False
+        conf["ITEM_DELETED"]["in_app_locked"] = False
         conf["ITEM_DELETED"]["email_locked"] = False
         conf["NEW_EXPORT"]["in_app_enabled"] = True
         conf["NEW_EXPORT"]["in_app_locked"] = True

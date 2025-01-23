@@ -177,10 +177,12 @@ class ConfigManager:
                 },
                 "ADMIN_CREDENTIALS_CHANGE": {
                     "email_enabled": True,
+                    "in_app_enabled": True,
                     "category": "security",
                 },
                 "ITEM_DELETED": {
                     "email_enabled": False,
+                    "in_app_enabled": True,
                     "category": "security",
                 },
                 "NEW_EXPORT": {
