@@ -349,6 +349,7 @@
 
     <script src="/static/js/components/SearchField.js" ></script>
     <script src="/static/js/mixins/whisper-mixin.js" ></script>
+    <script src="/static/js/mixins/media-mixin.js" ></script>
 
 
 
@@ -367,7 +368,7 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [globalMixin, whisperMixin],
+            mixins: [globalMixin, mediaMixin, whisperMixin],
             
             data: () => ({
                 drawer: drawer,
