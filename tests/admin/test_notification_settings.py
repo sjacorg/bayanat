@@ -1,78 +1,80 @@
 import pytest
-
+from enferno.admin.constants import Constants
 from enferno.utils.notification_settings import NotificationSettings
 from tests.test_utils import load_data
 
+NotificationEvent = Constants.NotificationEvent
+
 # Default settings that are configurable by the user
 DEFAULT_CONFIGURABLE_SETTINGS = {
-    "ADMIN_CREDENTIALS_CHANGE": {
+    NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {
         "email_enabled": True,
         "in_app_enabled": True,
         "category": "security",
     },
-    "BATCH_STATUS": {
+    NotificationEvent.BATCH_STATUS.value: {
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "update",
     },
-    "BULK_OPERATION_STATUS": {
+    NotificationEvent.BULK_OPERATION_STATUS.value: {
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "update",
     },
-    "EXPORT_APPROVED": {
+    NotificationEvent.EXPORT_APPROVED.value: {
         "email_enabled": False,
         "category": "update",
     },
-    "ITEM_DELETED": {
+    NotificationEvent.ITEM_DELETED.value: {
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "security",
     },
-    "LOGIN_NEW_COUNTRY": {
+    NotificationEvent.LOGIN_NEW_COUNTRY.value: {
         "email_enabled": True,
         "category": "security",
     },
-    "NEW_ASSIGNMENT": {
+    NotificationEvent.NEW_ASSIGNMENT.value: {
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "update",
     },
-    "NEW_BATCH": {
+    NotificationEvent.NEW_BATCH.value: {
         "email_enabled": False,
         "in_app_enabled": False,
         "category": "update",
     },
-    "NEW_EXPORT": {
+    NotificationEvent.NEW_EXPORT.value: {
         "email_enabled": False,
         "category": "update",
     },
-    "NEW_GROUP": {
+    NotificationEvent.NEW_GROUP.value: {
         "email_enabled": True,
         "category": "security",
     },
-    "NEW_USER": {
+    NotificationEvent.NEW_USER.value: {
         "email_enabled": True,
         "category": "security",
     },
-    "REVIEW_NEEDED": {
+    NotificationEvent.REVIEW_NEEDED.value: {
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "update",
     },
-    "SYSTEM_SETTINGS_CHANGE": {
+    NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {
         "email_enabled": True,
         "category": "security",
     },
-    "UNAUTHORIZED_ACTION": {
+    NotificationEvent.UNAUTHORIZED_ACTION.value: {
         "email_enabled": True,
         "category": "security",
     },
-    "UPDATE_USER": {
+    NotificationEvent.UPDATE_USER.value: {
         "email_enabled": True,
         "category": "security",
     },
-    "WEB_IMPORT_STATUS": {
+    NotificationEvent.WEB_IMPORT_STATUS.value: {
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "update",
@@ -81,147 +83,147 @@ DEFAULT_CONFIGURABLE_SETTINGS = {
 
 # Default settings, decorated with app-managed read-only keys and fields
 DECORATED_DEFAULT_SETTINGS = {
-    "LOGIN_NEW_IP": {
+    NotificationEvent.LOGIN_NEW_IP.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_enabled": True,
         "email_locked": True,
         "category": "security",
     },
-    "PASSWORD_CHANGE": {
+    NotificationEvent.PASSWORD_CHANGE.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_enabled": True,
         "email_locked": True,
         "category": "security",
     },
-    "TWO_FACTOR_CHANGE": {
+    NotificationEvent.TWO_FACTOR_CHANGE.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_enabled": True,
         "email_locked": True,
         "category": "security",
     },
-    "RECOVERY_CODES_CHANGE": {
+    NotificationEvent.RECOVERY_CODES_CHANGE.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_enabled": True,
         "email_locked": True,
         "category": "security",
     },
-    "FORCE_PASSWORD_CHANGE": {
+    NotificationEvent.FORCE_PASSWORD_CHANGE.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_enabled": True,
         "email_locked": True,
         "category": "security",
     },
-    "NEW_USER": {
+    NotificationEvent.NEW_USER.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_locked": False,
         "email_enabled": True,
         "category": "security",
     },
-    "UPDATE_USER": {
+    NotificationEvent.UPDATE_USER.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_locked": False,
         "email_enabled": True,
         "category": "security",
     },
-    "NEW_GROUP": {
+    NotificationEvent.NEW_GROUP.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_locked": False,
         "email_enabled": True,
         "category": "security",
     },
-    "SYSTEM_SETTINGS_CHANGE": {
+    NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_locked": False,
         "email_enabled": True,
         "category": "security",
     },
-    "LOGIN_NEW_COUNTRY": {
+    NotificationEvent.LOGIN_NEW_COUNTRY.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_locked": False,
         "email_enabled": True,
         "category": "security",
     },
-    "UNAUTHORIZED_ACTION": {
+    NotificationEvent.UNAUTHORIZED_ACTION.value: {
         "in_app_enabled": True,
         "in_app_locked": True,
         "email_locked": False,
         "email_enabled": True,
         "category": "security",
     },
-    "ADMIN_CREDENTIALS_CHANGE": {
+    NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {
         "in_app_locked": False,
         "email_locked": False,
         "email_enabled": True,
         "in_app_enabled": True,
         "category": "security",
     },
-    "ITEM_DELETED": {
+    NotificationEvent.ITEM_DELETED.value: {
         "in_app_locked": False,
         "email_locked": False,
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "security",
     },
-    "NEW_EXPORT": {
+    NotificationEvent.NEW_EXPORT.value: {
         "in_app_locked": True,
         "in_app_enabled": True,
         "email_enabled": False,
         "email_locked": False,
         "category": "update",
     },
-    "EXPORT_APPROVED": {
+    NotificationEvent.EXPORT_APPROVED.value: {
         "in_app_locked": True,
         "email_locked": False,
         "email_enabled": False,
         "in_app_enabled": True,
         "category": "update",
     },
-    "NEW_BATCH": {
+    NotificationEvent.NEW_BATCH.value: {
         "in_app_locked": False,
         "email_locked": False,
         "in_app_enabled": False,
         "email_enabled": False,
         "category": "update",
     },
-    "BATCH_STATUS": {
+    NotificationEvent.BATCH_STATUS.value: {
         "in_app_locked": False,
         "email_locked": False,
         "in_app_enabled": True,
         "email_enabled": False,
         "category": "update",
     },
-    "BULK_OPERATION_STATUS": {
+    NotificationEvent.BULK_OPERATION_STATUS.value: {
         "in_app_locked": False,
         "email_locked": False,
         "in_app_enabled": True,
         "email_enabled": False,
         "category": "update",
     },
-    "WEB_IMPORT_STATUS": {
+    NotificationEvent.WEB_IMPORT_STATUS.value: {
         "in_app_locked": False,
         "email_locked": False,
         "in_app_enabled": True,
         "email_enabled": False,
         "category": "update",
     },
-    "NEW_ASSIGNMENT": {
+    NotificationEvent.NEW_ASSIGNMENT.value: {
         "in_app_locked": False,
         "email_locked": False,
         "in_app_enabled": True,
         "email_enabled": False,
         "category": "update",
     },
-    "REVIEW_NEEDED": {
+    NotificationEvent.REVIEW_NEEDED.value: {
         "in_app_locked": False,
         "email_locked": False,
         "in_app_enabled": True,

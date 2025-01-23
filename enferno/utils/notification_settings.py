@@ -1,3 +1,8 @@
+from enferno.admin.constants import Constants
+
+NotificationEvent = Constants.NotificationEvent
+
+
 class NotificationSettings:
     _config = None
 
@@ -20,16 +25,15 @@ class NotificationSettings:
         If no config is provided, generates a valid default config without app-managed read-only fields.
         """
         conf = NotificationSettings._enforce_locked_settings(conf)
-        from enferno.utils.notification_utils import NotificationEvent
 
         # Prune read-only settings
         # Prune security events
         for event in [
-            "LOGIN_NEW_IP",
-            "PASSWORD_CHANGE",
-            "TWO_FACTOR_CHANGE",
-            "RECOVERY_CODES_CHANGE",
-            "FORCE_PASSWORD_CHANGE",
+            NotificationEvent.LOGIN_NEW_IP.value,
+            NotificationEvent.PASSWORD_CHANGE.value,
+            NotificationEvent.TWO_FACTOR_CHANGE.value,
+            NotificationEvent.RECOVERY_CODES_CHANGE.value,
+            NotificationEvent.FORCE_PASSWORD_CHANGE.value,
         ]:
             conf.pop(event)
         # Prune locked fields and locked information
@@ -57,35 +61,35 @@ class NotificationSettings:
         defaults = manager.get_default_config("NOTIFICATIONS")
         # Always-On Security Events
         # Override these in all cases
-        conf["LOGIN_NEW_IP"] = {
+        conf[NotificationEvent.LOGIN_NEW_IP.value] = {
             "in_app_enabled": True,
             "in_app_locked": True,
             "email_enabled": True,
             "email_locked": True,
             "category": "security",
         }
-        conf["PASSWORD_CHANGE"] = {
+        conf[NotificationEvent.PASSWORD_CHANGE.value] = {
             "in_app_enabled": True,
             "in_app_locked": True,
             "email_enabled": True,
             "email_locked": True,
             "category": "security",
         }
-        conf["TWO_FACTOR_CHANGE"] = {
+        conf[NotificationEvent.TWO_FACTOR_CHANGE.value] = {
             "in_app_enabled": True,
             "in_app_locked": True,
             "email_enabled": True,
             "email_locked": True,
             "category": "security",
         }
-        conf["RECOVERY_CODES_CHANGE"] = {
+        conf[NotificationEvent.RECOVERY_CODES_CHANGE.value] = {
             "in_app_enabled": True,
             "in_app_locked": True,
             "email_enabled": True,
             "email_locked": True,
             "category": "security",
         }
-        conf["FORCE_PASSWORD_CHANGE"] = {
+        conf[NotificationEvent.FORCE_PASSWORD_CHANGE.value] = {
             "in_app_enabled": True,
             "in_app_locked": True,
             "email_enabled": True,
@@ -94,66 +98,66 @@ class NotificationSettings:
         }
         # Add missing events with default values
         for configurable_event in [
-            "NEW_USER",
-            "UPDATE_USER",
-            "NEW_GROUP",
-            "SYSTEM_SETTINGS_CHANGE",
-            "LOGIN_NEW_COUNTRY",
-            "UNAUTHORIZED_ACTION",
-            "ADMIN_CREDENTIALS_CHANGE",
-            "ITEM_DELETED",
-            "NEW_EXPORT",
-            "EXPORT_APPROVED",
-            "NEW_BATCH",
-            "BATCH_STATUS",
-            "BULK_OPERATION_STATUS",
-            "WEB_IMPORT_STATUS",
-            "NEW_ASSIGNMENT",
-            "REVIEW_NEEDED",
+            NotificationEvent.NEW_USER.value,
+            NotificationEvent.UPDATE_USER.value,
+            NotificationEvent.NEW_GROUP.value,
+            NotificationEvent.SYSTEM_SETTINGS_CHANGE.value,
+            NotificationEvent.LOGIN_NEW_COUNTRY.value,
+            NotificationEvent.UNAUTHORIZED_ACTION.value,
+            NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value,
+            NotificationEvent.ITEM_DELETED.value,
+            NotificationEvent.NEW_EXPORT.value,
+            NotificationEvent.EXPORT_APPROVED.value,
+            NotificationEvent.NEW_BATCH.value,
+            NotificationEvent.BATCH_STATUS.value,
+            NotificationEvent.BULK_OPERATION_STATUS.value,
+            NotificationEvent.WEB_IMPORT_STATUS.value,
+            NotificationEvent.NEW_ASSIGNMENT.value,
+            NotificationEvent.REVIEW_NEEDED.value,
         ]:
             if configurable_event not in conf:
                 conf[configurable_event] = defaults[configurable_event]
 
-        conf["NEW_USER"]["in_app_enabled"] = True
-        conf["NEW_USER"]["in_app_locked"] = True
-        conf["NEW_USER"]["email_locked"] = False
-        conf["UPDATE_USER"]["in_app_enabled"] = True
-        conf["UPDATE_USER"]["in_app_locked"] = True
-        conf["UPDATE_USER"]["email_locked"] = False
-        conf["NEW_GROUP"]["in_app_enabled"] = True
-        conf["NEW_GROUP"]["in_app_locked"] = True
-        conf["NEW_GROUP"]["email_locked"] = False
-        conf["SYSTEM_SETTINGS_CHANGE"]["in_app_enabled"] = True
-        conf["SYSTEM_SETTINGS_CHANGE"]["in_app_locked"] = True
-        conf["SYSTEM_SETTINGS_CHANGE"]["email_locked"] = False
-        conf["LOGIN_NEW_COUNTRY"]["in_app_enabled"] = True
-        conf["LOGIN_NEW_COUNTRY"]["in_app_locked"] = True
-        conf["LOGIN_NEW_COUNTRY"]["email_locked"] = False
-        conf["UNAUTHORIZED_ACTION"]["in_app_enabled"] = True
-        conf["UNAUTHORIZED_ACTION"]["in_app_locked"] = True
-        conf["UNAUTHORIZED_ACTION"]["email_locked"] = False
-        conf["ADMIN_CREDENTIALS_CHANGE"]["in_app_locked"] = False
-        conf["ADMIN_CREDENTIALS_CHANGE"]["email_locked"] = False
-        conf["ITEM_DELETED"]["in_app_locked"] = False
-        conf["ITEM_DELETED"]["email_locked"] = False
-        conf["NEW_EXPORT"]["in_app_enabled"] = True
-        conf["NEW_EXPORT"]["in_app_locked"] = True
-        conf["NEW_EXPORT"]["email_locked"] = False
-        conf["EXPORT_APPROVED"]["in_app_enabled"] = True
-        conf["EXPORT_APPROVED"]["in_app_locked"] = True
-        conf["EXPORT_APPROVED"]["email_locked"] = False
-        conf["NEW_BATCH"]["in_app_locked"] = False
-        conf["NEW_BATCH"]["email_locked"] = False
-        conf["BATCH_STATUS"]["in_app_locked"] = False
-        conf["BATCH_STATUS"]["email_locked"] = False
-        conf["BULK_OPERATION_STATUS"]["in_app_locked"] = False
-        conf["BULK_OPERATION_STATUS"]["email_locked"] = False
-        conf["WEB_IMPORT_STATUS"]["in_app_locked"] = False
-        conf["WEB_IMPORT_STATUS"]["email_locked"] = False
-        conf["NEW_ASSIGNMENT"]["in_app_locked"] = False
-        conf["NEW_ASSIGNMENT"]["email_locked"] = False
-        conf["REVIEW_NEEDED"]["in_app_locked"] = False
-        conf["REVIEW_NEEDED"]["email_locked"] = False
+        conf[NotificationEvent.NEW_USER.value]["in_app_enabled"] = True
+        conf[NotificationEvent.NEW_USER.value]["in_app_locked"] = True
+        conf[NotificationEvent.NEW_USER.value]["email_locked"] = False
+        conf[NotificationEvent.UPDATE_USER.value]["in_app_enabled"] = True
+        conf[NotificationEvent.UPDATE_USER.value]["in_app_locked"] = True
+        conf[NotificationEvent.UPDATE_USER.value]["email_locked"] = False
+        conf[NotificationEvent.NEW_GROUP.value]["in_app_enabled"] = True
+        conf[NotificationEvent.NEW_GROUP.value]["in_app_locked"] = True
+        conf[NotificationEvent.NEW_GROUP.value]["email_locked"] = False
+        conf[NotificationEvent.SYSTEM_SETTINGS_CHANGE.value]["in_app_enabled"] = True
+        conf[NotificationEvent.SYSTEM_SETTINGS_CHANGE.value]["in_app_locked"] = True
+        conf[NotificationEvent.SYSTEM_SETTINGS_CHANGE.value]["email_locked"] = False
+        conf[NotificationEvent.LOGIN_NEW_COUNTRY.value]["in_app_enabled"] = True
+        conf[NotificationEvent.LOGIN_NEW_COUNTRY.value]["in_app_locked"] = True
+        conf[NotificationEvent.LOGIN_NEW_COUNTRY.value]["email_locked"] = False
+        conf[NotificationEvent.UNAUTHORIZED_ACTION.value]["in_app_enabled"] = True
+        conf[NotificationEvent.UNAUTHORIZED_ACTION.value]["in_app_locked"] = True
+        conf[NotificationEvent.UNAUTHORIZED_ACTION.value]["email_locked"] = False
+        conf[NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value]["in_app_locked"] = False
+        conf[NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value]["email_locked"] = False
+        conf[NotificationEvent.ITEM_DELETED.value]["in_app_locked"] = False
+        conf[NotificationEvent.ITEM_DELETED.value]["email_locked"] = False
+        conf[NotificationEvent.NEW_EXPORT.value]["in_app_enabled"] = True
+        conf[NotificationEvent.NEW_EXPORT.value]["in_app_locked"] = True
+        conf[NotificationEvent.NEW_EXPORT.value]["email_locked"] = False
+        conf[NotificationEvent.EXPORT_APPROVED.value]["in_app_enabled"] = True
+        conf[NotificationEvent.EXPORT_APPROVED.value]["in_app_locked"] = True
+        conf[NotificationEvent.EXPORT_APPROVED.value]["email_locked"] = False
+        conf[NotificationEvent.NEW_BATCH.value]["in_app_locked"] = False
+        conf[NotificationEvent.NEW_BATCH.value]["email_locked"] = False
+        conf[NotificationEvent.BATCH_STATUS.value]["in_app_locked"] = False
+        conf[NotificationEvent.BATCH_STATUS.value]["email_locked"] = False
+        conf[NotificationEvent.BULK_OPERATION_STATUS.value]["in_app_locked"] = False
+        conf[NotificationEvent.BULK_OPERATION_STATUS.value]["email_locked"] = False
+        conf[NotificationEvent.WEB_IMPORT_STATUS.value]["in_app_locked"] = False
+        conf[NotificationEvent.WEB_IMPORT_STATUS.value]["email_locked"] = False
+        conf[NotificationEvent.NEW_ASSIGNMENT.value]["in_app_locked"] = False
+        conf[NotificationEvent.NEW_ASSIGNMENT.value]["email_locked"] = False
+        conf[NotificationEvent.REVIEW_NEEDED.value]["in_app_locked"] = False
+        conf[NotificationEvent.REVIEW_NEEDED.value]["email_locked"] = False
 
         return conf
 

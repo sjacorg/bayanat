@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 from enferno.admin.models.Notification import Notification
 from enferno.user.models import User
 from enferno.extensions import db
@@ -8,36 +7,10 @@ from pydantic import BaseModel, model_validator
 from pydantic import ConfigDict
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.email_utils import EmailUtils
+from enferno.admin.constants import Constants
 
+NotificationEvent = Constants.NotificationEvent
 logger = get_logger()
-
-
-class NotificationEvent(Enum):
-    """
-    Notification events that are used in the app.
-    """
-
-    LOGIN_NEW_IP = "LOGIN_NEW_IP"
-    PASSWORD_CHANGE = "PASSWORD_CHANGE"
-    TWO_FACTOR_CHANGE = "TWO_FACTOR_CHANGE"
-    RECOVERY_CODES_CHANGE = "RECOVERY_CODES_CHANGE"
-    FORCE_PASSWORD_CHANGE = "FORCE_PASSWORD_CHANGE"
-    NEW_USER = "NEW_USER"
-    UPDATE_USER = "UPDATE_USER"
-    NEW_GROUP = "NEW_GROUP"
-    SYSTEM_SETTINGS_CHANGE = "SYSTEM_SETTINGS_CHANGE"
-    LOGIN_NEW_COUNTRY = "LOGIN_NEW_COUNTRY"
-    UNAUTHORIZED_ACTION = "UNAUTHORIZED_ACTION"
-    ADMIN_CREDENTIALS_CHANGE = "ADMIN_CREDENTIALS_CHANGE"
-    ITEM_DELETED = "ITEM_DELETED"
-    NEW_EXPORT = "NEW_EXPORT"
-    EXPORT_APPROVED = "EXPORT_APPROVED"
-    NEW_BATCH = "NEW_BATCH"
-    BATCH_STATUS = "BATCH_STATUS"
-    BULK_OPERATION_STATUS = "BULK_OPERATION_STATUS"
-    WEB_IMPORT_STATUS = "WEB_IMPORT_STATUS"
-    NEW_ASSIGNMENT = "NEW_ASSIGNMENT"
-    REVIEW_NEEDED = "REVIEW_NEEDED"
 
 
 class NotificationDeliveryStrategy(ABC):

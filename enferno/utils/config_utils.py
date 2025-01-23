@@ -5,6 +5,9 @@ from flask_security import current_user
 import logging
 import os
 import shutil
+from enferno.admin.constants import Constants
+
+NotificationEvent = Constants.NotificationEvent
 
 logger = logging.getLogger("app_logger")
 
@@ -151,74 +154,74 @@ class ConfigManager:
             ],
             "YTDLP_COOKIES": "",
             "NOTIFICATIONS": {
-                "NEW_USER": {
+                NotificationEvent.NEW_USER.value: {
                     "email_enabled": True,
                     "category": "security",
                 },
-                "UPDATE_USER": {
+                NotificationEvent.UPDATE_USER.value: {
                     "email_enabled": True,
                     "category": "security",
                 },
-                "NEW_GROUP": {
+                NotificationEvent.NEW_GROUP.value: {
                     "email_enabled": True,
                     "category": "security",
                 },
-                "SYSTEM_SETTINGS_CHANGE": {
+                NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {
                     "email_enabled": True,
                     "category": "security",
                 },
-                "LOGIN_NEW_COUNTRY": {
+                NotificationEvent.LOGIN_NEW_COUNTRY.value: {
                     "email_enabled": True,
                     "category": "security",
                 },
-                "UNAUTHORIZED_ACTION": {
+                NotificationEvent.UNAUTHORIZED_ACTION.value: {
                     "email_enabled": True,
                     "category": "security",
                 },
-                "ADMIN_CREDENTIALS_CHANGE": {
+                NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {
                     "email_enabled": True,
                     "in_app_enabled": True,
                     "category": "security",
                 },
-                "ITEM_DELETED": {
+                NotificationEvent.ITEM_DELETED.value: {
                     "email_enabled": False,
                     "in_app_enabled": True,
                     "category": "security",
                 },
-                "NEW_EXPORT": {
+                NotificationEvent.NEW_EXPORT.value: {
                     "email_enabled": False,
                     "category": "update",
                 },
-                "EXPORT_APPROVED": {
+                NotificationEvent.EXPORT_APPROVED.value: {
                     "email_enabled": False,
                     "category": "update",
                 },
-                "NEW_BATCH": {
+                NotificationEvent.NEW_BATCH.value: {
                     "in_app_enabled": False,
                     "email_enabled": False,
                     "category": "update",
                 },
-                "BATCH_STATUS": {
+                NotificationEvent.BATCH_STATUS.value: {
                     "in_app_enabled": True,
                     "email_enabled": False,
                     "category": "update",
                 },
-                "BULK_OPERATION_STATUS": {
+                NotificationEvent.BULK_OPERATION_STATUS.value: {
                     "in_app_enabled": True,
                     "email_enabled": False,
                     "category": "update",
                 },
-                "WEB_IMPORT_STATUS": {
+                NotificationEvent.WEB_IMPORT_STATUS.value: {
                     "in_app_enabled": True,
                     "email_enabled": False,
                     "category": "update",
                 },
-                "NEW_ASSIGNMENT": {
+                NotificationEvent.NEW_ASSIGNMENT.value: {
                     "in_app_enabled": True,
                     "email_enabled": False,
                     "category": "update",
                 },
-                "REVIEW_NEEDED": {
+                NotificationEvent.REVIEW_NEEDED.value: {
                     "in_app_enabled": True,
                     "email_enabled": False,
                     "category": "update",
