@@ -3,11 +3,13 @@
 
     <v-main class="system-admin overflow-y-auto">
         <div class="pa-4">
-            <v-card class="pa-4" elevation="2">
+            <v-card class="pa-4" elevation="2" height="calc(100dvh - 96px)">
                 <h1 class="text-h6 mb-5">{{ _('Administration Dashboard') }}</h1>
 
-                <div class="d-flex flex-column flex-md-row ga-4">
-                    <v-card class="py-5 overflow-y-auto h-fit" elevation="2" style="min-width: 255px;">
+                <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px);">
+
+                    <!-- Left navigation menu -->
+                    <v-card class="py-5 h-fit" elevation="2" style="min-width: 255px;">
                         <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
                             <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
                                 class="px-7 justify-start text-none text-subtitle-2">
@@ -15,11 +17,20 @@
                             </v-tab>
                         </v-tabs>
                     </v-card>
+
+
+                    <!-- Main content -->
                     <v-card elevation="2" class="w-100">
+
+                        <!-- Main content header -->
                         <v-card-title class="d-flex flex-column pa-0 px-4">
                             <div class="d-flex my-3">
+
+                                <!-- Title -->
                                 ${tabsMap[tab]?.text}
                                 <v-spacer></v-spacer>
+
+                                <!-- Actions -->
                                 <div class="d-flex ga-4">
                                     <v-btn class="outlined-btn" color="primary" prepend-icon="mdi-restore" @click="loadDefaults"
                                         variant="outlined">
@@ -34,8 +45,11 @@
                                 </div>
                             </div>
                         </v-card-title>
+
                         <v-divider></v-divider>
                         <div>
+                            
+                            <!-- General tab -->
                             <div v-if="tab === 'general'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
@@ -58,8 +72,7 @@
                                     <v-divider class="my-4"></v-divider>
                     
                                     <h4 class="subtitle-2 mb-1">{{ _('Default language') }}</h4>
-                                    <p class="text-caption mb-1">{{ _('Changes default interface language for all users. Users can still
-                                        choose their own interface language.') }}</p>
+                                    <p class="text-caption mb-1">{{ _('Changes default interface language for all users. Users can still choose their own interface language.') }}</p>
                                     <v-btn-toggle divided variant="outlined" color="primary" mandatory v-model="eitem.BABEL_DEFAULT_LOCALE">
                                         <v-btn size="small" v-for="(name, code) in languages" :value="code">
                                             ${name}
@@ -111,15 +124,14 @@
                                 </v-card>
                             </div>
                     
+
+                            <!-- Storage tab -->
                             <div v-if="tab === 'storage'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
                                     <div style="max-width: 823px;">
                                         <h4 class="subtitle-2 mb-1">{{ _('Settings') }}</h4>
-                                        <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default,
-                                            Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket
-                                            using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline
-                                            installations).') }}</p>
+                                        <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
                                         <v-btn-toggle divided variant="outlined" color="primary" mandatory v-model="eitem.FILESYSTEM_LOCAL"
                                             class="my-3 mb-9">
                                             <v-btn :value="true">{{ _('Local Filesystem') }}</v-btn>
@@ -162,6 +174,7 @@
                             </div>
                     
                     
+                            <!-- Security tab -->
                             <div v-if="tab === 'security'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
@@ -277,6 +290,7 @@
                                 </v-card>
                             </div>
                     
+                            <!-- Access control tab -->
                             <div v-if="tab === 'control'">
                     
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
@@ -304,6 +318,8 @@
                                 </v-card>
                             </div>
                     
+
+                            <!-- Activity monitor tab -->
                             <div v-if="tab === 'logging'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
@@ -464,6 +480,7 @@
                             </div>
                     
                     
+                            <!-- Import tools tab -->
                             <div v-if="tab === 'import'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
@@ -566,6 +583,7 @@
                             </div>
                     
                     
+                            <!-- Export tools tab -->
                             <div v-if="tab === 'export'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
@@ -585,6 +603,7 @@
                             </div>
                     
                     
+                            <!-- Maps tab -->
                             <div v-if="tab === 'maps'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
@@ -610,6 +629,9 @@
                                     </div>
                                 </v-card>
                             </div>
+
+
+                            <!-- Location tab -->
                             <div v-if="tab === 'locations'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
                                     style="max-height: calc(100dvh - 242px);">
@@ -623,11 +645,12 @@
                         </div>
                     </v-card>
                 </div>
-                            
             </v-card>
         </div>
-
     </v-main>
+
+
+    <!-- Revision history sidebar -->
     <v-navigation-drawer
             v-model="showRevisions"
             location="right"
@@ -658,6 +681,8 @@
         </v-card>
     </v-navigation-drawer>
 
+
+    <!-- Save changes confirmation dialog -->
     <v-dialog v-model="saveChangesDialog" max-width="900">
         <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
@@ -702,6 +727,8 @@
         </v-card>
     </v-dialog>
 
+
+    <!-- Revert changes confirmation dialog -->
     <v-dialog v-model="revertChangesDialog" max-width="511">
         <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
@@ -732,6 +759,8 @@
         </v-card>
     </v-dialog>
 
+
+    <!-- Restarting Bayanat overlay -->
     <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
         <v-row class="align-center justify-center">
             <v-progress-circular
@@ -747,7 +776,6 @@
         <v-row class="align-center justify-center">
             {{ _('This can take up to a minute. If it takes longer, please restart Bayanat manually.') }}
         </v-row>
-
     </v-overlay>
 
 {% endblock %}
