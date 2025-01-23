@@ -18,8 +18,8 @@ const ImageGallery = Vue.defineComponent({
     }
   },
   methods: {
-    handleVideo(s3url){
-      this.$emit('video-click', s3url)
+    handleVideo(media){
+      this.$emit('video-click', media)
     },
     handleThumb(s3url){
       this.$emit('thumb-click', s3url)
@@ -35,8 +35,8 @@ const ImageGallery = Vue.defineComponent({
 
       return sortedMediaList;
     },
-    handleAudio(s3url){
-      this.$emit('audio-click', s3url)
+    handleAudio(media){
+      this.$emit('audio-click', media)
     },
 
     updateMediaState() {
