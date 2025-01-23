@@ -1443,6 +1443,7 @@ class ActivitiesModel(BaseModel):
 class NotificationConfigModel(BaseValidationModel):
     email_enabled: Optional[bool] = None
     in_app_enabled: Optional[bool] = None
+    category: Optional[str] = None
 
 
 class ConfigValidationModel(StrictValidationModel):

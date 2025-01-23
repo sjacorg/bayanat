@@ -3,11 +3,10 @@ from uuid import uuid4
 from unittest.mock import patch
 
 import pytest
-from enferno.utils.config_utils import ConfigManager
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 
-with patch.object(ConfigManager, "CONFIG_FILE_PATH", "config.sample.json"):
+with patch("enferno.utils.config_utils.ConfigManager.CONFIG_FILE_PATH", "config.sample.json"):
     from enferno.settings import TestConfig as cfg
 
 from enferno.settings import Config as prod_cfg
