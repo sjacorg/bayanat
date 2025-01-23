@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Any
-from enferno.admin.models.utils import check_roles
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
@@ -52,12 +51,12 @@ class Notification(db.Model, BaseMixin):
             "read_status": self.read_status,
             "read_at": DateHelper.serialize_datetime(self.read_at) if self.read_at else None,
             "is_urgent": self.is_urgent,
-            "created_at": DateHelper.serialize_datetime(self.created_at)
-            if self.created_at
-            else None,
-            "updated_at": DateHelper.serialize_datetime(self.updated_at)
-            if self.updated_at
-            else None,
+            "created_at": (
+                DateHelper.serialize_datetime(self.created_at) if self.created_at else None
+            ),
+            "updated_at": (
+                DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
+            ),
         }
 
     def to_json(self) -> str:

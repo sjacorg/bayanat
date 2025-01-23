@@ -24,7 +24,6 @@ from flask_security.twofactor import tf_disable
 import shortuuid
 
 from enferno.admin.models.Notification import Notification
-from enferno.utils.notification_utils import NotificationUtils
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
@@ -5788,7 +5787,10 @@ def api_notifications() -> Response:
     # Query notifications for current user, ordered by creation date descending
     notifications_query = (
         db.session.query(Notification)
-        .filter(Notification.user_id == current_user.id)
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
         .order_by(Notification.created_at.desc())
     )
 
@@ -5829,7 +5831,11 @@ def api_notifications_unread_count() -> Response:
     """
     unread_count = (
         db.session.query(Notification)
-        .filter(Notification.user_id == current_user.id, Notification.read_status == False)
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.read_status == False,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
         .count()
     )
 
