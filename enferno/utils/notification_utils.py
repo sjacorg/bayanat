@@ -13,6 +13,10 @@ logger = get_logger()
 
 
 class NotificationEvent(Enum):
+    """
+    Notification events that are used in the app.
+    """
+
     LOGIN_NEW_IP = "LOGIN_NEW_IP"
     PASSWORD_CHANGE = "PASSWORD_CHANGE"
     TWO_FACTOR_CHANGE = "TWO_FACTOR_CHANGE"
@@ -39,10 +43,6 @@ class NotificationEvent(Enum):
 class NotificationDeliveryStrategy(ABC):
     @abstractmethod
     def send(self, notification: Notification) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def can_send(self, notification: Notification) -> bool:
         raise NotImplementedError
 
 

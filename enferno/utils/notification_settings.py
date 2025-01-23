@@ -20,7 +20,8 @@ class NotificationSettings:
         If no config is provided, generates a valid default config without app-managed read-only fields.
         """
         conf = NotificationSettings._enforce_locked_settings(conf)
-        print(conf)
+        from enferno.utils.notification_utils import NotificationEvent
+
         # Prune read-only settings
         # Prune security events
         for event in [
@@ -33,7 +34,8 @@ class NotificationSettings:
             conf.pop(event)
         # Prune locked fields and locked information
         for event in conf:
-            print(f"{event}: {conf[event]}")
+            if event not in NotificationEvent.__members__:
+                continue
             if conf[event]["email_locked"]:
                 conf[event].pop("email_enabled")
             if conf[event]["in_app_locked"]:
