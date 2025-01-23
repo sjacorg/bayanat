@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-    <v-main class="system-admin overflow-y-auto">
+    <v-main class="system-admin">
         <div class="pa-4">
             <v-card class="pa-4" elevation="2" height="calc(100dvh - 96px)">
                 <h1 class="text-h6 mb-5">{{ _('Administration Dashboard') }}</h1>
@@ -9,7 +9,7 @@
                 <div class="d-flex flex-column flex-md-row ga-4" style="height: calc(100% - 52px);">
 
                     <!-- Left navigation menu -->
-                    <v-card class="py-5 h-fit" elevation="2" style="min-width: 255px;">
+                    <v-card class="py-5 h-fit overflow-y-auto" elevation="2" style="min-width: 255px;">
                         <v-tabs height="40" v-model="tab" selected-class="bg-surface-light" direction="vertical">
                             <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
                                 class="px-7 justify-start text-none text-subtitle-2">
@@ -20,10 +20,10 @@
 
 
                     <!-- Main content -->
-                    <v-card elevation="2" class="w-100">
+                    <v-card elevation="2" class="w-100 overflow-y-auto">
 
                         <!-- Main content header -->
-                        <v-card-title class="d-flex flex-column pa-0 px-4">
+                        <v-card-title class="d-flex flex-column pa-0 px-4 position-sticky top-0 z-1 bg-surface">
                             <div class="d-flex my-3">
 
                                 <!-- Title -->
@@ -44,15 +44,14 @@
                                         :disabled="!hasChanges">{{ _('Save changes') }}</v-btn>
                                 </div>
                             </div>
+                            <v-divider></v-divider>
                         </v-card-title>
 
-                        <v-divider></v-divider>
                         <div>
                             
                             <!-- General tab -->
                             <div v-if="tab === 'general'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <v-row>
                                         <v-col cols="6">
                                             <h4 class="subtitle-2 mb-1">{{ _('Table settings') }}</h4>
@@ -127,8 +126,7 @@
 
                             <!-- Storage tab -->
                             <div v-if="tab === 'storage'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <div style="max-width: 823px;">
                                         <h4 class="subtitle-2 mb-1">{{ _('Settings') }}</h4>
                                         <p class="text-caption">{{ _('Storage options for media files uploaded to Bayanat. By default, Bayanat store these files locally on the server. It\'s also possible to use S3 compatible bucket using cloud providers like AWS, Azure, Google Cloud, or MinIO (which can be used in offline installations).') }}</p>
@@ -176,8 +174,7 @@
                     
                             <!-- Security tab -->
                             <div v-if="tab === 'security'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <v-row>
                                         <v-col cols="12" lg="3">
                                             <h4 class="subtitle-2 mb-1">{{ _('Password Policies') }}</h4>
@@ -293,8 +290,7 @@
                             <!-- Access control tab -->
                             <div v-if="tab === 'control'">
                     
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <p class="text-caption text-muted mb-6" style="max-width: 823px;">{{ _('By default, users can access all
                                         items in the Bayanat database, except for items which are restricted from them. Administrators can
                                         restrict access to certain items by assigning Access Group(s) to these items. Additionally, only
@@ -321,8 +317,7 @@
 
                             <!-- Activity monitor tab -->
                             <div v-if="tab === 'logging'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <p class="text-caption text-muted mb-6">{{ _('Set users\' actions to be logged in the Activity
                                         Monitor.') }}</p>
                     
@@ -482,8 +477,7 @@
                     
                             <!-- Import tools tab -->
                             <div v-if="tab === 'import'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <h4 class="subtitle-2 mb-n1">{{ _('Media import tool') }}</h4>
                                     <v-switch persistent-hint
                                         hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
@@ -585,8 +579,7 @@
                     
                             <!-- Export tools tab -->
                             <div v-if="tab === 'export'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <div style="max-width: 424px;">
                                         <h4 class="subtitle-2 mb-n1">{{ _('Export system') }}</h4>
                                         <v-switch class="mb-4" v-model="eitem.EXPORT_TOOL" persistent-hint
@@ -605,8 +598,7 @@
                     
                             <!-- Maps tab -->
                             <div v-if="tab === 'maps'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <v-text-field class="mb-9" label="{{ _('Map API endpoint') }}" persistent-hint
                                         hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
                                         v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
@@ -633,8 +625,7 @@
 
                             <!-- Location tab -->
                             <div v-if="tab === 'locations'">
-                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8 overflow-y-auto"
-                                    style="max-height: calc(100dvh - 242px);">
+                                <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <div style="max-width: 408px;">
                                         <h4 class="subtitle-2 mb-n1">{{ _('Include postal code generation settings') }}</h4>
                                         <v-switch v-model="eitem.LOCATIONS_INCLUDE_POSTAL_CODE" persistent-hint
