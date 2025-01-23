@@ -6,277 +6,245 @@
         <v-card class="pa-4" elevation="2">
             <h1 class="text-h6 mb-5">{{ _('Component Data Management') }}</h1>
 
-            <v-container fluid class="pa-0">
-                <v-row>
-                    <v-col cols="12" sm="12" md="4" lg="3">
-                        <v-card elevation="2" class="py-5 overflow-y-auto" style="max-height: calc(100dvh - 180px);">
-                            <v-tabs mandatory height="40" v-model="tabState.main" selected-class="bg-surface-light"
-                                direction="vertical">
-                                <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
-                                    class="px-7 justify-start text-none text-subtitle-2">
-                                    ${tab.text}
+            <div class="d-flex flex-column flex-md-row ga-4">
+                <v-card class="py-5 overflow-y-auto h-fit" elevation="2" style="min-width: 255px;">
+                    <v-tabs mandatory height="40" v-model="tabState.main" selected-class="bg-surface-light" direction="vertical">
+                        <v-tab v-for="(tab, key) in tabsMap" :key="key" :value="key"
+                            class="px-7 justify-start text-none text-subtitle-2">
+                            ${tab.text}
+                        </v-tab>
+                    </v-tabs>
+                </v-card>
+                <v-card elevation="2" class="w-100">
+                    <div>
+                        <div v-if="tabState.main === 'location'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
+                                    :value="key">
+                                    ${childTab.text}
                                 </v-tab>
                             </v-tabs>
-                        </v-card>
-                    </v-col>
+                            <v-divider></v-divider>
 
-                    <v-col cols="12" sm="12" md="8" lg="9">
-                        <v-card elevation="2">
-                            <div>
-                                <div v-if="tabState.main === 'location'">
-                                    <v-tabs mandatory height="64" v-model="tabState.child">
-                                        <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap"
-                                            :key="key" class="px-7" :value="key">
-                                            ${childTab.text}
-                                        </v-tab>
-                                    </v-tabs>
-                                    <v-divider></v-divider>
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'administrative-levels'">
+                                    <editable-table height="calc(100vh - 628px)" title="{{ _('Location Administrative Levels') }}"
+                                        :item-headers="alHeaders" :editable-columns="['title']"
+                                        :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
+                                        delete-endpoint="/admin/api/location-admin-level"
+                                        save-endpoint="/admin/api/location-admin-level"
+                                        load-endpoint="/admin/api/location-admin-levels/?per_page=1000"
+                                        @items-updated="onLocationAdminLevelsUpdated">
+                                    </editable-table>
+                                    <v-divider class="my-4"></v-divider>
+                                    <!-- Add toolbar template -->
+                                    <v-card flat class="px-5 pb-5 pt-1">
+                                        <h3 class="text-subtitle-1 mb-2">{{ _('Full Location Text Format') }}
+                                        </h3>
+                                        <div class="text-caption text-muted" style="max-width: 716px;">{{
+                                            _('These settings control how the full location text of each
+                                            Location is
+                                            formatted and generated from its title and its parents. You can
+                                            customize this order to match the
+                                            address system of the country you\'re working on.') }}</div>
+                                        <draggable v-model="lalChips" :item-key="'id'" class="d-flex flex-wrap ga-2 mt-4 mb-8"
+                                            @end="onDragEnd">
+                                            <template #item="{element}">
+                                                <v-chip border variant="text" size="default">
+                                                    <v-icon left size="x-large">mdi-drag</v-icon>
+                                                    <span class="text-body-2 ml-2" v-text="element.title"></span>
+                                                </v-chip>
+                                            </template>
+                                        </draggable>
 
-                                    <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
-                                        <div v-if="tabState.child === 'administrative-levels'">
-                                            <editable-table height="calc(100vh - 628px)"
-                                                title="{{ _('Location Administrative Levels') }}"
-                                                :item-headers="alHeaders" :editable-columns="['title']"
-                                                :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
-                                                delete-endpoint="/admin/api/location-admin-level"
-                                                save-endpoint="/admin/api/location-admin-level"
-                                                load-endpoint="/admin/api/location-admin-levels/?per_page=1000"
-                                                @items-updated="onLocationAdminLevelsUpdated">
-                                            </editable-table>
-                                            <v-divider class="my-4"></v-divider>
-                                            <!-- Add toolbar template -->
-                                            <v-card flat class="px-5 pb-5 pt-1">
-                                                <h3 class="text-subtitle-1 mb-2">{{ _('Full Location Text Format') }}
-                                                </h3>
-                                                <div class="text-caption text-muted" style="max-width: 716px;">{{
-                                                    _('These settings control how the full location text of each
-                                                    Location is
-                                                    formatted and generated from its title and its parents. You can
-                                                    customize this order to match the
-                                                    address system of the country you\'re working on.') }}</div>
-                                                <draggable v-model="lalChips" :item-key="'id'"
-                                                    class="d-flex flex-wrap ga-2 mt-4 mb-8" @end="onDragEnd">
-                                                    <template #item="{element}">
-                                                        <v-chip border variant="text" size="default">
-                                                            <v-icon left size="x-large">mdi-drag</v-icon>
-                                                            <span class="text-body-2 ml-2"
-                                                                v-text="element.title"></span>
-                                                        </v-chip>
-                                                    </template>
-                                                </draggable>
-
-                                                <div class="d-flex justify-end align-center ga-4 mt-4">
-                                                    <div class="text-caption text-right text-muted mr-2"
-                                                        style="max-width: 400px;">
-                                                        {{ _('You can change the option to include postal codes in
-                                                        format of the full location text in the system settings.') }}
-                                                    </div>
-                                                    <v-btn v-if="isOrderChanged" variant="outlined" @click="revertOrder"
-                                                        class="outlined-btn" prepend-icon="mdi-history">
-                                                        {{ _('Revert changes') }}
-                                                    </v-btn>
-                                                    <v-btn color="primary" variant="outlined" prepend-icon="mdi-refresh"
-                                                        class="outlined-btn" @click="regenerateLocations">
-                                                        {{ _('Regenerate') }}
-                                                    </v-btn>
-                                                    <v-btn v-if="isOrderChanged" color="primary"
-                                                        prepend-icon="mdi-check" @click="reorderLocationAdminLevels">
-                                                        {{ _('Save order') }}
-                                                    </v-btn>
-                                                </div>
-                                                <div>
-                                                    <v-card class="pa-2 mt-5 mb-3" color="info" v-if="showLalWarning">
-                                                        <v-card-text>
-                                                            <v-icon>mdi-information</v-icon>
-                                                            {{ _('You must Re-generate Full Location Texts for the new
-                                                            format to take effect.') }}
-                                                        </v-card-text>
-                                                    </v-card>
-                                                </div>
+                                        <div class="d-flex justify-end align-center ga-4 mt-4">
+                                            <div class="text-caption text-right text-muted mr-2" style="max-width: 400px;">
+                                                {{ _('You can change the option to include postal codes in
+                                                format of the full location text in the system settings.') }}
+                                            </div>
+                                            <v-btn v-if="isOrderChanged" variant="outlined" @click="revertOrder" class="outlined-btn"
+                                                prepend-icon="mdi-history">
+                                                {{ _('Revert changes') }}
+                                            </v-btn>
+                                            <v-btn color="primary" variant="outlined" prepend-icon="mdi-refresh" class="outlined-btn"
+                                                @click="regenerateLocations">
+                                                {{ _('Regenerate') }}
+                                            </v-btn>
+                                            <v-btn v-if="isOrderChanged" color="primary" prepend-icon="mdi-check"
+                                                @click="reorderLocationAdminLevels">
+                                                {{ _('Save order') }}
+                                            </v-btn>
+                                        </div>
+                                        <div>
+                                            <v-card class="pa-2 mt-5 mb-3" color="info" v-if="showLalWarning">
+                                                <v-card-text>
+                                                    <v-icon>mdi-information</v-icon>
+                                                    {{ _('You must Re-generate Full Location Texts for the new
+                                                    format to take effect.') }}
+                                                </v-card-text>
                                             </v-card>
                                         </div>
-
-                                        <div v-if="tabState.child === 'location-types'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Location Types') }}" :item-headers="ltHeaders"
-                                                :no-action-ids="[1,2]" delete-endpoint="/admin/api/location-type"
-                                                save-endpoint="/admin/api/location-type"
-                                                load-endpoint="/admin/api/location-types/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-                                    </div>
+                                    </v-card>
                                 </div>
 
-                                <div v-if="tabState.main === 'countries'">
-                                    <v-tabs mandatory height="64" v-model="tabState.child">
-                                        <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap"
-                                            :key="key" class="px-7" :value="key">
-                                            ${childTab.text}
-                                        </v-tab>
-                                    </v-tabs>
-                                    <v-divider></v-divider>
-
-                                    <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
-                                        <div v-if="tabState.child === 'countries'">
-                                            <editable-table height="calc(100vh - 375px)" title="{{ _('Countries') }}"
-                                                :item-headers="countryHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/country" save-endpoint="/admin/api/country"
-                                                load-endpoint="/admin/api/countries/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'ethnographic-info'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Ethnographic Information') }}" :item-headers="ethnoHeaders"
-                                                :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/ethnography"
-                                                save-endpoint="/admin/api/ethnography"
-                                                load-endpoint="/admin/api/ethnographies/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'dialects'">
-                                            <editable-table height="calc(100vh - 375px)" title="{{ _('Dialects') }}"
-                                                :item-headers="dialectHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/dialect" save-endpoint="/admin/api/dialect"
-                                                load-endpoint="/admin/api/dialects/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div v-if="tabState.main === 'relations'">
-                                    <v-tabs mandatory height="64" v-model="tabState.child">
-                                        <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap"
-                                            :key="key" class="px-7" :value="key">
-                                            ${childTab.text}
-                                        </v-tab>
-                                    </v-tabs>
-                                    <v-divider></v-divider>
-
-                                    <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
-                                        <div v-if="tabState.child === 'actor-to-actor'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Actor to Actor Relations') }}"
-                                                :item-headers="revRelationHeaders"
-                                                :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
-                                                delete-endpoint="/admin/api/atoainfo"
-                                                save-endpoint="/admin/api/atoainfo"
-                                                load-endpoint="/admin/api/atoainfos/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'actor-to-bulletin'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Actor to Bulletin Relations') }}"
-                                                :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/atobinfo"
-                                                save-endpoint="/admin/api/atobinfo"
-                                                load-endpoint="/admin/api/atobinfos/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'bulletin-to-bulletin'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Bulletin to Bulletin Relations') }}"
-                                                :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/btobinfo"
-                                                save-endpoint="/admin/api/btobinfo"
-                                                load-endpoint="/admin/api/btobinfos/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'incident-to-bulletin'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Incident to Bulletin Relations') }}"
-                                                :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/itobinfo"
-                                                save-endpoint="/admin/api/itobinfo"
-                                                load-endpoint="/admin/api/itobinfos/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'incident-to-actor'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Incident to Actor Relations') }}"
-                                                :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/itoainfo"
-                                                save-endpoint="/admin/api/itoainfo"
-                                                load-endpoint="/admin/api/itoainfos/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'incident-to-incident'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Incident to Incident Relations') }}"
-                                                :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/itoiinfo"
-                                                save-endpoint="/admin/api/itoiinfo"
-                                                load-endpoint="/admin/api/itoiinfos/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-if="tabState.main === 'media'">
-                                    <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
-                                        <editable-table height="calc(100vh - 307px)" title="{{ _('Media Categories') }}"
-                                            :item-headers="mediaHeaders" :editable-columns="['title','title_tr']"
-                                            delete-endpoint="/admin/api/mediacategory"
-                                            save-endpoint="/admin/api/mediacategory"
-                                            load-endpoint="/admin/api/mediacategories/?per_page=1000">
-                                        </editable-table>
-                                    </div>
-                                </div>
-                                <div v-if="tabState.main === 'geolocation'">
-                                    <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
-                                        <editable-table height="calc(100vh - 307px)"
-                                            title="{{ _('Geo Location Types') }}" :item-headers="geoHeaders"
-                                            :editable-columns="['title','title_tr']"
-                                            delete-endpoint="/admin/api/geolocationtype"
-                                            save-endpoint="/admin/api/geolocationtype"
-                                            load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
-                                        </editable-table>
-                                    </div>
-                                </div>
-                                <div v-if="tabState.main === 'violation'">
-                                    <v-tabs mandatory height="64" v-model="tabState.child">
-                                        <v-tab class="px-7" value="potential-violation">
-                                            {{ _('Potential Violation') }}
-                                        </v-tab>
-                                        <v-tab class="px-7" value="claimed-violation">
-                                            {{ _('Claimed Violation') }}
-                                        </v-tab>
-                                    </v-tabs>
-                                    <v-divider></v-divider>
-
-                                    <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
-                                        <div v-if="tabState.child === 'potential-violation'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Potential Violation Categories') }}"
-                                                :item-headers="potentialHeaders"
-                                                :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/potentialviolation"
-                                                save-endpoint="/admin/api/potentialviolation"
-                                                load-endpoint="/admin/api/potentialviolation/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-
-                                        <div v-if="tabState.child === 'claimed-violation'">
-                                            <editable-table height="calc(100vh - 375px)"
-                                                title="{{ _('Claimed Violation Categories') }}"
-                                                :item-headers="claimedHeaders" :editable-columns="['title','title_tr']"
-                                                delete-endpoint="/admin/api/claimedviolation"
-                                                save-endpoint="/admin/api/claimedviolation"
-                                                load-endpoint="/admin/api/claimedviolation/?per_page=1000">
-                                            </editable-table>
-                                        </div>
-                                    </div>
+                                <div v-if="tabState.child === 'location-types'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Location Types') }}"
+                                        :item-headers="ltHeaders" :no-action-ids="[1,2]" delete-endpoint="/admin/api/location-type"
+                                        save-endpoint="/admin/api/location-type"
+                                        load-endpoint="/admin/api/location-types/?per_page=1000">
+                                    </editable-table>
                                 </div>
                             </div>
-                        </v-card>
-                    </v-col>
-                </v-row>
-            </v-container>
+                        </div>
+
+                        <div v-if="tabState.main === 'countries'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
+                                    :value="key">
+                                    ${childTab.text}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
+
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'countries'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Countries') }}"
+                                        :item-headers="countryHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/country" save-endpoint="/admin/api/country"
+                                        load-endpoint="/admin/api/countries/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'ethnographic-info'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Ethnographic Information') }}"
+                                        :item-headers="ethnoHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/ethnography" save-endpoint="/admin/api/ethnography"
+                                        load-endpoint="/admin/api/ethnographies/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'dialects'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Dialects') }}"
+                                        :item-headers="dialectHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/dialect" save-endpoint="/admin/api/dialect"
+                                        load-endpoint="/admin/api/dialects/?per_page=1000">
+                                    </editable-table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="tabState.main === 'relations'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7"
+                                    :value="key">
+                                    ${childTab.text}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
+
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'actor-to-actor'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Actor Relations') }}"
+                                        :item-headers="revRelationHeaders"
+                                        :editable-columns="['title','title_tr', 'reverse_title', 'reverse_title_tr']"
+                                        delete-endpoint="/admin/api/atoainfo" save-endpoint="/admin/api/atoainfo"
+                                        load-endpoint="/admin/api/atoainfos/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'actor-to-bulletin'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Actor to Bulletin Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/atobinfo" save-endpoint="/admin/api/atobinfo"
+                                        load-endpoint="/admin/api/atobinfos/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'bulletin-to-bulletin'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Bulletin to Bulletin Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/btobinfo" save-endpoint="/admin/api/btobinfo"
+                                        load-endpoint="/admin/api/btobinfos/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'incident-to-bulletin'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Bulletin Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/itobinfo" save-endpoint="/admin/api/itobinfo"
+                                        load-endpoint="/admin/api/itobinfos/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'incident-to-actor'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Actor Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/itoainfo" save-endpoint="/admin/api/itoainfo"
+                                        load-endpoint="/admin/api/itoainfos/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'incident-to-incident'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Incident to Incident Relations') }}"
+                                        :item-headers="relationHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/itoiinfo" save-endpoint="/admin/api/itoiinfo"
+                                        load-endpoint="/admin/api/itoiinfos/?per_page=1000">
+                                    </editable-table>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="tabState.main === 'media'">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
+                                <editable-table height="calc(100vh - 307px)" title="{{ _('Media Categories') }}"
+                                    :item-headers="mediaHeaders" :editable-columns="['title','title_tr']"
+                                    delete-endpoint="/admin/api/mediacategory" save-endpoint="/admin/api/mediacategory"
+                                    load-endpoint="/admin/api/mediacategories/?per_page=1000">
+                                </editable-table>
+                            </div>
+                        </div>
+                        <div v-if="tabState.main === 'geolocation'">
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 180px);">
+                                <editable-table height="calc(100vh - 307px)" title="{{ _('Geo Location Types') }}"
+                                    :item-headers="geoHeaders" :editable-columns="['title','title_tr']"
+                                    delete-endpoint="/admin/api/geolocationtype" save-endpoint="/admin/api/geolocationtype"
+                                    load-endpoint="/admin/api/geolocationtypes/?per_page=1000">
+                                </editable-table>
+                            </div>
+                        </div>
+                        <div v-if="tabState.main === 'violation'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab class="px-7" value="potential-violation">
+                                    {{ _('Potential Violation') }}
+                                </v-tab>
+                                <v-tab class="px-7" value="claimed-violation">
+                                    {{ _('Claimed Violation') }}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
+
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'potential-violation'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Potential Violation Categories') }}"
+                                        :item-headers="potentialHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/potentialviolation" save-endpoint="/admin/api/potentialviolation"
+                                        load-endpoint="/admin/api/potentialviolation/?per_page=1000">
+                                    </editable-table>
+                                </div>
+
+                                <div v-if="tabState.child === 'claimed-violation'">
+                                    <editable-table height="calc(100vh - 375px)" title="{{ _('Claimed Violation Categories') }}"
+                                        :item-headers="claimedHeaders" :editable-columns="['title','title_tr']"
+                                        delete-endpoint="/admin/api/claimedviolation" save-endpoint="/admin/api/claimedviolation"
+                                        load-endpoint="/admin/api/claimedviolation/?per_page=1000">
+                                    </editable-table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </v-card>
+            </div>
+                        
+
         </v-card>
     </div>
 </v-main>

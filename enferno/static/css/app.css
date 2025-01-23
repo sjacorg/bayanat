@@ -850,6 +850,9 @@ div.jsondiffpatch-child-node-type-array:after {
 .z-1 {
     z-index: 1;
 }
+.h-fit {
+    height: fit-content;
+}
 
 /* wrap chips */
 .flex-chips {
