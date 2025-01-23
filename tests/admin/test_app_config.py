@@ -101,7 +101,6 @@ def test_put_configuration(request, client_fixture, expected_status):
                 headers={"Content-Type": "application/json"},
                 json={"conf": updated_conf},
             )
-            print(response.json)
             assert response.status_code == expected_status
             if expected_status == 200:
                 called_conf_write_argument = FullConfigValidationModel(
