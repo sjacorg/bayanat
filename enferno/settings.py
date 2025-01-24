@@ -417,6 +417,7 @@ class TestConfig(Config):
     SETUP_COMPLETE = False
     IMPORT_DIR = "tests/imports"
     LOCATIONS_INCLUDE_POSTAL_CODE = False
+    TRANSCRIPTION_ENABLED = True
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
     YTDLP_PROXY = ""
