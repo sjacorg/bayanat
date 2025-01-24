@@ -1376,6 +1376,8 @@ class UserValidationModel(StrictValidationModel):
                     domain = email.split("@")[-1]
                 except Exception:
                     raise ValueError("Error, invalid email format")
+                if "*" in cfg.MAIL_ALLOWED_DOMAINS:
+                    return v
                 if domain.lower() not in cfg.MAIL_ALLOWED_DOMAINS:
                     raise ValueError("Error, email domain not allowed")
             else:
