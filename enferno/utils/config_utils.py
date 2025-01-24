@@ -135,7 +135,7 @@ class ConfigManager:
             "ADV_ANALYSIS": False,
             "LOCATIONS_INCLUDE_POSTAL_CODE": False,
             "MAIL_ENABLED": False,
-            "MAIL_ALLOWED_DOMAINS": ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"],
+            "MAIL_ALLOWED_DOMAINS": [],
             "MAIL_SERVER": "",
             "MAIL_PORT": 25,
             "MAIL_USE_TLS": False,

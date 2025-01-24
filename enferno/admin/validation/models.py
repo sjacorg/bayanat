@@ -1768,6 +1768,10 @@ class FullConfigValidationModel(ConfigValidationModel):
                 raise ValueError(
                     "MAIL_SERVER, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD must be provided if MAIL_ENABLED is True"
                 )
+            if not values.get("MAIL_ALLOWED_DOMAINS"):
+                raise ValueError(
+                    "MAIL_ALLOWED_DOMAINS must be provided and not empty if MAIL_ENABLED is True"
+                )
         return values
 
     @model_validator(mode="before")
