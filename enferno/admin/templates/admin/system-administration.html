@@ -707,10 +707,10 @@
 
             </v-card-text>
             <v-divider></v-divider>
-            <v-card-actions class="pa-4 justify-center">
+            <v-card-actions class="pa-4 justify-end">
                 <v-btn @click.stop="closeSaveDialog" class="grey lighten-4" elevation="0">{{ _('Cancel') }}
                 </v-btn>
-                <v-btn variant="elevated" :disabled="!configDiff" @click.stop="saveConfiguration" class="ml-4">
+                <v-btn variant="elevated" color="primary" :disabled="!configDiff" @click.stop="saveConfiguration" class="ml-4">
                     {{ _('Confirm') }}
                 </v-btn>
             </v-card-actions>
@@ -753,20 +753,22 @@
 
     <!-- Restarting Bayanat overlay -->
     <v-overlay v-model="overlay" class="align-center justify-center" z-index="1000000">
-        <v-row class="align-center justify-center">
-            <v-progress-circular
-                    class="mr-3"
-                    color="white"
-                    indeterminate
-                    size="32"
-            ></v-progress-circular>
-        </v-row>
-        <v-row class="align-center justify-center">
-            {{ _('Restarting Bayanat to new settings to take effect, please wait...') }}
-        </v-row>
-        <v-row class="align-center justify-center">
-            {{ _('This can take up to a minute. If it takes longer, please restart Bayanat manually.') }}
-        </v-row>
+        <v-card>
+            <v-card-text class="d-flex flex-column justify-center align-center text-center">
+                <v-progress-circular
+                        class="mb-4"
+                        color="white"
+                        indeterminate
+                        size="32"
+                ></v-progress-circular>
+                <div>
+                    {{ _('Restarting Bayanat to new settings to take effect, please wait...') }}
+                </div>
+                <div>
+                    {{ _('This can take up to a minute. If it takes longer, please restart Bayanat manually.') }}
+                </div>
+            </v-card-text>
+        </v-card>
     </v-overlay>
 
 {% endblock %}
