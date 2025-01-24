@@ -379,11 +379,11 @@
                                 this.refresh()
                             })
                     } else {
-                        this.items.push(this.editedItem);
-
                         axios
                             .post("/admin/api/label/", {item: this.editedItem})
                             .then(response => {
+                                this.items.push(response.data.data);
+                                this.showSnack(response.data.message);
                                 this.showSnack(response.data);
                                 this.refresh()
                             });

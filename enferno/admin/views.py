@@ -325,7 +325,12 @@ def api_label_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
-        return f"Created Label #{label.id}", 200
+
+        response = {
+            "message": f"Created Label #{label.id}",
+            "data": label.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
     else:
         return "Save Failed", 417
 
@@ -471,7 +476,12 @@ def api_eventtype_create(
             eventtype.to_mini(),
             "eventtype",
         )
-        return f"Created Event #{eventtype.id}", 200
+
+        response = {
+            "message": f"Created Event #{eventtype.id}",
+            "data": eventtype.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
     else:
         return "Save Failed", 417
 
@@ -906,7 +916,11 @@ def api_source_create(
             source.to_mini(),
             "source",
         )
-        return f"Created Source #{source.id}", 200
+        response = {
+            "message": f"Created Source #{source.id}",
+            "data": source.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
     else:
         return "Save Failed", 417
 
@@ -1075,7 +1089,14 @@ def api_location_create(
             location.to_mini(),
             "location",
         )
-        return f"Created Location #{location.id}", 200
+
+        response = {
+            "message": f"Created Location #{location.id}",
+            "data": location.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
+    else:
+        return "Error creating Location", 417
 
 
 @admin.put("/api/location/<int:id>")
@@ -2918,7 +2939,11 @@ def api_bulletin_create(
             "bulletin",
         )
 
-        return f"Created Bulletin #{bulletin.id}", 200
+        response = {
+            "message": f"Created Bulletin #{bulletin.id}",
+            "data": bulletin.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
     else:
         return "Error creating Bulletin", 417
 
@@ -3877,7 +3902,12 @@ def api_actor_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
         )
-        return f"Created Actor #{actor.id}", 200
+
+        response = {
+            "message": f"Created Actor #{actor.id}",
+            "data": actor.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
     else:
         return "Error creating Actor", 417
 
@@ -4803,8 +4833,12 @@ def api_role_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
-        return "Created", 200
 
+        response = {
+            "message": f"Created Role #{role.id}",
+            "data": role.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
     else:
         return "Save Failed", 417
 
@@ -4999,7 +5033,12 @@ def api_incident_create(
             incident.to_mini(),
             "incident",
         )
-        return f"Created Incident #{incident.id}", 200
+
+        response = {
+            "message": f"Created Incident #{incident.id}",
+            "data": incident.to_dict(),
+        }
+        return Response(json.dumps(response), content_type="application/json"), 200
     else:
         return "Error creating Incident", 417
 

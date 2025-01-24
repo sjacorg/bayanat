@@ -1466,8 +1466,8 @@
                         axios.post("/admin/api/incident/", {
                             item: this.editedItem
                         }).then(response => {
-                            this.items.push(this.editedItem);
-                            this.showSnack(response.data);
+                            this.items.push(response.data.data);
+                            this.showSnack(response.data.message);
                             this.refresh();
                             this.close();
                         }).catch(err => {
