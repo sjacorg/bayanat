@@ -659,11 +659,11 @@
                             <div class="mt-n1">
                                 <div><b>@${item.user.username}</b> {{ _('updated the settings') }} <span class="text-muted">{{ _('at') }} ${getFormattedDate(item.created_at)}</span></div>
                                 <div v-if="index === 0" class="font-italic">{{ _('Current configuration') }}</div>
-                                <div v-else-if="!diffPatch.diff(cleanConfig(revisionsState?.items?.[index + 1]?.config ?? {}), cleanConfig(item?.config))" class="font-italic">{{ _('Same as current configuration') }}</div>
+                                <div v-else-if="!DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('Same as current configuration') }}</div>
                                 <show-details v-else show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-                                    <diff-renderer :diff="generateConfigDiff(diffPatch.diff(cleanConfig(revisionsState?.items?.[index + 1]?.config ?? {}), cleanConfig(item?.config)))"></diff-renderer>
+                                    <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionsState?.items?.[index + 1]?.config, item?.config, configLabels)"></diff-renderer>
                                 </show-details>
-                                <v-btn v-if="index !== 0 && diffPatch.diff(cleanConfig(revisionsState?.items?.[index + 1]?.config ?? {}), cleanConfig(item?.config))" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Reverse to this version') }}</v-btn>
+                                <v-btn v-if="index !== 0 && DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Reverse to this version') }}</v-btn>
                             </div>
                         </v-timeline-item>
                     </v-timeline>
@@ -774,6 +774,7 @@
 {% block js %}
 
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
+    <script src="/static/js/diff-tool.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/ShowDetails.js"></script>
     <script src="/static/js/components/DiffRenderer.js"></script>
@@ -796,6 +797,7 @@
                 },
                 isCollapsed: true,
                 infiniteScrollCallback: null,
+                DiffTool: DiffTool,
 
                 // nav drawer
                 showRevisions: false,
@@ -816,9 +818,6 @@
 
                 configLabels: [],
 
-                // use this to perform diff operations and compare configurations
-                diffPatch: jsondiffpatch.create({}),
-                
                 //store current config before it is updated
                 exconfig: {},
                 configDiff: '',
@@ -898,8 +897,7 @@
                     }));
                 },
                 hasChanges() {
-                    const delta = this.diffPatch.diff(this.exconfig, this.eitem);
-                    return delta !== undefined;
+                    return DiffTool.hasDiff(this.exconfig, this.eitem);
                 },
             },
 
@@ -916,7 +914,7 @@
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
                         this.defaultConfig = res.data;
-                        this.showConfigDiff();
+                        this.showDefaultConfigDiff();
                     }).catch(err => {
                         this.$root.showSnack(err?.response?.data);
                         console.error(err);
@@ -936,52 +934,18 @@
                     this.showRevertConfigDiff();
                 },
 
-
-                friendlyDiff(html) {
-                    let output = html.replace(/true/ig, 'On');
-                    output = output.replace(/false/ig, 'Off');
-
-                    return output;
-
-                },
-                generateConfigDiff(delta) {
-                    // build a customized diff array to display to the user before saving
-                    let diff = [];
-                    if (!delta) return diff;
-
-                    const labels = this.defaultConfig?.labels || this.configLabels
-
-                    for (const k of Object.keys(delta)) {
-                        diff.push(
-                            {
-                                label: labels[k],
-                                diff: this.friendlyDiff(jsondiffpatch.formatters.html.format(delta[k]))
-
-                            }
-                        )
-                    }
-
-                    return diff;
-                },
-
-
-                showConfigDiff() {
-                    const delta = (() => {
-                        if (this.defaultConfig) {
-                            return this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig?.config))
-                        } else {
-                            return this.diffPatch.diff(this.cleanConfig(this.exconfig), this.cleanConfig(this.eitem))
-                        }
-                    })();
-
-                    this.configDiff = delta ? this.generateConfigDiff(delta) : null;
+                showDefaultConfigDiff() {
+                    this.configDiff = DiffTool.getAndRenderDiff(this.eitem, this.defaultConfig?.config, this.defaultConfig.labels);
                     this.saveChangesDialog = true;
                 },
 
+                showConfigDiff() {
+                    this.configDiff = DiffTool.getAndRenderDiff(this.exconfig, this.eitem, this.configLabels);
+                    this.saveChangesDialog = true;
+                },
+                
                 showRevertConfigDiff() {
-                    const delta = this.diffPatch.diff(this.cleanConfig(this.eitem), this.cleanConfig(this.defaultConfig?.config));
-
-                    this.configDiff = delta ? this.generateConfigDiff(delta) : null;
+                    this.configDiff = DiffTool.getAndRenderDiff(this.eitem, this.defaultConfig?.config, this.defaultConfig.labels);
                     this.revertChangesDialog = true;
                 },
 
@@ -1113,23 +1077,6 @@
                         // Otherwise, include full date and time
                         return date.format('DD MMM YYYY, hh:mm A');
                     }
-                },
-
-                replaceNullValues(obj, replacement = '') {
-                    for(const key in obj) {
-                        if (obj[key] === null) {
-                            obj[key] = replacement;
-                        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-                            this.replaceNullValues(obj[key], replacement);
-                        }
-                    }
-                    return obj;
-                },
-
-                cleanConfig(oldConfig) {
-                    const config = this.replaceNullValues(oldConfig)
-                    delete config.SETUP_COMPLETE
-                    return config
                 },
 
                 closeSaveDialog() {
