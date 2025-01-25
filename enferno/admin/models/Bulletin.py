@@ -5,7 +5,7 @@ from typing import Any, Optional
 import sqlalchemy
 from flask_login import current_user
 from geoalchemy2 import Geography
-from sqlalchemy import ARRAY, func
+from sqlalchemy import ARRAY, func, event
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 
 import enferno.utils.typing as t
@@ -136,6 +136,9 @@ class Bulletin(db.Model, BaseMixin):
     # tags field : used for etl tagging etc ..
     tags = db.Column(ARRAY(db.String), default=[], nullable=False)
 
+    # tags search field : used for search, optimized with trigram index
+    tags_search = db.Column(db.String(), default="", nullable=False)
+
     # extra fields used by etl etc ..
     originid = db.Column(db.String, index=True)
     comments = db.Column(db.Text)
@@ -173,7 +176,22 @@ class Bulletin(db.Model, BaseMixin):
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
         ),
+        db.Index(
+            "ix_bulletin_tags_search_trigram",
+            "tags_search",
+            postgresql_using="gin",
+            postgresql_ops={"tags_search": "gin_trgm_ops"},
+        ),
     )
+
+    @staticmethod
+    def generate_tags_search(tags):
+        """Generate searchable string from tags array"""
+        return " ".join(tags) if tags else ""
+
+    def update_tags_search(self):
+        """Update tags_search field from tags"""
+        self.tags_search = self.generate_tags_search(self.tags)
 
     # custom method to create new revision in history table
     def create_revision(
@@ -915,3 +933,10 @@ class Bulletin(db.Model, BaseMixin):
             return self.history[-1].updated_at
         else:
             return self.updated_at
+
+
+@event.listens_for(Bulletin, "before_insert")
+@event.listens_for(Bulletin, "before_update")
+def update_tags_search_on_save(mapper, connection, target):
+    """Update tags_search whenever a bulletin is saved or updated"""
+    target.update_tags_search()
