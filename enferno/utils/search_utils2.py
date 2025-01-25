@@ -108,7 +108,7 @@ class SearchUtils:
                 # Must match any SINGLE tag exactly (equivalent to old version)
                 conditions.append(or_(Bulletin.tags.contains([r]) for r in ref))
             else:
-                # For partial matches, use ANY with ILIKE
+                # For partial matches, use ANY with ILIKE (equivalent to old OR)
                 patterns = [f"%{r}%" for r in ref]
                 conditions.append(Bulletin.tags_search.ilike(any_(patterns)))
 
@@ -125,21 +125,11 @@ class SearchUtils:
         if exref := q.get("exTags"):
             if q.get("exExact", False):
                 # Must NOT contain ANY of these tags individually
-                subq = (
-                    db.select(Bulletin.id)
-                    .where(or_(Bulletin.tags.contains([r]) for r in exref))
-                    .scalar_subquery()
-                )
-                conditions.append(~Bulletin.id.in_(subq))
+                conditions.append(and_(~Bulletin.tags.contains([r]) for r in exref))
             else:
                 # Must NOT match ANY of these patterns
                 patterns = [f"%{r}%" for r in exref]
-                subq = (
-                    db.select(Bulletin.id)
-                    .where(Bulletin.tags_search.ilike(any_(patterns)))
-                    .scalar_subquery()
-                )
-                conditions.append(~Bulletin.id.in_(subq))
+                conditions.append(~Bulletin.tags_search.ilike(any_(patterns)))
 
             # Handle OR operation for exclusions
             if q.get("opExTags"):
