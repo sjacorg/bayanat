@@ -105,24 +105,40 @@ class SearchUtils:
         # Tags
         if ref := q.get("tags"):
             if q.get("inExact", False):
-                # Use array operations for exact matches
+                # Must match any SINGLE tag exactly (equivalent to old version)
                 conditions.append(or_(Bulletin.tags.contains([r]) for r in ref))
             else:
-                # Use tags_search with trigram index for partial matches
-                conditions.append(or_(Bulletin.tags_search.ilike(f"%{r}%") for r in ref))
+                # For partial matches, use ANY with ILIKE (equivalent to old OR)
+                patterns = [f"%{r}%" for r in ref]
+                conditions.append(Bulletin.tags_search.ilike(any_(patterns)))
+
+            # Handle AND operation
             if q.get("opTags", False):
-                conditions[-1] = and_(*[Bulletin.tags_search.ilike(f"%{r}%") for r in ref])
+                if q.get("inExact", False):
+                    # Must contain ALL individual tags
+                    conditions[-1] = and_(Bulletin.tags.contains([r]) for r in ref)
+                else:
+                    patterns = [f"%{r}%" for r in ref]
+                    conditions[-1] = Bulletin.tags_search.ilike(all_(patterns))
 
         # Exclude tags
         if exref := q.get("exTags"):
             if q.get("exExact", False):
-                # Use array operations for exact exclusions
+                # Must NOT contain ANY of these tags individually
                 conditions.append(and_(~Bulletin.tags.contains([r]) for r in exref))
             else:
-                conditions.append(and_(~Bulletin.tags_search.ilike(f"%{r}%") for r in exref))
-            opexref = q.get("opExTags")
-            if opexref:
-                conditions[-1] = or_(~Bulletin.tags_search.ilike(f"%{r}%") for r in exref)
+                # Must NOT match ANY of these patterns
+                patterns = [f"%{r}%" for r in exref]
+                conditions.append(~Bulletin.tags_search.ilike(any_(patterns)))
+
+            # Handle OR operation for exclusions
+            if q.get("opExTags"):
+                if q.get("exExact", False):
+                    # Must NOT contain at least one tag (OR of NOTs)
+                    conditions[-1] = or_(~Bulletin.tags.contains([r]) for r in exref)
+                else:
+                    patterns = [f"%{r}%" for r in exref]
+                    conditions[-1] = ~Bulletin.tags_search.ilike(all_(patterns))
 
         # Labels
         if labels := q.get("labels", []):
