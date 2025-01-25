@@ -126,7 +126,7 @@ class SearchUtils:
             if q.get("exExact", False):
                 # Must NOT contain ANY of these tags individually
                 subq = (
-                    select(Bulletin.id)
+                    db.select(Bulletin.id)
                     .where(or_(Bulletin.tags.contains([r]) for r in exref))
                     .scalar_subquery()
                 )
@@ -135,7 +135,7 @@ class SearchUtils:
                 # Must NOT match ANY of these patterns
                 patterns = [f"%{r}%" for r in exref]
                 subq = (
-                    select(Bulletin.id)
+                    db.select(Bulletin.id)
                     .where(Bulletin.tags_search.ilike(any_(patterns)))
                     .scalar_subquery()
                 )
