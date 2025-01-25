@@ -104,39 +104,25 @@ class SearchUtils:
 
         # Tags
         if ref := q.get("tags"):
-            exact = q.get("inExact")
-            if exact:
-                tag_conditions = [
-                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in ref
-                ]
+            if q.get("inExact", False):
+                # Use array operations for exact matches
+                conditions.append(or_(Bulletin.tags.contains([r]) for r in ref))
             else:
-                tag_conditions = [
-                    func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref
-                ]
-
-            # any operator
+                # Use tags_search with trigram index for partial matches
+                conditions.append(or_(Bulletin.tags_search.ilike(f"%{r}%") for r in ref))
             if q.get("opTags", False):
-                conditions.append(or_(*tag_conditions))
-            else:
-                conditions.append(and_(*tag_conditions))
+                conditions[-1] = and_(*[Bulletin.tags_search.ilike(f"%{r}%") for r in ref])
 
         # Exclude tags
         if exref := q.get("exTags"):
-            exact = q.get("exExact")
-            if exact:
-                tag_conditions = [
-                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in exref
-                ]
+            if q.get("exExact", False):
+                # Use array operations for exact exclusions
+                conditions.append(and_(~Bulletin.tags.contains([r]) for r in exref))
             else:
-                tag_conditions = [
-                    ~func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in exref
-                ]
-
+                conditions.append(and_(~Bulletin.tags_search.ilike(f"%{r}%") for r in exref))
             opexref = q.get("opExTags")
             if opexref:
-                conditions.append(or_(*tag_conditions))
-            else:
-                conditions.append(and_(*tag_conditions))
+                conditions[-1] = or_(~Bulletin.tags_search.ilike(f"%{r}%") for r in exref)
 
         # Labels
         if labels := q.get("labels", []):
