@@ -1247,7 +1247,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
 def _get_ytdl_options(with_cookies: bool = False) -> dict:
     """Get yt-dlp options."""
     options = {
-        "format": "mp4[height<=1080]/best[ext=mp4]/best",
+        "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
         "outtmpl": str(Media.media_dir / "%(id)s.%(ext)s"),
         "merge_output_format": "mp4",
         "noplaylist": True,
@@ -1270,6 +1270,7 @@ def _download_media(url: str) -> tuple[dict, Path]:
         with yt_dlp.YoutubeDL(_get_ytdl_options()) as ydl:
             info = ydl.extract_info(url, download=True)
             temp_file = Path(ydl.prepare_filename(info))
+            info["requested_downloads"][0].pop("__postprocessors")
             return info, temp_file
 
     except DownloadError as e:
