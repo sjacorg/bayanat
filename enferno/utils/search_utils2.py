@@ -132,7 +132,7 @@ class SearchUtils:
                 patterns_sql = ",".join(f"'{p}'" for p in patterns)
                 raw_sql = text(
                     f"NOT EXISTS (SELECT 1 FROM bulletin b2 WHERE b2.id = bulletin.id "
-                    f"AND b2.tags_search OPERATOR(gin_trgm_ops.~~*) ANY(ARRAY[{patterns_sql}]))"
+                    f"AND b2.tags_search ILIKE ANY(ARRAY[{patterns_sql}]))"
                 )
                 conditions.append(raw_sql)
 
@@ -146,7 +146,7 @@ class SearchUtils:
                     patterns_sql = ",".join(f"'{p}'" for p in patterns)
                     raw_sql = text(
                         f"NOT EXISTS (SELECT 1 FROM bulletin b2 WHERE b2.id = bulletin.id "
-                        f"AND b2.tags_search OPERATOR(gin_trgm_ops.~~*) ALL(ARRAY[{patterns_sql}]))"
+                        f"AND b2.tags_search ILIKE ALL(ARRAY[{patterns_sql}]))"
                     )
                     conditions[-1] = raw_sql
 
