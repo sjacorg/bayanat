@@ -1,5 +1,5 @@
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func, select, text
+from sqlalchemy import or_, not_, and_, any_, all_, func, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -108,7 +108,7 @@ class SearchUtils:
                 # Must match any SINGLE tag exactly (equivalent to old version)
                 conditions.append(or_(Bulletin.tags.contains([r]) for r in ref))
             else:
-                # For partial matches, use ANY with ILIKE
+                # For partial matches, use ANY with ILIKE (equivalent to old OR)
                 patterns = [f"%{r}%" for r in ref]
                 conditions.append(Bulletin.tags_search.ilike(any_(patterns)))
 
@@ -127,14 +127,9 @@ class SearchUtils:
                 # Must NOT contain ANY of these tags individually
                 conditions.append(and_(~Bulletin.tags.contains([r]) for r in exref))
             else:
-                # Must NOT match ANY of these patterns - using raw SQL with trigram operator
+                # Must NOT match ANY of these patterns
                 patterns = [f"%{r}%" for r in exref]
-                patterns_sql = ",".join(f"'{p}'" for p in patterns)
-                raw_sql = text(
-                    f"NOT EXISTS (SELECT 1 FROM bulletin b2 WHERE b2.id = bulletin.id "
-                    f"AND b2.tags_search ILIKE ANY(ARRAY[{patterns_sql}]))"
-                )
-                conditions.append(raw_sql)
+                conditions.append(~Bulletin.tags_search.ilike(any_(patterns)))
 
             # Handle OR operation for exclusions
             if q.get("opExTags"):
@@ -143,12 +138,7 @@ class SearchUtils:
                     conditions[-1] = or_(~Bulletin.tags.contains([r]) for r in exref)
                 else:
                     patterns = [f"%{r}%" for r in exref]
-                    patterns_sql = ",".join(f"'{p}'" for p in patterns)
-                    raw_sql = text(
-                        f"NOT EXISTS (SELECT 1 FROM bulletin b2 WHERE b2.id = bulletin.id "
-                        f"AND b2.tags_search ILIKE ALL(ARRAY[{patterns_sql}]))"
-                    )
-                    conditions[-1] = raw_sql
+                    conditions[-1] = ~Bulletin.tags_search.ilike(all_(patterns))
 
         # Labels
         if labels := q.get("labels", []):
