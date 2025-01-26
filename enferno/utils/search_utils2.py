@@ -108,7 +108,7 @@ class SearchUtils:
                 # Must match any SINGLE tag exactly (equivalent to old version)
                 conditions.append(or_(Bulletin.tags.contains([r]) for r in ref))
             else:
-                # For partial matches, use ANY with ILIKE (equivalent to old OR)
+                # For partial matches, use ANY with ILIKE
                 patterns = [f"%{r}%" for r in ref]
                 conditions.append(Bulletin.tags_search.ilike(any_(patterns)))
 
@@ -127,9 +127,15 @@ class SearchUtils:
                 # Must NOT contain ANY of these tags individually
                 conditions.append(and_(~Bulletin.tags.contains([r]) for r in exref))
             else:
-                # Must NOT match ANY of these patterns
+                # Must NOT match ANY of these patterns - using EXISTS for better index usage
                 patterns = [f"%{r}%" for r in exref]
-                conditions.append(~Bulletin.tags_search.ilike(any_(patterns)))
+                exists_clause = (
+                    select(1)
+                    .where(Bulletin.tags_search.ilike(any_(patterns)))
+                    .correlate(Bulletin)
+                    .exists()
+                )
+                conditions.append(~exists_clause)
 
             # Handle OR operation for exclusions
             if q.get("opExTags"):
