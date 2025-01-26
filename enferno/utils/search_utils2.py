@@ -1,5 +1,5 @@
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func, select
+from sqlalchemy import or_, not_, and_, any_, all_, func, select, text
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -127,15 +127,14 @@ class SearchUtils:
                 # Must NOT contain ANY of these tags individually
                 conditions.append(and_(~Bulletin.tags.contains([r]) for r in exref))
             else:
-                # Must NOT match ANY of these patterns - using EXISTS for better index usage
+                # Must NOT match ANY of these patterns - using raw SQL with trigram operator
                 patterns = [f"%{r}%" for r in exref]
-                exists_clause = (
-                    select(1)
-                    .where(Bulletin.tags_search.ilike(any_(patterns)))
-                    .correlate(Bulletin)
-                    .exists()
+                patterns_sql = ",".join(f"'{p}'" for p in patterns)
+                raw_sql = text(
+                    f"NOT EXISTS (SELECT 1 FROM bulletin b2 WHERE b2.id = bulletin.id "
+                    f"AND b2.tags_search OPERATOR(gin_trgm_ops.~~*) ANY(ARRAY[{patterns_sql}]))"
                 )
-                conditions.append(~exists_clause)
+                conditions.append(raw_sql)
 
             # Handle OR operation for exclusions
             if q.get("opExTags"):
@@ -144,7 +143,12 @@ class SearchUtils:
                     conditions[-1] = or_(~Bulletin.tags.contains([r]) for r in exref)
                 else:
                     patterns = [f"%{r}%" for r in exref]
-                    conditions[-1] = ~Bulletin.tags_search.ilike(all_(patterns))
+                    patterns_sql = ",".join(f"'{p}'" for p in patterns)
+                    raw_sql = text(
+                        f"NOT EXISTS (SELECT 1 FROM bulletin b2 WHERE b2.id = bulletin.id "
+                        f"AND b2.tags_search OPERATOR(gin_trgm_ops.~~*) ALL(ARRAY[{patterns_sql}]))"
+                    )
+                    conditions[-1] = raw_sql
 
         # Labels
         if labels := q.get("labels", []):
