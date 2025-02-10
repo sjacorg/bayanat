@@ -1211,6 +1211,7 @@ def load_whisper_model_on_startup(sender, **kwargs):
         logger.info("Whisper model not loaded, transcription is disabled")
 
 
+@celery.task
 def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: int) -> None:
     """Download and process media from web URL."""
     data_import = DataImport.query.get(import_id)
