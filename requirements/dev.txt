@@ -1,9 +1,9 @@
 -r main.txt
-pytest==7.4.4
-flask_pydantic==0.11.0
-SQLAlchemy-Utils==0.41.1
-pre-commit==3.5.0
-black==24.3.0
-factory-boy==3.3.0
+pytest==8.3.4
+flask_pydantic==0.12.0
+SQLAlchemy-Utils==0.41.2
+pre-commit==4.1.0
+black==25.1.0
+factory-boy==3.3.3
 pytest-sugar==1.0.0
 -r opt.txt
