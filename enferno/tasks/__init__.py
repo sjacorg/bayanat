@@ -1357,3 +1357,18 @@ def _start_etl_process(
         user_id=user_id,
         data_import_id=import_id,
     )
+
+
+from enferno.utils.docs_utils import DocImport
+
+
+@celery.task
+def process_doc(batch_id: t.id, file_path: str, meta: Any, user_id: t.id, data_import_id: t.id) -> None:
+    try:
+        di = DocImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id, file_path=file_path)
+        di.process()
+        return "done"
+    except Exception as e:
+        log = DataImport.query.get(data_import_id)
+        log.fail(e)
+

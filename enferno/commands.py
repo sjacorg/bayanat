@@ -16,6 +16,7 @@ from enferno.utils.data_helpers import (
     generate_user_roles,
     generate_workflow_statues,
     create_default_location_data,
+    media_check_duplicates,
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
@@ -313,3 +314,56 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
+
+
+@click.command()
+@with_appcontext
+@click.argument("file")
+def import_docs(file) -> None:
+    """Import the docs."""
+    click.echo("Importing docs.")
+    from enferno.utils.docs_utils import DocImport
+    from enferno.data_import.models import DataImport
+    from enferno.tasks import process_doc
+
+    import pandas as pd
+    import shortuuid
+
+    df = pd.read_csv(file)
+    files = df.to_dict(orient="records")
+
+    batch_id = shortuuid.uuid()[:9]
+
+    with click.progressbar(files, label="Importing docs", show_pos=True) as bar:
+        for item in bar:
+            meta = {
+                "sha256": item["sha256"],
+            }
+
+            file_path = item["file_path"]
+            if not (file_path.endswith(".jpg") or file_path.endswith(".pdf") or file_path.endswith(".png")):
+                click.echo(f"Skipping file {file_path}")
+                continue
+
+            data_import = DataImport(
+                user_id=1,
+                table="bulletin",
+                file=file_path,
+                batch_id=batch_id,
+                data={
+                    "mode": 0,  # custom mode
+                },
+            )
+
+            data_import.add_to_log(f"Added file {file} to import queue.")
+            data_import.save()
+
+            process_doc.delay(
+                batch_id=batch_id,
+                file_path=file_path,
+                meta=meta,
+                user_id=1,
+                data_import_id=data_import.id,
+            )
+
+        click.echo("=== Done ===")
