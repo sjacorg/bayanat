@@ -93,3 +93,4 @@ zxcvbn==4.4.28
 webauthn==2.4.0
 Flask-DebugToolbar==0.16.0
 yt-dlp==2024.12.23
+python-gnupg==0.5.4
