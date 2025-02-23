@@ -214,8 +214,16 @@ class DocImport(MediaImport):
             f"2025 DOCS ETL. \n\n Path: {self.file_path} \n\n Batch ID: {self.batch_id}."
         )
         bulletin.source_link = self.file_path
+
+        # tags
         bulletin.tags = []
         bulletin.tags.append(self.file_path)
+
+        if self.file_path.contains("core team documentation/"): 
+            bulletin.tags.append("Core Team Documentation")
+        else:
+            bulletin.tags.append("MP Documentation")
+
         bulletin.originid = self.file_path
 
         if info.get("text_content"):
