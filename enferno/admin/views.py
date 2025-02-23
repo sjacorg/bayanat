@@ -3472,7 +3472,7 @@ def api_medias_chunk() -> Response:
         etag = get_file_hash(filepath)
 
         # validate etag here // if it exists // reject the upload and send an error code
-        if Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
+        if Media.query.filter(Media.etag == etag, Media.deleted.is_not(True)).first():
             return "Error, file already exists", 409
 
         if not current_app.config["FILESYSTEM_LOCAL"] and not import_upload:
