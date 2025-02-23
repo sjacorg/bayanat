@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 from uuid import uuid4
-from unidecode import unidecode
 
 import bleach
 import boto3
@@ -3528,8 +3527,7 @@ def api_medias_upload() -> Response:
     if current_app.config["FILESYSTEM_LOCAL"]:
         file = request.files.get("file")
         # final file
-        decoded = unidecode(file.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(file.filename)
         filepath = (Media.media_dir / filename).as_posix()
 
         with open(filepath, "wb") as f:
@@ -3551,8 +3549,7 @@ def api_medias_upload() -> Response:
         )
 
         # final file
-        decoded = unidecode(file.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(file.filename)
         # filepath = (Media.media_dir/filename).as_posix()
 
         response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
@@ -3700,8 +3697,7 @@ def api_inline_medias_upload() -> Response:
         f = request.files.get("file")
 
         # final file
-        decoded = unidecode(f.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
         response = {"location": filename}
