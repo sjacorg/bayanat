@@ -45,7 +45,7 @@ class DocImport(MediaImport):
 
     def decrypt_file(self, file_path):
         with open(file_path, "rb") as stream:
-            decrypted_data = self.gpg.decrypt_file(stream)
+            decrypted_data = self.gpg.decrypt_file(stream, passphrase=os.environ.get("PASSPHRASE"))
 
         new_file_path = file_path.replace(".gpg", "")
         if decrypted_data.ok:
@@ -121,7 +121,7 @@ class DocImport(MediaImport):
         decrypted_path = self.decrypt_file(downloaded_path)
         if not decrypted_path:
             return
-        
+
         if not self.check_integrity(decrypted_path):
             self.data_import.add_to_log("Integrity check failed.")
             self.data_import.fail()
