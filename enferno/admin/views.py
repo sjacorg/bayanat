@@ -3423,8 +3423,8 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    decoded = unidecode(file.filename)
-    filename = Media.generate_file_name(decoded)
+    
+    filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
     dz_uuid = request.form.get("dzuuid")
