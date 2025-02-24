@@ -219,7 +219,7 @@ class DocImport(MediaImport):
         bulletin.tags = []
         bulletin.tags.append(self.file_path)
 
-        if self.file_path.contains("core team documentation/"): 
+        if "core team documentation/" in self.file_path: 
             bulletin.tags.append("Core Team Documentation")
         else:
             bulletin.tags.append("MP Documentation")
@@ -235,10 +235,10 @@ class DocImport(MediaImport):
             if create_date:
                 bulletin.documentation_date = create_date
 
-        refs = [str(self.batch_id)]
+        bulletin.tags.append(str(self.batch_id))
         serial = info.get("EXIF:SerialNumber")
         if serial:
-            refs.append(str(serial))
+            bulletin.tags.append(str(serial))
 
         # media for the original file
         org_media = Media()
