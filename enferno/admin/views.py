@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 from uuid import uuid4
-from unidecode import unidecode
 
 import bleach
 import boto3
@@ -3423,8 +3422,8 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    decoded = unidecode(file.filename)
-    filename = Media.generate_file_name(decoded)
+    
+    filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
     dz_uuid = request.form.get("dzuuid")
@@ -3473,7 +3472,7 @@ def api_medias_chunk() -> Response:
         etag = get_file_hash(filepath)
 
         # validate etag here // if it exists // reject the upload and send an error code
-        if Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
+        if Media.query.filter(Media.etag == etag, Media.deleted.is_not(True)).first():
             return "Error, file already exists", 409
 
         if not current_app.config["FILESYSTEM_LOCAL"] and not import_upload:
@@ -3528,8 +3527,7 @@ def api_medias_upload() -> Response:
     if current_app.config["FILESYSTEM_LOCAL"]:
         file = request.files.get("file")
         # final file
-        decoded = unidecode(file.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(file.filename)
         filepath = (Media.media_dir / filename).as_posix()
 
         with open(filepath, "wb") as f:
@@ -3551,8 +3549,7 @@ def api_medias_upload() -> Response:
         )
 
         # final file
-        decoded = unidecode(file.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(file.filename)
         # filepath = (Media.media_dir/filename).as_posix()
 
         response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
@@ -3700,8 +3697,7 @@ def api_inline_medias_upload() -> Response:
         f = request.files.get("file")
 
         # final file
-        decoded = unidecode(f.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
         response = {"location": filename}
