@@ -5,6 +5,10 @@ import gnupg
 import hashlib
 import pandas as pd
 import pyexifinfo as exiflib
+from typing import Any, Literal, Optional
+from pypdf import PdfReader
+from pdf2image import convert_from_path
+from pytesseract import image_to_string, pytesseract        
 
 from enferno.extensions import db
 from enferno.settings import Config as cfg
@@ -15,6 +19,7 @@ from enferno.utils.base import DatabaseException
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.date_helper import DateHelper
 
+pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
 
 class DocImport(MediaImport):
 
@@ -59,6 +64,61 @@ class DocImport(MediaImport):
 
     def check_integrity(self, file_path):
         return self.meta["sha256"] == hashlib.sha256(open(file_path, "rb").read()).hexdigest()
+    
+    def parse_pdf(self, filepath: str, attempt_ocr: bool = False) -> Optional[str]:
+        """
+        Parses PDF file.
+
+        Args:
+            - filepath: filepath of PDF file.
+
+        Returns:
+            - text content of the PDF file.
+        """
+        try:
+            pdf = PdfReader(filepath)
+            text_content = []
+
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    text_content.append(text)
+
+            # if no text contect recognize
+            # attempt to use Tesseract OCR
+            if not text_content and attempt_ocr:
+                images = convert_from_path(filepath)
+                for image in images:
+                    text = image_to_string(image, lang="ara")
+                    if text:
+                        text_content.append(text)
+
+            return "<p>\n</p>".join(text_content)
+
+        except Exception as e:
+            self.data_import.add_to_log("Failed to parse PDF file.")
+            self.data_import.add_to_log(str(e))
+            return None
+
+    def parse_pic(self, filepath: str) -> Optional[Any]:
+        """
+        Parses image files using Google's
+        Tesseract OCR engine for text content.
+
+        Args:
+            - filepath: filepath of image file.
+
+        Returns:
+            - text content of the image file.
+        """
+        try:
+            self.data_import.add_to_log(f"Parsing image file {filepath} using Tesseract.")
+            text_content = image_to_string(filepath, lang="ara")
+            return text_content
+        except Exception as e:
+            self.data_import.add_to_log("Failed to parse image file using Tesseract.")
+            self.data_import.add_to_log(str(e))
+            return None
 
     def upload(self, filepath: str, target: str) -> bool:
         """
