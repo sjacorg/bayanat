@@ -223,6 +223,7 @@ class DocImport(MediaImport):
 
         info["etag"] = self.data_import.file_hash
 
+        rotated = False
         text_content = None
         # ocr pictures
         if ext[1:] in cfg.OCR_EXT:
