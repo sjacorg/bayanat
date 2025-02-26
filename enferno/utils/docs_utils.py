@@ -229,8 +229,8 @@ class DocImport(MediaImport):
             parsed_text = self.parse_pic(decrypted_path) or ""
              
             if info.get('EXIF:Orientation') == 'Rotate 270 CW':
-                with Image.open(filepath) as im:
-                    new_filepath = filepath.replace(f"{ext}", f"_rotated{ext}")
+                with Image.open(decrypted_path) as im:
+                    new_filepath = decrypted_path.replace(f"{ext}", f"_rotated{ext}")
                     im.rotate(180).save(new_filepath)
                 parsed_text += "<br><br> Rotated Image: <br><br>"
                 parsed_text += self.parse_pic(new_filepath)
@@ -241,8 +241,8 @@ class DocImport(MediaImport):
                     self.data_import.add_to_log("Unable to upload rotated media file.")
 
             elif info.get('EXIF:Orientation') == 'Horizontal (normal)':
-                with Image.open(filepath) as im:
-                    new_filepath = filepath.replace(f"{ext}", f"_rotated{ext}")
+                with Image.open(decrypted_path) as im:
+                    new_filepath = decrypted_path.replace(f"{ext}", f"_rotated{ext}")
                     im.rotate(-90).save(new_filepath)
                 parsed_text += "<br><br> Rotated Image: <br><br>"
                 parsed_text += self.parse_pic(new_filepath)
