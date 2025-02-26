@@ -226,27 +226,31 @@ class DocImport(MediaImport):
         text_content = None
         # ocr pictures
         if ext[1:] in cfg.OCR_EXT:
-            parsed_text = self.parse_pic(decrypted_path)
+            parsed_text = self.parse_pic(decrypted_path) or ""
              
             if info.get('EXIF:Orientation') == 'Rotate 270 CW':
                 with Image.open(filepath) as im:
                     new_filepath = filepath.replace(f"{ext}", f"_rotated{ext}")
                     im.rotate(180).save(new_filepath)
-                text_content += "<br><br> Rotated Image: <br><br>"
-                text_content += self.parse_pic(new_filepath)
+                parsed_text += "<br><br> Rotated Image: <br><br>"
+                parsed_text += self.parse_pic(new_filepath)
                 rotated = True
-                info["new_filename"] = new_filepath.split("/")[-1]
+                new_filename = new_filepath.split("/")[-1]
                 new_etag = get_file_hash(new_filepath)
+                if not self.upload(new_filepath, new_filename):
+                    self.data_import.add_to_log("Unable to upload rotated media file.")
 
             elif info.get('EXIF:Orientation') == 'Horizontal (normal)':
                 with Image.open(filepath) as im:
                     new_filepath = filepath.replace(f"{ext}", f"_rotated{ext}")
                     im.rotate(-90).save(new_filepath)
-                text_content += "<br><br> Rotated Image: <br><br>"
-                text_content += self.parse_pic(new_filepath)
+                parsed_text += "<br><br> Rotated Image: <br><br>"
+                parsed_text += self.parse_pic(new_filepath)
                 rotated = True
                 new_filename = new_filepath.split("/")[-1]
                 new_etag = get_file_hash(new_filepath)
+                if not self.upload(new_filepath, new_filename):
+                    self.data_import.add_to_log("Unable to upload rotated media file.")
 
             if parsed_text:
                 text_content = parsed_text
