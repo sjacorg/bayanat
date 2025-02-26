@@ -8,7 +8,8 @@ import pyexifinfo as exiflib
 from typing import Any, Literal, Optional
 from pypdf import PdfReader
 from pdf2image import convert_from_path
-from pytesseract import image_to_string, pytesseract        
+from pytesseract import image_to_string, pytesseract  
+from PIL import Image      
 
 from enferno.extensions import db
 from enferno.settings import Config as cfg
@@ -226,6 +227,26 @@ class DocImport(MediaImport):
         # ocr pictures
         if ext[1:] in cfg.OCR_EXT:
             parsed_text = self.parse_pic(decrypted_path)
+             
+            if info.get('EXIF:Orientation') == 'Rotate 270 CW':
+                with Image.open(filepath) as im:
+                    new_filepath = filepath.replace(f"{ext}", f"_rotated{ext}")
+                    im.rotate(180).save(new_filepath)
+                text_content += "<br><br> Rotated Image: <br><br>"
+                text_content += self.parse_pic(new_filepath)
+                rotated = True
+                info["new_filename"] = new_filepath.split("/")[-1]
+                new_etag = get_file_hash(new_filepath)
+
+            elif info.get('EXIF:Orientation') == 'Horizontal (normal)':
+                with Image.open(filepath) as im:
+                    new_filepath = filepath.replace(f"{ext}", f"_rotated{ext}")
+                    im.rotate(-90).save(new_filepath)
+                text_content += "<br><br> Rotated Image: <br><br>"
+                text_content += self.parse_pic(new_filepath)
+                rotated = True
+                new_filename = new_filepath.split("/")[-1]
+                new_etag = get_file_hash(new_filepath)
 
             if parsed_text:
                 text_content = parsed_text
@@ -248,11 +269,18 @@ class DocImport(MediaImport):
         # pass filepath for cleanup purposes
         info["filepath"] = filepath
 
+        if rotated:
+            info["new_filename"] = new_filename
+            info["new_filepath"] = new_filepath
+            info["new_etag"] = new_etag
+
         self.data_import.add_to_log("Metadata parsed successfully.")
         self.create_bulletin(info)
 
         self.remove_file(downloaded_path)
         self.remove_file(decrypted_path)
+        if rotated:
+            self.remove_file(new_filepath)
 
     def create_bulletin(self, info: dict) -> None:
         """
@@ -325,6 +353,15 @@ class DocImport(MediaImport):
         org_media.media_file_type = mime_type
         org_media.etag = info.get("etag")
         bulletin.medias.append(org_media)
+
+        # additional media for optimized video
+        if info.get("new_filename"):
+            new_media = Media()
+            new_media.title = bulletin.title
+            new_media.media_file = info.get("new_filename")
+            new_media.media_file_type = "image/jpeg"
+            new_media.etag = info.get("new_etag")
+            bulletin.medias.append(new_media)
 
         bulletin.roles = []
         r = Role.query.filter(Role.name == "Docs").first()
