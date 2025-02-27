@@ -7,6 +7,7 @@ import tempfile
 import time
 from collections import namedtuple
 from pathlib import Path
+from psycopg2.errors import OperationalError
 
 from typing import Any, Generator, Literal, Optional
 from datetime import datetime, timedelta, date
@@ -1362,13 +1363,18 @@ def _start_etl_process(
 from enferno.utils.docs_utils import DocImport
 
 
-@celery.task
-def process_doc(batch_id: t.id, file_path: str, meta: Any, user_id: t.id, data_import_id: t.id) -> None:
+@celery.task(bind=True, max_retries=5)
+def process_doc(self, batch_id: t.id, file_path: str, meta: Any, user_id: t.id, data_import_id: t.id) -> None:
     try:
         di = DocImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id, file_path=file_path)
         di.process()
+        time.sleep(0.25)
         return "done"
+    except OperationalError as e:
+        logger.error(f"Encountered an error while processing {file_path}. Retrying...")
+        self.retry(exc=e, countdown=30)
     except Exception as e:
+        logger.error(f"{e}")
         log = DataImport.query.get(data_import_id)
         log.fail(e)
 
