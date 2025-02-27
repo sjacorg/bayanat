@@ -355,7 +355,7 @@ def import_docs(file) -> None:
                 },
             )
 
-            data_import.add_to_log(f"Added file {file} to import queue.")
+            data_import.add_to_log(f"Added file {item} to import queue.")
             data_import.save()
 
             process_doc.delay(
