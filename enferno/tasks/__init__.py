@@ -17,7 +17,7 @@ import boto3
 import pandas as pd
 from celery import Celery, chain
 from celery.schedules import crontab
-from celery.signals import worker_ready
+from celery.signals import worker_ready, worker_process_init
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -53,6 +53,8 @@ import enferno.utils.typing as t
 
 from enferno.utils.backup_utils import pg_dump, upload_to_s3
 
+# Remove the module-level app creation to avoid circular imports
+
 celery = Celery("tasks", broker=cfg.celery_broker_url)
 # remove deprecated warning
 celery.conf.update({"accept_content": ["pickle", "json", "msgpack", "yaml"]})
@@ -70,15 +72,35 @@ celery.conf.add_defaults(cfg)
 
 logger = get_logger("celery.tasks")
 
+# Global variable to store the Flask app instance
+_flask_app = None
+
+
+@worker_process_init.connect
+def init_worker_process(**kwargs):
+    """Initialize the Flask app when the worker process starts."""
+    global _flask_app
+    if _flask_app is None:
+        from enferno.app import create_app
+
+        _flask_app = create_app(cfg)
+        logger.info("Flask app initialized for worker process")
+
 
 # Class to run tasks within application's context
 class ContextTask(celery.Task):
     abstract = True
 
     def __call__(self, *args, **kwargs):
-        from enferno.app import create_app
+        global _flask_app
+        if _flask_app is None:
+            # Lazy load the app if it hasn't been initialized yet
+            from enferno.app import create_app
 
-        with create_app(cfg).app_context():
+            _flask_app = create_app(cfg)
+            logger.info("Flask app lazy-loaded in task context")
+
+        with _flask_app.app_context():
             return super(ContextTask, self).__call__(*args, **kwargs)
 
 
@@ -1365,17 +1387,20 @@ from enferno.utils.docs_utils import DocImport
 
 
 @celery.task(bind=True, max_retries=5)
-def process_doc(self, batch_id: t.id, file_path: str, meta: Any, user_id: t.id, data_import_id: t.id) -> None:
+def process_doc(
+    self, batch_id: t.id, file_path: str, meta: Any, user_id: t.id, data_import_id: t.id
+) -> None:
     try:
-        di = DocImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id, file_path=file_path)
+        di = DocImport(
+            batch_id, meta, user_id=user_id, data_import_id=data_import_id, file_path=file_path
+        )
         di.process()
         time.sleep(random.random())
         return "done"
     except OperationalError as e:
         logger.error(f"Encountered an error while processing {file_path}. Retrying...")
-        self.retry(exc=e, countdown=random.randrange(40,80))
+        self.retry(exc=e, countdown=random.randrange(40, 80))
     except Exception as e:
         logger.error(f"{e}")
         log = DataImport.query.get(data_import_id)
         log.fail(e)
-
