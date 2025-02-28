@@ -7,6 +7,7 @@ import tempfile
 import time
 from collections import namedtuple
 from pathlib import Path
+import random
 from psycopg2.errors import OperationalError
 
 from typing import Any, Generator, Literal, Optional
@@ -1368,11 +1369,11 @@ def process_doc(self, batch_id: t.id, file_path: str, meta: Any, user_id: t.id, 
     try:
         di = DocImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id, file_path=file_path)
         di.process()
-        time.sleep(0.25)
+        time.sleep(random.random())
         return "done"
     except OperationalError as e:
         logger.error(f"Encountered an error while processing {file_path}. Retrying...")
-        self.retry(exc=e, countdown=30)
+        self.retry(exc=e, countdown=random.randrange(40,80))
     except Exception as e:
         logger.error(f"{e}")
         log = DataImport.query.get(data_import_id)
