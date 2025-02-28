@@ -1395,7 +1395,6 @@ def process_doc(
             batch_id, meta, user_id=user_id, data_import_id=data_import_id, file_path=file_path
         )
         di.process()
-        time.sleep(random.random())
         return "done"
     except OperationalError as e:
         logger.error(f"Encountered an error while processing {file_path}. Retrying...")
