@@ -135,7 +135,7 @@ class Media(db.Model, BaseMixin):
             - the generated file name.
         """
         decoded = secure_filename(unidecode(filename)).lower()
-        return f"{datetime.utcnow().strftime("%Y%m%d-%H%M%S")}-{decoded}"
+        return f"{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{decoded}"
 
     @staticmethod
     def validate_file_extension(filepath: str, allowed_extensions: list[str]) -> bool:
