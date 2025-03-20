@@ -15,7 +15,7 @@ import boto3
 import pandas as pd
 from celery import Celery, chain
 from celery.schedules import crontab
-from celery.signals import worker_ready
+from celery.signals import worker_ready, worker_process_init
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
@@ -69,15 +69,35 @@ celery.conf.add_defaults(cfg)
 
 logger = get_logger("celery.tasks")
 
+# Global variable to store the Flask app instance
+_flask_app = None
+
+
+@worker_process_init.connect
+def init_worker_process(**kwargs):
+    """Initialize the Flask app when the worker process starts."""
+    global _flask_app
+    if _flask_app is None:
+        from enferno.app import create_app
+
+        _flask_app = create_app(cfg)
+        logger.info("Flask app initialized for worker process")
+
 
 # Class to run tasks within application's context
 class ContextTask(celery.Task):
     abstract = True
 
     def __call__(self, *args, **kwargs):
-        from enferno.app import create_app
+        global _flask_app
+        if _flask_app is None:
+            # Lazy load the app if it hasn't been initialized yet
+            from enferno.app import create_app
 
-        with create_app(cfg).app_context():
+            _flask_app = create_app(cfg)
+            logger.info("Flask app lazy-loaded in task context")
+
+        with _flask_app.app_context():
             return super(ContextTask, self).__call__(*args, **kwargs)
 
 
