@@ -14,8 +14,8 @@ from enferno.admin.constants import Constants
 from enferno.admin.models import Media
 from enferno.data_import.models import DataImport, Mapping
 from enferno.data_import.utils.sheet_import import SheetImport
-from enferno.tasks import etl_process_file, process_row
-from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
+from enferno.tasks import process_row, process_files
+from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
 import enferno.utils.typing as t
@@ -179,41 +179,9 @@ def etl_process() -> Response:
 
     files = request.json.pop("files")
     meta = request.json
-    results = []
     batch_id = shortuuid.uuid()[:9]
 
-    for file in files:
-        f = file.get("path") or file.get("filename")
-        # logging every file early in the process to track progress
-
-        # Initialize log here, outside of the if condition
-        data_import = DataImport(
-            user_id=current_user.id, table="bulletin", file=f, batch_id=batch_id, data=meta
-        )
-
-        if meta.get("mode") == 2:
-            # getting hash of file for deduplication
-            # server-side import doesn't automatically
-            # retrieve files' hashes
-            allowed_path = Path(current_app.config.get("ETL_ALLOWED_PATH"))
-            full_path = safe_join(allowed_path, f)
-
-            data_import.file_hash = file["etag"] = get_file_hash(full_path)
-            data_import.save()
-
-            # checking for existing media or pending or processing imports
-            if media_check_duplicates(file.get("etag"), data_import.id):
-                data_import.add_to_log(f"File already exists {f}.")
-                data_import.fail()
-                continue
-
-            file["path"] = full_path
-
-        data_import.add_to_log(f"Added file {file} to import queue.")
-        # make sure we have a log id
-        results.append(
-            etl_process_file.delay(batch_id, file, meta, current_user.id, data_import.id)
-        )
+    process_files.delay(files=files, meta=meta, user_id=current_user.id, batch_id=batch_id)
 
     return batch_id, 200
 
