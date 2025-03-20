@@ -30,7 +30,7 @@ post_media_chunk_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 403),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -54,7 +54,7 @@ def test_post_media_chunk_endpoint(create_media_file, request, client_fixture, e
                 "/admin/api/media/chunk",
                 content_type="multipart/form-data",
                 data=data,
-                headers={"Referer": ""},
+                headers={"Referer": "", "Accept": "application/json"},
             )
             assert response.status_code == expected_status
             if expected_status == 200:
@@ -68,8 +68,6 @@ def test_post_media_chunk_endpoint(create_media_file, request, client_fixture, e
                     if filename.endswith(f"test{ext}"):
                         os.remove(os.path.join(media_directory, filename))
                         break
-            elif expected_status == 302:
-                assert "/login" in response.headers["Location"]
 
 
 ##### POST /admin/api/media/chunk FOR CHUNKED UPLOAD #####
@@ -113,7 +111,7 @@ def test_post_media_chunk_endpoint_chunked_upload(
                 "/admin/api/media/chunk",
                 content_type="multipart/form-data",
                 data=data,
-                headers={"Referer": ""},
+                headers={"Referer": "", "Accept": "application/json"},
             )
             assert response.status_code == expected_status
 
@@ -137,9 +135,6 @@ def test_post_media_chunk_endpoint_chunked_upload(
                         os.remove(final_path)
                         break
 
-            elif expected_status == 302:
-                assert "/login" in response.headers["Location"]
-
 
 ##### POST /admin/api/media/upload #####
 
@@ -147,7 +142,7 @@ post_media_upload_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 403),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -162,6 +157,7 @@ def test_post_media_upload_endpoint(create_media_file, request, client_fixture, 
                 "/admin/api/media/upload/",
                 content_type="multipart/form-data",
                 data=data,
+                headers={"Accept": "application/json"},
             )
             assert response.status_code == expected_status
             if expected_status == 200:
@@ -175,5 +171,3 @@ def test_post_media_upload_endpoint(create_media_file, request, client_fixture, 
                     if filename.endswith(f"test{ext}"):
                         os.remove(os.path.join(media_directory, filename))
                         break
-            elif expected_status == 302:
-                assert "/login" in response.headers["Location"]

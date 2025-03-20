@@ -187,7 +187,7 @@ import_csv_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 403),
     ("mod_client", 403),
-    ("anonymous_client", 200),
+    ("anonymous_client", 401),
 ]
 
 
@@ -203,15 +203,11 @@ def test_post_csv_upload_endpoint(
             content_type="multipart/form-data",
             data=data,
             follow_redirects=True,
+            headers={"Accept": "application/json"},
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            if client_fixture == "anonymous_client":
-                # we should be redirected to the login page
-                assert "text/html" in response.headers["content-type"]
-                assert "csrf_token" in response.text
-            else:
-                conform_to_schema_or_fail(load_data(response), CsvImportResponseModel)
+            conform_to_schema_or_fail(load_data(response), CsvImportResponseModel)
 
 
 ##### POST /import/api/csv/analyze #####
