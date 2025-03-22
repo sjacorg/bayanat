@@ -578,17 +578,16 @@ class MediaImport:
         if is_web_import:
             # Set source_link to original URL for duplicate checking
             bulletin.source_link = info.get("source_url")
-            youtube_info = self.data_import.data.get("info", {})
 
             # Enhanced source handling
-            uploader = youtube_info.get("uploader")
-            uploader_id = youtube_info.get("uploader_id")
-            uploader_url = youtube_info.get("uploader_url")
-            channel_id = youtube_info.get("channel_id")
-            channel_url = youtube_info.get("channel_url")
-            channel = youtube_info.get("channel")
+            uploader = info.get("uploader")
+            uploader_id = info.get("uploader_id")
+            uploader_url = info.get("uploader_url")
+            channel_id = info.get("channel_id")
+            channel_url = info.get("channel_url")
+            channel = info.get("channel")
 
-            domain = youtube_info.get("extractor_key")
+            domain = info.get("extractor_key")
             if not domain:
                 url = urlparse(info.get("source_url")).netloc.lower()
                 url = domain[4:] if domain.startswith("www.") else domain
@@ -599,7 +598,7 @@ class MediaImport:
             if not main_source:
                 main_source = Source()
                 main_source.title = domain
-                main_source.etl_id = youtube_info.get("webpage_url_domain") or url
+                main_source.etl_id = info.get("webpage_url_domain") or url
                 main_source.save()
             bulletin.sources.append(main_source)
 
@@ -647,20 +646,17 @@ class MediaImport:
                 bulletin.sources.append(source)
 
             # Set bulletin fields
-            if video_id := youtube_info.get("id"):
+            if video_id := info.get("id"):
                 bulletin.originid = video_id
-            bulletin.source_link = youtube_info.get("webpage_url")
-            bulletin.title = youtube_info.get("fulltitle")
-            bulletin.title_ar = youtube_info.get("fulltitle")
+            bulletin.source_link = info.get("webpage_url")
+            bulletin.title = info.get("fulltitle")
+            bulletin.title_ar = info.get("fulltitle")
 
-            if upload_date := youtube_info.get("upload_date"):
+            if upload_date := info.get("upload_date"):
                 bulletin.publish_date = upload_date
 
-            # Add YouTube info to bulletin meta
-            if youtube_info:
-                bulletin.meta = youtube_info
-                if description := youtube_info.get("description"):
-                    bulletin.description = description
+            if description := info.get("description"):
+                bulletin.description = description
         else:
             bulletin.source_link = info.get("old_path")
 
@@ -690,8 +686,8 @@ class MediaImport:
         org_media.main = True
 
         # Set media title to video ID for web imports
-        if is_web_import and youtube_info.get("id"):
-            org_media.title = youtube_info.get("id")
+        if is_web_import and info.get("id"):
+            org_media.title = info.get("id")
         else:
             org_media.title = bulletin.title
 
