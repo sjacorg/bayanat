@@ -215,8 +215,7 @@ def api_local_csv_upload() -> Response:
         if not Media.validate_file_extension(f.filename, allowed_extensions):
             return "This file type is not allowed", 415
         # final file
-        decoded = unidecode(f.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(f.filename)
         filepath = (import_dir / filename).as_posix()
         f.save(filepath)
 
