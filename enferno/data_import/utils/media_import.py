@@ -473,10 +473,11 @@ class MediaImport:
 
             # we already have the file and the etag
             filename = file.get("filename")
-            n, ext = os.path.splitext(filename)
-            title, ex = os.path.splitext(file.get("original_filename"))
+            _, ext = os.path.splitext(filename)
+            title, _ = os.path.splitext(file.get("original_filename"))
             filepath = (Media.media_dir / filename).as_posix()
             info = exiflib.get_json(filepath)[0]
+            info["originalFilename"] = file.get("original_filename")
 
             if not cfg.FILESYSTEM_LOCAL:
                 self.upload(filepath, os.path.basename(filepath))
@@ -695,6 +696,8 @@ class MediaImport:
         # Set media title to video ID for web imports
         if is_web_import and youtube_info.get("id"):
             org_media.title = youtube_info.get("id")
+        elif info.get("originalFilename"):
+            org_media.title = info.get("originalFilename")
         else:
             org_media.title = title
 
