@@ -85,6 +85,9 @@ let mediaMixin = {
       file.filename = response.filename;
       if(response.original_filename) {
         file.original_filename = response.original_filename;
+        if (this.editedMedia.title === ''){
+          this.editedMedia.title = response.original_filename;
+        } 
       }
       if(this.editedItem.medias.some(m => m.etag === file.etag)) {
         this.showSnack(file.name + ' is already uploaded. Skipping...');
@@ -384,9 +387,6 @@ let mediaMixin = {
     },
 
     attachMedia() {
-      // detect file mode
-
-      //console.log(this.editedItem);
       //push files from editedMedia to edited item medias
       
       for (const file of this.editedMedia.files) {
