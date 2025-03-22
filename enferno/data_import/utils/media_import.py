@@ -473,10 +473,11 @@ class MediaImport:
 
             # we already have the file and the etag
             filename = file.get("filename")
-            n, ext = os.path.splitext(filename)
-            title, ex = os.path.splitext(file.get("name"))
+            _, ext = os.path.splitext(filename)
+            title, _ = os.path.splitext(file.get("original_filename"))
             filepath = (Media.media_dir / filename).as_posix()
             info = exiflib.get_json(filepath)[0]
+            info["originalFilename"] = file.get("original_filename")
 
             if not cfg.FILESYSTEM_LOCAL:
                 self.upload(filepath, os.path.basename(filepath))
@@ -568,8 +569,15 @@ class MediaImport:
         bulletin = Bulletin()
         db.session.add(bulletin)
 
+        def update_description(description):
+            if bulletin.description:
+                bulletin.description += f"<br />{description}"
+            else:
+                bulletin.description = description
+
         # mapping
-        bulletin.title = info.get("bulletinTitle")
+        title = info.get("bulletinTitle")
+        bulletin.title = title[:255]
         bulletin.status = "Machine Created"
         bulletin.comments = f"Created using Media Import Tool. Batch ID: {self.batch_id}."
 
@@ -650,8 +658,7 @@ class MediaImport:
             if video_id := youtube_info.get("id"):
                 bulletin.originid = video_id
             bulletin.source_link = youtube_info.get("webpage_url")
-            bulletin.title = youtube_info.get("fulltitle")
-            bulletin.title_ar = youtube_info.get("fulltitle")
+            title = youtube_info.get("fulltitle")
 
             if upload_date := youtube_info.get("upload_date"):
                 bulletin.publish_date = upload_date
@@ -668,10 +675,7 @@ class MediaImport:
             bulletin.description = info.get("text_content")
 
         if info.get("transcription"):
-            if bulletin.description:
-                bulletin.description += info.get("transcription")
-            else:
-                bulletin.description = info.get("transcription")
+            update_description(info.get("transcription"))
 
         create = info.get("EXIF:CreateDate")
         if create:
@@ -692,8 +696,10 @@ class MediaImport:
         # Set media title to video ID for web imports
         if is_web_import and youtube_info.get("id"):
             org_media.title = youtube_info.get("id")
+        elif info.get("originalFilename"):
+            org_media.title = info.get("originalFilename")
         else:
-            org_media.title = bulletin.title
+            org_media.title = title
 
         org_media.media_file = info.get("filename")
         # handle mime type failure
@@ -721,7 +727,7 @@ class MediaImport:
         # additional media for optimized video
         if info.get("new_filename"):
             new_media = Media()
-            new_media.title = bulletin.title
+            new_media.title = title
             new_media.media_file = info.get("new_filename")
             new_media.media_file_type = "video/mp4"
             new_media.etag = info.get("new_etag")
@@ -767,6 +773,14 @@ class MediaImport:
         user = User.query.get(self.user_id)
 
         bulletin.meta = info
+
+        if len(title) > 255:
+            update_description(
+                f"Title truncated to 255 characters.<br /><strong>Original title:</strong> {title}"
+            )
+        bulletin.title = title[:255]
+        if is_web_import:
+            bulletin.title_ar = bulletin.title
 
         try:
             bulletin.save(raise_exception=True)
