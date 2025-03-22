@@ -391,7 +391,9 @@ class MediaImport:
             file_ext = ext[1:].lower()
             self.data_import.add_format(file_ext)
 
-            if file_ext in cfg.ETL_VID_EXT:
+            mime_type = info.get("File:MIMEType")
+
+            if mime_type.startswith("video/") or mime_type.startswith("audio/"):
                 duration = self.get_duration(filepath)
                 info["vduration"] = duration
 
@@ -434,8 +436,10 @@ class MediaImport:
             file_ext = ext[1:].lower()
             self.data_import.add_format(file_ext)
 
+            mime_type = info.get("File:MIMEType")
+
             # get duration and optimize if video
-            if file_ext in cfg.ETL_VID_EXT:
+            if mime_type.startswith("video/") or mime_type.startswith("audio/"):
                 duration = self.get_duration(old_path)
 
                 if self.meta.get("optimize"):
@@ -480,8 +484,10 @@ class MediaImport:
             file_ext = ext[1:].lower()
             self.data_import.add_format(file_ext)
 
+            mime_type = info.get("File:MIMEType")
+
             # get duration and optimize if video
-            if ext[1:].lower() in cfg.ETL_VID_EXT:
+            if mime_type.startswith("video/") or mime_type.startswith("audio/"):
                 duration = self.get_duration(filepath)
 
                 if self.meta.get("optimize"):
