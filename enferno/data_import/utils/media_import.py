@@ -351,13 +351,116 @@ class MediaImport:
             self.data_import.add_to_log("Failed to transcribe video.")
             self.data_import.add_to_log(str(e))
             return None
+        
+    def web_import(self, file: dict) -> Optional[Any]:
+        self.data_import.add_to_log(f"Processing web import {file.get('filename')}...")
+
+        filename = file.get("filename")
+        filepath = (Media.media_dir / filename).as_posix()
+        info = exiflib.get_json(filepath)[0]
+
+        # Add YouTube metadata
+        youtube_info = self.data_import.data.get("info", {})
+        if youtube_info:
+            info.update(youtube_info)
+            # Use YouTube title for bulletin
+            info["bulletinTitle"] = youtube_info.get(
+                "title", os.path.splitext(file.get("name"))[0]
+            )
+
+        # Get file extension and duration
+        _, ext = os.path.splitext(filename)
+        if ext:
+            info["file_ext"] = ext[1:].lower()
+            self.data_import.add_format(info["file_ext"])
+
+        # Upload to S3 if needed
+        if not cfg.FILESYSTEM_LOCAL:
+            self.upload(filepath, os.path.basename(filepath))
+
+        # Bundle info for bulletin creation
+        info["filename"] = filename
+        info["filepath"] = filepath
+        info["source_url"] = file.get("source_url")
+        info["etag"] = file.get("etag")
+
+        self.data_import.add_to_log("Metadata parsed successfully.")
+        
+        return info
+
+    def server_import(self, file: dict) -> Optional[Any]:
+        self.data_import.add_to_log(f"Processing {file.get('filename')}...")
+
+        old_path = file.get("path")
+
+        # server side mode, need to copy files and generate etags
+        old_filename = file.get("filename")
+
+        filename = Media.generate_file_name(old_filename)
+        filepath = (Media.media_dir / filename).as_posix()
+
+        # copy file to media dir or s3 bucket
+        if not self.upload(old_path, filepath):
+            self.data_import.add_to_log("Unable to proceed without media file. Terminating.")
+            self.data_import.fail()
+            return
+
+        info = exiflib.get_json(old_path)[0]
+
+        title, ext = os.path.splitext(old_filename)
+        if ext:
+            info["file_ext"] = ext[1:].lower()
+            self.data_import.add_format(info["file_ext"])      
+
+        # bundle title with json info
+        info["bulletinTitle"] = title
+        info["filename"] = filename
+        # pass filepath for cleanup purposes
+        info["filepath"] = filepath
+
+        info["etag"] = file.get("etag")
+
+        info["old_path"] = old_path
+
+        return info
+
+    def upload_import(self, file: dict) -> Optional[Any]:
+        self.data_import.add_to_log(f"Processing {file.get('filename')}...")
+
+        # we already have the file and the etag
+        filename = file.get("filename")
+
+        # use original filename as title
+        title, _ = os.path.splitext(file.get("original_filename"))
+        filepath = (Media.media_dir / filename).as_posix()
+        info = exiflib.get_json(filepath)[0]
+        info["originalFilename"] = file.get("original_filename")
+
+        if not cfg.FILESYSTEM_LOCAL:
+            self.upload(filepath, os.path.basename(filepath))
+
+        # get file extension and duration
+        _, ext = os.path.splitext(filename)
+        if ext:
+            info["file_ext"] = ext[1:].lower()
+            self.data_import.add_format(info["file_ext"])     
+
+        # bundle title with json info
+        info["bulletinTitle"] = title
+        info["filename"] = filename
+        # pass filepath for cleanup purposes
+        info["filepath"] = filepath
+
+        info["etag"] = file.get("etag")
+        
+        return info
 
     def process(self, file: str) -> Optional[Any]:
-        duration = None
-        optimized = False
+        self.data_import.processing()
+
         text_content = None
         transcription = None
-        self.data_import.processing()
+        optimized = False
 
         # Check for duplicates using centralized helper
         if file.get("etag"):
@@ -371,168 +474,55 @@ class MediaImport:
 
         # Web import mode
         if import_mode == self.MODE_WEB:
-            self.data_import.add_to_log(f"Processing web import {file.get('filename')}...")
-
-            filename = file.get("filename")
-            filepath = (Media.media_dir / filename).as_posix()
-            info = exiflib.get_json(filepath)[0]
-
-            # Add YouTube metadata
-            youtube_info = self.data_import.data.get("info", {})
-            if youtube_info:
-                info.update(youtube_info)
-                # Use YouTube title for bulletin
-                info["bulletinTitle"] = youtube_info.get(
-                    "title", os.path.splitext(file.get("name"))[0]
-                )
-
-            # Get file extension and duration
-            _, ext = os.path.splitext(filename)
-            file_ext = ext[1:].lower()
-            self.data_import.add_format(file_ext)
-
-            mime_type = info.get("File:MIMEType")
-
-            if mime_type.startswith("video/") or mime_type.startswith("audio/"):
-                duration = self.get_duration(filepath)
-                info["vduration"] = duration
-
-            # Upload to S3 if needed
-            if not cfg.FILESYSTEM_LOCAL:
-                self.upload(filepath, os.path.basename(filepath))
-
-            # Bundle info for bulletin creation
-            info["filename"] = filename
-            info["filepath"] = filepath
-            info["source_url"] = file.get("source_url")
-            info["etag"] = file.get("etag")
-
-            self.data_import.add_to_log("Metadata parsed successfully.")
-            self.create_bulletin(info)
-            return
-
+            info = self.web_import(file)
         # Server-side mode
         elif import_mode == self.MODE_SERVER:
-            self.data_import.add_to_log(f"Processing {file.get('filename')}...")
-
-            old_path = file.get("path")
-
-            # server side mode, need to copy files and generate etags
-            old_filename = file.get("filename")
-            title, ext = os.path.splitext(old_filename)
-
-            filename = Media.generate_file_name(old_filename)
-            filepath = (Media.media_dir / filename).as_posix()
-
-            # copy file to media dir or s3 bucket
-            if not self.upload(old_path, filepath):
-                self.data_import.add_to_log("Unable to proceed without media file. Terminating.")
-                self.data_import.fail()
-                return
-
-            info = exiflib.get_json(old_path)[0]
-
-            # check file extension
-            file_ext = ext[1:].lower()
-            self.data_import.add_format(file_ext)
-
-            mime_type = info.get("File:MIMEType")
-
-            # get duration and optimize if video
-            if mime_type.startswith("video/") or mime_type.startswith("audio/"):
-                duration = self.get_duration(old_path)
-
-                if self.meta.get("optimize"):
-                    optimized, new_filename, new_filepath, new_etag = self.optimize(
-                        filename, filepath
-                    )
-
-            # ocr pictures
-            elif cfg.OCR_ENABLED and self.meta.get("ocr") and file_ext in cfg.OCR_EXT:
-                parsed_text = self.parse_pic(filepath)
-                if parsed_text:
-                    text_content = parsed_text
-
-            # parse content of word
-            elif self.meta.get("parse") and file_ext == "docx":
-                parsed_text = self.parse_docx(filepath)
-                if parsed_text:
-                    text_content = parsed_text
-
-            # scan pdf for text
-            elif self.meta.get("parse") and file_ext == "pdf":
-                attempt_ocr = cfg.OCR_ENABLED and self.meta.get("ocr")
-                parsed_text = self.parse_pdf(filepath, attempt_ocr)
-
-                if parsed_text:
-                    text_content = parsed_text
-
+            info = self.server_import(file)
         # Upload mode
         elif import_mode == self.MODE_UPLOAD:
-            self.data_import.add_to_log(f"Processing {file.get('filename')}...")
-
-            # we already have the file and the etag
-            filename = file.get("filename")
-            _, ext = os.path.splitext(filename)
-            title, _ = os.path.splitext(file.get("original_filename"))
-            filepath = (Media.media_dir / filename).as_posix()
-            info = exiflib.get_json(filepath)[0]
-            info["originalFilename"] = file.get("original_filename")
-
-            if not cfg.FILESYSTEM_LOCAL:
-                self.upload(filepath, os.path.basename(filepath))
-
-            file_ext = ext[1:].lower()
-            self.data_import.add_format(file_ext)
-
-            mime_type = info.get("File:MIMEType")
-
-            # get duration and optimize if video
-            if mime_type.startswith("video/") or mime_type.startswith("audio/"):
-                duration = self.get_duration(filepath)
-
-                if self.meta.get("optimize"):
-                    optimized, new_filename, new_filepath, new_etag = self.optimize(
-                        filename, filepath
-                    )
-
-            # ocr pictures
-            elif cfg.OCR_ENABLED and self.meta.get("ocr") and file_ext in cfg.OCR_EXT:
-                parsed_text = self.parse_pic(filepath)
-                if parsed_text:
-                    text_content = parsed_text
-
-            # parse content of word docs
-            elif self.meta.get("parse") and file_ext == "docx":
-                parsed_text = self.parse_docx(filepath)
-                if parsed_text:
-                    text_content = parsed_text
-
-            # scan pdf for text
-            elif self.meta.get("parse") and file_ext == "pdf":
-                attempt_ocr = cfg.OCR_ENABLED and self.meta.get("ocr")
-                parsed_text = self.parse_pdf(filepath, attempt_ocr)
-
-                if parsed_text:
-                    text_content = parsed_text
-
+            info = self.upload_import(file)
         else:
             self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
             return
+        
+        mime_type = info.get("File:MIMEType")
+
+        # get duration and optimize if video
+        if mime_type.startswith("video/") or mime_type.startswith("audio/"):
+            info["vduration"] = self.get_duration(info["filepath"])
+
+            if self.meta.get("optimize"):
+                optimized, new_filename, new_filepath, new_etag = self.optimize(
+                    info["filename"], info["filepath"]
+                )
+
+        # ocr pictures
+        elif cfg.OCR_ENABLED and self.meta.get("ocr") and info["file_ext"] in cfg.OCR_EXT:
+            parsed_text = self.parse_pic(info["filepath"])
+            if parsed_text:
+                text_content = parsed_text
+
+        # parse content of word docs
+        elif self.meta.get("parse") and info["file_ext"] == "docx":
+            parsed_text = self.parse_docx(info["filepath"])
+            if parsed_text:
+                text_content = parsed_text
+
+        # scan pdf for text
+        elif self.meta.get("parse") and info["file_ext"] == "pdf":
+            attempt_ocr = cfg.OCR_ENABLED and self.meta.get("ocr")
+            parsed_text = self.parse_pdf(info["filepath"], attempt_ocr)
+
+            if parsed_text:
+                text_content = parsed_text
 
         if self.meta.get("transcription") and (
             info.get("File:MIMEType").startswith("video")
             or info.get("File:MIMEType").startswith("audio")
         ):
             language = self.meta.get("transcription_language")
-            transcription = self.transcribe_video(filepath, language)
-
-        # bundle title with json info
-        info["bulletinTitle"] = title
-        info["filename"] = filename
-        # pass filepath for cleanup purposes
-        info["filepath"] = filepath
+            transcription = self.transcribe_video(info["filepath"], language)
 
         # include details of optimized files
         if optimized:
@@ -542,14 +532,7 @@ class MediaImport:
 
         if text_content:
             info["text_content"] = text_content
-
-        info["etag"] = file.get("etag")
-        if import_mode == self.MODE_SERVER:
-            info["old_path"] = old_path
-        # pass duration
-        if duration:
-            info["vduration"] = duration
-
+        
         if transcription:
             info["transcription"] = transcription
 
@@ -702,9 +685,9 @@ class MediaImport:
         org_media.media_file = info.get("filename")
         # handle mime type failure
         mime_type = info.get("File:MIMEType")
-        duration = info.get("vduration")
-        if duration:
-            org_media.duration = duration
+        self.duration = info.get("vduration")
+        if self.duration:
+            org_media.duration = self.duration
 
         if not mime_type:
             self.data_import.add_to_log("Unable to retrieve file mime type.")
@@ -729,8 +712,8 @@ class MediaImport:
             new_media.media_file = info.get("new_filename")
             new_media.media_file_type = "video/mp4"
             new_media.etag = info.get("new_etag")
-            if duration:
-                new_media.duration = duration
+            if self.duration:
+                new_media.duration = self.duration
             bulletin.medias.append(new_media)
 
         # add additional meta data
@@ -794,7 +777,7 @@ class MediaImport:
 
             self.data_import.add_to_log(f"Created Bulletin {bulletin.id} successfully.")
             self.data_import.add_item(bulletin.id)
-            self.data_import.sucess()
+            self.data_import.success()
         except DatabaseException as e:
             self.data_import.add_to_log(f"Failed to create Bulletin.")
             self.data_import.fail(e)
