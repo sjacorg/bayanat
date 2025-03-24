@@ -3,6 +3,7 @@ import json
 import subprocess
 
 import boto3
+from botocore.exceptions import ClientError
 
 from enferno.admin.models import Bulletin
 from enferno.data_import.models import DataImport
@@ -113,14 +114,26 @@ class YTImport(MediaImport):
             return
 
         filename = self.meta.get("id") + ".mp4"
+
         try:
+            etag = self.s3.head_object(Bucket=self.meta.get("bucket"), Key=self.meta.get("video_file"))["ETag"].strip('"')
+            # Check for duplicates using centralized helper
+            if (
+                media_check_duplicates(etag=etag, data_import_id=self.data_import.id)
+                or Bulletin.query.filter(Bulletin.originid == self.meta.get("id")).first()
+            ):
+                # log duplicate and fail
+                self.data_import.add_to_log(f"Video already exists in database.")
+                self.data_import.fail()
+                return
+            
             filepath = self.meta.get("bucket") + "/" + self.meta.get("video_file")
             self.data_import.add_to_log(
                 f"Copying video file to {cfg.S3_BUCKET}/{filename} from {filepath}"
             )
-            res = self.s3.copy_object(Bucket=cfg.S3_BUCKET, CopySource=filepath, Key=filename)
-            etag = res['CopyObjectResult']['ETag'].strip('"')
-        except self.s3.exceptions.NoSuchKey as e:
+            self.s3.copy_object(Bucket=cfg.S3_BUCKET, CopySource=filepath, Key=filename, )
+
+        except ClientError as e:
             # If video file not found, search for video and audio files
             # with the same prefix and mux them
             self.data_import.add_to_log(f"Video file not found. {e}")
@@ -150,16 +163,6 @@ class YTImport(MediaImport):
             "webpage_url", "https://www.youtube.com/watch?v=" + self.meta.get("id")
         )
         info["File:MIMEType"] = "video/mp4"
-
-        # Check for duplicates using centralized helper
-        if (
-            media_check_duplicates(etag=etag, data_import_id=self.data_import.id)
-            or Bulletin.query.filter(Bulletin.originid == self.meta.get("id")).first()
-        ):
-            # log duplicate and fail
-            self.data_import.add_to_log(f"Video already exists in database.")
-            self.data_import.fail()
-            return
 
         # language = self.meta.get("transcription_language")
         # transcription = self.transcribe_video(info["filepath"], language)
