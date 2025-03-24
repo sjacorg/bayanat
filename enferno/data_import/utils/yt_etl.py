@@ -114,6 +114,7 @@ class YTImport(MediaImport):
             return
 
         filename = self.meta.get("id") + ".mp4"
+        filepath = self.meta.get("bucket") + "/" + self.meta.get("video_file")
 
         try:
             etag = self.s3.head_object(Bucket=self.meta.get("bucket"), Key=self.meta.get("video_file"))["ETag"].strip('"')
@@ -126,8 +127,7 @@ class YTImport(MediaImport):
                 self.data_import.add_to_log(f"Video already exists in database.")
                 self.data_import.fail()
                 return
-            
-            filepath = self.meta.get("bucket") + "/" + self.meta.get("video_file")
+
             self.data_import.add_to_log(
                 f"Copying video file to {cfg.S3_BUCKET}/{filename} from {filepath}"
             )
