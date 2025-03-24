@@ -403,7 +403,6 @@ def etl(file):
             try:
                 meta = {
                     "bucket": line["bucket"],
-                    "etag": line["etag"],
                     "meta_file": line["file"],
                     "video_file" : line["file"].replace(".info.json", ".mp4"),
                     "checksum_file": line["file"].replace(".info.json", ".checksum"),

@@ -7,7 +7,7 @@ import boto3
 from enferno.admin.models import Bulletin
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
-from enferno.utils.data_helpers import media_check_duplicates
+from enferno.utils.data_helpers import media_check_duplicates, get_file_hash
 
 from enferno.settings import Config as cfg
 from sqlalchemy.orm.attributes import flag_modified
@@ -84,6 +84,7 @@ class YTImport(MediaImport):
         ]
 
         subprocess.call(command, shell=False)
+        etag = get_file_hash(f"enferno/imports/{filename}")
         uploaded = self.upload(f"enferno/imports/{filename}", filename)
         
         os.remove(f"enferno/imports/{filename}")
@@ -92,7 +93,7 @@ class YTImport(MediaImport):
 
         if uploaded:
             self.data_import.add_to_log(f"Video and audio files muxed successfully.")
-            return True
+            return etag
         else:
             self.data_import.add_to_log(f"Problem muxing video and audio files. Terminating.")
             self.data_import.fail()
@@ -104,6 +105,7 @@ class YTImport(MediaImport):
 
         info = self.get_meta()
         checksums = self.get_checksums()
+        etag = None
 
         if not info:
             self.data_import.add_to_log("Meta file not found.")
@@ -116,7 +118,8 @@ class YTImport(MediaImport):
             self.data_import.add_to_log(
                 f"Copying video file to {cfg.S3_BUCKET}/{filename} from {filepath}"
             )
-            self.s3.copy_object(Bucket=cfg.S3_BUCKET, CopySource=filepath, Key=filename)
+            res = self.s3.copy_object(Bucket=cfg.S3_BUCKET, CopySource=filepath, Key=filename)
+            etag = res['CopyObjectResult']['ETag'].strip('"')
         except self.s3.exceptions.NoSuchKey as e:
             # If video file not found, search for video and audio files
             # with the same prefix and mux them
@@ -124,7 +127,8 @@ class YTImport(MediaImport):
             search = self.meta.get("id") + ".f"
             files = [key.split("/")[-1] for key in checksums.keys() if search in key]
             if files:
-                if not self.mux_files(filename, files):
+                etag = self.mux_files(filename, files)
+                if not etag:
                     return
             else:
                 self.data_import.add_to_log(f"Video and audio files not found. Terminating.")
@@ -136,7 +140,7 @@ class YTImport(MediaImport):
             self.data_import.fail()
             return
 
-        info["etag"] = self.meta.get("etag")
+        info["etag"] = etag
         info["filepath"] = filepath
         info["bulletinTitle"] = info.get("title", self.meta.get("id"))
 
@@ -149,7 +153,7 @@ class YTImport(MediaImport):
 
         # Check for duplicates using centralized helper
         if (
-            media_check_duplicates(etag=info["etag"], data_import_id=self.data_import.id)
+            media_check_duplicates(etag=etag, data_import_id=self.data_import.id)
             or Bulletin.query.filter(Bulletin.originid == self.meta.get("id")).first()
         ):
             # log duplicate and fail
