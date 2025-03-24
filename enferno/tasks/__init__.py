@@ -1383,7 +1383,7 @@ def _start_etl_process(
     )
 
 
-from enferno.utils.docs_utils import DocImport
+from enferno.data_import.utils.docs_utils import DocImport
 
 
 @celery.task(bind=True, max_retries=5)
@@ -1398,6 +1398,26 @@ def process_doc(
         return "done"
     except OperationalError as e:
         logger.error(f"Encountered an error while processing {file_path}. Retrying...")
+        self.retry(exc=e, countdown=random.randrange(40, 80))
+    except Exception as e:
+        logger.error(f"{e}")
+        log = DataImport.query.get(data_import_id)
+        log.fail(e)
+
+
+from enferno.data_import.utils.yt_etl import YTImport
+
+@celery.task(bind=True, max_retries=5)
+def process_etl(
+    self, batch_id: t.id, meta: str, data_import_id: t.id
+) -> None:
+    
+    try:
+        yt = YTImport(batch_id=batch_id, data_import_id=data_import_id, meta=meta)
+        yt.process()
+        return "done"
+    except OperationalError as e:
+        logger.error(f"Encountered an error while processing {meta.get("meta_file")}. Retrying...")
         self.retry(exc=e, countdown=random.randrange(40, 80))
     except Exception as e:
         logger.error(f"{e}")

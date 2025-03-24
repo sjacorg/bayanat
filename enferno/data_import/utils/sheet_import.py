@@ -794,7 +794,7 @@ class SheetImport:
 
             self.data_import.add_to_log(f"Created Actor {self.actor.id} successfully.")
             self.data_import.add_item(self.actor.id)
-            self.data_import.sucess()
+            self.data_import.success()
 
         except DatabaseException as e:
             self.data_import.add_to_log(f"Failed to create Actor from row.")

@@ -316,14 +316,17 @@ def generate_config() -> None:
     ConfigManager.restore_default_config()
 
 
+# ------------------ ETL DOCS --------------------------- #
+from enferno.data_import.models import DataImport
+
+
 @click.command()
 @with_appcontext
 @click.argument("file")
 def import_docs(file) -> None:
     """Import the docs."""
     click.echo("Importing docs.")
-    from enferno.utils.docs_utils import DocImport
-    from enferno.data_import.models import DataImport
+    from enferno.data_import.utils.docs_utils import DocImport
     from enferno.tasks import process_doc
 
     import pandas as pd
@@ -367,3 +370,74 @@ def import_docs(file) -> None:
             )
 
         click.echo("=== Done ===")
+
+# ------------------ ETL VIDS --------------------------- #
+
+import os
+import pandas as pd
+import shortuuid
+from enferno.tasks import process_etl
+
+
+@click.command()
+@with_appcontext
+@click.argument('file')
+@with_appcontext
+def etl(file):
+    """
+    Runs the ETL
+    :param file: text file contains youtube ids, each id on a separate line
+    :return: success/error logs
+    """
+    batch_id = shortuuid.uuid()[:9]
+
+    if not os.path.isfile(file):
+        print("Invalid file!")
+        return
+    
+    csv_file = pd.read_csv(file)
+    files = csv_file.to_dict(orient="records")
+
+    with click.progressbar(files, label="Importing videos", show_pos=True) as bar:
+        for line in bar:
+            # click.echo(f"Processing {line}")
+            try:
+                meta = {
+                    "bucket": line["bucket"],
+                    "etag": line["etag"],
+                    "meta_file": line["file"],
+                    "video_file" : line["file"].replace(".info.json", ".mp4"),
+                    "checksum_file": line["file"].replace(".info.json", ".checksum"),
+                    "id": line["id"],
+                    "mode": 3,
+                }
+                # Create import log
+                data_import = DataImport(
+                    user_id=1,
+                    table="bulletin",
+                    file=line["file"],
+                    batch_id=batch_id,
+                    file_format="mp4",
+                    data={
+                        "mode": 3,  # Web import mode
+                        "optimize": False,
+                        "sources": [],
+                        "labels": [],
+                        "ver_labels": [],
+                        "locations": [],
+                        "tags": [],
+                        "roles": [],
+                    },
+                )
+
+                data_import.add_to_log(f"Started processing {line["file"]}")
+                data_import.save()
+
+                process_etl.delay(
+                    batch_id=batch_id,
+                    meta=meta,
+                    data_import_id=data_import.id
+                )
+                click.echo(f"Processed {line['file']}")
+            except Exception as e:
+                click.echo(e)

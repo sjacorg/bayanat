@@ -228,6 +228,7 @@ def register_commands(app):
     app.cli.add_command(commands.check_db_alignment)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.import_docs)
+    app.cli.add_command(commands.etl)
 
 
 def register_errorhandlers(app):
