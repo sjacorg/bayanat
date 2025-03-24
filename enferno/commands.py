@@ -400,7 +400,6 @@ def etl(file):
 
     with click.progressbar(files, label="Importing videos", show_pos=True) as bar:
         for line in bar:
-            # click.echo(f"Processing {line}")
             try:
                 meta = {
                     "bucket": line["bucket"],
@@ -438,6 +437,5 @@ def etl(file):
                     meta=meta,
                     data_import_id=data_import.id
                 )
-                click.echo(f"Processed {line['file']}")
             except Exception as e:
                 click.echo(e)
