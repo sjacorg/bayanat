@@ -119,10 +119,7 @@ class YTImport(MediaImport):
         try:
             etag = self.s3.head_object(Bucket=self.meta.get("bucket"), Key=self.meta.get("video_file"))["ETag"].strip('"')
             # Check for duplicates using centralized helper
-            if (
-                media_check_duplicates(etag=etag, data_import_id=self.data_import.id)
-                or Bulletin.query.filter(Bulletin.originid == self.meta.get("id")).first()
-            ):
+            if media_check_duplicates(etag=etag, data_import_id=self.data_import.id):
                 # log duplicate and fail
                 self.data_import.add_to_log(f"Video already exists in database.")
                 self.data_import.fail()

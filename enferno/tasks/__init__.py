@@ -1411,6 +1411,17 @@ from enferno.data_import.utils.yt_etl import YTImport
 def process_etl(
     self, batch_id: t.id, meta: str, data_import_id: t.id
 ) -> None:
+    """
+    Process YT S3 ETL task.
+    """
+    
+    # check if video already exists
+    if Bulletin.query.filter(Bulletin.originid == self.meta.get("id")).first():
+        # log duplicate and fail
+        data_import = DataImport.query.get(data_import_id)
+        data_import.add_to_log(f"Video already exists in database.")
+        data_import.fail()
+        return
     
     try:
         yt = YTImport(batch_id=batch_id, data_import_id=data_import_id, meta=meta)
