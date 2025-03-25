@@ -1416,7 +1416,7 @@ def process_etl(
     """
     
     # check if video already exists
-    if Bulletin.query.filter(Bulletin.originid == self.meta.get("id")).first():
+    if Bulletin.query.filter(Bulletin.originid == meta.get("id")).first():
         # log duplicate and fail
         data_import = DataImport.query.get(data_import_id)
         data_import.add_to_log(f"Video already exists in database.")
