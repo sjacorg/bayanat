@@ -9,13 +9,14 @@ def check_roles(method):
     """
     Decorator to check if the current user has access to the resource. If the
     user does not have access, the restricted_json method is called to return
-    a restricted response.
+    a restricted response. Role checking is skipped when there's no request context
+    (e.g. during ETL operations).
     """
 
     @wraps(method)
     def _impl(self, *method_args, **method_kwargs):
         method_output = method(self, *method_args, **method_kwargs)
-        if current_user:
+        if has_request_context() and current_user:
             if not current_user.can_access(self):
                 return self.restricted_json()
         return method_output
