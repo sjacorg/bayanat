@@ -3,6 +3,9 @@ const whisperMixin = {
     whisperLanguageCodes: null
   }),
   mounted() {
+    if(!window.__TRANSCRIPTION_ENABLED__) {
+      return;
+    }
     axios.get('/import/api/whisper/languages').then(response => {
       this.whisperLanguageCodes = response.data.languages;
     }).catch(error => {
@@ -11,6 +14,9 @@ const whisperMixin = {
   },
   computed: {
     whisperLanguageOptions() {
+      if(!this.whisperLanguageCodes) {
+        return [];
+      }
       const languages = Object.keys(this.whisperLanguageCodes).map(lang => ({
         title: lang.charAt(0).toUpperCase() + lang.slice(1),
         value: this.whisperLanguageCodes[lang]
