@@ -57,10 +57,26 @@
       </v-list-item>
     </v-list>
   </v-menu>
-    
+
   <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
-        <v-btn v-bind="props" icon="mdi-cog" @click="settingsDrawer=!settingsDrawer"></v-btn>
+        <v-btn v-bind="props" icon @click="toggleNotificationsDrawer()">
+          <v-badge
+            color="error"
+            :content="unreadNotificationsCount"
+            :model-value="hasUnreadNotifications"
+            :max="9"
+          >
+            <v-icon>mdi-bell</v-icon>
+          </v-badge>
+        </v-btn>
+      </template>
+      {{ _('Notifications') }}
+  </v-tooltip>
+
+  <v-tooltip location="bottom">
+      <template v-slot:activator="{ props }">
+        <v-btn v-bind="props" icon="mdi-cog" @click="toggleUserSettingsDrawer()"></v-btn>
       </template>
       {{ _('User Settings') }}
   </v-tooltip>

@@ -5,6 +5,9 @@ from flask_security import current_user
 import logging
 import os
 import shutil
+from enferno.admin.constants import Constants
+
+NotificationEvent = Constants.NotificationEvent
 
 logger = logging.getLogger("app_logger")
 
@@ -137,6 +140,14 @@ class ConfigManager:
             "ACTIVITIES_RETENTION": 90,
             "ADV_ANALYSIS": False,
             "LOCATIONS_INCLUDE_POSTAL_CODE": False,
+            "MAIL_ENABLED": False,
+            "MAIL_SERVER": "",
+            "MAIL_PORT": 25,
+            "MAIL_USE_TLS": False,
+            "MAIL_USE_SSL": False,
+            "MAIL_USERNAME": "",
+            "MAIL_PASSWORD": "",
+            "MAIL_DEFAULT_SENDER": "",
             "TRANSCRIPTION_ENABLED": False,
             "WHISPER_MODEL": "base",
             "WEB_IMPORT": False,
@@ -148,6 +159,80 @@ class ConfigManager:
                 "twitter.com",
             ],
             "YTDLP_COOKIES": "",
+            "NOTIFICATIONS": {
+                NotificationEvent.NEW_USER.value: {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.UPDATE_USER.value: {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.NEW_GROUP.value: {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.LOGIN_NEW_COUNTRY.value: {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.UNAUTHORIZED_ACTION.value: {
+                    "email_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {
+                    "email_enabled": True,
+                    "in_app_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.ITEM_DELETED.value: {
+                    "email_enabled": False,
+                    "in_app_enabled": True,
+                    "category": "security",
+                },
+                NotificationEvent.NEW_EXPORT.value: {
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.EXPORT_APPROVED.value: {
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.NEW_BATCH.value: {
+                    "in_app_enabled": False,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.BATCH_STATUS.value: {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.BULK_OPERATION_STATUS.value: {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.WEB_IMPORT_STATUS.value: {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.NEW_ASSIGNMENT.value: {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.REVIEW_NEEDED.value: {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+            },
         }
     )
 
@@ -200,12 +285,21 @@ class ConfigManager:
             "ACTIVITIES_RETENTION": "Activity Retention Period",
             "ADV_ANALYSIS": "Advanced Analysis Features",
             "LOCATIONS_INCLUDE_POSTAL_CODE": "Full Locations Include Postal Code",
+            "MAIL_ENABLED": "Mail Enabled",
+            "MAIL_SERVER": "Mail Server",
+            "MAIL_PORT": "Mail Port",
+            "MAIL_USE_TLS": "Mail Use TLS",
+            "MAIL_USE_SSL": "Mail Use SSL",
+            "MAIL_USERNAME": "Mail Username",
+            "MAIL_PASSWORD": "Mail Password",
+            "MAIL_DEFAULT_SENDER": "Mail Default Sender",
             "TRANSCRIPTION_ENABLED": "Allow Transcription of Media Files",
             "WHISPER_MODEL": "Whisper Model",
             "WEB_IMPORT": "Web Import",
             "YTDLP_PROXY": "Proxy URL to use with Web Import",
             "YTDLP_ALLOWED_DOMAINS": "Allowed Domains for Web Import",
             "YTDLP_COOKIES": "Cookies to use with Web Import",
+            "NOTIFICATIONS": "Notification Events",
         }
     )
 
@@ -294,12 +388,21 @@ class ConfigManager:
             "ACTIVITIES_RETENTION": int(cfg.ACTIVITIES_RETENTION.total_seconds()) / 86400,
             "ADV_ANALYSIS": cfg.ADV_ANALYSIS,
             "LOCATIONS_INCLUDE_POSTAL_CODE": cfg.LOCATIONS_INCLUDE_POSTAL_CODE,
+            "MAIL_ENABLED": cfg.MAIL_ENABLED,
+            "MAIL_SERVER": cfg.MAIL_SERVER,
+            "MAIL_PORT": cfg.MAIL_PORT,
+            "MAIL_USE_TLS": cfg.MAIL_USE_TLS,
+            "MAIL_USE_SSL": cfg.MAIL_USE_SSL,
+            "MAIL_USERNAME": cfg.MAIL_USERNAME,
+            "MAIL_PASSWORD": ConfigManager.MASK_STRING if cfg.MAIL_PASSWORD else "",
+            "MAIL_DEFAULT_SENDER": cfg.MAIL_DEFAULT_SENDER,
             "TRANSCRIPTION_ENABLED": cfg.TRANSCRIPTION_ENABLED,
             "WHISPER_MODEL": cfg.WHISPER_MODEL,
             "WEB_IMPORT": cfg.WEB_IMPORT,
             "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
             "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
             "YTDLP_COOKIES": cfg.YTDLP_COOKIES or "",
+            "NOTIFICATIONS": cfg.NOTIFICATIONS,
         }
         return conf
 
@@ -317,6 +420,10 @@ class ConfigManager:
         if conf.get("AWS_SECRET_ACCESS_KEY") == ConfigManager.MASK_STRING:
             # Keep existing secret
             conf["AWS_SECRET_ACCESS_KEY"] = cfg.AWS_SECRET_ACCESS_KEY
+
+        if conf.get("MAIL_PASSWORD") == ConfigManager.MASK_STRING:
+            # Keep existing secret
+            conf["MAIL_PASSWORD"] = cfg.MAIL_PASSWORD
 
         if ConfigManager.validate(conf):
             try:

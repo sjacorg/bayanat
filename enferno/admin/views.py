@@ -22,6 +22,7 @@ from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
 
+from enferno.admin.models.Notification import Notification
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
@@ -5760,6 +5761,115 @@ def api_logs() -> Response:
             return "Error sending log file", 417
     else:
         return "Log file not found", 404
+
+
+# Notifications
+@admin.route("/api/notifications")
+def api_notifications() -> Response:
+    """
+    Endpoint to return paginated notifications for the current user.
+    Accepts query parameters:
+    - page: page number (default: 1)
+    - per_page: number of notifications per page (default: 10)
+    - status: status of the notifications to filter by (default: all, can be "read" or "unread", any other value will return all notifications)
+
+    Returns:
+        - JSON response containing notifications and pagination info
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    status = request.args.get("status")
+
+    # Query notifications for current user, ordered by creation date descending
+    notifications_query = (
+        db.session.query(Notification)
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
+        .order_by(Notification.created_at.desc())
+    )
+
+    if status:
+        if status.lower() == "read":
+            notifications_query = notifications_query.filter(Notification.read_status == True)
+        elif status.lower() == "unread":
+            notifications_query = notifications_query.filter(Notification.read_status == False)
+
+    # Paginate the results
+    paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
+    unread_count = (
+        db.session.query(Notification)
+        .filter(Notification.user_id == current_user.id, Notification.read_status == False)
+        .count()
+    )
+
+    response = {
+        "items": [notification.to_dict() for notification in paginated_notifications.items],
+        "currentPage": page,
+        "perPage": per_page,
+        "total": paginated_notifications.total,
+        "hasMore": paginated_notifications.has_next,
+        "unreadCount": unread_count,
+    }
+
+    return jsonify(response)
+
+
+@admin.route("/api/notifications/unread/count")
+def api_notifications_unread_count() -> Response:
+    """
+    Endpoint to get the count of unread notifications for the current user.
+
+    Returns:
+        - JSON response containing the count of unread notifications
+        Example: {"unread_count": 5}
+    """
+    unread_count = (
+        db.session.query(Notification)
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.read_status == False,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
+        .count()
+    )
+
+    return jsonify({"unread_count": unread_count})
+
+
+@admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
+def api_mark_notification_read(notification_id: int) -> Response:
+    """
+    Endpoint to mark a specific notification as read.
+
+    Args:
+        notification_id: ID of the notification to mark as read
+
+    Returns:
+        - Success response if notification is marked as read
+        - Error response if notification doesn't exist or user doesn't have permission
+    """
+    notification = db.session.get(Notification, notification_id)
+
+    if not notification:
+        return HTTPResponse.NOT_FOUND
+
+    # Verify the notification belongs to the current user
+    if notification.user_id != current_user.id:
+        return HTTPResponse.FORBIDDEN
+
+    try:
+        notification.mark_as_read()
+        return (
+            jsonify(
+                {"message": "Notification marked as read", "notification": notification.to_dict()}
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.error(f"Error marking notification as read: {str(e)}", exc_info=True)
+        return HTTPResponse.INTERNAL_SERVER_ERROR
 
 
 @admin.post("/api/bulletin/web")
