@@ -1407,14 +1407,13 @@ def process_doc(
 
 from enferno.data_import.utils.yt_etl import YTImport
 
+
 @celery.task(bind=True, max_retries=5)
-def process_etl(
-    self, batch_id: t.id, meta: str, data_import_id: t.id
-) -> None:
+def process_etl(self, batch_id: t.id, meta: str, data_import_id: t.id) -> None:
     """
     Process YT S3 ETL task.
     """
-    
+
     # check if video already exists
     if Bulletin.query.filter(Bulletin.originid == meta.get("id")).first():
         # log duplicate and fail
@@ -1422,7 +1421,7 @@ def process_etl(
         data_import.add_to_log(f"Video already exists in database.")
         data_import.fail()
         return
-    
+
     try:
         yt = YTImport(batch_id=batch_id, data_import_id=data_import_id, meta=meta)
         yt.process()
@@ -1434,3 +1433,24 @@ def process_etl(
         logger.error(f"{e}")
         log = DataImport.query.get(data_import_id)
         log.fail(e)
+
+
+from enferno.data_import.utils.telegram_utils import TelegramImport
+import traceback
+
+
+@celery.task(bind=True, max_retries=5)
+def process_telegram_media(self, data_import_id: t.id) -> None:
+    try:
+        di = TelegramImport(
+            data_import_id=data_import_id,
+        )
+        di.process()
+        return "done"
+    except OperationalError as e:
+        logger.error(f"Encountered an error while processing {data_import_id}. Retrying...")
+        self.retry(exc=e, countdown=random.randrange(40, 80))
+    except Exception as e:
+        logger.error(traceback.print_exc())
+        log = DataImport.query.get(data_import_id)
+        log.fail(traceback.print_exc())

@@ -344,7 +344,11 @@ def import_docs(file) -> None:
             }
 
             file_path = item["file_path"]
-            if not (file_path.endswith(".jpg") or file_path.endswith(".pdf") or file_path.endswith(".png")):
+            if not (
+                file_path.endswith(".jpg")
+                or file_path.endswith(".pdf")
+                or file_path.endswith(".png")
+            ):
                 click.echo(f"Skipping file {file_path}")
                 continue
 
@@ -371,6 +375,7 @@ def import_docs(file) -> None:
 
         click.echo("=== Done ===")
 
+
 # ------------------ ETL VIDS --------------------------- #
 
 import os
@@ -381,7 +386,7 @@ from enferno.tasks import process_etl
 
 @click.command()
 @with_appcontext
-@click.argument('file')
+@click.argument("file")
 @with_appcontext
 def etl(file):
     """
@@ -394,7 +399,7 @@ def etl(file):
     if not os.path.isfile(file):
         print("Invalid file!")
         return
-    
+
     csv_file = pd.read_csv(file)
     files = csv_file.to_dict(orient="records")
 
@@ -404,7 +409,7 @@ def etl(file):
                 meta = {
                     "bucket": line["bucket"],
                     "meta_file": line["file"],
-                    "video_file" : line["file"].replace(".info.json", ".mp4"),
+                    "video_file": line["file"].replace(".info.json", ".mp4"),
                     "checksum_file": line["file"].replace(".info.json", ".checksum"),
                     "id": line["id"],
                     "mode": 3,
@@ -431,10 +436,97 @@ def etl(file):
                 data_import.add_to_log(f"Started processing {line["file"]}")
                 data_import.save()
 
-                process_etl.delay(
-                    batch_id=batch_id,
-                    meta=meta,
-                    data_import_id=data_import.id
-                )
+                process_etl.delay(batch_id=batch_id, meta=meta, data_import_id=data_import.id)
             except Exception as e:
                 click.echo(e)
+
+
+import json
+import boto3
+
+
+from enferno.tasks import process_telegram_media
+
+
+@click.command()
+@with_appcontext
+@click.argument("bucket")
+@click.argument("folder")
+def process_telegram(bucket, folder):
+
+    s3 = boto3.client(
+        "s3",
+        aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
+        region_name=Config.AWS_REGION,
+    )
+
+    if not folder.endswith("/"):
+        folder += "/"
+
+    objects = s3.list_objects_v2(
+        Bucket=bucket,
+        Prefix=folder,
+        Delimiter="/",
+    )
+
+    channels = []
+    for prefix in objects.get("CommonPrefixes", []):
+        channels.append(prefix["Prefix"].split("/")[-2])
+
+    batch_id = shortuuid.uuid()[:9]
+
+    with click.progressbar(channels, label="Processing Telegram Channels", show_pos=True) as cbar:
+        for channel in cbar:
+            # get meta file
+            meta_file = s3.get_object(
+                Bucket=bucket,
+                Key=folder + channel + "/meta.json",
+            )
+
+            # read the file
+            meta_file = meta_file["Body"].read().decode("utf-8")
+            meta_file = json.loads(meta_file)
+
+            messages_file = s3.get_object(
+                Bucket=bucket,
+                Key=folder + channel + "/messages.json",
+            )
+
+            messages = messages_file["Body"].read().decode("utf-8")
+            messages = json.loads(messages)
+
+            with click.progressbar(
+                messages, label="Processing Telegram Channels", show_pos=True
+            ) as mbar:
+                for message in mbar:
+                    try:
+                        if "media_path" in message and message["media_path"]:
+                            data = {
+                                "mode": 4,  # Telegram import mode
+                                "info": {
+                                    "bucket": bucket,
+                                    "folder": folder,
+                                    "message": message,
+                                    "channel_metadata": meta_file,
+                                },
+                            }
+
+                            data_import = DataImport(
+                                user_id=1,
+                                table="Bulletin",
+                                file=message["media_path"],
+                                batch_id=batch_id,
+                                data=data,
+                            )
+
+                            data_import.add_to_log(
+                                f"Started processing message {message.get('id')} {message['media_path']}"
+                            )
+                            data_import.save()
+
+                            process_telegram_media.delay(
+                                data_import_id=data_import.id,
+                            )
+                    except Exception as e:
+                        click.echo(f"Error processing message {message.get('id')}: {e}")

@@ -229,6 +229,7 @@ def register_commands(app):
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.import_docs)
     app.cli.add_command(commands.etl)
+    app.cli.add_command(commands.process_telegram)
 
 
 def register_errorhandlers(app):
