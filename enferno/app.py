@@ -228,8 +228,8 @@ def register_commands(app):
     app.cli.add_command(commands.check_db_alignment)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.import_docs)
-    app.cli.add_command(commands.etl)
-    app.cli.add_command(commands.process_telegram)
+    app.cli.add_command(commands.import_youtube)
+    app.cli.add_command(commands.import_telegram)
 
 
 def register_errorhandlers(app):

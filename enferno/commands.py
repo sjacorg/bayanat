@@ -376,7 +376,7 @@ def import_docs(file) -> None:
         click.echo("=== Done ===")
 
 
-# ------------------ ETL VIDS --------------------------- #
+# ------------------ YouTube ETL --------------------------- #
 
 import os
 import pandas as pd
@@ -388,9 +388,9 @@ from enferno.tasks import process_etl
 @with_appcontext
 @click.argument("file")
 @with_appcontext
-def etl(file):
+def import_youtube(file):
     """
-    Runs the ETL
+    Runs the YouTube ETL pipeline
     :param file: text file contains youtube ids, each id on a separate line
     :return: success/error logs
     """
@@ -452,7 +452,7 @@ from enferno.tasks import process_telegram_media
 @with_appcontext
 @click.argument("bucket")
 @click.argument("folder")
-def process_telegram(bucket, folder):
+def import_telegram(bucket, folder):
 
     s3 = boto3.client(
         "s3",
