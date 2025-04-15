@@ -504,9 +504,9 @@ def process_telegram(bucket, folder):
                         if "media_path" in message and message["media_path"]:
                             data = {
                                 "mode": 4,  # Telegram import mode
+                                "bucket": bucket,
+                                "folder": folder,
                                 "info": {
-                                    "bucket": bucket,
-                                    "folder": folder,
                                     "message": message,
                                     "channel_metadata": meta_file,
                                 },
@@ -528,5 +528,7 @@ def process_telegram(bucket, folder):
                             process_telegram_media.delay(
                                 data_import_id=data_import.id,
                             )
+                            break
                     except Exception as e:
                         click.echo(f"Error processing message {message.get('id')}: {e}")
+            break

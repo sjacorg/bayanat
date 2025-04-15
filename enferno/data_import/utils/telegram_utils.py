@@ -32,8 +32,11 @@ class TelegramImport:
         self.data_import = DataImport.query.get(data_import_id)
         self.batch_id = self.data_import.batch_id
 
-        self.channel_metadata = self.data_import.data.get("channel_metadata")
-        self.message = self.data_import.data.get("message")
+        self.info = self.data_import.data.get("info")
+
+        self.channel_metadata = self.info.get("channel_metadata")
+        self.message = self.info.get("message")
+
         self.bucket = self.data_import.data.get("bucket")
         self.folder = self.data_import.data.get("folder")
         self.s3_path = self.folder + str(self.channel_metadata.get("id")) + "/" + self.message.get("media_path")
@@ -54,8 +57,7 @@ class TelegramImport:
             if media_check_duplicates(etag=self.etag, data_import_id=self.data_import.id):
                 # log duplicate and fail
                 self.data_import.add_to_log(f"Video already exists in database.")
-                self.data_import.fail()
-                return
+                return False
 
             self.data_import.add_to_log(
                 f"Copying video file to {cfg.S3_BUCKET}/{self.filename} from {self.bucket + '/' + self.s3_path}"
@@ -65,16 +67,12 @@ class TelegramImport:
                 CopySource=self.bucket + '/' + self.s3_path,
                 Key=self.filename,
             )
+            return True
         except ClientError as e:
             self.data_import.add_to_log(f"Video file not found. {e}")
+            return False
 
     def create_bulletin(self):
-        # {
-        # "id": 703,
-        # "date": "2016-08-22T20:12:10+00:00",
-        # "text": "",
-        # "media_path": "media/ce8b1d6bed66787ebbbe5e3b2a5cf2ceebb5e09ea989f0c71cee5e55b0f00b22.jpg"
-        # },
         """
         Create a bulletin from the data.
         """
@@ -85,7 +83,7 @@ class TelegramImport:
         bulletin.publish_date = self.message.get("date")
         bulletin.comments = f"Created via Telegram import - Batch: {self.batch_id}"
         bulletin.status = "Machine Created"
-        bulletin.meta = self.data_import.data
+        bulletin.meta = self.info
 
         parent = Source.query.filter(Source.title == "Telegram").first()
         source = Source.query.filter(Source.etl_id == str(self.channel_metadata.get("id"))).first()
@@ -148,5 +146,8 @@ class TelegramImport:
         self.data_import.processing()
         self.data_import.add_to_log(f"Processing Telegram media {self.message.get('media_path')}...")
 
-        self.copy_file()
+        if not self.copy_file():
+            self.data_import.fail()
+            return
+        
         self.create_bulletin()
