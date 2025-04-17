@@ -1451,6 +1451,6 @@ def process_telegram_media(self, data_import_id: t.id) -> None:
         logger.error(f"Encountered an error while processing {data_import_id}. Retrying...")
         self.retry(exc=e, countdown=random.randrange(40, 80))
     except Exception as e:
-        logger.error(traceback.print_exc())
+        logger.error(str(traceback.print_exc()))
         log = DataImport.query.get(data_import_id)
-        log.fail(traceback.print_exc())
+        traceback.print_exc()
