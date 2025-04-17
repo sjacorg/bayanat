@@ -488,6 +488,7 @@ def import_telegram(bucket, folder):
             meta_file = meta_file["Body"].read().decode("utf-8")
             meta_file = json.loads(meta_file)
 
+            click.echo(f"Downloading channel {channel} meta file")
             messages_file = s3.get_object(
                 Bucket=bucket,
                 Key=folder + channel + "/messages.json",
@@ -499,7 +500,7 @@ def import_telegram(bucket, folder):
             # preprocess to link media 
             processed_messages = []
             temp_group = []
-
+            click.echo(f"Processing channel {channel}")
             for i, message in enumerate(messages):
                 if not message.get("text") and message.get("media_path"):
                     # media and no text implies it's linked to a previous message
@@ -513,36 +514,43 @@ def import_telegram(bucket, folder):
                     temp_group = []
                 # drop text only messages
 
+            counter = 0
             with click.progressbar(
                 processed_messages, label="Processing Telegram Channels", show_pos=True
             ) as mbar:
                 for messages in mbar:
                     try:
-                        data = {
-                            "mode": 4,  # Telegram import mode
-                            "bucket": bucket,
-                            "folder": folder,
-                            "info": {
-                                "messages": messages,
-                                "channel_metadata": meta_file,
-                            },
-                        }
+                        data_imports = []
+                        for message in messages:
+                            data = {
+                                "mode": 4,  # Telegram import mode
+                                "bucket": bucket,
+                                "folder": folder,
+                                "info": {
+                                    "message": message,
+                                    "channel_metadata": meta_file,
+                                },
+                            }
 
-                        data_import = DataImport(
-                            user_id=1,
-                            table="Bulletin",
-                            file=messages[-1]["media_path"] if len(messages) == 1 else "Group",
-                            batch_id=batch_id,
-                            data=data,
-                        )
+                            data_import = DataImport(
+                                user_id=1,
+                                table="Bulletin",
+                                file=message["media_path"],
+                                batch_id=batch_id,
+                                data=data,
+                            )
 
-                        data_import.add_to_log(
-                            f"Started processing message {messages[-1].get('id')}"
-                        )
-                        data_import.save()
+                            data_import.add_to_log(
+                                f"Started processing message {message.get('id')}"
+                            )
+                            data_import.save()
+                            data_imports.append(data_import.id)
 
                         process_telegram_media.delay(
-                            data_import_id=data_import.id,
+                            data_imports=data_imports,
                         )
+                        counter += 1
+                        if counter == 2:
+                            break
                     except Exception as e:
                         click.echo(f"Error processing message {messages[-1].get('id')}: {e}")

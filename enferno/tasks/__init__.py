@@ -1436,21 +1436,20 @@ def process_etl(self, batch_id: t.id, meta: str, data_import_id: t.id) -> None:
 
 
 from enferno.data_import.utils.telegram_utils import TelegramImport
-import traceback
-
 
 @celery.task(bind=True, max_retries=5)
-def process_telegram_media(self, data_import_id: t.id) -> None:
+def process_telegram_media(self, data_imports: list) -> None:
     try:
         di = TelegramImport(
-            data_import_id=data_import_id,
+            data_imports=data_imports,
         )
         di.process()
         return "done"
     except OperationalError as e:
-        logger.error(f"Encountered an error while processing {data_import_id}. Retrying...")
+        logger.error(f"Encountered an error while processing Telegram Imports {data_imports}. Retrying...")
         self.retry(exc=e, countdown=random.randrange(40, 80))
     except Exception as e:
-        logger.error(str(traceback.print_exc()))
-        log = DataImport.query.get(data_import_id)
-        traceback.print_exc()
+        logger.error(f"Encountered an error while processing Telegram Imports {data_imports}: {e}")
+        for log_id in data_imports:
+            log = DataImport.query.get(log_id)
+            log.fail(e)

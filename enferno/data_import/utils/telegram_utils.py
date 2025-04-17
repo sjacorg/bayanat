@@ -18,7 +18,7 @@ class TelegramImport:
     A class to handle Telegram bot interactions.
     """
 
-    def __init__(self, data_import_id):
+    def __init__(self, data_imports):
         """
         Initialize the TelegramUtils class.
 
@@ -29,20 +29,19 @@ class TelegramImport:
             data_import_id (str): The data import ID.
             file_path (str): The file path for the batch.
         """
-        self.data_import = DataImport.query.get(data_import_id)
-        self.batch_id = self.data_import.batch_id
+        self.data_imports = [DataImport.query.get(log_id) for log_id in data_imports]
 
-        self.info = self.data_import.data.get("info")
+        self.batch_id = self.data_imports[-1].batch_id
+
+        self.info = self.data_imports[-1].data.get("info")
 
         self.channel_metadata = self.info.get("channel_metadata")
-        self.messages = self.info.get("messages")
-
-        self.bucket = self.data_import.data.get("bucket")
-        self.folder = self.data_import.data.get("folder")
+        self.bucket = self.data_imports[-1].data.get("bucket")
+        self.folder = self.data_imports[-1].data.get("folder")
 
         self.medias = []
 
-    def check_file(self, s3_path):
+    def check_file(self, data_import, s3_path):
         """
         Check if the file exists in S3.
 
@@ -66,12 +65,12 @@ class TelegramImport:
             return etag, mime_type
         except ClientError as e:
             if e.response["Error"]["Code"] == "404":
-                self.data_import.add_to_log(f"File not found: {s3_path}")
+                data_import.add_to_log(f"File not found: {s3_path}")
             else:
-                self.data_import.add_to_log(f"Error checking file: {e}")
+                data_import.add_to_log(f"Error checking file: {e}")
             return False, False
 
-    def copy_file(self, s3_path, filename):
+    def copy_file(self, data_import, s3_path, filename):
         try:
             s3 = boto3.client(
                 "s3",
@@ -80,7 +79,7 @@ class TelegramImport:
                 region_name=cfg.AWS_REGION,
             )
 
-            self.data_import.add_to_log(
+            data_import.add_to_log(
                 f"Copying video file to {cfg.S3_BUCKET}/{filename} from {self.bucket + '/' + s3_path}"
             )
             s3.copy_object(
@@ -90,21 +89,25 @@ class TelegramImport:
             )
             return True
         except ClientError as e:
-            self.data_import.add_to_log(f"Failed to copy {s3_path}. {e}")
+            data_import.add_to_log(f"Failed to copy {s3_path}. {e}")
             return False
 
     def create_bulletin(self):
         """
         Create a bulletin from the data.
         """
-        self.data_import.add_to_log(f"Creating bulletin from {self.messages[-1].get('id')}...")
+        message = self.info.get("message")
+        self.data_imports[-1].add_to_log(f"Creating bulletin from{message.get("id")}...")
+        
         bulletin = Bulletin()
-        bulletin.title = self.messages[-1].get("text")[:255]
-        bulletin.description = self.messages[-1].get("text")
-        bulletin.publish_date = self.messages[-1].get("date")
+        bulletin.title = message.get("text")[:255]
+        bulletin.description = message.get("text")
+        bulletin.publish_date = message.get("date")
         bulletin.comments = f"Created via Telegram import - Batch: {self.batch_id}"
         bulletin.status = "Machine Created"
-        bulletin.meta = self.info
+
+        bulletin.source_link = f"https://t.me/{self.channel_metadata.get('username')}/{message.get('id')}"
+        bulletin.originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
 
         parent = Source.query.filter(Source.title == "Telegram").first()
         if not parent:
@@ -155,41 +158,46 @@ class TelegramImport:
                 bulletin.to_mini(),
                 "bulletin",
             )
-
-            self.data_import.add_to_log(f"Created Bulletin {bulletin.id} successfully.")
-            self.data_import.add_item(bulletin.id)
-            self.data_import.success()
+            for data_import in self.data_imports:
+                data_import.add_to_log(f"Created Bulletin {bulletin.id} successfully.")
+                data_import.add_item(bulletin.id)
+                data_import.success()
         except DatabaseException as e:
-            self.data_import.add_to_log(f"Failed to create Bulletin.")
-            self.data_import.fail(e)
+            for data_import in self.data_imports:
+                data_import.add_to_log(f"Failed to create Bulletin: {e}")
 
     def process(self):
         """
         Process the batch by copying the file and updating the database.
         """
-        self.data_import.processing()
-        self.data_import.add_to_log(f"Processing Telegram media {self.messages[-1].get('id')}...")
+        for data_import in self.data_imports:
+            data_import.processing()
+            if len(self.data_imports) > 1:
+                data_import.add_to_log(f"Main Telegram group import ID: {self.data_imports[-1].id}...")
+            
+        for data_import in self.data_imports:
+            message = data_import.data.get("info").get("message")
+            data_import.add_to_log(f"Processing Telegram media {message.get('id')}...")
 
-        for message in self.messages:
             s3_path = (
                 self.folder + str(self.channel_metadata.get("id")) + "/" + message.get("media_path")
             )
             filename = s3_path.split("/")[-1]
 
-            etag, mime_type = self.check_file(s3_path)
+            etag, mime_type = self.check_file(data_import, s3_path)
 
             if etag and mime_type:
-                if media_check_duplicates(etag, self.data_import.id):
-                    self.data_import.add_to_log(f"File {filename} already exists.")
+                if media_check_duplicates(etag, data_import.id):
+                    data_import.fail(f"File {filename} already exists.")
                     continue
             else:
-                self.data_import.add_to_log(f"File {s3_path} not found.")
+                data_import.fail(f"File {s3_path} not found.")
                 continue
 
-            copied = self.copy_file(s3_path, filename)
+            copied = self.copy_file(data_import, s3_path, filename)
 
             if not copied:
-                self.data_import.add_to_log(f"Failed to copy {s3_path}.")
+                data_import.fail(f"Failed to copy {s3_path}.")
                 continue
 
             self.medias.append(
