@@ -520,21 +520,27 @@ def import_telegram(bucket, folder):
                 for messages in mbar:
                     try:
                         data_imports = []
+                        main_id = None
+                        messages.reverse()
+                        
                         for message in messages:
                             data = {
                                 "mode": 4,  # Telegram import mode
                                 "bucket": bucket,
                                 "folder": folder,
+                                "main": main_id,
                                 "info": {
                                     "message": message,
                                     "channel_metadata": meta_file,
                                 },
                             }
 
+                            file_path = f"{bucket}/{folder}{channel}/{message['media_path']}"
+
                             data_import = DataImport(
                                 user_id=1,
-                                table="Bulletin",
-                                file=message["media_path"],
+                                table="bulletin",
+                                file=file_path,
                                 batch_id=batch_id,
                                 data=data,
                             )
@@ -543,6 +549,12 @@ def import_telegram(bucket, folder):
                                 f"Started processing message {message.get('id')}"
                             )
                             data_import.save()
+
+                            # add the first message as the main message
+                            # and the rest as linked messages
+                            if main_id is None:
+                                main_id = data_import.id
+                            
                             data_imports.append(data_import.id)
 
                         process_telegram_media.delay(

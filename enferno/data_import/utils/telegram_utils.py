@@ -31,13 +31,13 @@ class TelegramImport:
         """
         self.data_imports = [DataImport.query.get(log_id) for log_id in data_imports]
 
-        self.batch_id = self.data_imports[-1].batch_id
+        self.batch_id = self.data_imports[0].batch_id
 
-        self.info = self.data_imports[-1].data.get("info")
+        self.info = self.data_imports[0].data.get("info")
 
         self.channel_metadata = self.info.get("channel_metadata")
-        self.bucket = self.data_imports[-1].data.get("bucket")
-        self.folder = self.data_imports[-1].data.get("folder")
+        self.bucket = self.data_imports[0].data.get("bucket")
+        self.folder = self.data_imports[0].data.get("folder")
 
         self.medias = []
 
@@ -97,8 +97,8 @@ class TelegramImport:
         Create a bulletin from the data.
         """
         message = self.info.get("message")
-        self.data_imports[-1].add_to_log(f"Creating bulletin from{message.get("id")}...")
-        
+        self.data_imports[0].add_to_log(f"Creating bulletin from{message.get("id")}...")
+
         bulletin = Bulletin()
         bulletin.title = message.get("text")[:255]
         bulletin.description = message.get("text")
@@ -106,7 +106,9 @@ class TelegramImport:
         bulletin.comments = f"Created via Telegram import - Batch: {self.batch_id}"
         bulletin.status = "Machine Created"
 
-        bulletin.source_link = f"https://t.me/{self.channel_metadata.get('username')}/{message.get('id')}"
+        bulletin.source_link = (
+            f"https://t.me/{self.channel_metadata.get('username')}/{message.get('id')}"
+        )
         bulletin.originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
 
         parent = Source.query.filter(Source.title == "Telegram").first()
@@ -173,21 +175,27 @@ class TelegramImport:
         for data_import in self.data_imports:
             data_import.processing()
             if len(self.data_imports) > 1:
-                data_import.add_to_log(f"Main Telegram group import ID: {self.data_imports[-1].id}...")
-            
+                data_import.add_to_log(
+                    f"Main Telegram group import ID: {self.data_imports[0].id}..."
+                )
+
         for data_import in self.data_imports:
             message = data_import.data.get("info").get("message")
             data_import.add_to_log(f"Processing Telegram media {message.get('id')}...")
 
-            s3_path = (
-                self.folder + str(self.channel_metadata.get("id")) + "/" + message.get("media_path")
-            )
-            filename = s3_path.split("/")[-1]
+            filename = data_import.file.split("/")[-1]
+            s3_path = data_import.file.replace(f"{self.bucket}/", "")
+
+            data_import.add_to_log(f"Checking file {s3_path}...")
 
             etag, mime_type = self.check_file(data_import, s3_path)
 
             if etag and mime_type:
-                if media_check_duplicates(etag, data_import.id):
+                originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
+                if (
+                    media_check_duplicates(etag, data_import.id)
+                    or Bulletin.query.filter(Bulletin.originid == originid).first()
+                ):
                     data_import.fail(f"File {filename} already exists.")
                     continue
             else:
@@ -202,7 +210,7 @@ class TelegramImport:
 
             self.medias.append(
                 {
-                    "media_path": message.get("media_path"),
+                    "s3_path": s3_path,
                     "filename": filename,
                     "etag": etag,
                     "mime_type": mime_type,
