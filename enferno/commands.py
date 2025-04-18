@@ -514,7 +514,6 @@ def import_telegram(bucket, folder):
                     temp_group = []
                 # drop text only messages
 
-            counter = 0
             with click.progressbar(
                 processed_messages, label="Processing Telegram Channels", show_pos=True
             ) as mbar:
@@ -549,8 +548,6 @@ def import_telegram(bucket, folder):
                         process_telegram_media.delay(
                             data_imports=data_imports,
                         )
-                        counter += 1
-                        if counter == 2:
-                            break
+
                     except Exception as e:
                         click.echo(f"Error processing message {messages[-1].get('id')}: {e}")
