@@ -639,6 +639,7 @@ class MediaImport:
             # Set bulletin fields
             if video_id := info.get("id"):
                 bulletin.originid = video_id
+
             bulletin.source_link = info.get("webpage_url")
             bulletin.title = info.get("fulltitle")
             bulletin.title_ar = info.get("fulltitle")
@@ -675,8 +676,10 @@ class MediaImport:
         org_media.main = True
 
         # Set media title to video ID for web imports
+
         if is_web_import and info.get("id"):
             org_media.title = info.get("id")
+
         elif info.get("originalFilename"):
             org_media.title = info.get("originalFilename")
         else:

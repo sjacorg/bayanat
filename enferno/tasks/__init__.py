@@ -23,6 +23,7 @@ from sqlalchemy.sql.expression import func
 import yt_dlp
 from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
+from werkzeug.utils import safe_join
 
 from enferno.admin.models import (
     Bulletin,
@@ -44,7 +45,7 @@ from enferno.utils.csv_utils import convert_list_attributes
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
-from enferno.utils.data_helpers import get_file_hash
+from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
@@ -632,6 +633,40 @@ def dedup_cron() -> None:
         process_dedup.delay(data[0], data[1])
 
     update_stats()
+
+
+@celery.task
+def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
+    for file in files:
+        f = file.get("path") or file.get("filename")
+        # logging every file early in the process to track progress
+
+        # Initialize log here, outside of the if condition
+        data_import = DataImport(
+            user_id=user_id, table="bulletin", file=f, batch_id=batch_id, data=meta
+        )
+
+        if meta.get("mode") == 2:
+            # getting hash of file for deduplication
+            # server-side import doesn't automatically
+            # retrieve files' hashes
+            allowed_path = Path(cfg.ETL_ALLOWED_PATH)
+            full_path = safe_join(allowed_path, f)
+
+            data_import.file_hash = file["etag"] = get_file_hash(full_path)
+            data_import.save()
+
+            # checking for existing media or pending or processing imports
+            if media_check_duplicates(file.get("etag"), data_import.id):
+                data_import.add_to_log(f"File already exists {f}.")
+                data_import.fail()
+                continue
+
+            file["path"] = full_path
+
+        data_import.add_to_log(f"Added file {file} to import queue.")
+        # make sure we have a log id
+        etl_process_file.delay(batch_id, file, meta, user_id, data_import.id)
 
 
 @celery.task
