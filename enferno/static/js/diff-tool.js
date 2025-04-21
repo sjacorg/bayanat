@@ -8,52 +8,27 @@ const DiffTool = {
 
         const diffRecursive = (a, b, currentPath) => {
             if (Array.isArray(a) && Array.isArray(b)) {
-                // If arrays are different, include the whole array in the diff
                 if (JSON.stringify(a) !== JSON.stringify(b)) {
                     diff[currentPath] = { old: a, new: b };
                 }
             } else if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
-                // Compare objects key by key
                 const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
                 for (const key of keys) {
                     const newPath = currentPath ? `${currentPath}.${key}` : key;
                     diffRecursive(a[key], b[key], newPath);
                 }
             } else if (a !== b) {
-                // If primitive values differ, add to diff
                 diff[currentPath] = { old: a, new: b };
             }
         };
 
-        // Top-level comparison to group changes by entire objects if needed
-        if (typeof obj1 === 'object' && typeof obj2 === 'object') {
-            const keys = new Set([...Object.keys(obj1 ?? {}), ...Object.keys(obj2 ?? {})]);
-            for (const key of keys) {
-                const oldValue = obj1[key];
-                const newValue = obj2[key];
-
-                if (Array.isArray(oldValue) && Array.isArray(newValue)) {
-                    // Compare arrays as a whole
-                    if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
-                        diff[key] = { old: oldValue, new: newValue };
-                    }
-                } else if (typeof oldValue === 'object' && typeof newValue === 'object') {
-                    const nestedDiff = this.getDiff(oldValue, newValue);
-                    if (Object.keys(nestedDiff).length > 0) {
-                        diff[key] = { old: oldValue, new: newValue };
-                    }
-                } else if (oldValue !== newValue) {
-                    diff[key] = { old: oldValue, new: newValue };
-                }
-            }
-        }
-
+        diffRecursive(obj1, obj2, '');
         return diff;
     },
 
     renderDiff: function (diff, translations = {}) {
         const formatValue = (value) => {
-            if (value === undefined || value === null || value === "") return '<span style="font-style: italic;">UNSET</span>';
+            if (value === undefined || value === null || value === "") return '<span class="font-italic">UNSET</span>';
             if (Array.isArray(value)) {
                 return `${value.map(formatValue).join(', ')}`;
             }
@@ -67,24 +42,74 @@ const DiffTool = {
             return value;
         };
 
-        const translateKey = (key) => translations[key] || key;
+        const translateKey = (key) => {
+            const parts = key.split('.');
+            if (parts.length > 1) {
+                const [top, ...rest] = parts;
+                const topLabel = translations[top] || top;
+                const subPath = rest.join('.');
+                return `${topLabel} <b>(${subPath.toUpperCase()})</b>`;
+            }
+            return translations[key] || key;
+        };
 
-        const diffHtml = Object.entries(diff).map(([key, change]) => {
+        const entries = Object.entries(diff);
+
+        const diffHtml = entries.map(([key, change], index) => {
             const translatedKey = translateKey(key);
+            const isLast = index === entries.length - 1;
+            const borderClass = isLast ? '' : 'border-b';
+            const cellClass = `${borderClass} pb-1 pt-1`;
+
             if (change.old === undefined) {
-                return `<li><strong>${translatedKey}</strong>: <span style="color: green;">${formatValue(change.new)}</span></li>`;
+                return `<tr>
+                            <td class="${cellClass}">${translatedKey}</td>
+                            <td class="${cellClass}"></td>
+                            <td class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
+                        </tr>`;
             } else if (change.new === undefined) {
-                return `<li><strong>${translatedKey}</strong>: <span style="color: red;">${formatValue(change.old)}</span></li>`;
+                return `<tr>
+                            <td class="${cellClass}">${translatedKey}</td>
+                            <td class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
+                            <td class="${cellClass}"></td>
+                        </tr>`;
             } else {
-                return `<li><strong>${translatedKey}</strong>: <span style="color: red;">${formatValue(change.old)}</span> → <span style="color: green;">${formatValue(change.new)}</span></li>`;
+                return `<tr>
+                            <td class="${cellClass}">${translatedKey}</td>
+                            <td class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
+                            <td class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
+                        </tr>`;
             }
         });
 
-        return `<ul>${diffHtml.join('')}</ul>`;
+
+        return `<table class="text-left w-100" style="table-layout: fixed;">
+                    <thead>
+                        <th class="border-b pb-1 pt-1">Setting</th>
+                        <th class="border-b pb-1 pt-1">Before</th>
+                        <th class="border-b pb-1 pt-1">After</th>
+                    </thead>
+                    <tbody>
+                        ${diffHtml.join('')}
+                    </tbody>
+                </table>`;
+        // const diffHtml = Object.entries(diff).map(([key, change]) => {
+        //     const translatedKey = translateKey(key);
+        //     if (change.old === undefined) {
+        //         return `<li><strong>${translatedKey}</strong>: <span class="text-green-lighten-1">${formatValue(change.new)}</span></li>`;
+        //     } else if (change.new === undefined) {
+        //         return `<li><strong>${translatedKey}</strong>: <span class="text-red-lighten-1">${formatValue(change.old)}</span></li>`;
+        //     } else {
+        //         return `<li><strong>${translatedKey}</strong>: <span class="text-red-lighten-1">${formatValue(change.old)}</span> → <span class="text-green-lighten-1">${formatValue(change.new)}</span></li>`;
+        //     }
+        // });
+
+        // return `<ul>${diffHtml.join('')}</ul>`;
     },
 
     getAndRenderDiff(obj1 = {}, obj2 = {}, translations = {}) {
         const diff = DiffTool.getDiff(obj1, obj2);
+        console.log({obj1, obj2, diff})
         return DiffTool.renderDiff(diff, translations);
     }
 };
