@@ -891,3 +891,17 @@ div.jsondiffpatch-child-node-type-array:after {
         color: rgba(var(--v-theme-table-body), 1);
     }
 }
+.v-input .v-messages__message {
+    line-height: normal;
+}
+.v-slider-track__tick-label {
+    font-size: 0.75rem;
+    color: rgba(var(--v-theme-muted), 1);
+}
+.v-slider-track__tick {
+    border-radius: 50%;
+}
+.v-slider-thumb__surface {
+    border: 2px solid currentColor;
+    background-color: rgb(var(--v-theme-surface-light));
+}

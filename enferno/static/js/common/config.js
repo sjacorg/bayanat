@@ -18,11 +18,21 @@ const vuetifyConfig = {
                 rounded: 'none', // Reset the border radius
             },
         },
+        VBtnGroup: {
+            VBtn: {
+                class: '', // Remove the custom classes from tab buttons
+                rounded: 'none', // Reset the border radius
+            },
+        },
         VTable: {
             class: 'bayanat-table', // Remove the custom classes from tab buttons
         },
         VChip: {
             size: 'small'
+        },
+        VSwitch: {
+            color: 'primary',
+            density: 'compact'
         },
         VDataTableServer: {
             itemsPerPageOptions: window.itemsPerPageOptions,
@@ -170,6 +180,7 @@ const routes = [
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
     { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
+    { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
 
 ];
 
@@ -409,6 +420,7 @@ function parseResponse(dzFile) {
         s3url: response.filename,
         filename: response.filename,
         etag: response.etag,
+        original_filename: response.original_filename,
     };
 }
 
@@ -476,3 +488,21 @@ dataUriToBlob = function (dataURI) {
 
     return new Blob([ia], {type: mimeString});
 };
+
+// Media players
+const DEFAULT_VIDEOJS_OPTIONS = {
+    controls: true,
+    preload: 'auto',
+    playbackRates: VIDEO_RATES,
+    fluid: true,
+}
+function buildVideoElement() {
+    const videoElement = document.createElement('video');
+    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered w-100';
+    videoElement.setAttribute('crossorigin', 'anonymous');
+    videoElement.setAttribute('controls', '');
+    videoElement.setAttribute('width', '620');
+    videoElement.setAttribute('height', '348');
+
+    return videoElement;
+}
