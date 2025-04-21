@@ -655,13 +655,12 @@
             <v-card-text class="px-6">
                 <v-infinite-scroll empty-text="{{ _('No more items in history') }}" :items="revisionsState.items" @load="loadRevisions">
                     <v-timeline density="compact" side="end" align="start">
-                        <v-timeline-item v-for="(item, index) in revisionsState.items" :key="item" dot-color="primary" size="10">
+                        <v-timeline-item v-for="(item, index) in revisionsState.items" :key="index" dot-color="primary" size="10">
                             <div class="mt-n1">
                                 <div><b>@${item.user.username}</b> {{ _('updated the settings') }} <span class="text-muted">{{ _('at') }} ${getFormattedDate(item.created_at)}</span></div>
-                                <div v-if="index === 0" class="font-italic">{{ _('Current configuration') }}</div>
-                                <div v-else-if="!DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('Same as current configuration') }}</div>
+                                <div v-if="!DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('No changes in this configuration') }}</div>
                                 <show-details v-else show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
-                                    <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionsState?.items?.[index + 1]?.config, item?.config, configLabels)"></diff-renderer>
+                                    <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionsState?.items?.[index + 1]?.config, item?.config, configLabels, index)"></diff-renderer>
                                 </show-details>
                                 <v-btn v-if="index !== 0 && DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Reverse to this version') }}</v-btn>
                             </div>
@@ -1009,7 +1008,7 @@
                         } else {
                             this.revisionsState.items.push(...response.data.items);
                         }
-                        
+
                         const hasMore = this.revisionsState.items.length < response.data.total;
                         if (hasMore) this.revisionsState.pagination.page++
                         options?.done?.(hasMore ? 'ok' : 'empty');
