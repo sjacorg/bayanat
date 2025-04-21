@@ -33,9 +33,9 @@ const DiffTool = {
                 return `${value.map(formatValue).join(', ')}`;
             }
             if (typeof value === 'object') {
-                return `<ul>${Object.entries(value)
-                    .map(([key, val]) => `<li><strong>${key}</strong>: ${formatValue(val)}</li>`)
-                    .join('')}</ul>`;
+                return `<div>${Object.entries(value)
+                    .map(([key, val]) => `<div>${key}: ${formatValue(val)}</div>`)
+                    .join('')}</div>`;
             }
             if (typeof value === 'string') return `${value}`;
             if (typeof value === 'boolean') return value ? 'On' : 'Off';
@@ -93,23 +93,10 @@ const DiffTool = {
                         ${diffHtml.join('')}
                     </tbody>
                 </table>`;
-        // const diffHtml = Object.entries(diff).map(([key, change]) => {
-        //     const translatedKey = translateKey(key);
-        //     if (change.old === undefined) {
-        //         return `<li><strong>${translatedKey}</strong>: <span class="text-green-lighten-1">${formatValue(change.new)}</span></li>`;
-        //     } else if (change.new === undefined) {
-        //         return `<li><strong>${translatedKey}</strong>: <span class="text-red-lighten-1">${formatValue(change.old)}</span></li>`;
-        //     } else {
-        //         return `<li><strong>${translatedKey}</strong>: <span class="text-red-lighten-1">${formatValue(change.old)}</span> → <span class="text-green-lighten-1">${formatValue(change.new)}</span></li>`;
-        //     }
-        // });
-
-        // return `<ul>${diffHtml.join('')}</ul>`;
     },
 
     getAndRenderDiff(obj1 = {}, obj2 = {}, translations = {}) {
         const diff = DiffTool.getDiff(obj1, obj2);
-        console.log({obj1, obj2, diff})
         return DiffTool.renderDiff(diff, translations);
     }
 };
