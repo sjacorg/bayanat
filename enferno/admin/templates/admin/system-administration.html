@@ -55,14 +55,14 @@
                                     <v-row>
                                         <v-col cols="6">
                                             <h4 class="subtitle-2 mb-1">{{ _('Table settings') }}</h4>
-                                            <v-combobox multiple persistent-hint chips
+                                            <v-combobox v-bind="inputProps" multiple persistent-hint chips
                                                 hint="{{ _('Allows to load different set of items in pages that has data tables') }}"
                                                 :items="eitem.ITEMS_PER_PAGE_OPTIONS" label="{{ _('Items per page options') }}"
                                                 v-model="eitem.ITEMS_PER_PAGE_OPTIONS"></v-combobox>
                                         </v-col>
                                         <v-col cols="6">
                                             <h4 class="subtitle-2 mb-1">{{ _('Media settings') }}</h4>
-                                            <v-combobox multiple chips :items="eitem.VIDEO_RATES" persistent-hint
+                                            <v-combobox v-bind="inputProps" multiple chips :items="eitem.VIDEO_RATES" persistent-hint
                                                 hint="{{ _('Allows to play videos at different speed rates') }}"
                                                 label="{{ _('Video playback rate') }}" v-model="eitem.VIDEO_RATES"></v-combobox>
                                         </v-col>
@@ -88,25 +88,25 @@
                                         <v-sheet v-show="eitem.DEDUP_TOOL">
                                             <v-row>
                                                 <v-col cols="6">
-                                                    <v-text-field type="number" persistent-hint
+                                                    <v-text-field v-bind="inputProps" type="number" persistent-hint
                                                         hint="{{ _('Lowest value of distance to process.') }}"
                                                         label="{{ _('Deduplication low distance') }}"
                                                         v-model.number="eitem.DEDUP_LOW_DISTANCE"></v-text-field>
                                                 </v-col>
                                                 <v-col cols="6">
-                                                    <v-text-field type="number" persistent-hint
+                                                    <v-text-field v-bind="inputProps" type="number" persistent-hint
                                                         hint="{{ _('Highest value of distance to process.') }}"
                                                         label="{{ _('Deduplication max distance') }}"
                                                         v-model.number="eitem.DEDUP_MAX_DISTANCE"></v-text-field>
                                                 </v-col>
                                                 <v-col cols="6">
-                                                    <v-text-field type="number" persistent-hint
+                                                    <v-text-field v-bind="inputProps" type="number" persistent-hint
                                                         hint="{{ _('Number of matches to send for processing in every batch. Affects speed of processing and performance of the server.') }}"
                                                         label="{{ _('Deduplication batch size') }}"
                                                         v-model.number="eitem.DEDUP_BATCH_SIZE"></v-text-field>
                                                 </v-col>
                                                 <v-col cols="6">
-                                                    <v-text-field type="number" persistent-hint
+                                                    <v-text-field v-bind="inputProps" type="number" persistent-hint
                                                         hint="{{ _('Interval of batches sent for processing. Affects speed of processing and performance of the server.') }}"
                                                         label="{{ _('Deduplication interval') }}"
                                                         v-model.number="eitem.DEDUP_INTERVAL"></v-text-field>
@@ -140,31 +140,31 @@
                                             <v-sheet v-show="!eitem.FILESYSTEM_LOCAL">
                                                 <v-row>
                                                     <v-col cols="6">
-                                                        <v-text-field label="{{ _('AWS Access Key ID') }}"
+                                                        <v-text-field v-bind="inputProps" label="{{ _('AWS Access Key ID') }}"
                                                             v-model="eitem.AWS_ACCESS_KEY_ID"></v-text-field>
                                                     </v-col>
                                                     <v-col cols="6">
-                                                        <v-text-field label="{{ _('AWS Access Key Secret') }}"
+                                                        <v-text-field v-bind="inputProps" label="{{ _('AWS Access Key Secret') }}"
                                                             v-model="eitem.AWS_SECRET_ACCESS_KEY"></v-text-field>
                                                     </v-col>
                                                     <v-col cols="6">
-                                                        <v-text-field label="{{ _('S3 Bucket Name') }}"
+                                                        <v-text-field v-bind="inputProps" label="{{ _('S3 Bucket Name') }}"
                                                             v-model="eitem.S3_BUCKET"></v-text-field>
                                                     </v-col>
                                                     <v-col cols="6">
-                                                        <v-text-field label="{{ _('S3 Region') }}"
+                                                        <v-text-field v-bind="inputProps" label="{{ _('S3 Region') }}"
                                                             v-model="eitem.AWS_REGION"></v-text-field>
                                                     </v-col>
                                                 </v-row>
                                             </v-sheet>
                                         </v-slide-y-transition>
                     
-                                        <v-combobox class="mb-9" multiple chips :items="eitem.MEDIA_ALLOWED_EXTENSIONS"
+                                        <v-combobox v-bind="inputProps" class="mb-9" multiple chips :items="eitem.MEDIA_ALLOWED_EXTENSIONS"
                                             v-model="eitem.MEDIA_ALLOWED_EXTENSIONS" label="{{ _('Allowed Media Extensions') }}"
                                             persistent-hint
                                             hint="{{ _('The system will only allow files uploaded whose extensions are included in this list and reject all other extensions.') }}"></v-combobox>
                     
-                                        <v-text-field class="mb-9" v-model="eitem.MEDIA_UPLOAD_MAX_FILE_SIZE"
+                                        <v-text-field v-bind="inputProps" class="mb-9" v-model="eitem.MEDIA_UPLOAD_MAX_FILE_SIZE"
                                             label="{{ _('Media Max Upload Size') }}" persistent-hint
                                             hint="{{ _('Sets the maximum allowed file size for media uploads.') }}"></v-text-field>
                                     </div>
@@ -178,7 +178,7 @@
                                     <v-row>
                                         <v-col cols="12" lg="3">
                                             <h4 class="subtitle-2 mb-1">{{ _('Password Policies') }}</h4>
-                                            <v-text-field class="mb-9" type="number" label="{{ _('Password Minimum Length') }}"
+                                            <v-text-field v-bind="inputProps" class="mb-9" type="number" label="{{ _('Password Minimum Length') }}"
                                                 persistent-hint hint="{{ _('Minimum required length for passwords') }}" suffix="charachters"
                                                 v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
                                         </v-col>
@@ -222,7 +222,7 @@
                                             </v-switch>
                                         </v-col>
                                         <v-col cols="12" lg="4">
-                                            <v-text-field type="number" label="{{ _('Session Data Retention Period') }}" persistent-hint
+                                            <v-text-field v-bind="inputProps" type="number" label="{{ _('Session Data Retention Period') }}" persistent-hint
                                                 hint="{{ _('Period after which session data will be deleted.') }}" suffix="days"
                                                 v-model.number="eitem.SESSION_RETENTION_PERIOD"></v-text-field>
                                         </v-col>
@@ -239,10 +239,10 @@
                     
                                     <v-slide-y-transition>
                                         <v-sheet v-show="eitem.RECAPTCHA_ENABLED">
-                                            <v-text-field label="{{ _('Recaptcha Public Key') }}"
+                                            <v-text-field v-bind="inputProps" label="{{ _('Recaptcha Public Key') }}"
                                                 v-model="eitem.RECAPTCHA_PUBLIC_KEY"></v-text-field>
                     
-                                            <v-text-field label="{{ _('Recaptcha Private Key') }}"
+                                            <v-text-field v-bind="inputProps" label="{{ _('Recaptcha Private Key') }}"
                                                 v-model="eitem.RECAPTCHA_PRIVATE_KEY"></v-text-field>
                                         </v-sheet>
                                     </v-slide-y-transition>
@@ -256,13 +256,13 @@
                     
                                     <v-slide-y-transition>
                                         <v-sheet v-show="eitem.GOOGLE_OAUTH_ENABLED">
-                                            <v-text-field label="{{ _('Google Client ID') }}"
+                                            <v-text-field v-bind="inputProps" label="{{ _('Google Client ID') }}"
                                                 v-model="eitem.GOOGLE_CLIENT_ID"></v-text-field>
                     
-                                            <v-text-field label="{{ _('Google Client Secret') }}"
+                                            <v-text-field v-bind="inputProps" label="{{ _('Google Client Secret') }}"
                                                 v-model="eitem.GOOGLE_CLIENT_SECRET"></v-text-field>
                     
-                                            <v-text-field label="{{ _('Google Discovery URL') }}"
+                                            <v-text-field v-bind="inputProps" label="{{ _('Google Discovery URL') }}"
                                                 v-model="eitem.GOOGLE_DISCOVERY_URL"></v-text-field>
                                         </v-sheet>
                                     </v-slide-y-transition>
@@ -271,12 +271,12 @@
                     
                                     <v-row>
                                         <v-col cols="12" lg="4">
-                                            <v-text-field type="number" label="{{ _('Security freshness') }}" persistent-hint
+                                            <v-text-field v-bind="inputProps" type="number" label="{{ _('Security freshness') }}" persistent-hint
                                                 hint="{{ _('Secure pages will require re-authentication after this time expires.') }}"
                                                 suffix="minutes" v-model.number="eitem.SECURITY_FRESHNESS"></v-text-field>
                                         </v-col>
                                         <v-col cols="12" lg="4">
-                                            <v-text-field class="mb-9" type="number" label="{{ _('Security freshness grace period') }}"
+                                            <v-text-field v-bind="inputProps" class="mb-9" type="number" label="{{ _('Security freshness grace period') }}"
                                                 persistent-hint
                                                 hint="{{ _('Re-authentication will require a second factor after this period.') }}"
                                                 suffix="minutes" v-model.number="eitem.SECURITY_FRESHNESS_GRACE_PERIOD"></v-text-field>
@@ -444,7 +444,7 @@
                                             </v-switch>
                                         </v-col>
                                         <v-col cols="12" lg="4">
-                                            <v-text-field class="mb-9" type="number" label="{{ _('Activity Retention Period') }}"
+                                            <v-text-field v-bind="inputProps" class="mb-9" type="number" label="{{ _('Activity Retention Period') }}"
                                                 persistent-hint hint="{{ _('Period after which activities will be deleted.') }}"
                                                 suffix="days" v-model.number="eitem.ACTIVITIES_RETENTION"></v-text-field>
                                         </v-col>
@@ -492,7 +492,7 @@
                                                         hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
                                                         v-model="eitem.ETL_PATH_IMPORT"></v-switch>
                     
-                                                    <v-combobox class="mt-3" multiple chips persistent-hint
+                                                    <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
                                                         hint="{{ _('The file extensions for media, documents, and other files that are permitted for import using the Media Import Tool.') }}"
                                                         :items="eitem.ETL_VID_EXT" label="{{ _('Allowed Media Import Extensions') }}"
                                                         v-model="eitem.ETL_VID_EXT"></v-combobox>
@@ -503,7 +503,7 @@
                                                         hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This enables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
                                                         v-model="eitem.OCR_ENABLED"></v-switch>
                     
-                                                    <v-combobox class="mt-3" multiple chips persistent-hint
+                                                    <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
                                                         hint="{{ _('File extensions which will be scanned using Tesseract OCR.') }}"
                                                         :items="eitem.OCR_EXT" label="{{ _('OCR Extensions') }}"
                                                         v-model="eitem.OCR_EXT"></v-combobox>
@@ -514,7 +514,7 @@
                                                         hint="{{ _('Enables transcription of audio and video files using OpenAI\'s Whisper during import. Bayanat will need to download the specified model below from OpenAI\'s servers. However, the transcription will run locally on the Bayanat server. For more information about the models\' performance, required resources and available language please check:') }} https://github.com/openai/whisper#available-models-and-languages"
                                                         v-model="eitem.TRANSCRIPTION_ENABLED"></v-switch>
                     
-                                                    <v-combobox class="mt-3" chips persistent-hint
+                                                    <v-combobox v-bind="inputProps" class="mt-3" chips persistent-hint
                                                         hint="{{ _('Whisper model to use for transcription.') }}"
                                                         :items="whisperModelsCombo" item-value="model_name" item-title="title"
                                                         :return-object="false" label="{{ _('Whisper Model') }}"
@@ -533,7 +533,7 @@
                     
                                     <v-slide-y-transition>
                                         <v-sheet v-show="eitem.SHEET_IMPORT" class="mt-4">
-                                            <v-combobox multiple chips persistent-hint
+                                            <v-combobox v-bind="inputProps" multiple chips persistent-hint
                                                 hint="{{ _('Allowed spreadsheet extensions for Sheets Import Tool.') }}"
                                                 label="{{ _('Allowed Sheets Extensions') }}" :items="eitem.SHEETS_ALLOWED_EXTENSIONS"
                                                 v-model="eitem.SHEETS_ALLOWED_EXTENSIONS"></v-combobox>
@@ -550,12 +550,12 @@
                                         <v-sheet v-show="eitem.WEB_IMPORT" class="mt-4">
                                             <v-row>
                                                 <v-col cols="12" lg="6">
-                                                    <v-text-field label="{{ _('Web Import Proxy') }}" persistent-hint
+                                                    <v-text-field v-bind="inputProps" label="{{ _('Web Import Proxy') }}" persistent-hint
                                                         hint="{{ _('Proxy URL to use when importing media from web sources (e.g. socks5://user:pass@host:port).') }}"
                                                         v-model="eitem.YTDLP_PROXY"></v-text-field>
                                                 </v-col>
                                                 <v-col cols="12" lg="6">
-                                                    <v-textarea label="{{ _('Web Import Cookies') }}" persistent-hint
+                                                    <v-textarea v-bind="inputProps" label="{{ _('Web Import Cookies') }}" persistent-hint
                                                         hint="{{ _('Cookie data for authenticated web imports (in Netscape/Mozilla format).') }}"
                                                         auto-grow rows="1" v-model="eitem.YTDLP_COOKIES"></v-textarea>
                                                 </v-col>
@@ -563,7 +563,7 @@
                     
                                             <v-slide-y-transition>
                                                 <v-sheet>
-                                                    <v-combobox class="mt-3" multiple chips label="{{ _('Allowed Domains') }}"
+                                                    <v-combobox v-bind="inputProps" class="mt-3" multiple chips label="{{ _('Allowed Domains') }}"
                                                         persistent-hint
                                                         hint="{{ _('List of domains from which media can be imported. Check yt-dlp\'s repository (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list of supported websites.') }}"
                                                         :items="eitem.YTDLP_ALLOWED_DOMAINS" v-model="eitem.YTDLP_ALLOWED_DOMAINS">
@@ -586,7 +586,7 @@
                                             hint="{{ _('Enables exporting Actors, Bulletins and Incidents into various formats. Users with the correct permissions can request exports of items. Administrators can approve or reject these requests. Approved exports can be downloaded by the requesting user from the Exports dashboard.') }}"></v-switch>
                                         <v-slide-y-transition>
                                             <v-sheet v-show="eitem.EXPORT_TOOL">
-                                                <v-text-field type="number" label="{{ _('Export Expiry Time') }}" persistent-hint
+                                                <v-text-field v-bind="inputProps" type="number" label="{{ _('Export Expiry Time') }}" persistent-hint
                                                     hint="{{ _('Period after which exports will expired and be deleted.') }}" suffix="hours"
                                                     v-model.number="eitem.EXPORT_DEFAULT_EXPIRY"></v-text-field>
                                             </v-sheet>
@@ -599,7 +599,7 @@
                             <!-- Maps tab -->
                             <div v-if="tab === 'maps'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
-                                    <v-text-field class="mb-9" label="{{ _('Map API endpoint') }}" persistent-hint
+                                    <v-text-field v-bind="inputProps" class="mb-9" label="{{ _('Map API endpoint') }}" persistent-hint
                                         hint="{{ _('API provider for Open Street Maps tiles. By default, Bayanat uses OpenStreetMaps tiles servers. This can be changed using this setting, for example to use an offline instance of OSM.') }}"
                                         v-model="eitem.MAPS_API_ENDPOINT"></v-text-field>
                     
@@ -608,7 +608,7 @@
                                         able to show satellite imagery using Google Maps, in addition to OSM. To enable, add a Google Maps
                                         API Key.') }}</p>
                     
-                                    <v-text-field class="mb-9" label="{{ _('Google Maps API Key') }}" persistent-hint
+                                    <v-text-field v-bind="inputProps" class="mb-9" label="{{ _('Google Maps API Key') }}" persistent-hint
                                         hint="{{ _('API key for Google Maps. Adding a key enables satellite imagery in Bayanat\'s maps.') }}"
                                         v-model="eitem.GOOGLE_MAPS_API_KEY"></v-text-field>
                     
@@ -791,6 +791,9 @@
             mixins: [globalMixin],
 
             data: () => ({
+                inputProps: {
+                    variant: 'filled'
+                },
                 tab: window.location.hash.replace('#', ''),
                 drawer: drawer,
                 eitem: {
