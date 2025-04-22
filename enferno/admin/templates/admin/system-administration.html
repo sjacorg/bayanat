@@ -659,7 +659,7 @@
                             <div class="mt-n1">
                                 <div><b>@${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Current configuration)') }}</b> <span class="text-muted">{{ _('at') }} ${getFormattedDate(item.created_at)}</span></div>
                                 <div v-if="index > 0 && !DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('No changes in this configuration') }}</div>
-                                <show-details v-else show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
+                                <show-details v-else-if="DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
                                     <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionsState?.items?.[index + 1]?.config, item?.config, configLabels)"></diff-renderer>
                                 </show-details>
                                 <v-btn v-if="index !== 0 && DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Reverse to this version') }}</v-btn>
@@ -949,8 +949,19 @@
                 },
                 
                 showRevertConfigDiff() {
-                    this.configDiff = DiffTool.getAndRenderDiff(this.eitem, this.defaultConfig?.config, this.defaultConfig.labels);
+                    this.configDiff = DiffTool.getAndRenderDiff(this.convertEmptyStringsToNulls(this.eitem), this.defaultConfig?.config, this.defaultConfig.labels);
                     this.revertChangesDialog = true;
+                },
+                convertEmptyStringsToNulls(obj) {
+                    if(obj === "") return null;
+                    if (Array.isArray(obj)) {
+                        return obj.map(this.convertEmptyStringsToNulls);
+                    } else if (typeof obj === "object" && obj !== null) {
+                        return Object.fromEntries(
+                            Object.entries(obj).map(([key, value]) => [key, this.convertEmptyStringsToNulls(value)])
+                        );
+                    }
+                    return obj;
                 },
 
                 adaptResponse(eitem) {
