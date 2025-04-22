@@ -137,22 +137,22 @@
                                         </v-btn-toggle>
                     
                                         <v-slide-y-transition>
-                                            <v-sheet v-show="!eitem.FILESYSTEM_LOCAL">
+                                            <v-sheet v-show="!eitem.FILESYSTEM_LOCAL" class="mb-9">
                                                 <v-row>
                                                     <v-col cols="6">
-                                                        <v-text-field v-bind="inputProps" label="{{ _('AWS Access Key ID') }}"
+                                                        <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('AWS Access Key ID') }}"
                                                             v-model="eitem.AWS_ACCESS_KEY_ID"></v-text-field>
                                                     </v-col>
                                                     <v-col cols="6">
-                                                        <v-text-field v-bind="inputProps" label="{{ _('AWS Access Key Secret') }}"
+                                                        <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('AWS Access Key Secret') }}"
                                                             v-model="eitem.AWS_SECRET_ACCESS_KEY"></v-text-field>
                                                     </v-col>
                                                     <v-col cols="6">
-                                                        <v-text-field v-bind="inputProps" label="{{ _('S3 Bucket Name') }}"
+                                                        <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('S3 Bucket Name') }}"
                                                             v-model="eitem.S3_BUCKET"></v-text-field>
                                                     </v-col>
                                                     <v-col cols="6">
-                                                        <v-text-field v-bind="inputProps" label="{{ _('S3 Region') }}"
+                                                        <v-text-field v-bind="inputProps" hide-details="auto" label="{{ _('S3 Region') }}"
                                                             v-model="eitem.AWS_REGION"></v-text-field>
                                                     </v-col>
                                                 </v-row>
@@ -792,7 +792,7 @@
 
             data: () => ({
                 inputProps: {
-                    variant: 'filled'
+                    variant: 'filled',
                 },
                 tab: window.location.hash.replace('#', ''),
                 drawer: drawer,
