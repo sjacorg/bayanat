@@ -26,9 +26,9 @@ const DiffTool = {
         return diff;
     },
 
-    renderDiff: function (diff, translations = {}) {
+    renderDiff: function (diff, labels = {}) {
         const formatValue = (value) => {
-            if (value === undefined || value === null || value === "") return '<span class="font-italic">UNSET</span>';
+            if (value === undefined || value === null || value === "") return `<span class="font-italic">${window?.translations?.unset_ ?? 'UNSET'}</span>`;
             if (Array.isArray(value)) {
                 return `${value.map(formatValue).join(', ')}`;
             }
@@ -38,19 +38,25 @@ const DiffTool = {
                     .join('')}</div>`;
             }
             if (typeof value === 'string') return `${value}`;
-            if (typeof value === 'boolean') return value ? 'On' : 'Off';
+            if (typeof value === 'boolean') return value ? `${window?.translations?.on_ ?? 'On'}` : `${window?.translations?.off_ ?? 'Off'}`;
             return value;
         };
 
         const translateKey = (key) => {
-            const parts = key.split('.');
+            const parts = key.toUpperCase().split('.');
             if (parts.length > 1) {
-                const [top, ...rest] = parts;
-                const topLabel = translations[top] || top;
-                const subPath = rest.join('.');
-                return `${topLabel} <b>(${subPath.toUpperCase()})</b>`;
+                const nextKey = key.toUpperCase().replaceAll('.', '_')
+                if (labels[nextKey]) {
+                    return labels[nextKey]
+                } else {
+                    const [top, ...rest] = parts;
+                    const topLabel = labels[top] || top;
+                    const subPath = rest.join('.');
+                    return `${topLabel} <b>(${subPath})</b>`;
+                }
+
             }
-            return translations[key] || key;
+            return labels[key] || key;
         };
 
         const entries = Object.entries(diff);
@@ -59,35 +65,34 @@ const DiffTool = {
             const translatedKey = translateKey(key);
             const isLast = index === entries.length - 1;
             const borderClass = isLast ? '' : 'border-b';
-            const cellClass = `${borderClass} pb-1 pt-1`;
+            const cellClass = `${borderClass} pa-1`;
 
             if (change.old === undefined) {
                 return `<tr>
-                            <td class="${cellClass}">${translatedKey}</td>
+                            <td class="${cellClass} text-caption">${translatedKey}</td>
                             <td class="${cellClass}"></td>
                             <td class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
                         </tr>`;
             } else if (change.new === undefined) {
                 return `<tr>
-                            <td class="${cellClass}">${translatedKey}</td>
+                            <td class="${cellClass} text-caption">${translatedKey}</td>
                             <td class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
                             <td class="${cellClass}"></td>
                         </tr>`;
             } else {
                 return `<tr>
-                            <td class="${cellClass}">${translatedKey}</td>
+                            <td class="${cellClass} text-caption">${translatedKey}</td>
                             <td class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
                             <td class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
                         </tr>`;
             }
         });
 
-
-        return `<table class="text-left w-100" style="table-layout: fixed;">
+        return `<table class="text-left w-100" style="table-layout: fixed; border-collapse: collapse;">
                     <thead>
-                        <th class="border-b pb-1 pt-1">Setting</th>
-                        <th class="border-b pb-1 pt-1">Before</th>
-                        <th class="border-b pb-1 pt-1">After</th>
+                        <th class="border-b pa-1">${window?.translations?.setting_ ?? 'Setting'}</th>
+                        <th class="border-b pa-1">${window?.translations?.before_ ?? 'Before'}</th>
+                        <th class="border-b pa-1">${window?.translations?.after_ ?? 'After'}</th>
                     </thead>
                     <tbody>
                         ${diffHtml.join('')}
@@ -95,8 +100,8 @@ const DiffTool = {
                 </table>`;
     },
 
-    getAndRenderDiff(obj1 = {}, obj2 = {}, translations = {}) {
+    getAndRenderDiff(obj1 = {}, obj2 = {}, labels = {}) {
         const diff = DiffTool.getDiff(obj1, obj2);
-        return DiffTool.renderDiff(diff, translations);
+        return DiffTool.renderDiff(diff, labels);
     }
 };
