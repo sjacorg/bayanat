@@ -1,15 +1,17 @@
+name: pip-audit
+
 on:
   pull_request: {}
+  workflow_dispatch: {}
   push:
     branches:
-    - main
-    - prod
-    - dev
+      - main
+      - stable
     paths:
-    - requirements.txt
+      - requirements/requirements.txt
   schedule:
-  - cron: 19 20 * * *
-name: pip-audit
+    - cron: 19 20 * * *
+
 jobs:
   selftest:
     name: pip-audit
@@ -21,4 +23,4 @@ jobs:
           sudo apt install libimage-exiftool-perl
       - uses: pypa/gh-action-pip-audit@v1.0.8
         with:
-          inputs: requirements.txt dev-requirements.txt
+          inputs: requirements/main.txt requirements/dev.txt requirements/opt.txt

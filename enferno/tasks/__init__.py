@@ -16,12 +16,14 @@ import pandas as pd
 import requests
 from celery import Celery, chain
 from celery.schedules import crontab
+from celery.signals import worker_ready, worker_process_init
 from packaging import version
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 import yt_dlp
 from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
+from werkzeug.utils import safe_join
 
 from enferno.admin.models import (
     Bulletin,
@@ -43,7 +45,7 @@ from enferno.utils.csv_utils import convert_list_attributes
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
-from enferno.utils.data_helpers import get_file_hash
+from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
@@ -69,15 +71,35 @@ celery.conf.add_defaults(cfg)
 
 logger = get_logger("celery.tasks")
 
+# Global variable to store the Flask app instance
+_flask_app = None
+
+
+@worker_process_init.connect
+def init_worker_process(**kwargs):
+    """Initialize the Flask app when the worker process starts."""
+    global _flask_app
+    if _flask_app is None:
+        from enferno.app import create_app
+
+        _flask_app = create_app(cfg)
+        logger.info("Flask app initialized for worker process")
+
 
 # Class to run tasks within application's context
 class ContextTask(celery.Task):
     abstract = True
 
     def __call__(self, *args, **kwargs):
-        from enferno.app import create_app
+        global _flask_app
+        if _flask_app is None:
+            # Lazy load the app if it hasn't been initialized yet
+            from enferno.app import create_app
 
-        with create_app(cfg).app_context():
+            _flask_app = create_app(cfg)
+            logger.info("Flask app lazy-loaded in task context")
+
+        with _flask_app.app_context():
             return super(ContextTask, self).__call__(*args, **kwargs)
 
 
@@ -609,6 +631,40 @@ def dedup_cron() -> None:
         process_dedup.delay(data[0], data[1])
 
     update_stats()
+
+
+@celery.task
+def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
+    for file in files:
+        f = file.get("path") or file.get("filename")
+        # logging every file early in the process to track progress
+
+        # Initialize log here, outside of the if condition
+        data_import = DataImport(
+            user_id=user_id, table="bulletin", file=f, batch_id=batch_id, data=meta
+        )
+
+        if meta.get("mode") == 2:
+            # getting hash of file for deduplication
+            # server-side import doesn't automatically
+            # retrieve files' hashes
+            allowed_path = Path(cfg.ETL_ALLOWED_PATH)
+            full_path = safe_join(allowed_path, f)
+
+            data_import.file_hash = file["etag"] = get_file_hash(full_path)
+            data_import.save()
+
+            # checking for existing media or pending or processing imports
+            if media_check_duplicates(file.get("etag"), data_import.id):
+                data_import.add_to_log(f"File already exists {f}.")
+                data_import.fail()
+                continue
+
+            file["path"] = full_path
+
+        data_import.add_to_log(f"Added file {file} to import queue.")
+        # make sure we have a log id
+        etl_process_file.delay(batch_id, file, meta, user_id, data_import.id)
 
 
 @celery.task
@@ -1234,6 +1290,33 @@ def regenerate_locations() -> None:
         Location.regenerate_all_full_locations()
     finally:
         rds.delete(Location.CELERY_FLAG)
+
+
+@celery.task
+def load_whisper_model():
+    try:
+        # check if whisper is already downloaded
+        whisper_model = cfg.WHISPER_MODEL
+        if os.path.exists(
+            os.path.expanduser(f"~/.cache/whisper/{whisper_model}.pt")
+        ) and os.path.isfile(os.path.expanduser(f"~/.cache/whisper/{whisper_model}.pt")):
+            logger.info("Whisper model already downloaded")
+            return
+        logger.info("Downloading Whisper model...")
+        import whisper
+
+        whisper.load_model(whisper_model)
+        logger.info("Whisper model loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load Whisper model: {e}")
+
+
+@worker_ready.connect
+def load_whisper_model_on_startup(sender, **kwargs):
+    if cfg.TRANSCRIPTION_ENABLED:
+        load_whisper_model.delay()
+    else:
+        logger.info("Whisper model not loaded, transcription is disabled")
 
 
 @celery.task

@@ -200,7 +200,7 @@
     <script src="/static/js/videojs/video.min.js"></script>
 
 {% if config.GOOGLE_MAPS_API_KEY %}
-    {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+    {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
 {% endif %}
 <script src="/static/js/Leaflet.GoogleMutant.js"></script>
 
@@ -289,10 +289,6 @@
       dialog(val) {
         val || this.close();
       },
-
-      options: {
-        handler: "refresh"
-      }
     },
 
     mounted () {

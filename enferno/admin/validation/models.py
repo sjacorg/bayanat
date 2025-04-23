@@ -1702,6 +1702,8 @@ class FullConfigValidationModel(ConfigValidationModel):
     ADV_ANALYSIS: bool
     SETUP_COMPLETE: bool = Field(default=True)
     LOCATIONS_INCLUDE_POSTAL_CODE: bool
+    TRANSCRIPTION_ENABLED: bool
+    WHISPER_MODEL: Optional[str] = None
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
@@ -1709,6 +1711,17 @@ class FullConfigValidationModel(ConfigValidationModel):
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        return values
+
+    @model_validator(mode="before")
+    def validate_whisper_model(cls, values):
+        if values.get("TRANSCRIPTION_ENABLED"):
+            if not values.get("WHISPER_MODEL"):
+                raise ValueError("WHISPER_MODEL must be provided if TRANSCRIPTION_ENABLED is True")
+            if values.get("WHISPER_MODEL") and values.get("WHISPER_MODEL") not in [
+                model["model_name"] for model in Constants.WHISPER_MODEL_OPTS
+            ]:
+                raise ValueError("Invalid Whisper Model")
         return values
 
     @field_validator("ITEMS_PER_PAGE_OPTIONS")
