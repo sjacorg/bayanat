@@ -667,7 +667,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_IP.in_app_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_IP.in_app_enabled"></v-switch>
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_IP.email_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_IP.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will log all Actors, Bulletins and Incidents viewed by users.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user logs in from a new IP address.') }}</p>
                                             </v-col>
 
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -676,7 +676,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.PASSWORD_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.PASSWORD_CHANGE.in_app_enabled"></v-switch>
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.PASSWORD_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.PASSWORD_CHANGE.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will log all Actors, Bulletins and Incidents viewed by users.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user changes their password.') }}</p>
                                             </v-col>
 
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -685,7 +685,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.in_app_enabled"></v-switch>
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will log Actors, Bulletins, Incidents and all other secondary items edited by users.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user sets up or updates 2FA.') }}</p>
                                             </v-col>
                                             
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -694,7 +694,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.in_app_enabled"></v-switch>
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all secondary items deleted by authorized users. Note: Actors, Bulletins and Incidents cannot be deleted.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user updates recovery codes.') }}</p>
                                             </v-col>
                                             
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -703,7 +703,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.in_app_enabled"></v-switch>
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all items peer-viewed by authorized users.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _("Notify when a password reset is enforced.") }}</p>
                                             </v-col>
                                         </v-row>
                                     
@@ -720,7 +720,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.NEW_USER.email_locked" v-model="eitem.NOTIFICATIONS.NEW_USER.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all files uploaded users to media storage.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new user account is created.') }}</p>
                                             </v-col>
                                         
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -731,7 +731,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.UPDATE_USER.email_locked" v-model="eitem.NOTIFICATIONS.UPDATE_USER.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an existing user is updated.') }}</p>
                                             </v-col>
                                         
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -742,7 +742,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.NEW_GROUP.email_locked" v-model="eitem.NOTIFICATIONS.NEW_GROUP.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new group is created.') }}</p>
                                             </v-col>
                                         
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -753,7 +753,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all files uploaded users to media storage.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when system settings are updated.') }}</p>
                                             </v-col>
                                         
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -764,7 +764,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY.email_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify on login from a new country.') }}</p>
                                             </v-col>
 
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -775,7 +775,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION.email_locked" v-model="eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an unauthorized action is attempted.') }}</p>
                                             </v-col>
 
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -786,7 +786,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all files uploaded users to media storage.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an admin updates security credentials.') }}</p>
                                             </v-col>
                                             
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -797,7 +797,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}"
                                                         :disabled="eitem.NOTIFICATIONS.ITEM_DELETED.email_locked" v-model="eitem.NOTIFICATIONS.ITEM_DELETED.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when items are deleted from the system.') }}</p>
                                             </v-col>
                                         </v-row>
 
@@ -813,7 +813,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.NEW_EXPORT.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.NEW_EXPORT.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all files uploaded users to media storage.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new export is created.') }}</p>
                                             </v-col>
 
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -824,7 +824,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.EXPORT_APPROVED.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.EXPORT_APPROVED.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an export is approved.') }}</p>
                                             </v-col>
                                         </v-row>
 
@@ -841,7 +841,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.NEW_BATCH.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.NEW_BATCH.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all files uploaded users to media storage.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new import batch is created.') }}</p>
                                             </v-col>
                                         </v-row>
 
@@ -857,7 +857,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.BATCH_STATUS.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.BATCH_STATUS.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all files uploaded users to media storage.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify the admin of their batch result.') }}</p>
                                             </v-col>
 
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -868,7 +868,7 @@
                                                     <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify the admin of the status of their bulk operations.') }}</p>
                                             </v-col>
                                         </v-row>
 
@@ -886,7 +886,7 @@
                                                         :disabled="eitem.NOTIFICATIONS.NEW_ASSIGNMENT.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.NEW_ASSIGNMENT.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all files uploaded users to media storage.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users when they’re assigned a new task.') }}</p>
                                             </v-col>
                                         
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -899,7 +899,7 @@
                                                         :disabled="eitem.NOTIFICATIONS.REVIEW_NEEDED.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.REVIEW_NEEDED.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users when their review is requested.') }}</p>
                                             </v-col>
 
                                             <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
@@ -912,7 +912,7 @@
                                                         :disabled="eitem.NOTIFICATIONS.WEB_IMPORT_STATUS.email_locked"
                                                         v-model="eitem.NOTIFICATIONS.WEB_IMPORT_STATUS.email_enabled"></v-switch>
                                                 </div>
-                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}</p>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users about their web import status.') }}</p>
                                             </v-col>
                                         </v-row>
                                     </v-card>
