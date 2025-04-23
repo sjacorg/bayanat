@@ -1,2 +1,2 @@
 pytesseract==0.3.13
-openai-whisper
+openai-whisper==20240930
