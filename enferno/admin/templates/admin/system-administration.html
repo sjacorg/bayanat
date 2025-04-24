@@ -661,7 +661,7 @@
                                     <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                         <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for all users') }}</h4>
                                         <v-row>
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Login from new IP') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_IP.in_app_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_IP.in_app_enabled"></v-switch>
@@ -670,7 +670,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user logs in from a new IP address.') }}</p>
                                             </v-col>
 
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Change password') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.PASSWORD_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.PASSWORD_CHANGE.in_app_enabled"></v-switch>
@@ -679,7 +679,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user changes their password.') }}</p>
                                             </v-col>
 
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Add/Change 2FA') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.in_app_enabled"></v-switch>
@@ -688,7 +688,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user sets up or updates 2FA.') }}</p>
                                             </v-col>
                                             
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Add/Change recovery codes') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.in_app_enabled"></v-switch>
@@ -697,7 +697,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user updates recovery codes.') }}</p>
                                             </v-col>
                                             
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Force password change') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.in_app_enabled"></v-switch>
@@ -712,7 +712,7 @@
                                         <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for all admins') }}</h4>
                                         <h5 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Security') }}</h5>
                                         <v-row>
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New user') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -723,7 +723,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new user account is created.') }}</p>
                                             </v-col>
                                         
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Update user') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -734,7 +734,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an existing user is updated.') }}</p>
                                             </v-col>
                                         
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New group') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -745,7 +745,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new group is created.') }}</p>
                                             </v-col>
                                         
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('System settings change') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -756,7 +756,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when system settings are updated.') }}</p>
                                             </v-col>
                                         
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Login by a user from new country') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -767,7 +767,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify on login from a new country.') }}</p>
                                             </v-col>
 
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Unauthorized action') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -778,7 +778,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an unauthorized action is attempted.') }}</p>
                                             </v-col>
 
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Admin security credentials change') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -789,7 +789,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an admin updates security credentials.') }}</p>
                                             </v-col>
                                             
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Deleted items') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -805,7 +805,7 @@
 
                                         <h5 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Export') }}</h5>
                                         <v-row>
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New export') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.NEW_EXPORT.in_app_locked"
@@ -816,7 +816,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new export is created.') }}</p>
                                             </v-col>
 
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Approved export') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.EXPORT_APPROVED.in_app_locked"
@@ -832,7 +832,7 @@
                                         
                                         <h5 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Media and Sheet Import') }}</h5>
                                         <v-row>
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New batch') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -849,7 +849,7 @@
                                         
                                         <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for individual admins (the ones they carried out the action)') }}</h4>
                                         <v-row>
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Batch status (complete, fail)') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.BATCH_STATUS.in_app_locked"
@@ -860,7 +860,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify the admin of their batch result.') }}</p>
                                             </v-col>
 
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Bulk ops status') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.in_app_locked"
@@ -876,7 +876,7 @@
                                         
                                         <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for individual users (the ones they carried out the action)') }}</h4>
                                         <v-row>
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New assignment') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -889,7 +889,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users when they’re assigned a new task.') }}</p>
                                             </v-col>
                                         
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Review needed') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
@@ -902,7 +902,7 @@
                                                 <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users when their review is requested.') }}</p>
                                             </v-col>
 
-                                            <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                                 <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Web Import status') }}</h4>
                                                 <div class="d-flex ga-10">
                                                     <v-switch color="primary" hide-details label="{{ _('In-app') }}"
