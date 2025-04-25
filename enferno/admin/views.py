@@ -5779,6 +5779,7 @@ def api_notifications() -> Response:
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
     status = request.args.get("status")
+    is_urgent = request.args.get("is_urgent")
 
     # Query notifications for current user, ordered by creation date descending
     notifications_query = (
@@ -5795,6 +5796,10 @@ def api_notifications() -> Response:
             notifications_query = notifications_query.filter(Notification.read_status == True)
         elif status.lower() == "unread":
             notifications_query = notifications_query.filter(Notification.read_status == False)
+
+    if is_urgent is not None:
+        is_urgent_bool = is_urgent.lower() == "true"
+        notifications_query = notifications_query.filter(Notification.is_urgent.is_(is_urgent_bool))
 
     # Paginate the results
     paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
