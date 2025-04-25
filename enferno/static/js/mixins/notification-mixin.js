@@ -34,7 +34,7 @@ const notificationMixin = {
 
     this.notificationIntervalId = setInterval(this.refetchNotifications, 60_000);
 
-    if (localStorage.getItem('just_logged_in') === 'true') {
+    if (localStorage.getItem('show_important_notifications') === 'true') {
       const response = await this.loadImportantNotifications()
 
       if (response.data.items.length) {
@@ -57,7 +57,7 @@ const notificationMixin = {
       }))
       this.isMarkingAsReadImportantNotifications = false;
       this.isImportantNotificationsDialogVisible = false;
-      localStorage.removeItem('just_logged_in');
+      localStorage.removeItem('show_important_notifications');
     },
     toggleNotificationsDialog() {
       // Toggle the notifications dialog
