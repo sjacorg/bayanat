@@ -5,7 +5,8 @@ const NotificationsList = Vue.defineComponent({
         'hasMoreNotifications',
         'isLoadingMoreNotifications',
         'maxTitleLines',
-        'maxSubtitleLines'
+        'maxSubtitleLines',
+        'hideScrollFeedback'
     ],
     emits: ['readNotification', 'loadNotifications'],
     data() {
@@ -104,21 +105,23 @@ const NotificationsList = Vue.defineComponent({
                 </v-card>
             </v-container>
 
-            <v-btn
-                v-if="notifications?.length && hasMoreNotifications"
-                :loading="isLoadingMoreNotifications"
-                block
-                rounded="0"
-                height="48"
-                variant="text"
-                @click="$emit('loadNotifications')"
-            >
-                {{ translations.loadMore_ }}
-            </v-btn>
+            <template v-if="!hideScrollFeedback">
+                <v-btn
+                    v-if="notifications?.length && hasMoreNotifications"
+                    :loading="isLoadingMoreNotifications"
+                    block
+                    rounded="0"
+                    height="48"
+                    variant="text"
+                    @click="$emit('loadNotifications')"
+                >
+                    {{ translations.loadMore_ }}
+                </v-btn>
 
-            <v-container v-else-if="!hasMoreNotifications && notifications?.length" class="text-center text-caption py-3">
-                {{ translations.noMoreNotificationsToLoad_ }}
-            </v-container>
+                <v-container v-else-if="!hasMoreNotifications && notifications?.length" class="text-center text-caption py-3">
+                    {{ translations.noMoreNotificationsToLoad_ }}
+                </v-container>
+            </template>
         </div>
     `
 });

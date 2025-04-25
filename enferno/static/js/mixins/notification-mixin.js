@@ -9,12 +9,15 @@ const notificationMixin = {
   },
   data: () => ({
     // notifications drawer
+    isImportantNotificationsDialogVisible: false,
     isInitialLoadingNotifications: false,
+    isMarkingAsReadImportantNotifications: false,
     isLoadingMoreNotifications: false,
     isNotificationsDrawerVisible: false,
     isNotificationsDialogFullscreen: false,
     isNotificationsDialogVisible: false,
     unreadNotificationsCount: 0,
+    importantNotifications: [],
     notifications: null,
     totalNotifications: 0,
     hasMoreNotifications: false,
@@ -26,16 +29,36 @@ const notificationMixin = {
     notificationIntervalId: null
   }),
 
-  created () {
+  async mounted () {
     this.refetchNotifications();
 
     this.notificationIntervalId = setInterval(this.refetchNotifications, 60_000);
+
+    if (localStorage.getItem('just_logged_in') === 'true') {
+      const response = await this.loadImportantNotifications()
+
+      if (response.data.items.length) {
+        this.importantNotifications = response.data.items
+        this.isImportantNotificationsDialogVisible = true;
+      }
+
+    }
   },
   beforeUnmount() {
     clearInterval(this.notificationIntervalId);
   },
 
   methods: {
+    async markAsReadImportantNotifications() {
+      // TODO: Mark as read important notifications
+      this.isMarkingAsReadImportantNotifications = true;
+      await Promise.all(this.importantNotifications.map(async notification => {
+        await this.readNotification(notification)
+      }))
+      this.isMarkingAsReadImportantNotifications = false;
+      this.isImportantNotificationsDialogVisible = false;
+      localStorage.removeItem('just_logged_in');
+    },
     toggleNotificationsDialog() {
       // Toggle the notifications dialog
       this.isNotificationsDialogVisible = !this.isNotificationsDialogVisible;
@@ -72,6 +95,17 @@ const notificationMixin = {
         per_page: 10,
       };
       this.notifications = [];
+    },
+    async loadImportantNotifications() {
+      try {
+        // Construct query parameters
+        const response = await axios.get(`/admin/api/notifications?is_urgent=true&status=unread`);
+
+        return response
+      } catch (error) {
+        const errorMessage = error?.response?.data?.message || error.message || "Failed to load notifications";
+        this.showSnack(errorMessage);
+      }
     },
     async loadNotifications(options) {
       // Prevent concurrent loading or invalid state
@@ -126,19 +160,21 @@ const notificationMixin = {
       // Validate the notification object and its status
       if (!nextNotification?.id || nextNotification?.read_status) return;
 
+      // Find the matching important notification
+      const matchingImportantNotification = this.importantNotifications?.find(
+        notification => notification.id === nextNotification.id
+      );
       // Find the matching notification
-      const matchingNotification = this.notifications.find(
+      const matchingNotification = this.notifications?.find(
         notification => notification.id === nextNotification.id
       );
 
       // Update the read status if the notification is found
-      if (matchingNotification) {
-        matchingNotification.read_status = true;
+      if (matchingImportantNotification) matchingImportantNotification.read_status = true;
+      if (matchingNotification) matchingNotification.read_status = true;
 
-        // Decrement unread notifications count
-        if (this.unreadNotificationsCount > 0) {
-          this.unreadNotificationsCount -= 1;
-        }
+      if (matchingNotification || matchingImportantNotification) {
+        this.decrementNotificationsCount()
       }
 
       const notificationId = nextNotification.id
@@ -154,6 +190,11 @@ const notificationMixin = {
       if (!this.notifications) return;
       this.loadNotifications({ page: 1 });
     },
+    decrementNotificationsCount() {
+      if (this.unreadNotificationsCount > 0) {
+        this.unreadNotificationsCount -= 1;
+      }
+    }
   },
   watch: {
     currentNotificationTab() {
