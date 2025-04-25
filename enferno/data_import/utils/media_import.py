@@ -351,7 +351,7 @@ class MediaImport:
             self.data_import.add_to_log("Failed to transcribe video.")
             self.data_import.add_to_log(str(e))
             return None
-        
+
     def web_import(self, file: dict) -> Optional[Any]:
         self.data_import.add_to_log(f"Processing web import {file.get('filename')}...")
 
@@ -364,9 +364,7 @@ class MediaImport:
         if youtube_info:
             info.update(youtube_info)
             # Use YouTube title for bulletin
-            info["bulletinTitle"] = youtube_info.get(
-                "title", os.path.splitext(file.get("name"))[0]
-            )
+            info["bulletinTitle"] = youtube_info.get("title", os.path.splitext(file.get("name"))[0])
 
         # Get file extension and duration
         _, ext = os.path.splitext(filename)
@@ -385,7 +383,7 @@ class MediaImport:
         info["etag"] = file.get("etag")
 
         self.data_import.add_to_log("Metadata parsed successfully.")
-        
+
         return info
 
     def server_import(self, file: dict) -> Optional[Any]:
@@ -410,7 +408,7 @@ class MediaImport:
         title, ext = os.path.splitext(old_filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])      
+            self.data_import.add_format(info["file_ext"])
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -443,7 +441,7 @@ class MediaImport:
         _, ext = os.path.splitext(filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])     
+            self.data_import.add_format(info["file_ext"])
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -452,7 +450,7 @@ class MediaImport:
         info["filepath"] = filepath
 
         info["etag"] = file.get("etag")
-        
+
         return info
 
     def process(self, file: str) -> Optional[Any]:
@@ -485,7 +483,7 @@ class MediaImport:
             self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
             return
-        
+
         mime_type = info.get("File:MIMEType")
 
         # get duration and optimize if video
@@ -532,7 +530,7 @@ class MediaImport:
 
         if text_content:
             info["text_content"] = text_content
-        
+
         if transcription:
             info["transcription"] = transcription
 
@@ -595,29 +593,40 @@ class MediaImport:
 
             source = None
             # Attempt to find existing source
-            if uploader:
-                source = (
+
+            source = (
+                (
                     Source.query.filter(Source.etl_id == uploader_id).first()
-                    or Source.query.filter(Source.title == uploader).first()
+                    if uploader_id
+                    else False
                 )
-                if not source:
-                    words = []
-                    if uploader_url:
-                        words.append(f"%{uploader_url}%")
-                    if channel_id:
-                        words.append(f"%{channel_id}%")
-                    if channel_url:
-                        words.append(f"%{channel_url}%")
-                    if channel:
-                        words.append(f"%{channel}%")
-                    if words:
-                        source = Source.query.filter(Source.comments.ilike(any_(words))).first()
+                or (
+                    Source.query.filter(Source.etl_id == channel_id).first()
+                    if channel_id
+                    else False
+                )
+                or (Source.query.filter(Source.title == uploader).first() if uploader else False)
+                or (Source.query.filter(Source.title == channel).first() if channel else False)
+            )
+
+            if not source:
+                words = []
+                if uploader_url:
+                    words.append(f"%{uploader_url}%")
+                if channel_id:
+                    words.append(f"%{channel_id}%")
+                if channel_url:
+                    words.append(f"%{channel_url}%")
+                if channel:
+                    words.append(f"%{channel}%")
+                if words:
+                    source = Source.query.filter(Source.comments.ilike(any_(words))).first()
 
             # Create new source if none found
             if not source:
                 source = Source()
-                source.title = uploader
-                source.etl_id = uploader_id
+                source.title = uploader if uploader else channel
+                source.etl_id = uploader_id if uploader_id else channel_id
                 source.parent = main_source
 
                 # Build comments only with available info
