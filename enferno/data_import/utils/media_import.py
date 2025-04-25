@@ -613,29 +613,40 @@ class MediaImport:
 
             source = None
             # Attempt to find existing source
-            if uploader:
-                source = (
+
+            source = (
+                (
                     Source.query.filter(Source.etl_id == uploader_id).first()
-                    or Source.query.filter(Source.title == uploader).first()
+                    if uploader_id
+                    else False
                 )
-                if not source:
-                    words = []
-                    if uploader_url:
-                        words.append(f"%{uploader_url}%")
-                    if channel_id:
-                        words.append(f"%{channel_id}%")
-                    if channel_url:
-                        words.append(f"%{channel_url}%")
-                    if channel:
-                        words.append(f"%{channel}%")
-                    if words:
-                        source = Source.query.filter(Source.comments.ilike(any_(words))).first()
+                or (
+                    Source.query.filter(Source.etl_id == channel_id).first()
+                    if channel_id
+                    else False
+                )
+                or (Source.query.filter(Source.title == uploader).first() if uploader else False)
+                or (Source.query.filter(Source.title == channel).first() if channel else False)
+            )
+
+            if not source:
+                words = []
+                if uploader_url:
+                    words.append(f"%{uploader_url}%")
+                if channel_id:
+                    words.append(f"%{channel_id}%")
+                if channel_url:
+                    words.append(f"%{channel_url}%")
+                if channel:
+                    words.append(f"%{channel}%")
+                if words:
+                    source = Source.query.filter(Source.comments.ilike(any_(words))).first()
 
             # Create new source if none found
             if not source:
                 source = Source()
-                source.title = uploader
-                source.etl_id = uploader_id
+                source.title = uploader if uploader else channel
+                source.etl_id = uploader_id if uploader_id else channel_id
                 source.parent = main_source
 
                 # Build comments only with available info
