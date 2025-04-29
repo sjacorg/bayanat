@@ -230,6 +230,7 @@ def register_commands(app):
     app.cli.add_command(commands.apply_migrations)
     app.cli.add_command(commands.generate_config)
     app.cli.add_command(commands.backup_db)
+    app.cli.add_command(commands.restore_db)
 
 
 def register_errorhandlers(app):

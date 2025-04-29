@@ -571,3 +571,96 @@ def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]
         logger.error(f"Error creating database backup: {str(e)}")
         click.echo(f"Error creating database backup: {str(e)}")
         return None
+
+
+@click.command()
+@click.argument("backup_file", type=click.Path(exists=True))
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the restore operation", default=3600, type=int
+)
+@with_appcontext
+def restore_db(backup_file: str, timeout: int = 3600) -> bool:
+    """
+    Restore PostgreSQL database from a backup file.
+
+    Args:
+        backup_file: Path to the backup file
+        timeout: Timeout in seconds for the restore operation (default: 3600)
+
+    Returns:
+        True if restoration was successful, False otherwise
+    """
+    logger.info(f"Restoring database from backup: {backup_file}")
+    click.echo(f"Restoring database from backup: {backup_file}")
+
+    # Get database URI from app config
+    db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not db_uri:
+        logger.error("Database URI not found in application config.")
+        click.echo("Error: Database URI not found in application config.")
+        return False
+
+    # Parse the database URI
+    db_info = parse_pg_uri(db_uri)
+
+    # Build the pg_restore command for custom format
+    cmd = ["pg_restore", "--clean", "--if-exists"]
+
+    # Add database name if present
+    if db_info["dbname"]:
+        cmd.extend(["-d", db_info["dbname"]])
+
+    # Add connection parameters only if they exist
+    if db_info["username"]:
+        cmd.extend(["-U", db_info["username"]])
+
+    if db_info["host"]:
+        cmd.extend(["-h", db_info["host"]])
+
+    if db_info["port"]:
+        cmd.extend(["-p", db_info["port"]])
+
+    # Add the backup file
+    cmd.append(backup_file)
+
+    # Execute the command
+    try:
+        # Set PGPASSWORD environment variable if password exists
+        env = os.environ.copy()
+        if db_info["password"]:
+            env["PGPASSWORD"] = db_info["password"]
+
+        logger.info(f"Running database restore command: {' '.join(cmd)}")
+        click.echo("Restoring database... This may take a while.")
+
+        # Run the command with timeout
+        process = subprocess.run(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+            timeout=timeout,
+        )
+
+        if process.returncode == 0:
+            logger.info("Database restored successfully.")
+            click.echo("Database restored successfully.")
+            return True
+        else:
+            logger.error(f"Database restoration failed: {process.stderr}")
+            click.echo(f"Database restoration failed: {process.stderr}")
+            return False
+    except subprocess.TimeoutExpired:
+        logger.error(f"Database restoration timed out after {timeout} seconds")
+        click.echo(f"Database restoration timed out after {timeout} seconds")
+        return False
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Database restoration failed: {e.stderr}")
+        click.echo(f"Database restoration failed: {e.stderr}")
+        return False
+    except Exception as e:
+        logger.error(f"Error restoring database: {str(e)}")
+        click.echo(f"Error restoring database: {str(e)}")
+        return False
