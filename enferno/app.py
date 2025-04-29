@@ -217,10 +217,10 @@ def register_commands(app):
     Args:
         app: Flask application instance
     """
-    app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create_db)
     app.cli.add_command(commands.import_data)
     app.cli.add_command(commands.install)
+    app.cli.add_command(commands.clean)
     app.cli.add_command(commands.create)
     app.cli.add_command(commands.add_role)
     app.cli.add_command(commands.reset)
@@ -229,6 +229,7 @@ def register_commands(app):
     app.cli.add_command(commands.mark_migrations_applied)
     app.cli.add_command(commands.apply_migrations)
     app.cli.add_command(commands.generate_config)
+    app.cli.add_command(commands.backup_db)
 
 
 def register_errorhandlers(app):

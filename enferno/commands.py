@@ -9,6 +9,8 @@ from flask.cli import AppGroup
 from flask.cli import with_appcontext
 from flask_security.utils import hash_password
 from flask import current_app
+from pathlib import Path
+from typing import Optional
 
 from enferno.settings import Config
 from enferno.extensions import db
@@ -470,3 +472,102 @@ def parse_pg_uri(db_uri: str) -> dict:
         logger.error(f"Error parsing database URI: {e}")
 
     return result
+
+
+@click.command()
+@click.option("--output", "-o", help="Custom output file path for the backup", default=None)
+@click.option(
+    "--timeout", "-t", help="Timeout in seconds for the backup operation", default=300, type=int
+)
+@with_appcontext
+def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]:
+    """
+    Create a backup of the PostgreSQL database.
+
+    Args:
+        output: Optional custom output path for the backup file
+        timeout: Timeout in seconds for the backup operation (default: 300)
+
+    Returns:
+        Path to the created backup file or None if backup failed
+    """
+    logger.info("Creating database backup.")
+
+    # Get timestamp for the backup filename
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Create backup directory if it doesn't exist
+    backup_dir = Path(current_app.root_path) / ".." / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    # Get database URI from app config
+    db_uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not db_uri:
+        logger.error("Database URI not found in application config.")
+        click.echo("Error: Database URI not found in application config.")
+        return None
+
+    # Parse the database URI
+    db_info = parse_pg_uri(db_uri)
+
+    # Use provided output path or create one in backups directory
+    if output:
+        backup_file = output
+    else:
+        # Put timestamp at the beginning for better sorting
+        backup_file = str(backup_dir / f"{timestamp}_bayanat_backup.dump")
+
+    # Build the pg_dump command with custom format (compressed)
+    cmd = ["pg_dump", "-Fc", "-f", backup_file]
+
+    # Add connection parameters only if they exist
+    if db_info["username"]:
+        cmd.extend(["-U", db_info["username"]])
+
+    if db_info["host"]:
+        cmd.extend(["-h", db_info["host"]])
+
+    if db_info["port"]:
+        cmd.extend(["-p", str(db_info["port"])])
+
+    # Add database name
+    if db_info["dbname"]:
+        cmd.append(db_info["dbname"])
+
+    # Execute the command
+    try:
+        # Set PGPASSWORD environment variable if password exists
+        env = os.environ.copy()
+        if db_info["password"]:
+            env["PGPASSWORD"] = db_info["password"]
+
+        logger.info(f"Running database backup command: {' '.join(cmd)}")
+        click.echo(f"Creating database backup at: {backup_file}")
+
+        # Run the command with timeout
+        process = subprocess.run(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+            timeout=timeout,
+        )
+
+        logger.info(f"Database backup created successfully at {backup_file}")
+        click.echo(f"Database backup created successfully at {backup_file}")
+        return backup_file
+
+    except subprocess.TimeoutExpired:
+        logger.error(f"Database backup timed out after {timeout} seconds")
+        click.echo(f"Database backup timed out after {timeout} seconds")
+        return None
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Database backup failed: {e.stderr}")
+        click.echo(f"Database backup failed: {e.stderr}")
+        return None
+    except Exception as e:
+        logger.error(f"Error creating database backup: {str(e)}")
+        click.echo(f"Error creating database backup: {str(e)}")
+        return None
