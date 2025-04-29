@@ -2,10 +2,13 @@
 """Click commands."""
 import os
 import sys
+import datetime
+import subprocess
 import click
 from flask.cli import AppGroup
 from flask.cli import with_appcontext
 from flask_security.utils import hash_password
+from flask import current_app
 
 from enferno.settings import Config
 from enferno.extensions import db
@@ -21,6 +24,7 @@ from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from enferno.admin.models import MigrationHistory
 from sqlalchemy import event, MetaData, text
+from sqlalchemy.engine.url import make_url
 from natsort import natsorted
 
 logger = get_logger()
@@ -434,3 +438,35 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
+
+
+def parse_pg_uri(db_uri: str) -> dict:
+    """
+    Parse a PostgreSQL connection URI into its components using SQLAlchemy.
+
+    Args:
+        db_uri: The PostgreSQL connection URI
+
+    Returns:
+        Dictionary with connection parameters
+    """
+
+    # Initialize with empty values
+    result = {"username": None, "password": None, "host": None, "port": None, "dbname": None}
+
+    # Handle empty URI
+    if not db_uri:
+        logger.warning("Empty database URI provided")
+        return result
+
+    try:
+        url = make_url(db_uri)
+        result["username"] = url.username
+        result["password"] = url.password
+        result["host"] = url.host
+        result["port"] = url.port
+        result["dbname"] = url.database
+    except Exception as e:
+        logger.error(f"Error parsing database URI: {e}")
+
+    return result
