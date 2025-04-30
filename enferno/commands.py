@@ -664,3 +664,39 @@ def restore_db(backup_file: str, timeout: int = 3600) -> bool:
         logger.error(f"Error restoring database: {str(e)}")
         click.echo(f"Error restoring database: {str(e)}")
         return False
+
+
+@click.command(name="lock")
+@click.option("--reason", "-r", help="Reason for maintenance", default="System maintenance")
+@with_appcontext
+def enable_maintenance(reason):
+    """
+    Enable maintenance mode (lock the application).
+
+    Args:
+        reason: Reason for enabling maintenance mode
+    """
+    from enferno.utils.maintenance import enable_maintenance as em
+
+    if em(reason):
+        click.echo("Maintenance mode enabled. System is locked.")
+        logger.info("Maintenance mode enabled via CLI.")
+    else:
+        click.echo("Failed to enable maintenance mode.")
+        logger.error("Failed to enable maintenance mode via CLI.")
+
+
+@click.command(name="unlock")
+@with_appcontext
+def disable_maintenance():
+    """
+    Disable maintenance mode (unlock the application).
+    """
+    from enferno.utils.maintenance import disable_maintenance as dm
+
+    if dm():
+        click.echo("Maintenance mode disabled. System is unlocked.")
+        logger.info("Maintenance mode disabled via CLI.")
+    else:
+        click.echo("Failed to disable maintenance mode.")
+        logger.error("Failed to disable maintenance mode via CLI.")
