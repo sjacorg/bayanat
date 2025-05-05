@@ -29,20 +29,10 @@ const notificationMixin = {
     notificationIntervalId: null
   }),
 
-  async mounted () {
+  async mounted() {
     this.refetchNotifications();
 
     this.notificationIntervalId = setInterval(this.refetchNotifications, 60_000);
-
-    if (localStorage.getItem('show_important_notifications') === 'true') {
-      const response = await this.loadImportantNotifications()
-
-      if (response.data.items.length) {
-        this.importantNotifications = response.data.items
-        this.isImportantNotificationsDialogVisible = true;
-      }
-
-    }
   },
   beforeUnmount() {
     clearInterval(this.notificationIntervalId);
@@ -57,7 +47,6 @@ const notificationMixin = {
       }))
       this.isMarkingAsReadImportantNotifications = false;
       this.isImportantNotificationsDialogVisible = false;
-      localStorage.removeItem('show_important_notifications');
     },
     toggleNotificationsDialog() {
       // Toggle the notifications dialog
@@ -101,6 +90,11 @@ const notificationMixin = {
         // Construct query parameters
         const response = await axios.get(`/admin/api/notifications?is_urgent=true&status=unread`);
 
+        if (response?.data?.items?.length) {
+          this.importantNotifications = response.data.items
+          this.isImportantNotificationsDialogVisible = true;
+        }
+
         return response
       } catch (error) {
         const errorMessage = error?.response?.data?.message || error.message || "Failed to load notifications";
@@ -131,7 +125,12 @@ const notificationMixin = {
         const response = await axios.get(`/admin/api/notifications?${queryParams.toString()}`);
 
         // Destructure response data
-        const { items: nextNotifications = [], total, hasMore } = response?.data || {};
+        const { items: nextNotifications = [], total, hasMore, unreadCount = 0, hasUnreadUrgentNotifications = false } = response?.data || {};
+
+        this.unreadNotificationsCount = unreadCount
+        if (hasUnreadUrgentNotifications) {
+          this.loadImportantNotifications()
+        }
 
         // Update state
         this.notifications = [...(this.notifications || []), ...nextNotifications];
@@ -183,6 +182,9 @@ const notificationMixin = {
     async fetchUnreadNotificationCount() {
       const response = await axios.get('/admin/api/notifications/unread/count');
       this.unreadNotificationsCount = response?.data?.unread_count ?? 0;
+      if (Boolean(response?.data?.has_unread_urgent_notifications)) {
+        await this.loadImportantNotifications()
+      }
     },
     async refetchNotifications() {
       this.fetchUnreadNotificationCount();
