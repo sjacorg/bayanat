@@ -5803,11 +5803,18 @@ def api_notifications() -> Response:
 
     # Paginate the results
     paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
-    unread_count = (
+    unread_notifications = (
         db.session.query(Notification)
-        .filter(Notification.user_id == current_user.id, Notification.read_status == False)
-        .count()
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.read_status == False,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
+        .all()
     )
+
+    unread_count = len(unread_notifications)
+    has_unread_urgent_notifications = any(n.is_urgent for n in unread_notifications)
 
     response = {
         "items": [notification.to_dict() for notification in paginated_notifications.items],
@@ -5816,6 +5823,7 @@ def api_notifications() -> Response:
         "total": paginated_notifications.total,
         "hasMore": paginated_notifications.has_next,
         "unreadCount": unread_count,
+        "hasUnreadUrgentNotifications": has_unread_urgent_notifications,
     }
 
     return jsonify(response)
@@ -5824,23 +5832,33 @@ def api_notifications() -> Response:
 @admin.route("/api/notifications/unread/count")
 def api_notifications_unread_count() -> Response:
     """
-    Endpoint to get the count of unread notifications for the current user.
+    Returns the count of unread internal notifications for the current user,
+    and whether any of them are marked as urgent.
 
-    Returns:
-        - JSON response containing the count of unread notifications
-        Example: {"unread_count": 5}
+    Example response:
+    {
+        "unread_count": 5,
+        "has_unread_urgent_notifications": true
+    }
     """
-    unread_count = (
+    # Get all relevant unread internal notifications for the current user
+    unread_notifications = (
         db.session.query(Notification)
         .filter(
             Notification.user_id == current_user.id,
             Notification.read_status == False,
             Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
         )
-        .count()
+        .all()
     )
 
-    return jsonify({"unread_count": unread_count})
+    unread_count = len(unread_notifications)
+    has_unread_urgent_notifications = any(n.is_urgent for n in unread_notifications)
+
+    return jsonify({
+        "unread_count": unread_count,
+        "has_unread_urgent_notifications": has_unread_urgent_notifications
+    })
 
 
 @admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
