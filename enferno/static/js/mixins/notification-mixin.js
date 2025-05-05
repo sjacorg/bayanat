@@ -87,6 +87,8 @@ const notificationMixin = {
     },
     async loadImportantNotifications() {
       try {
+        if (this.isImportantNotificationsDialogVisible) return;
+
         // Construct query parameters
         const response = await axios.get(`/admin/api/notifications?is_urgent=true&status=unread`);
 
