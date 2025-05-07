@@ -77,14 +77,6 @@ const notificationMixin = {
         }
       }
     },
-    resetNotificationsState() {
-      this.hasMoreNotifications = false;
-      this.notificationsPagination = {
-        page: 1,
-        per_page: 10,
-      };
-      this.notifications = [];
-    },
     async loadImportantNotifications() {
       try {
         if (this.isImportantNotificationsDialogVisible) return;
@@ -111,7 +103,10 @@ const notificationMixin = {
         // Set appropriate loading state
         if (options?.page === 1) {
           this.isInitialLoadingNotifications = true;
-          this.resetNotificationsState();
+          this.notificationsPagination = {
+            page: 1,
+            per_page: 10,
+          };
         } else {
           this.isLoadingMoreNotifications = true;
         }
@@ -125,6 +120,13 @@ const notificationMixin = {
         // Construct query parameters
         const queryParams = new URLSearchParams(nextOptions);
         const response = await axios.get(`/admin/api/notifications?${queryParams.toString()}`);
+
+        if (!response?.data) return
+
+        if (options?.page === 1) {
+          this.notifications = [];
+          this.hasMoreNotifications = false;
+        }
 
         // Destructure response data
         const { items: nextNotifications = [], total, hasMore, unreadCount = 0, hasUnreadUrgentNotifications = false } = response?.data || {};
@@ -183,6 +185,9 @@ const notificationMixin = {
     },
     async fetchUnreadNotificationCount() {
       const response = await axios.get('/admin/api/notifications/unread/count');
+
+      if (!response?.data) return
+
       this.unreadNotificationsCount = response?.data?.unread_count ?? 0;
       if (Boolean(response?.data?.has_unread_urgent_notifications)) {
         await this.loadImportantNotifications()
