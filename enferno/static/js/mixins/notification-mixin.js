@@ -82,7 +82,7 @@ const notificationMixin = {
         if (this.isImportantNotificationsDialogVisible) return;
 
         // Construct query parameters
-        const response = await axios.get(`/admin/api/notifications?is_urgent=true&status=unread`);
+        const response = await axios.get(`/admin/api/notifications?is_urgent=true&status=unread&per_page=30`);
 
         if (response?.data?.items?.length) {
           this.importantNotifications = response.data.items
