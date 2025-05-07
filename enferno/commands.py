@@ -326,7 +326,7 @@ from enferno.data_import.models import DataImport
 def import_docs(file) -> None:
     """Import the docs."""
     click.echo("Importing docs.")
-    from enferno.data_import.utils.docs_utils import DocImport
+    from enferno.data_import.utils.docs_import import DocImport
     from enferno.tasks import process_doc
 
     import pandas as pd
@@ -446,6 +446,7 @@ import boto3
 
 
 from enferno.tasks import process_telegram_media
+from enferno.data_import.utils.telegram_utils import parse_html_messages
 
 
 @click.command()
@@ -489,14 +490,32 @@ def import_telegram(bucket, folder):
             meta_file = json.loads(meta_file)
 
             click.echo(f"Downloading channel {channel} meta file")
-            messages_file = s3.get_object(
-                Bucket=bucket,
-                Key=folder + channel + "/messages.json",
-            )
+            try:
+                messages_file = s3.get_object(
+                    Bucket=bucket,
+                    Key=folder + channel + "/messages.json",
+                )
 
-            messages = messages_file["Body"].read().decode("utf-8")
-            messages = json.loads(messages)
+                messages = messages_file["Body"].read().decode("utf-8")
+                messages = json.loads(messages)
 
+            except Exception as e:
+                click.echo(f"Channel {channel} has no messages JSON file... Looking for HTML file")
+
+                try:
+                    messages_file = s3.get_object(
+                        Bucket=bucket,
+                        Key=folder + channel + "/messages.html",
+                    )
+                    html = messages_file["Body"].read().decode("utf-8")
+                    
+                    messages = parse_html_messages(html)
+                    click.echo(f"Parsed {len(messages)} messages from HTML file")
+
+                except Exception as e:
+                    click.echo(f"Channel {channel} has no messages HTML file... Skipping")
+                    continue
+                
             # preprocess to link media 
             processed_messages = []
             temp_group = []
