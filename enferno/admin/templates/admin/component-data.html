@@ -28,7 +28,7 @@
 
                             <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                 <div v-if="tabState.child === 'administrative-levels'">
-                                    <editable-table height="calc(100vh - 628px)" title="{{ _('Location Administrative Levels') }}"
+                                    <editable-table :height="`calc(100vh - ${showLalWarning ? '701px' : '628px'})`" title="{{ _('Location Administrative Levels') }}"
                                         :item-headers="alHeaders" :editable-columns="['title']"
                                         :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
                                         delete-endpoint="/admin/api/location-admin-level"
@@ -76,11 +76,10 @@
                                             </v-btn>
                                         </div>
                                         <div>
-                                            <v-card class="pa-2 mt-5 mb-3" color="info" v-if="showLalWarning">
-                                                <v-card-text>
+                                            <v-card class="mt-5" color="info" v-if="showLalWarning">
+                                                <v-card-text class="d-flex align-center ga-2" style="line-height: 1;">
                                                     <v-icon>mdi-information</v-icon>
-                                                    {{ _('You must Re-generate Full Location Texts for the new
-                                                    format to take effect.') }}
+                                                    {{ _('You must Re-generate Full Location Texts for the new format to take effect.') }}
                                                 </v-card-text>
                                             </v-card>
                                         </div>
