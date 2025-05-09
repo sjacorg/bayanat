@@ -523,16 +523,18 @@ def import_telegram(bucket, folder):
             temp_group = []
             click.echo(f"Processing channel {channel}")
             for i, message in enumerate(messages):
+                date = arrow.get(message["date"]).datetime
+                if temp_group:
+                    # check if the last message in the group is more than 2 second old
+                    old_date = arrow.get(temp_group[-1]["date"]).datetime
+                    if date - old_date > timedelta(seconds=2):
+                        # if the difference is more than 2 second, it's a new group
+                        processed_messages.append(temp_group)
+                        temp_group = []
+
                 if not message.get("text") and message.get("media_path"):
                     # media and no text implies it's linked to a previous message
                     # append the last message to the group
-                    date = arrow.get(message["date"]).datetime
-                    if temp_group:
-                        old_date = arrow.get(temp_group[-1]["date"]).datetime
-                        if date - old_date > timedelta(seconds=2):
-                            # if the difference is more than 1 second, it's a new group
-                            processed_messages.append(temp_group)
-                            temp_group = []
                     temp_group.append(message)
                 elif message.get("text") and message.get("media_path"):
                     # end of the threat
