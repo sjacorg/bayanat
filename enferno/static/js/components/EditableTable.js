@@ -92,7 +92,6 @@ const EditableTable = Vue.defineComponent({
 
     this.loadItems();
   },
-  mixins: [globalMixin],
   methods: {
     loadItems() {
       axios
