@@ -523,11 +523,13 @@ def import_telegram(bucket, folder):
             temp_group = []
             click.echo(f"Processing channel {channel}")
             for i, message in enumerate(messages):
-                if temp_group:
+                if len(temp_group) > 0:
                     # check if the last message in the group is more than 2 second old
                     current_time = arrow.get(message["date"]).datetime
                     previous_time = arrow.get(temp_group[-1]["date"]).datetime
-                    if current_time - previous_time > timedelta(seconds=2):
+                    difference = previous_time - current_time
+
+                    if difference > timedelta(seconds=2):
                         # if the difference is more than 2 second, it's a new group
                         processed_messages.append(temp_group)
                         temp_group = []

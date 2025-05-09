@@ -99,8 +99,9 @@ class TelegramImport:
         self.data_imports[0].add_to_log(f"Creating bulletin from{message.get("id")}...")
 
         bulletin = Bulletin()
-        bulletin.title = message.get("text")[:255]
-        bulletin.description = message.get("text")
+        message_text = message.get("text") if message.get("text") else ""
+        bulletin.title = message_text[:255]
+        bulletin.description = message_text
         bulletin.publish_date = message.get("date")
         bulletin.comments = f"Created via Telegram import - Batch: {self.batch_id}"
         bulletin.status = "Machine Created"
