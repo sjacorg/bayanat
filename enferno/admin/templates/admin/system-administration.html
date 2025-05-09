@@ -1180,7 +1180,7 @@
 
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
-                        this.eitem = res.data.config;
+                        this.eitem = this.omitNotificationCategories(res?.data?.config);
                         this.configLabels = res.data.labels;
                         this.$root.showSnack(this.translations.defaultsLoaded_);
                     }).catch(err => {
@@ -1189,6 +1189,24 @@
                     }).finally(() => {
                         this.loading = false;
                     })
+                },
+
+                omitNotificationCategories(obj) {
+                    if(!obj.NOTIFICATIONS || typeof obj.NOTIFICATIONS !== 'object') return obj;
+
+                    const result = { ...obj, NOTIFICATIONS: {} };
+
+                    for (const key in obj.NOTIFICATIONS) {
+                        const entry = obj.NOTIFICATIONS[key];
+                        if (typeof entry === 'object' && entry !== null) {
+                            const { category, ...rest } = entry;
+                            result.NOTIFICATIONS[key] = rest;
+                        } else {
+                            result.NOTIFICATIONS[key] = entry; // Preserve non-object values
+                        }
+                    }
+
+                    return result;
                 },
 
                 revertVersion(config) {
@@ -1268,7 +1286,7 @@
                 loadConfiguration() {
                     this.loading = true;
                     axios.get('/admin/api/configuration/').then(res => {
-                        this.eitem = res.data.config;
+                        this.eitem = this.omitNotificationCategories(res?.data?.config);
                         this.configLabels = res.data.labels;
                         // also store the configuration in a persistent var
                         this.exconfig = JSON.parse(JSON.stringify(this.eitem));
