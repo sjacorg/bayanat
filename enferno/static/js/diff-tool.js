@@ -27,15 +27,23 @@ const DiffTool = {
     },
 
     renderDiff: function (diff, labels = {}) {
-        const formatValue = (value) => {
+        const formatValue = (value, options) => {
             if (value === undefined || value === null || value === "") return `<span class="font-italic">${window?.translations?.unset_ ?? 'UNSET'}</span>`;
             if (Array.isArray(value)) {
                 return `${value.map(formatValue).join(', ')}`;
             }
             if (typeof value === 'object') {
-                return `<div>${Object.entries(value)
-                    .map(([key, val]) => `<div>${key}: ${formatValue(val)}</div>`)
-                    .join('')}</div>`;
+                const childEntries = Object.entries(value)
+                
+                return `<ul>${childEntries
+                    .map(([key, val], index) => {
+                        const isLast = index === childEntries.length - 1
+                        const indentClass = options?.hasParent ? 'ml-2' : '';
+                        const marginClass = options?.hasParent || isLast ? '' : 'mb-2';
+
+                        return `<li class="${[indentClass, marginClass].filter(Boolean).join(' ')}">${key.toUpperCase()}: ${formatValue(val, { hasParent: true })}</li>`
+                    })
+                    .join('')}</ul>`;
             }
             if (typeof value === 'string') return `${value}`;
             if (typeof value === 'boolean') return value ? `${window?.translations?.on_ ?? 'On'}` : `${window?.translations?.off_ ?? 'Off'}`;
@@ -51,7 +59,7 @@ const DiffTool = {
                 } else {
                     const [top, ...rest] = parts;
                     const topLabel = labels[top] || top;
-                    const subPath = rest.join('.');
+                    const subPath = rest.join(' → ');
                     return `${topLabel} <b>(${subPath})</b>`;
                 }
 
@@ -59,31 +67,32 @@ const DiffTool = {
             return labels[key] || key;
         };
 
-        const entries = Object.entries(diff);
+        const diffEntries = Object.entries(diff);
 
-        const diffHtml = entries.map(([key, change], index) => {
+        const diffHtml = diffEntries.map(([key, change], index) => {
             const translatedKey = translateKey(key);
-            const isLast = index === entries.length - 1;
+            const isLast = index === diffEntries.length - 1;
             const borderClass = isLast ? '' : 'border-b';
             const cellClass = `${borderClass} pa-1`;
+            const cellStyle = `vertical-align: top;`;
 
             if (change.old === undefined) {
                 return `<tr>
-                            <td class="${cellClass} text-caption">${translatedKey}</td>
-                            <td class="${cellClass}"></td>
-                            <td class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
+                            <td style="${cellStyle}" class="${cellClass} text-caption">${translatedKey}</td>
+                            <td style="${cellStyle}" class="${cellClass}"></td>
+                            <td style="${cellStyle}" class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
                         </tr>`;
             } else if (change.new === undefined) {
                 return `<tr>
-                            <td class="${cellClass} text-caption">${translatedKey}</td>
-                            <td class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
-                            <td class="${cellClass}"></td>
+                            <td style="${cellStyle}" class="${cellClass} text-caption">${translatedKey}</td>
+                            <td style="${cellStyle}" class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
+                            <td style="${cellStyle}" class="${cellClass}"></td>
                         </tr>`;
             } else {
                 return `<tr>
-                            <td class="${cellClass} text-caption">${translatedKey}</td>
-                            <td class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
-                            <td class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
+                            <td style="${cellStyle}" class="${cellClass} text-caption">${translatedKey}</td>
+                            <td style="${cellStyle}" class="${cellClass} text-red-lighten-1">${formatValue(change.old)}</td>
+                            <td style="${cellStyle}" class="${cellClass} text-green-lighten-1">${formatValue(change.new)}</td>
                         </tr>`;
             }
         });
