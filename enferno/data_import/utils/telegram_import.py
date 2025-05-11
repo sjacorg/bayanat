@@ -139,7 +139,7 @@ class TelegramImport:
             media = Media()
             media.main = True
             media.title = m.get("filename")
-            media.media_file = m.get("filename")
+            media.media_file = m.get("new_filename")
             media.etag = m.get("etag")
             media.media_file_type = m.get("mime_type")
 
@@ -201,8 +201,9 @@ class TelegramImport:
             else:
                 data_import.fail(f"File {s3_path} not found.")
                 continue
-
-            copied = self.copy_file(data_import, s3_path, filename)
+            
+            new_filename = Media.generate_file_name(filename)
+            copied = self.copy_file(data_import, s3_path, new_filename)
 
             if not copied:
                 data_import.fail(f"Failed to copy {s3_path}.")
@@ -212,6 +213,7 @@ class TelegramImport:
                 {
                     "s3_path": s3_path,
                     "filename": filename,
+                    "new_filename": new_filename,
                     "etag": etag,
                     "mime_type": mime_type,
                 }
