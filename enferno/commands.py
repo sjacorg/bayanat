@@ -453,9 +453,10 @@ from enferno.data_import.utils.telegram_utils import parse_html_messages
 
 @click.command()
 @with_appcontext
-@click.argument("bucket")
-@click.argument("folder")
-def import_telegram(bucket, folder):
+@click.argument("bucket", required=True)
+@click.argument("folder", default="", required=False)
+@click.option("--html", is_flag=True, help="Use HTML files instead of JSON", default=False)
+def import_telegram(bucket, folder, html):
 
     s3 = boto3.client(
         "s3",
@@ -464,7 +465,7 @@ def import_telegram(bucket, folder):
         region_name=Config.AWS_REGION,
     )
 
-    if not folder.endswith("/"):
+    if folder and not folder.endswith("/"):
         folder += "/"
 
     objects = s3.list_objects_v2(
@@ -482,41 +483,60 @@ def import_telegram(bucket, folder):
     with click.progressbar(channels, label="Processing Telegram Channels", show_pos=True) as cbar:
         for channel in cbar:
             # get meta file
-            meta_file = s3.get_object(
-                Bucket=bucket,
-                Key=folder + channel + "/meta.json",
-            )
+            try:
+                meta_file = s3.get_object(
+                    Bucket=bucket,
+                    Key=folder + channel + "/meta.json",
+                )
+            except Exception as e:
+                click.echo(f"Channel {channel} has no meta file... Skipping")
+                continue
 
             # read the file
             meta_file = meta_file["Body"].read().decode("utf-8")
             meta_file = json.loads(meta_file)
 
             click.echo(f"Downloading channel {channel} meta file")
-            try:
-                messages_file = s3.get_object(
-                    Bucket=bucket,
-                    Key=folder + channel + "/messages.json",
-                )
-
-                messages = messages_file["Body"].read().decode("utf-8")
-                messages = json.loads(messages)
-
-            except Exception as e:
-                click.echo(f"Channel {channel} has no messages JSON file... Looking for HTML file")
-
+            if not html:
                 try:
                     messages_file = s3.get_object(
                         Bucket=bucket,
-                        Key=folder + channel + "/messages.html",
+                        Key=folder + channel + "/messages.json",
                     )
-                    html = messages_file["Body"].read().decode("utf-8")
-                    
-                    messages = parse_html_messages(html)
-                    click.echo(f"Parsed {len(messages)} messages from HTML file")
-
                 except Exception as e:
+                    click.echo(f"Channel {channel} has no messages JSON file... Skipping")
+                    continue
+                messages = messages_file["Body"].read().decode("utf-8")
+                messages = json.loads(messages)
+            else:
+                prefix = folder + channel + "/"
+                objects = s3.list_objects_v2(
+                    Bucket=bucket,
+                    Prefix=prefix,
+                    Delimiter="/",
+                )
+
+                html_files = [x["Key"] for x in objects.get("Contents", []) if x["Key"].endswith(".html")]
+
+                if not html_files:
                     click.echo(f"Channel {channel} has no messages HTML file... Skipping")
                     continue
+
+                messages = []
+
+                for file in html_files:
+                    click.echo(f"Downloading {file}")
+                    messages_file = s3.get_object(
+                        Bucket=bucket,
+                        Key=file,
+                    )
+                    html_file = messages_file["Body"].read().decode("utf-8")
+                    
+                    messages.extend(parse_html_messages(html_file))
+                    click.echo(f"Parsed {len(messages)} messages from HTML file")
+                
+                # Sort messages by reverse id
+                messages.sort(key=lambda x: int(x["id"]), reverse=True)
                 
             # preprocess to link media 
             processed_messages = []
@@ -529,8 +549,8 @@ def import_telegram(bucket, folder):
                     previous_time = arrow.get(temp_group[-1]["date"]).datetime
                     difference = previous_time - current_time
 
-                    if difference > timedelta(seconds=2):
-                        # if the difference is more than 2 second, it's a new group
+                    if difference > timedelta(seconds=10):
+                        # if the difference is more than 10 second, it's a new group
                         processed_messages.append(temp_group)
                         temp_group = []
 
@@ -547,7 +567,7 @@ def import_telegram(bucket, folder):
                 # drop text only messages
 
             with click.progressbar(
-                processed_messages, label="Processing Telegram Channels", show_pos=True
+                processed_messages, label=f"Processing Channel {channel} messages", show_pos=True
             ) as mbar:
                 for messages in mbar:
                     try:
