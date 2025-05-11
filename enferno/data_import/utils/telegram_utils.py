@@ -51,8 +51,5 @@ def parse_html_messages(html):
             "text": text,
             "media_path": media_path
         })
-
-    # Sort messages by reverse id
-    parsed_messages.sort(key=lambda x: int(x["id"]), reverse=True)
     
     return parsed_messages
