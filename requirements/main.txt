@@ -92,4 +92,4 @@ weasyprint==65.1
 zxcvbn==4.5.0
 webauthn==2.5.2
 Flask-DebugToolbar==0.16.0
-yt-dlp==2025.3.31
+yt-dlp==2025.4.30
