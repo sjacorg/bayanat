@@ -51,7 +51,7 @@ const EditableTable = Vue.defineComponent({
     },
     columnsList: {
       type: Array,
-      default: () => ['title', 'title_tr', 'reverse_title_tr', 'reverse_title', 'code'],
+      default: () => ['code', 'title', 'title_tr', 'reverse_title', 'reverse_title_tr'],
     },
   },
   template: `

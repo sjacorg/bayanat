@@ -29,7 +29,7 @@
                             <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
                                 <div v-if="tabState.child === 'administrative-levels'">
                                     <editable-table :height="`calc(100vh - ${showLalWarning ? '701px' : '628px'})`" title="{{ _('Location Administrative Levels') }}"
-                                        :item-headers="alHeaders" :editable-columns="['title']"
+                                        :item-headers="alHeaders" :editable-columns="['code', 'title']"
                                         :no-delete-action-ids="noDeleteIdsForLocationAdminLevels"
                                         delete-endpoint="/admin/api/location-admin-level"
                                         save-endpoint="/admin/api/location-admin-level"
