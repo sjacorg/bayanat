@@ -236,6 +236,8 @@ def register_commands(app):
     app.cli.add_command(commands.restore_db)
     app.cli.add_command(commands.enable_maintenance)
     app.cli.add_command(commands.disable_maintenance)
+    app.cli.add_command(commands.set_version)
+    app.cli.add_command(commands.get_version)
 
 
 def register_errorhandlers(app):

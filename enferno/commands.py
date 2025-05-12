@@ -2,7 +2,7 @@
 """Click commands."""
 import os
 import sys
-import datetime
+from datetime import datetime
 import subprocess
 import click
 from flask.cli import AppGroup
@@ -24,10 +24,9 @@ from enferno.utils.data_helpers import (
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
-from enferno.admin.models import MigrationHistory
+from enferno.admin.models import MigrationHistory, SystemInfo
 from sqlalchemy import event, MetaData, text
 from sqlalchemy.engine.url import make_url
-from natsort import natsorted
 
 logger = get_logger()
 
@@ -39,12 +38,12 @@ def log_table_creation(target, connection, tables=None, **kw):
             logger.info(f"Creating table: {table.name}")
 
 
-def _mark_migrations_applied() -> None:
+def _initialize_db_state() -> None:
     """
-    Internal function to mark all valid SQL migrations as applied.
-    This should be run when initializing the system for the first time
-    so that all past migrations are marked as applied.
+    Internal function to initialize database state on first setup.
+    This handles both marking migrations as applied and setting initial version info.
     """
+    # Step 1: Mark migrations as applied
     # The migrations directory is inside the enferno package
     migration_dir = os.path.join(os.path.dirname(__file__), "migrations")
 
@@ -53,8 +52,8 @@ def _mark_migrations_applied() -> None:
         click.echo(f"Error: Migration directory '{migration_dir}' not found.")
         return
 
-    # Get all .sql files in the migrations directory, sorted by natural name
-    migration_files = natsorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
+    # Get all .sql files in the migrations directory, sorted by timestamp prefix
+    migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
 
     # Loop through each migration file and mark it as applied
     for migration_file in migration_files:
@@ -63,21 +62,38 @@ def _mark_migrations_applied() -> None:
             MigrationHistory.record_migration(migration_file)
             click.echo(f"Migration {migration_file} marked as applied.")
 
-    # Commit the session to ensure all migrations are recorded
-    db.session.commit()
+    # Step 2: Initialize version information
+    try:
+        # Set initial app version
+        version_entry = SystemInfo(key="app_version", value=Config.VERSION)
+        db.session.add(version_entry)
 
-    click.echo("All valid SQL migrations have been marked as applied.")
+        # Add initial timestamp
+        update_time = datetime.now().isoformat()
+        update_time_entry = SystemInfo(key="last_update_time", value=update_time)
+        db.session.add(update_time_entry)
+
+        # Commit all changes in one transaction
+        db.session.commit()
+
+        click.echo("All valid SQL migrations have been marked as applied.")
+        click.echo(f"System version set to {Config.VERSION}")
+    except Exception as e:
+        db.session.rollback()
+        click.echo(f"Warning: Could not fully initialize database state: {str(e)}")
+        # Try at least to commit the migrations
+        db.session.commit()
 
 
 @click.command()
 @with_appcontext
 def mark_migrations_applied() -> None:
     """
-    Command wrapper to mark all valid SQL migrations as applied.
-    This should be run when initializing the system for the first time
-    so that all past migrations are marked as applied.
+    Command wrapper to initialize database state.
+    This marks all migrations as applied and sets up version tracking.
+    Should be run when initializing the system for the first time.
     """
-    _mark_migrations_applied()
+    _initialize_db_state()
 
 
 @click.command()
@@ -123,8 +139,8 @@ def create_db(create_exts: bool) -> None:
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
 
-    # Mark all migrations as applied on initial DB creation
-    _mark_migrations_applied()
+    # Initialize database state (mark migrations and set version)
+    _initialize_db_state()
 
     # Remove the event listener after creation
     event.remove(metadata, "before_create", log_table_creation)
@@ -160,7 +176,7 @@ def apply_migrations(dry_run: bool = False) -> None:
         click.echo(f"Error: Migration directory '{migration_dir}' not found.")
         sys.exit(1)
 
-    migration_files = natsorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
+    migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith(".sql")])
     pending_migrations = [f for f in migration_files if not MigrationHistory.is_applied(f)]
 
     if not pending_migrations:
@@ -202,6 +218,74 @@ def apply_migrations(dry_run: bool = False) -> None:
         click.echo("[Failed] Rolling back all migrations due to error.")
         click.echo(f"Error details: {str(e)}")
         sys.exit(1)
+
+
+@click.command()
+@click.argument("version", required=True)
+@with_appcontext
+def set_version(version: str) -> None:
+    """
+    Set the current application version in the database.
+
+    Args:
+        version: The version string to set
+    """
+    # Check if the version is the same as in settings
+    if version != Config.VERSION:
+        click.echo(
+            f"Warning: The version you're setting ({version}) doesn't match the version in settings ({Config.VERSION})."
+        )
+        confirm = click.confirm("Do you want to proceed anyway?")
+        if not confirm:
+            click.echo("Operation cancelled.")
+            return
+
+    try:
+        # Get existing entry or create new one
+        version_entry = SystemInfo.query.filter_by(key="app_version").first()
+        if version_entry:
+            version_entry.value = version
+        else:
+            version_entry = SystemInfo(key="app_version", value=version)
+            db.session.add(version_entry)
+
+        # Add update timestamp
+        update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
+        update_time = datetime.now().isoformat()
+        if update_time_entry:
+            update_time_entry.value = update_time
+        else:
+            update_time_entry = SystemInfo(key="last_update_time", value=update_time)
+            db.session.add(update_time_entry)
+
+        db.session.commit()
+        click.echo(f"Successfully set application version to {version}")
+    except Exception as e:
+        click.echo(f"Error setting version: {str(e)}")
+        sys.exit(1)
+
+
+@click.command()
+@with_appcontext
+def get_version() -> None:
+    """
+    Get the current application version from both settings and database.
+    """
+    settings_version = Config.VERSION
+    version_entry = SystemInfo.query.filter_by(key="app_version").first()
+    db_version = version_entry.value if version_entry else "Not set"
+
+    click.echo(f"Settings version: {settings_version}")
+    click.echo(f"Database version: {db_version}")
+
+    # Show last update time if available
+    update_time_entry = SystemInfo.query.filter_by(key="last_update_time").first()
+    if update_time_entry:
+        click.echo(f"Last updated: {update_time_entry.value}")
+
+    if settings_version != db_version and db_version != "Not set":
+        click.echo("\nWarning: The version in settings doesn't match the version in the database.")
+        click.echo("This could indicate incomplete migrations or an inconsistent state.")
 
 
 @click.command()
@@ -494,7 +578,7 @@ def backup_db(output: Optional[str] = None, timeout: int = 300) -> Optional[str]
     logger.info("Creating database backup.")
 
     # Get timestamp for the backup filename
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Create backup directory if it doesn't exist
     backup_dir = Path(current_app.root_path) / ".." / "backups"
