@@ -138,7 +138,7 @@ const EditableTable = Vue.defineComponent({
     dialogTitles() {
       return {
         insert: this.translations.newItem_,
-        update: this.translations.editItem_,
+        update: `${this.translations.editItem_} ${this.dialogState.item?.id}`,
       }
     }
   },
