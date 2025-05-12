@@ -383,8 +383,6 @@ class MediaImport:
         info["filepath"] = filepath
         info["source_url"] = file.get("source_url")
         info["etag"] = file.get("etag")
-
-        self.data_import.add_to_log("Metadata parsed successfully.")
         
         return info
 
