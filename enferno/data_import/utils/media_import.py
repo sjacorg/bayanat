@@ -560,7 +560,7 @@ class MediaImport:
 
         # mapping
         title = info.get("bulletinTitle")
-        bulletin.title = title[:255]
+        bulletin.title = bulletin.title_ar = title[:255]
         bulletin.status = "Machine Created"
         bulletin.comments = f"Created using Media Import Tool. Batch ID: {self.batch_id}."
 
@@ -645,9 +645,6 @@ class MediaImport:
             if video_id := info.get("id"):
                 bulletin.originid = video_id
             bulletin.source_link = info.get("webpage_url")
-            bulletin.title = info.get("fulltitle")
-            bulletin.title_ar = info.get("fulltitle")
-            title = info.get("fulltitle")
 
             if upload_date := info.get("upload_date"):
                 bulletin.publish_date = upload_date
@@ -764,9 +761,6 @@ class MediaImport:
             update_description(
                 f"Title truncated to 255 characters.<br /><strong>Original title:</strong> {title}"
             )
-        bulletin.title = title[:255]
-        if is_web_import:
-            bulletin.title_ar = bulletin.title
 
         try:
             bulletin.save(raise_exception=True)
