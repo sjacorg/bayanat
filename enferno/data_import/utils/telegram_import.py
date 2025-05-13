@@ -1,4 +1,4 @@
-import os
+import mimetypes
 
 import boto3
 from botocore.exceptions import ClientError
@@ -61,6 +61,11 @@ class TelegramImport:
             request = s3.head_object(Bucket=self.bucket, Key=s3_path)
             etag = request["ETag"].strip('"')
             mime_type = request["ContentType"]
+
+            # Check if mime type is not correctly set
+            if mime_type == "binary/octet-stream":
+                mime_type = mimetypes.guess_type(s3_path)[0]
+
             return etag, mime_type
         except ClientError as e:
             if e.response["Error"]["Code"] == "404":
@@ -201,7 +206,7 @@ class TelegramImport:
             else:
                 data_import.fail(f"File {s3_path} not found.")
                 continue
-            
+
             new_filename = Media.generate_file_name(filename)
             copied = self.copy_file(data_import, s3_path, new_filename)
 
