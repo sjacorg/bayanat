@@ -161,6 +161,11 @@ class TelegramImport:
             else:
                 bulletin.description += f"\n\nMedia in this Bulletin is duplicated by another Bulletin being imported by DataImport #{data_import.id}."
 
+        bulletin.meta = self.info
+        bulletin.meta["medias"] = self.medias
+        bulletin.meta["related_bulletins"] = self.related_bulletins
+        bulletin.meta["related_data_imports"] = self.related_data_imports
+        
         if self.related_bulletins:
             dup = BtobInfo.query.filter(BtobInfo.title == "Duplicate").first()
             
@@ -183,11 +188,6 @@ class TelegramImport:
 
                     rb.comments = f"Automatically related to Bulletin"
                     rb.create_revision(user_id=1)
-
-        bulletin.meta = self.info
-        bulletin.meta["medias"] = self.medias
-        bulletin.meta["related_bulletins"] = self.related_bulletins
-        bulletin.meta["related_data_imports"] = self.related_data_imports
 
         try:
             bulletin.save(raise_exception=True)
