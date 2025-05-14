@@ -3,7 +3,9 @@ import mimetypes
 import boto3
 from botocore.exceptions import ClientError
 
-from enferno.admin.models import Bulletin, Activity, Source, Media
+from sqlalchemy import and_, or_
+
+from enferno.admin.models import Bulletin, Activity, Source, Media, BtobInfo, Btob
 from enferno.user.models import User
 from enferno.data_import.models import DataImport
 from enferno.utils.data_helpers import media_check_duplicates
@@ -39,6 +41,8 @@ class TelegramImport:
         self.folder = self.data_imports[0].data.get("folder")
 
         self.medias = []
+        self.related_bulletins = []
+        self.related_data_imports = []
 
     def check_file(self, data_import, s3_path):
         """
@@ -150,6 +154,28 @@ class TelegramImport:
 
             bulletin.medias.append(media)
 
+        # Check for any related bulletins
+        for data_import in self.related_data_imports:
+            if data_import.item_id:
+                self.related_bulletins.append(Bulletin.query.get(data_import.item_id))
+            else:
+                bulletin.description += f"\n\nMedia in this Bulletin is duplicated by another Bulletin being imported by DataImport #{data_import.id}."
+
+        if self.related_bulletins:
+            dup = BtobInfo.query.filter(BtobInfo.title == "Duplicate").first()
+
+            for rb in self.related_bulletins:
+                if not Btob.are_related(bulletin.id, rb.id):
+                    new_relation = Btob.relate(bulletin, rb)
+                    new_relation.related_as = [dup.id]
+                    new_relation.comment = (
+                        f"Media in this message is a duplicated in these Bulletins"
+                    )
+                    new_relation.save()
+
+                    rb.comments = f"Automatically related to Bulletin"
+                    rb.create_revision(user_id=1)
+
         bulletin.meta = self.info
         bulletin.meta["medias"] = self.medias
 
@@ -194,15 +220,35 @@ class TelegramImport:
             data_import.add_to_log(f"Checking file {s3_path}...")
 
             etag, mime_type = self.check_file(data_import, s3_path)
+            data_import.etag = etag
+            data_import.save()
 
             if etag and mime_type:
                 originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
-                if (
-                    media_check_duplicates(etag, data_import.id)
-                    or Bulletin.query.filter(Bulletin.originid == originid).first()
-                ):
-                    data_import.fail(f"File {filename} already exists.")
+                if bulletin_exists := Bulletin.query.filter(Bulletin.originid == originid).first():
+                    data_import.add_to_log(f"File already imported Bulletin {bulletin_exists.id}.")
+                    self.related_bulletins.append(bulletin_exists)
                     continue
+
+                if media_exists := media_check_duplicates(etag, data_import.id):
+                    if isinstance(media_exists, Media):
+                        data_import.add_to_log(f"File already imported Media {media_exists.id}.")
+                        self.related_bulletins.append(media_exists.bulletin)
+                    continue
+
+                if di_exists := DataImport.query.filter(
+                    and_(
+                        DataImport.id != data_import.id,
+                        DataImport.file_hash == etag,
+                        or_(DataImport.status == "Pending", DataImport.status == "Processing"),
+                    )
+                ).all():
+                    data_import.add_to_log(
+                        f"File is being imported in DataImport(s) {[x.id for x in di_exists]}."
+                    )
+                    self.related_data_imports.extend(di_exists)
+                    continue
+
             else:
                 data_import.fail(f"File {s3_path} not found.")
                 continue
