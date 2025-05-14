@@ -1488,3 +1488,4 @@ def process_telegram_media(self, data_imports: list) -> None:
         for log_id in data_imports:
             log = DataImport.query.get(log_id)
             log.fail(e)
+            logger.error(f"Stacktrace: {e}", exc_info=True)

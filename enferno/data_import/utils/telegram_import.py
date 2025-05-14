@@ -178,6 +178,8 @@ class TelegramImport:
 
         bulletin.meta = self.info
         bulletin.meta["medias"] = self.medias
+        bulletin.meta["related_bulletins"] = self.related_bulletins
+        bulletin.meta["related_data_imports"] = self.related_data_imports
 
         try:
             bulletin.save(raise_exception=True)
@@ -230,10 +232,9 @@ class TelegramImport:
                     self.related_bulletins.append(bulletin_exists)
                     continue
 
-                if media_exists := media_check_duplicates(etag, data_import.id):
-                    if isinstance(media_exists, Media):
-                        data_import.add_to_log(f"File already imported Media {media_exists.id}.")
-                        self.related_bulletins.append(media_exists.bulletin)
+                if media_exists := Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
+                    data_import.add_to_log(f"File already imported Media {media_exists.id}.")
+                    self.related_bulletins.append(media_exists.bulletin)
                     continue
 
                 if di_exists := DataImport.query.filter(
@@ -270,5 +271,4 @@ class TelegramImport:
                 }
             )
 
-        if self.medias:
-            self.create_bulletin()
+        self.create_bulletin()
