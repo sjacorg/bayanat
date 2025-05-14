@@ -163,6 +163,14 @@ class TelegramImport:
 
         if self.related_bulletins:
             dup = BtobInfo.query.filter(BtobInfo.title == "Duplicate").first()
+            
+            # save the bulletin first to get the id
+            try:
+                bulletin.save(raise_exception=True)
+            except DatabaseException as e:
+                for data_import in self.data_imports:
+                    data_import.add_to_log(f"Failed to create Bulletin: {e}")
+                return
 
             for rb in self.related_bulletins:
                 if not Btob.are_related(bulletin.id, rb.id):
