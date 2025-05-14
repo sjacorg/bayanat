@@ -105,7 +105,7 @@ class TelegramImport:
         Create a bulletin from the data.
         """
         message = self.info.get("message")
-        self.data_imports[0].add_to_log(f"Creating bulletin from{message.get("id")}...")
+        self.data_imports[0].add_to_log(f"Creating bulletin from {message.get("id")}...")
 
         bulletin = Bulletin()
         message_text = message.get("text") if message.get("text") else ""
@@ -163,11 +163,12 @@ class TelegramImport:
 
         bulletin.meta = self.info
         bulletin.meta["medias"] = self.medias
-        bulletin.meta["related_bulletins"] = self.related_bulletins
-        bulletin.meta["related_data_imports"] = self.related_data_imports
-        
+        bulletin.meta["related_bulletins"] = [x.id for x in self.related_bulletins]
+        bulletin.meta["related_data_imports"] = [x.id for x in self.related_data_imports]
+
         if self.related_bulletins:
             dup = BtobInfo.query.filter(BtobInfo.title == "Duplicate").first()
+            data_import.add_to_log(f"Found {len(self.related_bulletins)} related bulletins. Attempting to relate them...")
             
             # save the bulletin first to get the id
             try:
