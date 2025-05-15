@@ -217,11 +217,21 @@ class TelegramImport:
         except DatabaseException as e:
             for data_import in self.data_imports:
                 data_import.add_to_log(f"Failed to create Bulletin: {e}")
+                data_import.fail()
 
     def process(self):
         """
         Process the batch by copying the file and updating the database.
         """
+        message = self.info.get("message")
+        originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
+
+        if bulletin_exists := Bulletin.query.filter(Bulletin.originid == originid).first():
+            for data_import in self.data_imports:
+                data_import.add_to_log(f"Bulletin already imported: #{bulletin_exists.id}.")
+                data_import.fail()
+            return
+
         for data_import in self.data_imports:
             data_import.processing()
             if len(self.data_imports) > 1:
@@ -243,12 +253,6 @@ class TelegramImport:
             data_import.save()
 
             if etag and mime_type:
-                originid = f"{self.channel_metadata.get('username')}/{message.get('id')}"
-                if bulletin_exists := Bulletin.query.filter(Bulletin.originid == originid).first():
-                    data_import.add_to_log(f"File already imported Bulletin {bulletin_exists.id}.")
-                    self.related_bulletins.append(bulletin_exists)
-                    continue
-
                 if media_exists := Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
                     data_import.add_to_log(f"File already imported Media {media_exists.id}.")
                     self.related_medias.append(media_exists)
