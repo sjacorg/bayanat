@@ -1418,7 +1418,7 @@ def _start_etl_process(
     )
 
 
-from enferno.data_import.utils.docs_utils import DocImport
+from enferno.data_import.utils.docs_import import DocImport
 
 
 @celery.task(bind=True, max_retries=5)
@@ -1440,7 +1440,7 @@ def process_doc(
         log.fail(e)
 
 
-from enferno.data_import.utils.yt_etl import YTImport
+from enferno.data_import.utils.youtube_import import YouTubeImport
 
 
 @celery.task(bind=True, max_retries=5)
@@ -1458,7 +1458,7 @@ def process_etl(self, batch_id: t.id, meta: str, data_import_id: t.id) -> None:
         return
 
     try:
-        yt = YTImport(batch_id=batch_id, data_import_id=data_import_id, meta=meta)
+        yt = YouTubeImport(batch_id=batch_id, data_import_id=data_import_id, meta=meta)
         yt.process()
         return "done"
     except OperationalError as e:
@@ -1470,7 +1470,7 @@ def process_etl(self, batch_id: t.id, meta: str, data_import_id: t.id) -> None:
         log.fail(e)
 
 
-from enferno.data_import.utils.telegram_utils import TelegramImport
+from enferno.data_import.utils.telegram_import import TelegramImport
 
 @celery.task(bind=True, max_retries=5)
 def process_telegram_media(self, data_imports: list) -> None:
@@ -1488,3 +1488,4 @@ def process_telegram_media(self, data_imports: list) -> None:
         for log_id in data_imports:
             log = DataImport.query.get(log_id)
             log.fail(e)
+            logger.error(f"Stacktrace: {e}", exc_info=True)

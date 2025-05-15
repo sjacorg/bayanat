@@ -94,3 +94,4 @@ webauthn==2.5.1
 Flask-DebugToolbar==0.16.0
 yt-dlp==2025.1.26
 python-gnupg==0.5.4
+beautifulsoup4==4.13.4

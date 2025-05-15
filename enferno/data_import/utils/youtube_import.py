@@ -5,7 +5,6 @@ import subprocess
 import boto3
 from botocore.exceptions import ClientError
 
-from enferno.admin.models import Bulletin
 from enferno.data_import.models import DataImport
 from enferno.data_import.utils.media_import import MediaImport
 from enferno.utils.data_helpers import media_check_duplicates, get_file_hash
@@ -14,7 +13,7 @@ from enferno.settings import Config as cfg
 from sqlalchemy.orm.attributes import flag_modified
 
 
-class YTImport(MediaImport):
+class YouTubeImport(MediaImport):
 
     def __init__(self, batch_id, data_import_id, meta):
 
