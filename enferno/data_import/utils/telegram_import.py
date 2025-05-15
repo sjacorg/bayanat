@@ -41,6 +41,7 @@ class TelegramImport:
         self.folder = self.data_imports[0].data.get("folder")
 
         self.medias = []
+        self.related_medias = []
         self.related_bulletins = []
         self.related_data_imports = []
 
@@ -154,17 +155,17 @@ class TelegramImport:
 
             bulletin.medias.append(media)
 
+        bulletin.meta = self.info
+        bulletin.meta["medias"] = self.medias
+        bulletin.meta["related_bulletins"] = [x.id for x in self.related_bulletins]
+        bulletin.meta["related_data_imports"] = [x.id for x in self.related_data_imports]
+
         # Check for any related bulletins
         for data_import in self.related_data_imports:
             if data_import.item_id:
                 self.related_bulletins.append(Bulletin.query.get(data_import.item_id))
             else:
                 bulletin.description += f"\n\nMedia in this Bulletin is duplicated by another Bulletin being imported by DataImport #{data_import.id}."
-
-        bulletin.meta = self.info
-        bulletin.meta["medias"] = self.medias
-        bulletin.meta["related_bulletins"] = [x.id for x in self.related_bulletins]
-        bulletin.meta["related_data_imports"] = [x.id for x in self.related_data_imports]
 
         if self.related_bulletins:
             dup = BtobInfo.query.filter(BtobInfo.title == "Duplicate").first()
@@ -181,9 +182,17 @@ class TelegramImport:
                 if not Btob.are_related(bulletin.id, rb.id):
                     new_relation = Btob.relate(bulletin, rb)
                     new_relation.related_as = [dup.id]
-                    new_relation.comment = (
-                        f"Media in this message is a duplicated in these Bulletins"
-                    )
+
+                    i = self.related_bulletins.index(rb)
+                    try:
+                        new_relation.comment = (
+                            f"Media {self.related_medias[i].id} is duplicated in this Bulletin"
+                        )
+                    except IndexError:
+                        new_relation.comment = (
+                            f"Media in this Bulletin is duplicated by the related Bulletin"
+                        )
+
                     new_relation.save()
 
                     rb.comments = f"Automatically related to Bulletin"
@@ -242,6 +251,7 @@ class TelegramImport:
 
                 if media_exists := Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
                     data_import.add_to_log(f"File already imported Media {media_exists.id}.")
+                    self.related_medias.append(media_exists)
                     self.related_bulletins.append(media_exists.bulletin)
                     continue
 
