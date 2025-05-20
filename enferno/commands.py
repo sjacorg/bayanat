@@ -11,6 +11,7 @@ from flask_security.utils import hash_password
 from flask import current_app
 from pathlib import Path
 from typing import Optional
+import tomli
 
 from enferno.settings import Config
 from enferno.extensions import db
@@ -226,16 +227,27 @@ def apply_migrations(dry_run: bool = False) -> None:
 def set_version(version: str) -> None:
     """
     Set the current application version in the database.
+    Note: This only updates the database record, not the actual application version.
+    The canonical version is always defined in pyproject.toml.
 
     Args:
-        version: The version string to set
+        version: The version string to set in the database
     """
-    # Check if the version is the same as in settings
-    if version != Config.VERSION:
+    # Load version from pyproject.toml for comparison
+    pyproject_path = Path(Config.PROJECT_ROOT) / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        pyproject_data = tomli.load(f)
+        settings_version = pyproject_data["project"]["version"]
+
+    # Warn if version doesn't match pyproject.toml
+    if version != settings_version:
         click.echo(
-            f"Warning: The version you're setting ({version}) doesn't match the version in settings ({Config.VERSION})."
+            f"Warning: The version you're setting ({version}) doesn't match pyproject.toml ({settings_version})."
         )
-        confirm = click.confirm("Do you want to proceed anyway?")
+        click.echo(
+            "The canonical version is defined in pyproject.toml and should be updated there."
+        )
+        confirm = click.confirm("Do you want to proceed with updating only the database version?")
         if not confirm:
             click.echo("Operation cancelled.")
             return
@@ -259,7 +271,7 @@ def set_version(version: str) -> None:
             db.session.add(update_time_entry)
 
         db.session.commit()
-        click.echo(f"Successfully set application version to {version}")
+        click.echo(f"Successfully set database version to {version}")
     except Exception as e:
         click.echo(f"Error setting version: {str(e)}")
         sys.exit(1)
@@ -271,7 +283,12 @@ def get_version() -> None:
     """
     Get the current application version from both settings and database.
     """
-    settings_version = Config.VERSION
+    # Get version from pyproject.toml (single source of truth)
+    pyproject_path = Path(Config.PROJECT_ROOT) / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        project_data = tomli.load(f)
+        settings_version = project_data["project"]["version"]
+
     version_entry = SystemInfo.query.filter_by(key="app_version").first()
     db_version = version_entry.value if version_entry else "Not set"
 
