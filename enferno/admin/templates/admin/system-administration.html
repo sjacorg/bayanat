@@ -34,6 +34,8 @@
                                 <v-tab value="export">{{ _('Export Tool') }}</v-tab>
                                 <v-tab value="maps">{{ _('Maps') }}</v-tab>
                                 <v-tab value="locations">{{ _('Locations') }}</v-tab>
+                                <v-tab value="mail">{{ _('Mail') }}</v-tab>
+                                <v-tab value="notifications">{{ _('Notifications') }}</v-tab>
                             </v-tabs>
                         </v-card-title>
                         <v-card-text class="pa-4">
@@ -589,6 +591,7 @@
                                         </v-card-text>
                                     </v-card>
                                 </v-window-item>
+
                                 <v-window-item value="locations">
                                     <v-card :disabled="loading" :loading="loading">
                                         <v-card-text>
@@ -600,6 +603,321 @@
                                         </v-card-text>
                                     </v-card>
                                 </v-window-item>
+
+                                <v-window-item value="mail">
+                                    <v-card :disabled="loading" :loading="loading">
+                                        <v-card-text>
+                                            <v-switch color="primary" label="{{ _('Enable Mail System') }}"
+                                                      v-model="eitem.MAIL_ENABLED"
+                                                      persistent-hint
+                                                      hint="{{ _('Enables sending emails from Bayanat.') }}">
+                                            </v-switch>
+
+                                            <v-slide-y-transition>
+                                                <v-sheet v-show="eitem.MAIL_ENABLED" class=" pa-4 grey lighten-4">
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Server') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('SMTP server for sending emails.') }}"
+                                                                  v-model="eitem.MAIL_SERVER"></v-text-field>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Port') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Port for SMTP server.') }}"
+                                                                  v-model.number="eitem.MAIL_PORT"></v-text-field>
+
+                                                    <v-switch color="primary" label="{{ _('Use TLS') }}"
+                                                              v-model="eitem.MAIL_USE_TLS"
+                                                              persistent-hint
+                                                              hint="{{ _('Use TLS for SMTP server.') }}"></v-switch>
+
+                                                    <v-switch color="primary" label="{{ _('Use SSL') }}"
+                                                              v-model="eitem.MAIL_USE_SSL"
+                                                              persistent-hint
+                                                              hint="{{ _('Use SSL for SMTP server.') }}"></v-switch>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Username') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Username for SMTP server.') }}"
+                                                                  v-model="eitem.MAIL_USERNAME"></v-text-field>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Password') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Password for SMTP server.') }}"
+                                                                  v-model="eitem.MAIL_PASSWORD"></v-text-field>
+
+                                                    <v-text-field class="mb-9" label="{{ _('Mail Default Sender') }}"
+                                                                  persistent-hint
+                                                                  hint="{{ _('Default sender for emails.') }}"
+                                                                  v-model="eitem.MAIL_DEFAULT_SENDER"></v-text-field>
+
+                                                </v-sheet>
+                                            </v-slide-y-transition>
+                                            
+                                        </v-card-text>
+                                    </v-card>
+                                </v-window-item>
+
+                                <v-window-item value="notifications">
+                                    <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
+                                        <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for all users') }}</h4>
+                                        <v-row class="ml-n5">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Login from new IP') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_IP.in_app_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_IP.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_IP.email_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_IP.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user logs in from a new IP address.') }}</p>
+                                            </v-col>
+
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Change password') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.PASSWORD_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.PASSWORD_CHANGE.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.PASSWORD_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.PASSWORD_CHANGE.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user changes their password.') }}</p>
+                                            </v-col>
+
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Add/Change 2FA') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user sets up or updates 2FA.') }}</p>
+                                            </v-col>
+                                            
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Add/Change recovery codes') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a user updates recovery codes.') }}</p>
+                                            </v-col>
+                                            
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Force password change') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _("Notify when a password reset is enforced.") }}</p>
+                                            </v-col>
+                                        </v-row>
+                                    
+                                        <v-divider class="my-7"></v-divider>
+
+                                        <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for all admins') }}</h4>
+                                        <h5 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Security') }}</h5>
+                                        <v-row class="ml-n5">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New user') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.NEW_USER.in_app_locked" v-model="eitem.NOTIFICATIONS.NEW_USER.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.NEW_USER.email_locked" v-model="eitem.NOTIFICATIONS.NEW_USER.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new user account is created.') }}</p>
+                                            </v-col>
+                                        
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Update user') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.UPDATE_USER.in_app_locked" v-model="eitem.NOTIFICATIONS.UPDATE_USER.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.UPDATE_USER.email_locked" v-model="eitem.NOTIFICATIONS.UPDATE_USER.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an existing user is updated.') }}</p>
+                                            </v-col>
+                                        
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New group') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.NEW_GROUP.in_app_locked" v-model="eitem.NOTIFICATIONS.NEW_GROUP.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.NEW_GROUP.email_locked" v-model="eitem.NOTIFICATIONS.NEW_GROUP.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new group is created.') }}</p>
+                                            </v-col>
+                                        
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('System settings change') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when system settings are updated.') }}</p>
+                                            </v-col>
+                                        
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Login by a user from new country') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY.in_app_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY.email_locked" v-model="eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify on login from a new country.') }}</p>
+                                            </v-col>
+
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Unauthorized action') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION.in_app_locked" v-model="eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION.email_locked" v-model="eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an unauthorized action is attempted.') }}</p>
+                                            </v-col>
+
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Admin security credentials change') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE.in_app_locked" v-model="eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE.email_locked" v-model="eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an admin updates security credentials.') }}</p>
+                                            </v-col>
+                                            
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Deleted items') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.ITEM_DELETED.in_app_locked" v-model="eitem.NOTIFICATIONS.ITEM_DELETED.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.ITEM_DELETED.email_locked" v-model="eitem.NOTIFICATIONS.ITEM_DELETED.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when items are deleted from the system.') }}</p>
+                                            </v-col>
+                                        </v-row>
+
+                                        <v-divider class="my-7"></v-divider>
+
+                                        <h5 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Export') }}</h5>
+                                        <v-row class="ml-n5">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New export') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.NEW_EXPORT.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.NEW_EXPORT.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.NEW_EXPORT.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.NEW_EXPORT.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new export is created.') }}</p>
+                                            </v-col>
+
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Approved export') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.EXPORT_APPROVED.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.EXPORT_APPROVED.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.EXPORT_APPROVED.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.EXPORT_APPROVED.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when an export is approved.') }}</p>
+                                            </v-col>
+                                        </v-row>
+
+                                        <v-divider class="my-7"></v-divider>
+                                        
+                                        <h5 class="text-subtitle-1 font-weight-bold mb-1">{{ _('Media and Sheet Import') }}</h5>
+                                        <v-row class="ml-n5">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New batch') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.NEW_BATCH.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.NEW_BATCH.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.NEW_BATCH.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.NEW_BATCH.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify when a new import batch is created.') }}</p>
+                                            </v-col>
+                                        </v-row>
+
+                                        <v-divider class="my-7"></v-divider>
+                                        
+                                        <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for individual admins (the ones they carried out the action)') }}</h4>
+                                        <v-row class="ml-n5">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Batch status (complete, fail)') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.BATCH_STATUS.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.BATCH_STATUS.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.BATCH_STATUS.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.BATCH_STATUS.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify the admin of their batch result.') }}</p>
+                                            </v-col>
+
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Bulk ops status') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}" :disabled="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}" :disabled="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify the admin of the status of their bulk operations.') }}</p>
+                                            </v-col>
+                                        </v-row>
+
+                                        <v-divider class="my-7"></v-divider>
+                                        
+                                        <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for individual users (the ones they carried out the action)') }}</h4>
+                                        <v-row class="ml-n5">
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('New assignment') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.NEW_ASSIGNMENT.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.NEW_ASSIGNMENT.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.NEW_ASSIGNMENT.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.NEW_ASSIGNMENT.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users when they’re assigned a new task.') }}</p>
+                                            </v-col>
+                                        
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Review needed') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.REVIEW_NEEDED.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.REVIEW_NEEDED.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.REVIEW_NEEDED.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.REVIEW_NEEDED.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users when their review is requested.') }}</p>
+                                            </v-col>
+
+                                            <v-col cols="12" xxl="2" xl="3" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
+                                                <h4 class="text-subtitle-2 font-weight-bold mb-n3">{{ _('Web Import status') }}</h4>
+                                                <div class="d-flex ga-10">
+                                                    <v-switch color="primary" hide-details label="{{ _('In-app') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.WEB_IMPORT_STATUS.in_app_locked"
+                                                        v-model="eitem.NOTIFICATIONS.WEB_IMPORT_STATUS.in_app_enabled"></v-switch>
+                                                    <v-switch color="primary" hide-details label="{{ _('Email') }}"
+                                                        :disabled="eitem.NOTIFICATIONS.WEB_IMPORT_STATUS.email_locked"
+                                                        v-model="eitem.NOTIFICATIONS.WEB_IMPORT_STATUS.email_enabled"></v-switch>
+                                                </div>
+                                                <p class="text-caption text-medium-emphasis mt-n2">{{ _('Notify users about their web import status.') }}</p>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card>
+                                </v-window-item>
+
                             </v-window>
 
 
@@ -862,7 +1180,7 @@
 
                 loadDefaults() {
                     axios.get('/admin/api/configuration/defaults/').then(res => {
-                        this.eitem = res.data.config;
+                        this.eitem = this.omitNotificationCategories(res?.data?.config);
                         this.configLabels = res.data.labels;
                         this.$root.showSnack(this.translations.defaultsLoaded_);
                     }).catch(err => {
@@ -871,6 +1189,24 @@
                     }).finally(() => {
                         this.loading = false;
                     })
+                },
+
+                omitNotificationCategories(obj) {
+                    if(!obj.NOTIFICATIONS || typeof obj.NOTIFICATIONS !== 'object') return obj;
+
+                    const result = { ...obj, NOTIFICATIONS: {} };
+
+                    for (const key in obj.NOTIFICATIONS) {
+                        const entry = obj.NOTIFICATIONS[key];
+                        if (typeof entry === 'object' && entry !== null) {
+                            const { category, ...rest } = entry;
+                            result.NOTIFICATIONS[key] = rest;
+                        } else {
+                            result.NOTIFICATIONS[key] = entry; // Preserve non-object values
+                        }
+                    }
+
+                    return result;
                 },
 
                 revertVersion(config) {
@@ -950,7 +1286,7 @@
                 loadConfiguration() {
                     this.loading = true;
                     axios.get('/admin/api/configuration/').then(res => {
-                        this.eitem = res.data.config;
+                        this.eitem = this.omitNotificationCategories(res?.data?.config);
                         this.configLabels = res.data.labels;
                         // also store the configuration in a persistent var
                         this.exconfig = JSON.parse(JSON.stringify(this.eitem));
