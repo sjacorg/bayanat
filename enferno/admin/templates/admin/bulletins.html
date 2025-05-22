@@ -431,7 +431,7 @@
 
 
     {% if config.GOOGLE_MAPS_API_KEY %}
-        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '" async defer></script>'|safe }}
+        {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
     {% endif %}
 
 
@@ -857,7 +857,7 @@
                     },
 
                     mediaDialog(val) {
-                        val || this.closeMedia();
+                        val || this.closeMediaDialog();
                     },
 
 
@@ -1105,7 +1105,7 @@
                                 // default refresh to first page
                                 this.options.page = 1;
 
-                                this.refresh(true);
+                                this.refresh();
                                 this.showSnack("{{ _('Bulk Update is finished!')}}")
                             } else {
                                 //console.log(this.jobs)

@@ -2,10 +2,6 @@ const ImportLogCard = Vue.defineComponent({
   props: ['log'],
 
   mounted() {
-
-    //convert expiry to localized date
-    this.log.imported_at = this.localDate(this.log.imported_at);
-
     if (this.item?.id) {
       this.loadImportedItem();
     }
@@ -76,7 +72,7 @@ const ImportLogCard = Vue.defineComponent({
       <!-- Refs -->
       <v-card v-if="log?.data?.tags?.length" outlined class="ma-2 pa-2 d-flex align-center flex-grow-1"
       color="grey lighten-5">
-        <div class="caption grey--text mr-2">{{ translations.ref_ }}</div>
+        <div class="caption grey--text mr-2">{{ translations.tags_ }}</div>
         <v-chip x-small v-for="tag in log.data.tags" class="caption black--text mx-1">{{ tag }}</v-chip>
       </v-card>
 
