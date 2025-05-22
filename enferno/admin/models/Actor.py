@@ -94,16 +94,30 @@ class Actor(db.Model, BaseMixin):
     )
 
     # Actors that this actor relate to ->
-    actors_to = db.relationship("Atoa", backref="actor_from", foreign_keys="Atoa.actor_id")
+    actors_to = db.relationship(
+        "Atoa",
+        backref="actor_from",
+        foreign_keys="Atoa.actor_id",
+        order_by="Atoa.updated_at.desc()",
+    )
 
     # Actors that relate to this <-
-    actors_from = db.relationship("Atoa", backref="actor_to", foreign_keys="Atoa.related_actor_id")
+    actors_from = db.relationship(
+        "Atoa",
+        backref="actor_to",
+        foreign_keys="Atoa.related_actor_id",
+        order_by="Atoa.updated_at.desc()",
+    )
 
     # Related Bulletins
-    related_bulletins = db.relationship("Atob", backref="actor", foreign_keys="Atob.actor_id")
+    related_bulletins = db.relationship(
+        "Atob", backref="actor", foreign_keys="Atob.actor_id", order_by="Atob.updated_at.desc()"
+    )
 
     # Related Incidents
-    related_incidents = db.relationship("Itoa", backref="actor", foreign_keys="Itoa.actor_id")
+    related_incidents = db.relationship(
+        "Itoa", backref="actor", foreign_keys="Itoa.actor_id", order_by="Itoa.updated_at.desc()"
+    )
 
     type = db.Column(db.String(255))
     sex = db.Column(db.String(255))

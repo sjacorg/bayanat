@@ -113,18 +113,36 @@ class Bulletin(db.Model, BaseMixin):
     )
 
     # Bulletins that this bulletin relate to ->
-    bulletins_to = db.relationship("Btob", backref="bulletin_from", foreign_keys="Btob.bulletin_id")
+    bulletins_to = db.relationship(
+        "Btob",
+        backref="bulletin_from",
+        foreign_keys="Btob.bulletin_id",
+        order_by="Btob.updated_at.desc()",
+    )
 
     # Bulletins that relate to this <-
     bulletins_from = db.relationship(
-        "Btob", backref="bulletin_to", foreign_keys="Btob.related_bulletin_id"
+        "Btob",
+        backref="bulletin_to",
+        foreign_keys="Btob.related_bulletin_id",
+        order_by="Btob.updated_at.desc()",
     )
 
     # Related Actors
-    related_actors = db.relationship("Atob", backref="bulletin", foreign_keys="Atob.bulletin_id")
+    related_actors = db.relationship(
+        "Atob",
+        backref="bulletin",
+        foreign_keys="Atob.bulletin_id",
+        order_by="Atob.updated_at.desc()",
+    )
 
     # Related Incidents
-    related_incidents = db.relationship("Itob", backref="bulletin", foreign_keys="Itob.bulletin_id")
+    related_incidents = db.relationship(
+        "Itob",
+        backref="bulletin",
+        foreign_keys="Itob.bulletin_id",
+        order_by="Itob.updated_at.desc()",
+    )
 
     publish_date = db.Column(db.DateTime, index=True)
     documentation_date = db.Column(db.DateTime, index=True)
