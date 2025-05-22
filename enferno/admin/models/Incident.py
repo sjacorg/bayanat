@@ -93,18 +93,36 @@ class Incident(db.Model, BaseMixin):
     )
 
     # Related Actors
-    related_actors = db.relationship("Itoa", backref="incident", foreign_keys="Itoa.incident_id")
+    related_actors = db.relationship(
+        "Itoa",
+        backref="incident",
+        foreign_keys="Itoa.incident_id",
+        order_by="Itoa.updated_at.desc()",
+    )
 
     # Related Bulletins
-    related_bulletins = db.relationship("Itob", backref="incident", foreign_keys="Itob.incident_id")
+    related_bulletins = db.relationship(
+        "Itob",
+        backref="incident",
+        foreign_keys="Itob.incident_id",
+        order_by="Itob.updated_at.desc()",
+    )
 
     # Related Incidents
     # Incidents that this incident relate to ->
-    incidents_to = db.relationship("Itoi", backref="incident_from", foreign_keys="Itoi.incident_id")
+    incidents_to = db.relationship(
+        "Itoi",
+        backref="incident_from",
+        foreign_keys="Itoi.incident_id",
+        order_by="Itoi.updated_at.desc()",
+    )
 
     # Incidents that relate to this <-
     incidents_from = db.relationship(
-        "Itoi", backref="incident_to", foreign_keys="Itoi.related_incident_id"
+        "Itoi",
+        backref="incident_to",
+        foreign_keys="Itoi.related_incident_id",
+        order_by="Itoi.updated_at.desc()",
     )
 
     status = db.Column(db.String(255))
