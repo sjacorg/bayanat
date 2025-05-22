@@ -7,7 +7,7 @@
         <v-toolbar class="position-sticky top-0" style="z-index: 2;" border flat title="{{ _('Important notifications') }}"></v-toolbar>
 
         <v-card-text class="flex-grow-1 overflow-y-auto">
-            <notifications-list :hide-scroll-feedback="true" :notifications="importantNotifications" :max-title-lines="false" :max-subtitle-lines="false" />
+            <notifications-list :hide-scroll-feedback="true" :notifications="importantNotifications" :max-title-lines="false" :max-subtitle-lines="false" :unable-to-load-notifications="unableToLoadNotifications" />
         </v-card-text>
 
         <v-card-actions class="bg-surface border-t position-sticky bottom-0">

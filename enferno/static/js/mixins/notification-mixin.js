@@ -17,6 +17,7 @@ const notificationMixin = {
     isNotificationsDialogFullscreen: false,
     isNotificationsDialogVisible: false,
     unreadNotificationsCount: 0,
+    unableToLoadNotifications: false,
     importantNotifications: [],
     notifications: null,
     totalNotifications: 0,
@@ -32,7 +33,19 @@ const notificationMixin = {
   async mounted() {
     this.refetchNotifications();
 
-    this.notificationIntervalId = setInterval(this.refetchNotifications, 60_000);
+    // Only poll when document is visible to save resources
+    this.notificationIntervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        this.refetchNotifications();
+      }
+    }, 60_000);
+    
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.refetchNotifications();
+      }
+    });
   },
   beforeUnmount() {
     clearInterval(this.notificationIntervalId);
@@ -40,13 +53,18 @@ const notificationMixin = {
 
   methods: {
     async markAsReadImportantNotifications() {
-      // TODO: Mark as read important notifications
-      this.isMarkingAsReadImportantNotifications = true;
-      await Promise.all(this.importantNotifications.map(async notification => {
-        await this.readNotification(notification)
-      }))
-      this.isMarkingAsReadImportantNotifications = false;
-      this.isImportantNotificationsDialogVisible = false;
+      try {
+        this.isMarkingAsReadImportantNotifications = true;
+        await Promise.all(this.importantNotifications.map(async notification => {
+          await this.readNotification(notification)
+        }))
+      } catch (error) {
+        console.error(error);
+        this.showSnack(handleRequestError(error))
+      } finally {
+        this.isMarkingAsReadImportantNotifications = false;
+        this.isImportantNotificationsDialogVisible = false;
+      }
     },
     toggleNotificationsDialog() {
       // Toggle the notifications dialog
@@ -85,14 +103,16 @@ const notificationMixin = {
         const response = await axios.get(`/admin/api/notifications?is_urgent=true&status=unread&per_page=30`);
 
         if (response?.data?.items?.length) {
-          this.importantNotifications = response.data.items
+          this.importantNotifications = response.data.items;
           this.isImportantNotificationsDialogVisible = true;
+          this.unableToLoadNotifications = false;
         }
 
         return response
       } catch (error) {
         const errorMessage = error?.response?.data?.message || error.message || "Failed to load notifications";
         this.showSnack(errorMessage);
+        this.unableToLoadNotifications = true;
       }
     },
     async loadNotifications(options) {
@@ -150,9 +170,13 @@ const notificationMixin = {
             page: (this.notificationsPagination.page || 1) + 1,
           };
         }
+
+        this.unableToLoadNotifications = false;
       } catch (error) {
+        console.error(error)
         const errorMessage = error?.response?.data?.message || error.message || "Failed to load notifications";
         this.showSnack(errorMessage);
+        this.unableToLoadNotifications = true;
       } finally {
         // Reset loading states
         this.isInitialLoadingNotifications = false;
@@ -176,12 +200,24 @@ const notificationMixin = {
       if (matchingImportantNotification) matchingImportantNotification.read_status = true;
       if (matchingNotification) matchingNotification.read_status = true;
 
+      let notificationsCountCopy = this.unreadNotificationsCount
       if (matchingNotification || matchingImportantNotification) {
         this.decrementNotificationsCount()
       }
 
-      const notificationId = nextNotification.id
-      await axios.post(`/admin/api/notifications/${notificationId}/read`)
+      try {
+        const notificationId = nextNotification.id
+        await axios.post(`/admin/api/notifications/${notificationId}/read`)
+      } catch (error) {
+        console.error(error)
+        this.showSnack(handleRequestError(error))
+
+        // Revert the read status if the request failed
+        if (matchingImportantNotification) matchingImportantNotification.read_status = false;
+        if (matchingNotification) matchingNotification.read_status = false;
+
+        this.unreadNotificationsCount = notificationsCountCopy
+      }
     },
     async fetchUnreadNotificationCount() {
       const response = await axios.get('/admin/api/notifications/unread/count');

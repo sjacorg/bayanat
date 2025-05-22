@@ -41,7 +41,7 @@
             
                 <div class="w-100">
                     <v-window v-model="currentNotificationTab" style="min-height: calc(100vh - 251px);">
-                        <v-window-item value="all">
+                        <v-window-item v-for="tab in ['all', 'unread', 'read']" :key="tab" :value="tab">
                             <notifications-list
                                 :notifications="notifications"
                                 :is-initial-loading-notifications="isInitialLoadingNotifications"
@@ -51,30 +51,7 @@
                                 @load-notifications="loadNotifications(notificationsPagination)"
                                 :max-title-lines="false"
                                 :max-subtitle-lines="false"
-                            />
-                        </v-window-item>
-                        <v-window-item value="unread">
-                            <notifications-list
-                                :notifications="notifications"
-                                :is-initial-loading-notifications="isInitialLoadingNotifications"
-                                :has-more-notifications="hasMoreNotifications"
-                                :is-loading-more-notifications="isLoadingMoreNotifications"
-                                @read-notification="readNotification"
-                                @load-notifications="loadNotifications(notificationsPagination)"
-                                :max-title-lines="false"
-                                :max-subtitle-lines="false"
-                            />
-                        </v-window-item>
-                        <v-window-item value="read">
-                            <notifications-list
-                                :notifications="notifications"
-                                :is-initial-loading-notifications="isInitialLoadingNotifications"
-                                :has-more-notifications="hasMoreNotifications"
-                                :is-loading-more-notifications="isLoadingMoreNotifications"
-                                @read-notification="readNotification"
-                                @load-notifications="loadNotifications(notificationsPagination)"
-                                :max-title-lines="false"
-                                :max-subtitle-lines="false"
+                                :unable-to-load-notifications="unableToLoadNotifications"
                             />
                         </v-window-item>
                     </v-window>
