@@ -55,7 +55,7 @@ class Bulletin(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_bulletins", foreign_keys=[user_id])
 
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
     assigned_to = db.relationship(
         "User", backref="assigned_to_bulletins", foreign_keys=[assigned_to_id]
     )
@@ -63,8 +63,8 @@ class Bulletin(db.Model, BaseMixin):
 
     reliability_score = db.Column(db.Integer, default=0)
 
-    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
+    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
 
     first_peer_reviewer = db.relationship(
         "User", backref="first_rev_bulletins", foreign_keys=[first_peer_reviewer_id]
