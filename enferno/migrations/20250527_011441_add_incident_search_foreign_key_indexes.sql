@@ -29,11 +29,11 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_roles_role_id ON incident_r
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_roles_incident_id ON incident_roles(incident_id);
 
 -- Incident-Potential Violations relationship (q.potentialVCats searches)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_potential_violations_potential_violation_id ON incident_potential_violations(potential_violation_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_potential_violations_potentialviolation_id ON incident_potential_violations(potentialviolation_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_potential_violations_incident_id ON incident_potential_violations(incident_id);
 
 -- Incident-Claimed Violations relationship (q.claimedVCats searches)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_claimed_violations_claimed_violation_id ON incident_claimed_violations(claimed_violation_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_claimed_violations_claimedviolation_id ON incident_claimed_violations(claimedviolation_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_claimed_violations_incident_id ON incident_claimed_violations(incident_id);
 
 -- Note: Using CREATE INDEX CONCURRENTLY to avoid table locking during index creation
