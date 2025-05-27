@@ -176,7 +176,7 @@
 
                         </template>
 
-                        <template #body.append>
+                        <template v-if="items.length" #body.append>
                             <tr>
                                 <td :colspan="headers.length + 1">
                                     <div v-if="nextCursor !== null" v-intersect="{ callback: loadMore }" class="sentinel d-flex justify-center">
@@ -1177,6 +1177,7 @@
                             
                             // If this is a fresh load (no nextCursor), replace items
                             // Otherwise append new items
+                            console.log(this.nextCursor, this.items, response.data.items)
                             if (!this.nextCursor) {
                                 this.items = response.data.items;
                             } else {
