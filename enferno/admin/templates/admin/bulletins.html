@@ -1178,9 +1178,6 @@
 
                         
                         let url = `/admin/api/bulletins/?per_page=${this.perPage}`;
-                        if (Math.ceil(Math.random() * 100) % 2) {
-                            url = `/admin/api/bulletinsss/?per_page=${this.perPage}`;
-                        }
                         if (this.nextCursor) {
                             url += `&cursor=${this.nextCursor}`;
                         }
