@@ -176,15 +176,28 @@
 
                         </template>
 
-                        <template v-if="items.length" #body.append>
+                        <template v-if="items.length || fetchingRecordsError" #body.append>
                             <tr>
                                 <td :colspan="headers.length + 1">
-                                    <div v-if="nextCursor !== null" v-intersect="{ callback: loadMore }" class="sentinel d-flex justify-center">
-                                        <v-progress-circular indeterminate />
-                                    </div>
-                                    <div v-else class="text-center text-caption">
-                                        You've reached the end of the list
-                                    </div>
+                                    <template v-if="items.length && !fetchingRecordsError">
+                                        <div v-if="nextCursor !== null" v-intersect="{ callback: loadMore }" class="sentinel d-flex justify-center">
+                                            <v-progress-circular indeterminate />
+                                        </div>
+                                        <div v-else class="text-center text-caption">
+                                            {{ _('You\'ve reached the end of the list') }}
+                                        </div>
+                                    </template>
+                                    <v-alert v-else-if="fetchingRecordsError" variant="tonal" type="error" class="ma-2" title="{{ _('Unable to load records') }}"
+                                         density="compact">
+                                        <template #text>
+                                            <div>{{ _('Please try again or refresh the page') }}</div>
+
+                                            <v-btn @click="loadMore" density="compact" color="error" variant="outlined" class="my-2"
+                                                :loading="loading">
+                                                {{ _('Retry') }}
+                                            </v-btn>
+                                        </template>    
+                                    </v-alert>
                                 </td>
                             </tr>
                         </template>
@@ -697,8 +710,7 @@
                     webUrl: '',
                     webImportLoading: false,
 
-                    // Refs
-                    bulletinsTableScrollRef: null,
+                    fetchingRecordsError: false
                 }),
 
                 computed: {
@@ -1160,10 +1172,15 @@
                     loadMore() {
                         if (this.loading) return;
                         
+                        this.fetchingRecordsError = false;
                         this.loading = true;
                         const startTime = new Date()
 
+                        
                         let url = `/admin/api/bulletins/?per_page=${this.perPage}`;
+                        if (Math.ceil(Math.random() * 100) % 2) {
+                            url = `/admin/api/bulletinsss/?per_page=${this.perPage}`;
+                        }
                         if (this.nextCursor) {
                             url += `&cursor=${this.nextCursor}`;
                         }
@@ -1177,7 +1194,6 @@
                             
                             // If this is a fresh load (no nextCursor), replace items
                             // Otherwise append new items
-                            console.log(this.nextCursor, this.items, response.data.items)
                             if (!this.nextCursor) {
                                 this.items = response.data.items;
                             } else {
@@ -1200,6 +1216,7 @@
                         }).catch(error => {
                             console.error('Error loading bulletins:', error);
                             this.showSnack('Error loading bulletins');
+                            this.fetchingRecordsError = true;
                         }).finally(() => {
                             this.loading = false;
                         });
