@@ -21,32 +21,28 @@
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
-                            elevation="16"
-                            color="primary"
-                            outlined
-                            icon="mdi-graph"
-                            @click.stop="visualizeResults"
-                            v-bind="props"
-                            v-if="showVisualize"
-                            :loading="visualizeLoading"
-                            variant="elevated"
-                            class="mb-5 mr-5 position-absolute "
-                            style="right: 30px; bottom: 90px; z-index: 1000;"
-                    >
-
-
-                    </v-btn>
+                        elevation="16"
+                        color="primary"
+                        outlined
+                        icon="mdi-graph"
+                        @click.stop="visualizeResults"
+                        v-bind="props"
+                        v-if="showVisualize"
+                        :loading="visualizeLoading"
+                        variant="elevated"
+                        class="mb-5 mr-5 position-absolute"
+                        style="right: 30px; bottom: 90px; z-index: 1000;"
+                    />
                 </template>
             </v-tooltip>
 
             <v-card>
 
                 <v-card-text>
-
-
-                    <v-data-table-server
+                    <v-data-table-virtual
+                            ref="bulletinsTableRef"
                             fixed-header
-                            height="calc(100vh - 328px)"
+                            height="calc(100vh - 300px)"
                             id="bulletins-dt"
                             v-model="selected"
                             hover
@@ -63,7 +59,6 @@
                             hide-default-footer
                             :items-length="computedItemsLength"
                     >
-
                         <template #top>
                             <v-sheet class="ma-3 d-flex align-center">
                                 <v-btn variant="text" class="hidden-sm-and-down" @click="allBulletins"
@@ -125,12 +120,13 @@
                                 <template v-if="bulkIcons">
                                     <v-tooltip location="top" text="{{ _('Unselect all') }}">
                                         <template #activator="{props}">
-                                            <v-btn icon="mdi-checkbox-blank-outline"
-                                                   @click="selected=[]"
-                                                   class="mr-3 ml-1"
-                                                   density="compact"
-                                                   :="props">
-                                            </v-btn>
+                                            <v-btn
+                                                icon="mdi-checkbox-blank-outline"
+                                                @click="selected=[]"
+                                                class="mr-3 ml-1"
+                                                density="compact"
+                                                v-bind="props"
+                                            />
                                         </template>
                                     </v-tooltip>
 
@@ -180,20 +176,23 @@
 
                         </template>
 
+                        <template #body.append>
+                            <tr>
+                                <td :colspan="headers.length + 1">
+                                    <div v-if="nextCursor !== null" v-intersect="{ callback: loadMore }" class="sentinel d-flex justify-center">
+                                        <v-progress-circular indeterminate />
+                                    </div>
+                                    <div v-else class="text-center text-caption">
+                                        You've reached the end of the list
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+
                         <template #bottom>
                             <div class="d-flex flex-column align-center w-100">
                                 <div class="ma-2 d-flex">{{ _('Search time: ') }}
                                     ${searchTime} {{ _('seconds') }}</div>
-                                <v-btn
-                                    v-show="nextCursor !== null"
-                                    @click="loadMore"
-                                    color="primary"
-                                    variant="elevated"
-                                    class="my-2"
-                                    :loading="loading"
-                                >
-                                    {{ _('Load More') }}
-                                </v-btn>
                             </div>
                         </template>
 
@@ -204,13 +203,11 @@
 
                                 <template #activator="{props}">
                                     <v-icon
-                                            :="props"
-                                            size="small"
-                                            :color="role.color || 'grey-lighten-1'"
-                                            icon="mdi-shield-lock"
-                                    >
-                                    </v-icon>
-
+                                        v-bind="props"
+                                        size="small"
+                                        :color="role.color || 'grey-lighten-1'"
+                                        icon="mdi-shield-lock"
+                                    />
                                 </template>
 
                             </v-tooltip>
@@ -265,10 +262,7 @@
                             </v-btn>
 
                         </template>
-
-
-                        
-                    </v-data-table-server>
+                    </v-data-table-virtual>
 
                     <v-overlay :value="loading">
                         <v-progress-circular
@@ -427,6 +421,8 @@
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
 
+    <script src="/static/js/directives/intersect.js"></script>
+
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
 
@@ -453,7 +449,6 @@
 
 
                 mixins: [mediaMixin, globalMixin],
-
 
                 components: {
 
@@ -700,7 +695,10 @@
 
                     webImportDlg: false,
                     webUrl: '',
-                    webImportLoading: false
+                    webImportLoading: false,
+
+                    // Refs
+                    bulletinsTableScrollRef: null,
                 }),
 
                 computed: {
@@ -931,8 +929,6 @@
                         }
 
                     })
-
-
                 },
 
                 created() {
@@ -1185,6 +1181,12 @@
                                 this.items = response.data.items;
                             } else {
                                 this.items = [...this.items, ...response.data.items];
+
+                                const count = response.data.items.length;
+                                if (count > 0) {
+                                    const plural = count === 1 ? 'record' : 'records';
+                                    this.showSnack(`Loaded ${count} more ${plural}.`);
+                                }
                             }
                             
                             // Set nextCursor from response
@@ -1876,6 +1878,8 @@
         app.component('mp-field', MPField);
         app.component('mp-card', MPCard);
         app.component('ActorProfiles', ActorProfiles);
+
+        app.directive('intersect', intersect);
 
 
         app.use(router);
