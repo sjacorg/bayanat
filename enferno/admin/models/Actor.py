@@ -67,13 +67,13 @@ class Actor(db.Model, BaseMixin):
     mother_name = db.Column(db.String(255))
     mother_name_ar = db.Column(db.String(255))
 
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
     assigned_to = db.relationship(
         "User", backref="assigned_to_actors", foreign_keys=[assigned_to_id]
     )
 
-    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
+    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
 
     first_peer_reviewer = db.relationship(
         "User", backref="first_rev_actors", foreign_keys=[first_peer_reviewer_id]
@@ -110,7 +110,7 @@ class Actor(db.Model, BaseMixin):
     age = db.Column(db.String(255))
     civilian = db.Column(db.String(255))
 
-    origin_place_id = db.Column(db.Integer, db.ForeignKey("location.id"))
+    origin_place_id = db.Column(db.Integer, db.ForeignKey("location.id"), index=True)
     origin_place = db.relationship(
         "Location", backref="actors_origin_place", foreign_keys=[origin_place_id]
     )

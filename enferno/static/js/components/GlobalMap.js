@@ -12,7 +12,6 @@ const GlobalMap = Vue.defineComponent({
     return {
       translations: window.translations,
       mapId: 'map-' + this.$.uid,
-      map: null,
       locations: this.modelValue?.length ? this.modelValue : [],
       mapHeight: 300,
       zoom: 10,
@@ -25,19 +24,14 @@ const GlobalMap = Vue.defineComponent({
       subdomains: null,
       lat: geoMapDefaultCenter.lat,
       lng: geoMapDefaultCenter.lng,
-      attribution:
-        '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      osmAttribution:
-        '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      satellite: null,
-      defaultTile: true,
+      attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      googleAttribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>, Imagery ©2025 Google, Maxar Technologies',
       measureControls: null,
     };
   },
 
   mounted() {
-
-
+    this.map = null;
     this.initMap();
   },
 
@@ -85,9 +79,24 @@ const GlobalMap = Vue.defineComponent({
       });
 
       // Add the default tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const osmLayer = L.tileLayer(this.mapsApiEndpoint, {
         attribution: this.attribution,
       }).addTo(this.map);
+
+      const googleLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        attribution: this.googleAttribution,
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      });
+
+      const baseMaps = {
+        'OpenStreetMap': osmLayer,
+        'Google Satellite': googleLayer,
+      };
+
+      if (window.__GOOGLE_MAPS_API_KEY__) {
+        L.control.layers(baseMaps).addTo(this.map);
+      }
 
       // Add fullscreen control
       this.map.addControl(
@@ -99,26 +108,7 @@ const GlobalMap = Vue.defineComponent({
         }),
       );
 
-      // Initialize the satellite layer if needed
-      // Note: Replace `L.gridLayer.googleMutant` with a suitable alternative for Leaflet if you're not using a plugin for Google Maps tiles
-      this.satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      });
       this.fitMarkers();
-    },
-    toggleSatellite() {
-      // use subdomains to identify state
-      if (this.defaultTile) {
-        this.defaultTile = false;
-        this.satellite.addTo(this.map);
-      } else {
-        this.defaultTile = true;
-        this.map.removeLayer(this.satellite);
-      }
-
-      // Working hack : redraw the tile layer component via Vue key
-      this.mapKey += 1;
     },
 
     fsHandler() {
