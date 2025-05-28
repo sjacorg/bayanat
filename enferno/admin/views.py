@@ -16,7 +16,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, select, func
+from sqlalchemy import desc, or_, select, func, text
 from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
@@ -124,7 +124,7 @@ from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
-from enferno.utils.pagination import paginate_query
+
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -2844,19 +2844,23 @@ def api_bulletins(validated_data: dict) -> Response:
     q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", 20)
+    include_count = validated_data.get("include_count", False)
 
     search = SearchUtils({"q": q}, "bulletin")
     query = search.get_query()
 
-    # Get total count if no cursor
-    # if not cursor:
-    #     total = db.session.execute(select(func.count()).select_from(query.subquery())).scalar()
+    # Get rough count if requested (for UX)
+    rough_total = None
+    if include_count and not cursor:  # Only on first page to avoid repeated calculations
+        rough_total = get_rough_count(query)
 
-    # Build main query
+    # Build main query with cursor-based pagination
     query = query.order_by(Bulletin.id.desc())
     if cursor:
-        query = query.where(Bulletin.id < cursor)
-    query = query.limit(per_page)
+        query = query.where(Bulletin.id < int(cursor))
+
+    # Fetch per_page + 1 items to detect if there are more pages
+    query = query.limit(per_page + 1)
 
     # Add options to eagerly load required relationships
     query = query.options(
@@ -2867,6 +2871,16 @@ def api_bulletins(validated_data: dict) -> Response:
 
     result = db.session.execute(query)
     items = result.scalars().unique().all()  # Use unique() to ensure unique rows
+
+    # Determine if there are more pages
+    has_more = len(items) > per_page
+    if has_more:
+        # Remove the extra item and set cursor to the last item's ID
+        items = items[:per_page]
+        next_cursor = str(items[-1].id) if items else None
+    else:
+        # No more pages
+        next_cursor = None
 
     # Minimal serialization for list view
     serialized_items = [
@@ -2890,13 +2904,14 @@ def api_bulletins(validated_data: dict) -> Response:
         for item in items
     ]
 
-    next_cursor = items[-1].id if items else None
-
     response = {
         "items": serialized_items,
-        "nextCursor": str(next_cursor) if next_cursor else None,
-        # "total": total if not cursor else None,
+        "nextCursor": next_cursor,
     }
+
+    # Include rough count if available
+    if rough_total is not None:
+        response["total"] = rough_total
 
     return jsonify(response)
 
@@ -3444,7 +3459,7 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -5838,3 +5853,47 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return jsonify({"batch_id": data_import.batch_id}), 202
+
+
+def get_rough_count(query, threshold=1000):
+    """
+    Get a rough count estimate for large datasets.
+
+    Args:
+        query: SQLAlchemy Select statement
+        threshold: Switch to estimation above this count
+
+    Returns:
+        int: Exact count for small datasets, rough estimate for large ones
+    """
+    try:
+        # For small datasets, get exact count (fast)
+        count_query = select(func.count()).select_from(query.limit(threshold).subquery())
+        exact_count = db.session.execute(count_query).scalar()
+
+        if exact_count < threshold:
+            return exact_count
+
+        # For large datasets, use PostgreSQL's row estimate
+        # Convert Select to string and use EXPLAIN
+        query_str = str(query.compile(compile_kwargs={"literal_binds": True}))
+        explain_query = text(f"EXPLAIN (FORMAT JSON) {query_str}")
+        result = db.session.execute(explain_query).fetchone()
+
+        if result and result[0]:
+            estimated_rows = result[0][0]["Plan"]["Plan Rows"]
+
+            # Round to meaningful increments for large numbers
+            if estimated_rows > 10000:
+                return round(estimated_rows, -3)  # Round to thousands
+            elif estimated_rows > 1000:
+                return round(estimated_rows, -2)  # Round to hundreds
+            else:
+                return int(estimated_rows)
+
+    except Exception as e:
+        # Fallback: return None if estimation fails
+        logger.warning(f"Count estimation failed: {e}")
+        return None
+
+    return None

@@ -1176,16 +1176,15 @@
                         this.loading = true;
                         const startTime = new Date()
 
-                        
-                        let url = `/admin/api/bulletins/?per_page=${this.perPage}`;
-                        if (this.nextCursor) {
-                            url += `&cursor=${this.nextCursor}`;
-                        }
-
-                        axios.post(url, {
+                        // Request count only on first load (no cursor) for better UX
+                        const requestData = {
                             q: this.search,
-                            cursor: this.nextCursor
-                        }).then(response => {
+                            per_page: this.perPage,
+                            cursor: this.nextCursor,
+                            include_count: !this.nextCursor  // Only on first page
+                        };
+
+                        axios.post('/admin/api/bulletins/', requestData).then(response => {
                             const endTime = new Date()
                             this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
                             
@@ -1193,6 +1192,13 @@
                             // Otherwise append new items
                             if (!this.nextCursor) {
                                 this.items = response.data.items;
+                                // Display rough count if available
+                                if (response.data.roughTotal) {
+                                    const countText = response.data.roughTotal > 1000 ? 
+                                        `~${(response.data.roughTotal / 1000).toFixed(0)}k` : 
+                                        response.data.roughTotal;
+                                    this.showSnack(`Found approximately ${countText} results`);
+                                }
                             } else {
                                 this.items = [...this.items, ...response.data.items];
 
