@@ -1212,7 +1212,6 @@ class BulletinQueryRequestModel(BaseValidationModel):
     q: list[BulletinQueryValidationModel] = Field(default_factory=list)
     per_page: int = Field(default=20, ge=1, le=100)
     cursor: Optional[str] = None
-    include_count: bool = Field(default=False)
 
 
 class EntityReviewValidationModel(BaseValidationModel):

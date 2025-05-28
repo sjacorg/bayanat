@@ -2617,7 +2617,6 @@ def api_mediacategory_create(
 def api_mediacategory_update(id: t.id, validated_data: dict) -> Response:
     """
     Endpoint to update a MediaCategory.
-
     Args:
         - id: id of the MediaCategory
         - validated_data: validated data from the request.
@@ -2844,30 +2843,17 @@ def api_bulletins(validated_data: dict) -> Response:
     q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", 20)
-    include_count = validated_data.get("include_count", False)
 
     search = SearchUtils({"q": q}, "bulletin")
     query = search.get_query()
-
-    # Get rough count if requested (for UX)
-    rough_total = None
-    if include_count and not cursor:  # Only on first page to avoid repeated calculations
-        rough_total = get_rough_count(query)
 
     # Build main query with cursor-based pagination
     query = query.order_by(Bulletin.id.desc())
     if cursor:
         query = query.where(Bulletin.id < int(cursor))
 
-    # Fetch per_page + 1 items to detect if there are more pages
+    # Fetch per_page + 1 items to determine if there are more pages
     query = query.limit(per_page + 1)
-
-    # Add options to eagerly load required relationships
-    query = query.options(
-        joinedload(Bulletin.assigned_to),
-        joinedload(Bulletin.roles),
-        joinedload(Bulletin.sources),
-    )
 
     result = db.session.execute(query)
     items = result.scalars().unique().all()  # Use unique() to ensure unique rows
@@ -2909,11 +2895,31 @@ def api_bulletins(validated_data: dict) -> Response:
         "nextCursor": next_cursor,
     }
 
-    # Include rough count if available
-    if rough_total is not None:
-        response["total"] = rough_total
-
     return jsonify(response)
+
+
+@admin.route("/api/bulletins/count/", methods=["POST"])
+@validate_with(BulletinQueryRequestModel)
+def api_bulletins_count(validated_data: dict) -> Response:
+    """
+    Get count of bulletins matching the search criteria.
+    Separate endpoint for optional counting when user requests it.
+    """
+    q = validated_data.get("q", [{}])
+
+    search = SearchUtils({"q": q}, "bulletin")
+    query = search.get_query()
+
+    # Use COUNT(id) for better performance than COUNT(*)
+    count_query = select(func.count(Bulletin.id)).select_from(query.subquery())
+
+    try:
+        total = db.session.execute(count_query).scalar()
+        return jsonify({"total": total})
+    except Exception as e:
+        # Fallback for complex queries
+        logger.warning(f"Count query failed: {e}")
+        return jsonify({"total": "Unable to calculate", "error": str(e)})
 
 
 @admin.post("/api/bulletin/")
@@ -5853,47 +5859,3 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return jsonify({"batch_id": data_import.batch_id}), 202
-
-
-def get_rough_count(query, threshold=1000):
-    """
-    Get a rough count estimate for large datasets.
-
-    Args:
-        query: SQLAlchemy Select statement
-        threshold: Switch to estimation above this count
-
-    Returns:
-        int: Exact count for small datasets, rough estimate for large ones
-    """
-    try:
-        # For small datasets, get exact count (fast)
-        count_query = select(func.count()).select_from(query.limit(threshold).subquery())
-        exact_count = db.session.execute(count_query).scalar()
-
-        if exact_count < threshold:
-            return exact_count
-
-        # For large datasets, use PostgreSQL's row estimate
-        # Convert Select to string and use EXPLAIN
-        query_str = str(query.compile(compile_kwargs={"literal_binds": True}))
-        explain_query = text(f"EXPLAIN (FORMAT JSON) {query_str}")
-        result = db.session.execute(explain_query).fetchone()
-
-        if result and result[0]:
-            estimated_rows = result[0][0]["Plan"]["Plan Rows"]
-
-            # Round to meaningful increments for large numbers
-            if estimated_rows > 10000:
-                return round(estimated_rows, -3)  # Round to thousands
-            elif estimated_rows > 1000:
-                return round(estimated_rows, -2)  # Round to hundreds
-            else:
-                return int(estimated_rows)
-
-    except Exception as e:
-        # Fallback: return None if estimation fails
-        logger.warning(f"Count estimation failed: {e}")
-        return None
-
-    return None
