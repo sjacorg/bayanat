@@ -88,20 +88,19 @@
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                         :bg-color="searchBg"
+                                        clearable
+                                        
+                                        
+
                                 ></v-text-field>
 
-                                <!-- Count button -->
-                                <v-btn
-                                    @click="getCount"
-                                    :loading="countLoading"
-                                    variant="outlined"
-                                    class="mx-1"
-                                    size="small"
-                                    prepend-icon="mdi-counter"
-                                >
-                                    <span v-if="showCount">${totalCount}</span>
-                                    <span v-else>{{ _('Count') }}</span>
-                                </v-btn>
+                                <v-checkbox 
+                                    v-model="enableCount"
+                                    density="compact"
+                                    hide-details
+                                    class="mx-2"
+                                    :label="countLabel"
+                                ></v-checkbox>
 
                                 <v-spacer></v-spacer>
                                 {% if current_user.roles_in(['Admin','DA']) %}
@@ -727,7 +726,8 @@
                     // Count functionality
                     countLoading: false,
                     totalCount: null,
-                    showCount: false
+                    enableCount: false,
+                    countType: null,
                 }),
 
                 computed: {
@@ -772,6 +772,18 @@
 
                     compLocations() {
                         return aggregateBulletinLocations(this.editedItem);
+                    },
+
+                    countLabel() {
+                        if (!this.enableCount) {
+                            return 'Show count';
+                        }
+                        
+                        if (this.totalCount === null) {
+                            return 'Show count';
+                        }
+                        
+                        return `Count: ${this.totalCount}`;
                     },
 
 
@@ -1197,28 +1209,29 @@
                         const requestData = {
                             q: this.search,
                             per_page: this.perPage,
-                            cursor: this.nextCursor
+                            cursor: this.nextCursor,
+                            include_count: this.enableCount // Simple: just use checkbox state
                         };
 
                         axios.post('/admin/api/bulletins/', requestData).then(response => {
                             const endTime = new Date()
-                            this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                            
-                            // If this is a fresh load (no nextCursor), replace items
-                            // Otherwise append new items
-                            if (!this.nextCursor) {
-                                this.items = response.data.items;
-                            } else {
-                                this.items = [...this.items, ...response.data.items];
+                            const duration = endTime - startTime
+                            console.log(`API call took ${duration}ms`)
 
-                                const count = response.data.items.length;
-                                if (count > 0) {
-                                    const plural = count === 1 ? 'record' : 'records';
-                                    this.showSnack(`Loaded ${count} more ${plural}.`);
+                            if (this.nextCursor === null) {
+                                // First page - replace items
+                                this.items = response.data.items;
+                                
+                                // Handle count if included
+                                if (response.data.total !== undefined) {
+                                    this.totalCount = response.data.total;
+                                    this.countType = response.data.totalType;
                                 }
+                            } else {
+                                // Subsequent pages - append items
+                                this.items = this.items.concat(response.data.items);
                             }
-                            
-                            // Set nextCursor from response
+
                             this.nextCursor = response.data.nextCursor;
                             
                             this.showVisualize = !(
@@ -1863,28 +1876,6 @@
                             });
                     },
 
-                    // Separate method to get count when user requests it
-                    getCount() {
-                        if (this.countLoading) return;
-                        
-                        this.countLoading = true;
-                        const requestData = {
-                            q: this.search,
-                            per_page: 20, // Not used for count, but required by validation
-                            cursor: null
-                        };
-
-                        axios.post('/admin/api/bulletins/count/', requestData).then(response => {
-                            this.totalCount = response.data.total;
-                            this.showCount = true;
-                            this.showSnack(`Total: ${this.totalCount} bulletins found`);
-                        }).catch(error => {
-                            console.error('Error getting count:', error);
-                            this.showSnack('Error getting count');
-                        }).finally(() => {
-                            this.countLoading = false;
-                        });
-                    }
                 }
             })
         ;

@@ -2843,6 +2843,7 @@ def api_bulletins(validated_data: dict) -> Response:
     q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", 20)
+    include_count = validated_data.get("include_count", False)  # Optional count
 
     search = SearchUtils({"q": q}, "bulletin")
     query = search.get_query()
@@ -2856,16 +2857,14 @@ def api_bulletins(validated_data: dict) -> Response:
     query = query.limit(per_page + 1)
 
     result = db.session.execute(query)
-    items = result.scalars().unique().all()  # Use unique() to ensure unique rows
+    items = result.scalars().unique().all()
 
     # Determine if there are more pages
     has_more = len(items) > per_page
     if has_more:
-        # Remove the extra item and set cursor to the last item's ID
         items = items[:per_page]
         next_cursor = str(items[-1].id) if items else None
     else:
-        # No more pages
         next_cursor = None
 
     # Minimal serialization for list view
@@ -2893,33 +2892,27 @@ def api_bulletins(validated_data: dict) -> Response:
     response = {
         "items": serialized_items,
         "nextCursor": next_cursor,
+        "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
+    # Add count if requested
+    if include_count:
+        try:
+            # Simple approach: just do a fast COUNT query
+            # For most searches, this will be fast enough
+            base_query = SearchUtils({"q": q}, "bulletin").get_query()
+            count_query = select(func.count()).select_from(base_query.subquery())
+            total_count = db.session.execute(count_query).scalar()
+
+            response["total"] = total_count
+            response["totalType"] = "exact"
+
+        except Exception as e:
+            logger.warning(f"Count query failed: {e}")
+            response["total"] = "Unable to calculate"
+            response["totalType"] = "error"
+
     return jsonify(response)
-
-
-@admin.route("/api/bulletins/count/", methods=["POST"])
-@validate_with(BulletinQueryRequestModel)
-def api_bulletins_count(validated_data: dict) -> Response:
-    """
-    Get count of bulletins matching the search criteria.
-    Separate endpoint for optional counting when user requests it.
-    """
-    q = validated_data.get("q", [{}])
-
-    search = SearchUtils({"q": q}, "bulletin")
-    query = search.get_query()
-
-    # Use COUNT(id) for better performance than COUNT(*)
-    count_query = select(func.count(Bulletin.id)).select_from(query.subquery())
-
-    try:
-        total = db.session.execute(count_query).scalar()
-        return jsonify({"total": total})
-    except Exception as e:
-        # Fallback for complex queries
-        logger.warning(f"Count query failed: {e}")
-        return jsonify({"total": "Unable to calculate", "error": str(e)})
 
 
 @admin.post("/api/bulletin/")
