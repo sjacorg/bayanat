@@ -94,15 +94,6 @@
 
                                 ></v-text-field>
 
-                                <v-checkbox 
-                                    :model-value="enableCount"
-                                    @update:model-value="handleEnableCountCheckbox"
-                                    density="compact"
-                                    hide-details
-                                    class="mx-2"
-                                    :label="countLabel"
-                                ></v-checkbox>
-
                                 <v-spacer></v-spacer>
                                 {% if current_user.roles_in(['Admin','DA']) %}
                                     <v-btn
@@ -215,9 +206,21 @@
                         </template>
 
                         <template #bottom>
-                            <div class="d-flex flex-column justify-center w-100 border-t px-1" style="height: 61px">
-                                <div class="ma-2 d-flex">{{ _('Search time: ') }}
+                            <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
+                                <div>{{ _('Search time: ') }}
                                     ${searchTime} {{ _('seconds') }}</div>
+                                <div>
+                                
+                                <v-slide-y-transition mode="out-in">
+                                    <div :key="enableCount && totalCount !== null ? 'count' : 'button'">
+                                        <div v-if="enableCount && totalCount !== null">
+                                            ${recordCountText} 
+                                        </div>
+                                        <v-btn v-else @click="handleEnableCount" :loading="countLoading" variant="text">
+                                            {{ _('Show total count') }}
+                                        </v-btn>
+                                    </div>
+                                </v-slide-y-transition>
                             </div>
                         </template>
 
@@ -770,18 +773,9 @@
                         return aggregateBulletinLocations(this.editedItem);
                     },
 
-                    countLabel() {
-                        if (!this.enableCount) {
-                            return 'Show count';
-                        }
-                        
-                        if (this.totalCount === null) {
-                            return 'Show count';
-                        }
-                        
-                        return `Count: ${this.totalCount}`;
+                    recordCountText() {
+                        return "{{ _('Showing {count} matching results') }}".replace('{count}', this.totalCount)
                     },
-
 
                     exBulletins() {
                         let ids = [];
@@ -974,9 +968,9 @@
                 },
 
                 methods: {
-                    handleEnableCountCheckbox(checked) {
-                        this.enableCount = checked
-                        if (checked) {
+                    handleEnableCount() {
+                        this.enableCount = !this.enableCount
+                        if (this.enableCount) {
                             this.loadTotalCount()
                         }
                     },
