@@ -994,7 +994,7 @@
                     axios.post(`/admin/api/incidents/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
                         const endTime = new Date();
 
-                        this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
+                        this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
 

@@ -1129,7 +1129,7 @@
                         options: this.options
                     }).then(response => {
                         const endTime = new Date();
-                        this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
+                        this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
                         this.showVisualize = !(
