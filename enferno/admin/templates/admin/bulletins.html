@@ -57,7 +57,7 @@
                             item-selectable="selectable"
                             class="elevation-1"
                             hide-default-footer
-                            :items-length="computedItemsLength"
+                            :items-length="items.length"
                     >
                         <template #top>
                             <v-sheet class="ma-3 d-flex align-center">
@@ -93,14 +93,6 @@
                                         
 
                                 ></v-text-field>
-
-                                <v-checkbox 
-                                    v-model="enableCount"
-                                    density="compact"
-                                    hide-details
-                                    class="mx-2"
-                                    :label="countLabel"
-                                ></v-checkbox>
 
                                 <v-spacer></v-spacer>
                                 {% if current_user.roles_in(['Admin','DA']) %}
@@ -214,9 +206,21 @@
                         </template>
 
                         <template #bottom>
-                            <div class="d-flex flex-column justify-center w-100 border-t px-1" style="height: 61px">
-                                <div class="ma-2 d-flex">{{ _('Search time: ') }}
+                            <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
+                                <div>{{ _('Search time: ') }}
                                     ${searchTime} {{ _('seconds') }}</div>
+                                <div>
+                                
+                                <v-slide-y-transition mode="out-in">
+                                    <div :key="enableCount && totalCount !== null ? 'count' : 'button'">
+                                        <div v-if="enableCount && totalCount !== null">
+                                            ${recordCountText} 
+                                        </div>
+                                        <v-btn v-else @click="handleEnableCount" :loading="countLoading" variant="text">
+                                            {{ _('Show total count') }}
+                                        </v-btn>
+                                    </div>
+                                </v-slide-y-transition>
                             </div>
                         </template>
 
@@ -731,11 +735,6 @@
                 }),
 
                 computed: {
-                    computedItemsLength() {
-                        // If we have a nextCursor, there are more items to load
-                        // So we return current items length + 1 to indicate more items
-                        return this.nextCursor ? this.items.length + 1 : this.items.length;
-                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)
@@ -774,18 +773,9 @@
                         return aggregateBulletinLocations(this.editedItem);
                     },
 
-                    countLabel() {
-                        if (!this.enableCount) {
-                            return 'Show count';
-                        }
-                        
-                        if (this.totalCount === null) {
-                            return 'Show count';
-                        }
-                        
-                        return `Count: ${this.totalCount}`;
+                    recordCountText() {
+                        return "{{ _('Showing {count} matching results') }}".replace('{count}', this.totalCount)
                     },
-
 
                     exBulletins() {
                         let ids = [];
@@ -978,6 +968,13 @@
                 },
 
                 methods: {
+                    handleEnableCount() {
+                        this.enableCount = !this.enableCount
+                        if (this.enableCount) {
+                            this.loadTotalCount()
+                        }
+                    },
+
                     fetchRelationInfo() {
                         axios.get('/admin/api/relation/info')
                             .then(response => {
@@ -1039,8 +1036,7 @@
                             console.error(e.message);
                         }).finally(() => {
                         });
-                    }
-                    ,
+                    },
 
 
                     exportRequest() {
@@ -1198,6 +1194,34 @@
                         this.loadMore();
                     },
 
+                    loadTotalCount() {
+                        if (this.countLoading) return;
+
+                        this.fetchingRecordsError = false;
+                        this.countLoading = true;
+
+                        // Clean request data - all parameters in POST body
+                        const requestData = {
+                            q: this.search,
+                            per_page: this.perPage,
+                            cursor: this.nextCursor,
+                            include_count: this.enableCount // Simple: just use checkbox state
+                        };
+
+                        axios.post('/admin/api/bulletins/', requestData).then(response => {
+                                // Handle count if included
+                                if (response.data.total !== undefined) {
+                                    this.totalCount = response.data.total;
+                                    this.countType = response.data.totalType;
+                                }
+                        }).catch(error => {
+                            console.error('Error loading bulletins total count:', error);
+                            this.showSnack('Error loading bulletins total count');
+                        }).finally(() => {
+                            this.countLoading = false;
+                        });
+                    },
+
                     loadMore() {
                         if (this.loading) return;
                         
@@ -1216,6 +1240,7 @@
                         axios.post('/admin/api/bulletins/', requestData).then(response => {
                             const endTime = new Date()
                             const duration = endTime - startTime
+                            this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
                             console.log(`API call took ${duration}ms`)
 
                             if (this.nextCursor === null) {
@@ -1351,7 +1376,6 @@
                     allBulletins() {
                         this.search = [{}];
                         this.refresh();
-
                     },
                     myAssigned() {
                         let q = {};
