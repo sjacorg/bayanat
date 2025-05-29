@@ -95,7 +95,8 @@
                                 ></v-text-field>
 
                                 <v-checkbox 
-                                    v-model="enableCount"
+                                    :model-value="enableCount"
+                                    @update:model-value="handleEnableCountCheckbox"
                                     density="compact"
                                     hide-details
                                     class="mx-2"
@@ -973,6 +974,13 @@
                 },
 
                 methods: {
+                    handleEnableCountCheckbox(checked) {
+                        this.enableCount = checked
+                        if (checked) {
+                            this.loadTotalCount()
+                        }
+                    },
+
                     fetchRelationInfo() {
                         axios.get('/admin/api/relation/info')
                             .then(response => {
@@ -1034,8 +1042,7 @@
                             console.error(e.message);
                         }).finally(() => {
                         });
-                    }
-                    ,
+                    },
 
 
                     exportRequest() {
@@ -1191,6 +1198,34 @@
                         this.items = [];
                         this.nextCursor = null;
                         this.loadMore();
+                    },
+
+                    loadTotalCount() {
+                        if (this.countLoading) return;
+
+                        this.fetchingRecordsError = false;
+                        this.countLoading = true;
+
+                        // Clean request data - all parameters in POST body
+                        const requestData = {
+                            q: this.search,
+                            per_page: this.perPage,
+                            cursor: this.nextCursor,
+                            include_count: this.enableCount // Simple: just use checkbox state
+                        };
+
+                        axios.post('/admin/api/bulletins/', requestData).then(response => {
+                                // Handle count if included
+                                if (response.data.total !== undefined) {
+                                    this.totalCount = response.data.total;
+                                    this.countType = response.data.totalType;
+                                }
+                        }).catch(error => {
+                            console.error('Error loading bulletins total count:', error);
+                            this.showSnack('Error loading bulletins total count');
+                        }).finally(() => {
+                            this.countLoading = false;
+                        });
                     },
 
                     loadMore() {
