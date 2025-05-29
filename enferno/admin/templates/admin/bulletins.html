@@ -774,7 +774,7 @@
                     },
 
                     recordCountText() {
-                        return "{{ _('Showing {count} matching results') }}".replace('{count}', this.totalCount)
+                        return "{{ _('Showing {count} items of {total}') }}".replace('{count}', this.items.length).replace('{total}', this.totalCount)
                     },
 
                     exBulletins() {
