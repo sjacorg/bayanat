@@ -133,8 +133,8 @@ class DataImport(db.Model, BaseMixin):
         self.status = "Processing"
         self.save()
 
-    def sucess(self) -> None:
-        """Update the status of the import log to sucess."""
+    def success(self) -> None:
+        """Update the status of the import log to success."""
         self.status = "Ready"
         self.imported_at = dt.utcnow()
         self.save()

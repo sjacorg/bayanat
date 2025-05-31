@@ -3,6 +3,7 @@ import pathlib
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from unidecode import unidecode
 
 from werkzeug.utils import secure_filename
 
@@ -133,10 +134,8 @@ class Media(db.Model, BaseMixin):
         Returns:
             - the generated file name.
         """
-        return "{}-{}".format(
-            datetime.utcnow().strftime("%Y%m%d-%H%M%S"),
-            secure_filename(filename).lower(),
-        )
+        decoded = secure_filename(unidecode(filename)).lower()
+        return f"{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{decoded}"
 
     @staticmethod
     def validate_file_extension(filepath: str, allowed_extensions: list[str]) -> bool:

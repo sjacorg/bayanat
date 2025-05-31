@@ -2,10 +2,6 @@ const ImportLogCard = Vue.defineComponent({
   props: ['log'],
 
   mounted() {
-
-    //convert expiry to localized date
-    this.log.imported_at = this.localDate(this.log.imported_at);
-
     if (this.item?.id) {
       this.loadImportedItem();
     }

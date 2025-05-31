@@ -70,7 +70,7 @@
                     ${translations.refineExtendSearch_}
                 </v-btn>
                 <v-spacer></v-spacer>
-                <v-btn @click="resetSearch" text>{{ _('Clear Search') }}</v-btn>
+                <v-btn @click="search=[{}]" text>{{ _('Clear Search') }}</v-btn>
                 <v-btn v-if="!savedSearchSelection" @click="openSaveQueryDialog" color="grey"
                        depressed>{{ _('Save Search') }}</v-btn>
                 <v-btn
