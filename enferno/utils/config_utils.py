@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 from enferno.admin.constants import Constants
+from enferno.utils.notification_settings import NotificationSettings
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -97,6 +98,12 @@ class ConfigManager:
                 "mts",
                 "lvr",
                 "m2ts",
+                "png",
+                "jpeg",
+                "jpg",
+                "gif",
+                "webp",
+                "pdf",
             ],
             "OCR_ENABLED": False,
             "OCR_EXT": ["png", "jpeg", "tiff", "jpg", "gif", "webp", "bmp", "pnm"],
@@ -321,9 +328,13 @@ class ConfigManager:
 
     @staticmethod
     def get_all_default_configs():
-        return {
+        default_configs = {
             entry: ConfigManager.get_default_config(entry) for entry in ConfigManager.DEFAULT_CONFIG
         }
+        default_configs["NOTIFICATIONS"] = NotificationSettings._enforce_locked_settings(
+            default_configs["NOTIFICATIONS"]
+        )
+        return default_configs
 
     @staticmethod
     def serialize():

@@ -47,7 +47,7 @@
                         name="password"
                         prepend-icon="mdi-lock-question"
                         type="password"
-                        @keyup.enter="!invalid && submit()"
+                        @keyup.enter="submit()"
                         :rules="[rules.required, rules.min]"
 
                 ></v-text-field>
@@ -83,7 +83,7 @@
         
         <v-card-actions class="px-4 pb-6">
 
-            <v-btn variant="elevated" class="mx-auto my-3" block :disabled="invalid" size="large" @click.once="submit"
+            <v-btn variant="elevated" class="mx-auto my-3" block size="large" @click.once="submit"
                    color="primary">
                 {{ _('Login') }}</v-btn>
         </v-card-actions>
@@ -139,9 +139,6 @@
                 submit() {
                     document.getElementById('loginForm').submit();
                 }
-            },
-            mounted() {
-                // Your mounted logic here
             },
             delimiters: delimiters
         });

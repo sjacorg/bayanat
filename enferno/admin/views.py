@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 from uuid import uuid4
-from unidecode import unidecode
 
 import bleach
 import boto3
@@ -3424,8 +3423,8 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    decoded = unidecode(file.filename)
-    filename = Media.generate_file_name(decoded)
+    
+    filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
     dz_uuid = request.form.get("dzuuid")
@@ -3474,7 +3473,7 @@ def api_medias_chunk() -> Response:
         etag = get_file_hash(filepath)
 
         # validate etag here // if it exists // reject the upload and send an error code
-        if Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
+        if Media.query.filter(Media.etag == etag, Media.deleted.is_not(True)).first():
             return "Error, file already exists", 409
 
         if not current_app.config["FILESYSTEM_LOCAL"] and not import_upload:
@@ -3491,7 +3490,7 @@ def api_medias_chunk() -> Response:
             except Exception as e:
                 logger.error(e, exc_info=True)
 
-        response = {"etag": etag, "filename": filename}
+        response = {"etag": etag, "filename": filename, "original_filename": file.filename}
         Activity.create(
             current_user, Activity.ACTION_UPLOAD, Activity.STATUS_SUCCESS, response, "media"
         )
@@ -3529,8 +3528,7 @@ def api_medias_upload() -> Response:
     if current_app.config["FILESYSTEM_LOCAL"]:
         file = request.files.get("file")
         # final file
-        decoded = unidecode(file.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(file.filename)
         filepath = (Media.media_dir / filename).as_posix()
 
         with open(filepath, "wb") as f:
@@ -3552,8 +3550,7 @@ def api_medias_upload() -> Response:
         )
 
         # final file
-        decoded = unidecode(file.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(file.filename)
         # filepath = (Media.media_dir/filename).as_posix()
 
         response = s3.Bucket(current_app.config["S3_BUCKET"]).put_object(Key=filename, Body=file)
@@ -3701,8 +3698,7 @@ def api_inline_medias_upload() -> Response:
         f = request.files.get("file")
 
         # final file
-        decoded = unidecode(f.filename)
-        filename = Media.generate_file_name(decoded)
+        filename = Media.generate_file_name(f.filename)
         filepath = (Media.inline_dir / filename).as_posix()
         f.save(filepath)
         response = {"location": filename}
@@ -5783,6 +5779,7 @@ def api_notifications() -> Response:
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
     status = request.args.get("status")
+    is_urgent = request.args.get("is_urgent")
 
     # Query notifications for current user, ordered by creation date descending
     notifications_query = (
@@ -5800,13 +5797,24 @@ def api_notifications() -> Response:
         elif status.lower() == "unread":
             notifications_query = notifications_query.filter(Notification.read_status == False)
 
+    if is_urgent is not None:
+        is_urgent_bool = is_urgent.lower() == "true"
+        notifications_query = notifications_query.filter(Notification.is_urgent.is_(is_urgent_bool))
+
     # Paginate the results
     paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
-    unread_count = (
+    unread_notifications = (
         db.session.query(Notification)
-        .filter(Notification.user_id == current_user.id, Notification.read_status == False)
-        .count()
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.read_status == False,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
+        .all()
     )
+
+    unread_count = len(unread_notifications)
+    has_unread_urgent_notifications = any(n.is_urgent for n in unread_notifications)
 
     response = {
         "items": [notification.to_dict() for notification in paginated_notifications.items],
@@ -5815,6 +5823,7 @@ def api_notifications() -> Response:
         "total": paginated_notifications.total,
         "hasMore": paginated_notifications.has_next,
         "unreadCount": unread_count,
+        "hasUnreadUrgentNotifications": has_unread_urgent_notifications,
     }
 
     return jsonify(response)
@@ -5823,23 +5832,33 @@ def api_notifications() -> Response:
 @admin.route("/api/notifications/unread/count")
 def api_notifications_unread_count() -> Response:
     """
-    Endpoint to get the count of unread notifications for the current user.
+    Returns the count of unread internal notifications for the current user,
+    and whether any of them are marked as urgent.
 
-    Returns:
-        - JSON response containing the count of unread notifications
-        Example: {"unread_count": 5}
+    Example response:
+    {
+        "unread_count": 5,
+        "has_unread_urgent_notifications": true
+    }
     """
-    unread_count = (
+    # Get all relevant unread internal notifications for the current user
+    unread_notifications = (
         db.session.query(Notification)
         .filter(
             Notification.user_id == current_user.id,
             Notification.read_status == False,
             Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
         )
-        .count()
+        .all()
     )
 
-    return jsonify({"unread_count": unread_count})
+    unread_count = len(unread_notifications)
+    has_unread_urgent_notifications = any(n.is_urgent for n in unread_notifications)
+
+    return jsonify({
+        "unread_count": unread_count,
+        "has_unread_urgent_notifications": has_unread_urgent_notifications
+    })
 
 
 @admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
