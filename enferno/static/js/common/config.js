@@ -5,6 +5,15 @@ const validationRules = {
     min: (v) => v.length >= 6 || 'Min 6 characters',
 };
 
+// Helper functions
+function scrollToElementById(elementId) {
+    const element = document.getElementById(elementId)
+    element?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+    })
+}
+
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
