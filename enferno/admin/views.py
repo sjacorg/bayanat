@@ -3490,7 +3490,7 @@ def api_medias_chunk() -> Response:
             except Exception as e:
                 logger.error(e, exc_info=True)
 
-        response = {"etag": etag, "filename": filename}
+        response = {"etag": etag, "filename": filename, "original_filename": file.filename}
         Activity.create(
             current_user, Activity.ACTION_UPLOAD, Activity.STATUS_SUCCESS, response, "media"
         )
