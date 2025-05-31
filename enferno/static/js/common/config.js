@@ -422,6 +422,7 @@ function parseResponse(dzFile) {
         s3url: response.filename,
         filename: response.filename,
         etag: response.etag,
+        original_filename: response.original_filename,
     };
 }
 
