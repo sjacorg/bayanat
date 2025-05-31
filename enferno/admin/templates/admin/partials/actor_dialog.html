@@ -62,7 +62,10 @@
                                             label-original="{{ _('Name') }}"
                                             label-translation="{{ _('Name (AR)') }}"
                                             :allow-unknown="true"
-                                            :rules="nameRule"
+                                            :rules="[
+                                                validationRules.required(),
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
                                 </v-col>
 
@@ -72,6 +75,9 @@
                                             v-model:translation="editedItem.nickname_ar"
                                             label-original="{{ _('Nickname') }}"
                                             label-translation="{{ _('Nickname (AR)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
                                 </v-col>
 
@@ -90,7 +96,10 @@
                                             label-original="{{ _('First Name') }}"
                                             label-translation="{{ _('First Name (AR)') }}"
                                             :allow-unknown="true"
-                                            :rules="firstNameRule"
+                                            :rules="[
+                                                validationRules.required(),
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
                                 </v-col>
                                 <v-col cols="12" md="4">
@@ -99,6 +108,9 @@
                                             v-model:translation="editedItem.middle_name_ar"
                                             label-original="{{ _('Middle Name') }}"
                                             label-translation="{{ _('Middle Name (AR)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
                                 </v-col>
                                 <v-col cols="12" md="4">
@@ -108,7 +120,10 @@
                                             label-original="{{ _('Last Name') }}"
                                             label-translation="{{ _('Last Name (AR)') }}"
                                             :allow-unknown="true"
-                                            :rules="lastNameRule"
+                                            :rules="[
+                                                validationRules.required(),
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
                                 </v-col>
                             </v-row>
@@ -120,6 +135,9 @@
                                             v-model:translation="editedItem.nickname_ar"
                                             label-original="{{ _('Nickname') }}"
                                             label-translation="{{ _('Nickname (AR)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
 
 
@@ -132,6 +150,9 @@
                                             v-model:translation="editedItem.father_name_ar"
                                             label-original="{{ _('Father\'s Name') }}"
                                             label-translation="{{ _('Father\'s Name (AR)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
 
 
@@ -143,6 +164,9 @@
                                             v-model:translation="editedItem.mother_name_ar"
                                             label-original="{{ _('Mother\'s Name') }}"
                                             label-translation="{{ _('Mother\'s Name (AR)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
 
 
@@ -206,6 +230,9 @@
                                             v-model:translation="editedItem.occupation_ar"
                                             label-original="{{ _('Occupation') }}"
                                             label-translation="{{ _('Occupation (AR)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
 
                                 </v-col>
@@ -218,6 +245,9 @@
                                             v-model:translation="editedItem.position_ar"
                                             label-original="{{ _('Position') }}"
                                             label-translation="{{ _('Position (AR)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
                                     ></dual-field>
 
 
@@ -240,7 +270,7 @@
                                 <v-col md="4">
                                     <v-text-field label="{{ _('No of Children') }}"
                                                   v-model="editedItem.no_children"
-                                                  :rules="integerRule"></v-text-field>
+                                                  :rules="[validationRules.integer()]"></v-text-field>
                                 </v-col>
 
                                 <v-col cols="12" md="4">
@@ -385,6 +415,7 @@
                                                                     variant="outlined"
                                                                     v-model="profile.source_link"
                                                                     label="{{ _('Source Link') }}"
+                                                                    :rules="[validationRules.maxLength(255)]"
                                                     ></v-text-field>
                                                 </v-col>
 
@@ -504,7 +535,7 @@
                                                                 <v-col md="4">
                                                                     <v-text-field
                                                                         label="{{ _('Months Pregnant at time of disappearance') }}"
-                                                                        v-model="profile.months_pregnant" :rules="integerRule"
+                                                                        v-model="profile.months_pregnant" :rules="[validationRules.integer()]"
                                                                     ></v-text-field>
 
                                                                 </v-col>
@@ -574,7 +605,7 @@
                                                                     <v-text-field v-model="profile.height"
                                                                                   label="{{ _('Height') }}"
                                                                                   suffix="cm"
-                                                                                  :rules="integerRule"
+                                                                                  :rules="[validationRules.integer()]"
                                                                     ></v-text-field>
 
 
@@ -583,7 +614,7 @@
                                                                     <v-text-field v-model="profile.weight"
                                                                                   label="{{ _('Weight') }}"
                                                                                   suffix="kg"
-                                                                                  :rules="integerRule"
+                                                                                  :rules="[validationRules.integer()]"
                                                                     ></v-text-field>
 
 
@@ -920,7 +951,9 @@
                                                 multiple
                                                 v-model="editedItem.roles"
                                                 label="{{ _('Restrict Actor to Access Group(s)') }}"
-                                                :rules="accessRule"
+                                                :rules="
+                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
+                                                "
                                                 clearable
                                         ></v-select>
                                         <v-checkbox
