@@ -219,8 +219,8 @@
 
                                     </div>
                                     <v-slide-y-transition mode="out-in">
-                                        <div :key="enableCount || totalCount !== null ? 'count' : 'button'" style="width: 188.18px;">
-                                            <div v-if="enableCount || totalCount !== null" class="text-center w-100">
+                                        <div :key="!countLoading && enableCount || totalCount !== null ? 'count' : 'button'" style="width: 188.18px;">
+                                            <div v-if="!countLoading && enableCount || totalCount !== null" class="text-center w-100">
                                                 ${recordCountText} 
                                             </div>
                                             <v-btn
@@ -800,10 +800,10 @@
                     },
 
                     recordCountShortText() {
-                        return "{{ _('Showing {count} items') }}".replace('{count}', this.items.length)
+                        return "{{ _('Showing {count} items') }}".replace('{count}', this.items.length ?? 0)
                     },
                     recordCountText() {
-                        return "{{ _('Showing {count} items of {total}') }}".replace('{count}', this.items.length).replace('{total}', this.totalCount)
+                        return "{{ _('Showing {count} items of {total}') }}".replace('{count}', this.items.length ?? 0).replace('{total}', this.totalCount ?? 0)
                     },
 
                     exBulletins() {
