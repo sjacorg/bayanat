@@ -211,20 +211,45 @@
                                     ${searchTime} {{ _('seconds') }}</div>
                                 <div>
                                 
-                                <v-slide-y-transition mode="out-in">
-                                    <div :key="enableCount && totalCount !== null ? 'count' : 'button'">
-                                        <div v-if="enableCount && totalCount !== null">
-                                            ${recordCountText} 
-                                        </div>
-                                        <v-btn v-else @click="handleEnableCount" :loading="countLoading" variant="text">
-                                            {{ _('Show total count') }}
-                                        </v-btn>
+                                <div class="d-flex flex-row align-center ga-2">
+                                    <div class="d-flex flex-row align-center ga-2">
+                                        {{ _('Items per page:') }}
+                                        <v-select :model-value="perPage" @update:model-value="setNextPerPageValue" hide-details density="compact" :items="itemsPerPageOptions"
+                                            variant="outlined"></v-select>
+
                                     </div>
-                                </v-slide-y-transition>
+                                    <v-slide-y-transition mode="out-in">
+                                        <div :key="enableCount && totalCount !== null ? 'count' : 'button'" style="width: 188.18px;">
+                                            <div v-if="enableCount && totalCount !== null" class="text-center w-100">
+                                                ${recordCountText} 
+                                            </div>
+                                            <v-btn
+                                                v-else
+                                                @mouseenter="isHoveringTotalCountBtn = true"
+                                                @mouseleave="isHoveringTotalCountBtn = false"
+                                                @click="handleEnableCount"
+                                                :loading="countLoading"
+                                                :variant="isHoveringTotalCountBtn ? 'outlined' : 'text'"
+                                                class="text-none text-body-2 text-right w-100"
+                                            >
+                                                <v-slide-y-transition mode="out-in">
+                                                    <div :key="isHoveringTotalCountBtn ? 'showing' : 'showTotalCount'">
+                                                        <div v-if="isHoveringTotalCountBtn">
+                                                            {{ _('Show total count') }}
+                                                        </div>
+                                                        <div v-else>
+                                                            ${recordCountShortText}
+                                                        </div>
+                                                    </div>
+                                                </v-slide-y-transition>
+                                            </v-btn>
+                                        </div>
+                                    </v-slide-y-transition>
+                                </div>
                             </div>
                         </template>
 
-                        <template v-slot:no-data></template>
+                        <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
                         <template #item.roles="{item}">
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
@@ -485,7 +510,8 @@
 
 
                 data: () => ({
-
+                    isHoveringTotalCountBtn: false,
+                    itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
 
                     valid: false,
@@ -501,7 +527,7 @@
                     itoiInfo: [],
 
                     nextCursor: null,
-                    perPage: 20,
+                    perPage: window.itemsPerPageOptions?.[0] ?? 20,
                     items: [],
                     selected: [],
 
@@ -773,6 +799,9 @@
                         return aggregateBulletinLocations(this.editedItem);
                     },
 
+                    recordCountShortText() {
+                        return "{{ _('Showing {count} items') }}".replace('{count}', this.items.length)
+                    },
                     recordCountText() {
                         return "{{ _('Showing {count} items of {total}') }}".replace('{count}', this.items.length).replace('{total}', this.totalCount)
                     },
@@ -968,6 +997,11 @@
                 },
 
                 methods: {
+                    setNextPerPageValue(nextPerPage) {
+                        this.perPage = nextPerPage;
+                        this.loadMore();
+                    },
+
                     handleEnableCount() {
                         this.enableCount = !this.enableCount
                         if (this.enableCount) {
