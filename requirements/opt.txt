@@ -1,2 +1,3 @@
 pytesseract==0.3.13
 openai-whisper==20240930
+torch>=2.7.1rc1  # Pin to secure version, fixes GHSA-887c-mr87-cxwp and GHSA-3749-ghw9-m3mg
