@@ -219,8 +219,8 @@
 
                                     </div>
                                     <v-slide-y-transition mode="out-in">
-                                        <div :key="enableCount && totalCount !== null ? 'count' : 'button'" style="width: 188.18px;">
-                                            <div v-if="enableCount && totalCount !== null" class="text-center w-100">
+                                        <div :key="enableCount || totalCount !== null ? 'count' : 'button'" style="width: 188.18px;">
+                                            <div v-if="enableCount || totalCount !== null" class="text-center w-100">
                                                 ${recordCountText} 
                                             </div>
                                             <v-btn
@@ -1225,6 +1225,7 @@
                     refresh() {
                         this.items = [];
                         this.nextCursor = null;
+                        this.totalCount = null;
                         this.loadMore();
                     },
 
@@ -1292,6 +1293,11 @@
                             }
 
                             this.nextCursor = response.data.nextCursor;
+
+                            // If there's no more records we can set the total count now
+                            if (response.data.nextCursor === null) {
+                                this.totalCount = this.items.length;
+                            }
                             
                             this.showVisualize = !(
                                 this.search.length === 1 &&
