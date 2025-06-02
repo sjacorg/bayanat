@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enferno.admin.models.Notification import Notification
-from enferno.user.models import User
+from enferno.user.models import Role, User
 from enferno.extensions import db
 from enferno.utils.notification_settings import NotificationSettings
 from pydantic import BaseModel, model_validator
@@ -120,7 +120,7 @@ class NotificationUtils:
         return notification, result
 
     @staticmethod
-    def send_notification_for_event(
+    def send_notification_to_user_for_event(
         event: str | NotificationEvent,
         user: User,
         title: str,
@@ -167,4 +167,64 @@ class NotificationUtils:
             logger.error(
                 f"Failed to send notification for event {event} to user {user.id} using any method"
             )
+        return any(results)
+
+    @staticmethod
+    def send_notification_to_admins_for_event(
+        event: str | NotificationEvent,
+        title: str,
+        message: str,
+        is_urgent: bool = False,
+    ) -> bool:
+        # get config
+        from enferno.settings import Config as cfg
+
+        config = NotificationSettings.get_config()
+
+        if isinstance(event, str):
+            event = event.upper()
+        else:
+            event = event.value
+
+        if event not in config:
+            raise ValueError(f"Event {event} not found in config")
+
+        # get event config
+        event_config = config[event]
+
+        # get delivery methods
+        delivery_methods = []
+        if cfg.MAIL_ENABLED and "email_enabled" in event_config and event_config["email_enabled"]:
+            delivery_methods.append(Notification.DELIVERY_METHOD_EMAIL)
+        if "in_app_enabled" in event_config and event_config["in_app_enabled"]:
+            delivery_methods.append(Notification.DELIVERY_METHOD_INTERNAL)
+        if "sms_enabled" in event_config and event_config["sms_enabled"]:
+            delivery_methods.append(Notification.DELIVERY_METHOD_SMS)
+
+        # admins
+        admins = User.query.filter(User.roles.any(Role.name == "Admin")).all()
+
+        # send notification
+        results = []
+        for admin in admins:
+            admin_results = []
+            for method in delivery_methods:
+                _, result = NotificationUtils._send_notification(
+                    admin, title, message, event_config["category"], method, is_urgent
+                )
+                admin_results.append(result)
+                if not result:
+                    logger.warning(
+                        f"Failed to send notification for event {event} to admin {admin.id} using method {method}"
+                    )
+            # consider success if at least one method was successful
+            results.append(any(admin_results))
+
+        if not any(results):
+            logger.error(
+                f"Failed to send notification for event {event} to admins using any method"
+            )
+            return False
+        elif not all(results):
+            logger.warning(f"Failed to send notification for event {event} to some admins")
         return any(results)

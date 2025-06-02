@@ -14,7 +14,7 @@ from enferno.admin.constants import Constants
 from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User, Session
-from flask_security.signals import password_changed, user_authenticated
+from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
 
 from enferno.utils.notification_utils import NotificationUtils
 
@@ -207,7 +207,7 @@ def load_settings() -> Response:
 def after_password_change(sender, user) -> None:
     """Reset the security reset key after password change, send notification to user"""
     user.unset_security_reset_key()
-    NotificationUtils.send_notification_for_event(
+    NotificationUtils.send_notification_to_user_for_event(
         Constants.NotificationEvent.PASSWORD_CHANGE,
         user,
         "Password Changed",
@@ -245,6 +245,27 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
     new_session = Session(**session_data)
     new_session.save()
 
+    # Check if logged in from a different IP address
+    # TODO: Confirm if these fields are being updated correctly prior to this step
+    if current_user.current_login_ip != current_user.last_login_ip:
+        NotificationUtils.send_notification_to_user_for_event(
+            Constants.NotificationEvent.LOGIN_FROM_DIFFERENT_IP,
+            current_user,
+            "Login from Different IP",
+            f"You have logged in from a different IP address than your last login. If this was you, please ignore this message. If this was not you, please change your password immediately.",
+        )
+    # TODO: Check the login country and send notification to all admins if it's not the same as the user's country
+
     # Check if multiple sessions are disabled
     if current_app.config.get("DISABLE_MULTIPLE_SESSIONS", False):
         user.logout_other_sessions()
+
+
+@tf_profile_changed.connect
+def after_tf_profile_change(sender, user, **extra_args) -> None:
+    NotificationUtils.send_notification_to_user_for_event(
+        Constants.NotificationEvent.TWO_FACTOR_CHANGE,
+        user,
+        "Two-Factor Profile Changed",
+        "Your two-factor profile has been changed. Please verify your new profile.",
+    )

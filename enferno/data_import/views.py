@@ -19,6 +19,7 @@ from enferno.tasks import process_row, process_files
 from enferno.utils.data_helpers import get_file_hash
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.notification_utils import NotificationUtils
 import enferno.utils.typing as t
 
 imports = Blueprint(
@@ -183,6 +184,14 @@ def etl_process() -> Response:
     batch_id = shortuuid.uuid()[:9]
 
     process_files.delay(files=files, meta=meta, user_id=current_user.id, batch_id=batch_id)
+
+    # Notify admins
+    NotificationUtils.send_notification_to_admins_for_event(
+        Constants.NotificationEvent.NEW_BATCH,
+        "New Import Request",
+        f"Import batch {batch_id} has been created by {current_user.username} successfully.",
+        is_urgent=True,
+    )
 
     return batch_id, 200
 
@@ -420,6 +429,14 @@ def api_process_sheet() -> Response:
                 lang,
                 roles,
             )
+
+    # Notify admins
+    NotificationUtils.send_notification_to_admins_for_event(
+        Constants.NotificationEvent.NEW_BATCH,
+        "New Import Request",
+        f"Import batch {batch_id} has been created by {current_user.username} successfully.",
+        is_urgent=True,
+    )
 
     return batch_id, 200
 

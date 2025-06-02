@@ -4,11 +4,13 @@ from typing import Literal, Optional
 from flask import current_app, request, Response, Blueprint, json, send_from_directory
 from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
+from enferno.admin.constants import Constants
 from enferno.admin.models import Activity
 from enferno.export.models import Export
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
+from enferno.utils.notification_utils import NotificationUtils
 import enferno.utils.typing as t
 
 export = Blueprint(
@@ -69,6 +71,13 @@ def export_bulletins() -> Response:
             export_request.to_mini(),
             Export.__table__.name,
         )
+        # Notify admins
+        NotificationUtils.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
+            is_urgent=True,
+        )
 
         return f"Export request created successfully, id:  {export_request.id} ", 200
     return "Error creating export request", 417
@@ -94,6 +103,13 @@ def export_actors() -> Response:
             export_request.to_mini(),
             Export.__table__.name,
         )
+        # Notify admins
+        NotificationUtils.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
+            is_urgent=True,
+        )
         return f"Export request created successfully, id:  {export_request.id} ", 200
     return "Error creating export request", 417
 
@@ -117,6 +133,13 @@ def export_incidents() -> Response:
             Activity.STATUS_SUCCESS,
             export_request.to_mini(),
             Export.__table__.name,
+        )
+        # Notify admins
+        NotificationUtils.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.NEW_EXPORT,
+            "New Export Request",
+            f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
+            is_urgent=True,
         )
         return f"Export request created successfully, id:  {export_request.id} ", 200
     return "Error creating export request", 417
@@ -213,6 +236,14 @@ def change_export_status() -> Response:
             # store export background task id, to be used for fetching progress
             export_request.uuid = res.id
             export_request.save()
+
+            # Notify admins
+            NotificationUtils.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.APPROVE_EXPORT,
+                "Export Request Approved",
+                f"Export request {export_request.id} has been approved by {current_user.username} successfully.",
+                is_urgent=True,
+            )
 
             return "Export request approval will be processed shortly.", 200
 
