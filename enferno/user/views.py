@@ -249,7 +249,7 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
     # TODO: Confirm if these fields are being updated correctly prior to this step
     if current_user.current_login_ip != current_user.last_login_ip:
         NotificationUtils.send_notification_to_user_for_event(
-            Constants.NotificationEvent.LOGIN_FROM_DIFFERENT_IP,
+            Constants.NotificationEvent.LOGIN_NEW_IP,
             current_user,
             "Login from Different IP",
             f"You have logged in from a different IP address than your last login. If this was you, please ignore this message. If this was not you, please change your password immediately.",

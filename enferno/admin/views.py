@@ -4838,7 +4838,7 @@ def api_user_delete(
         )
         # Notify admins
         NotificationUtils.send_notification_to_admins_for_event(
-            Constants.NotificationEvent.DELETE_USER,
+            Constants.NotificationEvent.ITEM_DELETED,
             "User Deleted",
             f"User {user.username} has been deleted by {current_user.username} successfully.",
         )
