@@ -864,8 +864,7 @@
                             this.save();
                         } else {
                             this.showSnack("{{ _('Please review the form for errors.')}}")
-                            const invalidFieldId = errors.find((e) => Boolean(e?.id))?.id
-                            scrollToElementById(invalidFieldId)
+                            scrollToFirstError(errors)
                         }
                     });
                 },

@@ -6,12 +6,16 @@ const validationRules = {
 };
 
 // Helper functions
-function scrollToElementById(elementId) {
-    const element = document.getElementById(elementId)
+function scrollToFirstError(errors) {
+    const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
+    const element = document.getElementById(invalidFieldId)
     element?.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
     })
+    if (element?.focus) {
+        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+    }
 }
 
 // global vuetify config object passed to most pages of the system
