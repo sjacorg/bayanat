@@ -536,8 +536,7 @@
                         //create new record
                         axios.post("/admin/api/location/", {item: this.editedItem})
                             .then(response => {
-                                this.items.push(response.data.data);
-                                this.showSnack(response.data.message);
+                                this.showSnack(response.data);
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
