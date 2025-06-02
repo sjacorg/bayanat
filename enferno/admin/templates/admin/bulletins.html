@@ -1259,6 +1259,7 @@
 
                     loadMore() {
                         if (this.loading) return;
+                        if (this.items.length && this.nextCursor === null) return
                         
                         this.fetchingRecordsError = false;
                         this.loading = true;
