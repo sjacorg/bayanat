@@ -145,11 +145,11 @@ class NotificationUtils:
 
         # get delivery methods
         delivery_methods = []
-        if cfg.MAIL_ENABLED and event_config["email_enabled"]:
+        if cfg.MAIL_ENABLED and "email_enabled" in event_config and event_config["email_enabled"]:
             delivery_methods.append(Notification.DELIVERY_METHOD_EMAIL)
-        if event_config["in_app_enabled"]:
+        if "in_app_enabled" in event_config and event_config["in_app_enabled"]:
             delivery_methods.append(Notification.DELIVERY_METHOD_INTERNAL)
-        if event_config["sms_enabled"]:
+        if "sms_enabled" in event_config and event_config["sms_enabled"]:
             delivery_methods.append(Notification.DELIVERY_METHOD_SMS)
 
         # send notification

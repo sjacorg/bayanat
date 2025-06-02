@@ -10,10 +10,13 @@ from flask_security.forms import LoginForm
 from oauthlib.oauth2 import WebApplicationClient
 from sqlalchemy.orm.attributes import flag_modified
 
+from enferno.admin.constants import Constants
 from enferno.settings import Config as cfg
 from enferno.user.forms import ExtendedLoginForm
 from enferno.user.models import User, Session
 from flask_security.signals import password_changed, user_authenticated
+
+from enferno.utils.notification_utils import NotificationUtils
 
 bp_user = Blueprint("users", __name__, static_folder="../static")
 
@@ -157,6 +160,7 @@ def account() -> str:
     """
     return render_template("dashboard.html")
 
+
 @bp_user.route("/settings/")
 @auth_required("session")
 def settings() -> str:
@@ -201,8 +205,14 @@ def load_settings() -> Response:
 
 @password_changed.connect
 def after_password_change(sender, user) -> None:
-    """Reset the security reset key after password change"""
+    """Reset the security reset key after password change, send notification to user"""
     user.unset_security_reset_key()
+    NotificationUtils.send_notification_for_event(
+        Constants.NotificationEvent.PASSWORD_CHANGE,
+        user,
+        "Password Changed",
+        "Your password has been changed.",
+    )
 
 
 @bp_user.before_app_request
