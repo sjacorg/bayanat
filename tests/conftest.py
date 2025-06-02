@@ -3,6 +3,7 @@ from uuid import uuid4
 from unittest.mock import patch
 
 import pytest
+from enferno.admin.models.Notification import Notification
 from enferno.utils.config_utils import ConfigManager
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
@@ -220,6 +221,9 @@ def users(session):
         user.id for user in self_assign_dict.values()
     ]
     session.query(Activity).filter(Activity.user_id.in_(user_ids)).delete(synchronize_session=False)
+    session.query(Notification).filter(Notification.user_id.in_(user_ids)).delete(
+        synchronize_session=False
+    )
     session.delete(admin_user)
     session.delete(da_user)
     session.delete(mod_user)

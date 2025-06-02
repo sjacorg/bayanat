@@ -4,6 +4,7 @@ import uuid
 import pytest
 from flask import current_app
 from enferno.admin.models import Activity
+from enferno.admin.models.Notification import Notification
 from enferno.admin.validation.util import convert_empty_strings_to_none
 from enferno.user.models import User, Session, WebAuthn
 
@@ -23,6 +24,7 @@ from tests.models.admin import UserSessionsResponseModel, UsersResponseModel
 @pytest.fixture(scope="function")
 def clean_slate_users(session):
     session.query(Activity).delete(synchronize_session=False)
+    session.query(Notification).delete(synchronize_session=False)
     session.query(User).delete(synchronize_session=False)
     session.commit()
     yield
@@ -319,6 +321,7 @@ def test_delete_user_endpoint(
         f"/admin/api/user/{u.id}",
         headers={"Content-Type": "application/json"},
     )
+    print(response)
     assert response.status_code == expected_status
     found_user = User.query.filter(User.id == u.id).first()
     if expected_status == 200:
