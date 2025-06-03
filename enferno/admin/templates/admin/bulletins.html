@@ -218,33 +218,15 @@
                                             variant="outlined"></v-select>
 
                                     </div>
-                                    <v-slide-y-transition mode="out-in">
-                                        <div :key="!countLoading && enableCount || totalCount !== null ? 'count' : 'button'" style="width: 188.18px;">
-                                            <div v-if="!countLoading && enableCount || totalCount !== null" class="text-center w-100">
-                                                ${recordCountText} 
-                                            </div>
-                                            <v-btn
-                                                v-else
-                                                @mouseenter="isHoveringTotalCountBtn = true"
-                                                @mouseleave="isHoveringTotalCountBtn = false"
-                                                @click="handleEnableCount"
-                                                :loading="countLoading"
-                                                :variant="isHoveringTotalCountBtn ? 'outlined' : 'text'"
-                                                class="text-none text-body-2 text-right w-100"
-                                            >
-                                                <v-slide-y-transition mode="out-in">
-                                                    <div :key="isHoveringTotalCountBtn ? 'showing' : 'showTotalCount'">
-                                                        <div v-if="isHoveringTotalCountBtn">
-                                                            {{ _('Show total count') }}
-                                                        </div>
-                                                        <div v-else>
-                                                            ${recordCountShortText}
-                                                        </div>
-                                                    </div>
-                                                </v-slide-y-transition>
-                                            </v-btn>
+                                    <div style="min-width: 190px;">
+                                        <v-skeleton-loader v-if="loading && !items.length" type="text" class="w-100"></v-skeleton-loader>
+                                        <div v-else class="text-center w-100">
+                                            Showing ${items.length} of
+                                            <v-progress-circular v-if="countLoading" class="ml-2" indeterminate size="20"></v-progress-circular>
+                                            <span v-else-if="enableCount || totalCount !== null">${totalCount}</span>
+                                            <a v-else @click="handleEnableCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'Click to show total items'">many <v-icon size="x-small">mdi-information</v-icon></a>
                                         </div>
-                                    </v-slide-y-transition>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -510,7 +492,6 @@
 
 
                 data: () => ({
-                    isHoveringTotalCountBtn: false,
                     itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
 
@@ -798,12 +779,8 @@
                     compLocations() {
                         return aggregateBulletinLocations(this.editedItem);
                     },
-
-                    recordCountShortText() {
-                        return "{{ _('Showing {count} items') }}".replace('{count}', this.items.length ?? 0)
-                    },
                     recordCountText() {
-                        return "{{ _('Showing {count} items of {total}') }}".replace('{count}', this.items.length ?? 0).replace('{total}', this.totalCount ?? 0)
+                        return "{{ _('Showing {count} items of {total}') }}".replace('{count}', this.items.length ?? 0).replace('{total}', this.totalCount ?? 'many')
                     },
 
                     exBulletins() {
