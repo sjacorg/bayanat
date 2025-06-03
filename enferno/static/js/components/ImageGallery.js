@@ -6,7 +6,6 @@ const ImageGallery = Vue.defineComponent({
   },
   emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click'],
   mounted() {
-    console.log('Entro')
     this.$nextTick(() => {
       this.initLightbox();
     });
@@ -33,7 +32,7 @@ const ImageGallery = Vue.defineComponent({
       this.$emit('video-click', media)
     },
     handleThumb(s3url){
-      // this.$emit('thumb-click', s3url)
+      this.$emit('thumb-click', s3url)
     },
     sortMediaByFileType(mediaList) {
       if (!mediaList) return [];
@@ -58,9 +57,9 @@ const ImageGallery = Vue.defineComponent({
       this.initLightbox();
     },
     initLightbox() {
-      const el = document.getElementById('lightbox');
+      const el = this.$refs.galleryContainer;
       if (!el) return;
-  
+
       this.lightboxInstance = lightGallery(el, {
         plugins: [lgZoom, lgVideo, lgThumbnail],
         licenseKey: 'your_license_key',
@@ -77,7 +76,7 @@ const ImageGallery = Vue.defineComponent({
   },
 
   template: `
-      <div id="lightbox">
+      <div ref="galleryContainer">
         <v-sheet class="media-grid">
           <v-sheet v-for="(media,index) in sortedMedia" :key="media.id">
             <media-card
