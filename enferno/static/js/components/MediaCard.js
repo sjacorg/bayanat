@@ -166,7 +166,7 @@ const MediaCard = Vue.defineComponent({
           <div v-bind="props" @click="handleMediaClick" class="preview-container"
               style="height: 180px; cursor: pointer;">
             <!-- Image preview -->
-            <a v-if="mediaType === 'image'" :href="s3url" target="_blank">
+            <a class="media-item" v-if="mediaType === 'image'" :href="s3url" target="_blank" :data-src="s3url">
               <v-img :src="s3url" height="180" cover class="bg-grey-lighten-2">
                 <v-expand-transition>  
                   <div v-if="isHovering" style="height: 100%;" class="d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">

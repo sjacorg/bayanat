@@ -100,7 +100,7 @@ let mediaMixin = {
     },
 
     viewImage(item) {
-      viewer.show(item);
+      // viewer.show(item);
     },
 
     crop() {
