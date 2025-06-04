@@ -62,7 +62,6 @@ const ImageGallery = Vue.defineComponent({
 
       this.lightboxInstance = lightGallery(el, {
         plugins: [lgZoom, lgThumbnail],
-        licenseKey: 'your_license_key',
         speed: 500,
         selector: '.media-item',
       });
