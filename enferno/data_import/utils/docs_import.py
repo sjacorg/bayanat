@@ -391,7 +391,7 @@ class DocImport(MediaImport):
 
             self.data_import.add_to_log(f"Created Bulletin {bulletin.id} successfully.")
             self.data_import.add_item(bulletin.id)
-            self.data_import.sucess()
+            self.data_import.success()
         except DatabaseException as e:
             self.data_import.add_to_log(f"Failed to create Bulletin.")
             self.data_import.fail(e)
