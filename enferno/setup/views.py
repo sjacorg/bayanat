@@ -52,7 +52,6 @@ def handle_installation_check() -> Optional[Response]:
     login_flow_paths = [
         "/login",
         "/wan-signin",
-        "/verify",
         "/tf-validate",
         "/tf-select"
     ]
