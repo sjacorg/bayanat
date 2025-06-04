@@ -278,6 +278,8 @@ class Config(object):
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
 
+    DOCS_BUCKET = os.environ.get("DOCS_BUCKET")
+
 
 class TestConfig(Config):
     """Test configuration."""
