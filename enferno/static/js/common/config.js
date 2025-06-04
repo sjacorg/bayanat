@@ -5,6 +5,19 @@ const validationRules = {
     min: (v) => v.length >= 6 || 'Min 6 characters',
 };
 
+// Helper functions
+function scrollToFirstError(errors) {
+    const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
+    const element = document.getElementById(invalidFieldId)
+    element?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+    })
+    if (element?.focus) {
+        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+    }
+}
+
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {

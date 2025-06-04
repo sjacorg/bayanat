@@ -1,2 +1,3 @@
 pytesseract==0.3.13
 openai-whisper==20240930
+torch==2.7.1
