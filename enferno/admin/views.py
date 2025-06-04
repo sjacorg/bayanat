@@ -2843,29 +2843,57 @@ def api_bulletins(validated_data: dict) -> Response:
     q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
     per_page = validated_data.get("per_page", 20)
-    include_count = validated_data.get("include_count", False)  # Optional count
+    include_count = validated_data.get("include_count", False)
 
     search = SearchUtils({"q": q}, "bulletin")
-    query = search.get_query()
+    base_query = search.get_query()
 
-    # Build main query with cursor-based pagination
-    query = query.order_by(Bulletin.id.desc())
-    if cursor:
-        query = query.where(Bulletin.id < int(cursor))
+    if include_count and cursor is None:
+        # Single query approach: use window function to get count with results
+        # Only do this on first page to avoid performance overhead on pagination
+        count_subquery = (
+            base_query.add_columns(func.count().over().label("total_count"))
+            .order_by(Bulletin.id.desc())
+            .limit(per_page + 1)
+        )
 
-    # Fetch per_page + 1 items to determine if there are more pages
-    query = query.limit(per_page + 1)
+        result = db.session.execute(count_subquery)
+        rows = result.all()
 
-    result = db.session.execute(query)
-    items = result.scalars().unique().all()
+        if rows:
+            items = [row[0] for row in rows]  # Extract Bulletin objects
+            total_count = rows[0].total_count if rows else 0
+        else:
+            items = []
+            total_count = 0
 
-    # Determine if there are more pages
-    has_more = len(items) > per_page
-    if has_more:
-        items = items[:per_page]
-        next_cursor = str(items[-1].id) if items else None
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
     else:
-        next_cursor = None
+        # Fast pagination approach: no counting overhead
+        main_query = base_query.order_by(Bulletin.id.desc())
+        if cursor:
+            main_query = main_query.where(Bulletin.id < int(cursor))
+
+        paginated_query = main_query.limit(per_page + 1)
+        result = db.session.execute(paginated_query)
+        items = result.scalars().unique().all()
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+        total_count = None
 
     # Minimal serialization for list view
     serialized_items = [
@@ -2895,22 +2923,10 @@ def api_bulletins(validated_data: dict) -> Response:
         "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
-    # Add count if requested
-    if include_count:
-        try:
-            # Simple approach: just do a fast COUNT query
-            # For most searches, this will be fast enough
-            base_query = SearchUtils({"q": q}, "bulletin").get_query()
-            count_query = select(func.count()).select_from(base_query.subquery())
-            total_count = db.session.execute(count_query).scalar()
-
-            response["total"] = total_count
-            response["totalType"] = "exact"
-
-        except Exception as e:
-            logger.warning(f"Count query failed: {e}")
-            response["total"] = "Unable to calculate"
-            response["totalType"] = "error"
+    # Add count if it was calculated
+    if include_count and cursor is None and total_count is not None:
+        response["total"] = total_count
+        response["totalType"] = "exact"
 
     return jsonify(response)
 

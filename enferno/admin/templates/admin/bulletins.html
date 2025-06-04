@@ -222,9 +222,8 @@
                                         <v-skeleton-loader v-if="loading && !items.length" type="text" class="w-100"></v-skeleton-loader>
                                         <div v-else class="text-center w-100">
                                             Showing ${items.length} of
-                                            <v-progress-circular v-if="countLoading" class="ml-2" indeterminate size="20"></v-progress-circular>
-                                            <span v-else-if="enableCount || totalCount !== null">${totalCount}</span>
-                                            <a v-else @click="handleEnableCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'Click to show total items'">many <v-icon size="x-small">mdi-information</v-icon></a>
+                                            <span v-if="totalCount !== null">${totalCount}</span>
+                                            <a v-else @click="loadCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'Click to show total items'">many <v-icon size="x-small">mdi-information</v-icon></a>
                                         </div>
                                     </div>
                                 </div>
@@ -734,11 +733,9 @@
 
                     fetchingRecordsError: false,
                     
-                    // Count functionality
-                    countLoading: false,
+                    // Count functionality  
                     totalCount: null,
-                    enableCount: false,
-                    countType: null,
+                    loadCountOnNextRefresh: false,
                 }),
 
                 computed: {
@@ -979,11 +976,9 @@
                         this.loadMore();
                     },
 
-                    handleEnableCount() {
-                        this.enableCount = !this.enableCount
-                        if (this.enableCount) {
-                            this.loadTotalCount()
-                        }
+                    loadCount() {
+                        this.loadCountOnNextRefresh = true;
+                        this.refresh();
                     },
 
                     fetchRelationInfo() {
@@ -1206,33 +1201,7 @@
                         this.loadMore();
                     },
 
-                    loadTotalCount() {
-                        if (this.countLoading) return;
 
-                        this.fetchingRecordsError = false;
-                        this.countLoading = true;
-
-                        // Clean request data - all parameters in POST body
-                        const requestData = {
-                            q: this.search,
-                            per_page: this.perPage,
-                            cursor: this.nextCursor,
-                            include_count: this.enableCount // Simple: just use checkbox state
-                        };
-
-                        axios.post('/admin/api/bulletins/', requestData).then(response => {
-                                // Handle count if included
-                                if (response.data.total !== undefined) {
-                                    this.totalCount = response.data.total;
-                                    this.countType = response.data.totalType;
-                                }
-                        }).catch(error => {
-                            console.error('Error loading bulletins total count:', error);
-                            this.showSnack('Error loading bulletins total count');
-                        }).finally(() => {
-                            this.countLoading = false;
-                        });
-                    },
 
                     loadMore() {
                         if (this.loading) return;
@@ -1247,7 +1216,7 @@
                             q: this.search,
                             per_page: this.perPage,
                             cursor: this.nextCursor,
-                            include_count: this.enableCount // Simple: just use checkbox state
+                            include_count: this.loadCountOnNextRefresh && this.nextCursor === null
                         };
 
                         axios.post('/admin/api/bulletins/', requestData).then(response => {
@@ -1265,17 +1234,21 @@
                                     this.totalCount = response.data.total;
                                     this.countType = response.data.totalType;
                                 }
+                                
+                                // Reset the count flag after first load
+                                this.loadCountOnNextRefresh = false;
                             } else {
                                 // Subsequent pages - append items
                                 this.items = this.items.concat(response.data.items);
+                                
+                                // For subsequent pages, only set count if we haven't got an exact count yet
+                                if (response.data.nextCursor === null && this.totalCount === null) {
+                                    // End of pagination without server count - use item count
+                                    this.totalCount = this.items.length;
+                                }
                             }
 
                             this.nextCursor = response.data.nextCursor;
-
-                            // If there's no more records we can set the total count now
-                            if (response.data.nextCursor === null) {
-                                this.totalCount = this.items.length;
-                            }
                             
                             this.showVisualize = !(
                                 this.search.length === 1 &&
