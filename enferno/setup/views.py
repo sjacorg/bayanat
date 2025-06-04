@@ -49,9 +49,17 @@ def handle_installation_check() -> Optional[Response]:
         "/api/complete-setup",
         "/admin/api/reload",
     ]
+    login_flow_paths = [
+        "/login",
+        "/wan-signin",
+        "/verify",
+        "/tf-validate",
+        "/tf-select"
+    ]
+
     # Add /login to excluded paths if users exist
     if User.query.first() is not None:
-        excluded_paths.append("/login")
+        excluded_paths.extend(login_flow_paths)
 
     if not any(request.path.startswith(path) for path in excluded_paths):
         if check_installation():
