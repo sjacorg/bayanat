@@ -18,9 +18,8 @@
     "leaflet-textpath": "^1.*",
     "leaflet.markercluster": "^1.*",
     "leaflet.polylinemeasure": "^3.*",
+    "lightgallery": "^2.8.3",
     "npm": "^10.*",
-    "photoswipe": "^5.*",
-    "photoswipe-deep-zoom-plugin": "^1.*",
     "sortablejs": "^1.*",
     "vee-validate": "^4.*",
     "video.js": "^7.21.5",
@@ -37,7 +36,6 @@
   "devDependencies": {
     "prettier": "^3.*"
   },
-    "name": "bayanat",
+  "name": "bayanat",
   "version": "1.31"
-
 }
