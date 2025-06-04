@@ -6,15 +6,17 @@ const ImageGallery = Vue.defineComponent({
   },
   emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click'],
   mounted() {
-    this.$nextTick(() => {
-      this.initLightbox();
-    });
+    this.initLightbox();
+  },
+  unmounted() {
+    this.lightboxInstance?.destroy?.();
+    this.lightboxInstance = null;
   },
   watch: {
     medias: {
       handler() {
         this.$nextTick(() => {
-          this.refreshLightbox();
+          this.lightboxInstance?.refresh?.();
         });
       },
       deep: true,
@@ -37,7 +39,7 @@ const ImageGallery = Vue.defineComponent({
     sortMediaByFileType(mediaList) {
       if (!mediaList) return [];
       // Sort media list by fileType (video first)
-      const sortedMediaList = mediaList.sort((a, b) => {
+      const sortedMediaList = [...mediaList].sort((a, b) => {
         if (a?.fileType?.includes('video')) return -1; // Video should come first
         if (b?.fileType?.includes('video')) return 1; // Then images
         return 0; // Leave unchanged if neither is a video
@@ -47,14 +49,6 @@ const ImageGallery = Vue.defineComponent({
     },
     handleAudio(media){
       this.$emit('audio-click', media)
-    },
-
-    refreshLightbox() {
-      if (this.lightboxInstance) {
-        this.lightboxInstance.destroy();
-        this.lightboxInstance = null;
-      }
-      this.initLightbox();
     },
     initLightbox() {
       const el = this.$refs.galleryContainer;
