@@ -783,9 +783,12 @@
                 },
 
                 validateForm() {
-                    this.$refs.form.validate().then(valid => {
+                    this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
                             this.save();
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError(errors)
                         }
                     });
                 },
