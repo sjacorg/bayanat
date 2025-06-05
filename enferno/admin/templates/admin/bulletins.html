@@ -1243,12 +1243,12 @@
                             } else {
                                 // Subsequent pages - append items
                                 this.items = this.items.concat(response.data.items);
-                                
-                                // For subsequent pages, only set count if we haven't got an exact count yet
-                                if (response.data.nextCursor === null && this.totalCount === null) {
-                                    // End of pagination without server count - use item count
-                                    this.totalCount = this.items.length;
-                                }
+                            }
+                            
+                            // Set count if we haven't got an exact count yet
+                            if (response.data.nextCursor === null && this.totalCount === null) {
+                                // End of pagination without server count - use item count
+                                this.totalCount = this.items.length;
                             }
 
                             this.nextCursor = response.data.nextCursor;
