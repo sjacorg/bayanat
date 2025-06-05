@@ -39,7 +39,7 @@
             <v-card>
 
                 <v-card-text>
-                    <v-data-table-server
+                    <v-data-table-virtual
                             ref="bulletinsTableRef"
                             fixed-header
                             height="calc(100vh - 328px)"
@@ -296,7 +296,7 @@
                             </v-btn>
 
                         </template>
-                    </v-data-table-server>
+                    </v-data-table-virtual>
 
                     <v-overlay :value="loading">
                         <v-progress-circular
@@ -1201,6 +1201,7 @@
                     },
 
                     refresh() {
+                        this.$refs.bulletinsTableRef?.scrollToIndex?.(0)
                         this.items = [];
                         this.nextCursor = null;
                         this.totalCount = null;
