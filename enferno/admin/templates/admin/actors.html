@@ -382,6 +382,7 @@
                 valid: false,
 
                 translations: window.translations,
+                validationRules: validationRules,
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                 helper: {}, // helper object for review items
@@ -623,29 +624,6 @@
                         Object.values(search).every(value => !value)
                     );
 
-                },
-                nameRule() {
-                    return [this.editedItem.name || this.editedItem.name_ar ? v => true : this.rules.required]
-                },
-                firstNameRule() {
-                    return [this.editedItem.first_name || this.editedItem.first_name_ar ? v => true : this.rules.required]
-                },
-                lastNameRule() {
-                    return [this.editedItem.last_name || this.editedItem.last_name_ar ? v => true : this.rules.required]
-                },
-
-                accessRule() {
-                    return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
-                },
-                integerRule() {
-                    return [
-                        value => {
-                            if (value === null || value === undefined || value === '') return true;
-                            if (/^\d+$/.test(value)) return true
-
-                            return "{{ _('Please enter a valid number.') }}"
-                        },
-                    ]
                 },
 
                 bulletinRelationTypes() {

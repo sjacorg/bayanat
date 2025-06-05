@@ -455,6 +455,7 @@
                     valid: false,
 
                     translations: translations,
+                    validationRules: validationRules,
                     advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                     itobInfo: [],
@@ -692,15 +693,6 @@
                             Object.values(search).every(value => !value)
                         );
 
-                    },
-                    titleRule() {
-                        return [this.editedItem.title ? v => true : v => "{{ _('Original Title is required.')}}"]
-                    },
-                    accessRule() {
-                        return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
-                    },
-                    linkRule() {
-                        return [this.source_alt || this.editedItem.source_link ? v => true : v => "{{ _('Source link is required unless unavailable.')}}"]
                     },
                     bulletinRelationTypes() {
                         return this.btobInfo;

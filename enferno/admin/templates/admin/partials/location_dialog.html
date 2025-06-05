@@ -37,7 +37,10 @@
                                         v-model:translation="editedItem.title_ar"
                                         label-original="{{ _('Title') }}"
                                         label-translation="{{ _('Title (Ar)') }}"
-                                        :rules="titleRule">
+                                        :rules="[
+                                            validationRules.required('{{_('Title or Title (Ar) is required')}}'),
+                                            validationRules.maxLength(255),
+                                        ]">
                             </dual-field>
                         </v-col>
 
