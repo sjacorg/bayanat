@@ -221,9 +221,9 @@
                                     <div style="min-width: 190px;">
                                         <v-skeleton-loader v-if="loading && !items.length" type="text" class="w-100"></v-skeleton-loader>
                                         <div v-else class="text-center w-100">
-                                            Showing ${items.length} of
+                                            ${showingItemsOfText}
                                             <span v-if="totalCount !== null">${totalCount}</span>
-                                            <a v-else @click="loadCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'Click to show total items'">many <v-icon size="x-small">mdi-information</v-icon></a>
+                                            <a v-else @click="loadCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'{{ _('Click to show total items') }}'">{{ _('many') }} <v-icon size="x-small">mdi-information</v-icon></a>
                                         </div>
                                     </div>
                                 </div>
@@ -849,6 +849,9 @@
                         return this.currentUser.roles;
                     },
 
+                    showingItemsOfText() {
+                        return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
+                    }
                 },
 
 
