@@ -258,8 +258,9 @@
                                                             v-model="cfg.SECURITY_ZXCVBN_MINIMUM_SCORE"
                                                             min="2"
                                                             max="4"
-                                                            hint="{{ _('') }}"
-                                                            persistent-hint
+                                                            :tick-size="4"
+                                                            :thumb-size="14"
+                                                            :track-size="4"
                                                             color="primary"
                                                             show-ticks="always"
                                                             :ticks="{
@@ -625,14 +626,14 @@
                         });
                 },
 
-                waitForRelaod() {
+                waitForReload() {
                     setTimeout(() => {
                         axios.get('/').then(res => {
                             this.showSnack("{{_('Bayanat reloaded successfully.')}}");
                             this.overlay = false;
                             this.step = 11;
                         }).catch(err => {
-                            this.waitForRelaod();
+                            this.waitForReload();
                         });
                     }, 5000)
                 },
@@ -640,7 +641,7 @@
                 reloadApp() {
                     this.overlay = true;
                     axios.post('/admin/api/reload/')
-                    this.waitForRelaod();
+                    this.waitForReload();
                 },
 
                 finishSetup() {
