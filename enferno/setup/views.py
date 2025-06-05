@@ -48,12 +48,13 @@ def handle_installation_check() -> Optional[Response]:
         "/admin/api/location-admin-level",
         "/api/complete-setup",
         "/admin/api/reload",
+        "/fs-static",
     ]
     login_flow_paths = [
         "/login",
         "/wan-signin",
         "/tf-validate",
-        "/tf-select"
+        "/tf-select",
     ]
 
     # Add /login to excluded paths if users exist
