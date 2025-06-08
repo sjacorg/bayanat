@@ -93,8 +93,11 @@ class DynamicField(db.Model, BaseMixin):
     options = db.Column(JSONB, default=list)  # Options for dropdowns/multi-select
     config = db.Column(JSONB, default=dict)  # Field configuration (validation & UI)
 
-    order = db.Column(Integer, default=0)
-    description = db.Column(db.String(255))
+    sort_order = db.Column(Integer, default=0)
+    help_text = db.Column(db.String(255))
+    default_value = db.Column(JSONB)
+    readonly = db.Column(db.Boolean, default=False)
+    hidden = db.Column(db.Boolean, default=False)
     active = db.Column(db.Boolean, default=True)
 
     __table_args__ = (db.UniqueConstraint("name", "entity_type", name="uq_field_name_entity"),)
@@ -165,10 +168,13 @@ class DynamicField(db.Model, BaseMixin):
             "type": self.field_type,
             "component": self.ui_component or self.get_valid_components(self.field_type)[0],
             "title": self.title,
-            "description": self.description,
+            "help_text": self.help_text,
             "required": self.required,
-            "order": self.order,
+            "sort_order": self.sort_order,
             "config": self.config,
+            "default_value": self.default_value,
+            "readonly": self.readonly,
+            "hidden": self.hidden,
         }
 
         # Add options if applicable
@@ -313,7 +319,7 @@ class DynamicField(db.Model, BaseMixin):
         return {
             field.name: field
             for field in cls.query.filter_by(entity_type=entity_type, active=True)
-            .order_by(cls.order)
+            .order_by(cls.sort_order)
             .all()
         }
 
@@ -328,7 +334,10 @@ class DynamicField(db.Model, BaseMixin):
             "required": self.required,
             "searchable": self.searchable,
             "config": self.config,
-            "order": self.order,
-            "description": self.description,
+            "sort_order": self.sort_order,
+            "help_text": self.help_text,
+            "default_value": self.default_value,
+            "readonly": self.readonly,
+            "hidden": self.hidden,
             "active": self.active,
         }
