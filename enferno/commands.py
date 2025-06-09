@@ -332,6 +332,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "ui_component": DynamicField.UIComponent.TEXT_INPUT,
             "config": {"max_length": 100},
             "test_value": "Hello World",
+            "help_text": "A test string field",
+            "sort_order": 1,
+            "default_value": "Hello World",
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_dropdown_field",
@@ -340,6 +345,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "ui_component": DynamicField.UIComponent.DROPDOWN,
             "options": ["Option 1", "Option 2", "Option 3"],
             "test_value": "Option 1",
+            "help_text": "A test dropdown field",
+            "sort_order": 2,
+            "default_value": "Option 1",
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_integer_field",
@@ -348,6 +358,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "ui_component": DynamicField.UIComponent.NUMBER,
             "config": {"min": 0, "max": 100},
             "test_value": 42,
+            "help_text": "A test integer field",
+            "sort_order": 3,
+            "default_value": 42,
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_datetime_field",
@@ -356,6 +371,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "ui_component": DynamicField.UIComponent.DATE_PICKER,
             "config": {"format": "YYYY-MM-DD"},
             "test_value": datetime.now(timezone.utc),
+            "help_text": "A test datetime field",
+            "sort_order": 4,
+            "default_value": datetime.now(timezone.utc),
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_array_field",
@@ -364,6 +384,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "ui_component": DynamicField.UIComponent.MULTI_SELECT,
             "options": ["Tag 1", "Tag 2", "Tag 3"],
             "test_value": ["Tag 1", "Tag 2"],
+            "help_text": "A test array field",
+            "sort_order": 5,
+            "default_value": ["Tag 1", "Tag 2"],
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_text_field",
@@ -371,6 +396,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "field_type": DynamicField.TEXT,
             "ui_component": DynamicField.UIComponent.TEXT_AREA,
             "test_value": "This is a longer text field\nwith multiple lines",
+            "help_text": "A test text field",
+            "sort_order": 6,
+            "default_value": "This is a longer text field\nwith multiple lines",
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_boolean_field",
@@ -378,6 +408,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "field_type": DynamicField.BOOLEAN,
             "ui_component": DynamicField.UIComponent.CHECKBOX,
             "test_value": True,
+            "help_text": "A test boolean field",
+            "sort_order": 7,
+            "default_value": True,
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_float_field",
@@ -386,6 +421,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "ui_component": DynamicField.UIComponent.NUMBER,
             "config": {"precision": 8, "scale": 2},
             "test_value": 3.14159,
+            "help_text": "A test float field",
+            "sort_order": 8,
+            "default_value": 3.14159,
+            "readonly": False,
+            "hidden": False,
         },
         {
             "name": "test_json_field",
@@ -393,6 +433,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "field_type": DynamicField.JSON,
             "ui_component": DynamicField.UIComponent.TEXT_AREA,
             "test_value": {"key": "value", "nested": {"data": "test"}},
+            "help_text": "A test json field",
+            "sort_order": 9,
+            "default_value": {"key": "value", "nested": {"data": "test"}},
+            "readonly": False,
+            "hidden": False,
         },
     ]
 
@@ -410,7 +455,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
                     ui_component=field_data["ui_component"],
                     config=field_data.get("config", {}),
                     options=field_data.get("options", []),
-                    description=f"A test {field_data['field_type']} field",
+                    help_text=field_data["help_text"],
+                    sort_order=field_data["sort_order"],
+                    default_value=field_data["default_value"],
+                    readonly=field_data["readonly"],
+                    hidden=field_data["hidden"],
                 )
                 field.save()
                 field.create_column()
@@ -442,7 +491,9 @@ def test_dynamic_fields(cleanup: bool) -> None:
             click.echo("\nField values:")
             for field_data in test_fields:
                 value = getattr(bulletin, field_data["name"])
-                click.echo(f"{field_data['title']}: {value}")
+                click.echo(
+                    f"{field_data['title']}: {value} (help_text: {field_data['help_text']}, default: {field_data['default_value']}, readonly: {field_data['readonly']}, hidden: {field_data['hidden']})"
+                )
 
         except Exception as e:
             logger.error(f"Error testing bulletin: {str(e)}")
