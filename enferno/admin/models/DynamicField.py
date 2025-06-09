@@ -90,14 +90,17 @@ class DynamicField(db.Model, BaseMixin):
 
     # UI Configuration
     ui_component = db.Column(db.String(20))  # How the field should be rendered
-    options = db.Column(JSONB, default=list)  # Options for dropdowns/multi-select
-    config = db.Column(JSONB, default=dict)  # Field configuration (validation & UI)
+    schema_config = db.Column(
+        JSONB, default=dict
+    )  # DB-related: type, required, default, unique, etc.
+    ui_config = db.Column(
+        JSONB, default=dict
+    )  # UI-related: label, help_text, widget, sort_order, readonly, hidden, etc.
+    validation_config = db.Column(
+        JSONB, default=dict
+    )  # Validation rules: min/max, pattern, allowed values, etc.
+    options = db.Column(JSONB, default=list)  # For select/multi fields
 
-    sort_order = db.Column(Integer, default=0)
-    help_text = db.Column(db.String(255))
-    default_value = db.Column(JSONB)
-    readonly = db.Column(db.Boolean, default=False)
-    hidden = db.Column(db.Boolean, default=False)
     active = db.Column(db.Boolean, default=True)
 
     __table_args__ = (db.UniqueConstraint("name", "entity_type", name="uq_field_name_entity"),)
@@ -168,19 +171,12 @@ class DynamicField(db.Model, BaseMixin):
             "type": self.field_type,
             "component": self.ui_component or self.get_valid_components(self.field_type)[0],
             "title": self.title,
-            "help_text": self.help_text,
-            "required": self.required,
-            "sort_order": self.sort_order,
-            "config": self.config,
-            "default_value": self.default_value,
-            "readonly": self.readonly,
-            "hidden": self.hidden,
+            "ui_config": self.ui_config,
+            "required": self.schema_config.get("required", self.required),
+            "schema_config": self.schema_config,
+            "validation_config": self.validation_config,
+            "options": self.options,
         }
-
-        # Add options if applicable
-        if self.options:
-            schema["options"] = self.options
-
         return schema
 
     def save(self):
@@ -229,8 +225,8 @@ class DynamicField(db.Model, BaseMixin):
 
             # Update SQLAlchemy model
             column_type = self._column_types[self.field_type]
-            if self.field_type == DynamicField.STRING and self.config.get("max_length"):
-                column_type = String(self.config["max_length"])
+            if self.field_type == DynamicField.STRING and self.schema_config.get("max_length"):
+                column_type = String(self.schema_config["max_length"])
 
             column_args = {"nullable": not self.required}
             setattr(model_class, self.name, Column(self.name, column_type, **column_args))
@@ -289,14 +285,14 @@ class DynamicField(db.Model, BaseMixin):
 
     def validate_config(self):
         """Validate configuration based on field type"""
-        if not self.config:
-            self.config = {}
+        if not self.schema_config:
+            self.schema_config = {}
 
         # Validate based on field type
         if self.field_type == DynamicField.STRING:
-            if "max_length" in self.config:
+            if "max_length" in self.schema_config:
                 try:
-                    max_length = int(self.config["max_length"])
+                    max_length = int(self.schema_config["max_length"])
                     if max_length <= 0:
                         raise ValueError("max_length must be positive")
                 except ValueError:
@@ -331,13 +327,12 @@ class DynamicField(db.Model, BaseMixin):
             "title": self.title,
             "entity_type": self.entity_type,
             "field_type": self.field_type,
-            "required": self.required,
+            "required": self.schema_config.get("required", self.required),
             "searchable": self.searchable,
             "config": self.config,
-            "sort_order": self.sort_order,
-            "help_text": self.help_text,
-            "default_value": self.default_value,
-            "readonly": self.readonly,
-            "hidden": self.hidden,
+            "schema_config": self.schema_config,
+            "ui_config": self.ui_config,
+            "validation_config": self.validation_config,
+            "options": self.options,
             "active": self.active,
         }
