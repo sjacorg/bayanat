@@ -42,6 +42,10 @@
                                             ${localDate(item.created_at)}
                                         </template>
 
+                                        <template v-slot:item.imported_at="{item}">
+                                            ${localDate(item.imported_at)}
+                                        </template>
+
                                         <template v-slot:item.status="{item}">
                                           <import-log-status :item="item"></import-log-status>
                                         </template>

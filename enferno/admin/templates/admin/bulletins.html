@@ -936,9 +936,12 @@
                     },
 
                     validateForm() {
-                        this.$refs.form.validate().then(valid => {
+                        this.$refs.form.validate().then(({ valid, errors }) => {
                             if (valid) {
                                 this.save();
+                            } else {
+                                this.showSnack("{{ _('Please review the form for errors.')}}")
+                                scrollToFirstError(errors)
                             }
                         });
                     },
@@ -1083,7 +1086,7 @@
                                 // default refresh to first page
                                 this.options.page = 1;
 
-                                this.refresh(true);
+                                this.refresh();
                                 this.showSnack("{{ _('Bulk Update is finished!')}}")
                             } else {
                                 //console.log(this.jobs)
