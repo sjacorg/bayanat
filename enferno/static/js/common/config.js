@@ -5,6 +5,19 @@ const validationRules = {
     min: (v) => v.length >= 6 || 'Min 6 characters',
 };
 
+// Helper functions
+function scrollToFirstError(errors) {
+    const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
+    const element = document.getElementById(invalidFieldId)
+    element?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+    })
+    if (element?.focus) {
+        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+    }
+}
+
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
@@ -399,6 +412,7 @@ function parseResponse(dzFile) {
         s3url: response.filename,
         filename: response.filename,
         etag: response.etag,
+        original_filename: response.original_filename,
     };
 }
 
@@ -466,3 +480,21 @@ dataUriToBlob = function (dataURI) {
 
     return new Blob([ia], {type: mimeString});
 };
+
+// Media players
+const DEFAULT_VIDEOJS_OPTIONS = {
+    controls: true,
+    preload: 'auto',
+    playbackRates: VIDEO_RATES,
+    fluid: true,
+}
+function buildVideoElement() {
+    const videoElement = document.createElement('video');
+    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered w-100';
+    videoElement.setAttribute('crossorigin', 'anonymous');
+    videoElement.setAttribute('controls', '');
+    videoElement.setAttribute('width', '620');
+    videoElement.setAttribute('height', '348');
+
+    return videoElement;
+}
