@@ -21,6 +21,7 @@ email-validator==2.2.0
 Flask-Babel==4.0.0
 Flask-Limiter
 Flask-Login==0.6.3
+Flask-Mail==0.10.0
 Flask-Principal==0.4.0
 flask-redis==0.4.0
 Flask-Script==2.0.6
