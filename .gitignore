@@ -31,3 +31,5 @@ backups/*
 .windsurfrules
 cookies.txt 
 
+dependency_summary.json
+

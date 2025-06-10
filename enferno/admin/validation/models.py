@@ -15,7 +15,7 @@ import re
 import os
 
 from enferno.admin.constants import Constants
-from enferno.admin.validation.util import SanitizedField, one_must_exist
+from enferno.admin.validation.util import SanitizedField, get_dependency_summary, one_must_exist
 from enferno.utils.typing import typ as t
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
@@ -1711,6 +1711,15 @@ class FullConfigValidationModel(ConfigValidationModel):
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        return values
+
+    @model_validator(mode="before")
+    def validate_missing_dependencies(cls, values):
+        # Enforces config to respect existence of optional dependencies
+        summary = get_dependency_summary()
+        if summary and summary.get("status") != "OK":
+            for pkg in summary.get("missing_dependencies"):
+                values[pkg.get("blocks")] = False
         return values
 
     @model_validator(mode="before")

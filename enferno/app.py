@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 import pandas as pd
 from flask import Flask, render_template, current_app
 from flask_login import user_logged_in, user_logged_out
@@ -79,6 +80,7 @@ def create_app(config_object=Config):
     register_shellcontext(app)
     register_commands(app)
     register_signals(app)
+    dependency_summary()
     return app
 
 
@@ -275,3 +277,57 @@ def handle_uncaught_exception(e):
 
 def register_constants(app):
     app.config["CONSTANTS"] = Constants
+
+
+def dependency_summary() -> None:
+    """
+    Generate a dependency summary.
+    """
+    logger.info("Generating dependency summary.")
+    missing_dependencies = []
+    summary = {"status": "OK", "missing_dependencies": missing_dependencies}
+    try:
+        import whisper
+    except:
+        missing_dependencies.append(
+            {
+                "package": "openai-whisper",
+                "status": "missing",
+                "blocks": "TRANSCRIPTION_ENABLED",
+                "rec_version": "20240930",
+                "message": "Whisper package is not installed. Transcription can not be enabled.",
+            }
+        )
+    try:
+        import pytesseract
+    except:
+        missing_dependencies.append(
+            {
+                "package": "pytesseract",
+                "status": "missing",
+                "blocks": "OCR_ENABLED",
+                "rec_version": "0.3.13",
+                "message": "Tesseract package is not installed. OCR can not be enabled.",
+            }
+        )
+    try:
+        import torch
+    except:
+        missing_dependencies.append(
+            {
+                "package": "torch",
+                "status": "missing",
+                "blocks": "TRANSCRIPTION_ENABLED",
+                "rec_version": "2.7.1",
+                "message": "Torch package is not installed. Transcription can not be enabled.",
+            }
+        )
+    if len(missing_dependencies) > 0:
+        summary["status"] = "ERROR"
+        summary["missing_dependencies"] = missing_dependencies
+    else:
+        summary["status"] = "OK"
+        summary["missing_dependencies"] = missing_dependencies
+    with open("dependency_summary.json", "w") as f:
+        f.write(json.dumps(summary))
+    logger.info("Dependency summary generated successfully.")

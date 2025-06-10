@@ -1,4 +1,6 @@
 from functools import wraps
+import json
+import os
 from typing import Any, Type, Annotated
 from flask import request
 from pydantic import (
@@ -229,3 +231,11 @@ def convert_empty_strings_to_none(data: Any) -> Any:
         return None
     else:
         return data
+
+
+def get_dependency_summary():
+    if os.path.exists("dependency_summary.json"):
+        with open("dependency_summary.json", "r") as f:
+            return json.load(f)
+    else:
+        return None
