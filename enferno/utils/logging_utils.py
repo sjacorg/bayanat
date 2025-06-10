@@ -11,6 +11,7 @@ from traceback import TracebackException
 from celery.signals import after_setup_logger, after_setup_task_logger
 
 cfg = Config()
+DEFAULT_LOG_LEVEL = "INFO"
 
 
 class JsonFormatter(logging.Formatter):
@@ -58,7 +59,7 @@ class JsonFormatter(logging.Formatter):
 def get_logger(name="app_logger"):
     """Get a logger instance."""
     logger = logging.getLogger(name)
-    logger.setLevel(cfg.LOG_LEVEL)
+    logger.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
 
     if cfg.APP_LOG_ENABLED:
         handler = TimedRotatingFileHandler(
@@ -84,10 +85,10 @@ def setup_celery_logger(logger, *args, **kwargs):
             backupCount=cfg.LOG_BACKUP_COUNT,
         )
         handler.setFormatter(JsonFormatter())
-        handler.setLevel(cfg.LOG_LEVEL)
+        handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
         logger.handlers = [handler]
     for handler in logger.handlers:
-        handler.setLevel(cfg.LOG_LEVEL)
+        handler.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
 
 
 @after_setup_task_logger.connect
