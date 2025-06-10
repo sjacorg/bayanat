@@ -80,16 +80,20 @@ class DynamicField(db.Model, BaseMixin):
         JSON: JSONB,
     }
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    title = db.Column(db.String(100), nullable=False)
-    entity_type = db.Column(db.String(50), nullable=False)  # e.g., 'bulletin', 'actor'
-    field_type = db.Column(db.String(20), nullable=False)
-    required = db.Column(db.Boolean, default=False)
-    searchable = db.Column(db.Boolean, default=False)
+    id = db.Column(db.Integer, primary_key=True)  # Primary key
+    name = db.Column(db.String(50), nullable=False)  # Python identifier for the field
+    title = db.Column(db.String(100), nullable=False)  # Human-readable label
+    entity_type = db.Column(
+        db.String(50), nullable=False
+    )  # Target entity/table (e.g., 'bulletin', 'actor')
+    field_type = db.Column(db.String(20), nullable=False)  # Data type of the field
+    required = db.Column(
+        db.Boolean, default=False
+    )  # Whether the field is required (legacy, see schema_config)
+    searchable = db.Column(db.Boolean, default=False)  # Whether the field is indexed for search
 
     # UI Configuration
-    ui_component = db.Column(db.String(20))  # How the field should be rendered
+    ui_component = db.Column(db.String(20))  # How the field should be rendered in the UI
     schema_config = db.Column(
         JSONB, default=dict
     )  # DB-related: type, required, default, unique, etc.
@@ -99,9 +103,9 @@ class DynamicField(db.Model, BaseMixin):
     validation_config = db.Column(
         JSONB, default=dict
     )  # Validation rules: min/max, pattern, allowed values, etc.
-    options = db.Column(JSONB, default=list)  # For select/multi fields
+    options = db.Column(JSONB, default=list)  # Allowed values for select/multi fields
 
-    active = db.Column(db.Boolean, default=True)
+    active = db.Column(db.Boolean, default=True)  # Whether the field is active
 
     __table_args__ = (db.UniqueConstraint("name", "entity_type", name="uq_field_name_entity"),)
 
