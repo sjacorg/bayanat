@@ -273,6 +273,7 @@ class Config(object):
 
     # Email Settings
     MAIL_ENABLED = manager.get_config("MAIL_ENABLED")
+    MAIL_ALLOWED_DOMAINS = manager.get_config("MAIL_ALLOWED_DOMAINS")
     MAIL_SERVER = manager.get_config("MAIL_SERVER")
     MAIL_PORT = int(manager.get_config("MAIL_PORT"))
     MAIL_USE_TLS = manager.get_config("MAIL_USE_TLS")
@@ -439,7 +440,7 @@ class TestConfig(Config):
     MAIL_USERNAME = "dummy-username"
     MAIL_PASSWORD = "dummy-password"
     MAIL_DEFAULT_SENDER = "dummy-sender@example.com"
-
+    MAIL_ALLOWED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"]
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
     YTDLP_PROXY = ""

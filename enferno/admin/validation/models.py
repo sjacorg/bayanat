@@ -1365,6 +1365,25 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_email(cls, v):
+        from enferno.settings import Config as cfg
+
+        if cfg.MAIL_ENABLED:
+            if email := v.get("email"):
+                try:
+                    domain = email.split("@")[-1]
+                except Exception:
+                    raise ValueError("Error, invalid email format")
+                if "*" in cfg.MAIL_ALLOWED_DOMAINS:
+                    return v
+                if domain.lower() not in cfg.MAIL_ALLOWED_DOMAINS:
+                    raise ValueError("Error, email domain not allowed")
+            else:
+                raise ValueError("Error, email is required")
+        return v
+
 
 class UserRequestModel(BaseValidationModel):
     item: UserValidationModel
@@ -1709,6 +1728,7 @@ class FullConfigValidationModel(ConfigValidationModel):
     SETUP_COMPLETE: bool = Field(default=True)
     LOCATIONS_INCLUDE_POSTAL_CODE: bool
     MAIL_ENABLED: bool
+    MAIL_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     MAIL_SERVER: Optional[str] = None
     MAIL_PORT: Optional[int] = None
     MAIL_USE_TLS: Optional[bool] = None
@@ -1749,6 +1769,10 @@ class FullConfigValidationModel(ConfigValidationModel):
             ):
                 raise ValueError(
                     "MAIL_SERVER, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD must be provided if MAIL_ENABLED is True"
+                )
+            if not values.get("MAIL_ALLOWED_DOMAINS"):
+                raise ValueError(
+                    "MAIL_ALLOWED_DOMAINS must be provided and not empty if MAIL_ENABLED is True"
                 )
         return values
 

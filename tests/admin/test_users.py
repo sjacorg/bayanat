@@ -155,6 +155,56 @@ def test_post_user_endpoint(clean_slate_users, request, client_fixture, expected
         assert found_user is None
 
 
+post_user_endpoint_invalid_email_roles = [
+    ("admin_client", 400),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 401),
+]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", post_user_endpoint_invalid_email_roles)
+def test_post_user_endpoint_invalid_email(
+    clean_slate_users, request, client_fixture, expected_status
+):
+    from enferno.settings import Config as cfg
+
+    with patch.object(cfg, "MAIL_ENABLED", True), patch.object(
+        cfg, "MAIL_ALLOWED_DOMAINS", ["valid_domain.com"]
+    ):
+        client_ = request.getfixturevalue(client_fixture)
+        user = UserFactory()
+        data = user_to_dict(user)
+        data["email"] = "email@invalid_domain.com"
+        response = client_.post(
+            "/admin/api/user/",
+            headers={"Content-Type": "application/json"},
+            json={"item": data},
+        )
+        assert response.status_code == expected_status
+        if expected_status == 400:
+            assert "Error, email domain not allowed" in response.json["errors"]["item"]
+
+
+@pytest.mark.parametrize("client_fixture, expected_status", post_user_endpoint_roles)
+def test_post_user_endpoint_allow_all_domains(
+    clean_slate_users, request, client_fixture, expected_status
+):
+    from enferno.settings import Config as cfg
+
+    with patch.object(cfg, "MAIL_ENABLED", True), patch.object(cfg, "MAIL_ALLOWED_DOMAINS", ["*"]):
+        client_ = request.getfixturevalue(client_fixture)
+        user = UserFactory()
+        data = user_to_dict(user)
+        data["email"] = "email@invalid_domain.com"
+        response = client_.post(
+            "/admin/api/user/",
+            headers={"Content-Type": "application/json"},
+            json={"item": data},
+        )
+        assert response.status_code == expected_status
+
+
 ##### POST /admin/api/checkuser #####
 
 post_checkuser_endpoint_roles = [
