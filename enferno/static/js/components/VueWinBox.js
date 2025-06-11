@@ -35,10 +35,10 @@ const VueWinBox = Vue.defineComponent({
             height,
           })
         },
-        onclose: () => {
-            const shouldClose = confirm("Are you sure?");
+        onclose: (force) => {
+            const shouldClose = force ? null : confirm("Are you sure?");
 
-            if (shouldClose) {
+            if (force || shouldClose) {
                 this.$emit('close', { id: this.winbox?.id })
                 this.initialized = false
                 this.winbox = null
@@ -67,6 +67,12 @@ const VueWinBox = Vue.defineComponent({
 
       this.initialized = true
     },
+    forceClose() {
+        this.winbox.close(true)
+        this.$emit('close', { id: this.winbox?.id })
+        this.initialized = false
+        this.winbox = null
+    }
   },
   mounted() {
     if (this.openOnMount) {

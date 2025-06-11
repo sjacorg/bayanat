@@ -1,4 +1,4 @@
-<short-actor-dialog v-model:open="actorDialog" :rules="rules"></short-actor-dialog>
+<short-actor-dialog ref="shortActorDialogRef" v-if="actorDialog" v-model:open="actorDialog" :rules="rules" :tiny-config="tinyConfig"></short-actor-dialog>
 
 <v-dialog :retain-focus="false" no-click-animation persistent v-model="dialog" fullscreen>
     <v-form @submit.prevent="save" ref="form" v-model="valid">

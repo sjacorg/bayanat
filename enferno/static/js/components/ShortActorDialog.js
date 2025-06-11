@@ -7,10 +7,8 @@ const defaultActorData = {
   medias: [],
   // related actors
   actor_relations: [],
-
   // related bulletins
   bulletin_relations: [],
-
   // related incidents
   incident_relations: [],
   publish_date: '',
@@ -75,9 +73,6 @@ const ShortActorDialog = Vue.defineComponent({
     formTitle() {
       return this.editedItem?.id ? this.translations.editActor_ : this.translations.newActor_;
     },
-    nameRule() {
-      return [this.editedItem.name || this.editedItem.name_ar ? (v) => true : this.rules.required];
-    },
     firstNameRule() {
       return [
         this.editedItem.first_name || this.editedItem.first_name_ar
@@ -100,90 +95,10 @@ const ShortActorDialog = Vue.defineComponent({
           : (v) => "{{ _('Access Group(s) are required unless unresticted.')}}",
       ];
     },
-    integerRule() {
-      return [
-        (value) => {
-          if (value === null || value === undefined || value === '') return true;
-          if (/^\d+$/.test(value)) return true;
-
-          return "{{ _('Please enter a valid number.') }}";
-        },
-      ];
-    },
   },
   methods: {
-    modeName(modeId) {
-      return this.profileModes.find((x) => x.id == modeId).title;
-    },
-
-    deleteProfile(index) {
-      if (confirm("{{ _('Are you sure you want to delete this profile?')}}")) {
-        if (this.editedItem.actor_profiles.length > 1) {
-          this.editedItem.actor_profiles.splice(index, 1);
-        } else {
-          console.log('Cannot delete the last remaining profile.');
-        }
-      }
-    },
-
     shouldDisplayField(mode, fieldName) {
       return this.profileModes.find((x) => x.id === mode).fields.includes(fieldName);
-    },
-
-    createProfile(profileMode) {
-      if (profileMode.id === 2 && this.hasMainProfile) {
-        this.showSnack("{{ _('Main profile already exists.')}}");
-        return;
-      }
-
-      this.profileModeDropdown = false;
-      this.editedItem.actor_profiles.push({
-        mode: profileMode.id,
-      });
-      this.tab = this.editedItem.actor_profiles.length - 1;
-    },
-
-    duplicateProfile(index) {
-      // Check if the profile being duplicated is a main profile and if another main profile exists
-      if (this.editedItem.actor_profiles[index].mode === 2 && this.hasMainProfile) {
-        this.showSnack('A main profile already exists, cannot create another main profile.');
-        return;
-      }
-
-      const profileToDuplicate = this.editedItem.actor_profiles[index];
-      const newProfile = { ...profileToDuplicate };
-
-      // reset the id of the new profile
-      newProfile.id = null;
-
-      // Check if the profile being duplicated is a main profile and if another main profile exists
-      if (profileToDuplicate.mode === 2 && this.hasMainProfile) {
-        this.showSnack(
-          "{{ _('A main profile already exists. Cannot duplicate another main profile.')}}",
-        );
-        return;
-      }
-
-      newProfile.originid = null;
-      newProfile.source_link = null;
-      newProfile.source_link_type = null;
-
-      // Append the new profile to the actor_profiles array
-      this.editedItem.actor_profiles.push(newProfile);
-      this.tab = this.editedItem.actor_profiles.length - 1;
-    },
-
-    getValidationRules(profile) {
-      if (profile.source_link != null) {
-        return 'url';
-      } else {
-        return '';
-      }
-    },
-    confirmClose() {
-      if (confirm(translations.confirm_)) {
-        this.close();
-      }
     },
     close() {
       this.$emit('update:open', false);
@@ -210,44 +125,26 @@ const ShortActorDialog = Vue.defineComponent({
       }
 
       this.saving = true;
-      if (this.editedItem.id) {
-        //update record
-        axios
-          .put(`/admin/api/actor/${this.editedItem.id}`, {
-            item: this.editedItem,
-          })
-          .then((response) => {
-            this.showSnack(response.data);
-            this.refresh();
-            this.close();
-          })
-          .catch((err) => {
-            console.error(err.response?.data);
-            this.showSnack(handleRequestError(err));
-            this.saving = false;
-          });
-      } else {
-        //create new record
-        axios
-          .post('/admin/api/actor/', {
-            item: this.editedItem,
-          })
-          .then((response) => {
-            this.items.push(this.editedItem);
-            this.showSnack(response.data);
-            this.refresh();
-            this.close();
-          })
-          .catch((err) => {
-            console.error(err.response?.data);
-            this.showSnack(handleRequestError(err));
-            this.saving = false;
-          });
-      }
+      //create new record
+      axios
+        .post('/admin/api/actor/', {
+          item: this.editedItem,
+        })
+        .then((response) => {
+          this.items.push(this.editedItem);
+          this.showSnack(response.data);
+          this.refresh();
+          this.close();
+        })
+        .catch((err) => {
+          console.error(err.response?.data);
+          this.showSnack(handleRequestError(err));
+          this.saving = false;
+        });
     },
   },
   template: /*html*/ `
-  <vue-win-box v-if="open" ref="wbRef" :options="{ index: 3000, class: ['no-full'] }" @close="$emit('update:open', !open)">
+  <vue-win-box v-if="open" ref="shortActorDialogRef" :options="{ index: 3000, class: ['no-full'], x: 'center', y: 'center' }" @close="$emit('update:open', !open)">
     <template #title>
         <div>{{ formTitle }}</div>
     </template>

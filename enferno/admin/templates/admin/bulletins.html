@@ -1575,6 +1575,7 @@
 
                     close() {
                         this.dialog = false;
+                        this.actorDialog = false;
                         setTimeout(() => {
                             this.editedItem = Object.assign({}, this.defaultItem);
 
