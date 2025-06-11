@@ -984,9 +984,8 @@
                 },
 
                 extraUploadSuccess(dzfile) {
-
                     // pick file from dropzone files list
-                    const needle = this.$refs.extradropzone.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
+                    const needle = this.$refs.extradropzone.dz.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
 
 
                     const file = parseResponse(needle);
