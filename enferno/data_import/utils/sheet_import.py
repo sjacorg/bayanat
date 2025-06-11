@@ -101,7 +101,7 @@ class SheetImport:
         self.lang = lang
 
         self.actor = Actor()
-        self.actor.name = "Temp"
+        self.actor.name = "TEMP"  # temporary name
         self.actor_profile = ActorProfile()
         self.actor_profile.actor = self.actor
         self.actor.actor_profiles.append(self.actor_profile)
@@ -368,7 +368,8 @@ class SheetImport:
         Returns:
             None
         """
-        location = Location.find_by_title(str(value))
+        value = str(value).strip()
+        location = Location.find_by_title(value)
         if location:
             setattr(self.actor, field, location)
             self.data_import.add_to_log(f"Processed {field}")
@@ -458,14 +459,16 @@ class SheetImport:
             return
 
         # Parse the value into a list of tags
-        if isinstance(value, str):
-            # Handle comma-separated values
-            tags = SheetImport.parse_array_field(value)
-            # Clean and filter empty tags
-            tags = [tag.strip() for tag in tags if tag.strip()]
-            if tags:
-                self.actor.tags = tags
-                self.data_import.add_to_log(f"Processed tags")
+        # Handle comma-separated values
+        value = str(value)
+        tags = SheetImport.parse_array_field(value)
+
+        # Clean and filter empty tags
+        tags = [tag.strip() for tag in tags if tag.strip()]
+
+        if tags:
+            self.actor.tags = tags
+            self.data_import.add_to_log(f"Processed tags")
         else:
             self.handle_mismatch("tags", value)
 
@@ -567,31 +570,53 @@ class SheetImport:
             for event in events:
                 if not event:
                     continue
+
                 e = Event()
+
                 title = event.get("title")
                 if title:
                     e.title = str(title)
 
-                e.comments = event.get("comments")
+                e.comments = event.get("comments", "")
+
                 # search and match event type
                 type = event.get("type")
+                if not type:
+                    type = event.get("dtype")
+
                 if type:
                     eventtype = Eventtype.find_by_title(type)
                     if eventtype:
                         e.eventtype = eventtype
 
+                # search and match location
                 location = event.get("location")
                 loc = None
                 if location:
                     loc = Location.find_by_title(location)
                     if loc:
                         e.location = loc
+
+                # set dates
                 from_date = event.get("from_date")
+
                 if from_date:
                     e.from_date = DateHelper.parse_date(from_date)
                 to_date = event.get("to_date")
+
                 if to_date:
                     e.to_date = DateHelper.parse_date(to_date)
+
+                # check if estimated date is set
+                if estimated := event.get("estimated"):
+                    if (
+                        estimated.__class__ == str
+                        and estimated.lower() in boolean_positive
+                        or estimated == 1
+                    ):
+                        e.estimated = True
+                    else:
+                        e.comments += f"Estimated date: {estimated}"
 
                 # validate event here
                 if (from_date and not pd.isnull(from_date)) or loc or title:
@@ -760,7 +785,7 @@ class SheetImport:
                 if csv_value:
                     if Actor.query.filter(getattr(Actor, field) == str(csv_value)).first():
                         self.data_import.fail(
-                            f"Existing Actor with the same {field} detected. Skiping..."
+                            f"Existing Actor with the same {field} detected. Skipping..."
                         )
                         return
 
@@ -779,6 +804,17 @@ class SheetImport:
                 self.actor_profile.mode = 3
                 self.data_import.add_to_log(f"Changed Actor Profile to MP.")
                 break
+
+        # set actor names
+        if self.actor.name == "TEMP":
+            en = self.actor.first_name and self.actor.last_name
+            ar = self.actor.first_name_ar and self.actor.last_name_ar
+
+            # check if ar name is not set and ar/en first/last names are not set either
+            if not (self.actor.name_ar or en or ar):
+                self.actor.name = "UNKNOWN UNKNOWN"
+            else:
+                self.actor.name = ""
 
         # Save actor
         try:
