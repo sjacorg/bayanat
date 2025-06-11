@@ -1,4 +1,18 @@
-<short-actor-dialog ref="shortActorDialogRef" v-if="actorDialog" v-model:open="actorDialog" :rules="rules" :tiny-config="tinyConfig"></short-actor-dialog>
+<short-actor-dialog
+    v-if="actorDialog"
+    ref="shortActorDialogRef"
+    v-model:open="actorDialog"
+    :rules="rules"
+    :status-items="statusItems"
+    :allowed-roles="allowedRoles"
+    :parent-item="editedItem"
+    :show-snack="showSnack"
+    :can-restrict-view="{{ config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin")|tojson }}"
+>
+    <template #events>
+        {% include 'admin/partials/event_dialog.html' %}
+    </template>
+</short-actor-dialog>
 
 <v-dialog :retain-focus="false" no-click-animation persistent v-model="dialog" fullscreen>
     <v-form @submit.prevent="save" ref="form" v-model="valid">

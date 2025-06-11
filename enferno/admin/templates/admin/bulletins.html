@@ -700,7 +700,7 @@
                         return [this.editedItem.title ? v => true : v => "{{ _('Original Title is required.')}}"]
                     },
                     accessRule() {
-                        return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
+                        return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unrestricted.')}}"]
                     },
                     linkRule() {
                         return [this.source_alt || this.editedItem.source_link ? v => true : v => "{{ _('Source link is required unless unavailable.')}}"]
