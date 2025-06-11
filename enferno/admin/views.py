@@ -2917,9 +2917,9 @@ def api_bulletin_create(
             "bulletin",
         )
 
-        return f"Created Bulletin #{bulletin.id}", 200
+        return {"message": f"Created Bulletin #{bulletin.id}", "item": bulletin.to_mini()}, 201
     else:
-        return "Error creating Bulletin", 417
+        return {"message": "Error creating Bulletin"}, 417
 
 
 @admin.put("/api/bulletin/<int:id>")
@@ -3422,7 +3422,7 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
