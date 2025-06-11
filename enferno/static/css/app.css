@@ -854,3 +854,24 @@ div.jsondiffpatch-child-node-type-array:after {
     overflow-wrap: anywhere;
     white-space: normal;
 }
+
+/* winbox */
+.winbox {
+    background: rgba(var(--v-theme-primary), 1);
+}
+.wb-title {
+    display: flex;
+}
+.wb-control {
+    display: flex;
+}
+.wb-control * {
+    width: fit-content;
+    min-width: 30px;
+}
+.wb-prepend-controls, .wb-prepend-controls * {
+    cursor: inherit;
+}
+.winbox.min .wb-prepend-controls {
+    display: none;
+}

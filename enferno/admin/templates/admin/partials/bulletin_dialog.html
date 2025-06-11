@@ -1,5 +1,6 @@
-<v-dialog :retain-focus="false" no-click-animation persistent v-model="dialog" fullscreen>
+<short-actor-dialog v-model:open="actorDialog" :rules="rules"></short-actor-dialog>
 
+<v-dialog :retain-focus="false" no-click-animation persistent v-model="dialog" fullscreen>
     <v-form @submit.prevent="save" ref="form" v-model="valid">
         <v-card v-if="dialog" class="overflow-hidden card-edit">
             <v-toolbar
@@ -46,7 +47,9 @@
                 </v-toolbar-title>
 
                 <template #append>
-
+                    <v-btn @click="actorDialog = true" variant="outlined" class="mx-2">
+                        {{ _('Create Related Actor') }}
+                    </v-btn>
                     <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>
