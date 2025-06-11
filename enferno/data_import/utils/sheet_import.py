@@ -610,7 +610,7 @@ class SheetImport:
                 # check if estimated date is set
                 if estimated := event.get("estimated"):
                     if (
-                        estimated.__class__ == str
+                        isinstance(estimated, str)
                         and estimated.lower() in boolean_positive
                         or estimated == 1
                     ):
