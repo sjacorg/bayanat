@@ -26,13 +26,21 @@ const ShortActorDialog = Vue.defineComponent({
     'tinymce-editor': Editor,
   },
   props: {
+    parentItem: {
+      type: Object,
+      default: () => null,
+    },
     canRestrictView: {
       type: Boolean,
       default: false,
     },
-    disabledFields: {
-      type: Object,
-      default: () => {},
+    statusItems: {
+      type: Array,
+      default: () => [],
+    },
+    allowedRoles: {
+      type: Array,
+      default: () => [],
     },
     advFeatures: {
       type: Boolean,
@@ -42,21 +50,17 @@ const ShortActorDialog = Vue.defineComponent({
       type: Object,
       default: () => {},
     },
-    tinyConfig: {
-      type: Object,
-      default: () => {},
-    },
-    editedItem: {
-      type: Object,
-      default: () => defaultActorData,
-    },
     open: {
       type: Boolean,
       default: false,
     },
+    showSnack: {
+      type: Function,
+    },
   },
-  emits: ['update:open', 'update:editedItem', 'close'],
+  emits: ['update:open', 'close'],
   data: () => ({
+    editedItem: defaultActorData,
     valid: false,
     unrestricted: false,
     translations: window.translations,
@@ -92,7 +96,7 @@ const ShortActorDialog = Vue.defineComponent({
       return [
         this.unrestricted || this.editedItem.roles?.length
           ? (v) => true
-          : (v) => "{{ _('Access Group(s) are required unless unresticted.')}}",
+          : (v) => translations.accessGroupsRequired_,
       ];
     },
   },
@@ -131,9 +135,7 @@ const ShortActorDialog = Vue.defineComponent({
           item: this.editedItem,
         })
         .then((response) => {
-          this.items.push(this.editedItem);
           this.showSnack(response.data);
-          this.refresh();
           this.close();
         })
         .catch((err) => {
@@ -143,13 +145,26 @@ const ShortActorDialog = Vue.defineComponent({
         });
     },
   },
+  watch: {
+    parentItem:{
+      handler(newParentItem) {
+        this.editedItem.comments = `First Data Analysis from Bulletin ${newParentItem.id ? '#' + newParentItem.id : ''}`
+        this.editedItem.status = 'Machine Created'
+        this.editedItem.roles = newParentItem.roles
+        const actorProfile = this.editedItem.actor_profiles.find(Boolean)
+        actorProfile.sources = newParentItem.sources
+      },
+      deep: true,
+      immediate: true
+    }
+  },
   template: /*html*/ `
-  <vue-win-box v-if="open" ref="shortActorDialogRef" :options="{ index: 3000, class: ['no-full'], x: 'center', y: 'center' }" @close="$emit('update:open', !open)">
+  <vue-win-box v-if="open" ref="shortActorDialogRef" :options="{ index: 2401, class: ['no-full'], x: 'center', y: 'center' }" @close="$emit('update:open', !open)">
     <template #title>
         <div>{{ formTitle }}</div>
     </template>
     <template #prepend-controls>
-        <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2" density="compact">
+        <v-btn :ripple="false" @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2" density="compact">
             {{ translations.saveActor_ }}
         </v-btn>
     </template>
@@ -181,17 +196,6 @@ const ShortActorDialog = Vue.defineComponent({
                                     :allow-unknown="true"
                                     :rules="lastNameRule"
                                 ></dual-field>
-                            </div>
-                            <div style="min-width: 0;">
-                                <dual-field v-model:original="editedItem.nickname" v-model:translation="editedItem.nickname_ar" :label-original="translations.nickname_" :label-translation="translations.nicknameAr_"></dual-field>
-                            </div>
-
-                            <div style="min-width: 0;">
-                                <dual-field v-model:original="editedItem.father_name" v-model:translation="editedItem.father_name_ar" :label-original="translations.fathersName_" :label-translation="translations.fathersNameAr_"></dual-field>
-                            </div>
-
-                            <div style="min-width: 0;">
-                                <dual-field v-model:original="editedItem.mother_name" v-model:translation="editedItem.mother_name_ar" :label-original="translations.mothersName_" :label-translation="translations.mothersNameAr_"></dual-field>
                             </div>
 
                             <div style="min-width: 0;">
@@ -234,11 +238,6 @@ const ShortActorDialog = Vue.defineComponent({
                                             </v-card-text>
 
                                             <v-card-text>
-                                                <div class="text-subtitle-2 pa-1">{{ translations.description_ }}</div>
-                                                <tinymce-editor :key="index" :init="tinyConfig" v-model="profile.description"></tinymce-editor>
-                                            </v-card-text>
-
-                                            <v-card-text>
                                                 <!-- Sources -->
                                                 <search-field v-model="profile.sources" api="/admin/api/sources/" item-title="title" item-value="id" :multiple="true" :label="translations.sources_"></search-field>
                                             </v-card-text>
@@ -261,7 +260,7 @@ const ShortActorDialog = Vue.defineComponent({
                             </div>
 
                             <div style="min-width: 0;">
-                              <v-select :disabled="disabledFields?.status" item-title="tr" item-value="en" :items="statusItems" class="mx-2" v-model="editedItem.status" :label="translations.status_"></v-select>
+                              <v-select item-title="tr" item-value="en" :items="statusItems" class="mx-2" v-model="editedItem.status" :label="translations.status_"></v-select>
                             </div>
                             <div v-if="canRestrictView && !editedItem.id" style="min-width: 0;">
                               <v-select
