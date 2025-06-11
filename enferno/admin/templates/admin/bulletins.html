@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="/static/css/dropzone.min.css">
     <link rel="stylesheet" href="/static/js/videojs/video-js.css">
     <link rel="stylesheet" href="/static/js/croppr/croppr.min.css">
+    <script src="/static/js/winbox/winbox.min.js"></script>
 
 {% endblock %}
 
@@ -356,6 +357,8 @@
     ></script>
 
     <script src="/static/js/tinymce-vue.min.js"></script>
+    <script src="/static/js/winbox/winbox.min.js"></script>
+    <script src="/static/js/components/VueWinBox.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
@@ -375,6 +378,7 @@
     <script src="/static/js/components/BulletinSearchBox.js"></script>
     <script src="/static/js/components/ActorSearchBox.js"></script>
     <script src="/static/js/components/IncidentSearchBox.js"></script>
+    <script src="/static/js/components/ShortActorDialog.js"></script>
 
 
 
@@ -443,13 +447,11 @@
 
 
                 components: {
-
                     "tinymce-editor": Editor, // <- Important part,
                 },
 
 
                 data: () => ({
-
                     helper: {}, // helper object for review items
 
                     valid: false,
@@ -515,6 +517,7 @@
                     fsloading: true,
 
 
+                    actorDialog: false,
                     dialog: dialog,
                     saving: false,
                     eventDialog: false,
@@ -1814,6 +1817,7 @@
         app.component('ActorResult', ActorResult);
         app.component('IncidentResult', IncidentResult);
 
+        app.component('VueWinBox', VueWinBox);
         app.component('VueDropzone', VueDropzone);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
@@ -1840,6 +1844,7 @@
         app.component('mp-field', MPField);
         app.component('mp-card', MPCard);
         app.component('ActorProfiles', ActorProfiles);
+        app.component('ShortActorDialog', ShortActorDialog);
 
 
         app.use(router);
