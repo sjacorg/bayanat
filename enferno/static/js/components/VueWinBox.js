@@ -81,7 +81,7 @@ const VueWinBox = Vue.defineComponent({
   },
   unmounted() {
     if (this.winbox) {
-      this.winbox.close()
+      this.winbox.close(true)
     }
   },
   template: `
