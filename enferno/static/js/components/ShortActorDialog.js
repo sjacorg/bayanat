@@ -232,9 +232,7 @@ const ShortActorDialog = Vue.defineComponent({
                                         <v-card class="pa-3" variant="text">
                                             <!-- Source Link -->
                                             <v-card-text v-if="shouldDisplayField(profile.mode, 'source')">
-                                                <v-card variant="text" class="d-flex align-center">
-                                                    <v-text-field class="mx-2" variant="outlined" v-model="profile.originid" :disabled="profile.originidDisabled" :label="translations.originId_"></v-text-field>
-                                                </v-card>
+                                                <v-text-field class="mx-2" variant="outlined" v-model="profile.originid" :disabled="profile.originidDisabled" :label="translations.originId_"></v-text-field>
                                             </v-card-text>
 
                                             <v-card-text>
