@@ -23,6 +23,7 @@ from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
 from enferno.admin.models import Bulletin
 from enferno.admin.models.DynamicField import DynamicField
+from enferno.utils.date_helper import DateHelper
 
 logger = get_logger()
 
@@ -381,7 +382,10 @@ def test_dynamic_fields(cleanup: bool) -> None:
             "title": "Test DateTime Field",
             "field_type": DynamicField.DATETIME,
             "ui_component": DynamicField.UIComponent.DATE_PICKER,
-            "schema_config": {"required": False, "default": datetime.now(timezone.utc)},
+            "schema_config": {
+                "required": False,
+                "default": DateHelper.serialize_datetime(datetime.now(timezone.utc)),
+            },
             "ui_config": {
                 "label": "Test DateTime Field",
                 "help_text": "A test datetime field",
@@ -391,7 +395,7 @@ def test_dynamic_fields(cleanup: bool) -> None:
             },
             "validation_config": {"format": "YYYY-MM-DD"},
             "options": [],
-            "test_value": datetime.now(timezone.utc),
+            "test_value": DateHelper.serialize_datetime(datetime.now(timezone.utc)),
         },
         {
             "name": "test_array_field",
