@@ -881,12 +881,11 @@ div.jsondiffpatch-child-node-type-array:after {
 .wb-control {
     display: flex;
 }
-.wb-control * {
-    width: fit-content;
-    min-width: 30px;
-}
 .wb-prepend-controls, .wb-prepend-controls * {
     cursor: inherit;
+}
+.wb-prepend-controls, .wb-prepend-controls button {
+    cursor: pointer;
 }
 .winbox.min .wb-prepend-controls {
     display: none;
@@ -894,4 +893,5 @@ div.jsondiffpatch-child-node-type-array:after {
 .wb-prepend-controls {
     display: flex;
     align-items: center;
+    width: fit-content;
 }

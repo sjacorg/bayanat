@@ -161,7 +161,7 @@ const ShortActorDialog = Vue.defineComponent({
         <div class="v-toolbar-title">{{ formTitle }}</div>
     </template>
     <template #prepend-controls>
-        <v-btn :ripple="false" @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
+        <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2" style="width: 130px;">
             {{ translations.saveActor_ }}
         </v-btn>
     </template>
@@ -256,23 +256,23 @@ const ShortActorDialog = Vue.defineComponent({
 
                             <div style="min-width: 0;">
                               <v-select item-title="tr" item-value="en" :items="statusItems" class="mx-2" v-model="editedItem.status" :label="translations.status_"></v-select>
-                            </div>
-                            <div v-if="canRestrictView && !editedItem.id" style="min-width: 0;">
-                              <v-select
-                                  :color="editedItem.roles?.length ? 'error' : 'blue darken-1'"
-                                  :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
-                                  chips
-                                  :disabled="unrestricted"
-                                  item-title="name"
-                                  return-object
-                                  :items="allowedRoles"
-                                  multiple
-                                  v-model="editedItem.roles"
-                                  :label="translations.restrictToAccessGroups_"
-                                  :rules="accessRule"
-                                  clearable
-                              ></v-select>
-                              <v-checkbox color="error" @change="unrestricted ? editedItem.roles = [] : null" class="mx-2" :label="translations.noAccessAccessGroups_" v-model="unrestricted"> </v-checkbox>
+                              <div v-if="canRestrictView && !editedItem.id">
+                                <v-select
+                                    :color="editedItem.roles?.length ? 'error' : 'blue darken-1'"
+                                    :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
+                                    chips
+                                    :disabled="unrestricted"
+                                    item-title="name"
+                                    return-object
+                                    :items="allowedRoles"
+                                    multiple
+                                    v-model="editedItem.roles"
+                                    :label="translations.restrictToAccessGroups_"
+                                    :rules="accessRule"
+                                    clearable
+                                ></v-select>
+                                <v-checkbox color="error" @change="unrestricted ? editedItem.roles = [] : null" class="mx-2" :label="translations.noAccessAccessGroups_" v-model="unrestricted"> </v-checkbox>
+                              </div>
                             </div>
                         </div>
                     </v-card-text>
