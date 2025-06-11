@@ -859,6 +859,22 @@ div.jsondiffpatch-child-node-type-array:after {
 .winbox {
     background: rgba(var(--v-theme-primary), 1);
 }
+.wb-drag {
+    display: flex;
+    align-items: center;
+}
+.wb-body {
+    top: 64px;
+}
+.wb-header {
+    height: 64px;
+}
+.winbox.min .wb-body {
+    top: 35px;
+}
+.winbox.min .wb-header {
+    height: 35px;
+}
 .wb-title {
     display: flex;
 }
@@ -874,4 +890,8 @@ div.jsondiffpatch-child-node-type-array:after {
 }
 .winbox.min .wb-prepend-controls {
     display: none;
+}
+.wb-prepend-controls {
+    display: flex;
+    align-items: center;
 }

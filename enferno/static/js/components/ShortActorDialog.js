@@ -22,9 +22,6 @@ const defaultActorData = {
 };
 
 const ShortActorDialog = Vue.defineComponent({
-  components: {
-    'tinymce-editor': Editor,
-  },
   props: {
     parentItem: {
       type: Object,
@@ -161,10 +158,10 @@ const ShortActorDialog = Vue.defineComponent({
   template: /*html*/ `
   <vue-win-box v-if="open" ref="shortActorDialogRef" :options="{ index: 2401, class: ['no-full'], x: 'center', y: 'center' }" @close="$emit('update:open', !open)">
     <template #title>
-        <div>{{ formTitle }}</div>
+        <div class="v-toolbar-title">{{ formTitle }}</div>
     </template>
     <template #prepend-controls>
-        <v-btn :ripple="false" @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2" density="compact">
+        <v-btn :ripple="false" @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
             {{ translations.saveActor_ }}
         </v-btn>
     </template>
