@@ -31,6 +31,18 @@
     /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
+/* roboto-500 - latin */
+@font-face {
+    font-family: "Roboto";
+    font-style: normal;
+    font-weight: 500;
+    src: local("Roboto Medium"), local("Roboto-Medium"),
+        url("../font/roboto-v20-latin-500.woff2") format("woff2"),
+        /* Chrome 26+, Opera 23+, Firefox 39+ */
+        url("../font/roboto-v20-latin-500.woff") format("woff");
+    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
 /* roboto-700 - latin */
 @font-face {
     font-family: "Roboto";
@@ -44,6 +56,7 @@
 
 .v-application {
     font-family: "Roboto", sans-serif;
+    background-color: rgba(var(--v-theme-background), 1);
 }
 
 .v-application .headline,
@@ -837,6 +850,9 @@ div.jsondiffpatch-child-node-type-array:after {
 .z-1 {
     z-index: 1;
 }
+.h-fit {
+    height: fit-content;
+}
 
 /* wrap chips */
 .flex-chips {
@@ -853,4 +869,39 @@ div.jsondiffpatch-child-node-type-array:after {
 .flex-chip .v-chip__content {
     overflow-wrap: anywhere;
     white-space: normal;
+}
+
+/* Custom styles for new bayanat design */
+.bayanat-btn {
+    box-shadow: none;
+    text-transform: none;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+}
+.outlined-btn {
+    border: thin solid rgba(var(--v-theme-border), 1);
+}
+.bayanat-table {
+    th {
+        color: rgba(var(--v-theme-table-header), 1);
+    }
+    td {
+        color: rgba(var(--v-theme-table-body), 1);
+    }
+}
+.v-input .v-messages__message {
+    line-height: normal;
+}
+.v-slider-track__tick-label {
+    font-size: 0.75rem;
+    color: rgba(var(--v-theme-muted), 1);
+}
+.v-slider-track__tick {
+    border-radius: 50%;
+}
+.v-slider-thumb__surface {
+    border: 2px solid currentColor;
+    background-color: rgb(var(--v-theme-surface-light));
 }
