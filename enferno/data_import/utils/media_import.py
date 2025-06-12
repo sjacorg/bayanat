@@ -39,9 +39,9 @@ def now() -> str:
 
 
 if cfg.OCR_ENABLED:
-    from pytesseract import image_to_string, pytesseract
-
     try:
+        from pytesseract import image_to_string, pytesseract
+
         pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
         tesseract_langs = "+".join(pytesseract.get_languages(config=""))
     except Exception as e:
@@ -351,7 +351,7 @@ class MediaImport:
             self.data_import.add_to_log("Failed to transcribe video.")
             self.data_import.add_to_log(str(e))
             return None
-        
+
     def web_import(self, file: dict) -> Optional[Any]:
         self.data_import.add_to_log(f"Processing web import {file.get('filename')}...")
 
@@ -364,9 +364,7 @@ class MediaImport:
         if youtube_info:
             info.update(youtube_info)
             # Use YouTube title for bulletin
-            info["bulletinTitle"] = youtube_info.get(
-                "title", os.path.splitext(file.get("name"))[0]
-            )
+            info["bulletinTitle"] = youtube_info.get("title", os.path.splitext(file.get("name"))[0])
 
         # Get file extension and duration
         _, ext = os.path.splitext(filename)
@@ -383,7 +381,7 @@ class MediaImport:
         info["filepath"] = filepath
         info["source_url"] = file.get("source_url")
         info["etag"] = file.get("etag")
-        
+
         return info
 
     def server_import(self, file: dict) -> Optional[Any]:
@@ -408,7 +406,7 @@ class MediaImport:
         title, ext = os.path.splitext(old_filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])      
+            self.data_import.add_format(info["file_ext"])
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -441,7 +439,7 @@ class MediaImport:
         _, ext = os.path.splitext(filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])     
+            self.data_import.add_format(info["file_ext"])
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -450,7 +448,7 @@ class MediaImport:
         info["filepath"] = filepath
 
         info["etag"] = file.get("etag")
-        
+
         return info
 
     def process(self, file: str) -> Optional[Any]:
@@ -483,7 +481,7 @@ class MediaImport:
             self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
             return
-        
+
         mime_type = info.get("File:MIMEType")
 
         # get duration and optimize if video
@@ -530,7 +528,7 @@ class MediaImport:
 
         if text_content:
             info["text_content"] = text_content
-        
+
         if transcription:
             info["transcription"] = transcription
 
@@ -592,7 +590,7 @@ class MediaImport:
             bulletin.sources.append(main_source)
 
             source = None
-            
+
             # Attempt to find existing source
             if uploader_id:
                 source = Source.query.filter(Source.etl_id == uploader_id).first()
