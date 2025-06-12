@@ -55,7 +55,7 @@ const ShortActorDialog = Vue.defineComponent({
       type: Function,
     },
   },
-  emits: ['update:open', 'close'],
+  emits: ['update:open', 'close', 'createActor'],
   data: () => ({
     editedItem: defaultActorData,
     valid: false,
@@ -132,6 +132,9 @@ const ShortActorDialog = Vue.defineComponent({
           item: this.editedItem,
         })
         .then((response) => {
+          // TODO: Actor ID is required to either fetch the correct actor data 
+          // or reformat the edited item to match the structure used in mode=1
+          this.$emit('createActor', this.editedItem)
           this.showSnack(response.data);
           this.close();
         })

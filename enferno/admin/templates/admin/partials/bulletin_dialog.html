@@ -8,6 +8,7 @@
     :parent-item="editedItem"
     :show-snack="showSnack"
     :can-restrict-view="{{ config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin")|tojson }}"
+    @create-actor="relateActor"
 >
     <template #events>
         {% include 'admin/partials/event_dialog.html' %}
