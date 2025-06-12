@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import bleach
 import boto3
+from botocore.config import Config as BotoConfig
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
 from flask import request, jsonify, abort, session
 from flask.templating import render_template
@@ -3592,8 +3593,11 @@ def serve_media(
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
 
+        s3_config = BotoConfig(signature_version='s3v4')
+
         s3 = boto3.client(
             "s3",
+            config=s3_config,
             aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
             aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
             region_name=current_app.config["AWS_REGION"],
