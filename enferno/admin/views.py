@@ -2917,9 +2917,9 @@ def api_bulletin_create(
             "bulletin",
         )
 
-        return f"Created Bulletin #{bulletin.id}", 200
+        return {"message": f"Created Bulletin #{bulletin.id}", "item": bulletin.to_mini()}, 201
     else:
-        return "Error creating Bulletin", 417
+        return {"message": "Error creating Bulletin"}, 417
 
 
 @admin.put("/api/bulletin/<int:id>")
@@ -3422,7 +3422,7 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -3873,9 +3873,9 @@ def api_actor_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
         )
-        return f"Created Actor #{actor.id}", 200
+        return {"message": f"Created Actor #{actor.id}", "item": actor.to_mini()}, 201
     else:
-        return "Error creating Actor", 417
+        return {"message": "Error creating Actor"}, 417
 
 
 # update actor endpoint
@@ -4995,9 +4995,9 @@ def api_incident_create(
             incident.to_mini(),
             "incident",
         )
-        return f"Created Incident #{incident.id}", 200
+        return {"message": f"Created Incident #{incident.id}", "item": incident.to_mini()}, 201
     else:
-        return "Error creating Incident", 417
+        return {"message": "Error creating Incident"}, 417
 
 
 # update incident endpoint
