@@ -69,6 +69,7 @@ const MediaCard = Vue.defineComponent({
           this.$root.$refs.pdfViewer.openPDF(this.s3url);
           break;
         case 'image':
+          this.$refs.thumbnailRef?.click()
           break;
         case 'video':
           this.$emit('video-click', this.media);
@@ -138,21 +139,30 @@ const MediaCard = Vue.defineComponent({
         .catch(() => this.$root.showSnack('Failed to copy to clipboard'));
     }
   },
-  template: `
-    <v-card style="width:min(400px,100%)"  class="border border-1 mx-2" :disabled="!s3url">
+  template: /*html*/`
+    <v-card style="width:min(350px,100%)"  class="border border-1 mx-2" :disabled="!s3url">
       <v-toolbar density="compact" class="px-2">
-        <v-icon :icon="iconMap[mediaType]" :color="mediaType === 'pdf' ? 'red' : 'primary'"></v-icon>
-        <v-divider vertical class="mx-2"></v-divider>
-        <v-chip prepend-icon="mdi-identifier" variant="text" class="font-weight-bold">{{ media.id }}</v-chip>
-        <v-divider vertical class="mx-2"></v-divider>
-        <v-tooltip location="bottom">
-          <template v-slot:activator="{ props }">
-            <v-chip prepend-icon="mdi-tag" variant="plain" v-if="media.category" size="small" v-bind="props">
-              {{ media.category.title }}
-            </v-chip>
-          </template>
-          <span>{{ translations.category_ }}</span>
-        </v-tooltip>
+        <div class="w-100 d-flex justify-space-between align-center">
+          <div class="d-flex align-center">
+            <v-icon :icon="iconMap[mediaType]" :color="mediaType === 'pdf' ? 'red' : 'primary'"></v-icon>
+            <v-divider vertical class="mx-2"></v-divider>
+            <v-chip prepend-icon="mdi-identifier" variant="text" class="font-weight-bold">{{ media.id }}</v-chip>
+            <v-divider vertical class="mx-2"></v-divider>
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-chip prepend-icon="mdi-tag" variant="plain" v-if="media.category" size="small" v-bind="props">
+                  {{ media.category.title }}
+                </v-chip>
+              </template>
+              <span>{{ translations.category_ }}</span>
+            </v-tooltip>
+          </div>
+          <div class="d-flex align-center">
+            <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
+            <v-btn size="small" variant="text" icon="mdi-magnify-expand" @click="handleMediaClick"></v-btn> 
+          </div>
+        </div>
+
       </v-toolbar>
       <v-divider></v-divider>
       <v-sheet>
@@ -166,7 +176,7 @@ const MediaCard = Vue.defineComponent({
           <div v-bind="props" @click="handleMediaClick" class="preview-container"
               style="height: 180px; cursor: pointer;">
             <!-- Image preview -->
-            <a v-if="mediaType === 'image'" :href="s3url" target="_blank">
+            <a v-if="mediaType === 'image'" ref="thumbnailRef" :href="s3url" target="_blank">
               <v-img :src="s3url" height="180" cover class="bg-grey-lighten-2">
                 <v-expand-transition>  
                   <div v-if="isHovering" style="height: 100%;" class="d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">

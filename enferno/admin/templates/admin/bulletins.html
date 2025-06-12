@@ -483,7 +483,6 @@
 
                     },
 
-
                     assignBulletin: {},
                     selfAssignDialog: false,
 
@@ -1576,6 +1575,7 @@
                     close() {
                         this.dialog = false;
                         this.actorDialog = false;
+                        this.closeExpandedMedia()
                         setTimeout(() => {
                             this.editedItem = Object.assign({}, this.defaultItem);
 

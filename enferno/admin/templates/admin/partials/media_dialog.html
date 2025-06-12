@@ -17,17 +17,26 @@
             </v-toolbar>
 
             <!--  Grid of Media Items -->
+            <div v-if="expandedMedia" ref="expandedMediaRef" class="w-100" style="height: 500px;">
+                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer"></div>
+                <div  v-if="expandedMediaType === 'pdf'" class="w-100 h-100">
+                    <object :data="expandedMedia.s3url" class="w-100 h-100"></object>
+                </div>
+                <div v-if="expandedMediaType === 'image'" class="w-100 h-100">
+                    <v-img :src="expandedMedia.s3url" class="w-100 h-100 bg-grey-lighten-2"></v-img>
+                </div>
+            </div>
 
             <v-card-text id="medias">
-
-
-
                 <image-gallery prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
-                               @video-click="viewMediaPlayerDialog"
-                               @audio-click="viewMediaPlayerDialog"
+                               @video-click="viewMediaPlayerDialog($event); closeExpandedMedia() "
+                               @audio-click="viewMediaPlayerDialog($event); closeExpandedMedia()"
                                @remove-media="removeMedia"
-                ></image-gallery>
-
+                >
+                    <template #top-actions="{ media, mediaType }">
+                      <v-btn size="small" variant="text" icon="mdi-arrow-expand-all" @click="handleExpandedMedia(media, mediaType)"></v-btn> 
+                    </template>
+                </image-gallery>
             </v-card-text>
         </v-card>
     </template>
