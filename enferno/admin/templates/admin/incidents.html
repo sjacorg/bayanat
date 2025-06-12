@@ -1469,7 +1469,6 @@
                         axios.post("/admin/api/incident/", {
                             item: this.editedItem
                         }).then(response => {
-                            this.items.push(this.editedItem);
                             this.showSnack(response.data);
                             this.refresh();
                             this.close();
