@@ -173,7 +173,7 @@ const MediaCard = Vue.defineComponent({
 
       <v-card-text class="text-center pa-0">
         <v-hover v-slot="{ isHovering, props }">
-          <div v-bind="props" @click="handleMediaClick" class="preview-container"
+          <div v-bind="props" class="preview-container"
               style="height: 180px; cursor: pointer;">
             <!-- Image preview -->
             <a v-if="mediaType === 'image'" ref="thumbnailRef" :href="s3url" target="_blank">
@@ -186,8 +186,9 @@ const MediaCard = Vue.defineComponent({
               </v-img>
             </a>
 
+            <div @click="handleMediaClick">
             <!-- Video preview -->
-            <v-img v-else-if="mediaType === 'video'" :src="videoThumbnail" height="180" cover class="bg-grey-lighten-2">
+            <v-img v-if="mediaType === 'video'" :src="videoThumbnail" height="180" cover class="bg-grey-lighten-2">
               <div class="d-flex align-center justify-center fill-height">
                 <v-btn icon="mdi-play-circle" variant="text" size="x-large" :class="['custom-play-icon', thumbnailBrightness > 128 ? 'dark-play-icon' : 'light-play-icon']"></v-btn>
               </div>
@@ -215,9 +216,10 @@ const MediaCard = Vue.defineComponent({
             </v-card>
 
             <!-- Other file types preview -->
-            <v-card v-else height="180" class="d-flex align-center justify-center bg-grey-lighten-2">
+            <v-card v-else-if="mediaType === 'unknown'" height="180" class="d-flex align-center justify-center bg-grey-lighten-2">
               <v-icon size="64">mdi-file-download</v-icon>
             </v-card>
+            </div>
           </div>
         </v-hover>
       </v-card-text>
