@@ -11,7 +11,15 @@ const DualField = Vue.defineComponent({
     },
     rules: {
       type: Array,
-      default: () => [v => true],
+      default: () => [],
+    },
+    rulesOriginal: {
+      type: Array,
+      default: () => [],
+    },
+    rulesTranslation: {
+      type: Array,
+      default: () => [],
     },
     labelOriginal: {
       type: String,
@@ -69,7 +77,7 @@ const DualField = Vue.defineComponent({
           variant="outlined"
           append-inner-icon="mdi-web"
           @click:append-inner="toggleField"
-          :rules="rules"
+          :rules="[...rulesOriginal, ...rules]"
       >
         <template v-slot:append v-if="allowUnknown">
           <v-tooltip location="top" :text="unknownTooltip">
@@ -89,7 +97,7 @@ const DualField = Vue.defineComponent({
           variant="outlined"
           append-inner-icon="mdi-web"
           @click:append-inner="toggleField"
-          :rules="rules"
+          :rules="[...rulesTranslation, ...rules]"
       ></v-text-field>
     </v-sheet>
   `,
