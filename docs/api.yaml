@@ -3533,13 +3533,18 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateBulletinRequest'
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Bulletin #{id} !"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Created Bulletin #{id} !"
+                  item:
+                    $ref: '#/components/schemas/BaseMiniItem'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -4469,13 +4474,18 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateActorRequest'
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Actor #{id} !"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Created Actor #{id} !"
+                  item:
+                    $ref: '#/components/schemas/BaseMiniItem'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -5635,13 +5645,18 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateIncidentRequest'
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Incident #{id} !"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Created Incident #{id} !"
+                  item:
+                    $ref: '#/components/schemas/BaseMiniItem'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
