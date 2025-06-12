@@ -4,7 +4,7 @@ const ImageGallery = Vue.defineComponent({
     enableDelete: Boolean,
     prioritizeVideos: Boolean
   },
-  emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click'],
+  emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click', 'expand-media'],
   mounted() {
     this.prepareImagesForPhotoswipe().then(() => {
       this.initLightbox();
@@ -20,9 +20,6 @@ const ImageGallery = Vue.defineComponent({
   methods: {
     handleVideo(media){
       this.$emit('video-click', media)
-    },
-    handleThumb(s3url){
-      this.$emit('thumb-click', s3url)
     },
     sortMediaByFileType(mediaList) {
       if (!mediaList) return [];
@@ -101,16 +98,19 @@ const ImageGallery = Vue.defineComponent({
             
                 
               <v-sheet  v-for="(media,index) in sortedMedia" :key="media.id">
-                <media-card @ready="updateMediaState" @thumb-click="handleThumb" @video-click="handleVideo" @audio-click="handleAudio" :media="media">
-              <template v-slot:actions v-if="enableDelete">
-                <v-divider></v-divider>
-                <v-card-actions class="justify-end d-flex">
-                    <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
-                </v-card-actions>
-            </template>
+                <media-card @ready="updateMediaState" @video-click="handleVideo" @audio-click="handleAudio" :media="media">
+                  <template v-slot:top-actions="{ media, mediaType }">
+                    <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
+                  </template>
+                  <template v-slot:actions v-if="enableDelete">
+                    <v-divider></v-divider>
+                    <v-card-actions class="justify-end d-flex">
+                      <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
+                    </v-card-actions>
+                  </template>
            
-          </media-card>
-                  </v-sheet>
+                </media-card>
+              </v-sheet>
             
         </v-sheet>
         
