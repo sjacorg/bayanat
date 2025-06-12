@@ -282,7 +282,7 @@ const GeoMap = Vue.defineComponent({
         this.setOrUpdateMarker(lat, lng);
         this.updateRadiusCircle(); // Add this line
 
-        this.broadcast();
+        this.emitValue();
       }
     },
 
@@ -307,12 +307,24 @@ const GeoMap = Vue.defineComponent({
     },
 
     emitValue() {
-      const newValue =
-        this.lat !== null && this.lng !== null
-          ? { lat: this.lat, lng: this.lng, radius: this.radius }
-          : null;
-      this.$emit('update:modelValue', newValue);
+      if (this.lat == null || this.lng == null) return;
+    
+      const newValue = { lat: this.lat, lng: this.lng, radius: this.radius ?? 1000 };
+      const current = {
+        lat: this.modelValue?.lat,
+        lng: this.modelValue?.lng,
+        radius: this.modelValue?.radius ?? 1000,
+      };
+    
+      if (
+        newValue.lat !== current.lat ||
+        newValue.lng !== current.lng ||
+        newValue.radius !== current.radius
+      ) {
+        this.$emit('update:modelValue', newValue);
+      }
     },
+    
 
     updateLocation(point) {
       this.lat = point.lat;
@@ -345,14 +357,6 @@ const GeoMap = Vue.defineComponent({
         const bounds = this.radiusCircle.getBounds();
         this.map.fitBounds(bounds);
       }, 250)();
-    },
-
-    broadcast() {
-      const newValue =
-        this.lat !== null && this.lng !== null
-          ? { lat: this.lat, lng: this.lng, radius: this.radius }
-          : null;
-      this.$emit('update:modelValue', newValue);
     },
   },
   template: `
