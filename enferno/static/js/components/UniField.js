@@ -6,7 +6,7 @@ const UniField = Vue.defineComponent({
   },
   data: function () {
     return {
-      sw: true,
+      sw: this.english ? true : false,
     };
   },
 
