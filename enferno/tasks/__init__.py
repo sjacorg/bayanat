@@ -945,47 +945,56 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
 
     export_request = Export.query.get(previous_result)
 
+    if not export_request:
+        return False
+
     # check if we need to export media files
     if not export_request.include_media:
         return export_request.id
+    try:
+        export_type = export_request.table
+        # get list of previous entity ids and export their medias
+        # dynamic query based on table
+        if export_type == "bulletin":
+            items = Bulletin.query.filter(Bulletin.id.in_(export_request.items))
+        elif export_type == "actor":
+            items = Actor.query.filter(Actor.id.in_(export_request.items))
+        elif export_type == "incident":
+            # incidents has no media
+            # UI switch disabled, but just in case...
+            return
 
-    export_type = export_request.table
-    # get list of previous entity ids and export their medias
-    # dynamic query based on table
-    if export_type == "bulletin":
-        items = Bulletin.query.filter(Bulletin.id.in_(export_request.items))
-    elif export_type == "actor":
-        items = Actor.query.filter(Actor.id.in_(export_request.items))
-    elif export_type == "incident":
-        # incidents has no media
-        # UI switch disabled, but just in case...
-        return
+        for item in items:
+            if item.medias:
+                media = item.medias[0]
+                target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"
 
-    for item in items:
-        if item.medias:
-            media = item.medias[0]
-            target_file = f"{Export.export_dir}/{export_request.file_id}/{media.media_file}"
-
-            if cfg.FILESYSTEM_LOCAL:
-                # copy file (including metadata)
-                shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
-            else:
-                s3 = boto3.client(
-                    "s3",
-                    aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
-                    region_name=cfg.AWS_REGION,
-                )
-                try:
-                    s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
-                except Exception as e:
-                    logger.error(
-                        f"Error downloading Export #{export_request.id} file from S3.",
-                        exc_info=True,
+                if cfg.FILESYSTEM_LOCAL:
+                    # copy file (including metadata)
+                    shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
+                else:
+                    s3 = boto3.client(
+                        "s3",
+                        aws_access_key_id=cfg.AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=cfg.AWS_SECRET_ACCESS_KEY,
+                        region_name=cfg.AWS_REGION,
                     )
+                    try:
+                        s3.download_file(cfg.S3_BUCKET, media.media_file, target_file)
+                    except Exception as e:
+                        logger.error(
+                            f"Error downloading Export #{export_request.id} file from S3.",
+                            exc_info=True,
+                        )
 
-        time.sleep(0.05)
-    return export_request.id
+            time.sleep(0.05)
+        return export_request.id
+    except Exception as e:
+        logger.error(
+            f"Error generating export media for Export #{export_request.id}", exc_info=True
+        )
+        clear_failed_export(export_request)
+        return False  # to stop chain
 
 
 @celery.task
