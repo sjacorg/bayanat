@@ -475,13 +475,8 @@
                 },
 
                 uploadSuccess(dzfile) {
-
                     // pick file from dropzone files list
-                    const needle = this.$refs.dropzone.dz.getAcceptedFiles().filter(x => x.status === 'success').filter(x => parseResponse(x).uuid === dzfile.upload.uuid).pop();
-
-
-                    const file = parseResponse(needle);
-
+                    const file = findUploadedFileByUUID(this.$refs.dropzone.dz.getAcceptedFiles(), dzfile.upload.uuid);
 
                     // parse the response in xhr
                     this.files.push(file);
