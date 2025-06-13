@@ -86,8 +86,45 @@ const ActorSearchBox = Vue.defineComponent({
                   :label="translations.notContains_"
                   clearable
               ></v-text-field>
+              
+              <div class="d-flex align-center">
+                <v-combobox
+                    v-model="q.tags"
+                    :label="translations.inTags_"
+                    multiple
+                    chips
+                    closable-chips
+                    small-chips
+                    clearable
+                ></v-combobox>
+
+                <v-checkbox :label="translations.any_" dense v-model="q.opTags" color="primary" small
+                            class="mx-3"></v-checkbox>
+                <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
+                            class="mx-3"></v-checkbox>
+
+              </div>
+
+              <div class="d-flex align-center">
+
+                <v-combobox
+                    v-model="q.exTags"
+                    :label="translations.exTags_"
+                    multiple
+                    chips
+                    closable-chips
+                    clearable
+                ></v-combobox>
+
+                <v-checkbox :label="translations.all_" dense v-model="q.opExTags" color="primary" small
+                            class="mx-3"></v-checkbox>
+                <v-checkbox :label="translations.exactMatch_" dense v-model="q.exExact" color="primary" small
+                            class="mx-3"></v-checkbox>
+              </div>
+
             </v-col>
           </v-row>
+
           <v-row>
             <v-col md="6">
               <div class="d-flex flex-wrap">
