@@ -38,7 +38,7 @@ def now() -> str:
     return str(arrow.utcnow())
 
 
-misconfig_flag = False
+_tesseract_misconfig_flag = False
 if cfg.OCR_ENABLED:
     try:
         from pytesseract import image_to_string, pytesseract
@@ -49,7 +49,7 @@ if cfg.OCR_ENABLED:
         logger.error(
             f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
         )
-        misconfig_flag = True
+        _tesseract_misconfig_flag = True
 
 
 class MediaImport:
@@ -194,7 +194,7 @@ class MediaImport:
             # if no text contect recognize
             # attempt to use Tesseract OCR
             if not text_content and attempt_ocr:
-                if misconfig_flag:
+                if _tesseract_misconfig_flag:
                     raise Exception(
                         "Tesseract system package is missing or Bayanat's OCR settings are not set properly."
                     )
@@ -223,7 +223,7 @@ class MediaImport:
             - text content of the image file.
         """
         try:
-            if misconfig_flag:
+            if _tesseract_misconfig_flag:
                 raise Exception(
                     "Tesseract system package is missing or Bayanat's OCR settings are not set properly."
                 )
