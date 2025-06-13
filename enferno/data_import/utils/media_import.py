@@ -528,7 +528,10 @@ class MediaImport:
             or info.get("File:MIMEType").startswith("audio")
         ):
             language = self.meta.get("transcription_language")
-            transcription = self.transcribe_video(info["filepath"], language)
+            if not whisper_available:
+                self.data_import.add_to_log("Whisper is not available. Skipping transcription.")
+            else:
+                transcription = self.transcribe_video(info["filepath"], language)
 
         # include details of optimized files
         if optimized:
