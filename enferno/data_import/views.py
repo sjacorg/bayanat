@@ -436,7 +436,7 @@ def api_process_sheet() -> Response:
 def api_whisper_models() -> Response:
     """Returns the list of whisper models."""
     if _whisper_sys_error:
-        return "This feature is not available.", 501
+        return "This feature is not available.", 503
     else:
         return jsonify({"models": Constants.WHISPER_MODEL_OPTS})
 
@@ -449,6 +449,6 @@ def api_whisper_languages() -> Response:
         return "Transcription is not enabled.", 417
 
     if _whisper_sys_error:
-        return "This feature is not available.", 501
+        return "This feature is not available.", 503
     else:
         return jsonify({"languages": TO_LANGUAGE_CODE})
