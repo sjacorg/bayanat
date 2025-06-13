@@ -3422,7 +3422,7 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -5816,3 +5816,14 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return jsonify({"batch_id": data_import.batch_id}), 202
+
+
+@admin.get("/api/dependency-summary/")
+@roles_required("Admin")
+def api_dependency_summary() -> Response:
+    """Endpoint to return the dependency summary."""
+    if not os.path.exists("dependency_summary.json"):
+        return jsonify({"status": "UNKNOWN", "missing_dependencies": []}), 200
+    with open("dependency_summary.json", "r") as f:
+        summary = json.load(f)
+    return jsonify(summary), 200

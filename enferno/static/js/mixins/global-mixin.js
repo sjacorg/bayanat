@@ -66,6 +66,17 @@ const globalMixin = {
     axios.get('/settings/load').then(res => {
       this.settings = res.data;
     });
+
+    // Initialize missing dependencies as empty array
+    window.__MISSINGDEPS__ = [];
+    
+    axios.get('/admin/api/dependency-summary/').then(res => {
+      if(res.data.status !== "OK"){
+        window.__MISSINGDEPS__ = res.data.missing_dependencies;
+      }
+    }).catch(err => {
+      console.warn('Could not load dependency summary:', err);
+    });
   },
   beforeUnmount() {
     document.removeEventListener('global-axios-error', this.showSnack);

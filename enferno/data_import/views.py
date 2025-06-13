@@ -34,6 +34,13 @@ PER_PAGE = 50
 
 logger = get_logger()
 
+_whisper_sys_error = False
+try:
+    from whisper.tokenizer import TO_LANGUAGE_CODE
+except Exception as e:
+    logger.error(e, exc_info=True)
+    _whisper_sys_error = True
+
 
 @imports.before_request
 @auth_required("session")
@@ -428,13 +435,20 @@ def api_process_sheet() -> Response:
 @roles_required("Admin")
 def api_whisper_models() -> Response:
     """Returns the list of whisper models."""
-    return jsonify({"models": Constants.WHISPER_MODEL_OPTS})
+    if _whisper_sys_error:
+        return "This feature is not available.", 503
+    else:
+        return jsonify({"models": Constants.WHISPER_MODEL_OPTS})
 
 
 @imports.get("/api/whisper/languages/")
 @roles_required("Admin")
 def api_whisper_languages() -> Response:
     """Returns the list of whisper languages."""
-    from whisper.tokenizer import TO_LANGUAGE_CODE
+    if not current_app.config.get("TRANSCRIPTION_ENABLED"):
+        return "Transcription is not enabled.", 417
 
-    return jsonify({"languages": TO_LANGUAGE_CODE})
+    if _whisper_sys_error:
+        return "This feature is not available.", 503
+    else:
+        return jsonify({"languages": TO_LANGUAGE_CODE})
