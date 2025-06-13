@@ -90,7 +90,7 @@ const ActorSearchBox = Vue.defineComponent({
               <div class="d-flex align-center">
                 <v-combobox
                     v-model="q.tags"
-                    :label="translations.inTags_"
+                    :label="translations.inTagsAll_"
                     multiple
                     chips
                     closable-chips
@@ -109,7 +109,7 @@ const ActorSearchBox = Vue.defineComponent({
 
                 <v-combobox
                     v-model="q.exTags"
-                    :label="translations.exTags_"
+                    :label="translations.exTagsAny_"
                     multiple
                     chips
                     closable-chips
