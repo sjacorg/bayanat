@@ -87,7 +87,6 @@ WTForms==3.2.1
 zipp==3.22.0
 qrcode==8.2
 psycopg2==2.9.10
-setuptools==80.9.0
 weasyprint==65.1
 zxcvbn==4.5.0
 webauthn==2.5.2
