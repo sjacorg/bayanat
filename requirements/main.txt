@@ -68,7 +68,7 @@ python-editor==1.0.4
 pytz==2025.2
 redis==6.2.0
 requests==2.32.4
-setuptools==75.6.0
+setuptools==80.0.0
 s3transfer==0.13.0
 Shapely==2.1.1
 shortuuid==1.0.13
