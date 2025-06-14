@@ -15,6 +15,7 @@ from enferno.admin.models import Incident
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from enferno.utils.logging_utils import get_logger
+from enferno.utils import validators
 
 logger = get_logger()
 
@@ -340,3 +341,43 @@ class DynamicField(db.Model, BaseMixin):
             "options": self.options,
             "active": self.active,
         }
+
+    def validate_value(self, value):
+        """
+        Validate a value against this field's validation_config and schema_config.
+        Returns a list of error messages (empty if valid).
+        """
+        errors = []
+        vcfg = self.validation_config or {}
+        scfg = self.schema_config or {}
+
+        if scfg.get("required", False):
+            err = validators.validate_required(value)
+            if err:
+                errors.append(err)
+
+        if self.field_type == self.STRING:
+            if "min_length" in vcfg:
+                err = validators.validate_min_length(value, vcfg["min_length"])
+                if err:
+                    errors.append(err)
+            if "max_length" in vcfg:
+                err = validators.validate_max_length(value, vcfg["max_length"])
+                if err:
+                    errors.append(err)
+            if "pattern" in vcfg:
+                err = validators.validate_pattern(value, vcfg["pattern"])
+                if err:
+                    errors.append(err)
+
+        if self.field_type == self.INTEGER:
+            if "min" in vcfg:
+                err = validators.validate_min(value, vcfg["min"])
+                if err:
+                    errors.append(err)
+            if "max" in vcfg:
+                err = validators.validate_max(value, vcfg["max"])
+                if err:
+                    errors.append(err)
+
+        return errors
