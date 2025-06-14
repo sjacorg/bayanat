@@ -99,7 +99,7 @@ class DynamicField(db.Model, BaseMixin):
     )  # DB-related: type, required, default, unique, etc.
     ui_config = db.Column(
         JSONB, default=dict
-    )  # UI-related: label, help_text, widget, sort_order, readonly, hidden, etc.
+    )  # UI-related: label, help_text, widget, sort_order, readonly, hidden, group (string), group_label (optional), width ("full" or "half")
     validation_config = db.Column(
         JSONB, default=dict
     )  # Validation rules: min/max, pattern, allowed values, etc.
