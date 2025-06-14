@@ -20,7 +20,50 @@ logger = get_logger()
 
 
 class DynamicField(db.Model, BaseMixin):
-    """Defines custom fields for any entity type"""
+    """
+    Defines custom fields for any entity type.
+
+    JSONB Field Documentation:
+
+    - schema_config (JSONB): Database-related config.
+        Example:
+        {
+            "type": "string",
+            "required": true,
+            "default": "",
+            "unique": false,
+            "max_length": 100
+        }
+
+    - ui_config (JSONB): UI rendering config.
+        Example:
+        {
+            "label": "Full Name",
+            "help_text": "Enter your full legal name.",
+            "widget": "text_input",
+            "sort_order": 1,
+            "readonly": false,
+            "hidden": false,
+            "group": "personal",
+            "group_label": "Personal Info",
+            "width": "full"
+        }
+
+    - validation_config (JSONB): Validation rules.
+        Example:
+        {
+            "min_length": 2,
+            "max_length": 100,
+            "pattern": "^[A-Za-z ]+$"
+        }
+
+    - options (JSONB): Allowed values for select/multi fields.
+        Example:
+        [
+            {"value": "admin", "label": "Administrator"},
+            {"value": "user", "label": "User"}
+        ]
+    """
 
     __tablename__ = "dynamic_fields"
 
