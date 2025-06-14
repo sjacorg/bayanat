@@ -338,6 +338,8 @@ def test_dynamic_fields(cleanup: bool) -> None:
                 "sort_order": 1,
                 "readonly": False,
                 "hidden": False,
+                "group": "main",
+                "width": "full",
             },
             "validation_config": {"max_length": 100},
             "options": [],
@@ -355,6 +357,8 @@ def test_dynamic_fields(cleanup: bool) -> None:
                 "sort_order": 2,
                 "readonly": False,
                 "hidden": False,
+                "group": "main",
+                "width": "half",
             },
             "validation_config": {},
             "options": ["Option 1", "Option 2", "Option 3"],
@@ -372,6 +376,8 @@ def test_dynamic_fields(cleanup: bool) -> None:
                 "sort_order": 3,
                 "readonly": False,
                 "hidden": False,
+                "group": "details",
+                "width": "half",
             },
             "validation_config": {"min": 0, "max": 100},
             "options": [],
@@ -392,6 +398,8 @@ def test_dynamic_fields(cleanup: bool) -> None:
                 "sort_order": 4,
                 "readonly": False,
                 "hidden": False,
+                "group": "details",
+                "width": "full",
             },
             "validation_config": {"format": "YYYY-MM-DD"},
             "options": [],
@@ -540,7 +548,7 @@ def test_dynamic_fields(cleanup: bool) -> None:
                 ui = field_data.get("ui_config", {})
                 schema = field_data.get("schema_config", {})
                 click.echo(
-                    f"{field_data['title']}: {value} (help_text: {ui.get('help_text')}, default: {schema.get('default')}, readonly: {ui.get('readonly')}, hidden: {ui.get('hidden')})"
+                    f"{field_data['title']}: {value} (group: {ui.get('group')}, width: {ui.get('width')}, help_text: {ui.get('help_text')}, default: {schema.get('default')}, readonly: {ui.get('readonly')}, hidden: {ui.get('hidden')})"
                 )
 
         except Exception as e:
