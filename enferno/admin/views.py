@@ -16,7 +16,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, asc, text, select, func
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
@@ -123,6 +123,7 @@ from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
+from enferno.admin.models.DynamicField import DynamicField
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -3422,7 +3423,7 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -5816,3 +5817,98 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return jsonify({"batch_id": data_import.batch_id}), 202
+
+
+def parse_filters(args):
+    """
+    Parse filter parameters from the query string and build SQLAlchemy filter conditions.
+    Supports equality checks on model fields using:
+      filter[field][_eq]=value
+    Example: ?filter[entity_type][_eq]=bulletin&filter[active][_eq]=true
+    """
+    filters = []
+    for key, value in args.items():
+        if key.startswith("filter[") and key.endswith("]"):
+            parts = key[7:-1].split("][_")
+            if len(parts) == 2:
+                field, op = parts
+                if op == "eq":
+                    if hasattr(DynamicField, field):
+                        filters.append(getattr(DynamicField, field) == value)
+            elif len(parts) == 1:
+                field = parts[0]
+                if hasattr(DynamicField, field):
+                    filters.append(getattr(DynamicField, field) == value)
+    return filters
+
+
+def parse_sort(args):
+    """
+    Parse the 'sort' query parameter and return a SQLAlchemy order_by clause.
+    Supports sorting by regular fields and nested JSONB keys.
+    Use '-field' for descending order.
+    Example: ?sort=ui_config.sort_order or ?sort=-name
+    """
+    sort = args.get("sort")
+    if not sort:
+        return DynamicField.id.asc()
+    direction = asc
+    if sort.startswith("-"):
+        direction = desc
+        sort = sort[1:]
+    if "." in sort:
+        field, subfield = sort.split(".", 1)
+        if hasattr(DynamicField, field):
+            return direction(text(f"{field} ->> '{subfield}'"))
+    if hasattr(DynamicField, sort):
+        return direction(getattr(DynamicField, sort))
+    return DynamicField.id.asc()
+
+
+@admin.route("/api/dynamic-fields", methods=["GET"])
+def api_dynamic_fields():
+    """
+    List dynamic fields with optional filtering, sorting, and pagination.
+    Query params:
+      filter[field][_eq]=value   (e.g. ?filter[entity_type][_eq]=bulletin)
+      sort=field or sort=-field (e.g. ?sort=ui_config.sort_order)
+      limit, offset             (e.g. ?limit=10&offset=0)
+    Returns a JSON response with 'data' (list of fields) and 'meta' (pagination info).
+    """
+    try:
+        filters = parse_filters(request.args)
+        sort_clause = parse_sort(request.args)
+        try:
+            limit = int(request.args.get("limit", 25))
+            offset = int(request.args.get("offset", 0))
+        except ValueError:
+            return jsonify({"errors": [{"message": "Invalid limit or offset"}]}), 400
+        stmt = (
+            select(DynamicField).where(*filters).order_by(sort_clause).offset(offset).limit(limit)
+        )
+        count_stmt = select(func.count()).select_from(DynamicField).where(*filters)
+        total = db.session.execute(count_stmt).scalar_one()
+        items = db.session.execute(stmt).scalars().all()
+        data = [item.to_dict() for item in items]
+        meta = {"total": total, "limit": limit, "offset": offset}
+        return jsonify({"data": data, "meta": meta})
+    except Exception as e:
+        # Log the error and return a generic server error response
+        return jsonify({"errors": [{"message": str(e)}]}), 500
+
+
+@admin.route("/api/dynamic-fields/<int:field_id>", methods=["GET"])
+def api_dynamic_field(field_id):
+    """
+    Retrieve a single dynamic field by its ID.
+    Returns a JSON response with 'data' (field details) or a 404 error if not found.
+    """
+    try:
+        stmt = select(DynamicField).where(DynamicField.id == field_id)
+        field = db.session.execute(stmt).scalars().first()
+        if not field:
+            return jsonify({"errors": [{"message": "Not found"}]}), 404
+        return jsonify({"data": field.to_dict(), "meta": {}})
+    except Exception as e:
+        # Log the error and return a generic server error response
+        return jsonify({"errors": [{"message": str(e)}]}), 500
