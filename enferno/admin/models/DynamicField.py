@@ -376,7 +376,6 @@ class DynamicField(db.Model, BaseMixin):
             "field_type": self.field_type,
             "required": self.schema_config.get("required", self.required),
             "searchable": self.searchable,
-            "config": self.config,
             "schema_config": self.schema_config,
             "ui_config": self.ui_config,
             "validation_config": self.validation_config,
