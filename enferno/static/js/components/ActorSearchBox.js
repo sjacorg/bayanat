@@ -64,8 +64,8 @@ const ActorSearchBox = Vue.defineComponent({
           <v-row v-if="showOp">
             <v-col>
               <v-btn-toggle mandatory v-model="q.op">
-                <v-btn small value="and">{{ translations.and_ }}</v-btn>
-                <v-btn small value="or">{{ translations.or_ }}</v-btn>
+                <v-btn value="and">{{ translations.and_ }}</v-btn>
+                <v-btn value="or">{{ translations.or_ }}</v-btn>
               </v-btn-toggle>
             </v-col>
           </v-row>
@@ -94,13 +94,12 @@ const ActorSearchBox = Vue.defineComponent({
                     multiple
                     chips
                     closable-chips
-                    small-chips
                     clearable
                 ></v-combobox>
 
-                <v-checkbox :label="translations.any_" dense v-model="q.opTags" color="primary" small
+                <v-checkbox :label="translations.any_" v-model="q.opTags" color="primary"
                             class="mx-3"></v-checkbox>
-                <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
+                <v-checkbox label="Exact Match" v-model="q.inExact" color="primary"
                             class="mx-3"></v-checkbox>
 
               </div>
@@ -116,9 +115,9 @@ const ActorSearchBox = Vue.defineComponent({
                     clearable
                 ></v-combobox>
 
-                <v-checkbox :label="translations.all_" dense v-model="q.opExTags" color="primary" small
+                <v-checkbox :label="translations.all_" v-model="q.opExTags" color="primary"
                             class="mx-3"></v-checkbox>
-                <v-checkbox :label="translations.exactMatch_" dense v-model="q.exExact" color="primary" small
+                <v-checkbox :label="translations.exactMatch_" v-model="q.exExact" color="primary"
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -172,7 +171,7 @@ const ActorSearchBox = Vue.defineComponent({
 
 
                   <span class="black--text font-weight-bold text-h6">{{ translations.events_ }}</span>
-                  <v-checkbox :label="translations.singleEvent_" dense v-model="q.singleEvent" color="primary" small
+                  <v-checkbox :label="translations.singleEvent_" v-model="q.singleEvent" color="primary"
                               class="ma-3"></v-checkbox>
                 </div>
 
@@ -285,7 +284,7 @@ const ActorSearchBox = Vue.defineComponent({
                 multiple
                 v-model="q.roles"
             >
-              <v-chip v-if="roles" :value="role.id" small v-for="role in roles" filter
+              <v-chip v-if="roles" :value="role.id" v-for="role in roles" filter
                       outlined>{{ role.name }}
               </v-chip>
             </v-chip-group>
@@ -307,7 +306,7 @@ const ActorSearchBox = Vue.defineComponent({
                 multiple
                 v-model="q.assigned"
             >
-              <v-chip :value="user.id" small label v-for="user in users" filter
+              <v-chip :value="user.id" label v-for="user in users" filter
                       outlined>{{ user.name }}
               </v-chip>
             </v-chip-group>
@@ -323,7 +322,7 @@ const ActorSearchBox = Vue.defineComponent({
                 multiple
                 v-model="q.reviewer"
             >
-              <v-chip :value="user.id" label small v-for="user in users" filter
+              <v-chip :value="user.id" label v-for="user in users" filter
                       outlined>{{ user.name }}
               </v-chip>
             </v-chip-group>
@@ -341,7 +340,7 @@ const ActorSearchBox = Vue.defineComponent({
                 multiple
                 v-model="q.statuses"
             >
-              <v-chip :value="status.en" label small v-for="status in translations.statuses" :key="status.en"
+              <v-chip :value="status.en" label v-for="status in translations.statuses" :key="status.en"
                       filter
                       outlined>{{ status.tr }}
               </v-chip>
@@ -353,8 +352,8 @@ const ActorSearchBox = Vue.defineComponent({
           <v-col cols="12">
             <span class="caption pt-2">{{ translations.reviewAction_ }}</span>
             <v-chip-group column v-model="q.reviewAction">
-              <v-chip :value="translations.noReviewNeeded_" label small filter outlined>{{translations.noReviewNeeded_}}</v-chip>
-              <v-chip :value="translations.needsReview_" label small filter outlined>{{translations.needsReview_}}</v-chip>
+              <v-chip :value="translations.noReviewNeeded_" label filter outlined>{{translations.noReviewNeeded_}}</v-chip>
+              <v-chip :value="translations.needsReview_" label filter outlined>{{translations.needsReview_}}</v-chip>
 
             </v-chip-group>
 
@@ -374,7 +373,7 @@ const ActorSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeSources_"
                 ></search-field>
-                <v-checkbox :label="translations.any_" dense v-model="q.opsources" color="primary" small
+                <v-checkbox :label="translations.any_" v-model="q.opsources" color="primary"
                             class="mx-3"></v-checkbox>
 
               </div>
@@ -406,7 +405,7 @@ const ActorSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeLabels_"
                 ></search-field>
-                <v-checkbox :label="translations.any_" dense v-model="q.oplabels" color="primary" small
+                <v-checkbox :label="translations.any_" v-model="q.oplabels" color="primary"
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -437,7 +436,7 @@ const ActorSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeVerLabels_"
                 ></search-field>
-                <v-checkbox :label="translations.any_" dense v-model="q.opvlabels" color="primary" small
+                <v-checkbox :label="translations.any_" v-model="q.opvlabels" color="primary"
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -493,7 +492,6 @@ const ActorSearchBox = Vue.defineComponent({
                   v-for="type in translations.actorLocTypes_"
                   :value="type.code"
                   label
-                  small
                   filter
                   outlined
                   :key="type.code"
@@ -598,7 +596,7 @@ const ActorSearchBox = Vue.defineComponent({
                     :label="translations.spokenDialects_"
                 ></search-field>
             
-                <v-checkbox :label="translations.any_" dense v-model="q.opDialects" color="primary" small
+                <v-checkbox :label="translations.any_" v-model="q.opDialects" color="primary"
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -619,7 +617,7 @@ const ActorSearchBox = Vue.defineComponent({
                     :label="translations.ethnography_"
                 ></search-field>
              
-                <v-checkbox :label="translations.any_" dense v-model="q.opEthno" color="primary" small
+                <v-checkbox :label="translations.any_" v-model="q.opEthno" color="primary"
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -639,7 +637,7 @@ const ActorSearchBox = Vue.defineComponent({
                                         clearable
                                         :label="translations.nationality_"
                                 ></search-field>
-                <v-checkbox :label="translations.any_" dense v-model="q.opNat" color="primary" small
+                <v-checkbox :label="translations.any_" v-model="q.opNat" color="primary"
                             class="mx-3"></v-checkbox>
               </div>
 
@@ -648,7 +646,7 @@ const ActorSearchBox = Vue.defineComponent({
 
           <v-row>
             <v-col md="6">
-              <v-text-field dense :label="translations.idNumber_" v-model="q.id_number"></v-text-field>
+              <v-text-field :label="translations.idNumber_" v-model="q.id_number"></v-text-field>
             </v-col>
           </v-row>
 
