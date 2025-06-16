@@ -150,29 +150,42 @@ def test_setup_wizard_complete_setup(
     uninitialized_app, session_uninitialized, client_fixture, expected_status, request
 ):
     """Test that the setup wizard complete setup works."""
-    config = {
-        "SECURITY_TWO_FACTOR_REQUIRED": True,
-        "SECURITY_PASSWORD_LENGTH_MIN": 8,
-        "SECURITY_ZXCVBN_MINIMUM_SCORE": 4,
-        "SESSION_RETENTION_PERIOD": 1,
-        "FILESYSTEM_LOCAL": True,
-        "ACCESS_CONTROL_RESTRICTIVE": True,
-        "AC_USERS_CAN_RESTRICT_NEW": True,
-        "ETL_TOOL": True,
-        "SHEET_IMPORT": True,
-        "WEB_IMPORT": True,
-        "BABEL_DEFAULT_LOCALE": "en",
-        "GOOGLE_MAPS_API_KEY": "asdasdasd123sd54aasd135asd135asd135",
-        "GEO_MAP_DEFAULT_CENTER": {"lat": 0, "lng": 0},
-        "EXPORT_TOOL": True,
-        "EXPORT_DEFAULT_EXPIRY": 1,
-        "ACTIVITIES_RETENTION": 1,
-    }
-    client = request.getfixturevalue(client_fixture)
-    response = client.put("/api/complete-setup/", json={"conf": config})
-    assert response.status_code == expected_status
-    if expected_status == 200:
-        assert response.text == "Configuration Saved Successfully"
+    from tempfile import NamedTemporaryFile
+    from unittest.mock import patch
+    import json
+
+    temp = NamedTemporaryFile("w", delete=False)
+    try:
+        json.dump({}, temp)
+        temp.close()
+        with patch("enferno.utils.config_utils.ConfigManager.CONFIG_FILE_PATH", temp.name):
+            config = {
+                "SECURITY_TWO_FACTOR_REQUIRED": True,
+                "SECURITY_PASSWORD_LENGTH_MIN": 8,
+                "SECURITY_ZXCVBN_MINIMUM_SCORE": 4,
+                "SESSION_RETENTION_PERIOD": 1,
+                "FILESYSTEM_LOCAL": True,
+                "ACCESS_CONTROL_RESTRICTIVE": True,
+                "AC_USERS_CAN_RESTRICT_NEW": True,
+                "ETL_TOOL": True,
+                "SHEET_IMPORT": True,
+                "WEB_IMPORT": True,
+                "BABEL_DEFAULT_LOCALE": "en",
+                "GOOGLE_MAPS_API_KEY": "asdasdasd123sd54aasd135asd135asd135",
+                "GEO_MAP_DEFAULT_CENTER": {"lat": 0, "lng": 0},
+                "EXPORT_TOOL": True,
+                "EXPORT_DEFAULT_EXPIRY": 1,
+                "ACTIVITIES_RETENTION": 1,
+            }
+            client = request.getfixturevalue(client_fixture)
+            response = client.put("/api/complete-setup/", json={"conf": config})
+            assert response.status_code == expected_status
+            if expected_status == 200:
+                assert response.text == "Configuration Saved Successfully"
+    finally:
+        import os
+
+        os.unlink(temp.name)
 
 
 def test_setup_wizard_not_accessible_after_setup(setup_completed_app):
