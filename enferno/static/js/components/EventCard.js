@@ -38,10 +38,9 @@ const EventCard = Vue.defineComponent({
           {{ event.location.full_string }}
         </v-chip>
 
+        <v-divider v-if="event.from_date || event.to_date || event.estimated" class="my-2"></v-divider>
 
-        <div v-if="event.from_date||event.to_date">
-          <v-divider class="my-2"></v-divider>
-          
+        <div v-if="event.from_date || event.to_date">
           <v-chip prepend-icon="mdi-calendar" label variant="text"  class="text-caption" v-if="event.from_date">
             {{ event.from_date }}
           </v-chip>
