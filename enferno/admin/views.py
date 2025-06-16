@@ -2916,8 +2916,12 @@ def api_bulletin_create(
             bulletin.to_mini(),
             "bulletin",
         )
-
-        return {"message": f"Created Bulletin #{bulletin.id}", "item": bulletin.to_mini()}, 201
+        # Select json encoding type
+        mode = request.args.get("mode", "1")
+        return {
+            "message": f"Created Bulletin #{bulletin.id}",
+            "item": bulletin.to_dict(mode=mode),
+        }, 201
     else:
         return {"message": "Error creating Bulletin"}, 417
 
@@ -3873,7 +3877,9 @@ def api_actor_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
         )
-        return {"message": f"Created Actor #{actor.id}", "item": actor.to_mini()}, 201
+        # Select json encoding type
+        mode = request.args.get("mode", "1")
+        return {"message": f"Created Actor #{actor.id}", "item": actor.to_dict(mode=mode)}, 201
     else:
         return {"message": "Error creating Actor"}, 417
 
@@ -4995,7 +5001,12 @@ def api_incident_create(
             incident.to_mini(),
             "incident",
         )
-        return {"message": f"Created Incident #{incident.id}", "item": incident.to_mini()}, 201
+        # Select json encoding type
+        mode = request.args.get("mode", "1")
+        return {
+            "message": f"Created Incident #{incident.id}",
+            "item": incident.to_dict(mode=mode),
+        }, 201
     else:
         return {"message": "Error creating Incident"}, 417
 

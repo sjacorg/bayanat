@@ -3532,19 +3532,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateBulletinRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
         '201':
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Created Bulletin #{id} !"
-                  item:
-                    $ref: '#/components/schemas/BaseMiniItem'
+                $ref: '#/components/schemas/BulletinCreateResponse'
+        '417':
+          $ref: '#/components/responses/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -4473,19 +4476,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateActorRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
         '201':
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Created Actor #{id} !"
-                  item:
-                    $ref: '#/components/schemas/BaseMiniItem'
+                $ref: '#/components/schemas/ActorCreateResponse'
+        '417':
+          $ref: '#/components/responses/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -5644,19 +5650,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateIncidentRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
         '201':
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Created Incident #{id} !"
-                  item:
-                    $ref: '#/components/schemas/BaseMiniItem'
+                $ref: '#/components/schemas/IncidentCreateResponse'
+        '417':
+          $ref: '#/components/responses/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -9593,3 +9602,29 @@ components:
               items:
                 type: string
               example: ['You do not have permission to view this resource.']
+    BaseItemCreateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    BulletinCreateResponse:
+      type: object
+      allOf: 
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/BulletinItem'
+    ActorCreateResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/ActorItem'
+    IncidentCreateResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/IncidentItem'
