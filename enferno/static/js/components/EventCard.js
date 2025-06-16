@@ -27,7 +27,7 @@ const EventCard = Vue.defineComponent({
           <uni-field :caption="translations.title_" :english="event.title" :arabic="event.title_ar" disable-spacing></uni-field>
         </div>
 
-        <div v-if="event.comments">
+        <div v-if="event.comments" class="mt-n3">
           <uni-field :caption="translations.comments_" :english="event.comments" :arabic="event.comments_ar" disable-spacing></uni-field>
         </div>
 
