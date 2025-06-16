@@ -4,6 +4,9 @@ const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
     },
+    atLeastOneRequired: (value, message = window.translations.thisFieldIsRequired_) => {
+        return v => hasValue(value) || message;
+    },
     maxLength: (max, message) => {
         const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
         return v => isValidLength(v, max, "max") || message || defaultMessage;

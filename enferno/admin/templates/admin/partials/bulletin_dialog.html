@@ -72,7 +72,7 @@
                                             label-original="{{ _('Original Title') }}"
                                             label-translation="{{ _('Original Title (Ar)') }}"
                                             :rules="[
-                                                validationRules.required('{{ _('Original Title is required.') }}'),
+                                                validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
                                                 validationRules.maxLength(255),
                                             ]">
                                 </dual-field>
