@@ -12,7 +12,7 @@ from typing import Optional, Any
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
-import os
+import logging
 
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
@@ -22,6 +22,8 @@ DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
 BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+logger = logging.getLogger(__name__)
 
 
 class BaseValidationModel(BaseModel):
@@ -1711,6 +1713,18 @@ class FullConfigValidationModel(ConfigValidationModel):
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        return values
+
+    @model_validator(mode="before")
+    def validate_optional_deps(cls, values):
+        from enferno.utils.optional_deps import HAS_TESSERACT, HAS_WHISPER
+
+        if values.get("TRANSCRIPTION_ENABLED") and not HAS_WHISPER:
+            logger.warning("Transcription disabled: openai-whisper/torch not available.")
+            values["TRANSCRIPTION_ENABLED"] = False
+        if values.get("OCR_ENABLED") and not HAS_TESSERACT:
+            logger.warning("OCR disabled: pytesseract not available.")
+            values["OCR_ENABLED"] = False
         return values
 
     @model_validator(mode="before")

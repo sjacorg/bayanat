@@ -84,7 +84,7 @@
 
                                                     <v-tooltip location="top">
                                                         <template v-slot:activator="{props}">
-                                                            <v-btn :disabled="mode==1 || !__ETL_PATH_IMPORT__"
+                                                            <v-btn :disabled="mode==1 || !etlPathImport"
                                                                    @click="selectPath" size="small"
                                                                    :="props" color="primary" class="hidden-sm-and-down">
                                                                 <v-icon left> mdi-folder-open</v-icon>
@@ -225,23 +225,23 @@
                                                     </v-col>
                                                     <v-col cols="12" md="4">
                                                         <v-switch v-model="ocr"
-                                                                  :disabled="!__OCR_ENABLED__"
+                                                                  :disabled="!ocrEnabled"
                                                                   label="{{ _('Scan images for text') }}"></v-switch>
-                                                        <div v-if="!__OCR_ENABLED__">
+                                                        <div v-if="!ocrEnabled">
                                                             <v-icon left>mdi-information-outline</v-icon>
                                                             {{ _('Tesseract OCR is disabled.') }}
                                                         </div>
                                                     </v-col>
                                                     <v-col cols="12" md="4">
                                                         <v-switch v-model="transcription"
-                                                                  :disabled="!__TRANSCRIPTION_ENABLED__"
+                                                                  :disabled="!transcriptionEnabled"
                                                                   label="{{ _('Transcribe audio/video files') }}"></v-switch>
-                                                        <div v-if="!__TRANSCRIPTION_ENABLED__">
+                                                        <div v-if="!transcriptionEnabled">
                                                             <v-icon left>mdi-information-outline</v-icon>
                                                             {{ _('Transcription is disabled.') }}
                                                         </div>
                                                         <v-select
-                                                            v-if="transcription && __TRANSCRIPTION_ENABLED__"
+                                                            v-if="transcription && transcriptionEnabled"
                                                             v-model="transcriptionLanguage"
                                                             :items="whisperLanguageOptions"
                                                             label="{{ _('Language:') }}"
@@ -358,10 +358,6 @@
 
 
     <script>
-        window.__OCR_ENABLED__ = ('{{ config.OCR_ENABLED }}' === 'True');
-        window.__ETL_PATH_IMPORT__ = ('{{ config.ETL_PATH_IMPORT }}' === 'True');
-        window.__TRANSCRIPTION_ENABLED__ = ('{{ config.TRANSCRIPTION_ENABLED }}' === 'True');
-
         const {createApp} = Vue;
         const {createVuetify} = Vuetify;
         const vuetify = createVuetify(vuetifyConfig);
@@ -371,6 +367,9 @@
             mixins: [globalMixin, mediaMixin, whisperMixin],
             
             data: () => ({
+                ocrEnabled: ('{{ config.OCR_ENABLED }}' === 'True'),
+                transcriptionEnabled: ('{{ config.TRANSCRIPTION_ENABLED }}' === 'True'),
+                etlPathImport: ('{{ config.ETL_PATH_IMPORT }}' === 'True'),
                 drawer: drawer,
                 mode: null,
                 loading: false,
@@ -617,7 +616,7 @@
                 },
 
                 selectPath() {
-                    if (window.__ETL_PATH_IMPORT__) {
+                    if (this.etlPathImport) {
                         this.selectDlg = true;
                     }
                 },
