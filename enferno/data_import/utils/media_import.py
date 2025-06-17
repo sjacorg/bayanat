@@ -320,7 +320,7 @@ class MediaImport:
             return None
 
         try:
-            from whisper.tokenizer import TO_LANGUAGE_CODE
+            from enferno.utils.optional_deps import TO_LANGUAGE_CODE
 
             self.data_import.add_to_log(f"Transcribing video...")
 
