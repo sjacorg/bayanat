@@ -1,155 +1,132 @@
-{% extends 'login-layout.html' %}
-{% block nav %}{% endblock %}
-{% block content %}
-
-    <v-main class="d-flex flex-column align-center justify-center">
-
-
-
-    <v-card class="mx-auto mb-5 elevation-23  w-33 ">
-
-
-        <v-toolbar title="{{ _('Account Login') }}" color="primary">
-        </v-toolbar>
-        <v-card-text>
-
-           <v-form
-
-                    action="{{ url_for_security('login') }}"
-                    method="post"
-                    id="loginForm"
-                    ref="form"
-                    @submit.prevent
-            >
-                {{ login_user_form.hidden_tag() }}
-
-                <v-text-field
-
-                        autocomplete="chrome-off"
-                        label="{{ _('Login') }}"
-                        name="username"
-                        prepend-icon="mdi-account"
-                        type="text"
-                        :rules="[rules.required]"
-                        variant="underlined"
-
-
-                >
-                </v-text-field>
-
-                <v-text-field
-                        class="mt-2"
-                        variant="underlined"
-                        id="password"
-                        autocomplete="chrome-off"
-
-                        label="{{ _('Password') }}"
-                        name="password"
-                        prepend-icon="mdi-lock-question"
-                        type="password"
-                        @keyup.enter="!invalid && submit()"
-                        :rules="[rules.required, rules.min]"
-
-                ></v-text-field>
-
-
-
-                {% if login_user_form.recaptcha %}
-                    {{ login_user_form.recaptcha }}
-                {% endif %}
-
-            </v-form>
-        </v-card-text>
-{% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
+{% extends 'login-layout.html' %} {% block nav %}{% endblock %} {% block content %}
+<v-main class="d-flex flex-column align-center justify-center bg-surface-light">
+  <v-card class="mx-auto mb-5" rounded="lg">
+    <v-card-title>{{ _('Log in') }}</v-card-title>
+    <v-card-subtitle>{{ _('Welcome Bayanat! Please enter your details below to log in.') }}</v-card-subtitle>
     <v-card-text>
+      <v-form
+        action="{{ url_for_security('login') }}"
+        method="post"
+        id="loginForm"
+        ref="form"
+        @submit.prevent
+      >
+        {{ login_user_form.hidden_tag() }}
 
+        <label for="username" class="text-body-2 mb-1 d-block">{{ _('Login') }}</label>
+        <v-text-field
+          autocomplete="chrome-off"
+          id="username"
+          name="username"
+          type="text"
+          :rules="[rules.required]"
+          prepend-inner-icon="mdi-account-outline"
+          variant="outlined"
+          density="compact"
+        >
+        </v-text-field>
 
-                {% for category, message in messages %}
-                    <v-alert type="{{ category }}" dense dismissible>{{ message }}</v-alert>
-                {% endfor %}
-            </v-card-text>
-        {% endif %}
-    {% endwith %}
+        <label for="password" class="text-body-2 mb-1 d-block">{{ _('Password') }}</label>
+        <v-text-field
+          class="mt-2"
+          id="password"
+          autocomplete="chrome-off"
+          name="password"
+          @keyup.enter="!invalid && submit()"
+          @click:append-inner="showPassword = !showPassword"
+          :rules="[rules.required, rules.min]"
+          prepend-inner-icon="mdi-lock-outline"
+          :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+          :type="showPassword ? 'text' : 'password'"
+          variant="outlined"
+          density="compact"
+        ></v-text-field>
 
+        {% if login_user_form.recaptcha %} {{ login_user_form.recaptcha }} {% endif %}
+      </v-form>
+    </v-card-text>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+    <v-card-text>
+      {% for category, message in messages %}
+      <v-alert type="{{ category }}" dense dismissible>{{ message }}</v-alert>
+      {% endfor %}
+    </v-card-text>
+    {% endif %} {% endwith %} {% if login_user_form.username.errors or
+    login_user_form.password.errors %}
+    <v-card-text>
+      <v-alert type="error" dense dismissible> {{ _('Invalid username or password!') }} </v-alert>
+    </v-card-text>
+    {% endif %}
 
+    <v-card-actions>
+      <v-btn
+        variant="elevated"
+        block
+        :disabled="invalid"
+        size="large"
+        @click.once="submit"
+        color="primary"
+      >
+        {{ _('Login') }}</v-btn
+      >
+    </v-card-actions>
+  </v-card>
+  <v-card>
+    {% if config.GOOGLE_OAUTH_ENABLED %}
 
-        {% if login_user_form.username.errors or login_user_form.password.errors %}
-            <v-card-text>
-                <v-alert type="error" dense dismissible> {{ _('Invalid username or password!') }}
-                </v-alert>
-            </v-card-text>
-        {% endif %}
-        
-        <v-card-actions class="px-4 pb-6">
-
-            <v-btn variant="elevated" class="mx-auto my-3" block :disabled="invalid" size="large" @click.once="submit"
-                   color="primary">
-                {{ _('Login') }}</v-btn>
-        </v-card-actions>
-    </v-card>
-    <v-card>
-        {% if config.GOOGLE_OAUTH_ENABLED %}
-
-
-            <v-card-text class="text-center">
-                <a href="/auth"><img width="191"
-                                     src="/static/img/google-login/2x/btn_google_signin_light_normal_web@2x.png"
-                                     alt=""></a>
-            </v-card-text>
-        {% endif %}
-
-    </v-card>
-    <v-snackbar absolute button
-                v-model="snackBar"
-    >
-        ${snackMessage}
-        <v-btn variant="text" color="primary" @click.native="value = false">{{ _('Close') }}</v-btn>
-    </v-snackbar>
+    <v-card-text class="text-center">
+      <a href="/auth"
+        ><img
+          width="191"
+          src="/static/img/google-login/2x/btn_google_signin_light_normal_web@2x.png"
+          alt=""
+      /></a>
+    </v-card-text>
+    {% endif %}
+  </v-card>
+  <v-snackbar absolute button v-model="snackBar">
+    ${snackMessage}
+    <v-btn variant="text" color="primary" @click.native="value = false">{{ _('Close') }}</v-btn>
+  </v-snackbar>
 </v-main>
 
 {% endblock %} {% block js %}
 
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
 
-    <script>
-        const {createApp} = Vue;
-        const {createVuetify} = Vuetify;
+  const vuetify = createVuetify(vuetifyConfig);
 
-        const vuetify = createVuetify(vuetifyConfig);
+  const app = createApp({
+    data() {
+      return {
+        menu: null,
+        errors: '',
+        snackBar: false,
+        snackMessage: '',
+        email: '',
+        password: '',
+        rules: validationRules,
+        showPassword: false,
+      };
+    },
+    methods: {
+      showSnack(message) {
+        this.snackMessage = message;
+        this.snackBar = true;
+      },
+      submit() {
+        document.getElementById('loginForm').submit();
+      },
+    },
+    mounted() {
+      // Your mounted logic here
+    },
+    delimiters: delimiters,
+  });
 
-        const app = createApp({
-
-            data() {
-                return {
-                    menu: null,
-                    errors: '',
-                    snackBar: false,
-                    snackMessage: '',
-                    email: "",
-                    password: "",
-                    rules: validationRules
-
-                };
-            },
-            methods: {
-                showSnack(message) {
-                    this.snackMessage = message;
-                    this.snackBar = true;
-                },
-                submit() {
-                    document.getElementById('loginForm').submit();
-                }
-            },
-            mounted() {
-                // Your mounted logic here
-            },
-            delimiters: delimiters
-        });
-
-
-        app.use(vuetify).mount('#app');
-
-
-    </script>
+  app.use(vuetify).mount('#app');
+</script>
 
 {% endblock %}
