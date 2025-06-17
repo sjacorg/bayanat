@@ -3547,7 +3547,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulletinCreateResponse'
         '417':
-          $ref: '#/components/responses/BaseItemCreateResponse'
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -4491,13 +4491,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ActorCreateResponse'
         '417':
-          $ref: '#/components/responses/BaseItemCreateResponse'
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
-        '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+
   /admin/api/actor/{id}:
     get:
       operationId: getActor
@@ -5665,7 +5664,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/IncidentCreateResponse'
         '417':
-          $ref: '#/components/responses/BaseItemCreateResponse'
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
