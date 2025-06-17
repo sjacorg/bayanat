@@ -250,7 +250,7 @@ class Config(object):
     # logging
     APP_LOG_ENABLED = os.environ.get("APP_LOG_ENABLED", "True").lower() == "true"
     CELERY_LOG_ENABLED = os.environ.get("CELERY_LOG_ENABLED", "True").lower() == "true"
-    LOG_LEVEL = os.environ.get("LOG_LEVEL", "ERROR")
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
     LOG_DIR = os.environ.get("LOG_DIR", "logs")
     LOG_FILE = os.environ.get("LOG_FILE", "bayanat.log")
     LOG_BACKUP_COUNT = os.environ.get("LOG_BACKUP_COUNT", 5)

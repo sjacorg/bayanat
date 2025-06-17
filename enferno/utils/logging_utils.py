@@ -61,17 +61,19 @@ def get_logger(name="app_logger"):
     logger = logging.getLogger(name)
     logger.setLevel(cfg.LOG_LEVEL if cfg.LOG_LEVEL else DEFAULT_LOG_LEVEL)
 
-    if cfg.APP_LOG_ENABLED:
-        handler = TimedRotatingFileHandler(
-            os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
-            when="midnight",
-            backupCount=cfg.LOG_BACKUP_COUNT,
-        )
-        handler.setFormatter(JsonFormatter())
-    else:
-        handler = logging.NullHandler()
+    # Prevent race condition when called from multiple threads
+    if not logger.handlers:
+        if cfg.APP_LOG_ENABLED:
+            handler = TimedRotatingFileHandler(
+                os.path.join(cfg.LOG_DIR, cfg.LOG_FILE),
+                when="midnight",
+                backupCount=cfg.LOG_BACKUP_COUNT,
+            )
+            handler.setFormatter(JsonFormatter())
+        else:
+            handler = logging.NullHandler()
 
-    logger.handlers = [handler]
+        logger.handlers = [handler]
     return logger
 
 
