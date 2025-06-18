@@ -174,7 +174,7 @@ function handleRequestError(error) {
         return containsHTML(error.response.data) ? 'An error occurred.' : error.response.data;
     }
 
-    if (error.request) {
+    if (error?.request) {
         return 'No response from server. Contact an admin.';
     }
 
