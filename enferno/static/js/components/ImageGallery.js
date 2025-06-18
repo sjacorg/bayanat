@@ -4,7 +4,7 @@ const ImageGallery = Vue.defineComponent({
     enableDelete: Boolean,
     prioritizeVideos: Boolean
   },
-  emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click'],
+  emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click', 'expand-media'],
   mounted() {
     this.initLightbox();
   },
@@ -32,9 +32,6 @@ const ImageGallery = Vue.defineComponent({
   methods: {
     handleVideo(media){
       this.$emit('video-click', media)
-    },
-    handleThumb(s3url){
-      this.$emit('thumb-click', s3url)
     },
     sortMediaByFileType(mediaList) {
       if (!mediaList) return [];
@@ -76,11 +73,13 @@ const ImageGallery = Vue.defineComponent({
         <v-sheet class="media-grid">
           <v-sheet v-for="(media,index) in sortedMedia" :key="media.id">
             <media-card
-              @thumb-click="handleThumb"
               @video-click="handleVideo"
               @audio-click="handleAudio"
               :media="media"
             >
+              <template v-slot:top-actions="{ media, mediaType }">
+                <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
+              </template>
               <template v-slot:actions v-if="enableDelete">
                 <v-divider></v-divider>
                 <v-card-actions class="justify-end d-flex">
