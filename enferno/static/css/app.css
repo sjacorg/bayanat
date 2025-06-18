@@ -895,3 +895,9 @@ div.jsondiffpatch-child-node-type-array:after {
     align-items: center;
     width: fit-content;
 }
+
+/* Lightgallery.js place above all dialogs */
+.lg-backdrop,
+.lg-outer {
+    z-index: 3000 !important;
+}
