@@ -12,7 +12,6 @@ from typing import Optional, Any
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
-import logging
 
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
@@ -22,8 +21,6 @@ DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
 BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
-
-logger = logging.getLogger(__name__)
 
 
 class BaseValidationModel(BaseModel):
