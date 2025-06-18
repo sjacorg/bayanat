@@ -153,11 +153,10 @@ axios.interceptors.response.use(
 );
 
 function handleRequestError(error) {
-    const containsHTML = (str) => /<\/?[a-z][\s\S]*>/i.test(str); // detects any HTML-like tags
+    const containsHTML = (str) => /<\/?[a-z][\s\S]*>/i.test(str);
 
     if (error?.response?.data?.response?.errors) {
-        const messages = error.response.data.response.errors.join('\n');
-        return containsHTML(messages) ? 'An error occurred.' : messages;
+        return error.response.data.response.errors.join('\n') || 'An error occurred.';
     }
 
     if (error?.response?.data?.errors) {
@@ -172,9 +171,7 @@ function handleRequestError(error) {
     }
 
     if (typeof error?.response?.data === 'string') {
-        const str = error.response.data.trim();
-        if (containsHTML(str)) return 'An error occurred.';
-        return str;
+        return containsHTML(error.response.data) ? 'An error occurred.' : error.response.data;
     }
 
     if (error.request) {
