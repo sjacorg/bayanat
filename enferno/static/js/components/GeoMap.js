@@ -3,6 +3,10 @@ const GeoMap = Vue.defineComponent({
   props: {
     title: String,
     modelValue: Object,
+    inputProps: {
+      type: Object,
+      default: () => ({}),
+    },
     mapHeight: {
       type: Number,
       default: 300,
@@ -278,7 +282,7 @@ const GeoMap = Vue.defineComponent({
         this.setOrUpdateMarker(lat, lng);
         this.updateRadiusCircle(); // Add this line
 
-        this.broadcast();
+        this.emitValue();
       }
     },
 
@@ -303,12 +307,24 @@ const GeoMap = Vue.defineComponent({
     },
 
     emitValue() {
-      const newValue =
-        this.lat !== null && this.lng !== null
-          ? { lat: this.lat, lng: this.lng, radius: this.radius }
-          : null;
-      this.$emit('update:modelValue', newValue);
+      if (this.lat == null || this.lng == null) return;
+    
+      const newValue = { lat: this.lat, lng: this.lng, radius: this.radius ?? 1000 };
+      const current = {
+        lat: this.modelValue?.lat,
+        lng: this.modelValue?.lng,
+        radius: this.modelValue?.radius ?? 1000,
+      };
+    
+      if (
+        newValue.lat !== current.lat ||
+        newValue.lng !== current.lng ||
+        newValue.radius !== current.radius
+      ) {
+        this.$emit('update:modelValue', newValue);
+      }
     },
+    
 
     updateLocation(point) {
       this.lat = point.lat;
@@ -342,24 +358,16 @@ const GeoMap = Vue.defineComponent({
         this.map.fitBounds(bounds);
       }, 250)();
     },
-
-    broadcast() {
-      const newValue =
-        this.lat !== null && this.lng !== null
-          ? { lat: this.lat, lng: this.lng, radius: this.radius }
-          : null;
-      this.$emit('update:modelValue', newValue);
-    },
   },
   template: `
       <v-card class="pa-1" elevation="0">
         <v-card-text>
           <h3 v-if="title" class="mb-5">{{ title }}</h3>
           <div v-if="editMode" class="d-flex" style="column-gap: 20px;">
-            <v-text-field  type="number" min="-90" max="90" label="Latitude"
+            <v-text-field v-bind="inputProps" type="number" min="-90" max="90" label="Latitude"
                           :rules="[rules.required]"
                           v-model.number="lat"></v-text-field>
-            <v-text-field  type="number" min="-180" max="180" label="Longitude"
+            <v-text-field v-bind="inputProps" type="number" min="-180" max="180" label="Longitude"
                           :rules="[rules.required]"
                           v-model.number="lng"></v-text-field>
             <v-btn icon variant="flat" v-if="lat && lng" @click="clearMarker">
@@ -378,7 +386,7 @@ const GeoMap = Vue.defineComponent({
                 v-model.number="radius"
                 label="Radius (meters)">
               <template v-slot:append>
-                <v-text-field
+                <v-text-field v-bind="inputProps"
                     readonly
                     variant="solo-filled"
                     style="width: 150px;"
