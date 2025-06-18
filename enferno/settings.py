@@ -7,6 +7,7 @@ import redis
 from dotenv import load_dotenv, find_dotenv
 
 from enferno.utils.config_utils import ConfigManager
+from enferno.utils.optional_deps import HAS_TESSERACT, HAS_WHISPER
 
 load_dotenv(find_dotenv())
 manager = ConfigManager()
@@ -279,6 +280,10 @@ class Config(object):
     YTDLP_PROXY = manager.get_config("YTDLP_PROXY")
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
+
+    # Dependency Flags
+    HAS_TESSERACT = HAS_TESSERACT
+    HAS_WHISPER = HAS_WHISPER
 
 
 class TestConfig(Config):

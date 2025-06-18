@@ -1716,18 +1716,6 @@ class FullConfigValidationModel(ConfigValidationModel):
         return values
 
     @model_validator(mode="before")
-    def validate_optional_deps(cls, values):
-        from enferno.utils.optional_deps import HAS_TESSERACT, HAS_WHISPER
-
-        if values.get("TRANSCRIPTION_ENABLED") and not HAS_WHISPER:
-            logger.warning("Transcription disabled: openai-whisper/torch not available.")
-            values["TRANSCRIPTION_ENABLED"] = False
-        if values.get("OCR_ENABLED") and not HAS_TESSERACT:
-            logger.warning("OCR disabled: pytesseract not available.")
-            values["OCR_ENABLED"] = False
-        return values
-
-    @model_validator(mode="before")
     def validate_whisper_model(cls, values):
         if values.get("TRANSCRIPTION_ENABLED"):
             if not values.get("WHISPER_MODEL"):

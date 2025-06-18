@@ -10,7 +10,6 @@ from uuid import uuid4
 
 import bleach
 import boto3
-from enferno.utils.optional_deps import HAS_TESSERACT, HAS_WHISPER
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
 from flask import request, jsonify, abort, session
 from flask.templating import render_template
@@ -5817,15 +5816,3 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     )
 
     return jsonify({"batch_id": data_import.batch_id}), 202
-
-
-@admin.get("/api/optional-deps/")
-@roles_required("Admin")
-def api_optional_deps() -> Response:
-    """Endpoint to return the status of the optional dependencies."""
-    return jsonify(
-        {
-            "whisper": HAS_WHISPER,
-            "tesseract": HAS_TESSERACT,
-        }
-    )

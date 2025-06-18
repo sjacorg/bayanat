@@ -24,33 +24,6 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <!-- Misconfiguration Warning -->
-                             <v-alert 
-                             v-if="(optionalDeps.whisper === false && exconfig.TRANSCRIPTION_ENABLED) || (optionalDeps.tesseract === false && exconfig.OCR_ENABLED)"
-                             type="error" 
-                             color="red" 
-                             class="mb-6"
-                             icon="mdi-alert"
-                         >
-                             <div class="font-weight-bold mb-2">{{ _('Invalid Configuration') }}</div>
-                             <div class="text-body-2">
-                                 {{ _('Current configuration enables features that are not supported by the system.') }}
-                             </div>
-                             <ul class="mt-2 ml-4 mb-2">
-                                <li v-if="optionalDeps.whisper === false && exconfig.TRANSCRIPTION_ENABLED" class="text-body-2">
-                                    {{ _('Transcription is enabled but OpenAI Whisper is not installed.') }}
-                                </li>
-                                <li v-if="optionalDeps.tesseract === false && exconfig.OCR_ENABLED" class="text-body-2">
-                                    {{ _('OCR is enabled but Tesseract is not installed.') }}
-                                </li>
-                             </ul>
-                            <div class="text-body-2">
-                               <strong> {{ _('Save the settings to disable these features.') }} </strong>
-                            </div>
-                         </v-alert>
-                            </div>
-
                             <v-tabs bg-color="primary" v-model="tab">
                                 <v-tab value="general">{{ _('General') }}</v-tab>
                                 <v-tab value="storage">{{ _('Storage') }}</v-tab>
@@ -62,7 +35,6 @@
                                 <v-tab value="maps">{{ _('Maps') }}</v-tab>
                                 <v-tab value="locations">{{ _('Locations') }}</v-tab>
                             </v-tabs>
-                             
                         </v-card-title>
                         <v-card-text class="pa-4">
 
@@ -439,27 +411,6 @@
                                 <v-window-item value="import">
                                     <v-card :disabled="loading" :loading="loading">
                                         <v-card-text>
-                                            <!-- Missing Dependencies Warning Box -->
-                                            <v-alert 
-                                                v-if="optionalDeps.whisper === false || optionalDeps.tesseract === false"
-                                                type="warning" 
-                                                color="yellow" 
-                                                class="mb-6"
-                                                icon="mdi-alert"
-                                            >
-                                                <div class="font-weight-bold mb-2">{{ _('Missing Dependencies Detected') }}</div>
-                                                <div class="text-body-2">
-                                                    {{ _('Some import features are disabled due to missing system dependencies:') }}
-                                                </div>
-                                                <ul class="mt-2 ml-4">
-                                                    <li v-if="optionalDeps.whisper === false">
-                                                        {{ _('OpenAI Whisper is not installed. Please install it to enable transcription.') }}
-                                                    </li>
-                                                    <li v-if="optionalDeps.tesseract === false">
-                                                        {{ _('Tesseract is not installed. Please install it to enable OCR.') }}
-                                                    </li>
-                                                </ul>
-                                            </v-alert>
 
                                             <v-switch color="primary" class="mb-9" label="{{ _('Media Import Tool') }}"
                                                       persistent-hint
@@ -486,8 +437,17 @@
                                                               persistent-hint
                                                               hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This enables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
                                                               label="{{ _('Enable OCR') }}"
-                                                              :disabled="!optionalDeps.tesseract"
-                                                              :v-model="optionalDeps.tesseract ? eitem.OCR_ENABLED : false"></v-switch>
+                                                              {% if not config.HAS_TESSERACT %}
+                                                              disabled
+                                                              :value="false"
+                                                              {% else %}
+                                                              v-model="eitem.OCR_ENABLED"
+                                                              {% endif %}
+                                                              ></v-switch>
+
+                                                    <v-alert v-if="!{{config.HAS_TESSERACT}}" type="warning" class="mb-6" icon="mdi-alert">
+                                                        {{ _('Tesseract is not installed. Please install it to enable OCR.') }}
+                                                    </v-alert>
                                                     
                                                     <v-slide-y-transition>
                                                         <v-sheet v-show="eitem.OCR_ENABLED"
@@ -507,8 +467,17 @@
                                                               label="{{ _('Enable Transcription') }}"
                                                               persistent-hint
                                                               hint="{{ _('Enables transcription of audio and video files using OpenAI\'s Whisper during import. Bayanat will need to download the specified model below from OpenAI\'s servers. However, the transcription will run locally on the Bayanat server. For more information about the models\' performance, required resources and available language please check:') }} https://github.com/openai/whisper#available-models-and-languages"
-                                                              :disabled="!optionalDeps.whisper"
-                                                              :v-model="optionalDeps.whisper ? eitem.TRANSCRIPTION_ENABLED : false"></v-switch>
+                                                              {% if not config.HAS_WHISPER %}
+                                                              disabled
+                                                              :value="false"
+                                                              {% else %}
+                                                              v-model="eitem.TRANSCRIPTION_ENABLED"
+                                                              {% endif %}
+                                                              ></v-switch>
+
+                                                    <v-alert v-if="!{{config.HAS_WHISPER}}" type="warning" class="mb-6" icon="mdi-alert">
+                                                        {{ _('OpenAI Whisper is not installed. Please install it to enable transcription.') }}
+                                                    </v-alert>
 
                                                     <v-slide-y-transition>
                                                         <v-sheet v-show="eitem.TRANSCRIPTION_ENABLED"
@@ -807,7 +776,7 @@
             mixins: [globalMixin],
 
             data: () => ({
-                optionalDeps: {},
+
                 tab: null,
                 drawer: drawer,
                 eitem: {
@@ -888,8 +857,7 @@
                 //load configuration
                 this.loadConfiguration();
                 this.loadWhisperModels();
-                this.loadRevisions();
-                this.loadOptionalDeps();
+                this.loadRevisions()
 
             },
 
@@ -903,20 +871,6 @@
             },
 
             methods: {
-                loadOptionalDeps(){
-                    axios.get('/admin/api/optional-deps/').then(res => {
-                        this.optionalDeps = res.data;
-                        if(!this.optionalDeps.whisper){
-                            this.eitem.TRANSCRIPTION_ENABLED = false;
-                        }
-                        if(!this.optionalDeps.tesseract){
-                            this.eitem.OCR_ENABLED = false;
-                        }
-                    }).catch(err => {
-                        this.showSnack(err?.response?.data);
-                        console.error(err);
-                    })
-                },
                 loadWhisperModels(){
                     axios.get('/import/api/whisper/models/').then(res => {
                         this.whisperModels = res.data.models;

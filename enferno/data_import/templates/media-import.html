@@ -367,8 +367,8 @@
             mixins: [globalMixin, mediaMixin, whisperMixin],
             
             data: () => ({
-                ocrEnabled: ('{{ config.OCR_ENABLED }}' === 'True'),
-                transcriptionEnabled: ('{{ config.TRANSCRIPTION_ENABLED }}' === 'True'),
+                ocrEnabled: ('{{ config.OCR_ENABLED }}' === 'True' && '{{ config.HAS_TESSERACT }}' === 'True'),
+                transcriptionEnabled: ('{{ config.TRANSCRIPTION_ENABLED }}' === 'True' && '{{ config.HAS_WHISPER }}' === 'True'),
                 etlPathImport: ('{{ config.ETL_PATH_IMPORT }}' === 'True'),
                 drawer: drawer,
                 mode: null,
