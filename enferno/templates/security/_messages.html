@@ -2,7 +2,7 @@
   {% if messages %}
 
     {% for category, message in messages %}
-      <v-alert color="fifth" class="alert alert-{{ category }}">{{ message }}</v-alert>
+      <v-alert type="{{ category }}" variant="tonal">{{ message }}</v-alert>
     {% endfor %}
 
   {% endif %}

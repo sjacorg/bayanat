@@ -1,61 +1,67 @@
-{% extends 'login-layout.html' %}
-{% block navbar %}{% endblock %}
-{% from "security/_macros.html" import prop_next, render_field_with_errors, render_field %}
+{% extends 'login-layout.html' %} {% block navbar %}{% endblock %} {% from "security/_macros.html"
+import prop_next, render_field_with_errors, render_field %} {% block content %}
+<v-main class="d-flex flex-column align-center justify-center bg-background">
+  <v-card class="login-card mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
+    <v-card-text> {% include "security/_messages.html" %} </v-card-text>
 
+    <v-card-title class="text-center px-0" style="font-size: 30px; font-weight: 700; line-height: 1;">{{ _fsdomain('Select two-factor method') }}</v-card-title>
+    <v-card-subtitle class="text-center pl-0 pr-0 text-pre-wrap text-body-2">{{ _('Available second factor methods as below') }}</v-card-subtitle>
 
-{% block content %}
-<v-main class="d-flex flex-column align-center">
+    <form
+      action="{{ url_for_security('tf_select') }}{{ prop_next() }}"
+      method="post"
+      name="tf_select"
+      id="tfForm"
+    >
+      {{ two_factor_select_form.hidden_tag() }}
 
+      <v-card-text class="px-0">
+        <div class="d-flex flex-column ga-2">
+          {% for value in two_factor_select_form.which.choices %}
+          <v-btn
+            :variant="selected2fa === '{{ value }}' ? 'flat' : 'outlined'"
+            :color="selected2fa === '{{ value }}' ? 'primary' : 'grey'"
+            block
+            @click.prevent="selectMethod('{{ value }}')"
+          >
+            {{ value }}
+            <v-icon>mdi-chevron-right</v-icon>
+          </v-btn>
+          {% endfor %}
+        </div>
 
-    <v-card width="770" class="ma-auto">
-        <v-card-text>
-            {% include "security/_messages.html" %}
-        </v-card-text>
+        <!-- Hidden input that actually submits the selected option -->
+        <input type="hidden" name="{{ two_factor_select_form.which.name }}" :value="selected2fa" />
+      </v-card-text>
 
-        <v-toolbar title="{{ _fsdomain('Select a two factor authentication method') }}"></v-toolbar>
-
-        <form action="{{ url_for_security('tf_select') }}{{ prop_next() }}" method="post" name="tf_select">
-            <v-card-text>
-            {{ two_factor_select_form.hidden_tag() }}
-            {{ render_field_with_errors(two_factor_select_form.which) }}
-            </v-card-text>
-            
-            <v-card-actions class="pa-4">
-                <v-btn type="submit" color="primary" variant="elevated">Select</v-btn>
-            </v-card-actions>
-        </form>
-        
-    </v-card>
+      <v-card-actions class="px-0">
+        <v-btn type="submit" color="primary" block variant="elevated">Select</v-btn>
+      </v-card-actions>
+    </form>
+  </v-card>
 </v-main>
-{% endblock content %}
+{% endblock content %} {% block css %}
 
+<style></style>
+{% endblock %} {% block js %}
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
 
-{% block css %}
+  const vuetify = createVuetify(vuetifyConfig);
 
-    <style>
-
-    </style>
+  const app = createApp({
+    data() {
+      return {
+        selected2fa: '{{ two_factor_select_form.which.data or "" }}',
+      };
+    },
+    methods: {
+      selectMethod(value) {
+        this.selected2fa = value;
+      },
+    },
+  });
+  app.use(vuetify).mount('#app');
+</script>
 {% endblock %}
-
-
-{% block js %}
-    <script>
-         const {createApp} = Vue;
-        const {createVuetify} = Vuetify;
-
-        const vuetify = createVuetify(vuetifyConfig);
-
-        const app = createApp({
-
-            data() {
-                return {
-                    activeTab: null,
-                    selectedOption : ''
-                }
-
-            }
-        });
-        app.use(vuetify).mount('#app');
-    </script>
-{% endblock %}
-
