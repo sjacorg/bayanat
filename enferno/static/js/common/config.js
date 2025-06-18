@@ -153,29 +153,39 @@ axios.interceptors.response.use(
 );
 
 function handleRequestError(error) {
+    const containsHTML = (str) => /<\/?[a-z][\s\S]*>/i.test(str); // detects any HTML-like tags
+
     if (error?.response?.data?.response?.errors) {
-        return error?.response?.data?.response?.errors?.join('\n') || 'An error occurred.';
-    } else if (error?.response?.data?.errors) {
-        const errors = error?.response?.data?.errors;
-        let message = '';
-        for(const field in errors){
-            let fieldName = field;
-            if (fieldName.startsWith('item.')){
-                fieldName = fieldName.substring(5);
-            }
-            message += `<strong style="color:#b71c1c;">[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]:</strong> ${errors[field]}<br/>`;
-        }
-        return message;
-    } else if (error?.response?.data) {
-        if (error?.response?.data?.toLowerCase()?.includes('<!doctype html>')) return 'An error occurred.'
-        return error.response.data || 'An error occurred.';
-    } else if (error.request) {
-        return 'No response from server. Contact an admin.';
-    } else if (error?.message) {
-        return error.message || 'An error occurred.';
-    } else {
-        return 'Request failed. Check your network connection.';
+        const messages = error.response.data.response.errors.join('\n');
+        return containsHTML(messages) ? 'An error occurred.' : messages;
     }
+
+    if (error?.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        let message = '';
+        for (const field in errors) {
+            let fieldName = field.startsWith('item.') ? field.substring(5) : field;
+            const safeText = `${errors[field]}`.replace(/<\/?[^>]+(>|$)/g, ''); // strip all HTML
+            message += `[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]: ${safeText}\n`;
+        }
+        return message || 'An error occurred.';
+    }
+
+    if (typeof error?.response?.data === 'string') {
+        const str = error.response.data.trim();
+        if (containsHTML(str)) return 'An error occurred.';
+        return str;
+    }
+
+    if (error.request) {
+        return 'No response from server. Contact an admin.';
+    }
+
+    if (error?.message) {
+        return error.message || 'An error occurred.';
+    }
+
+    return 'Request failed. Check your network connection.';
 }
 
 //  in-page router for bulletins/actors/incidents pages
