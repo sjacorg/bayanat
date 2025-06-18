@@ -434,7 +434,20 @@ function prepareEventLocations(parentId, events) {
     });
 }
 
-function parseResponse(dzFile) {
+function findUploadedFileByUUID(acceptedFiles, uuid) {
+    const file = acceptedFiles.find(
+        file => file.status === 'success' && normalizeDropzoneResponse(file).uuid === uuid
+    );
+
+    if (!file) {
+        console.warn('Could not find matching file for UUID:', uuid);
+        return null;
+    }
+
+    return normalizeDropzoneResponse(file);
+}
+
+function normalizeDropzoneResponse(dzFile) {
     // helper method to convert xml response to friendly json format
     const response = JSON.parse(dzFile.xhr.response);
 
