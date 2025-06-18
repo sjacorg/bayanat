@@ -905,3 +905,9 @@ div.jsondiffpatch-child-node-type-array:after {
     border: 2px solid currentColor;
     background-color: rgb(var(--v-theme-surface-light));
 }
+
+/* Lightgallery.js place above all dialogs */
+.lg-backdrop,
+.lg-outer {
+    z-index: 3000 !important;
+}

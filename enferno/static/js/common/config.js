@@ -5,6 +5,19 @@ const validationRules = {
     min: (v) => v.length >= 6 || 'Min 6 characters',
 };
 
+// Helper functions
+function scrollToFirstError(errors) {
+    const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
+    const element = document.getElementById(invalidFieldId)
+    element?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+    })
+    if (element?.focus) {
+        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+    }
+}
+
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
@@ -421,7 +434,20 @@ function prepareEventLocations(parentId, events) {
     });
 }
 
-function parseResponse(dzFile) {
+function findUploadedFileByUUID(acceptedFiles, uuid) {
+    const file = acceptedFiles.find(
+        file => file.status === 'success' && normalizeDropzoneResponse(file).uuid === uuid
+    );
+
+    if (!file) {
+        console.warn('Could not find matching file for UUID:', uuid);
+        return null;
+    }
+
+    return normalizeDropzoneResponse(file);
+}
+
+function normalizeDropzoneResponse(dzFile) {
     // helper method to convert xml response to friendly json format
     const response = JSON.parse(dzFile.xhr.response);
 
