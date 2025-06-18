@@ -1218,12 +1218,18 @@ def api_location_admin_levels() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
-    query = []
-    result = (
-        LocationAdminLevel.query.filter(*query)
-        .order_by(-LocationAdminLevel.id)
-        .paginate(page=page, per_page=per_page, count=True)
-    )
+    query = request.args.get("q")
+    if query:
+        result = (
+            LocationAdminLevel.query.filter(LocationAdminLevel.title.ilike(f"%{query}%"))
+            .order_by(-LocationAdminLevel.id)
+            .paginate(page=page, per_page=per_page, count=True)
+        )
+    else:
+        result = LocationAdminLevel.query.order_by(-LocationAdminLevel.id).paginate(
+            page=page, per_page=per_page, count=True
+        )
+
     response = {
         "items": [item.to_dict() for item in result.items],
         "perPage": per_page,
@@ -1368,12 +1374,18 @@ def api_location_types() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
-    query = []
-    result = (
-        LocationType.query.filter(*query)
-        .order_by(-LocationType.id)
-        .paginate(page=page, per_page=per_page, count=True)
-    )
+    query = request.args.get("q")
+    if query:
+        result = (
+            LocationType.query.filter(LocationType.title.ilike(f"%{query}%"))
+            .order_by(-LocationType.id)
+            .paginate(page=page, per_page=per_page, count=True)
+        )
+    else:
+        result = LocationType.query.order_by(-LocationType.id).paginate(
+            page=page, per_page=per_page, count=True
+        )
+
     response = {
         "items": [item.to_dict() for item in result.items],
         "perPage": per_page,

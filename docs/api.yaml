@@ -1612,6 +1612,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: q
+          schema:
+            type: string
+            description: Query string to filter location admin levels by title.
       responses:
         '200':
           description: OK
@@ -1793,6 +1798,14 @@ paths:
         - DA
       security:
         - SessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: q
+          schema:
+            type: string
+            description: Query string to filter location types by title.
       responses:
         '200':
           description: OK
