@@ -233,8 +233,8 @@ def test_bulletin_endpoint_roled_restricted(
 ##### POST /admin/api/bulletin #####
 
 post_bulletin_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 200),
+    ("admin_client", 201),
+    ("da_client", 201),
     ("mod_client", 403),
     ("anonymous_client", 401),
 ]
@@ -257,7 +257,7 @@ def test_post_bulletin_endpoint(clean_slate_bulletins, request, client_fixture, 
     )
     assert response.status_code == expected_status
     found_bulletin = Bulletin.query.filter(Bulletin.title == bulletin.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
         assert found_bulletin
     else:
         assert found_bulletin is None

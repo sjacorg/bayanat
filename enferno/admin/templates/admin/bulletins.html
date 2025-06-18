@@ -1603,9 +1603,8 @@
                             axios.post("/admin/api/bulletin/", {
                                 item: this.editedItem
                             }).then(response => {
-                                this.items.push(this.editedItem);
-                                this.showSnack(response.data);
-                                this.refresh();
+                                this.items.unshift(response.data.item);
+                                this.showSnack(response.data.message);
                                 this.close();
                             }).catch(err => {
                                 console.error(err.response?.data);
