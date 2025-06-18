@@ -11,52 +11,6 @@ const ActorCard = Vue.defineComponent({
       this.mapLocations = aggregateActorLocations(this.actor);
     },
 
-    updateMediaState() {
-      this.mediasReady += 1;
-      if (this.mediasReady == this.actor.medias.length && this.mediasReady > 0) {
-        this.prepareImagesForPhotoswipe().then((res) => {
-          this.initLightbox();
-        });
-      }
-    },
-
-    prepareImagesForPhotoswipe() {
-      // Get the <a> tags from the image gallery
-      const imagesList = document.querySelectorAll('#lightbox a');
-      const promisesList = [];
-
-      imagesList.forEach((element) => {
-        const promise = new Promise(function (resolve) {
-          let image = new Image();
-          image.src = element.getAttribute('href');
-          image.onload = () => {
-            element.dataset.pswpWidth = image.width;
-            element.dataset.pswpHeight = image.height;
-            resolve(); // Resolve the promise only if the image has been loaded
-          };
-          image.onerror = () => {
-            resolve();
-          };
-        });
-        promisesList.push(promise);
-      });
-
-      // Use .then() to handle the promise resolution
-      return Promise.all(promisesList);
-    },
-
-    initLightbox() {
-      this.lightbox = new PhotoSwipeLightbox({
-        gallery: '#lightbox',
-        children: 'a',
-        pswpModule: PhotoSwipe,
-        wheelToZoom: true,
-        arrowKeys: true,
-      });
-
-      this.lightbox.init();
-    },
-
     getRelatedValues(item, actor) {
       const titleType = actor.id < item.actor.id ? 'title' : 'reverse_title';
       return extractValuesById(this.$root.atoaInfo, [item.related_as], titleType);
@@ -130,7 +84,6 @@ const ActorCard = Vue.defineComponent({
       show: false,
       hloading: false,
       mapLocations: [],
-      lightbox: null,
       mediasReady: 0,
     };
   },
