@@ -91,7 +91,7 @@ bulletin_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -105,7 +105,9 @@ def test_bulletin_endpoint(
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
         client_ = request.getfixturevalue(client_fixture)
         bulletin = get_first_or_fail(Bulletin)
-        response = client_.get(f"/admin/api/bulletin/{bulletin.id}")
+        response = client_.get(
+            f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
+        )
         assert response.status_code == expected_status
         # Additional checks
         if expected_status == 200:
@@ -126,8 +128,6 @@ def test_bulletin_endpoint(
             data = convert_empty_strings_to_none(load_data(response))
             assert "tags" in dict.keys(data)
             conform_to_schema_or_fail(data, BulletinItemMode3Model)
-        elif expected_status == 302:
-            assert "login" in response.headers["Location"]
 
 
 bulletin_endpoint_roles_roled = [
@@ -135,7 +135,7 @@ bulletin_endpoint_roles_roled = [
     ("da_client", 403),
     ("mod_client", 403),
     ("roled_client", 200),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -162,7 +162,9 @@ def test_bulletin_endpoint_roled_normal(
     bulletin = restrict_to_roles(create_full_bulletin, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
-    response = client_.get(f"/admin/api/bulletin/{bulletin.id}")
+    response = client_.get(
+        f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
+    )
     assert response.status_code == expected_status
 
 
@@ -171,7 +173,7 @@ bulletin_endpoint_roles_restricted = [
     ("da_client", 403),
     ("mod_client", 403),
     ("roled_client", 403),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -192,7 +194,9 @@ def test_bulletin_endpoint_no_roles_restricted(
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
-        response = client_.get(f"/admin/api/bulletin/{bulletin.id}")
+        response = client_.get(
+            f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
+        )
         assert response.status_code == expected_status
 
 
@@ -220,15 +224,17 @@ def test_bulletin_endpoint_roled_restricted(
     client_ = request.getfixturevalue(client_fixture)
     bulletin = get_first_or_fail(Bulletin)
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
-        response = client_.get(f"/admin/api/bulletin/{bulletin.id}")
+        response = client_.get(
+            f"/admin/api/bulletin/{bulletin.id}", headers={"Accept": "application/json"}
+        )
         assert response.status_code == expected_status
 
 
 ##### POST /admin/api/bulletin #####
 
 post_bulletin_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 200),
+    ("admin_client", 201),
+    ("da_client", 201),
     ("mod_client", 403),
     ("anonymous_client", 401),
 ]
@@ -251,7 +257,7 @@ def test_post_bulletin_endpoint(clean_slate_bulletins, request, client_fixture, 
     )
     assert response.status_code == expected_status
     found_bulletin = Bulletin.query.filter(Bulletin.title == bulletin.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
         assert found_bulletin
     else:
         assert found_bulletin is None

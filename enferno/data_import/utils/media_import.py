@@ -351,7 +351,7 @@ class MediaImport:
             self.data_import.add_to_log("Failed to transcribe video.")
             self.data_import.add_to_log(str(e))
             return None
-
+        
     def web_import(self, file: dict) -> Optional[Any]:
         self.data_import.add_to_log(f"Processing web import {file.get('filename')}...")
 
@@ -364,7 +364,9 @@ class MediaImport:
         if youtube_info:
             info.update(youtube_info)
             # Use YouTube title for bulletin
-            info["bulletinTitle"] = youtube_info.get("title", os.path.splitext(file.get("name"))[0])
+            info["bulletinTitle"] = youtube_info.get(
+                "title", os.path.splitext(file.get("name"))[0]
+            )
 
         # Get file extension and duration
         _, ext = os.path.splitext(filename)
@@ -381,9 +383,7 @@ class MediaImport:
         info["filepath"] = filepath
         info["source_url"] = file.get("source_url")
         info["etag"] = file.get("etag")
-
-        self.data_import.add_to_log("Metadata parsed successfully.")
-
+        
         return info
 
     def server_import(self, file: dict) -> Optional[Any]:
@@ -408,7 +408,7 @@ class MediaImport:
         title, ext = os.path.splitext(old_filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])
+            self.data_import.add_format(info["file_ext"])      
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -441,7 +441,7 @@ class MediaImport:
         _, ext = os.path.splitext(filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])
+            self.data_import.add_format(info["file_ext"])     
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -450,7 +450,7 @@ class MediaImport:
         info["filepath"] = filepath
 
         info["etag"] = file.get("etag")
-
+        
         return info
 
     def process(self, file: str) -> Optional[Any]:
@@ -483,7 +483,7 @@ class MediaImport:
             self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
             return
-
+        
         mime_type = info.get("File:MIMEType")
 
         # get duration and optimize if video
@@ -530,7 +530,7 @@ class MediaImport:
 
         if text_content:
             info["text_content"] = text_content
-
+        
         if transcription:
             info["transcription"] = transcription
 
@@ -558,7 +558,7 @@ class MediaImport:
 
         # mapping
         title = info.get("bulletinTitle")
-        bulletin.title = title[:255]
+        bulletin.title = bulletin.title_ar = title[:255]
         bulletin.status = "Machine Created"
         bulletin.comments = f"Created using Media Import Tool. Batch ID: {self.batch_id}."
 
@@ -592,22 +592,16 @@ class MediaImport:
             bulletin.sources.append(main_source)
 
             source = None
+            
             # Attempt to find existing source
-
-            source = (
-                (
-                    Source.query.filter(Source.etl_id == uploader_id).first()
-                    if uploader_id
-                    else False
-                )
-                or (
-                    Source.query.filter(Source.etl_id == channel_id).first()
-                    if channel_id
-                    else False
-                )
-                or (Source.query.filter(Source.title == uploader).first() if uploader else False)
-                or (Source.query.filter(Source.title == channel).first() if channel else False)
-            )
+            if uploader_id:
+                source = Source.query.filter(Source.etl_id == uploader_id).first()
+            if not source and channel_id:
+                source = Source.query.filter(Source.etl_id == channel_id).first()
+            if not source and uploader:
+                source = Source.query.filter(Source.title == uploader).first()
+            if not source and channel:
+                source = Source.query.filter(Source.title == channel).first()
 
             if not source:
                 words = []
@@ -625,8 +619,8 @@ class MediaImport:
             # Create new source if none found
             if not source:
                 source = Source()
-                source.title = uploader if uploader else channel
-                source.etl_id = uploader_id if uploader_id else channel_id
+                source.title = uploader
+                source.etl_id = uploader_id
                 source.parent = main_source
 
                 # Build comments only with available info
@@ -648,11 +642,7 @@ class MediaImport:
             # Set bulletin fields
             if video_id := info.get("id"):
                 bulletin.originid = video_id
-
             bulletin.source_link = info.get("webpage_url")
-            bulletin.title = info.get("fulltitle")
-            bulletin.title_ar = info.get("fulltitle")
-            title = info.get("fulltitle")
 
             if upload_date := info.get("upload_date"):
                 bulletin.publish_date = upload_date
@@ -685,10 +675,8 @@ class MediaImport:
         org_media.main = True
 
         # Set media title to video ID for web imports
-
         if is_web_import and info.get("id"):
             org_media.title = info.get("id")
-
         elif info.get("originalFilename"):
             org_media.title = info.get("originalFilename")
         else:
@@ -771,9 +759,6 @@ class MediaImport:
             update_description(
                 f"Title truncated to 255 characters.<br /><strong>Original title:</strong> {title}"
             )
-        bulletin.title = title[:255]
-        if is_web_import:
-            bulletin.title_ar = bulletin.title
 
         try:
             bulletin.save(raise_exception=True)
