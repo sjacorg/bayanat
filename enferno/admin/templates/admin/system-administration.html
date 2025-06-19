@@ -445,9 +445,11 @@
                                                               {% endif %}
                                                               ></v-switch>
 
-                                                    <v-alert v-if="!{% if config.HAS_TESSERACT %}true{% else %}false{% endif %}" type="warning" class="mb-6" icon="mdi-alert">
-                                                        {{ _('Tesseract is not installed. Please install it to enable OCR.') }}
-                                                    </v-alert>
+                                                                                        {% if not config.HAS_TESSERACT %}
+                                    <v-alert type="warning" class="mb-6" icon="mdi-alert">
+                                        {{ _('Tesseract is not installed. Please install it to enable OCR.') }}
+                                    </v-alert>
+                                    {% endif %}
                                                     
                                                     <v-slide-y-transition>
                                                         <v-sheet v-show="eitem.OCR_ENABLED && {% if config.HAS_TESSERACT %}true{% else %}false{% endif %}"
@@ -475,9 +477,11 @@
                                                               {% endif %}
                                                               ></v-switch>
 
-                                                    <v-alert v-if="!{% if config.HAS_WHISPER %}true{% else %}false{% endif %}" type="warning" class="mb-6" icon="mdi-alert">
-                                                        {{ _('OpenAI Whisper is not installed. Please install it to enable transcription.') }}
-                                                    </v-alert>
+                                                                                        {% if not config.HAS_WHISPER %}
+                                    <v-alert type="warning" class="mb-6" icon="mdi-alert">
+                                        {{ _('OpenAI Whisper is not installed. Please install it to enable transcription.') }}
+                                    </v-alert>
+                                    {% endif %}
 
                                                     <v-slide-y-transition>
                                                         <v-sheet v-show="eitem.TRANSCRIPTION_ENABLED && {% if config.HAS_WHISPER %}true{% else %}false{% endif %}"
