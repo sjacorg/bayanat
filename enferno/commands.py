@@ -2,6 +2,8 @@
 """Click commands."""
 import os
 
+import arrow
+from datetime import timedelta
 import click
 from flask.cli import AppGroup
 from flask.cli import with_appcontext
@@ -16,6 +18,7 @@ from enferno.utils.data_helpers import (
     generate_user_roles,
     generate_workflow_statues,
     create_default_location_data,
+    media_check_duplicates,
 )
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
@@ -313,3 +316,302 @@ def generate_config() -> None:
             return
     logger.info("Restoring default configuration.")
     ConfigManager.restore_default_config()
+
+
+# ------------------ ETL DOCS --------------------------- #
+from enferno.data_import.models import DataImport
+
+
+@click.command()
+@with_appcontext
+@click.argument("file")
+def import_docs(file) -> None:
+    """Import the docs."""
+    click.echo("Importing docs.")
+    from enferno.data_import.utils.docs_import import DocImport
+    from enferno.tasks import process_doc
+
+    import pandas as pd
+    import shortuuid
+
+    df = pd.read_csv(file)
+    files = df.to_dict(orient="records")
+
+    batch_id = shortuuid.uuid()[:9]
+
+    with click.progressbar(files, label="Importing docs", show_pos=True) as bar:
+        for item in bar:
+            meta = {
+                "sha256": item["sha256"],
+            }
+
+            file_path = item["file_path"]
+            if not (
+                file_path.endswith(".jpg")
+                or file_path.endswith(".pdf")
+                or file_path.endswith(".png")
+            ):
+                click.echo(f"Skipping file {file_path}")
+                continue
+
+            data_import = DataImport(
+                user_id=1,
+                table="bulletin",
+                file=file_path,
+                batch_id=batch_id,
+                data={
+                    "mode": 0,  # custom mode
+                },
+            )
+
+            data_import.add_to_log(f"Added file {item} to import queue.")
+            data_import.save()
+
+            process_doc.delay(
+                batch_id=batch_id,
+                file_path=file_path,
+                meta=meta,
+                user_id=1,
+                data_import_id=data_import.id,
+            )
+
+        click.echo("=== Done ===")
+
+
+# ------------------ YouTube ETL --------------------------- #
+
+import os
+import pandas as pd
+import shortuuid
+from enferno.tasks import process_etl
+
+
+@click.command()
+@with_appcontext
+@click.argument("file")
+@with_appcontext
+def import_youtube(file):
+    """
+    Runs the YouTube ETL pipeline
+    :param file: text file contains youtube ids, each id on a separate line
+    :return: success/error logs
+    """
+    batch_id = shortuuid.uuid()[:9]
+
+    if not os.path.isfile(file):
+        print("Invalid file!")
+        return
+
+    csv_file = pd.read_csv(file)
+    files = csv_file.to_dict(orient="records")
+
+    with click.progressbar(files, label="Importing videos", show_pos=True) as bar:
+        for line in bar:
+            try:
+                meta = {
+                    "bucket": line["bucket"],
+                    "meta_file": line["file"],
+                    "video_file": line["file"].replace(".info.json", ".mp4"),
+                    "checksum_file": line["file"].replace(".info.json", ".checksum"),
+                    "id": line["id"],
+                    "mode": 3,
+                }
+                # Create import log
+                data_import = DataImport(
+                    user_id=1,
+                    table="bulletin",
+                    file=line["file"],
+                    batch_id=batch_id,
+                    file_format="mp4",
+                    data={
+                        "mode": 3,  # Web import mode
+                        "optimize": False,
+                        "sources": [],
+                        "labels": [],
+                        "ver_labels": [],
+                        "locations": [],
+                        "tags": [],
+                        "roles": [],
+                    },
+                )
+
+                data_import.add_to_log(f"Started processing {line["file"]}")
+                data_import.save()
+
+                process_etl.delay(batch_id=batch_id, meta=meta, data_import_id=data_import.id)
+            except Exception as e:
+                click.echo(e)
+
+
+import json
+import boto3
+
+
+from enferno.tasks import process_telegram_media
+from enferno.data_import.utils.telegram_utils import parse_html_messages
+
+
+@click.command()
+@with_appcontext
+@click.argument("bucket", required=True)
+@click.argument("folder", default="", required=False)
+@click.option("--html", is_flag=True, help="Use HTML files instead of JSON", default=False)
+def import_telegram(bucket, folder, html):
+
+    s3 = boto3.client(
+        "s3",
+        aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
+        region_name=Config.AWS_REGION,
+    )
+
+    if folder and not folder.endswith("/"):
+        folder += "/"
+
+    objects = s3.list_objects_v2(
+        Bucket=bucket,
+        Prefix=folder,
+        Delimiter="/",
+    )
+
+    channels = []
+    for prefix in objects.get("CommonPrefixes", []):
+        channels.append(prefix["Prefix"].split("/")[-2])
+
+    batch_id = shortuuid.uuid()[:9]
+
+    with click.progressbar(channels, label="Processing Telegram Channels", show_pos=True) as cbar:
+        for channel in cbar:
+            # get meta file
+            try:
+                meta_file = s3.get_object(
+                    Bucket=bucket,
+                    Key=folder + channel + "/meta.json",
+                )
+            except Exception as e:
+                click.echo(f"Channel {channel} has no meta file... Skipping")
+                continue
+
+            # read the file
+            meta_file = meta_file["Body"].read().decode("utf-8")
+            meta_file = json.loads(meta_file)
+
+            click.echo(f"Downloading channel {channel} meta file")
+            if not html:
+                try:
+                    messages_file = s3.get_object(
+                        Bucket=bucket,
+                        Key=folder + channel + "/messages.json",
+                    )
+                except Exception as e:
+                    click.echo(f"Channel {channel} has no messages JSON file... Skipping")
+                    continue
+                messages = messages_file["Body"].read().decode("utf-8")
+                messages = json.loads(messages)
+            else:
+                prefix = folder + channel + "/"
+                objects = s3.list_objects_v2(
+                    Bucket=bucket,
+                    Prefix=prefix,
+                    Delimiter="/",
+                )
+
+                html_files = [x["Key"] for x in objects.get("Contents", []) if x["Key"].endswith(".html")]
+
+                if not html_files:
+                    click.echo(f"Channel {channel} has no messages HTML file... Skipping")
+                    continue
+
+                messages = []
+
+                for file in html_files:
+                    click.echo(f"Downloading {file}")
+                    messages_file = s3.get_object(
+                        Bucket=bucket,
+                        Key=file,
+                    )
+                    html_file = messages_file["Body"].read().decode("utf-8")
+                    
+                    messages.extend(parse_html_messages(html_file))
+                    click.echo(f"Parsed {len(messages)} messages from HTML file")
+                
+                # Sort messages by reverse id
+                messages.sort(key=lambda x: int(x["id"]), reverse=True)
+                
+            # preprocess to link media 
+            processed_messages = []
+            temp_group = []
+            click.echo(f"Processing channel {channel}")
+            for i, message in enumerate(messages):
+                if len(temp_group) > 0:
+                    # check if the last message in the group is more than 2 second old
+                    current_time = arrow.get(message["date"]).datetime
+                    previous_time = arrow.get(temp_group[-1]["date"]).datetime
+                    difference = previous_time - current_time
+
+                    if difference > timedelta(seconds=10):
+                        # if the difference is more than 10 second, it's a new group
+                        processed_messages.append(temp_group)
+                        temp_group = []
+
+                if not message.get("text") and message.get("media_path"):
+                    # media and no text implies it's linked to a previous message
+                    # append the last message to the group
+                    temp_group.append(message)
+                elif message.get("text") and message.get("media_path"):
+                    # end of the threat
+                    # append the last message and push the group
+                    temp_group.append(message)
+                    processed_messages.append(temp_group)
+                    temp_group = []
+                # drop text only messages
+
+            with click.progressbar(
+                processed_messages, label=f"Processing Channel {channel} messages", show_pos=True
+            ) as mbar:
+                for messages in mbar:
+                    try:
+                        data_imports = []
+                        main_id = None
+                        messages.reverse()
+                        
+                        for message in messages:
+                            data = {
+                                "mode": 4,  # Telegram import mode
+                                "bucket": bucket,
+                                "folder": folder,
+                                "main": main_id,
+                                "info": {
+                                    "message": message,
+                                    "channel_metadata": meta_file,
+                                },
+                            }
+
+                            file_path = f"{bucket}/{folder}{channel}/{message['media_path']}"
+
+                            data_import = DataImport(
+                                user_id=1,
+                                table="bulletin",
+                                file=file_path,
+                                batch_id=batch_id,
+                                data=data,
+                            )
+
+                            data_import.add_to_log(
+                                f"Started processing message {message.get('id')}"
+                            )
+                            data_import.save()
+
+                            # add the first message as the main message
+                            # and the rest as linked messages
+                            if main_id is None:
+                                main_id = data_import.id
+                            
+                            data_imports.append(data_import.id)
+
+                        process_telegram_media.delay(
+                            data_imports=data_imports,
+                        )
+
+                    except Exception as e:
+                        click.echo(f"Error processing message {messages[-1].get('id')}: {e}")
