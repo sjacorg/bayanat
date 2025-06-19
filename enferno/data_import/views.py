@@ -435,6 +435,9 @@ def api_whisper_models() -> Response:
 @roles_required("Admin")
 def api_whisper_languages() -> Response:
     """Returns the list of whisper languages."""
-    from enferno.utils.optional_deps import TO_LANGUAGE_CODE
+    if current_app.config["HAS_WHISPER"]:
+        from whisper.tokenizer import TO_LANGUAGE_CODE
 
-    return jsonify({"languages": TO_LANGUAGE_CODE})
+        return jsonify({"languages": TO_LANGUAGE_CODE})
+    else:
+        return jsonify({"languages": []})

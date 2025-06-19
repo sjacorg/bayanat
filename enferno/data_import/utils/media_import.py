@@ -6,8 +6,6 @@ from docx import Document
 from pypdf import PdfReader
 from pdf2image import convert_from_path
 
-from enferno.utils.optional_deps import HAS_TESSERACT, HAS_WHISPER
-
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
@@ -33,7 +31,7 @@ def now() -> str:
 
 
 if cfg.OCR_ENABLED:
-    if HAS_TESSERACT:
+    if cfg.HAS_TESSERACT:
         from pytesseract import image_to_string, pytesseract
 
         try:
@@ -59,7 +57,7 @@ class MediaImport:
 
     @classmethod
     def get_whisper_model(cls):
-        if not cls._whisper_model and HAS_WHISPER and cfg.TRANSCRIPTION_ENABLED:
+        if not cls._whisper_model and cfg.HAS_WHISPER and cfg.TRANSCRIPTION_ENABLED:
             import whisper
 
             cls._whisper_model = whisper.load_model(cfg.WHISPER_MODEL)
@@ -191,7 +189,7 @@ class MediaImport:
             # if no text contect recognize
             # attempt to use Tesseract OCR
             if not text_content and attempt_ocr:
-                if not HAS_TESSERACT:
+                if not cfg.HAS_TESSERACT:
                     logger.warning("pytesseract not available, skipping OCR.")
                     # Raise the error so it is logged in data_import as well
                     raise ModuleNotFoundError(name="pytesseract")
@@ -220,7 +218,7 @@ class MediaImport:
             - text content of the image file.
         """
         try:
-            if not HAS_TESSERACT:
+            if not cfg.HAS_TESSERACT:
                 logger.warning("pytesseract not available, skipping OCR.")
                 # Raise the error so it is logged in data_import as well
                 raise ModuleNotFoundError(name="pytesseract")
@@ -316,7 +314,7 @@ class MediaImport:
             - Transcribed text if successful, None otherwise
         """
         whisper_model = self.get_whisper_model()
-        if not cfg.TRANSCRIPTION_ENABLED or not HAS_WHISPER or not whisper_model:
+        if not cfg.TRANSCRIPTION_ENABLED or not cfg.HAS_WHISPER or not whisper_model:
             return None
 
         try:

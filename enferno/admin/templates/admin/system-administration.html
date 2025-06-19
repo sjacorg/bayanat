@@ -445,12 +445,12 @@
                                                               {% endif %}
                                                               ></v-switch>
 
-                                                    <v-alert v-if="!{{config.HAS_TESSERACT}}" type="warning" class="mb-6" icon="mdi-alert">
+                                                    <v-alert v-if="!{% if config.HAS_TESSERACT %}true{% else %}false{% endif %}" type="warning" class="mb-6" icon="mdi-alert">
                                                         {{ _('Tesseract is not installed. Please install it to enable OCR.') }}
                                                     </v-alert>
                                                     
                                                     <v-slide-y-transition>
-                                                        <v-sheet v-show="eitem.OCR_ENABLED"
+                                                        <v-sheet v-show="eitem.OCR_ENABLED && {% if config.HAS_TESSERACT %}true{% else %}false{% endif %}"
                                                                     class=" pa-4 grey lighten-4">
 
                                                             <v-combobox class="mb-9" multiple chips
@@ -475,12 +475,12 @@
                                                               {% endif %}
                                                               ></v-switch>
 
-                                                    <v-alert v-if="!{{config.HAS_WHISPER}}" type="warning" class="mb-6" icon="mdi-alert">
+                                                    <v-alert v-if="!{% if config.HAS_WHISPER %}true{% else %}false{% endif %}" type="warning" class="mb-6" icon="mdi-alert">
                                                         {{ _('OpenAI Whisper is not installed. Please install it to enable transcription.') }}
                                                     </v-alert>
 
                                                     <v-slide-y-transition>
-                                                        <v-sheet v-show="eitem.TRANSCRIPTION_ENABLED"
+                                                        <v-sheet v-show="eitem.TRANSCRIPTION_ENABLED && {% if config.HAS_WHISPER %}true{% else %}false{% endif %}"
                                                                  class=" pa-4 grey lighten-4">
                                                             <v-combobox class="mb-9" chips
                                                                         persistent-hint

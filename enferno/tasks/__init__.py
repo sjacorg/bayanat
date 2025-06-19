@@ -45,7 +45,6 @@ from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.optional_deps import HAS_WHISPER
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
@@ -1242,7 +1241,7 @@ def regenerate_locations() -> None:
 
 @celery.task
 def load_whisper_model():
-    if not HAS_WHISPER:
+    if not _flask_app.config["HAS_WHISPER"]:
         logger.warning("Whisper not available, skipping model load.")
         return
     try:
