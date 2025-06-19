@@ -91,11 +91,21 @@ const BulletinSearchBox = Vue.defineComponent({
               ></v-text-field>
 
               <v-text-field
-
+                  class="mb-4"
                   v-model="q.extsv"
                   :label="translations.notContains_"
                   clearable
+                  hint="Separate words with space, use quotes for exact match"
+                  persistent-hint
               ></v-text-field>
+
+              <v-text-field
+                  class="mb-4"
+                  v-model="q.originid"
+                  :label="translations.originId_"
+                  clearable
+              ></v-text-field>
+              
               <div class="d-flex align-center">
                 <v-combobox
                     v-model="q.tags"
