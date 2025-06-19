@@ -5,3 +5,28 @@
         0px 1px 6px -1px #00000005,
         0px 1px 2px 0px #00000008;
 }
+
+.login-page-title {
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+}
+.login-title {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+}
+.login-subtitle {
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    font-size: 14px;
+    white-space: pre-wrap;
+    font-weight: 400;
+}
+.v-otp-input__content {
+    padding-left: 0;
+    padding-right: 0;
+}

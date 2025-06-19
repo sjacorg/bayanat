@@ -2,10 +2,10 @@
 import prop_next, render_field_with_errors, render_field %} {% block content %}
 <v-main class="d-flex flex-column align-center justify-center bg-background">
   <v-card class="login-card mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
-    <v-card-title class="text-center px-0" style="font-size: 30px; font-weight: 700; line-height: 1"
+    <v-card-title class="login-title px-0 pb-0"
       >{{ _fsdomain('Select two-factor method') }}</v-card-title
     >
-    <v-card-subtitle class="text-center pl-0 pr-0 text-pre-wrap text-body-2"
+    <v-card-subtitle class="login-subtitle px-0 pb-4"
       >{{ _('Available second factor methods as below') }}</v-card-subtitle
     >
 
@@ -41,8 +41,9 @@ import prop_next, render_field_with_errors, render_field %} {% block content %}
     </form>
   </v-card>
 
-  <div class="mt-6 w-100" style="max-width: 424px;">
-    <v-btn href="/login" color="primary" variant="outlined" prepend-icon="mdi-chevron-left">Back</v-btn>
+  <div class="mt-6 w-100" style="max-width: 424px">
+    <v-btn href="{{ url_for_security('login') }}" color="primary" variant="outlined"
+        prepend-icon="mdi-chevron-left">{{ _('Back') }}</v-btn>
   </div>
 </v-main>
 {% endblock content %} {% block css %}
@@ -65,8 +66,8 @@ import prop_next, render_field_with_errors, render_field %} {% block content %}
       selectMethod(value) {
         this.selected2fa = value;
         this.$nextTick(() => {
-            this.$refs.tfSelectRef.requestSubmit();
-        })
+          this.$refs.tfSelectRef.requestSubmit();
+        });
       },
     },
   });
