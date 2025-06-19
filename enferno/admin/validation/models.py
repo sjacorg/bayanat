@@ -12,7 +12,6 @@ from typing import Optional, Any
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
-import os
 
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
