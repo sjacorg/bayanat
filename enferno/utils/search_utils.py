@@ -1,3 +1,4 @@
+import re
 from dateutil.parser import parse
 from sqlalchemy import or_, not_, and_, any_, all_, func
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
@@ -158,7 +159,8 @@ class SearchUtils:
             # exact match search
             if exact:
                 conditions = [
-                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in ref
+                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{re.escape(r)}\y")
+                    for r in ref
                 ]
             else:
                 conditions = [func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref]
@@ -177,7 +179,8 @@ class SearchUtils:
             # exact match
             if exact:
                 conditions = [
-                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in exref
+                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{re.escape(r)}\y")
+                    for r in exref
                 ]
             else:
                 conditions = [
@@ -676,7 +679,8 @@ class SearchUtils:
             # exact match search
             if exact:
                 conditions = [
-                    func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{r}\\y") for r in tags
+                    func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in tags
                 ]
             else:
                 conditions = [func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in tags]
@@ -695,7 +699,8 @@ class SearchUtils:
             # exact match
             if exact:
                 conditions = [
-                    ~func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{r}\\y") for r in extags
+                    ~func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in extags
                 ]
             else:
                 conditions = [
@@ -705,7 +710,6 @@ class SearchUtils:
             # get all operator
             opextags = q.get("opExTags")
             if opextags:
-                # De Morgan's
                 query.append(or_(*conditions))
             else:
                 query.append(and_(*conditions))
