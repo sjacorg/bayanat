@@ -1,37 +1,35 @@
-{% extends "login-layout.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field %}
-{% block navbar %}{% endblock %}
-{% block content %}
-    <v-main>
+{% extends "login-layout.html" %} {% from "security/_macros.html" import render_field_with_errors,
+render_field %} {% block navbar %}{% endblock %} {% block content %}
+<v-main class="d-flex flex-column align-center justify-center bg-background">
+  <v-card class="login-card mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
+    <v-card-title class="login-title px-0 pb-0">{{ _("Recovery code") }}</v-card-title>
+    <v-card-subtitle class="login-subtitle px-0 pb-4"
+      >{{ _("You’ve chosen to use a recovery code. Please enter it below to continue.") }}</v-card-subtitle
+    >
 
-    <v-card style="width:min(90%,400px)" class="ma-auto pa-4">
-        <v-toolbar title="{{ _('Recovery Code')}}"></v-toolbar>
+    <form action='{{ url_for_security("mf_recovery") }}' method="POST" name="mf_recovery_form">
+      <v-card-text class="px-0">
+        {{ mf_recovery_form.hidden_tag() }}
+        <label for="code" class="text-body-2 mb-1 d-block">{{ _('Recovery code') }}</label>
+        <v-text-field density="compact" id="code" name="code" hide-details placeholder="{{ _('Enter your code') }}"></v-text-field>
+      </v-card-text>
 
-    <v-card-text>{% include "security/_messages.html" %}</v-card-text>
-        <form action="{{ url_for_security("mf_recovery") }}" method="POST"
-              name="mf_recovery_form">
-            <v-card-text>
+      <v-card-text class="px-0 pt-0">{% include "security/_messages.html" %}</v-card-text>
+      {% if mf_recovery_form.errors %}
+      <v-card-text class="px-0 pt-0">
+        <v-alert color="error" variant="tonal">{{ mf_recovery_form.errors.code[0] }} </v-alert>
+      </v-card-text>
+      {% endif %}
 
-                {{ mf_recovery_form.hidden_tag() }}
-                <v-text-field name="code" label="{{ _('Recovery Code')}}"></v-text-field>
+      <v-card-actions class="px-0" class="justify-space-between">
+        <v-btn type="submit" color="primary" variant="flat" block> {{ _('Submit') }} </v-btn>
+      </v-card-actions>
+    </form>
+  </v-card>
 
-            </v-card-text>
-            <v-card-actions class="justify-space-between">
-                <v-btn variant="text" href="/login">{{ _('Back to Login')}}</v-btn>
-                <v-btn type="submit" color="primary" variant="elevated"> {{ _('Submit') }} </v-btn>
-            </v-card-actions>
-
-            {% if mf_recovery_form.errors %}
-
-                <v-card-text>
-                    <v-alert type="error" dnese dismissible>{{ mf_recovery_form.errors.code[0] }}
-                    </v-alert>
-
-
-                </v-card-text>
-            {% endif %}
-        </form>
-    </v-card>
-
+<div class="mt-6 w-100 d-flex justify-space-between" style="max-width: 424px">
+    <v-btn href="{{ url_for_security('login') }}" color="primary" variant="outlined"
+        prepend-icon="mdi-chevron-left">{{ _('Back') }}</v-btn>
+</div>
 </v-main>
 {% endblock %}

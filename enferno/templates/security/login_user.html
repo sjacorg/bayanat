@@ -59,7 +59,7 @@
     {% endif %}
 
     <v-card-actions class="d-flex flex-column ga-4 pl-0 pr-0">
-      <v-btn variant="elevated" block size="large" flat @click.once="submit" color="primary">
+      <v-btn variant="flat" block size="large" @click.once="submit" color="primary">
         {{ _('Login') }}</v-btn
       >
       {% if config.GOOGLE_OAUTH_ENABLED %}
