@@ -30,7 +30,7 @@
                         name="username"
                         prepend-icon="mdi-account"
                         type="text"
-                        :rules="[rules.required]"
+                        :rules="[validationRules.required()]"
                         variant="underlined"
 
 
@@ -47,8 +47,8 @@
                         name="password"
                         prepend-icon="mdi-lock-question"
                         type="password"
-                        @keyup.enter="!invalid && submit()"
-                        :rules="[rules.required, rules.min]"
+                        @keyup.enter="submit()"
+                        :rules="[validationRules.required(), validationRules.minLength(6)]"
 
                 ></v-text-field>
 
@@ -83,7 +83,7 @@
         
         <v-card-actions class="px-4 pb-6">
 
-            <v-btn variant="elevated" class="mx-auto my-3" block :disabled="invalid" size="large" @click.once="submit"
+            <v-btn variant="elevated" class="mx-auto my-3" block size="large" @click.once="submit"
                    color="primary">
                 {{ _('Login') }}</v-btn>
         </v-card-actions>
@@ -127,8 +127,7 @@
                     snackMessage: '',
                     email: "",
                     password: "",
-                    rules: validationRules
-
+                    validationRules: validationRules
                 };
             },
             methods: {

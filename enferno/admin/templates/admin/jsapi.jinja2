@@ -466,8 +466,13 @@ resetPassword_: "{{ _('Reset password') }}",
 passwordResetAlreadyRequested_: "{{ _('Password reset already requested.') }}",
 passwordResetRequested_: "{{ _('Password reset requested.') }}",
 forcePasswordReset_: "{{ _('Force password reset') }}",
-revoke2fa_: "{{ _('Revoke 2FA') }}"
+revoke2fa_: "{{ _('Revoke 2FA') }}",
 
+// validations
+mustBeMaxCharactersOrFewer_: (max) => "{{ _('Must be {max} characters or fewer.') }}".replace("{max}", max),
+mustBeAtLeastCharacters_: (min) => "{{ _('Must be at least {min} characters.') }}".replace("{min}", min),
+thisFieldIsRequired_: "{{ _('This field is required.') }}",
+pleaseEnterAValidNumber_: "{{ _('Please enter a valid number.') }}",
 
 
 }
