@@ -28,21 +28,34 @@ from enferno.user.models import Role
 
 def date_between_query(field: ColumnElement, dates: list) -> BinaryExpression:
     """
-    Create a date range query for a given field.
+    Create a date range query for a given field using proper timestamp ranges.
+
+    This function converts user-provided dates to timestamp ranges that preserve
+    database index usage, avoiding the performance penalty of function wrappers
+    around indexed columns.
 
     Args:
-        - field: The field to search on.
-        - dates: A list of two dates in string format.
+        - field: The timestamp field to search on.
+        - dates: A list of one or two dates in string format.
 
     Returns:
-        - A binary expression for the date range query.
+        - A binary expression for the date range query that uses indexes.
     """
+    from datetime import datetime, time
+
     start_date = parse(dates[0]).date()
     if len(dates) == 1:
         end_date = start_date
     else:
         end_date = parse(dates[1]).date()
-    return func.date(field).between(start_date, end_date)
+
+    # Convert dates to proper timestamp ranges
+    # Start of day: 00:00:00.000000
+    start_datetime = datetime.combine(start_date, time.min)
+    # End of day: 23:59:59.999999 (use next day 00:00:00 exclusive)
+    end_datetime = datetime.combine(end_date, time.max)
+
+    return field.between(start_datetime, end_datetime)
 
 
 class SearchUtils:
