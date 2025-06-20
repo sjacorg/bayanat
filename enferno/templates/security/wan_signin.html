@@ -106,7 +106,9 @@ render_field, render_field_errors, prop_next %} {% block navbar %} {% endblock %
       },
       methods: {
           autoSubmitWanSignInForm() {
-              document.forms["wan-signin-form"]?.submit?.();
+              this.$nextTick(() => {
+                document.forms["wan-signin-form"]?.submit?.();
+              });
           },
           reloadPage() {
               window.location.reload();
