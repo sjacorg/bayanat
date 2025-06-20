@@ -163,17 +163,17 @@ const MediaCard = Vue.defineComponent({
 
       <v-card-text class="text-center pa-0">
         <v-hover v-slot="{ isHovering, props }">
-          <div v-bind="props" @click="handleMediaClick" class="preview-container"
-              style="height: 180px; cursor: pointer;">
+          <div v-bind="props" @click="handleMediaClick" class="preview-container position-relative cursor-pointer"
+              style="height: 180px;">
             <!-- Image preview -->
-            <a v-if="mediaType === 'image'" :href="s3url" target="_blank">
-              <v-img :src="s3url" height="180" cover class="bg-grey-lighten-2">
+            <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :href="s3url" target="_blank" :data-src="s3url">
+              <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
                 <v-expand-transition>  
                   <div v-if="isHovering" style="height: 100%;" class="d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
                     <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
                   </div>
                 </v-expand-transition>
-              </v-img>
+              </img>
             </a>
 
             <!-- Video preview -->

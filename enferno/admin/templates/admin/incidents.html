@@ -361,6 +361,7 @@
             data: () => ({
                 valid: false,
                 translations: window.translations,
+                validationRules: validationRules,
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                 helper: {}, // helper object for review items
@@ -581,14 +582,6 @@
             computed: {
                 searchEmpty() {
                     return !Object.values(this.search).some(Boolean);
-                },
-
-                titleRule() {
-                    return [this.editedItem.title ? v => true : v => "{{ _('Original Title is required.') }}"]
-                },
-
-                accessRule() {
-                    return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.') }}"]
                 },
 
                 bulletinRelationTypes() {
@@ -1469,9 +1462,8 @@
                         axios.post("/admin/api/incident/", {
                             item: this.editedItem
                         }).then(response => {
-                            this.items.push(this.editedItem);
-                            this.showSnack(response.data);
-                            this.refresh();
+                            this.items.unshift(response.data.item);
+                            this.showSnack(response.data.message);
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);

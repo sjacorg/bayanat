@@ -221,9 +221,9 @@
                                     <div style="min-width: 190px;">
                                         <v-skeleton-loader v-if="loading && !items.length" type="text" class="w-100"></v-skeleton-loader>
                                         <div v-else class="text-center w-100">
-                                            Showing ${items.length} of
+                                            ${showingItemsOfText}
                                             <span v-if="totalCount !== null">${totalCount}</span>
-                                            <a v-else @click="loadCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'Click to show total items'">many <v-icon size="x-small">mdi-information</v-icon></a>
+                                            <a v-else @click="loadCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'{{ _('Click to show total items') }}'">{{ _('many') }} <v-icon size="x-small">mdi-information</v-icon></a>
                                         </div>
                                     </div>
                                 </div>
@@ -497,6 +497,7 @@
                     valid: false,
 
                     translations: translations,
+                    validationRules: validationRules,
                     advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                     itobInfo: [],
@@ -745,15 +746,6 @@
                         );
 
                     },
-                    titleRule() {
-                        return [this.editedItem.title ? v => true : v => "{{ _('Original Title is required.')}}"]
-                    },
-                    accessRule() {
-                        return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.')}}"]
-                    },
-                    linkRule() {
-                        return [this.source_alt || this.editedItem.source_link ? v => true : v => "{{ _('Source link is required unless unavailable.')}}"]
-                    },
                     bulletinRelationTypes() {
                         return this.btobInfo;
                     },
@@ -849,6 +841,9 @@
                         return this.currentUser.roles;
                     },
 
+                    showingItemsOfText() {
+                        return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
+                    }
                 },
 
 
@@ -1198,6 +1193,7 @@
                     },
 
                     refresh() {
+                        this.$refs.bulletinsTableRef?.scrollToIndex?.(0)
                         this.items = [];
                         this.nextCursor = null;
                         this.totalCount = null;
@@ -1243,12 +1239,12 @@
                             } else {
                                 // Subsequent pages - append items
                                 this.items = this.items.concat(response.data.items);
-                                
-                                // For subsequent pages, only set count if we haven't got an exact count yet
-                                if (response.data.nextCursor === null && this.totalCount === null) {
-                                    // End of pagination without server count - use item count
-                                    this.totalCount = this.items.length;
-                                }
+                            }
+                            
+                            // Set count if we haven't got an exact count yet
+                            if (response.data.nextCursor === null && this.totalCount === null) {
+                                // End of pagination without server count - use item count
+                                this.totalCount = this.items.length;
                             }
 
                             this.nextCursor = response.data.nextCursor;
@@ -1710,9 +1706,8 @@
                             axios.post("/admin/api/bulletin/", {
                                 item: this.editedItem
                             }).then(response => {
-                                this.items.push(this.editedItem);
-                                this.showSnack(response.data);
-                                this.refresh();
+                                this.items.unshift(response.data.item);
+                                this.showSnack(response.data.message);
                                 this.close();
                             }).catch(err => {
                                 console.error(err.response?.data);
