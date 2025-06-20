@@ -57,7 +57,7 @@ render_field, render_field_errors, prop_next %} {% block navbar %} {% endblock %
           block
           >{{ _('Try again')}}</v-btn
         >
-        <v-btn variant="text" block href="{{ url_for_security('mf_recovery') }}"
+        <v-btn variant="text" block href="{{ url_for_security('mf_recovery') }}" prepend-icon="mdi-lifebuoy"
           >{{ _('Recovery Code')}}</v-btn
         >
       </v-card-actions>
