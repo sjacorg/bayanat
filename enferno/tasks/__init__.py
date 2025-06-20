@@ -975,7 +975,7 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                     shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
                 except Exception as e:
                     logger.error(
-                        f"Error copying Export #{export_request.id} file from local filesystem.",
+                        f"Error copying Export #{export_request.id} file from {media.media_dir}/{media.media_file} to {target_file}: {str(e)}",
                         exc_info=True,
                     )
                     clear_failed_export(export_request)
