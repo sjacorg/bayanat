@@ -83,7 +83,6 @@ render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% b
 
           window.location.reload()
         } catch (error) {
-          console.log(error, handleRequestError(error), handleRequestError)
           this.error = handleRequestError(error)
         }
       },
