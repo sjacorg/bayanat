@@ -257,12 +257,14 @@
             methods: {
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
+                    this.loading = true;
 
                     axios.get(`/admin/api/sources/?page=${this.options.page}&per_page=${this.options.itemsPerPage}&q=${this.q}`).then(response => {
-                        this.loading = false;
 
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
+                    }).finally(() => {
+                        this.loading = false;
                     });
                 },
 
@@ -330,7 +332,6 @@
                                 this.close();
                             })
                     } else {
-                        this.items.push(this.editedItem);
                         //create new record
                         axios
                             .post("/admin/api/source/", {item: this.editedItem})

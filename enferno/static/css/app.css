@@ -857,3 +857,9 @@ div.jsondiffpatch-child-node-type-array:after {
     overflow-wrap: anywhere;
     white-space: normal;
 }
+
+/* Lightgallery.js place above all dialogs */
+.lg-backdrop,
+.lg-outer {
+    z-index: 3000 !important;
+}

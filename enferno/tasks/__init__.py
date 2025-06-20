@@ -1241,6 +1241,9 @@ def regenerate_locations() -> None:
 
 @celery.task
 def load_whisper_model():
+    if not _flask_app.config["HAS_WHISPER"]:
+        logger.warning("Whisper not available, skipping model load.")
+        return
     try:
         # check if whisper is already downloaded
         whisper_model = cfg.WHISPER_MODEL
