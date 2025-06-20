@@ -7,31 +7,21 @@ render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% b
     <v-card-subtitle class="login-subtitle px-0 pb-4"
       >{{ _("Please enter your authentication code") }}</v-card-subtitle
     >
-    <form
-      action="{{ url_for_security('two_factor_token_validation') }}"
-      method="POST"
-      name="two_factor_verify_code_form"
-      ref="twoFactorVerifyCodeFormRef"
-    >
+    <form ref="twoFactorVerifyCodeFormRef">
       {{ two_factor_verify_code_form.hidden_tag() }}
       <v-card-text class="pa-0">
         <label class="mb-n2 d-block">{{ _('Authentication code') }}</label>
-        <v-otp-input autofocus name="code" max-width="100%" @finish="this.$nextTick(() => this.$refs.twoFactorVerifyCodeFormRef.submit())"></v-otp-input>
+        <v-otp-input autofocus name="code" max-width="100%" @finish="submitForm"></v-otp-input>
         <p class="text-caption text-medium-emphasis mb-6 mt-n2">
           {{ _('The authentication code consists of 6 digits and is generated within your Authenticator app.') }}
         </p>
       </v-card-text>
 
-      {% if two_factor_verify_code_form.errors %}
-      <v-card-text class="px-0 pt-0">
+      <v-card-text v-if="error" class="px-0 pt-0">
         <div class="error-messages">
-          {% for field, errors in two_factor_verify_code_form.errors.items() %} {% for error in
-          errors %}
-          <v-alert color="error" variant="tonal">{{ error }}</v-alert>
-          {% endfor %} {% endfor %}
+          <v-alert color="error" variant="tonal">${error}</v-alert>
         </div>
       </v-card-text>
-      {% endif %}
     </form>
   </v-card>
 
@@ -67,4 +57,38 @@ render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% b
   </v-card-text>
 </v-card>
 
+{% endblock %} {% block js %}
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
+
+  const vuetify = createVuetify(vuetifyConfig);
+
+  const app = createApp({
+    delimiters: delimiters,
+    data() {
+      return {
+        error: null
+      };
+    },
+    methods: {
+      async submitForm(code) {
+        try {
+          const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+          const response = await axios.post('/tf-validate', {
+            csrf_token: csrfToken,
+            code: code,
+          });
+
+          window.location.reload()
+        } catch (error) {
+          console.log(error, handleRequestError(error), handleRequestError)
+          this.error = handleRequestError(error)
+        }
+      },
+    },
+  });
+  app.use(vuetify).mount('#app');
+</script>
 {% endblock %}
