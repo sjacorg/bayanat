@@ -11,11 +11,12 @@ render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% b
       action="{{ url_for_security('two_factor_token_validation') }}"
       method="POST"
       name="two_factor_verify_code_form"
+      ref="twoFactorVerifyCodeFormRef"
     >
       {{ two_factor_verify_code_form.hidden_tag() }}
       <v-card-text class="pa-0">
         <label class="mb-n2 d-block">{{ _('Authentication code') }}</label>
-        <v-otp-input name="code" max-width="100%"></v-otp-input>
+        <v-otp-input autofocus name="code" max-width="100%" @finish="this.$nextTick(() => this.$refs.twoFactorVerifyCodeFormRef.submit())"></v-otp-input>
         <p class="text-caption text-medium-emphasis mb-6 mt-n2">
           {{ _('The authentication code consists of 6 digits and is generated within your Authenticator app.') }}
         </p>
@@ -31,13 +32,6 @@ render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% b
         </div>
       </v-card-text>
       {% endif %}
-
-      <v-card-actions class="pa-0 d-flex flex-column ga-2">
-        <v-btn color="primary" variant="flat" block type="submit">{{ _("Continue") }}</v-btn>
-        <v-btn variant="text" block href="{{ url_for_security('mf_recovery') }}"
-          >{{ _('Recovery Code')}}</v-btn
-        >
-      </v-card-actions>
     </form>
   </v-card>
 

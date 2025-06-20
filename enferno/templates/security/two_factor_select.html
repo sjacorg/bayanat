@@ -28,7 +28,7 @@ import prop_next, render_field_with_errors, render_field %} {% block content %}
             @click.prevent="selectMethod('{{ value }}')"
             :prepend-icon="'{{ value }}' === 'authenticator' ? 'mdi-lock-check' : 'mdi-fingerprint'"
           >
-            {{ value }}
+            ${getButtonLabel('{{ value }}')}
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
           {% endfor %}
@@ -43,8 +43,13 @@ import prop_next, render_field_with_errors, render_field %} {% block content %}
   </v-card>
 
   <div class="mt-6 w-100" style="max-width: 424px">
-    <v-btn href="{{ url_for_security('login') }}" color="primary" variant="outlined"
-        prepend-icon="mdi-chevron-left">{{ _('Back') }}</v-btn>
+    <v-btn
+      href="{{ url_for_security('login') }}"
+      color="primary"
+      variant="outlined"
+      prepend-icon="mdi-chevron-left"
+      >{{ _('Back') }}</v-btn
+    >
   </div>
 </v-main>
 {% endblock content %} {% block css %}
@@ -58,16 +63,27 @@ import prop_next, render_field_with_errors, render_field %} {% block content %}
   const vuetify = createVuetify(vuetifyConfig);
 
   const app = createApp({
+    delimiters: delimiters,
     data() {
       return {
         selected2fa: '{{ two_factor_select_form.which.data or "" }}',
       };
     },
     methods: {
+      getButtonLabel(category) {
+        switch (category) {
+          case 'webauthn':
+            return "{{ _('Security Key/Passkey')}}";
+          case 'authenticator':
+            return "{{ _('Authenticator')}}";
+          default:
+            return category;
+        }
+      },
       selectMethod(value) {
         this.selected2fa = value;
         this.$nextTick(() => {
-          this.$refs.tfSelectRef.requestSubmit();
+          this.$refs.tfSelectRef.submit();
         });
       },
     },
