@@ -89,7 +89,7 @@ incident_endpoint_roles = [
     ("admin_client", 200),
     ("da_client", 200),
     ("mod_client", 200),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -103,26 +103,32 @@ def test_incident_endpoint(
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
         client_ = request.getfixturevalue(client_fixture)
         incident = get_first_or_fail(Incident)
-        response = client_.get(f"/admin/api/incident/{incident.id}")
+        response = client_.get(
+            f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
+        )
         assert response.status_code == expected_status
         if expected_status == 200:
             data = convert_empty_strings_to_none(load_data(response))
             conform_to_schema_or_fail(data, IncidentItemMode3PlusModel)
             assert "bulletin_relations" in dict.keys(data)
             # Mode 1
-            response = client_.get(f"/admin/api/incident/{incident.id}?mode=1")
+            response = client_.get(
+                f"/admin/api/incident/{incident.id}?mode=1", headers={"Accept": "application/json"}
+            )
             data = convert_empty_strings_to_none(load_data(response))
             conform_to_schema_or_fail(data, IncidentItemMinModel)
             # Mode 2
-            response = client_.get(f"/admin/api/incident/{incident.id}?mode=2")
+            response = client_.get(
+                f"/admin/api/incident/{incident.id}?mode=2", headers={"Accept": "application/json"}
+            )
             data = convert_empty_strings_to_none(load_data(response))
             conform_to_schema_or_fail(data, IncidentItemMode2Model)
             # Mode 3
-            response = client_.get(f"/admin/api/incident/{incident.id}?mode=3")
+            response = client_.get(
+                f"/admin/api/incident/{incident.id}?mode=3", headers={"Accept": "application/json"}
+            )
             data = convert_empty_strings_to_none(load_data(response))
             conform_to_schema_or_fail(data, IncidentItemMode3Model)
-        elif expected_status == 302:
-            assert "login" in response.headers["Location"]
 
 
 incident_endpoint_roles_roled = [
@@ -130,7 +136,7 @@ incident_endpoint_roles_roled = [
     ("da_client", 403),
     ("mod_client", 403),
     ("roled_client", 200),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -149,10 +155,10 @@ def test_incident_endpoint_roled_normal(
     """
     incident = restrict_to_roles(create_full_incident, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
-    response = client_.get(f"/admin/api/incident/{incident.id}")
+    response = client_.get(
+        f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
+    )
     assert response.status_code == expected_status
-    if expected_status == 302:
-        assert "login" in response.headers["Location"]
 
 
 incident_endpoint_roles_restricted = [
@@ -160,7 +166,7 @@ incident_endpoint_roles_restricted = [
     ("da_client", 403),
     ("mod_client", 403),
     ("roled_client", 403),
-    ("anonymous_client", 302),
+    ("anonymous_client", 401),
 ]
 
 
@@ -174,10 +180,10 @@ def test_incident_endpoint_no_role_restricted(
     incident = create_full_incident
     client_ = request.getfixturevalue(client_fixture)
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
-        response = client_.get(f"/admin/api/incident/{incident.id}")
+        response = client_.get(
+            f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
+        )
         assert response.status_code == expected_status
-        if expected_status == 302:
-            assert "login" in response.headers["Location"]
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", incident_endpoint_roles_roled)
@@ -196,17 +202,17 @@ def test_incident_endpoint_roled_restricted(
     incident = restrict_to_roles(create_full_incident, ["TestRole"])
     client_ = request.getfixturevalue(client_fixture)
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", True):
-        response = client_.get(f"/admin/api/incident/{incident.id}")
+        response = client_.get(
+            f"/admin/api/incident/{incident.id}", headers={"Accept": "application/json"}
+        )
         assert response.status_code == expected_status
-        if expected_status == 302:
-            assert "login" in response.headers["Location"]
 
 
 ##### POST /admin/api/incident #####
 
 post_incident_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 200),
+    ("admin_client", 201),
+    ("da_client", 201),
     ("mod_client", 403),
     ("anonymous_client", 401),
 ]
@@ -227,7 +233,7 @@ def test_post_incident_endpoint(clean_slate_incidents, request, client_fixture, 
     )
     assert response.status_code == expected_status
     found_incident = Incident.query.filter(Incident.title == incident.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
         assert found_incident
     else:
         assert found_incident is None

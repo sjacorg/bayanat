@@ -1,11 +1,37 @@
 // common validation rules
 
 const validationRules = {
-    required: (value) => !!value || 'Required.',
-    min: (v) => v.length >= 6 || 'Min 6 characters',
+    required: (message = window.translations.thisFieldIsRequired_) => {
+        return v => hasValue(v) || message;
+    },
+    atLeastOneRequired: (value, message = window.translations.thisFieldIsRequired_) => {
+        return v => hasValue(value) || message;
+    },
+    maxLength: (max, message) => {
+        const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
+        return v => isValidLength(v, max, "max") || message || defaultMessage;
+    },
+    minLength: (min, message) => {
+        const defaultMessage = window.translations.mustBeAtLeastCharacters_(min);
+        return v => isValidLength(v, min, "min") || message || defaultMessage;
+    },
+    integer: (message) => {
+        const defaultMessage = window.translations.pleaseEnterAValidNumber_;
+        return v => !v || /^\d+$/.test(v) || message || defaultMessage;
+    },
 };
 
 // Helper functions
+function hasValue(value) {
+    return Array.isArray(value) ? value.length > 0 : !!value;
+}
+
+function isValidLength(value, limit, type) {
+    if (!value) return true; // Allow empty values
+    const length = Array.isArray(value) ? value.length : value.length;
+    return type === "max" ? length <= limit : length >= limit;
+}
+
 function scrollToFirstError(errors) {
     const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
     const element = document.getElementById(invalidFieldId)
@@ -141,7 +167,7 @@ function handleRequestError(error) {
         }
         return message;
     } else if (error?.response?.data) {
-        if (error?.response?.data?.includes('<!DOCTYPE html>')) return 'An error occurred.'
+        if (error?.response?.data?.toLowerCase()?.includes('<!doctype html>')) return 'An error occurred.'
         return error.response.data || 'An error occurred.';
     } else if (error.request) {
         return 'No response from server. Contact an admin.';

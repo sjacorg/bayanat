@@ -837,6 +837,9 @@ div.jsondiffpatch-child-node-type-array:after {
 .z-1 {
     z-index: 1;
 }
+.pi-0 {
+    padding-inline: 0 !important;
+}
 
 /* wrap chips */
 .flex-chips {
@@ -853,4 +856,10 @@ div.jsondiffpatch-child-node-type-array:after {
 .flex-chip .v-chip__content {
     overflow-wrap: anywhere;
     white-space: normal;
+}
+
+/* Lightgallery.js place above all dialogs */
+.lg-backdrop,
+.lg-outer {
+    z-index: 3000 !important;
 }
