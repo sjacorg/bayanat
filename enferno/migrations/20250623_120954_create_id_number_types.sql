@@ -8,10 +8,6 @@ CREATE TABLE id_number_types (
     deleted BOOLEAN DEFAULT FALSE
 );
 
--- Add index on title columns for better search performance
-CREATE INDEX idx_id_number_types_title ON id_number_types(title);
-CREATE INDEX idx_id_number_types_title_tr ON id_number_types(title_tr);
-
 -- Insert some default ID number types
 INSERT INTO id_number_types (title, title_tr) VALUES 
     ('National ID', ''),
@@ -22,3 +18,8 @@ INSERT INTO id_number_types (title, title_tr) VALUES
     ('Military ID', ''),
     ('Birth Certificate', ''),
     ('Student ID', ''); 
+
+-- Rollback script:
+/*
+DROP TABLE id_number_types;
+*/
