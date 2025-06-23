@@ -53,6 +53,7 @@ from enferno.admin.models import (
     Country,
     Ethnography,
     Dialect,
+    IDNumberType,
     MediaCategory,
     GeoLocationType,
     WorkflowStatus,
@@ -1875,6 +1876,132 @@ def api_dialect_delete(
         return "Error deleting Dialect", 417
 
 
+@admin.route("/api/id-number-types/", methods=["GET", "POST"])
+def api_id_number_types() -> Response:
+    """
+    Returns ID Number Types in JSON format, allows search and paging.
+    """
+    page = request.args.get("page", 1, int)
+    per_page = request.args.get("per_page", PER_PAGE, int)
+
+    q = request.args.get("q")
+    if q:
+        result = (
+            IDNumberType.query.filter(
+                or_(IDNumberType.title.ilike(f"%{q}%"), IDNumberType.title_tr.ilike(f"%{q}%"))
+            )
+            .order_by(-IDNumberType.id)
+            .paginate(page=page, per_page=per_page, count=True)
+        )
+    else:
+        result = IDNumberType.query.order_by(-IDNumberType.id).paginate(
+            page=page, per_page=per_page, count=True
+        )
+
+    response = {
+        "items": [item.to_dict() for item in result.items],
+        "perPage": per_page,
+        "total": result.total,
+    }
+    return Response(json.dumps(response), content_type="application/json"), 200
+
+
+@admin.post("/api/id-number-type")
+@roles_required("Admin")
+@validate_with(ComponentDataMixinRequestModel)
+def api_id_number_type_create(
+    validated_data: dict,
+) -> Response:
+    """
+    Endpoint to create an ID number type.
+
+    Args:
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    id_number_type = IDNumberType()
+    id_number_type.from_json(validated_data["item"])
+
+    if id_number_type.save():
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            id_number_type.to_mini(),
+            "id_number_type",
+        )
+        return f"Item created successfully ID #{id_number_type.id}", 200
+    else:
+        return "Creation failed.", 417
+
+
+@admin.put("/api/id-number-type/<int:id>")
+@roles_required("Admin")
+@validate_with(ComponentDataMixinRequestModel)
+def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
+    """
+    Endpoint to update an ID number type.
+
+    Args:
+        - id: id of the ID number type.
+        - validated_data: validated data from the request.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    id_number_type = IDNumberType.query.get(id)
+
+    if id_number_type:
+        id_number_type.from_json(validated_data.get("item"))
+        if id_number_type.save():
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                id_number_type.to_mini(),
+                "id_number_type",
+            )
+            return "Updated", 200
+        else:
+            return "Error saving item", 417
+    else:
+        return HTTPResponse.NOT_FOUND
+
+
+@admin.delete("/api/id-number-type/<int:id>")
+@roles_required("Admin")
+def api_id_number_type_delete(
+    id: t.id,
+) -> Response:
+    """
+    Endpoint to delete an ID number type.
+
+    Args:
+        - id: id of the ID number type.
+
+    Returns:
+        - success/error string based on the operation result.
+    """
+    id_number_type = IDNumberType.query.get(id)
+    if id_number_type is None:
+        return HTTPResponse.NOT_FOUND
+
+    if id_number_type.delete():
+        # Record Activity
+        Activity.create(
+            current_user,
+            Activity.ACTION_DELETE,
+            Activity.STATUS_SUCCESS,
+            id_number_type.to_mini(),
+            "id_number_type",
+        )
+        return f"ID Number Type Deleted #{id_number_type.id}", 200
+    else:
+        return "Error deleting ID Number Type", 417
+
+
 @admin.route("/api/atoainfos/", methods=["GET", "POST"])
 def api_atoainfos() -> Response:
     """Returns AtoaInfos in JSON format, allows search and paging."""
@@ -3608,7 +3735,7 @@ def serve_media(
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
 
-        s3_config = BotoConfig(signature_version='s3v4')
+        s3_config = BotoConfig(signature_version="s3v4")
 
         s3 = boto3.client(
             "s3",

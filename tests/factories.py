@@ -30,6 +30,7 @@ from enferno.admin.models import (
     Eventtype,
     GeoLocation,
     GeoLocationType,
+    IDNumberType,
     Incident,
     IncidentHistory,
     ItoaInfo,
@@ -291,6 +292,14 @@ class EthnographyFactory(factory.Factory):
         model = Ethnography
 
     title = factory.Sequence(lambda n: f"Ethnography {n}")
+
+
+class IDNumberTypeFactory(factory.Factory):
+    class Meta:
+        model = IDNumberType
+
+    title = factory.Sequence(lambda n: f"IDNumberType {n}")
+    title_tr = factory.Sequence(lambda n: f"IDNumberType Tr {n}")
 
 
 class AtoaInfoFactory(factory.Factory):

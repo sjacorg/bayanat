@@ -27,6 +27,9 @@
                         <v-tab value="dialects" class="justify-start">
                             {{ _('Dialects') }}
                         </v-tab>
+                        <v-tab value="id-number-types" class="justify-start">
+                            {{ _('ID Number Types') }}
+                        </v-tab>
                         <v-tab value="actor-actor-relations" class="justify-start">
                             {{ _('Actor to Actor Relations') }}
                         </v-tab>
@@ -188,6 +191,20 @@
                                                     delete-endpoint="/admin/api/dialect"
                                                     save-endpoint="/admin/api/dialect"
                                                     load-endpoint="/admin/api/dialects/?per_page=1000">
+                                    </editable-table>
+                                </v-card-text>
+                            </v-card>
+                        </v-window-item>
+
+                        <v-window-item value="id-number-types" class="pa-1">
+                            <v-card>
+                                <v-card-text>
+                                    <editable-table title="{{ _('ID Number Types') }}"
+                                                    :item-headers="idNumberTypeHeaders"
+                                                    :editable-columns="['title','title_tr']"
+                                                    delete-endpoint="/admin/api/id-number-type"
+                                                    save-endpoint="/admin/api/id-number-type"
+                                                    load-endpoint="/admin/api/id-number-types/?per_page=1000">
                                     </editable-table>
                                 </v-card-text>
                             </v-card>
@@ -394,6 +411,13 @@
                 ],
 
                 dialectHeaders: [
+                    {title: "{{_('ID')}}", value: "id"},
+                    {title: "{{_('Title')}}", value: "title"},
+                    {title: "{{_('Title (tr)')}}", value: "title_tr"},
+                    {title: "{{_('Actions')}}", value: "actions"},
+                ],
+
+                idNumberTypeHeaders: [
                     {title: "{{_('ID')}}", value: "id"},
                     {title: "{{_('Title')}}", value: "title"},
                     {title: "{{_('Title (tr)')}}", value: "title_tr"},
