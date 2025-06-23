@@ -62,7 +62,7 @@
                                     item-title="title"
                                     item-value="id"
                                     @input="checkLevel"
-                                    :rules="[rules.required]"
+                                    :rules="[validationRules.required()]"
                                     :multiple="false"
                                     label="{{ _('Location Type') }}">
                                 </search-field>
