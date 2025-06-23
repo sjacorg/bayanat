@@ -16,17 +16,17 @@
                 >
             </v-toolbar>
 
-            <!--  Grid of Media Items -->
-            <div v-if="expandedMedia" ref="expandedMediaRef" class="w-100" style="height: 500px;">
-                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer"></div>
-                <div  v-if="expandedMediaType === 'pdf'" class="w-100 h-100">
-                    <object :data="expandedMedia.s3url" class="w-100 h-100"></object>
+            <div v-if="expandedMedia" ref="expandedMediaRef" class="w-100">
+                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer" class="mb-4" style="height: fit-content; max-height: 500px;"></div>
+                <div  v-if="expandedMediaType === 'pdf'">
+                    <object :data="expandedMedia.s3url" class="w-100" style="height: 500px;"></object>
                 </div>
-                <div v-if="expandedMediaType === 'image'" class="w-100 h-100">
-                    <v-img :src="expandedMedia.s3url" class="w-100 h-100 bg-grey-lighten-2"></v-img>
+                <div v-if="expandedMediaType === 'image'">
+                    <v-img :src="expandedMedia.s3url" class="bg-grey-lighten-2" style="height: 500px;"></v-img>
                 </div>
             </div>
-
+            
+            <!--  Grid of Media Items -->
             <v-card-text id="medias">
                 <image-gallery prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
                                @video-click="viewMediaPlayerDialog($event); closeExpandedMedia() "
