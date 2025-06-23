@@ -17,12 +17,12 @@
             </v-toolbar>
 
             <div v-if="expandedMedia" ref="expandedMediaRef" class="w-100">
-                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer" class="mb-4" style="height: fit-content; max-height: 500px;"></div>
+                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer" class="mb-6" style="height: fit-content; max-height: 50vh;"></div>
                 <div  v-if="expandedMediaType === 'pdf'">
-                    <object :data="expandedMedia.s3url" class="w-100" style="height: 500px;"></object>
+                    <object :data="expandedMedia.s3url" class="w-100" style="height: 50vh;"></object>
                 </div>
                 <div v-if="expandedMediaType === 'image'">
-                    <v-img :src="expandedMedia.s3url" class="bg-grey-lighten-2" style="height: 500px;"></v-img>
+                    <v-img :src="expandedMedia.s3url" class="bg-grey-lighten-2" style="height: 50vh;"></v-img>
                 </div>
             </div>
             
