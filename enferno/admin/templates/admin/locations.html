@@ -183,6 +183,7 @@
 
             },
             data: () => ({
+                validationRules: validationRules,
                 translations: window.translations,
                 adminValid: false,
                 valid: false,
@@ -241,7 +242,7 @@
 
             computed: {
                 adminLevelRule(){
-                    return [ this.adminValid ? v=>true : this.rules.required];
+                    return [ this.adminValid ? v=>true : this.validationRules.required()];
                 }, 
                 titleRule(){
                     return [this.editedItem.title || this.editedItem.title_ar ? v => true : v=>"{{_('Title or Title (Ar) is required')}}"]
@@ -320,7 +321,7 @@
             methods: {
                 validateAdminLevel(){
                     if (this.editedItem.location_type?.title === 'Administrative Location')
-                        if(this.rules.required(this.editedItem.admin_level)!==true){
+                        if(this.validationRules.required(this.editedItem.admin_level)!==true){
                             this.adminValid = false;
                             this.$refs?.form?.validate();
                             return;
