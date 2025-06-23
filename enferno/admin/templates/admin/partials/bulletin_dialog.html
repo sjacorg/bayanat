@@ -78,272 +78,271 @@
             <v-sheet
                     id="card-content"
                     max-height="100vh"
-                    class="overflow-y-auto pt-11">
+                    class="overflow-y-auto pt-8">
 
 
                 <v-card-text>
                     <v-container fluid>
-                        <v-row>
-                            <v-col v-bind="expandedMedia ? { cols: 6 } : { cols: 12, xxl: 2, xl: 3, lg: 4, md: 4, sm: 6 }">
+                        <split-view>
+                            <template #left>
                                 {% include 'admin/partials/media_dialog.html' %}
-                            </v-col>
-                            <v-col v-bind="expandedMedia ? { cols: 6 } : { cols: 12, xxl: 10, xl: 9, lg: 8, md: 8, sm: 6 }">
-                                <v-row>
-                                    <v-col cols="12" md="4">
-                                        <dual-field v-model:original="editedItem.title"
-                                                    v-model:translation="editedItem.title_ar"
-                                                    label-original="{{ _('Original Title') }}"
-                                                    label-translation="{{ _('Original Title (Ar)') }}"
-                                                    :rules="titleRule">
-                                        </dual-field>
-                                    </v-col>
-
-                                    <v-col cols="12" md="4">
-                                        <dual-field v-model:original="editedItem.sjac_title"
-                                                    v-model:translation="editedItem.sjac_title_ar"
-                                                    label-original="{{ _('Title') }}"
-                                                    label-translation="{{ _('Title (Ar)') }}">
-                                        </dual-field>
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-combobox
-                                                chips
-                                                multiple
-                                                v-model="editedItem.tags"
-                                                label="{{ _('Tags') }}"
-                                        ></v-combobox>
-
-                                    </v-col>
-
-                                </v-row>
-
-                                <v-row>
-                                    <v-col cols="12" md="12">
-
-                                        <search-field
-                                                v-model="editedItem.sources"
-                                                api="/admin/api/sources/"
-                                                item-title="title"
-                                                item-value="id"
-                                                :multiple="true"
-                                                label="{{ _('Sources') }}"
-                                        ></search-field>
-
-                                        <tinymce-editor
-                                                :init="tinyConfig"
-                                                :key="descKey"
-                                                v-model="editedItem.description"
-                                        ></tinymce-editor>
-                                    </v-col>
-                                </v-row>
-
-                                <v-row>
-
-                                    <v-col cols="12" md="6">
-                                        <search-field
-                                                v-model="editedItem.labels"
-                                                api="/admin/api/labels/"
-                                                :query-params="{ typ: 'for_bulletin' }"
-                                                item-title="title"
-                                                item-value="id"
-                                                :multiple="true"
-                                                :show-copy-icon="advFeatures"
-                                                label="{{ _('Labels') }}"
-                                        ></search-field>
-                                    </v-col>
-
-
-                                    <v-col cols="12" md="6">
-                                        <search-field
-                                                v-model="editedItem.verLabels"
-                                                api="/admin/api/labels/"
-                                                :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
-                                                item-title="title"
-                                                item-value="id"
-                                                :multiple="true"
-                                                :show-copy-icon="advFeatures"
-                                                label="{{ _('Verified Labels') }}"
-                                        ></search-field>
-
-                                    </v-col>
-                                </v-row>
-
-                                <v-row>
-                                    <v-col cols="12" md="12">
-
-                                        <location-search-field
-                                                v-model="editedItem.locations"
-                                                api="/admin/api/locations/"
-                                                item-title="full_string"
-                                                item-value="id"
-                                                :multiple="true"
-                                                :show-copy-icon="advFeatures"
-                                                label="{{ _('Locations') }}"
-                                        ></location-search-field>
-
-                                    </v-col>
-                                </v-row>
-
-                                <v-row>
-                                    <v-col cols="12">
-                                        <global-map ref="globalmap" :model-value="compLocations"></global-map>
-
-                                    </v-col>
-                                </v-row>
-
-                                <!-- events  -->
-
-                                <v-row>
-                                    <v-col col="12">
-
-                                        {% include 'admin/partials/event_dialog.html' %}
-
-
-                                    </v-col>
-                                </v-row>
-
-                                <v-row>
-                                    <v-col col="12">
-                                        <geo-locations ref="geolocs" @locations-updated="geoLocationsUpdated"
-                                                    :others="editedItem.geoLocations"
-                                                    v-model="editedItem.geoLocations"></geo-locations>
-
-
-                                    </v-col>
-                                </v-row>
-
-                                <v-row>
-                                    <v-col cols="12">
-
-
-                                        {% include 'admin/partials/edit_related_bulletins.html' %}
-                                        {% include 'admin/partials/edit_related_actors.html' %}
-                                        {% include 'admin/partials/edit_related_incidents.html' %}
-
-
-                                    </v-col>
-                                </v-row>
-
-                                <v-row>
-
-                                    <v-col cols="12" md="6">
-
-
-                                        <v-sheet class="d-flex align-center">
-
-
-                                            <v-text-field class="mx-2"
-                                                        :disabled="source_disabled"
-                                                        v-model="editedItem.source_link"
-                                                        label="{{ _('Source Link') }}"
-                                                        :rules="linkRule"
-                                            ></v-text-field>
-
-
-                                            <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
-                                            </v-checkbox>
-
-                                            <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
-                                                    v-model="editedItem.source_link_type">
-                                            </v-switch>
-
-
-                                        </v-sheet>
-
-
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
-                                                            v-model="editedItem.publish_date"></pop-date-time-field>
-
-
-                                            <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
-                                                            v-model="editedItem.documentation_date"></pop-date-time-field>
-
-
-                                    </v-col>
-
-
-
-
-
-
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12" md="6">
-
-
-                                        <v-textarea
-                                                required
-                                                :rules="[rules.required]"
-                                                outlined
-                                                v-model="editedItem.comments"
-                                                label="{{ _('Comments') }}"
-                                        >
-
-                                        </v-textarea>
-
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-row>
-                                        <v-select
-                                                    :disabled="statusDisabled"
-                                                    item-title="tr"
-                                                    item-value="en"
-                                                    :items="statusItems"
-                                                    class="mx-2"
-                                                    v-model="editedItem.status"
-                                                    label="{{ _('Status') }}"
-                                            ></v-select>
-                                        </v-row>
-
-                                        {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
-                                        <v-row v-if="!editedItem.id">
-                                            <v-select
-                                                    :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
-                                                    :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
+                            </template>
+                            <template #right>
+                                    <v-row>
+                                        <v-col cols="12" md="4">
+                                            <dual-field v-model:original="editedItem.title"
+                                                        v-model:translation="editedItem.title_ar"
+                                                        label-original="{{ _('Original Title') }}"
+                                                        label-translation="{{ _('Original Title (Ar)') }}"
+                                                        :rules="titleRule">
+                                            </dual-field>
+                                        </v-col>
+        
+                                        <v-col cols="12" md="4">
+                                            <dual-field v-model:original="editedItem.sjac_title"
+                                                        v-model:translation="editedItem.sjac_title_ar"
+                                                        label-original="{{ _('Title') }}"
+                                                        label-translation="{{ _('Title (Ar)') }}">
+                                            </dual-field>
+                                        </v-col>
+                                        <v-col cols="12" md="4">
+                                            <v-combobox
                                                     chips
-                                                    :disabled="unrestricted"
-                                                    item-title="name"
-                                                    return-object
-                                                    :items="allowedRoles"
                                                     multiple
-                                                    v-model="editedItem.roles"
-                                                    label="{{ _('Restrict Bulletin to Access Group(s)') }}"
-                                                    :rules="accessRule"
-                                                    clearable
-                                            ></v-select>
-                                            <v-checkbox
-                                                color="error"
-                                                @change="unrestricted? editedItem.roles = [] : null"
-                                                class="mx-2"
-                                                label="{{ _('No Access Groups') }}"
-                                                v-model="unrestricted">
-                                            </v-checkbox>
-                                        </v-row>
-                                        {% endif %}
-
-                                    </v-col>
-                                </v-row>
-
-                                <v-row v-if="editedItem.review">
-                                    <v-col cols="12" md="12">
-
-                                        <v-card outlined color="gray " elevation="0">
-                                            <v-card-title class="subtitle-2 black--text">{{ _('Review') }}</v-card-title>
-                                            <v-card-text>
-                                                <p class="pa-1 my-2 grey--text text--darken-2" v-html="editedItem.review">
-
-                                                </p>
-                                            </v-card-text>
-
-                                        </v-card>
-
-                                    </v-col>
-                                </v-row>
-                            </v-col>
-                        </v-row>
-
+                                                    v-model="editedItem.tags"
+                                                    label="{{ _('Tags') }}"
+                                            ></v-combobox>
+        
+                                        </v-col>
+        
+                                    </v-row>
+        
+                                    <v-row>
+                                        <v-col cols="12" md="12">
+        
+                                            <search-field
+                                                    v-model="editedItem.sources"
+                                                    api="/admin/api/sources/"
+                                                    item-title="title"
+                                                    item-value="id"
+                                                    :multiple="true"
+                                                    label="{{ _('Sources') }}"
+                                            ></search-field>
+        
+                                            <tinymce-editor
+                                                    :init="tinyConfig"
+                                                    :key="descKey"
+                                                    v-model="editedItem.description"
+                                            ></tinymce-editor>
+                                        </v-col>
+                                    </v-row>
+        
+                                    <v-row>
+        
+                                        <v-col cols="12" md="6">
+                                            <search-field
+                                                    v-model="editedItem.labels"
+                                                    api="/admin/api/labels/"
+                                                    :query-params="{ typ: 'for_bulletin' }"
+                                                    item-title="title"
+                                                    item-value="id"
+                                                    :multiple="true"
+                                                    :show-copy-icon="advFeatures"
+                                                    label="{{ _('Labels') }}"
+                                            ></search-field>
+                                        </v-col>
+        
+        
+                                        <v-col cols="12" md="6">
+                                            <search-field
+                                                    v-model="editedItem.verLabels"
+                                                    api="/admin/api/labels/"
+                                                    :query-params="{ fltr: 'verified', typ: 'for_bulletin' }"
+                                                    item-title="title"
+                                                    item-value="id"
+                                                    :multiple="true"
+                                                    :show-copy-icon="advFeatures"
+                                                    label="{{ _('Verified Labels') }}"
+                                            ></search-field>
+        
+                                        </v-col>
+                                    </v-row>
+        
+                                    <v-row>
+                                        <v-col cols="12" md="12">
+        
+                                            <location-search-field
+                                                    v-model="editedItem.locations"
+                                                    api="/admin/api/locations/"
+                                                    item-title="full_string"
+                                                    item-value="id"
+                                                    :multiple="true"
+                                                    :show-copy-icon="advFeatures"
+                                                    label="{{ _('Locations') }}"
+                                            ></location-search-field>
+        
+                                        </v-col>
+                                    </v-row>
+        
+                                    <v-row>
+                                        <v-col cols="12">
+                                            <global-map ref="globalmap" :model-value="compLocations"></global-map>
+        
+                                        </v-col>
+                                    </v-row>
+        
+                                    <!-- events  -->
+        
+                                    <v-row>
+                                        <v-col col="12">
+        
+                                            {% include 'admin/partials/event_dialog.html' %}
+        
+        
+                                        </v-col>
+                                    </v-row>
+        
+                                    <v-row>
+                                        <v-col col="12">
+                                            <geo-locations ref="geolocs" @locations-updated="geoLocationsUpdated"
+                                                        :others="editedItem.geoLocations"
+                                                        v-model="editedItem.geoLocations"></geo-locations>
+        
+        
+                                        </v-col>
+                                    </v-row>
+        
+                                    <v-row>
+                                        <v-col cols="12">
+        
+        
+                                            {% include 'admin/partials/edit_related_bulletins.html' %}
+                                            {% include 'admin/partials/edit_related_actors.html' %}
+                                            {% include 'admin/partials/edit_related_incidents.html' %}
+        
+        
+                                        </v-col>
+                                    </v-row>
+        
+                                    <v-row>
+        
+                                        <v-col cols="12" md="6">
+        
+        
+                                            <v-sheet class="d-flex align-center">
+        
+        
+                                                <v-text-field class="mx-2"
+                                                            :disabled="source_disabled"
+                                                            v-model="editedItem.source_link"
+                                                            label="{{ _('Source Link') }}"
+                                                            :rules="linkRule"
+                                                ></v-text-field>
+        
+        
+                                                <v-checkbox class="mx-2" label="{{ _('Not Available') }}" v-model="source_alt">
+                                                </v-checkbox>
+        
+                                                <v-switch color="primary" class="mx-2" label="{{ _('Private') }}"
+                                                        v-model="editedItem.source_link_type">
+                                                </v-switch>
+        
+        
+                                            </v-sheet>
+        
+        
+                                        </v-col>
+                                        <v-col cols="12" md="6">
+                                            <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Publish Date') }}"
+                                                                v-model="editedItem.publish_date"></pop-date-time-field>
+        
+        
+                                                <pop-date-time-field time-label="{{ _('Time') }}" label="{{ _('Documentation Date') }}"
+                                                                v-model="editedItem.documentation_date"></pop-date-time-field>
+        
+        
+                                        </v-col>
+        
+        
+        
+        
+        
+        
+                                    </v-row>
+                                    <v-row>
+                                        <v-col cols="12" md="6">
+        
+        
+                                            <v-textarea
+                                                    required
+                                                    :rules="[rules.required]"
+                                                    outlined
+                                                    v-model="editedItem.comments"
+                                                    label="{{ _('Comments') }}"
+                                            >
+        
+                                            </v-textarea>
+        
+                                        </v-col>
+                                        <v-col cols="12" md="6">
+                                            <v-row>
+                                            <v-select
+                                                        :disabled="statusDisabled"
+                                                        item-title="tr"
+                                                        item-value="en"
+                                                        :items="statusItems"
+                                                        class="mx-2"
+                                                        v-model="editedItem.status"
+                                                        label="{{ _('Status') }}"
+                                                ></v-select>
+                                            </v-row>
+        
+                                            {% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}
+                                            <v-row v-if="!editedItem.id">
+                                                <v-select
+                                                        :color="editedItem.roles?.length ? 'blue darken-1' : 'error'"
+                                                        :prepend-icon="editedItem.roles?.length ? 'mdi-lock' : 'mdi-lock-open'"
+                                                        chips
+                                                        :disabled="unrestricted"
+                                                        item-title="name"
+                                                        return-object
+                                                        :items="allowedRoles"
+                                                        multiple
+                                                        v-model="editedItem.roles"
+                                                        label="{{ _('Restrict Bulletin to Access Group(s)') }}"
+                                                        :rules="accessRule"
+                                                        clearable
+                                                ></v-select>
+                                                <v-checkbox
+                                                    color="error"
+                                                    @change="unrestricted? editedItem.roles = [] : null"
+                                                    class="mx-2"
+                                                    label="{{ _('No Access Groups') }}"
+                                                    v-model="unrestricted">
+                                                </v-checkbox>
+                                            </v-row>
+                                            {% endif %}
+        
+                                        </v-col>
+                                    </v-row>
+        
+                                    <v-row v-if="editedItem.review">
+                                        <v-col cols="12" md="12">
+        
+                                            <v-card outlined color="gray " elevation="0">
+                                                <v-card-title class="subtitle-2 black--text">{{ _('Review') }}</v-card-title>
+                                                <v-card-text>
+                                                    <p class="pa-1 my-2 grey--text text--darken-2" v-html="editedItem.review">
+        
+                                                    </p>
+                                                </v-card-text>
+        
+                                            </v-card>
+        
+                                        </v-col>
+                                    </v-row>
+                            </template>
+                        </split-view>
                     </v-container>
                 </v-card-text>
 
