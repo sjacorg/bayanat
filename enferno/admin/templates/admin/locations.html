@@ -321,7 +321,7 @@
             methods: {
                 validateAdminLevel(){
                     if (this.editedItem.location_type?.title === 'Administrative Location')
-                        if(this.validationRules.required(this.editedItem.admin_level)!==true){
+                        if(!this.editedItem.admin_level){
                             this.adminValid = false;
                             this.$refs?.form?.validate();
                             return;
