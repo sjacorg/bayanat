@@ -1,4 +1,6 @@
-<v-dialog v-model="mediaDialog" max-width="500px">
+<v-dialog v-model="mediaDialog"
+    v-bind="playerDialogProps"
+>
     <template #activator="{props}">
         <v-card>
             <v-toolbar class="handle">
@@ -40,7 +42,7 @@
             </v-card-text>
         </v-card>
     </template>
-    <v-card>
+    <v-card class="flex-grow-1">
         <v-card-title>
             <span class="headline">{{ _('Media File') }}</span>
         </v-card-title>

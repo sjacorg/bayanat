@@ -1,4 +1,10 @@
 const PdfViewer = Vue.defineComponent({
+  props: {
+    dialogProps: {
+      type: Object,
+      default: null
+    }
+  },
   data: () => {
     return {
       viewer: false,
@@ -16,20 +22,25 @@ const PdfViewer = Vue.defineComponent({
     },
   },
   template: `
-    <v-dialog overlay="false"  min-width="1000" v-model="viewer">
-    <v-card height="100%" class="pa-5" v-if="viewer">
-   
-    <v-card-text class="justify-end text-right">
-    <v-btn outlined color="grey darken-2" @click.stop.prevent="closePDF" x-small right
-                           top="10" fab>
-                        <v-icon>mdi-close</v-icon>
-        </v-btn>
+    <v-dialog
+      overlay="false"
+      v-bind="dialogProps"
+      v-model="viewer"
+    >
+      <v-card v-if="viewer">
+        <v-toolbar>
+          <v-spacer></v-spacer>
+          <v-btn
+              @click.stop.prevent="closePDF"
+              icon="mdi-close"
+              variant="text"
+          ></v-btn>
+        </v-toolbar>
     
-    </v-card-text>
-    <v-card-text>
-    <object id="pdf" v-if="url" style="width: 100%;height: 80vh" :data='url'></object>
-    </v-card-text>
-    </v-card>
+        <v-card-text>
+          <object id="pdf" v-if="url" style="width: 100%;height: 80vh" :data='url'></object>
+        </v-card-text>
+      </v-card>
     </v-dialog>
     
     `,

@@ -24,6 +24,6 @@
                    @close="bulletinDrawer=false"
                    :bulletin="bulletin"></bulletin-card>
     <preview-card ref="prev" :item="pitem" v-model="preview"></preview-card>
-    <pdf-viewer ref="pdfViewer"></pdf-viewer>
+    <pdf-viewer ref="pdfViewer" :dialog-props="dialog ? playerDialogProps : null"></pdf-viewer>
         <visualization ref="viz" @error="showSnack($event)"></visualization>
 </v-navigation-drawer>

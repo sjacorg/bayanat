@@ -169,8 +169,8 @@ const ShortActorDialog = Vue.defineComponent({
         @update:model-value="confirmClose()"
         width="50%"
         min-width="350"
-        min-height="100%"
-        content-class="absolute right-0 ma-0"
+        location="left"
+        fullscreen
     >
       <v-toolbar color="primary">
         <v-toolbar-title>{{ formTitle }}</v-toolbar-title>

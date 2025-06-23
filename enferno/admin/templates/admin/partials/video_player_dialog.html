@@ -1,4 +1,6 @@
-<v-dialog persistent v-model="videoDialog" max-width="700px">
+<v-dialog persistent v-model="videoDialog"
+    v-bind="playerDialogProps"
+>
     <v-card>
         <v-toolbar>
             <v-spacer></v-spacer>
