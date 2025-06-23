@@ -46,7 +46,7 @@ render_field, render_field_errors, prop_next %} {% block navbar %} {% endblock %
         <v-alert v-if="wanErrors" color="error" variant="tonal">${wanErrors}</v-alert>
       </v-card-text>
 
-      <v-card-actions class="pa-0 d-flex flex-column ga-2">
+      <v-card-actions class="pa-0 d-block">
         <v-btn
           v-if="isTryAgainVisible"
           color="primary"
@@ -55,9 +55,10 @@ render_field, render_field_errors, prop_next %} {% block navbar %} {% endblock %
           @click="reloadPage"
           prepend-icon="mdi-reload"
           block
+          class="mb-2"
           >{{ _('Try again')}}</v-btn
         >
-        <v-btn variant="text" block href="{{ url_for_security('mf_recovery') }}" prepend-icon="mdi-lifebuoy"
+        <v-btn class="ma-0" variant="outlined" block href="{{ url_for_security('mf_recovery') }}" prepend-icon="mdi-lifebuoy"
           >{{ _('Recovery Code')}}</v-btn
         >
       </v-card-actions>
