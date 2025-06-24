@@ -11,6 +11,7 @@ const SplitView = Vue.defineComponent({
   },
   data() {
     return {
+      ro: null,
       overlayEl: null,
       isHovering: false,
       isDragging: false,
@@ -31,12 +32,16 @@ const SplitView = Vue.defineComponent({
     },
   },
   mounted() {
-    document.addEventListener('mousemove', this.queueDragFrame);
-    document.addEventListener('mouseup', this.stopDrag);
+    this.ro = new ResizeObserver(() => {
+      this.currentWidth = this.$el?.offsetWidth || 0;
+    });
+  
+    this.ro.observe(this.$el);
   },
   beforeUnmount() {
-    document.removeEventListener('mousemove', this.queueDragFrame);
-    document.removeEventListener('mouseup', this.stopDrag);
+    if (this.ro) {
+      this.ro.disconnect();
+    }
   },
   methods: {
     hoverHandle(e) {
@@ -47,37 +52,51 @@ const SplitView = Vue.defineComponent({
     },
     startDrag(e) {
       if (e.button !== 0) return;
-
+    
+      const bounds = this.$el.getBoundingClientRect();
+      this.currentX = e.clientX - bounds.left;
+    
       this.isDragging = true;
-      this.currentX = e.clientX;
-      this.containerWidth = this.$el.offsetWidth;
+    
+      document.addEventListener('mousemove', this.queueDragFrame);
+      document.addEventListener('mouseup', this.stopDrag);
       document.body.style.cursor = 'ew-resize';
-      this.createOverlay();
-    },
+    
+      this.createOverlay?.(); // optional overlay
+    },   
+    
     stopDrag() {
       if (!this.isDragging) return;
+    
       this.isDragging = false;
       this.frameRequested = false;
       document.body.style.cursor = '';
-      this.removeOverlay();
+    
+      document.removeEventListener('mousemove', this.queueDragFrame);
+      document.removeEventListener('mouseup', this.stopDrag);
+    
+      this.removeOverlay?.();
     },
     queueDragFrame(e) {
       if (!this.isDragging) return;
-      this.currentX = e.clientX;
-
+    
+      const bounds = this.$el.getBoundingClientRect();
+      this.currentX = e.clientX - bounds.left;
+    
       if (!this.frameRequested) {
         this.frameRequested = true;
         requestAnimationFrame(this.doDrag);
       }
     },
     doDrag() {
-      const max = this.containerWidth - this.minWidth;
+      const containerWidth = this.currentWidth; // live value
+      const max = containerWidth - this.minWidth;
       const newWidth = Math.min(Math.max(this.currentX, this.minWidth), max);
-
+    
       if (this.leftWidth !== newWidth) {
         this.leftWidth = newWidth;
       }
-
+    
       this.frameRequested = false;
     },
     createOverlay() {
