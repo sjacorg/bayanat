@@ -223,7 +223,7 @@ const ExportCard = Vue.defineComponent({
       </v-card>
 
       <!-- Comment -->
-      <uni-field :caption="translations.comment_" :english="exp.comment"></uni-field>
+      <uni-field :caption="translations.comments_" :english="exp.comment"></uni-field>
 
       <!-- Related Bulletins -->
       <v-card class="ma-2" v-if="items">

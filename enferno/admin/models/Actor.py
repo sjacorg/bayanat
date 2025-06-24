@@ -172,6 +172,12 @@ class Actor(db.Model, BaseMixin):
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
         ),
+        db.Index(
+            "ix_actor_tags",
+            "tags",
+            postgresql_using="gin",
+            postgresql_ops={"tags": "array_ops"},
+        ),
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
     )
 

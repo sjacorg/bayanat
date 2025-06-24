@@ -1,3 +1,4 @@
+import re
 from dateutil.parser import parse
 from sqlalchemy import or_, not_, and_, any_, all_, func, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
@@ -179,7 +180,8 @@ class SearchUtils:
             exact = q.get("inExact")
             if exact:
                 tag_conditions = [
-                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in ref
+                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in ref
                 ]
             else:
                 tag_conditions = [
@@ -197,7 +199,8 @@ class SearchUtils:
             exact = q.get("exExact")
             if exact:
                 tag_conditions = [
-                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in exref
+                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in exref
                 ]
             else:
                 tag_conditions = [
@@ -644,6 +647,49 @@ class SearchUtils:
         if exsources := q.get("exsources"):
             ids = [item.get("id") for item in exsources]
             query.append(~Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
+
+        # tags
+        tags = q.get("tags")
+        exact = q.get("inExact")
+
+        if tags:
+            # exact match search
+            if exact:
+                conditions = [
+                    func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in tags
+                ]
+            else:
+                conditions = [func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in tags]
+
+            # any operator
+            op = q.get("opTags", False)
+            if op:
+                query.append(or_(*conditions))
+            else:
+                query.append(and_(*conditions))
+
+        # exclude tags
+        extags = q.get("exTags")
+        exact = q.get("exExact")
+        if extags:
+            # exact match
+            if exact:
+                conditions = [
+                    ~func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in extags
+                ]
+            else:
+                conditions = [
+                    ~func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in extags
+                ]
+
+            # get all operator
+            opextags = q.get("opExTags")
+            if opextags:
+                query.append(or_(*conditions))
+            else:
+                query.append(and_(*conditions))
 
         res_locations = q.get("resLocations", [])
         if res_locations:

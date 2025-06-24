@@ -3491,7 +3491,6 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -3661,7 +3660,7 @@ def serve_media(
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
 
-        s3_config = BotoConfig(signature_version='s3v4')
+        s3_config = BotoConfig(signature_version="s3v4")
 
         s3 = boto3.client(
             "s3",
