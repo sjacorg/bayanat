@@ -136,7 +136,7 @@ class Actor(db.Model, BaseMixin):
         "Dialect", secondary="actor_dialects", backref=db.backref("actors", lazy="dynamic")
     )
 
-    id_number = db.Column(db.String(255))
+    id_number = db.Column(JSONB, default=[], nullable=False)
 
     status = db.Column(db.String(255))
 
@@ -178,7 +178,35 @@ class Actor(db.Model, BaseMixin):
             postgresql_using="gin",
             postgresql_ops={"tags": "array_ops"},
         ),
+        db.Index(
+            "ix_actor_id_number_gin",
+            "id_number",
+            postgresql_using="gin",
+        ),
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
+        db.CheckConstraint(
+            "jsonb_typeof(id_number) = 'array'", name="check_actor_id_number_is_array"
+        ),
+        db.CheckConstraint(
+            """id_number = '[]'::jsonb OR 
+            (SELECT bool_and(
+                jsonb_typeof(elem->'type') = 'string' AND 
+                jsonb_typeof(elem->'number') = 'string' AND
+                (elem->'type') IS NOT NULL AND 
+                (elem->'number') IS NOT NULL
+            ) FROM jsonb_array_elements(id_number) AS elem)""",
+            name="check_actor_id_number_element_structure",
+        ),
+        db.CheckConstraint(
+            """id_number = '[]'::jsonb OR 
+            (SELECT bool_and(
+                EXISTS (
+                    SELECT 1 FROM id_number_types 
+                    WHERE id = (elem->>'type')::int AND deleted = FALSE
+                )
+            ) FROM jsonb_array_elements(id_number) AS elem)""",
+            name="check_actor_id_number_valid_type_references",
+        ),
     )
 
     # helper property to make all entities consistent
@@ -380,7 +408,20 @@ class Actor(db.Model, BaseMixin):
 
         self.nickname = json["nickname"] if "nickname" in json else None
         self.nickname_ar = json["nickname_ar"] if "nickname_ar" in json else None
-        self.id_number = json["id_number"] if "id_number" in json else None
+
+        # Handle id_number array format
+        if "id_number" in json:
+            if isinstance(json["id_number"], list):
+                # Already in the correct format (list of objects)
+                self.id_number = json["id_number"]
+            elif isinstance(json["id_number"], str) and json["id_number"].strip():
+                # Legacy string format - convert to array with default type (1)
+                self.id_number = [{"type": "1", "number": json["id_number"]}]
+            else:
+                # Empty or null value
+                self.id_number = []
+        else:
+            self.id_number = []
 
         if "origin_place" in json and json["origin_place"] and "id" in json["origin_place"]:
             self.origin_place_id = json["origin_place"]["id"]
@@ -797,7 +838,7 @@ class Actor(db.Model, BaseMixin):
             ],
             "nationalities": [country.to_dict() for country in getattr(self, "nationalities", [])],
             "dialects": [dialect.to_dict() for dialect in getattr(self, "dialects", [])],
-            "id_number": self.id_number or None,
+            "id_number": self.id_number or [],
             # assigned to
             "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
             # first peer reviewer

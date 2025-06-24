@@ -1,6 +1,6 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func
+from sqlalchemy import or_, not_, and_, any_, all_, func, text
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -879,11 +879,18 @@ class SearchUtils:
         if type:
             query.append(Actor.type == type)
 
-        # National ID card
+        # ID Number search - now searches within JSONB array
         id_number = q.get("id_number", {})
         if id_number:
             search = "%{}%".format(id_number)
-            query.append(Actor.id_number.ilike(search))
+            # Search in the 'number' field of any element in the id_number JSONB array
+            query.append(
+                func.exists(
+                    func.jsonb_array_elements(Actor.id_number)
+                    .op("->>")(text("'number'"))
+                    .ilike(search)
+                )
+            )
 
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")
