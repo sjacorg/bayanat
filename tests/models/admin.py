@@ -454,6 +454,12 @@ class BulletinItemRestrictedModel(StrictModel):
     restricted: bool = True
 
 
+class BulletinResponseMetaModel(BaseModel):
+    currentPageSize: int
+    hasMore: bool
+    isFirstPage: bool
+
+
 class BulletinsResponseModel(BaseResponseModel):
     items: list[
         Union[
@@ -463,8 +469,10 @@ class BulletinsResponseModel(BaseResponseModel):
             BulletinItemMode3PlusModel,
         ]
     ]
-    perPage: int
-    total: int
+    nextCursor: Optional[BulletinResponseMetaModel] = None
+    meta: BulletinResponseMetaModel
+    total: Optional[int] = None
+    totalType: Optional[str] = None
 
 
 class BulletinRequestModel(BaseModel):

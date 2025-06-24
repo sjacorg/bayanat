@@ -8235,14 +8235,45 @@ components:
           format: date-time
         comments:
           type: string
+    BulletinResponseMeta:
+      type: object
+      required:
+        - currentPageSize
+        - hasMore
+        - isFirstPage
+      properties:
+        currentPageSize:
+          type: integer
+          description: Number of items in the current page
+        hasMore:
+          type: boolean
+          description: Whether there are more items available
+        isFirstPage:
+          type: boolean
+          description: Whether this is the first page of results
     BulletinsResponse:
-      allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
-        - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/BulletinItem'
+      type: object
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulletinItem'
+          description: List of bulletin items
+        nextCursor:
+          type: string
+          description: Next cursor for pagination (optional)
+        meta:
+          $ref: '#/components/schemas/BulletinResponseMeta'
+          description: Metadata about the current page
+        total:
+          type: integer
+          description: Total number of items (optional)
+        totalType:
+          type: string
+          description: Type of total count (optional)
     BaseMinItem:
       type: object
       properties:
