@@ -453,10 +453,16 @@
                     helper: {}, // helper object for review items
 
                     valid: false,
-                    playerDialogProps: {
+                    leftDialogProps: {
                         width: "50%",
                         'min-width': "350",
-                        location: "left",
+                        location: "start",
+                        fullscreen: true,
+                    },
+                    rightDialogProps: {
+                        width: "50%",
+                        'min-width': "350",
+                        'content-class': 'absolute right-0 left-auto',
                         fullscreen: true,
                     },
                     translations: translations,
