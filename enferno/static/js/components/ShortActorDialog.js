@@ -35,6 +35,10 @@ const ShortActorDialog = Vue.defineComponent({
       type: Array,
       default: () => [],
     },
+    dialogProps: {
+      type: Object,
+      default: () => ({}),
+    },
     allowedRoles: {
       type: Array,
       default: () => [],
@@ -167,10 +171,7 @@ const ShortActorDialog = Vue.defineComponent({
     <v-dialog
         :modelValue="open"
         @update:model-value="confirmClose()"
-        width="50%"
-        min-width="350"
-        location="left"
-        fullscreen
+        v-bind="dialogProps"
     >
       <v-toolbar color="primary">
         <v-toolbar-title>{{ formTitle }}</v-toolbar-title>
