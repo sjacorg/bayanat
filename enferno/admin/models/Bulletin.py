@@ -129,7 +129,7 @@ class Bulletin(db.Model, BaseMixin):
     publish_date = db.Column(db.DateTime, index=True)
     documentation_date = db.Column(db.DateTime, index=True)
 
-    status = db.Column(db.String(255))
+    status = db.Column(db.String(255), index=True)
     source_link = db.Column(db.String(255))
     source_link_type = db.Column(db.Boolean, default=False)
 
@@ -172,6 +172,16 @@ class Bulletin(db.Model, BaseMixin):
             "search",
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+        db.Index(
+            "ix_bulletin_tags_gin",
+            "tags",
+            postgresql_using="gin",
+        ),
+        db.Index(
+            "ix_bulletin_status_assigned",
+            "status",
+            "assigned_to_id",
         ),
     )
 
