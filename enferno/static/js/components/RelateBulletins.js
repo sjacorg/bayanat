@@ -1,6 +1,6 @@
 const RelateBulletins = Vue.defineComponent({
-  props: ['modelValue', 'show', 'exids', 'dialogProps'], // Changed 'value' to 'modelValue'
-  emits: ['update:modelValue', 'relate'], // Explicitly define emitted events
+  props: ['exids', 'dialogProps'], // Changed 'value' to 'modelValue'
+  emits: ['relate'], // Explicitly define emitted events
   data() {
     return {
       translations: window.translations,
@@ -15,11 +15,6 @@ const RelateBulletins = Vue.defineComponent({
       bulletin: null,
       showSearch: true,
     };
-  },
-  watch: {
-    modelValue: function (val) {
-      this.$emit('update:modelValue', val); // Changed 'input' to 'update:modelValue'
-    },
   },
   methods: {
     open() {

@@ -1,6 +1,6 @@
 const RelateActors = Vue.defineComponent({
-  props: ['modelValue', 'show', 'exids', 'dialogProps'],
-  emits: ['update:modelValue', 'relate'],
+  props: ['exids', 'dialogProps'],
+  emits: ['relate'],
   data: () => {
     return {
       translations: window.translations,
@@ -15,11 +15,6 @@ const RelateActors = Vue.defineComponent({
       actor: null,
       showSearch: true,
     };
-  },
-  watch: {
-    modelValue: function (val) {
-      this.$emit('update:modelValue', val);
-    },
   },
   methods: {
     open() {
