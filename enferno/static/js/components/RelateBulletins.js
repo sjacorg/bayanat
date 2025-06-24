@@ -71,8 +71,8 @@ const RelateBulletins = Vue.defineComponent({
         
         <!-- Top Toolbar -->
         <v-toolbar color="primary">
-          <v-btn variant="outlined" @click="toggleSearchPanel" class="ml-2"> <!-- Assuming you toggle -->
-            {{ showSearch ? 'Hide Search' : 'Show Search' }}
+          <v-btn variant="outlined" @click="toggleSearchPanel" class="ml-2">
+            {{ showSearch ? translations.hideSearch_ : translations.showSearch_ }}
           </v-btn>
           <v-spacer></v-spacer>
           <v-btn icon @click="visible = false" class="ml-2">
@@ -134,7 +134,7 @@ const RelateBulletins = Vue.defineComponent({
                   <!-- Load More / No Results -->
                   <v-card-actions class="px-4 pb-4">
                     <v-spacer></v-spacer>
-                    <v-btn v-if="moreItems" @click="loadMore" color="primary">Load more</v-btn>
+                    <v-btn v-if="moreItems" @click="loadMore" color="primary">{{ translations.loadMore_ }}</v-btn>
                     <span v-else class="text-grey">{{ translations.noResults_ }}</span>
                     <v-spacer></v-spacer>
                   </v-card-actions>
