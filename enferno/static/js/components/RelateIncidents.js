@@ -1,5 +1,5 @@
 const RelateIncidents = Vue.defineComponent({
-  props: ['modelValue', 'show', 'exids'],
+  props: ['modelValue', 'show', 'exids', 'dialogProps'],
   emits: ['update:modelValue', 'relate'],
   data: () => {
     return {
@@ -87,12 +87,12 @@ const RelateIncidents = Vue.defineComponent({
   },
 
   template: `
-    <v-dialog v-model="visible" class="w-sm-100 w-md-75">
+    <v-dialog v-model="visible" v-bind="dialogProps">
       <v-sheet>
 
         <v-container class="fluid fill-height">
           <v-row>
-            <v-col cols="12" md="4">
+            <v-col cols="12" lg="6">
 
               <v-card variant="outlined">
                 <incident-search-box 
@@ -108,7 +108,7 @@ const RelateIncidents = Vue.defineComponent({
                 </v-card-text>
               </v-card>
             </v-col>
-            <v-col cols="12" md="8">
+            <v-col cols="12" lg="6">
 
               <v-card :loading="loading">
 
@@ -151,7 +151,7 @@ const RelateIncidents = Vue.defineComponent({
         </v-container>
 
 
-        <v-dialog v-model="showIncident" max-width="550">
+        <v-dialog v-model="showIncident" max-width="550" v-bind="dialogProps">
           <v-sheet>
             <div class="d-flex justify-end">
               <v-btn @click="showIncident=false"  fab right="10">

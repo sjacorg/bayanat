@@ -264,11 +264,11 @@
                         ></v-progress-circular>
                     </v-overlay>
                     <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
-                                      ref="relateBulletins"></relate-bulletins>
+                                      ref="relateBulletins" :dialog-props="rightDialogProps"></relate-bulletins>
                     <relate-actors @relate="relateActor" :exids="exActors"
-                                   ref="relateActors"></relate-actors>
+                                   ref="relateActors" :dialog-props="rightDialogProps"></relate-actors>
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
-                                      ref="relateIncidents"></relate-incidents>
+                                      ref="relateIncidents" :dialog-props="rightDialogProps"></relate-incidents>
 
 
                     {% include 'admin/partials/video_player_dialog.html' %}
@@ -454,13 +454,13 @@
 
                     valid: false,
                     leftDialogProps: {
-                        width: "50%",
+                        width: "60%",
                         'min-width': "350",
                         location: "start",
                         fullscreen: true,
                     },
                     rightDialogProps: {
-                        width: "50%",
+                        width: "60%",
                         'min-width': "350",
                         'content-class': 'absolute right-0 left-auto',
                         fullscreen: true,

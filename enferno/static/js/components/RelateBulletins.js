@@ -1,5 +1,5 @@
 const RelateBulletins = Vue.defineComponent({
-  props: ['modelValue', 'show', 'exids'], // Changed 'value' to 'modelValue'
+  props: ['modelValue', 'show', 'exids', 'dialogProps'], // Changed 'value' to 'modelValue'
   emits: ['update:modelValue', 'relate'], // Explicitly define emitted events
 
   data() {
@@ -77,12 +77,12 @@ const RelateBulletins = Vue.defineComponent({
   },
 
   template: `
-      <v-dialog v-model="visible" class="w-sm-100 w-md-75">
+      <v-dialog v-model="visible" v-bind="dialogProps">
       <v-sheet>
 
         <v-container fluid class="h-100">
           <v-row>
-            <v-col cols="12" md="4">
+            <v-col cols="12" lg="6">
 
               <v-card variant="outlined">
                 <bulletin-search-box 
@@ -99,7 +99,7 @@ const RelateBulletins = Vue.defineComponent({
                 </v-card-text>
               </v-card>
             </v-col>
-            <v-col cols="12" md="8">
+            <v-col cols="12" lg="6">
 
               <v-card :loading="loading">
 
@@ -141,7 +141,7 @@ const RelateBulletins = Vue.defineComponent({
           </v-row>
         </v-container>
 
-        <v-dialog v-model="showBulletin" max-width="550">
+        <v-dialog v-model="showBulletin" max-width="550" v-bind="dialogProps">
           <v-sheet>
             <div class="d-flex justify-end">
               <v-btn @click="showBulletin=false"    right="10">
