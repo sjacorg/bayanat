@@ -157,7 +157,7 @@ const RelateActors = Vue.defineComponent({
           </v-row>
         </v-container>
 
-        <v-dialog v-model="showActor" max-width="550" v-bind="dialogProps">
+        <v-dialog v-model="showActor" max-width="550">
           <v-sheet>
             <div class="d-flex justify-end">
               <v-btn @click="showActor=false" small text fab right="10">

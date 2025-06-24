@@ -141,7 +141,7 @@ const RelateBulletins = Vue.defineComponent({
           </v-row>
         </v-container>
 
-        <v-dialog v-model="showBulletin" max-width="550" v-bind="dialogProps">
+        <v-dialog v-model="showBulletin" max-width="550">
           <v-sheet>
             <div class="d-flex justify-end">
               <v-btn @click="showBulletin=false"    right="10">

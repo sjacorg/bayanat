@@ -1,5 +1,5 @@
 const PreviewCard = Vue.defineComponent({
-  props: ['item', 'modelValue'],
+  props: ['item', 'modelValue', 'dialogProps'],
   watch: {
     modelValue(val) {
       this.preview = val;
@@ -14,7 +14,7 @@ const PreviewCard = Vue.defineComponent({
     };
   },
   template: `
-    <v-dialog max-width="900"  v-model="preview">
+    <v-dialog max-width="900" v-model="preview" v-bind="dialogProps">
       <v-sheet v-if="preview" class="mt-2" >
         <v-toolbar class="header-fixed">
           <v-spacer></v-spacer>
