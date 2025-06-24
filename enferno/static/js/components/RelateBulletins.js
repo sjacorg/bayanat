@@ -1,7 +1,6 @@
 const RelateBulletins = Vue.defineComponent({
   props: ['modelValue', 'show', 'exids', 'dialogProps'], // Changed 'value' to 'modelValue'
   emits: ['update:modelValue', 'relate'], // Explicitly define emitted events
-
   data() {
     return {
       translations: window.translations,
@@ -14,23 +13,16 @@ const RelateBulletins = Vue.defineComponent({
       total: 0,
       moreItems: false,
       bulletin: null,
-      showBulletin: false,
+      showSearch: true,
     };
   },
   watch: {
-    results: {
-      handler(val, old) {},
-      deep: true,
-    },
-
     modelValue: function (val) {
       this.$emit('update:modelValue', val); // Changed 'input' to 'update:modelValue'
     },
   },
-
   methods: {
     open() {
-
       this.visible = true;
     },
     close() {
@@ -42,9 +34,8 @@ const RelateBulletins = Vue.defineComponent({
       this.search();
     },
 
-    search( ) {
+    search() {
       this.loading = true;
-
       axios
         .post(`/admin/api/bulletins/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
           q: [this.q],
@@ -52,7 +43,7 @@ const RelateBulletins = Vue.defineComponent({
         .then((response) => {
           this.loading = false;
           this.total = response.data.total;
-          
+
           // exclude ids of item and related items
           const ex_arr = this.exids || [];
           this.results = this.results.concat(
@@ -71,89 +62,93 @@ const RelateBulletins = Vue.defineComponent({
       this.search();
     },
     relateItem(item) {
-      this.results = this.results.filter(result => result.id !== item.id);
+      this.results = this.results.filter((result) => result.id !== item.id);
       this.$emit('relate', item);
     },
+    toggleSearchPanel() {
+      this.showSearch = !this.showSearch
+    }
   },
 
-  template: `
-      <v-dialog v-model="visible" v-bind="dialogProps">
-      <v-sheet>
+  template: /*html*/ `
+    <v-dialog v-model="visible" v-bind="dialogProps">
+      <v-card class="d-flex flex-column h-screen pa-0" :loading="loading">
+        
+        <!-- Top Toolbar -->
+        <v-toolbar color="primary">
+          <v-btn variant="outlined" @click="toggleSearchPanel" class="ml-2"> <!-- Assuming you toggle -->
+            {{ showSearch ? 'Hide Search' : 'Show Search' }}
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="visible = false" class="ml-2">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
 
-        <v-container fluid class="h-100">
-          <v-row>
-            <v-col cols="12" lg="6">
+        <!-- Content -->
+        <div class="overflow-y-auto">
+          <split-view :left-slot-visible="showSearch">
+            <template #left>
+              <!-- Left Column: Search -->
+              <v-col>
+                <!-- Sub-Toolbar -->
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <h3 class="text-h6 mb-0">{{ translations.advSearch_ }}</h3>
+                </div>
 
-              <v-card variant="outlined">
                 <bulletin-search-box 
+                  v-model="q"
                   @search="reSearch"
                   :extra-filters="false"
-                  v-model="q"
-                  :show-op="false">
-                </bulletin-search-box>
-              </v-card>
+                  :show-op="false"
+                ></bulletin-search-box>
 
-              <v-card  class="text-center  search-toolbar" >
-                <v-card-text>
-                  <v-btn color="primary" @click="reSearch">{{ translations.search_ }}</v-btn>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="12" lg="6">
+                <div class="text-center mt-4 position-sticky" style="bottom: 16px;">
+                  <v-btn color="primary" @click="reSearch" block>{{ translations.search_ }}</v-btn>
+                </div>
+              </v-col>
+            </template>
+            <template #right>
+              <!-- Right Column -->
+              <v-col>
+                <!-- Sub-Toolbar -->
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <h3 class="text-h6 mb-0">{{ translations.bulletins_ }}</h3>
+                </div>
 
-              <v-card :loading="loading">
+                <v-card>
+                  <v-card-text v-if="loading && !results.length" class="d-flex justify-center align-center pa-5">
+                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                  </v-card-text>
 
-                <v-toolbar class="handle">
-                    <v-toolbar-title>{{ translations.advSearch_ }}</v-toolbar-title>
-                  <v-spacer></v-spacer>
-                  <v-btn icon="mdi-close" @click="visible=false"></v-btn>
-                </v-toolbar>
+                  <v-card-text>
+                    <bulletin-result
+                      v-for="(item, i) in results"
+                      :key="i"
+                      :bulletin="item"
+                      :show-hide="true"
+                    >
+                      <template #actions>
+                        <v-btn @click="relateItem(item)" variant="elevated" color="primary">
+                          {{ translations.relate_ }}
+                        </v-btn>
+                      </template>
+                    </bulletin-result>
+                  </v-card-text>
 
-                <v-divider></v-divider>
-
-                <v-card-text v-if="loading" class="d-flex pa-5" justify-center align-center>
-                  <v-progress-circular class="ma-auto" indeterminate
-                                       color="primary"></v-progress-circular>
-                </v-card-text>
-
-                <v-card class="pa-2">
-
-                  <bulletin-result v-for="(item, i) in results" :key="i" :bulletin="item"
-                                   :show-hide="true">
-                    <template v-slot:actions>
-                      <v-btn @click="relateItem(item)"  variant="elevated" color="primary">{{ translations.relate_ }}
-                      </v-btn>
-
-                    </template>
-                  </bulletin-result>
+                  <!-- Load More / No Results -->
+                  <v-card-actions class="px-4 pb-4">
+                    <v-spacer></v-spacer>
+                    <v-btn v-if="moreItems" @click="loadMore" color="primary">Load more</v-btn>
+                    <span v-else class="text-grey">{{ translations.noResults_ }}</span>
+                    <v-spacer></v-spacer>
+                  </v-card-actions>
                 </v-card>
-
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn icon="mdi-dots-horizontal" @click="loadMore" v-if="moreItems" color="third">
-                  </v-btn>
-                  <v-sheet small v-else class="heading" color="grey--text"> {{ translations.noResults_ }} </v-sheet>
-                  <v-spacer></v-spacer>
-                </v-card-actions>
-              </v-card>
-            </v-col>
-
-          </v-row>
-        </v-container>
-
-        <v-dialog v-model="showBulletin" max-width="550">
-          <v-sheet>
-            <div class="d-flex justify-end">
-              <v-btn @click="showBulletin=false"    right="10">
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
-            </div>
-            <bulletin-card :bulletin="bulletin"></bulletin-card>
-          </v-sheet>
-        </v-dialog>
-
-      </v-sheet>
-
-      </v-dialog>
+              </v-col>
+            </template>
+          </split-view>
+        </div>
+      </v-card>
+    </v-dialog>
     `,
 });

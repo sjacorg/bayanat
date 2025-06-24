@@ -4,9 +4,17 @@ const SplitView = Vue.defineComponent({
       type: Number,
       default: () => window.innerWidth / 2,
     },
+    leftSlotVisible: {
+      type: Boolean,
+      default: true,
+    },
     minWidth: {
       type: Number,
       default: 100,
+    },
+    dividerClass: {
+      type: String,
+      default: '',
     },
   },
   data() {
@@ -18,6 +26,7 @@ const SplitView = Vue.defineComponent({
       leftWidth: this.initialLeftWidth,
       currentX: 0,
       frameRequested: false,
+      hasInitialized: false,
     };
   },
   computed: {
@@ -33,7 +42,14 @@ const SplitView = Vue.defineComponent({
   },
   mounted() {
     this.ro = new ResizeObserver(() => {
-      this.currentWidth = this.$el?.offsetWidth || 0;
+      const width = this.$el?.offsetWidth || 0;
+      this.currentWidth = width;
+  
+      // Only set leftWidth the first time (or if needed)
+      if (!this.hasInitialized && width > 0) {
+        this.leftWidth = width / 2;
+        this.hasInitialized = true;
+      }
     });
   
     this.ro.observe(this.$el);
@@ -44,6 +60,9 @@ const SplitView = Vue.defineComponent({
     }
   },
   methods: {
+    resetToCenter() {
+      this.leftWidth = this.currentWidth / 2;
+    },
     hoverHandle(e) {
       this.isHovering = true;
     },
@@ -127,18 +146,20 @@ const SplitView = Vue.defineComponent({
         :style="containerStyle"
       >
         <div
+          v-show="leftSlotVisible"
           :style="{ width: leftWidth + 'px' }"
         >
           <slot name="left" />
         </div>
 
         <div
+            v-if="leftSlotVisible"
             @mousedown="startDrag"
             @mouseenter="hoverHandle"
             @mouseleave="leaveHandle"
-            class="mx-4 d-flex justify-center"
-        
-        style="cursor: ew-resize; width: 24px; ">
+            :class="['d-flex justify-center', dividerClass]"
+            style="cursor: ew-resize; width: 24px;"
+        >
             <v-divider
                 vertical
                 :thickness="isHandleHighlighted ? 3 : 1"

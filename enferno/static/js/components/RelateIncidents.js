@@ -13,7 +13,7 @@ const RelateIncidents = Vue.defineComponent({
       total: 0,
       moreItems: false,
       incident: null,
-      showIncident: false,
+      showSearch: true,
     };
   },
   watch: {
@@ -21,22 +21,7 @@ const RelateIncidents = Vue.defineComponent({
       this.$emit('update:modelValue', val);
     },
   },
-
   methods: {
-    viewIncident(i) {
-      axios
-        .get(`/admin/api/incident/${i.id}`)
-        .then((response) => {
-          console.log(response.data);
-          this.incident = response.data;
-          this.showIncident = true;
-        })
-        .catch((error) => {
-          this.showIncident = false;
-          this.showSnack(translations.notFound_);
-        });
-    },
-
     open() {
       this.visible = true;
     },
@@ -49,7 +34,7 @@ const RelateIncidents = Vue.defineComponent({
       this.search();
     },
 
-    search(q = {}) {
+    search() {
       this.loading = true;
       axios
         .post(`/admin/api/incidents/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
@@ -65,15 +50,11 @@ const RelateIncidents = Vue.defineComponent({
             response.data.items.filter((x) => !ex_arr.includes(x.id)),
           );
 
-          if (this.page * this.perPage >= this.total) {
-            this.moreItems = false;
-          } else {
-            this.moreItems = true;
-          }
+          this.moreItems = this.page * this.perPage < this.total;
         })
         .catch((err) => {
-          this.loading = false;
           console.log(err.response.data);
+          this.loading = false;
         });
     },
     loadMore() {
@@ -81,91 +62,93 @@ const RelateIncidents = Vue.defineComponent({
       this.search();
     },
     relateItem(item) {
-      this.results = this.results.filter(result => result.id !== item.id);
+      this.results = this.results.filter((result) => result.id !== item.id);
       this.$emit('relate', item);
     },
+    toggleSearchPanel() {
+      this.showSearch = !this.showSearch
+    }
   },
 
-  template: `
+  template: /*html*/ `
     <v-dialog v-model="visible" v-bind="dialogProps">
-      <v-sheet>
+      <v-card class="d-flex flex-column h-screen pa-0" :loading="loading">
+        
+        <!-- Top Toolbar -->
+        <v-toolbar color="primary">
+          <v-btn variant="outlined" @click="toggleSearchPanel" class="ml-2"> <!-- Assuming you toggle -->
+            {{ showSearch ? 'Hide Search' : 'Show Search' }}
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="visible = false" class="ml-2">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
 
-        <v-container class="fluid fill-height">
-          <v-row>
-            <v-col cols="12" lg="6">
+        <!-- Content -->
+        <div class="overflow-y-auto">
+          <split-view :left-slot-visible="showSearch" class="overflow-y-auto">
+            <template #left>
+              <!-- Left Column: Search -->
+              <v-col>
+                <!-- Sub-Toolbar -->
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <h3 class="text-h6 mb-0">{{ translations.advSearch_ }}</h3>
+                </div>
 
-              <v-card variant="outlined">
                 <incident-search-box 
-                  :extra-filters="false" 
-                  v-model="q" 
-                  search="reSearch">
-                </incident-search-box>
-              </v-card>
+                  v-model="q"
+                  @search="reSearch"
+                  :extra-filters="false"
+                  :show-op="false"
+                ></incident-search-box>
 
-              <v-card  class="text-center">
-                <v-card-text>
-                  <v-btn color="primary" variant="elevated" @click="reSearch">{{ translations.search_ }}</v-btn>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="12" lg="6">
+                <div class="text-center mt-4 position-sticky" style="bottom: 16px;">
+                  <v-btn color="primary" @click="reSearch" block>{{ translations.search_ }}</v-btn>
+                </div>
+              </v-col>
+            </template>
+            <template #right>
+              <!-- Right Column -->
+              <v-col>
+                <!-- Sub-Toolbar -->
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <h3 class="text-h6 mb-0">{{ translations.incidents_ }}</h3>
+                </div>
 
-              <v-card :loading="loading">
+                <v-card>
+                  <v-card-text v-if="loading && !results.length" class="d-flex justify-center align-center pa-5">
+                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                  </v-card-text>
 
-                <v-toolbar>
-                  <v-toolbar-title>{{ translations.advSearch_ }}</v-toolbar-title>
-                  <v-spacer></v-spacer>
-                  <v-btn @click="visible=false" icon="mdi-close"></v-btn>
-                </v-toolbar>
+                  <v-card-text>
+                    <incident-result
+                      v-for="(item, i) in results"
+                      :key="i"
+                      :incident="item"
+                      :show-hide="true"
+                    >
+                      <template #actions>
+                        <v-btn @click="relateItem(item)" variant="elevated" color="primary">
+                          {{ translations.relate_ }}
+                        </v-btn>
+                      </template>
+                    </incident-result>
+                  </v-card-text>
 
-                <v-divider></v-divider>
-
-                <v-card-text v-if="loading" class="d-flex pa-5" justify-center align-center>
-                  <v-progress-circular class="ma-auto" indeterminate
-                                       color="primary"></v-progress-circular>
-                </v-card-text>
-
-
-                <v-card class="pa-2">
-
-                  <incident-result v-for="(item, i) in results" :key="i" :incident="item"
-                                   :show-hide="true">
-                    <template v-slot:actions>
-                      <v-btn variant="elevated" @click="relateItem(item)"  color="primary">{{ translations.relate_ }}
-                      </v-btn>
-                    </template>
-                  </incident-result>
+                  <!-- Load More / No Results -->
+                  <v-card-actions class="px-4 pb-4">
+                    <v-spacer></v-spacer>
+                    <v-btn v-if="moreItems" @click="loadMore" color="primary">Load more</v-btn>
+                    <span v-else class="text-grey">{{ translations.noResults_ }}</span>
+                    <v-spacer></v-spacer>
+                  </v-card-actions>
                 </v-card>
-
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn icon @click="loadMore" v-if="moreItems" color="third">
-                    <v-icon>mdi-dots-horizontal</v-icon>
-                  </v-btn>
-                  <v-sheet small v-else class="heading" color=" grey--text"> {{ translations.noResults_ }}</v-sheet>
-                  <v-spacer></v-spacer>
-                </v-card-actions>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-container>
-
-
-        <v-dialog v-model="showIncident" max-width="550">
-          <v-sheet>
-            <div class="d-flex justify-end">
-              <v-btn @click="showIncident=false"  fab right="10">
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
-            </div>
-            <incident-card :incident="incident"></incident-card>
-          </v-sheet>
-        </v-dialog>
-
-
-      </v-sheet>
-
+              </v-col>
+            </template>
+          </split-view>
+        </div>
+      </v-card>
     </v-dialog>
-
-  `,
+    `,
 });
