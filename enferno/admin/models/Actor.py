@@ -19,6 +19,8 @@ from enferno.admin.models.Atob import Atob
 from enferno.admin.models.Itoa import Itoa
 from enferno.admin.models.Location import Location
 
+from enferno.admin.models.IDNumberType import IDNumberType
+
 from enferno.admin.models.tables import (
     actor_roles,
     actor_events,
@@ -186,26 +188,6 @@ class Actor(db.Model, BaseMixin):
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
         db.CheckConstraint(
             "jsonb_typeof(id_number) = 'array'", name="check_actor_id_number_is_array"
-        ),
-        db.CheckConstraint(
-            """id_number = '[]'::jsonb OR 
-            (SELECT bool_and(
-                jsonb_typeof(elem->'type') = 'string' AND 
-                jsonb_typeof(elem->'number') = 'string' AND
-                (elem->'type') IS NOT NULL AND 
-                (elem->'number') IS NOT NULL
-            ) FROM jsonb_array_elements(id_number) AS elem)""",
-            name="check_actor_id_number_element_structure",
-        ),
-        db.CheckConstraint(
-            """id_number = '[]'::jsonb OR 
-            (SELECT bool_and(
-                EXISTS (
-                    SELECT 1 FROM id_number_types 
-                    WHERE id = (elem->>'type')::int AND deleted = FALSE
-                )
-            ) FROM jsonb_array_elements(id_number) AS elem)""",
-            name="check_actor_id_number_valid_type_references",
         ),
     )
 
@@ -627,6 +609,8 @@ class Actor(db.Model, BaseMixin):
                 self.incident_relations_dict, Incident.__tablename__
             ),
         }
+        if self.id_number:
+            output.update(self.flatten_id_numbers())
         return output
 
     def get_modified_date(self) -> datetime:
@@ -1046,5 +1030,47 @@ class Actor(db.Model, BaseMixin):
                 flattened.update(
                     {f"{prefix}{field}": getattr(profile, field) for field in mode_3_fields}
                 )
+
+        return flattened
+
+    def flatten_id_numbers(self) -> dict[str, Any]:
+        """
+        Return a flattened dictionary representation of the actor's id numbers.
+        For each id number, the type's name is retrieved and used as a key.
+        If multiple id numbers of the same type are present, each one is suffixed with an `_X` where X is a number starting from 1.
+        """
+        flattened = {}
+
+        if not self.id_number:
+            return flattened
+
+        # Group id numbers by type to handle duplicates
+        type_counts = {}
+        type_titles = {}  # Cache for type titles
+
+        for id_entry in self.id_number:
+            if not isinstance(id_entry, dict) or "type" not in id_entry or "number" not in id_entry:
+                continue
+
+            type_id = id_entry["type"]
+            number = id_entry["number"]
+
+            # Get the IDNumberType title (cache it to avoid multiple DB queries)
+            if type_id not in type_titles:
+                try:
+                    id_type = IDNumberType.query.get(int(type_id))
+                    type_titles[type_id] = id_type.title if id_type else f"Unknown_Type_{type_id}"
+                except (ValueError, TypeError):
+                    type_titles[type_id] = f"Invalid_Type_{type_id}"
+
+            title = type_titles[type_id]
+
+            # Track how many times we've seen this type
+            if title not in type_counts:
+                type_counts[title] = 0
+                flattened[title] = number
+            else:
+                type_counts[title] += 1
+                flattened[f"{title}_{type_counts[title]}"] = number
 
         return flattened

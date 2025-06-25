@@ -37,36 +37,6 @@ ALTER TABLE actor ALTER COLUMN id_number SET NOT NULL;
 ALTER TABLE actor ADD CONSTRAINT check_actor_id_number_is_array 
 CHECK (jsonb_typeof(id_number) = 'array');
 
--- Add check constraint to ensure each element has string type and number keys
-ALTER TABLE actor ADD CONSTRAINT check_actor_id_number_element_structure 
-CHECK (
-    id_number = '[]'::jsonb OR 
-    (
-        SELECT bool_and(
-            jsonb_typeof(elem->'type') = 'string' AND 
-            jsonb_typeof(elem->'number') = 'string' AND
-            (elem->'type') IS NOT NULL AND 
-            (elem->'number') IS NOT NULL
-        ) 
-        FROM jsonb_array_elements(id_number) AS elem
-    )
-);
-
--- Add check constraint to ensure valid IDNumberType references
-ALTER TABLE actor ADD CONSTRAINT check_actor_id_number_valid_type_references 
-CHECK (
-    id_number = '[]'::jsonb OR 
-    (
-        SELECT bool_and(
-            EXISTS (
-                SELECT 1 FROM id_number_types 
-                WHERE id = (elem->>'type')::int AND deleted = FALSE
-            )
-        ) 
-        FROM jsonb_array_elements(id_number) AS elem
-    )
-);
-
 -- Create an index for better performance on JSONB queries
 CREATE INDEX IF NOT EXISTS ix_actor_id_number_gin ON actor USING GIN (id_number);
 
@@ -75,8 +45,6 @@ CREATE INDEX IF NOT EXISTS ix_actor_id_number_gin ON actor USING GIN (id_number)
 -- To rollback this migration:
 -- 1. Remove constraints
 ALTER TABLE actor DROP CONSTRAINT IF EXISTS check_actor_id_number_is_array;
-ALTER TABLE actor DROP CONSTRAINT IF EXISTS check_actor_id_number_element_structure;
-ALTER TABLE actor DROP CONSTRAINT IF EXISTS check_actor_id_number_valid_type_references;
 
 -- 2. Drop index
 DROP INDEX IF EXISTS ix_actor_id_number_gin;
