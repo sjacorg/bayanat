@@ -1052,7 +1052,11 @@ class Actor(db.Model, BaseMixin):
         type_titles = {}  # Cache for type titles
 
         # Extract all unique type IDs from id_number
-        unique_type_ids = {int(id_entry["type"]) for id_entry in self.id_number if isinstance(id_entry, dict) and "type" in id_entry and "number" in id_entry}
+        unique_type_ids = {
+            int(id_entry["type"])
+            for id_entry in self.id_number
+            if isinstance(id_entry, dict) and "type" in id_entry and "number" in id_entry
+        }
 
         # Perform a bulk query to fetch all IDNumberType entries
         id_types = IDNumberType.query.filter(IDNumberType.id.in_(unique_type_ids)).all()
@@ -1117,4 +1121,4 @@ DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
 
 # Register DDL events to ensure function exists for both fresh installs and migrations
 event.listen(Actor.__table__, "before_create", create_validation_function)
-event.listen(Actor.__table__, "before_drop", drop_validation_function)
+event.listen(Actor.__table__, "after_drop", drop_validation_function)
