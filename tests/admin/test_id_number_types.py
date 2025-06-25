@@ -1,12 +1,14 @@
 import pytest
 
-from enferno.admin.models import IDNumberType
+from enferno.admin.models.Actor import Actor
+from enferno.admin.models.IDNumberType import IDNumberType
 from enferno.admin.validation.util import convert_empty_strings_to_none
 from tests.factories import IDNumberTypeFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
     get_first_or_fail,
 )
+from tests.factories import create_simple_actor
 
 #### PYDANTIC MODELS #####
 
@@ -152,3 +154,35 @@ def test_delete_id_number_type(
         assert found_id_number_type is None
     else:
         assert found_id_number_type
+
+
+delete_id_number_type_still_referenced_roles = [
+    ("admin_client", 409),
+    ("da_client", 403),
+    ("mod_client", 403),
+    ("anonymous_client", 401),
+]
+
+
+@pytest.mark.parametrize(
+    "client_fixture, expected_status", delete_id_number_type_still_referenced_roles
+)
+def test_delete_id_number_type_still_referenced(
+    clean_slate_id_number_types,
+    create_id_number_type,
+    request,
+    client_fixture,
+    expected_status,
+    create_simple_actor,
+):
+    actor = get_first_or_fail(Actor)
+    actor.id_number = [{"type": str(create_id_number_type.id), "number": "1234567890"}]
+    actor.save()
+    client_ = request.getfixturevalue(client_fixture)
+    response = client_.delete(
+        f"/admin/api/id-number-type/{create_id_number_type.id}",
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == expected_status
+    if expected_status == 409:
+        assert "is referenced by" in response.text.lower()
