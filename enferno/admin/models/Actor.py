@@ -1051,21 +1051,25 @@ class Actor(db.Model, BaseMixin):
         type_counts = {}
         type_titles = {}  # Cache for type titles
 
+        # Extract all unique type IDs from id_number
+        unique_type_ids = {int(id_entry["type"]) for id_entry in self.id_number if isinstance(id_entry, dict) and "type" in id_entry and "number" in id_entry}
+
+        # Perform a bulk query to fetch all IDNumberType entries
+        id_types = IDNumberType.query.filter(IDNumberType.id.in_(unique_type_ids)).all()
+        for id_type in id_types:
+            type_titles[id_type.id] = id_type.title
+
+        # Handle missing or invalid type IDs
+        for type_id in unique_type_ids:
+            if type_id not in type_titles:
+                type_titles[type_id] = f"Unknown_Type_{type_id}"
+
         for id_entry in self.id_number:
             if not isinstance(id_entry, dict) or "type" not in id_entry or "number" not in id_entry:
                 continue
 
-            type_id = id_entry["type"]
+            type_id = int(id_entry["type"])
             number = id_entry["number"]
-
-            # Get the IDNumberType title (cache it to avoid multiple DB queries)
-            if type_id not in type_titles:
-                try:
-                    id_type = IDNumberType.query.get(int(type_id))
-                    type_titles[type_id] = id_type.title if id_type else f"Unknown_Type_{type_id}"
-                except (ValueError, TypeError):
-                    type_titles[type_id] = f"Invalid_Type_{type_id}"
-
             title = type_titles[type_id]
 
             # Track how many times we've seen this type
