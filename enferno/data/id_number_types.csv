@@ -6,4 +6,5 @@ id,title,title_tr
 5,Tax ID,
 6,Military ID,
 7,Birth Certificate,
-8,Other,
+8,Student ID,
+9,Other,
