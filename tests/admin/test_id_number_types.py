@@ -180,7 +180,7 @@ def test_delete_id_number_type_still_referenced(
     actor.save()
     client_ = request.getfixturevalue(client_fixture)
     response = client_.delete(
-        f"/admin/api/id-number-type/{create_id_number_type.id}",
+        f"/admin/api/idnumbertype/{create_id_number_type.id}",
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == expected_status
