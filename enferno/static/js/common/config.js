@@ -152,36 +152,65 @@ axios.interceptors.response.use(
     },
 );
 
-function handleRequestError(error) {
-    const containsHTML = (str) => /<\/?[a-z][\s\S]*>/i.test(str);
-
-    if (error?.response?.data?.response?.errors) {
-        return error.response.data.response.errors.join('\n') || 'An error occurred.';
+function getInfraMessage(status) {
+    switch (status) {
+      case 502:
+      case 503:
+        return 'Service temporarily unavailable, please try again shortly.';
+      case 500:
+        return 'Server error, please try again or contact support.';
+      default:
+        return 'Unexpected error, please contact support if the issue persists.';
     }
-
-    if (error?.response?.data?.errors) {
-        const errors = error.response.data.errors;
-        let message = '';
-        for (const field in errors) {
-            let fieldName = field.startsWith('item.') ? field.substring(5) : field;
-            const safeText = `${errors[field]}`.replace(/<\/?[^>]+(>|$)/g, ''); // strip all HTML
-            message += `[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]: ${safeText}\n`;
+  }
+  
+ function handleRequestError(error) {
+    const response = error?.response;
+  
+    // Handle known API error format
+    if (response?.data?.response?.errors) {
+      return response.data.response.errors.join('\n');
+    }
+  
+    if (response?.data?.errors) {
+      const errors = response.data.errors;
+      return Object.entries(errors).map(([field, message]) => {
+        const fieldName = field.startsWith('item.') ? field.slice(5) : field;
+        const label = fieldName.includes('__root__') ? 'Validation Error' : fieldName;
+        return `[${label}]: ${message}`;
+      }).join('\n') || 'An error occurred.';
+    }
+  
+    // Check for HTML response by Content-Type header
+    const ct = response?.headers?.['content-type'] || '';
+    if (ct.includes('text/html') && response?.status) {
+      return getInfraMessage(response.status);
+    }
+  
+    // Fallback: detect HTML content via DOMParser
+    if (typeof response?.data === 'string') {
+      try {
+        const doc = new DOMParser().parseFromString(response.data, 'text/html');
+        if (doc.body.children.length && response?.status) {
+          return getInfraMessage(response.status);
         }
-        return message || 'An error occurred.';
+        return response.data; // It's a plain string, safe to show
+      } catch {
+        return 'Unexpected error occurred while processing server response.';
+      }
     }
-
-    if (typeof error?.response?.data === 'string') {
-        return containsHTML(error.response.data) ? 'An error occurred.' : error.response.data;
+  
+    // No response from server (network issue, timeout, etc.)
+    if (error.request) {
+      return 'No response from server. Contact an admin.';
     }
-
-    if (error?.request) {
-        return 'No response from server. Contact an admin.';
-    }
-
+  
+    // Axios or JS-level error
     if (error?.message) {
-        return error.message || 'An error occurred.';
+      return error.message || 'An error occurred.';
     }
-
+  
+    // Total fallback
     return 'Request failed. Check your network connection.';
 }
 
