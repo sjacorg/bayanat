@@ -1876,7 +1876,7 @@ def api_dialect_delete(
         return "Error deleting Dialect", 417
 
 
-@admin.route("/api/id-number-types/", methods=["GET", "POST"])
+@admin.route("/api/idnumbertypes/", methods=["GET", "POST"])
 def api_id_number_types() -> Response:
     """
     Returns ID Number Types in JSON format, allows search and paging.
@@ -1906,7 +1906,7 @@ def api_id_number_types() -> Response:
     return Response(json.dumps(response), content_type="application/json"), 200
 
 
-@admin.post("/api/id-number-type")
+@admin.post("/api/idnumbertype")
 @roles_required("Admin")
 @validate_with(ComponentDataMixinRequestModel)
 def api_id_number_type_create(
@@ -1930,14 +1930,14 @@ def api_id_number_type_create(
             Activity.ACTION_CREATE,
             Activity.STATUS_SUCCESS,
             id_number_type.to_mini(),
-            "id_number_type",
+            "idnumbertype",
         )
-        return f"Item created successfully ID #{id_number_type.id}", 200
+        return f"Item created successfully ID {id_number_type.id}", 200
     else:
         return "Creation failed.", 417
 
 
-@admin.put("/api/id-number-type/<int:id>")
+@admin.put("/api/idnumbertype/<int:id>")
 @roles_required("Admin")
 @validate_with(ComponentDataMixinRequestModel)
 def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
@@ -1961,7 +1961,7 @@ def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
                 Activity.ACTION_UPDATE,
                 Activity.STATUS_SUCCESS,
                 id_number_type.to_mini(),
-                "id_number_type",
+                "idnumbertype",
             )
             return "Updated", 200
         else:
@@ -1970,7 +1970,7 @@ def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
         return HTTPResponse.NOT_FOUND
 
 
-@admin.delete("/api/id-number-type/<int:id>")
+@admin.delete("/api/idnumbertype/<int:id>")
 @roles_required("Admin")
 def api_id_number_type_delete(
     id: t.id,
@@ -1995,9 +1995,9 @@ def api_id_number_type_delete(
             Activity.ACTION_DELETE,
             Activity.STATUS_SUCCESS,
             id_number_type.to_mini(),
-            "id_number_type",
+            "idnumbertype",
         )
-        return f"ID Number Type Deleted #{id_number_type.id}", 200
+        return f"ID Number Type Deleted {id_number_type.id}", 200
     else:
         return "Error deleting ID Number Type", 417
 

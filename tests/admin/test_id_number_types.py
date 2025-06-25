@@ -37,7 +37,7 @@ def clean_slate_id_number_types(session):
     yield
 
 
-##### GET /admin/api/id-number-types #####
+##### GET /admin/api/idnumbertypes #####
 
 id_number_types_endpoint_roles = [
     ("admin_client", 200),
@@ -53,7 +53,7 @@ def test_id_number_types_endpoint(
 ):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.get(
-        "/admin/api/id-number-types",
+        "/admin/api/idnumbertypes",
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
@@ -64,7 +64,7 @@ def test_id_number_types_endpoint(
         )
 
 
-##### POST /admin/api/id-number-type #####
+##### POST /admin/api/idnumbertype #####
 
 post_id_number_type_roles = [
     ("admin_client", 200),
@@ -79,7 +79,7 @@ def test_post_id_number_type(clean_slate_id_number_types, request, client_fixtur
     client_ = request.getfixturevalue(client_fixture)
     id_number_type = IDNumberTypeFactory()
     response = client_.post(
-        "/admin/api/id-number-type",
+        "/admin/api/idnumbertype",
         headers={"Content-Type": "application/json"},
         json={"item": id_number_type.to_dict()},
     )
@@ -93,7 +93,7 @@ def test_post_id_number_type(clean_slate_id_number_types, request, client_fixtur
         assert found_id_number_type is None
 
 
-##### PUT /admin/api/id-number-type/<int:id> #####
+##### PUT /admin/api/idnumbertype/<int:id> #####
 
 put_id_number_type_roles = [
     ("admin_client", 200),
@@ -113,7 +113,7 @@ def test_put_id_number_type(
     new_id_number_type = IDNumberTypeFactory()
     new_id_number_type.id = id_number_type_id
     response = client_.put(
-        f"/admin/api/id-number-type/{id_number_type_id}",
+        f"/admin/api/idnumbertype/{id_number_type_id}",
         headers={"Content-Type": "application/json"},
         json={"item": new_id_number_type.to_dict()},
     )
@@ -125,7 +125,7 @@ def test_put_id_number_type(
         assert found_id_number_type.title != new_id_number_type.title
 
 
-##### DELETE /admin/api/id-number-type/<int:id> #####
+##### DELETE /admin/api/idnumbertype/<int:id> #####
 
 delete_id_number_type_roles = [
     ("admin_client", 200),
@@ -143,7 +143,7 @@ def test_delete_id_number_type(
     id_number_type = get_first_or_fail(IDNumberType)
     id_number_type_id = id_number_type.id
     response = client_.delete(
-        f"/admin/api/id-number-type/{id_number_type_id}",
+        f"/admin/api/idnumbertype/{id_number_type_id}",
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == expected_status

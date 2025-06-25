@@ -2341,7 +2341,7 @@ paths:
               schema:
                 type: string
                 example: "Error deleting dialect"
-  /admin/api/id-number-types:
+  /admin/api/idnumbertypes:
     get:
       operationId: getIDNumberTypes
       tags:
@@ -2370,7 +2370,7 @@ paths:
                 $ref: '#/components/schemas/ComponentsResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedResponse'
-  /admin/api/id-number-type:
+  /admin/api/idnumbertype:
     post:
       operationId: createIDNumberType
       tags:
@@ -2399,7 +2399,7 @@ paths:
           $ref: '#/components/responses/UnauthorizedJsonResponse'
         '417':
           $ref: '#/components/responses/SaveFailedResponse'
-  /admin/api/id-number-type/{id}:
+  /admin/api/idnumbertype/{id}:
     put:
       operationId: updateIDNumberType
       tags:
