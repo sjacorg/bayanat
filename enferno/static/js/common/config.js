@@ -134,6 +134,9 @@ const debounce = (fn, time) => {
 //register leaflet map components
 const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 
+// Set axios defaults
+axios.defaults.headers.common['Accept'] = 'application/json';
+
 //global axios error handler - can be used to define global exception handling on ajax failures
 axios.interceptors.response.use(
     function (response) {
