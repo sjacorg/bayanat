@@ -6,6 +6,28 @@ INSERT INTO id_number_types (id, title, title_tr, created_at, updated_at, delete
 VALUES (1, 'National ID', '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE) 
 ON CONFLICT (id) DO NOTHING;
 
+-- Create a function to validate id_number structure
+CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Check if it's an empty array (always valid)
+    IF jsonb_array_length(id_number_data) = 0 THEN
+        RETURN TRUE;
+    END IF;
+    
+    -- Check each element has the required structure
+    RETURN (
+        SELECT bool_and(
+            jsonb_typeof(elem->'type') = 'string' AND 
+            jsonb_typeof(elem->'number') = 'string' AND
+            (elem->'type') IS NOT NULL AND 
+            (elem->'number') IS NOT NULL
+        )
+        FROM jsonb_array_elements(id_number_data) AS elem
+    );
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
 -- Create a backup of the current data
 CREATE TABLE IF NOT EXISTS actor_id_number_backup AS 
 SELECT id, id_number 
@@ -37,6 +59,10 @@ ALTER TABLE actor ALTER COLUMN id_number SET NOT NULL;
 ALTER TABLE actor ADD CONSTRAINT check_actor_id_number_is_array 
 CHECK (jsonb_typeof(id_number) = 'array');
 
+-- Add check constraint to ensure each element has the required structure
+ALTER TABLE actor ADD CONSTRAINT check_actor_id_number_element_structure 
+CHECK (validate_actor_id_number(id_number));
+
 -- Create an index for better performance on JSONB queries
 CREATE INDEX IF NOT EXISTS ix_actor_id_number_gin ON actor USING GIN (id_number);
 
@@ -45,14 +71,18 @@ CREATE INDEX IF NOT EXISTS ix_actor_id_number_gin ON actor USING GIN (id_number)
 -- To rollback this migration:
 -- 1. Remove constraints
 ALTER TABLE actor DROP CONSTRAINT IF EXISTS check_actor_id_number_is_array;
+ALTER TABLE actor DROP CONSTRAINT IF EXISTS check_actor_id_number_element_structure;
 
--- 2. Drop index
+-- 2. Drop the validation function
+DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
+
+-- 3. Drop index
 DROP INDEX IF EXISTS ix_actor_id_number_gin;
 
--- 3. Add temporary string column
+-- 4. Add temporary string column
 ALTER TABLE actor ADD COLUMN id_number_temp VARCHAR(255);
 
--- 4. Convert JSONB back to string (taking first element's number)
+-- 5. Convert JSONB back to string (taking first element's number)
 UPDATE actor 
 SET id_number_temp = CASE 
     WHEN jsonb_array_length(id_number) > 0 
@@ -60,15 +90,15 @@ SET id_number_temp = CASE
     ELSE NULL
 END;
 
--- 5. Drop JSONB column and rename temp column
+-- 6. Drop JSONB column and rename temp column
 ALTER TABLE actor DROP COLUMN id_number;
 ALTER TABLE actor RENAME COLUMN id_number_temp TO id_number;
 
--- 6. Restore data from backup if needed
+-- 7. Restore data from backup if needed
 -- UPDATE actor SET id_number = backup.id_number 
 -- FROM actor_id_number_backup backup 
 -- WHERE actor.id = backup.id;
 
--- 7. Drop backup table
+-- 8. Drop backup table
 DROP TABLE IF EXISTS actor_id_number_backup;
 */ 

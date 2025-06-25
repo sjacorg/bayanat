@@ -6,7 +6,7 @@ import sqlalchemy
 from flask_babel import gettext
 from flask_login import current_user
 from geoalchemy2 import Geography
-from sqlalchemy import ARRAY, func
+from sqlalchemy import ARRAY, func, event, DDL
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
 from sqlalchemy.sql import text
 
@@ -188,6 +188,9 @@ class Actor(db.Model, BaseMixin):
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
         db.CheckConstraint(
             "jsonb_typeof(id_number) = 'array'", name="check_actor_id_number_is_array"
+        ),
+        db.CheckConstraint(
+            "validate_actor_id_number(id_number)", name="check_actor_id_number_element_structure"
         ),
     )
 
@@ -1074,3 +1077,40 @@ class Actor(db.Model, BaseMixin):
                 flattened[f"{title}_{type_counts[title]}"] = number
 
         return flattened
+
+
+# DDL event to create the validation function for fresh installs
+create_validation_function = DDL(
+    """
+CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Check if it's an empty array (always valid)
+    IF jsonb_array_length(id_number_data) = 0 THEN
+        RETURN TRUE;
+    END IF;
+    
+    -- Check each element has the required structure
+    RETURN (
+        SELECT bool_and(
+            jsonb_typeof(elem->'type') = 'string' AND 
+            jsonb_typeof(elem->'number') = 'string' AND
+            (elem->'type') IS NOT NULL AND 
+            (elem->'number') IS NOT NULL
+        )
+        FROM jsonb_array_elements(id_number_data) AS elem
+    );
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+"""
+)
+
+drop_validation_function = DDL(
+    """
+DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
+"""
+)
+
+# Register DDL events to ensure function exists for both fresh installs and migrations
+event.listen(Actor.__table__, "before_create", create_validation_function)
+event.listen(Actor.__table__, "before_drop", drop_validation_function)
