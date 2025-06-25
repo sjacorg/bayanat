@@ -61,7 +61,7 @@ const ShortActorDialog = Vue.defineComponent({
   },
   emits: ['update:open', 'close', 'createActor'],
   data: () => ({
-    editedItem: {...defaultActorData},
+    editedItem: { ...defaultActorData },
     valid: false,
     unrestricted: false,
     translations: window.translations,
@@ -71,7 +71,7 @@ const ShortActorDialog = Vue.defineComponent({
       { id: 2, title: "{{ _('Main')}}", fields: [] }, // Main Profile
       { id: 3, title: "{{ _('Missing Person')}}", fields: ['source', 'mp'] }, // Missing Person Profile
     ],
-    defaultItem: {...defaultActorData},
+    defaultItem: { ...defaultActorData },
     saving: false,
   }),
   computed: {
@@ -107,13 +107,13 @@ const ShortActorDialog = Vue.defineComponent({
     },
     confirmClose() {
       if (confirm(translations.confirm_)) {
-          this.close();
+        this.close();
       }
     },
     close() {
       this.$emit('update:open', false);
       setTimeout(() => {
-        this.editedItem = {...defaultActorData};
+        this.editedItem = { ...defaultActorData };
         this.unrestricted = false;
         this.saving = false;
       }, 300);
@@ -141,9 +141,9 @@ const ShortActorDialog = Vue.defineComponent({
           item: this.editedItem,
         })
         .then((response) => {
-          // TODO: Actor ID is required to either fetch the correct actor data 
+          // TODO: Actor ID is required to either fetch the correct actor data
           // or reformat the edited item to match the structure used in mode=1
-          this.$emit('createActor', this.editedItem)
+          this.$emit('createActor', this.editedItem);
           this.showSnack(response.data);
           this.close();
         })
@@ -155,17 +155,17 @@ const ShortActorDialog = Vue.defineComponent({
     },
   },
   watch: {
-    parentItem:{
+    parentItem: {
       handler(newParentItem) {
-        this.editedItem.comments = `First Data Analysis from Bulletin ${newParentItem.id ? '#' + newParentItem.id : ''}`
-        this.editedItem.status = 'Machine Created'
-        this.editedItem.roles = newParentItem.roles
-        const actorProfile = this.editedItem.actor_profiles.find(Boolean)
-        actorProfile.sources = newParentItem.sources
+        this.editedItem.comments = `First Data Analysis from Bulletin ${newParentItem.id ? '#' + newParentItem.id : ''}`;
+        this.editedItem.status = 'Machine Created';
+        this.editedItem.roles = newParentItem.roles;
+        const actorProfile = this.editedItem.actor_profiles.find(Boolean);
+        actorProfile.sources = newParentItem.sources;
       },
       deep: true,
-      immediate: true
-    }
+      immediate: true,
+    },
   },
   template: /*html*/ `
     <v-dialog
@@ -266,6 +266,56 @@ const ShortActorDialog = Vue.defineComponent({
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
                               <slot name="events"></slot>
+                          </div>
+
+                          <div style="grid-column: 1 / -1; min-width: 0;">
+                            <v-card>
+                              <v-card-item>
+                                <v-card-title>Relation</v-card-title>
+                              </v-card-item>
+                              <v-card-text>
+                                <v-list-item :title="translations.probability_">
+                                  <v-list-item-subtitle>
+                                    <v-chip-group
+                                      column
+                                      selected-class="bg-primary"
+                                    >
+                                      <v-chip filter v-for="item in translations.probs"
+                                              size="small">{{ item.tr }}
+                                      </v-chip>
+                                    </v-chip-group>
+                                  </v-list-item-subtitle>
+
+                                </v-list-item>
+
+                                <v-list-item :title="translations.relatedAs_">
+                                  <v-list-item-subtitle>
+                                    <v-chip-group
+                                      column
+                                      filter
+                                      selected-class="bg-primary"
+                                      :multiple="$root.actorRelationMultiple"
+                                    >
+                                      <v-chip v-for="rel in $root.actorRelationTypes"
+                                              :value="rel.id"
+                                              :key="rel.id" size="small"> {{ rel.title }}
+                                      </v-chip>
+                                    </v-chip-group>
+                                  </v-list-item-subtitle>
+                                </v-list-item>
+
+
+                                <v-list-item :title="translations.comments_">
+                                  <v-list-item-subtitle>
+                                    <v-text-field class="mt-2"
+                                                  variant="outlined"
+                                                  rows="1"
+                                                  clearable
+                                    ></v-text-field>
+                                  </v-list-item-subtitle>
+                                </v-list-item>
+                              </v-card-text>
+                            </v-card>
                           </div>
 
                           <div style="min-width: 0;">
