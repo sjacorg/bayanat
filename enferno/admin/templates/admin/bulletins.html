@@ -21,29 +21,24 @@
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
-                            elevation="16"
-                            color="primary"
-                            outlined
-                            icon="mdi-graph"
-                            @click.stop="visualizeResults"
-                            v-bind="props"
-                            v-if="showVisualize"
-                            :loading="visualizeLoading"
-                            variant="elevated"
-                            class="mb-5 mr-5 position-absolute "
-                            style="right: 30px; bottom: 90px; z-index: 1000;"
-                    >
-
-
-                    </v-btn>
+                        elevation="16"
+                        color="primary"
+                        outlined
+                        icon="mdi-graph"
+                        @click.stop="visualizeResults"
+                        v-bind="props"
+                        v-if="showVisualize"
+                        :loading="visualizeLoading"
+                        variant="elevated"
+                        class="mb-5 mr-5 position-absolute"
+                        style="right: 30px; bottom: 90px; z-index: 1000;"
+                    />
                 </template>
             </v-tooltip>
 
             <v-card>
 
                 <v-card-text>
-
-
                     <v-data-table-server
                             fixed-header
                             height="calc(100vh - 328px)"
@@ -53,18 +48,16 @@
                             :headers="headers"
                             @click:row="rowClick"
                             :items="items"
-                            @update:options="refresh"
-                            :page="options.page"
                             :loading="loading"
-                            :items-length="itemsLength"
                             :row-props="rowClass"
+                            :items-length="totalCount"
                             show-select
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
                             class="elevation-1"
+                            hide-default-footer
                     >
-
                         <template #top>
                             <v-sheet class="ma-3 d-flex align-center">
                                 <v-btn variant="text" class="hidden-sm-and-down" @click="allBulletins"
@@ -94,8 +87,11 @@
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
                                         :bg-color="searchBg"
-                                ></v-text-field>
+                                        clearable
+                                        
+                                        
 
+                                ></v-text-field>
 
                                 <v-spacer></v-spacer>
                                 {% if current_user.roles_in(['Admin','DA']) %}
@@ -126,12 +122,13 @@
                                 <template v-if="bulkIcons">
                                     <v-tooltip location="top" text="{{ _('Unselect all') }}">
                                         <template #activator="{props}">
-                                            <v-btn icon="mdi-checkbox-blank-outline"
-                                                   @click="selected=[]"
-                                                   class="mr-3 ml-1"
-                                                   density="compact"
-                                                   :="props">
-                                            </v-btn>
+                                            <v-btn
+                                                icon="mdi-checkbox-blank-outline"
+                                                @click="selected=[]"
+                                                class="mr-3 ml-1"
+                                                density="compact"
+                                                v-bind="props"
+                                            />
                                         </template>
                                     </v-tooltip>
 
@@ -181,23 +178,41 @@
 
                         </template>
 
-                        <template #footer.prepend>
-                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }}
-                                ${searchTime} {{ _('seconds') }}</div>
+                        <template #bottom>
+                            <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
+                                <div>{{ _('Search time: ') }}
+                                    ${searchTime} {{ _('seconds') }}</div>
+                                <div>
+                                
+                                <div class="d-flex flex-row align-center ga-2">
+                                    <div class="d-flex flex-row align-center ga-2">
+                                        {{ _('Items per page:') }}
+                                        <v-select :model-value="perPage" @update:model-value="setNextPerPageValue" hide-details density="compact" :items="itemsPerPageOptions"
+                                            variant="outlined"></v-select>
+
+                                    </div>
+                                    <div>
+                                        <span>${rangeStart}-${rangeEnd} of ${totalCount}</span>
+                                        <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text" icon="mdi-page-first"></v-btn>
+                                        <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text" icon="mdi-chevron-left"></v-btn>
+                                        <v-btn :disabled="loading || !nextCursor" @click="goToNextPage()" variant="text" icon="mdi-chevron-right"></v-btn>
+                                    </div>
+                                </div>
+                            </div>
                         </template>
+
+                        <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
                         <template #item.roles="{item}">
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
 
                                 <template #activator="{props}">
                                     <v-icon
-                                            :="props"
-                                            size="small"
-                                            :color="role.color || 'grey-lighten-1'"
-                                            icon="mdi-shield-lock"
-                                    >
-                                    </v-icon>
-
+                                        v-bind="props"
+                                        size="small"
+                                        :color="role.color || 'grey-lighten-1'"
+                                        icon="mdi-shield-lock"
+                                    />
                                 </template>
 
                             </v-tooltip>
@@ -252,9 +267,6 @@
                             </v-btn>
 
                         </template>
-
-
-                        <template v-slot:no-data></template>
                     </v-data-table-server>
 
                     <v-overlay :value="loading">
@@ -414,6 +426,8 @@
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
 
+    <script src="/static/js/directives/intersect.js"></script>
+
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
 
@@ -441,7 +455,6 @@
 
                 mixins: [mediaMixin, globalMixin],
 
-
                 components: {
 
                     "tinymce-editor": Editor, // <- Important part,
@@ -449,7 +462,7 @@
 
 
                 data: () => ({
-
+                    itemsPerPageOptions: window.itemsPerPageOptions,
                     helper: {}, // helper object for review items
 
                     valid: false,
@@ -465,6 +478,13 @@
                     btobInfo: [],
                     itoiInfo: [],
 
+                    cursorPage: 1,
+                    currentCursor: null,          // the current request's cursor
+                    nextCursor: null,             // the next cursor from the API
+                    cursorHistory: [null],        // page 1 starts at null
+                    perPage: window.itemsPerPageOptions?.[0] ?? 20,
+                    items: [],
+                    selected: [],
 
                     dzOpts: {
                         url: '/admin/api/media/chunk',
@@ -513,7 +533,7 @@
                     graphTimer: null,
 
 
-                    fsloading: true,
+                    fsloading: false,
 
 
                     dialog: dialog,
@@ -585,7 +605,7 @@
                     tinyConfig: tinyConfig,
 
 
-                    loading: true,
+                    loading: false,
                     parentLoading: false,
                     csvFile: null,
                     options: {},
@@ -684,10 +704,21 @@
 
                     webImportDlg: false,
                     webUrl: '',
-                    webImportLoading: false
+                    webImportLoading: false,
+
+                    fetchingRecordsError: false,
+                    
+                    // Count functionality  
+                    totalCount: 0,
                 }),
 
                 computed: {
+                    rangeStart() {
+                        return this.totalCount === 0 ? 0 : (this.cursorPage - 1) * this.perPage + 1;
+                    },
+                    rangeEnd() {
+                        return this.totalCount === 0 ? 0 : this.rangeStart + this.items.length - 1;
+                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)
@@ -716,7 +747,6 @@
                     compLocations() {
                         return aggregateBulletinLocations(this.editedItem);
                     },
-
 
                     exBulletins() {
                         let ids = [];
@@ -787,6 +817,9 @@
                         return this.currentUser.roles;
                     },
 
+                    showingItemsOfText() {
+                        return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
+                    }
                 },
 
 
@@ -834,7 +867,6 @@
                 },
                 mounted: function () {
 
-
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
                         axios.get('/admin/api/roles/').then(res => {
@@ -844,8 +876,9 @@
                             console.error(e.message);
                         });
                     {% endif  %}
-
-
+                    
+                    // Load initial data
+                    this.refresh();
 
                     // display confirmation alert if edit dialog is open.
                     let self = this;
@@ -901,8 +934,6 @@
                         }
 
                     })
-
-
                 },
 
                 created() {
@@ -975,8 +1006,7 @@
                             console.error(e.message);
                         }).finally(() => {
                         });
-                    }
-                    ,
+                    },
 
 
                     exportRequest() {
@@ -1124,38 +1154,76 @@
 
                     },
                     doSearch() {
-                        this.options.page = 1;
                         this.advSearchExpand = this.advSearchExpand && false;
                         this.refresh();
                     },
 
-                    refresh(options) {
-
-                        this.options = options || { ...this.options, page: 1 };
-                        this.loading = true;
-                        const startTime = new Date()
-
-                        let url = `/admin/api/bulletins/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
-
-                        axios.post(url, {
-                            q: this.search,
-                            options: this.options
-                        }).then(response => {
-                            const endTime = new Date()
-                            this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                            this.itemsLength = response.data.total;
-                            this.items = response.data.items;
-                            this.showVisualize = !(
-                                this.search.length === 1 &&
-                                Object.keys(this.search[0]).length === 0
-                            );
-
-                        }).finally(() => {
-                            this.loading = false;
-                        });
-
-
+                    setNextPerPageValue(nextPerPage) {
+                        this.perPage = nextPerPage;
+                        this.goToFirstPage();
                     },
+
+                    refresh() {
+                        if (this.loading) return;
+
+                        this.loading = true;
+
+                        const requestData = {
+                            q: this.search,
+                            per_page: this.perPage,
+                            cursor: this.currentCursor,
+                            include_count: true,
+                        };
+
+                        axios.post('/admin/api/bulletins/', requestData)
+                            .then((response) => {
+                                this.items = response.data.items;
+                                if ('total' in response.data) {
+                                    this.totalCount = response.data.total
+                                    this.countType = response.data.totalType
+                                }
+                                this.nextCursor = response.data.nextCursor || null;
+                            })
+                            .catch((error) => {
+                                console.error('Error loading data:', error);
+                                this.showSnack('Error loading data');
+                            })
+                            .finally(() => {
+                                this.loading = false;
+                            });
+                    },
+
+                    goToFirstPage() {
+                        if (this.loading) return;
+
+                        this.currentCursor = null;
+                        this.cursorPage = 1
+
+                        this.refresh();
+                    },
+
+                    goToNextPage() {
+                        if (this.loading || !this.nextCursor) return;
+
+                        this.currentCursor = this.nextCursor;
+                        this.cursorPage++;
+
+                        // Save currentCursor before moving to next page
+                        this.cursorHistory[this.cursorPage - 1] = this.currentCursor;
+
+                        this.refresh();
+                    },
+
+                    goToPrevPage() {
+                        if (this.loading || this.cursorPage <= 1) return;
+
+                        this.cursorPage--;
+
+                        this.currentCursor = this.cursorHistory[this.cursorPage - 1] || null;
+                        this.refresh();
+                    },
+
+
                     removeQueryAt(i) {
 
                         this.search.splice(i, 1);
@@ -1175,7 +1243,7 @@
 
                     resetSearch() {
                         this.resetQuery();
-                        this.doSearch();
+                        this.refresh();
                     },
 
                     openSaveQueryDialog() {
@@ -1259,12 +1327,10 @@
 
                     allBulletins() {
                         this.search = [{}];
-                        this.doSearch();
-
+                        this.refresh();
                     },
                     myAssigned() {
-                        q = {};
-                        this.options.page = 1;
+                        let q = {};
                         q.assigned = [this.currentUser.id];
                         q.statuses = ["Assigned"];
                         this.search = [q];
@@ -1272,11 +1338,10 @@
                     },
 
                     myReview() {
-                        q = {};
-                        this.options.page = 1;
+                        let q = {};
                         q.reviewer = [this.currentUser.id];
                         q.statuses = ["Peer Review Assigned"];
-                        this.search = [q]
+                        this.search = [q];
                         this.refresh();
                     },
 
@@ -1784,7 +1849,8 @@
                             .finally(() => {
                                 this.webImportLoading = false;
                             });
-                    }
+                    },
+
                 }
             })
         ;
@@ -1831,6 +1897,8 @@
         app.component('mp-field', MPField);
         app.component('mp-card', MPCard);
         app.component('ActorProfiles', ActorProfiles);
+
+        app.directive('intersect', intersect);
 
 
         app.use(router);

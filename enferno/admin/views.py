@@ -17,7 +17,8 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, select, func, text
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
@@ -124,6 +125,7 @@ from enferno.utils.graph_utils import GraphUtils
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
+
 
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
@@ -275,7 +277,8 @@ def api_labels() -> Response:
     elif fltr == "all":
         pass
     else:
-        query.append(Label.verified == False)
+        # Include both False and NULL values for unverified labels
+        query.append(or_(Label.verified == False, Label.verified == None))
 
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
@@ -2627,7 +2630,6 @@ def api_mediacategory_create(
 def api_mediacategory_update(id: t.id, validated_data: dict) -> Response:
     """
     Endpoint to update a MediaCategory.
-
     Args:
         - id: id of the MediaCategory
         - validated_data: validated data from the request.
@@ -2840,17 +2842,7 @@ def bulletins(id: Optional[t.id]) -> str:
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
 @validate_with(BulletinQueryRequestModel)
 def api_bulletins(validated_data: dict) -> Response:
-    """
-    Returns bulletins in JSON format, allows search and paging.
-
-    Args:
-        - validated_data: validated data from the request.
-
-    Returns:
-        - response: Response object
-        - status code: 200
-    """
-    # log search query
+    # Log search query
     q = validated_data.get("q", None)
     if q and q != [{}]:
         Activity.create(
@@ -2861,35 +2853,95 @@ def api_bulletins(validated_data: dict) -> Response:
             "bulletin",
         )
 
-    su = SearchUtils(validated_data, cls="bulletin")
-    queries, ops = su.get_query()
-    result = Bulletin.query.filter(*queries.pop(0))
+    q = validated_data.get("q", [{}])
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", 20)
+    include_count = validated_data.get("include_count", False)
 
-    # nested queries
-    if len(queries) > 0:
-        while queries:
-            nextOp = ops.pop(0)
-            nextQuery = queries.pop(0)
-            if nextOp == "union":
-                result = result.union(Bulletin.query.filter(*nextQuery))
-            elif nextOp == "intersect":
-                result = result.intersect(Bulletin.query.filter(*nextQuery))
+    search = SearchUtils({"q": q}, "bulletin")
+    base_query = search.get_query()
 
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
-    result = result.order_by(Bulletin.updated_at.desc()).paginate(
-        page=page, per_page=per_page, count=True
-    )
+    if include_count and cursor is None:
+        # Single query approach: use window function to get count with results
+        # Only do this on first page to avoid performance overhead on pagination
+        count_subquery = (
+            base_query.add_columns(func.count().over().label("total_count"))
+            .order_by(Bulletin.id.desc())
+            .limit(per_page + 1)
+        )
 
-    # Select json encoding type
-    mode = request.args.get("mode", "1")
+        result = db.session.execute(count_subquery)
+        rows = result.all()
+
+        if rows:
+            items = [row[0] for row in rows]  # Extract Bulletin objects
+            total_count = rows[0].total_count if rows else 0
+        else:
+            items = []
+            total_count = 0
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+    else:
+        # Fast pagination approach: no counting overhead
+        main_query = base_query.order_by(Bulletin.id.desc())
+        if cursor:
+            main_query = main_query.where(Bulletin.id < int(cursor))
+
+        paginated_query = main_query.limit(per_page + 1)
+        result = db.session.execute(paginated_query)
+        items = result.scalars().unique().all()
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+        total_count = None
+
+    # Minimal serialization for list view
+    serialized_items = [
+        {
+            "id": item.id,
+            "title": item.title,
+            "status": item.status,
+            "assigned_to": (
+                {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                if item.assigned_to
+                else None
+            ),
+            "roles": (
+                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
+                if item.roles
+                else []
+            ),
+            "_status": item.status,
+            "review_action": item.review_action,
+        }
+        for item in items
+    ]
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": per_page,
-        "total": result.total,
+        "items": serialized_items,
+        "nextCursor": next_cursor,
+        "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    # Add count if it was calculated
+    if include_count and cursor is None and total_count is not None:
+        response["total"] = total_count
+        response["totalType"] = "exact"
+
+    return jsonify(response)
 
 
 @admin.post("/api/bulletin/")
@@ -3608,7 +3660,7 @@ def serve_media(
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
 
-        s3_config = BotoConfig(signature_version='s3v4')
+        s3_config = BotoConfig(signature_version="s3v4")
 
         s3 = boto3.client(
             "s3",
