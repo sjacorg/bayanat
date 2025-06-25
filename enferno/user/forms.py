@@ -4,7 +4,7 @@ from wtforms import StringField
 from wtforms.validators import ValidationError
 
 from flask_wtf import RecaptchaField
-from enferno.admin.validation.util import sanitize_string
+from enferno.utils.validation_utils import validate_plain_text_field
 
 
 class ExtendedRegisterForm(RegisterForm):
@@ -16,29 +16,12 @@ class ExtendedLoginForm(LoginForm):
 
 
 class SanitizedWebAuthnRegisterForm(WebAuthnRegisterForm):
-    """Custom WebAuthn registration form with sanitized name field"""
+    """Custom WebAuthn registration form with plain text validation for device names"""
 
     def validate_name(self, field):
-        """Validate and sanitize the name field"""
-        # Check for empty or None field data first
-        if not field.data or not field.data.strip():
-            raise ValidationError(
-                "Device name cannot be empty or contain only HTML/special characters."
-            )
-
-        # Sanitize the field data
-        sanitized_name = sanitize_string(field.data)
-        field.data = sanitized_name
-
-        # Ensure name is not empty after sanitization
-        if not sanitized_name.strip():
-            raise ValidationError(
-                "Device name cannot be empty or contain only HTML/special characters."
-            )
-
-        # Ensure the sanitized name isn't too long for the database field
-        if len(sanitized_name) > 64:
-            raise ValidationError("Device name is too long (maximum 64 characters).")
+        """Validate the name field to ensure it contains only plain text"""
+        # Use the new validation utility that rejects HTML instead of sanitizing
+        validate_plain_text_field(field.data, "Device name", max_length=64)
 
 
 class UserInfoForm:
