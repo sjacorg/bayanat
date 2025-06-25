@@ -39,8 +39,7 @@
             <v-card>
 
                 <v-card-text>
-                    <v-data-table-virtual
-                            ref="bulletinsTableRef"
+                    <v-data-table-server
                             fixed-header
                             height="calc(100vh - 328px)"
                             id="bulletins-dt"
@@ -51,13 +50,13 @@
                             :items="items"
                             :loading="loading"
                             :row-props="rowClass"
+                            :items-length="totalCount"
                             show-select
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
                             class="elevation-1"
                             hide-default-footer
-                            :items-length="items.length"
                     >
                         <template #top>
                             <v-sheet class="ma-3 d-flex align-center">
@@ -179,32 +178,6 @@
 
                         </template>
 
-                        <template v-if="items.length || fetchingRecordsError" #body.append>
-                            <tr>
-                                <td :colspan="headers.length + 1">
-                                    <template v-if="items.length && !fetchingRecordsError">
-                                        <div v-if="nextCursor !== null" v-intersect="{ callback: loadMore }" class="sentinel d-flex justify-center">
-                                            <v-progress-circular indeterminate />
-                                        </div>
-                                        <div v-else class="text-center text-caption">
-                                            {{ _('You\'ve reached the end of the list') }}
-                                        </div>
-                                    </template>
-                                    <v-alert v-else-if="fetchingRecordsError" variant="tonal" type="error" class="ma-2" title="{{ _('Unable to load records') }}"
-                                         density="compact">
-                                        <template #text>
-                                            <div>{{ _('Please try again or refresh the page') }}</div>
-
-                                            <v-btn @click="loadMore" density="compact" color="error" variant="outlined" class="my-2"
-                                                :loading="loading">
-                                                {{ _('Retry') }}
-                                            </v-btn>
-                                        </template>    
-                                    </v-alert>
-                                </td>
-                            </tr>
-                        </template>
-
                         <template #bottom>
                             <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
                                 <div>{{ _('Search time: ') }}
@@ -218,13 +191,11 @@
                                             variant="outlined"></v-select>
 
                                     </div>
-                                    <div style="min-width: 190px;">
-                                        <v-skeleton-loader v-if="loading && !items.length" type="text" class="w-100"></v-skeleton-loader>
-                                        <div v-else class="text-center w-100">
-                                            ${showingItemsOfText}
-                                            <span v-if="totalCount !== null">${totalCount}</span>
-                                            <a v-else @click="loadCount" class="text-primary text-decoration-underline cursor-pointer" v-tooltip="'{{ _('Click to show total items') }}'">{{ _('many') }} <v-icon size="x-small">mdi-information</v-icon></a>
-                                        </div>
+                                    <div>
+                                        <span>${rangeStart}-${rangeEnd} of ${totalCount}</span>
+                                        <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text" icon="mdi-page-first"></v-btn>
+                                        <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text" icon="mdi-chevron-left"></v-btn>
+                                        <v-btn :disabled="loading || !nextCursor" @click="goToNextPage()" variant="text" icon="mdi-chevron-right"></v-btn>
                                     </div>
                                 </div>
                             </div>
@@ -296,7 +267,7 @@
                             </v-btn>
 
                         </template>
-                    </v-data-table-virtual>
+                    </v-data-table-server>
 
                     <v-overlay :value="loading">
                         <v-progress-circular
@@ -507,7 +478,10 @@
                     btobInfo: [],
                     itoiInfo: [],
 
-                    nextCursor: null,
+                    cursorPage: 1,
+                    currentCursor: null,          // the current request's cursor
+                    nextCursor: null,             // the next cursor from the API
+                    cursorHistory: [null],        // page 1 starts at null
                     perPage: window.itemsPerPageOptions?.[0] ?? 20,
                     items: [],
                     selected: [],
@@ -735,11 +709,16 @@
                     fetchingRecordsError: false,
                     
                     // Count functionality  
-                    totalCount: null,
-                    loadCountOnNextRefresh: false,
+                    totalCount: 0,
                 }),
 
                 computed: {
+                    rangeStart() {
+                        return this.totalCount === 0 ? 0 : (this.cursorPage - 1) * this.perPage + 1;
+                    },
+                    rangeEnd() {
+                        return this.totalCount === 0 ? 0 : this.rangeStart + this.items.length - 1;
+                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)
@@ -767,9 +746,6 @@
 
                     compLocations() {
                         return aggregateBulletinLocations(this.editedItem);
-                    },
-                    recordCountText() {
-                        return "{{ _('Showing {count} items of {total}') }}".replace('{count}', this.items.length ?? 0).replace('{total}', this.totalCount ?? 'many')
                     },
 
                     exBulletins() {
@@ -966,16 +942,6 @@
                 },
 
                 methods: {
-                    setNextPerPageValue(nextPerPage) {
-                        this.perPage = nextPerPage;
-                        this.loadMore();
-                    },
-
-                    loadCount() {
-                        this.loadCountOnNextRefresh = true;
-                        this.refresh();
-                    },
-
                     fetchRelationInfo() {
                         axios.get('/admin/api/relation/info')
                             .then(response => {
@@ -1192,75 +1158,71 @@
                         this.refresh();
                     },
 
-                    refresh() {
-                        this.$refs.bulletinsTableRef?.scrollToIndex?.(0)
-                        this.items = [];
-                        this.nextCursor = null;
-                        this.totalCount = null;
-                        this.loadMore();
+                    setNextPerPageValue(nextPerPage) {
+                        this.perPage = nextPerPage;
+                        this.goToFirstPage();
                     },
 
-
-
-                    loadMore() {
+                    refresh() {
                         if (this.loading) return;
-                        if (this.items.length && this.nextCursor === null) return
-                        
-                        this.fetchingRecordsError = false;
-                        this.loading = true;
-                        const startTime = new Date()
 
-                        // Clean request data - all parameters in POST body
+                        this.loading = true;
+
                         const requestData = {
                             q: this.search,
                             per_page: this.perPage,
-                            cursor: this.nextCursor,
-                            include_count: this.loadCountOnNextRefresh && this.nextCursor === null
+                            cursor: this.currentCursor,
+                            include_count: true,
                         };
 
-                        axios.post('/admin/api/bulletins/', requestData).then(response => {
-                            const endTime = new Date()
-                            const duration = endTime - startTime
-                            this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
-                            console.log(`API call took ${duration}ms`)
-
-                            if (this.nextCursor === null) {
-                                // First page - replace items
+                        axios.post('/admin/api/bulletins/', requestData)
+                            .then((response) => {
                                 this.items = response.data.items;
-                                
-                                // Handle count if included
-                                if (response.data.total !== undefined) {
-                                    this.totalCount = response.data.total;
-                                    this.countType = response.data.totalType;
+                                if ('total' in response.data) {
+                                    this.totalCount = response.data.total
+                                    this.countType = response.data.totalType
                                 }
-                                
-                                // Reset the count flag after first load
-                                this.loadCountOnNextRefresh = false;
-                            } else {
-                                // Subsequent pages - append items
-                                this.items = this.items.concat(response.data.items);
-                            }
-                            
-                            // Set count if we haven't got an exact count yet
-                            if (response.data.nextCursor === null && this.totalCount === null) {
-                                // End of pagination without server count - use item count
-                                this.totalCount = this.items.length;
-                            }
-
-                            this.nextCursor = response.data.nextCursor;
-                            
-                            this.showVisualize = !(
-                                this.search.length === 1 &&
-                                Object.keys(this.search[0]).length === 0
-                            );
-                        }).catch(error => {
-                            console.error('Error loading bulletins:', error);
-                            this.showSnack('Error loading bulletins');
-                            this.fetchingRecordsError = true;
-                        }).finally(() => {
-                            this.loading = false;
-                        });
+                                this.nextCursor = response.data.nextCursor || null;
+                            })
+                            .catch((error) => {
+                                console.error('Error loading data:', error);
+                                this.showSnack('Error loading data');
+                            })
+                            .finally(() => {
+                                this.loading = false;
+                            });
                     },
+
+                    goToFirstPage() {
+                        if (this.loading) return;
+
+                        this.currentCursor = null;
+                        this.cursorPage = 1
+
+                        this.refresh();
+                    },
+
+                    goToNextPage() {
+                        if (this.loading || !this.nextCursor) return;
+
+                        this.currentCursor = this.nextCursor;
+                        this.cursorPage++;
+
+                        // Save currentCursor before moving to next page
+                        this.cursorHistory[this.cursorPage - 1] = this.currentCursor;
+
+                        this.refresh();
+                    },
+
+                    goToPrevPage() {
+                        if (this.loading || this.cursorPage <= 1) return;
+
+                        this.cursorPage--;
+
+                        this.currentCursor = this.cursorHistory[this.cursorPage - 1] || null;
+                        this.refresh();
+                    },
+
 
                     removeQueryAt(i) {
 
