@@ -6,14 +6,6 @@ from docx import Document
 from pypdf import PdfReader
 from pdf2image import convert_from_path
 
-try:
-    import whisper
-    from whisper.tokenizer import TO_LANGUAGE_CODE
-
-    whisper_available = True
-except ImportError:
-    whisper_available = False
-
 from enferno.admin.models import Media, Bulletin, Source, Label, Location, Activity
 from enferno.data_import.models import DataImport
 from enferno.user.models import User, Role
@@ -39,15 +31,18 @@ def now() -> str:
 
 
 if cfg.OCR_ENABLED:
-    from pytesseract import image_to_string, pytesseract
+    if cfg.HAS_TESSERACT:
+        from pytesseract import image_to_string, pytesseract
 
-    try:
-        pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
-        tesseract_langs = "+".join(pytesseract.get_languages(config=""))
-    except Exception as e:
-        logger.error(
-            f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
-        )
+        try:
+            pytesseract.tesseract_cmd = cfg.TESSERACT_CMD
+            tesseract_langs = "+".join(pytesseract.get_languages(config=""))
+        except Exception as e:
+            logger.error(
+                f"Tesseract system package is missing or Bayanat's OCR settings are not set properly: {e}"
+            )
+    else:
+        logger.warning("pytesseract not available. OCR functionality will be unavailable.")
 
 
 class MediaImport:
@@ -62,7 +57,9 @@ class MediaImport:
 
     @classmethod
     def get_whisper_model(cls):
-        if not cls._whisper_model and whisper_available and cfg.TRANSCRIPTION_ENABLED:
+        if not cls._whisper_model and cfg.HAS_WHISPER and cfg.TRANSCRIPTION_ENABLED:
+            import whisper
+
             cls._whisper_model = whisper.load_model(cfg.WHISPER_MODEL)
         return cls._whisper_model
 
@@ -192,6 +189,10 @@ class MediaImport:
             # if no text contect recognize
             # attempt to use Tesseract OCR
             if not text_content and attempt_ocr:
+                if not cfg.HAS_TESSERACT:
+                    logger.warning("pytesseract not available, skipping OCR.")
+                    # Raise the error so it is logged in data_import as well
+                    raise ModuleNotFoundError(name="pytesseract")
                 images = convert_from_path(filepath)
                 for image in images:
                     text = image_to_string(image, lang=tesseract_langs)
@@ -217,6 +218,10 @@ class MediaImport:
             - text content of the image file.
         """
         try:
+            if not cfg.HAS_TESSERACT:
+                logger.warning("pytesseract not available, skipping OCR.")
+                # Raise the error so it is logged in data_import as well
+                raise ModuleNotFoundError(name="pytesseract")
             text_content = image_to_string(filepath, lang=tesseract_langs)
             return text_content
         except Exception as e:
@@ -309,10 +314,12 @@ class MediaImport:
             - Transcribed text if successful, None otherwise
         """
         whisper_model = self.get_whisper_model()
-        if not cfg.TRANSCRIPTION_ENABLED or not whisper_available or not whisper_model:
+        if not cfg.TRANSCRIPTION_ENABLED or not cfg.HAS_WHISPER or not whisper_model:
             return None
 
         try:
+            from whisper.tokenizer import TO_LANGUAGE_CODE
+
             self.data_import.add_to_log(f"Transcribing video...")
 
             # Configure Whisper's logger to use our logging system
@@ -351,7 +358,7 @@ class MediaImport:
             self.data_import.add_to_log("Failed to transcribe video.")
             self.data_import.add_to_log(str(e))
             return None
-        
+
     def web_import(self, file: dict) -> Optional[Any]:
         self.data_import.add_to_log(f"Processing web import {file.get('filename')}...")
 
@@ -364,9 +371,7 @@ class MediaImport:
         if youtube_info:
             info.update(youtube_info)
             # Use YouTube title for bulletin
-            info["bulletinTitle"] = youtube_info.get(
-                "title", os.path.splitext(file.get("name"))[0]
-            )
+            info["bulletinTitle"] = youtube_info.get("title", os.path.splitext(file.get("name"))[0])
 
         # Get file extension and duration
         _, ext = os.path.splitext(filename)
@@ -383,7 +388,7 @@ class MediaImport:
         info["filepath"] = filepath
         info["source_url"] = file.get("source_url")
         info["etag"] = file.get("etag")
-        
+
         return info
 
     def server_import(self, file: dict) -> Optional[Any]:
@@ -408,7 +413,7 @@ class MediaImport:
         title, ext = os.path.splitext(old_filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])      
+            self.data_import.add_format(info["file_ext"])
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -441,7 +446,7 @@ class MediaImport:
         _, ext = os.path.splitext(filename)
         if ext:
             info["file_ext"] = ext[1:].lower()
-            self.data_import.add_format(info["file_ext"])     
+            self.data_import.add_format(info["file_ext"])
 
         # bundle title with json info
         info["bulletinTitle"] = title
@@ -450,7 +455,7 @@ class MediaImport:
         info["filepath"] = filepath
 
         info["etag"] = file.get("etag")
-        
+
         return info
 
     def process(self, file: str) -> Optional[Any]:
@@ -483,7 +488,7 @@ class MediaImport:
             self.data_import.add_to_log(f"Invalid import mode {import_mode}. Terminating.")
             self.data_import.fail()
             return
-        
+
         mime_type = info.get("File:MIMEType")
 
         # get duration and optimize if video
@@ -530,7 +535,7 @@ class MediaImport:
 
         if text_content:
             info["text_content"] = text_content
-        
+
         if transcription:
             info["transcription"] = transcription
 
@@ -592,7 +597,7 @@ class MediaImport:
             bulletin.sources.append(main_source)
 
             source = None
-            
+
             # Attempt to find existing source
             if uploader_id:
                 source = Source.query.filter(Source.etl_id == uploader_id).first()

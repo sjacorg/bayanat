@@ -245,8 +245,8 @@ def test_actor_endpoint_roled_restricted(
 ##### POST /admin/api/actor #####
 
 post_actor_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 200),
+    ("admin_client", 201),
+    ("da_client", 201),
     ("mod_client", 403),
     ("anonymous_client", 401),
 ]
@@ -271,7 +271,7 @@ def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expect
     found_actor = Actor.query.filter(Actor.name == actor.name).first()
     # If expected status 200, assert that actor was created,
     # Else assert it was not created
-    if expected_status == 200:
+    if expected_status == 201:
         assert found_actor
     else:
         assert found_actor is None
