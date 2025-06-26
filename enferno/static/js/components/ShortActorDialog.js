@@ -21,6 +21,24 @@ const defaultActorData = {
   roles: [],
 };
 
+const allowedKeys = [
+  'first_name',
+  'first_name_ar',
+  'middle_name',
+  'middle_name_ar',
+  'last_name',
+  'last_name_ar',
+  'sex',
+  'civilian',
+  'origin_place',
+  'id_number',
+  'tags',
+  'comments',
+  'status',
+  'roles'
+  // add others if needed
+];
+
 const ShortActorDialog = Vue.defineComponent({
   props: {
     parentItem: {
@@ -146,6 +164,8 @@ const ShortActorDialog = Vue.defineComponent({
                 comment: this.relation.comment,
               },
             });
+            // Reset filters values on RelateActors component
+            this.$root.$refs.relateActors.q = {}
           }
           this.showSnack(response.data.message);
           this.close();
@@ -165,6 +185,18 @@ const ShortActorDialog = Vue.defineComponent({
         this.editedItem.roles = newParentItem.roles;
         const actorProfile = this.editedItem.actor_profiles.find(Boolean);
         actorProfile.sources = newParentItem.sources;
+
+        // Extract prefilled data from relateActors component,
+        // but only the keys used in this short actor dialog form
+        const relateData = this.$root.$refs.relateActors.q;
+        const filteredData = Object.fromEntries(
+          Object.entries(relateData).filter(([key]) => allowedKeys.includes(key))
+        );
+
+        this.editedItem = {
+          ...this.editedItem,
+          ...filteredData,
+        };
       },
       deep: true,
       immediate: true,
