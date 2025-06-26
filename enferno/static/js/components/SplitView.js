@@ -169,7 +169,7 @@ const SplitView = Vue.defineComponent({
             ></v-divider>
         </div>
 
-        <div class="flex-grow-1">
+        <div :style="{ width: 'calc(100% - ' + leftWidth + 'px)' }">
           <slot name="right" />
         </div>
       </div>
