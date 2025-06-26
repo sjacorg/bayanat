@@ -157,7 +157,7 @@ const ShortActorDialog = Vue.defineComponent({
         .then((response) => {
           if (response?.data?.item?.id) {
             this.$emit('createActor', {
-              actor: { ...this.editedItem, ...response.data.item },
+              actor: { ...response.data.item },
               relation: {
                 probability: this.relation.probability,
                 related_as: this.relation.related_as,

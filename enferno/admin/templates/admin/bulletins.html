@@ -1608,7 +1608,8 @@
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
-                                console.error(err.response?.data);
+                                console.error(err);
+                                this.showSnack(handleRequestError(err));
                                 this.saving = false;
                             });
                         } else {
@@ -1620,7 +1621,8 @@
                                 this.showSnack(response.data.message);
                                 this.close();
                             }).catch(err => {
-                                console.error(err.response?.data);
+                                console.error(err);
+                                this.showSnack(handleRequestError(err));
                                 this.saving = false;
                             });
                         }
