@@ -857,33 +857,6 @@
                             });
                     },
 
-                // Helper method to format ID numbers for display
-                formatIdNumbers(idNumbers) {
-                    if (!idNumbers || !Array.isArray(idNumbers) || idNumbers.length === 0) {
-                        return '';
-                    }
-
-                    // Group by type
-                    const grouped = {};
-                    idNumbers.forEach(idEntry => {
-                        if (idEntry.type && idEntry.number) {
-                            const typeId = parseInt(idEntry.type);
-                            const type = this.idNumberTypesMap[typeId];
-                            const typeName = type ? (type.title_tr || type.title) : `Unknown Type ${typeId}`;
-                            
-                            if (!grouped[typeName]) {
-                                grouped[typeName] = [];
-                            }
-                            grouped[typeName].push(idEntry.number);
-                        }
-                    });
-
-                    // Format as "Type: number1, number2" for display
-                    return Object.entries(grouped)
-                        .map(([typeName, numbers]) => `${typeName}: ${numbers.join(', ')}`)
-                        .join(' | ');
-                },
-
                 // Get ID number type name for display
                 getIdNumberTypeName(typeId) {
                     const type = this.idNumberTypesMap[parseInt(typeId)];
