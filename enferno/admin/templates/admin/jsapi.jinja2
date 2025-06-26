@@ -55,7 +55,9 @@ contains_: "{{ _('Contains') }}",
 notContains_: "{{ _('Does not contain') }}",
 tags_: "{{ _('Tags') }}",
 inTags_: "{{ _('Include Tags') }}",
+inTagsAll_: "{{ _('Include Tags (All)') }}",
 exTags_: "{{ _('Exclude Tags') }}",
+exTagsAny_: "{{ _('Exclude Tags (Any)') }}",
 publishDate_: "{{ _('Publish Date') }}",
 documentationDate_: "{{ _('Documentation Date') }}",
 createdDate_: "{{ _('Creation Date') }}",
@@ -166,7 +168,7 @@ relationshipInfo_: "{{ _('Relationship Info') }}",
 publishDate_: "{{ _('Publish Date') }}",
 documentationDate_: "{{ _('Documentation Date') }}",
 sourceLink_: "{{ _('Source Link') }}",
-comment_ : "{{ _('Comments') }}",
+comments_ : "{{ _('Comments') }}",
 logHistory_: "{{ _('Log History') }}",
 
 // actors
@@ -493,8 +495,13 @@ resetPassword_: "{{ _('Reset password') }}",
 passwordResetAlreadyRequested_: "{{ _('Password reset already requested.') }}",
 passwordResetRequested_: "{{ _('Password reset requested.') }}",
 forcePasswordReset_: "{{ _('Force password reset') }}",
-revoke2fa_: "{{ _('Revoke 2FA') }}"
+revoke2fa_: "{{ _('Revoke 2FA') }}",
 
+// validations
+mustBeMaxCharactersOrFewer_: (max) => "{{ _('Must be {max} characters or fewer.') }}".replace("{max}", max),
+mustBeAtLeastCharacters_: (min) => "{{ _('Must be at least {min} characters.') }}".replace("{min}", min),
+thisFieldIsRequired_: "{{ _('This field is required.') }}",
+pleaseEnterAValidNumber_: "{{ _('Please enter a valid number.') }}",
 
 
 }

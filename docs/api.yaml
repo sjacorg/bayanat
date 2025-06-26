@@ -1612,6 +1612,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: q
+          schema:
+            type: string
+            description: Query string to filter location admin levels by title.
       responses:
         '200':
           description: OK
@@ -1793,6 +1798,14 @@ paths:
         - DA
       security:
         - SessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: q
+          schema:
+            type: string
+            description: Query string to filter location types by title.
       responses:
         '200':
           description: OK
@@ -3532,14 +3545,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateBulletinRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Bulletin #{id} !"
+                $ref: '#/components/schemas/BulletinCreateResponse'
+        '417':
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -4468,20 +4489,27 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateActorRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Actor #{id} !"
+                $ref: '#/components/schemas/ActorCreateResponse'
+        '417':
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
-        '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+
   /admin/api/actor/{id}:
     get:
       operationId: getActor
@@ -5634,14 +5662,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateIncidentRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Incident #{id} !"
+                $ref: '#/components/schemas/IncidentCreateResponse'
+        '417':
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -7046,6 +7082,32 @@ components:
             mother_name:
               type: string
               description: Search query for mother name.
+            tags:
+              type: array
+              items:
+                type: string
+              description: List of tags to include in the search.
+            inExact:
+              type: boolean
+              description: Whether to use exact word boundary matching for include tags.
+              default: false
+            opTags:
+              type: boolean
+              description: Tags include queries operator. true for OR (any), false for AND (all).
+              default: false
+            exTags:
+              type: array
+              items:
+                type: string
+              description: List of tags to exclude from the search.
+            exExact:
+              type: boolean
+              description: Whether to use exact word boundary matching for exclude tags.
+              default: false
+            opExTags:
+              type: boolean
+              description: Tags exclude queries operator. true for OR (any), false for AND (all).
+              default: false
             opEthno:
               type: boolean
               description: Ethnography queries operator. true for OR, false for AND
@@ -9578,3 +9640,29 @@ components:
               items:
                 type: string
               example: ['You do not have permission to view this resource.']
+    BaseItemCreateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    BulletinCreateResponse:
+      type: object
+      allOf: 
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/BulletinItem'
+    ActorCreateResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/ActorItem'
+    IncidentCreateResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/IncidentItem'

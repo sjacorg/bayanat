@@ -265,11 +265,13 @@
             methods: {
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
+                    this.loading = true;
 
                     axios.get(`/admin/api/roles/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(response => {
-                        this.loading = false;
                         this.itemsLength = response.data.total;
                         this.items = response.data.items;
+                    }).finally(() => {
+                        this.loading = false;
                     });
                 },
 
@@ -328,13 +330,10 @@
                                 this.refresh()
                                 this.close();
                             });
-                        } else {
-                        this.items.push(this.editedItem);
-
+                    } else {
                         axios
                             .post("/admin/api/role/", {item: this.editedItem})
                             .then(response => {
-
                                 this.showSnack(response.data);
                                 this.refresh()
                                 this.close()

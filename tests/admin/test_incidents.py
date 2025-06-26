@@ -211,8 +211,8 @@ def test_incident_endpoint_roled_restricted(
 ##### POST /admin/api/incident #####
 
 post_incident_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 200),
+    ("admin_client", 201),
+    ("da_client", 201),
     ("mod_client", 403),
     ("anonymous_client", 401),
 ]
@@ -233,7 +233,7 @@ def test_post_incident_endpoint(clean_slate_incidents, request, client_fixture, 
     )
     assert response.status_code == expected_status
     found_incident = Incident.query.filter(Incident.title == incident.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
         assert found_incident
     else:
         assert found_incident is None

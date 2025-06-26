@@ -195,7 +195,7 @@ const GeoLocations = Vue.defineComponent({
                 </search-field>
               </div>
               <div class="d-flex px-5 ga-2">
-                <v-text-field v-model="e.comment" :label="translations.comment_"></v-text-field>
+                <v-text-field v-model="e.comment" :label="translations.comments_"></v-text-field>
                 <v-checkbox :label="translations.mainIncident_" v-model="e.main"></v-checkbox>
               </div>
 
