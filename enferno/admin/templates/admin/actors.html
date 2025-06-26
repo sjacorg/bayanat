@@ -894,6 +894,13 @@
                     }
                 },
 
+                // Update an ID number field at a specific index
+                updateIdNumber(index, field, value) {
+                    if (this.editedItem.id_number && index >= 0 && index < this.editedItem.id_number.length) {
+                        this.editedItem.id_number[index][field] = field === 'type' ? value.toString() : value.trim();
+                    }
+                },
+
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {

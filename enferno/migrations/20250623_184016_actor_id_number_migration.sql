@@ -10,18 +10,26 @@ ON CONFLICT (id) DO NOTHING;
 CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
 RETURNS BOOLEAN AS $$
 BEGIN
+    -- Check if it's a valid array type
+    IF jsonb_typeof(id_number_data) != 'array' THEN
+        RETURN FALSE;
+    END IF;
+    
     -- Check if it's an empty array (always valid)
     IF jsonb_array_length(id_number_data) = 0 THEN
         RETURN TRUE;
     END IF;
     
-    -- Check each element has the required structure
+    -- Check each element has the required structure and valid data
     RETURN (
         SELECT bool_and(
             jsonb_typeof(elem->'type') = 'string' AND 
             jsonb_typeof(elem->'number') = 'string' AND
             (elem->'type') IS NOT NULL AND 
-            (elem->'number') IS NOT NULL
+            (elem->'number') IS NOT NULL AND
+            trim((elem->>'type')) != '' AND
+            trim((elem->>'number')) != '' AND
+            (elem->>'type') ~ '^[0-9]+$'
         )
         FROM jsonb_array_elements(id_number_data) AS elem
     );
@@ -55,11 +63,7 @@ ALTER TABLE actor RENAME COLUMN id_number_temp TO id_number;
 ALTER TABLE actor ALTER COLUMN id_number SET DEFAULT '[]'::jsonb;
 ALTER TABLE actor ALTER COLUMN id_number SET NOT NULL;
 
--- Add check constraint to ensure id_number is an array
-ALTER TABLE actor ADD CONSTRAINT check_actor_id_number_is_array 
-CHECK (jsonb_typeof(id_number) = 'array');
-
--- Add check constraint to ensure each element has the required structure
+-- Add check constraint to ensure each element has the required structure (includes array type validation)
 ALTER TABLE actor ADD CONSTRAINT check_actor_id_number_element_structure 
 CHECK (validate_actor_id_number(id_number));
 
@@ -70,7 +74,6 @@ CREATE INDEX IF NOT EXISTS ix_actor_id_number_gin ON actor USING GIN (id_number)
 /*
 -- To rollback this migration:
 -- 1. Remove constraints
-ALTER TABLE actor DROP CONSTRAINT IF EXISTS check_actor_id_number_is_array;
 ALTER TABLE actor DROP CONSTRAINT IF EXISTS check_actor_id_number_element_structure;
 
 -- 2. Drop the validation function

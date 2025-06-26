@@ -8,6 +8,7 @@ from flask_login import current_user
 from geoalchemy2 import Geography
 from sqlalchemy import ARRAY, func, event, DDL
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql import text
 
 import enferno.utils.typing as t
@@ -186,9 +187,6 @@ class Actor(db.Model, BaseMixin):
             postgresql_using="gin",
         ),
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
-        db.CheckConstraint(
-            "jsonb_typeof(id_number) = 'array'", name="check_actor_id_number_is_array"
-        ),
         db.CheckConstraint(
             "validate_actor_id_number(id_number)", name="check_actor_id_number_element_structure"
         ),
@@ -405,6 +403,8 @@ class Actor(db.Model, BaseMixin):
             else:
                 # Empty or null value
                 self.id_number = []
+            # Mark the field as modified for SQLAlchemy to save changes
+            flag_modified(self, "id_number")
         else:
             self.id_number = []
 
@@ -1039,52 +1039,12 @@ class Actor(db.Model, BaseMixin):
     def flatten_id_numbers(self) -> dict[str, Any]:
         """
         Return a flattened dictionary representation of the actor's id numbers.
-        For each id number, the type's name is retrieved and used as a key.
-        If multiple id numbers of the same type are present, each one is suffixed with an `_X` where X is a number starting from 1.
+        For exports, just return the JSON representation which is safer and performs better.
         """
-        flattened = {}
-
         if not self.id_number:
-            return flattened
+            return {}
 
-        # Group id numbers by type to handle duplicates
-        type_counts = {}
-        type_titles = {}  # Cache for type titles
-
-        # Extract all unique type IDs from id_number
-        unique_type_ids = {
-            int(id_entry["type"])
-            for id_entry in self.id_number
-            if isinstance(id_entry, dict) and "type" in id_entry and "number" in id_entry
-        }
-
-        # Perform a bulk query to fetch all IDNumberType entries
-        id_types = IDNumberType.query.filter(IDNumberType.id.in_(unique_type_ids)).all()
-        for id_type in id_types:
-            type_titles[id_type.id] = id_type.title
-
-        # Handle missing or invalid type IDs
-        for type_id in unique_type_ids:
-            if type_id not in type_titles:
-                type_titles[type_id] = f"Unknown_Type_{type_id}"
-
-        for id_entry in self.id_number:
-            if not isinstance(id_entry, dict) or "type" not in id_entry or "number" not in id_entry:
-                continue
-
-            type_id = int(id_entry["type"])
-            number = id_entry["number"]
-            title = type_titles[type_id]
-
-            # Track how many times we've seen this type
-            if title not in type_counts:
-                type_counts[title] = 0
-                flattened[title] = number
-            else:
-                type_counts[title] += 1
-                flattened[f"{title}_{type_counts[title]}"] = number
-
-        return flattened
+        return {"id_numbers": json.dumps(self.id_number)}
 
     def get_grouped_id_numbers(self) -> dict[str, list[str]]:
         """
@@ -1138,18 +1098,26 @@ create_validation_function = DDL(
 CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
 RETURNS BOOLEAN AS $$
 BEGIN
+    -- Check if it's a valid array type
+    IF jsonb_typeof(id_number_data) != 'array' THEN
+        RETURN FALSE;
+    END IF;
+    
     -- Check if it's an empty array (always valid)
     IF jsonb_array_length(id_number_data) = 0 THEN
         RETURN TRUE;
     END IF;
     
-    -- Check each element has the required structure
+    -- Check each element has the required structure and valid data
     RETURN (
         SELECT bool_and(
             jsonb_typeof(elem->'type') = 'string' AND 
             jsonb_typeof(elem->'number') = 'string' AND
             (elem->'type') IS NOT NULL AND 
-            (elem->'number') IS NOT NULL
+            (elem->'number') IS NOT NULL AND
+            trim((elem->>'type')) != '' AND
+            trim((elem->>'number')) != '' AND
+            (elem->>'type') ~ '^[0-9]+$'
         )
         FROM jsonb_array_elements(id_number_data) AS elem
     );
