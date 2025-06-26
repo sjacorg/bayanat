@@ -1712,13 +1712,14 @@
                         });
 
                     },
-                    relateActor(actor) {
+                    relateActor(actor, relationData = {}) {
                         // get list of existing attached actors
                         let ex = this.editedItem.actor_relations.map(x => x.actor.id);
 
                         if (!ex.includes(actor.id)) {
                             relation = {
-                                actor: actor
+                                actor: actor,
+                                ...relationData
                             };
                             this.editedItem.actor_relations.push(relation);
                             this.relateActorResults.removeById(actor.id);

@@ -62,43 +62,26 @@ const ShortActorDialog = Vue.defineComponent({
   emits: ['update:open', 'close', 'createActor'],
   data: () => ({
     editedItem: { ...defaultActorData },
+    relation: {
+      probability: null,
+      related_as: null,
+      comment: null,
+    },
     valid: false,
     unrestricted: false,
     translations: window.translations,
+    validationRules: validationRules,
     tab: 0,
     profileModes: [
       { id: 1, title: "{{ _('Normal')}}", fields: ['source'] }, // Normal Profile
       { id: 2, title: "{{ _('Main')}}", fields: [] }, // Main Profile
       { id: 3, title: "{{ _('Missing Person')}}", fields: ['source', 'mp'] }, // Missing Person Profile
     ],
-    defaultItem: { ...defaultActorData },
     saving: false,
   }),
   computed: {
     formTitle() {
       return this.editedItem?.id ? this.translations.editActor_ : this.translations.newActor_;
-    },
-    firstNameRule() {
-      return [
-        this.editedItem.first_name || this.editedItem.first_name_ar
-          ? (v) => true
-          : this.rules.required,
-      ];
-    },
-    lastNameRule() {
-      return [
-        this.editedItem.last_name || this.editedItem.last_name_ar
-          ? (v) => true
-          : this.rules.required,
-      ];
-    },
-
-    accessRule() {
-      return [
-        this.unrestricted || this.editedItem.roles?.length
-          ? (v) => true
-          : (v) => translations.accessGroupsRequired_,
-      ];
     },
   },
   methods: {
@@ -135,16 +118,36 @@ const ShortActorDialog = Vue.defineComponent({
       }
 
       this.saving = true;
+
+      // If parent id is present create relation immediately
+      if (this.parentItem.id) {
+        this.editedItem.bulletin_relations = [
+          {
+            bulletin: this.parentItem,
+            probability: this.relation.probability,
+            related_as: this.relation.related_as,
+            comment: this.relation.comment,
+          },
+        ];
+      }
+
       //create new record
       axios
         .post('/admin/api/actor/', {
           item: this.editedItem,
         })
         .then((response) => {
-          // TODO: Actor ID is required to either fetch the correct actor data
-          // or reformat the edited item to match the structure used in mode=1
-          this.$emit('createActor', this.editedItem);
-          this.showSnack(response.data);
+          if (response?.data?.item?.id) {
+            this.$emit('createActor', {
+              actor: { ...this.editedItem, ...response.data.item },
+              relation: {
+                probability: this.relation.probability,
+                related_as: this.relation.related_as,
+                comment: this.relation.comment,
+              },
+            });
+          }
+          this.showSnack(response.data.message);
           this.close();
         })
         .catch((err) => {
@@ -196,11 +199,20 @@ const ShortActorDialog = Vue.defineComponent({
                                   :label-original="translations.firstName_"
                                   :label-translation="translations.firstNameAr_"
                                   :allow-unknown="true"
-                                  :rules="firstNameRule"
+                                  :rules="[
+                                    validationRules.required(),
+                                    validationRules.maxLength(255),
+                                  ]"
                               />
                           </div>
                           <div style="min-width: 0;">
-                              <dual-field v-model:original="editedItem.middle_name" v-model:translation="editedItem.middle_name_ar" :label-original="translations.middleName_" :label-translation="translations.middleNameAr_"></dual-field>
+                              <dual-field
+                                v-model:original="editedItem.middle_name"
+                                v-model:translation="editedItem.middle_name_ar"
+                                :label-original="translations.middleName_"
+                                :label-translation="translations.middleNameAr_"
+                                :rules="[validationRules.maxLength(255)]">
+                              </dual-field>
                           </div>
                           <div style="min-width: 0;">
                               <dual-field
@@ -209,7 +221,10 @@ const ShortActorDialog = Vue.defineComponent({
                                   :label-original="translations.lastName_"
                                   :label-translation="translations.lastNameAr_"
                                   :allow-unknown="true"
-                                  :rules="lastNameRule"
+                                  :rules="[
+                                      validationRules.required(),
+                                      validationRules.maxLength(255),
+                                  ]"
                               ></dual-field>
                           </div>
 
@@ -277,6 +292,7 @@ const ShortActorDialog = Vue.defineComponent({
                                 <v-list-item :title="translations.probability_">
                                   <v-list-item-subtitle>
                                     <v-chip-group
+                                      v-model="relation.probability"
                                       column
                                       selected-class="bg-primary"
                                     >
@@ -291,6 +307,7 @@ const ShortActorDialog = Vue.defineComponent({
                                 <v-list-item :title="translations.relatedAs_">
                                   <v-list-item-subtitle>
                                     <v-chip-group
+                                      v-model="relation.related_as"
                                       column
                                       filter
                                       selected-class="bg-primary"
@@ -308,6 +325,7 @@ const ShortActorDialog = Vue.defineComponent({
                                 <v-list-item :title="translations.comments_">
                                   <v-list-item-subtitle>
                                     <v-text-field class="mt-2"
+                                                  v-model="relation.comment"
                                                   variant="outlined"
                                                   rows="1"
                                                   clearable
@@ -336,7 +354,9 @@ const ShortActorDialog = Vue.defineComponent({
                                   multiple
                                   v-model="editedItem.roles"
                                   :label="translations.restrictToAccessGroups_"
-                                  :rules="accessRule"
+                                  :rules="
+                                    !unrestricted ? [validationRules.required(translations.accessGroupsRequired_)] : []
+                                  "
                                   clearable
                               ></v-select>
                               <v-checkbox color="error" @change="unrestricted ? editedItem.roles = [] : null" class="mx-2" :label="translations.noAccessAccessGroups_" v-model="unrestricted"> </v-checkbox>
