@@ -1086,6 +1086,51 @@ class Actor(db.Model, BaseMixin):
 
         return flattened
 
+    def get_grouped_id_numbers(self) -> dict[str, list[str]]:
+        """
+        Return a dictionary of ID numbers grouped by type name.
+        Format: {"typeName": [number1, number2], "type2Name": [number3]}
+        """
+        if not self.id_number:
+            return {}
+
+        # Extract all unique type IDs first
+        type_ids = set()
+        for id_entry in self.id_number:
+            if isinstance(id_entry, dict) and "type" in id_entry:
+                try:
+                    type_ids.add(int(id_entry["type"]))
+                except (ValueError, TypeError):
+                    pass
+
+        # Single query to get all IDNumberType records we need
+        id_types_map = {}
+        if type_ids:
+            id_types = IDNumberType.query.filter(IDNumberType.id.in_(type_ids)).all()
+            id_types_map = {id_type.id: id_type for id_type in id_types}
+
+        # Group numbers by type name
+        grouped = {}
+        for id_entry in self.id_number:
+            if not isinstance(id_entry, dict) or "type" not in id_entry or "number" not in id_entry:
+                continue
+
+            type_id = id_entry["type"]
+            number = id_entry["number"]
+
+            try:
+                type_id_int = int(type_id)
+                id_type = id_types_map.get(type_id_int)
+                type_name = id_type.title if id_type else f"Unknown Type {type_id}"
+            except (ValueError, TypeError):
+                type_name = f"Invalid Type {type_id}"
+
+            if type_name not in grouped:
+                grouped[type_name] = []
+            grouped[type_name].append(number)
+
+        return grouped
+
 
 # DDL event to create the validation function for fresh installs
 create_validation_function = DDL(
