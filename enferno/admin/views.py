@@ -1989,23 +1989,7 @@ def api_id_number_type_delete(
         return HTTPResponse.NOT_FOUND
 
     # Check if this ID number type is referenced by any actor.id_number[].type
-    from sqlalchemy import func, text
-
-    referenced_count = db.session.execute(
-        text(
-            """
-            SELECT COUNT(*) 
-            FROM actor 
-            WHERE jsonb_array_length(id_number) > 0 
-            AND EXISTS (
-                SELECT 1 
-                FROM jsonb_array_elements(id_number) AS elem 
-                WHERE elem->>'type' = :id_type
-            )
-        """
-        ),
-        {"id_type": str(id)},
-    ).scalar()
+    referenced_count = id_number_type.get_ref_count()
 
     if referenced_count > 0:
         return (
