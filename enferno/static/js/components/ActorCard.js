@@ -75,6 +75,31 @@ const ActorCard = Vue.defineComponent({
     },
   },
 
+  computed: {
+    groupedIdNumbers() {
+      if (!this.actor.id_number || !Array.isArray(this.actor.id_number) || this.actor.id_number.length === 0) {
+        return {};
+      }
+
+      const grouped = {};
+      this.actor.id_number.forEach(idEntry => {
+        if (idEntry.type && idEntry.number) {
+          const typeId = parseInt(idEntry.type);
+          // Access the parent's idNumberTypesMap through $root
+          const type = this.$root.idNumberTypesMap[typeId];
+          const typeName = type ? (type.title_tr || type.title) : `Unknown Type ${typeId}`;
+          
+          if (!grouped[typeName]) {
+            grouped[typeName] = [];
+          }
+          grouped[typeName].push(idEntry.number);
+        }
+      });
+
+      return grouped;
+    }
+  },
+
   data: function () {
     return {
       translations: window.translations,
@@ -275,7 +300,19 @@ const ActorCard = Vue.defineComponent({
           </div>
         </v-card>
 
-        <uni-field :caption="translations.idNumber_" :english="actor.id_number"></uni-field>
+        <!-- ID Numbers - only show if there are any -->
+        <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
+          <div class="d-flex align-center w-100">
+            <div class="text-subtitle-2 mr-3">{{ translations.idNumber_ }}:</div>
+            <div class="flex-chips">
+              <template v-for="(group, typeName) in groupedIdNumbers" :key="typeName">
+                <v-chip size="small" class="flex-chip mr-1 mb-1" variant="outlined">
+                  <strong>{{ typeName }}:</strong> {{ group.join(', ') }}
+                </v-chip>
+              </template>
+            </div>
+          </div>
+        </v-card>
 
         <!-- profiles -->
         <actor-profiles v-if="actor.id" :actor-id="actor.id"></actor-profiles>

@@ -589,7 +589,8 @@
                     actor_profiles: [{
                         mode: 1
                     }],
-                    roles: []
+                    roles: [],
+                    id_number: []
                 },
 
                 //events
@@ -615,7 +616,16 @@
                 bulkTimer: 0,
 
                 actor: {},
-                actorLoader: false
+                actorLoader: false,
+
+                idNumberTypes: [],
+                idNumberTypesMap: {},
+
+                // For adding new ID numbers in the form
+                newIdNumber: {
+                    type: null,
+                    number: ''
+                }
             }),
 
             computed: {
@@ -760,8 +770,19 @@
                     });
                 {% endif  %}
 
-
-
+                // Fetch and cache IDNumberType data for ID number display and editing
+                axios.get('/admin/api/idnumbertypes/').then(res => {
+                    this.idNumberTypes = res.data.items || [];
+                    // Create a lookup map for quick access
+                    this.idNumberTypesMap = {};
+                    this.idNumberTypes.forEach(type => {
+                        this.idNumberTypesMap[type.id] = type;
+                    });
+                }).catch(e => {
+                    this.idNumberTypes = [];
+                    this.idNumberTypesMap = {};
+                    console.log('Failed to fetch ID number types:', e.message);
+                });
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -835,6 +856,43 @@
                                 this.showSnack('Error fetching relation info');
                             });
                     },
+
+                // Get ID number type name for display
+                getIdNumberTypeName(typeId) {
+                    const type = this.idNumberTypesMap[parseInt(typeId)];
+                    return type ? (type.title_tr || type.title) : `Unknown Type ${typeId}`;
+                },
+
+                // Add a new ID number to the current actor
+                addIdNumber() {
+                    if (!this.newIdNumber.type || !this.newIdNumber.number.trim()) {
+                        return;
+                    }
+
+                    // Initialize id_number array if it doesn't exist
+                    if (!this.editedItem.id_number) {
+                        this.editedItem.id_number = [];
+                    }
+
+                    // Add the new ID number
+                    this.editedItem.id_number.push({
+                        type: this.newIdNumber.type.toString(),
+                        number: this.newIdNumber.number.trim()
+                    });
+
+                    // Clear the form
+                    this.newIdNumber = {
+                        type: null,
+                        number: ''
+                    };
+                },
+
+                // Remove an ID number by index
+                removeIdNumber(index) {
+                    if (this.editedItem.id_number && index >= 0 && index < this.editedItem.id_number.length) {
+                        this.editedItem.id_number.splice(index, 1);
+                    }
+                },
 
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
