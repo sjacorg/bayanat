@@ -44,6 +44,11 @@ const ActorSearchBox = Vue.defineComponent({
     modelValue: function (newVal, oldVal) {
       if (newVal !== oldVal) {
         this.q = newVal;
+
+        this.id_number = {
+          type: this.q?.id_number?.type || null,
+          number: this.q?.id_number?.number || null,
+        };
       }
     },
   },
