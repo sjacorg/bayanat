@@ -675,7 +675,7 @@ const ActorSearchBox = Vue.defineComponent({
                 <v-card-text class="pb-0">
                   <div class="d-flex align-center ga-4 mb-2">
                     <v-select
-                        :model-value="Number(id_number.type) || null"
+                        :model-value="Number(id_number.type) || Number(q?.id_number?.type) || null"
                         :items="$root.idNumberTypes"
                         item-title="title"
                         item-value="id"
@@ -685,7 +685,7 @@ const ActorSearchBox = Vue.defineComponent({
                     ></v-select>
                     
                     <v-text-field
-                        :model-value="id_number.number"
+                        :model-value="id_number.number || q?.id_number?.number || null"
                         :label="translations.number_"
                         class="w-100"
                         @update:model-value="id_number.number = $event"

@@ -297,6 +297,8 @@
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/id-number-mixin.js"></script>
+
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -377,7 +379,7 @@
                 "tinymce-editor": Editor,
             },
 
-            mixins: [mediaMixin, globalMixin],
+            mixins: [mediaMixin, globalMixin, idNumberMixin],
 
             data: () => ({
                 valid: false,
@@ -618,9 +620,6 @@
 
                 actor: {},
                 actorLoader: false,
-
-                idNumberTypes: [],
-                idNumberTypesMap: {},
             }),
 
             computed: {
@@ -748,10 +747,6 @@
                 mediaDialog(val) {
                     val || this.closeMediaDialog();
                 },
-
-                options: {
-                    handler: "refresh"
-                }
             },
             mounted: function () {
 
@@ -837,26 +832,6 @@
                                 this.showSnack('Error fetching relation info');
                             });
                     },
-
-                fetchIdNumberTypes() {
-                    // If already loaded the exit
-                    if (this.idNumberTypes.length) return
-
-                    // Fetch and cache IDNumberType data for ID number display and editing
-                    axios.get('/admin/api/idnumbertypes/').then(res => {
-                        this.idNumberTypes = res.data.items || [];
-                        // Create a lookup map for quick access
-                        this.idNumberTypesMap = {};
-                        this.idNumberTypes.forEach(type => {
-                            this.idNumberTypesMap[type.id] = type;
-                        });
-                    }).catch(err => {
-                        this.idNumberTypes = [];
-                        this.idNumberTypesMap = {};
-                        console.error('Error fetching id number types:', err);
-                        this.showSnack(handleRequestError(err));
-                    });
-                },
 
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
