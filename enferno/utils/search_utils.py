@@ -1,6 +1,6 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func, text
+from sqlalchemy import or_, not_, and_, any_, all_, func, text, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -879,7 +879,7 @@ class SearchUtils:
         if type:
             query.append(Actor.type == type)
 
-        # ID Number search - now searches within JSONB array
+            # ID Number search - now searches within JSONB array
         id_number = q.get("id_number", None)
         if id_number and isinstance(id_number, dict):
             type_value = id_number.get("type", "").strip()
@@ -891,33 +891,36 @@ class SearchUtils:
             elif type_value and number_value:
                 # Both type and number provided - search for specific type with specific number
                 search = "%{}%".format(number_value)
-                elem_alias = func.jsonb_array_elements(Actor.id_number).alias("elem")
                 query.append(
-                    func.exists()
-                    .where(
-                        and_(
-                            elem_alias.c.elem.op("->>")("type") == type_value,
-                            elem_alias.c.elem.op("->>")("number").ilike(search),
+                    func.exists(
+                        select(1)
+                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
+                        .where(
+                            and_(
+                                func.jsonb_extract_path_text(text("elem"), "type") == type_value,
+                                func.jsonb_extract_path_text(text("elem"), "number").ilike(search),
+                            )
                         )
                     )
-                    .select_from(elem_alias)
                 )
             elif type_value:
                 # Only type provided - search for all actors with this ID type (number is wildcard)
-                elem_alias = func.jsonb_array_elements(Actor.id_number).alias("elem")
                 query.append(
-                    func.exists()
-                    .where(elem_alias.c.elem.op("->>")("type") == type_value)
-                    .select_from(elem_alias)
+                    func.exists(
+                        select(1)
+                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
+                        .where(func.jsonb_extract_path_text(text("elem"), "type") == type_value)
+                    )
                 )
             elif number_value:
                 # Only number provided - search across all ID types (type is wildcard)
                 search = "%{}%".format(number_value)
-                elem_alias = func.jsonb_array_elements(Actor.id_number).alias("elem")
                 query.append(
-                    func.exists()
-                    .where(elem_alias.c.elem.op("->>")("number").ilike(search))
-                    .select_from(elem_alias)
+                    func.exists(
+                        select(1)
+                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
+                        .where(func.jsonb_extract_path_text(text("elem"), "number").ilike(search))
+                    )
                 )
 
         # Related to bulletin search
