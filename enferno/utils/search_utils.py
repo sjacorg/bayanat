@@ -880,17 +880,45 @@ class SearchUtils:
             query.append(Actor.type == type)
 
         # ID Number search - now searches within JSONB array
-        id_number = q.get("id_number", {})
-        if id_number:
-            search = "%{}%".format(id_number)
-            # Search in the 'number' field of any element in the id_number JSONB array
-            query.append(
-                func.exists(
-                    func.jsonb_array_elements(Actor.id_number)
-                    .op("->>")(text("'number'"))
-                    .ilike(search)
+        id_number = q.get("id_number", None)
+        if id_number and isinstance(id_number, dict):
+            type_value = id_number.get("type", "").strip()
+            number_value = id_number.get("number", "").strip()
+
+            # Skip if both are empty
+            if not type_value and not number_value:
+                pass
+            elif type_value and number_value:
+                # Both type and number provided - search for specific type with specific number
+                search = "%{}%".format(number_value)
+                elem_alias = func.jsonb_array_elements(Actor.id_number).alias("elem")
+                query.append(
+                    func.exists()
+                    .where(
+                        and_(
+                            elem_alias.c.elem.op("->>")("type") == type_value,
+                            elem_alias.c.elem.op("->>")("number").ilike(search),
+                        )
+                    )
+                    .select_from(elem_alias)
                 )
-            )
+            elif type_value:
+                # Only type provided - search for all actors with this ID type (number is wildcard)
+                elem_alias = func.jsonb_array_elements(Actor.id_number).alias("elem")
+                query.append(
+                    func.exists()
+                    .where(elem_alias.c.elem.op("->>")("type") == type_value)
+                    .select_from(elem_alias)
+                )
+            elif number_value:
+                # Only number provided - search across all ID types (type is wildcard)
+                search = "%{}%".format(number_value)
+                elem_alias = func.jsonb_array_elements(Actor.id_number).alias("elem")
+                query.append(
+                    func.exists()
+                    .where(elem_alias.c.elem.op("->>")("number").ilike(search))
+                    .select_from(elem_alias)
+                )
 
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")

@@ -1334,7 +1334,7 @@ class ActorQueryModel(QueryBaseModel):
     age: Optional[str] = None
     civilian: Optional[str] = None
     type_: Optional[str] = Field(default=None, alias="type")
-    id_number: Optional[str] = None
+    id_number: Optional[dict[str, str]] = None
     locTypes: list[str] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel] = None
     childlabels: Optional[bool] = False
