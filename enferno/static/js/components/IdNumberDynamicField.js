@@ -62,32 +62,15 @@ const IdNumberDynamicField = Vue.defineComponent({
     },
     watch: {
         modelValue: {
-          immediate: true,
-          handler(newVal) {
-            // Ensure it's an array
-            const list = Array.isArray(newVal) ? newVal : [];
-      
-            // If empty, emit default row
-            if (list.length === 0) {
-              this.$emit('update:modelValue', [{ type: null, number: null, id: generateRandomId() }]);
-              return;
+            immediate: true,
+            handler(newVal) {
+              if (!Array.isArray(newVal) || newVal.length === 0) {
+                this.$emit('update:modelValue', [{ type: null, number: null, id: generateRandomId() }]);
+              }
             }
-      
-            // Normalize: convert type to number if it has a value
-            const normalized = list.map(entry => ({
-              ...entry,
-              type: entry.type != null && entry.type !== '' ? Number(entry.type) : null
-            }));
-      
-            // Emit only if normalization changed the array
-            const changed = JSON.stringify(normalized) !== JSON.stringify(list);
-            if (changed) {
-              this.$emit('update:modelValue', normalized);
-            }
-          }
         }
     },      
-    template: `
+    template: /*html*/`
         <v-card>
             <v-card-item>
                 <v-card-title>{{ translations.idNumber_ }}</v-card-title>
@@ -97,7 +80,7 @@ const IdNumberDynamicField = Vue.defineComponent({
             <v-card-text class="pb-0">
                 <div v-for="(idEntry, index) in modelValue" :key="idEntry.id" class="d-flex align-center ga-4 mb-2">
                     <v-select
-                        :model-value="idEntry.type"
+                        :model-value="Number(idEntry.type) || null"
                         :items="idNumberTypes"
                         item-title="title"
                         item-value="id"
