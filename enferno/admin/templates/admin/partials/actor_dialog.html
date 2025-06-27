@@ -317,84 +317,16 @@
                                 </v-col>
 
                                 <v-col cols="12" md="4">
-                                    <!-- ID Numbers Management -->
-                                    <v-card variant="outlined" class="pa-3">
-                                        <v-card-title class="text-subtitle-2 pa-0 mb-2">{{ _('ID Numbers') }}</v-card-title>
-                                        
-                                        <!-- Display and edit existing ID numbers -->
-                                        <div v-if="editedItem.id_number && editedItem.id_number.length > 0" class="mb-3">
-                                            <div v-for="(idEntry, index) in editedItem.id_number" :key="index" class="d-flex align-center ga-2 mb-2">
-                                                <v-select
-                                                    :model-value="parseInt(idEntry.type)"
-                                                    :items="idNumberTypes"
-                                                    item-title="title"
-                                                    item-value="id"
-                                                    label="{{ _('ID Type') }}"
-                                                    density="compact"
-                                                    variant="outlined"
-                                                    class="flex-grow-1"
-                                                    @update:model-value="updateIdNumber(index, 'type', $event)"
-                                                ></v-select>
-                                                
-                                                <v-text-field
-                                                    v-model="idEntry.number"
-                                                    label="{{ _('Number') }}"
-                                                    density="compact"
-                                                    variant="outlined"
-                                                    class="flex-grow-1"
-                                                    @update:model-value="updateIdNumber(index, 'number', $event)"
-                                                    @keydown.enter="$event.target.blur()"
-                                                ></v-text-field>
-                                                
-                                                <v-btn
-                                                    @click="removeIdNumber(index)"
-                                                    icon="mdi-delete"
-                                                    size="small"
-                                                    color="red"
-                                                    variant="text"
-                                                ></v-btn>
-                                            </div>
-                                        </div>
-
-                                        <!-- Add new ID number form -->
-                                        <div class="d-flex align-center ga-2">
-                                            <v-select
-                                                v-model="newIdNumber.type"
-                                                :items="idNumberTypes"
-                                                item-title="title"
-                                                item-value="id"
-                                                label="{{ _('Add ID Type') }}"
-                                                density="compact"
-                                                variant="outlined"
-                                                class="flex-grow-1"
-                                                clearable
-                                            ></v-select>
-                                            
-                                            <v-text-field
-                                                v-model="newIdNumber.number"
-                                                :disabled="!newIdNumber.type"
-                                                label="{{ _('Number') }}"
-                                                density="compact"
-                                                variant="outlined"
-                                                class="flex-grow-1"
-                                                @keydown.enter="addIdNumber"
-                                            ></v-text-field>
-                                            
-                                            <v-btn
-                                                :disabled="!newIdNumber.type || !newIdNumber.number?.trim()"
-                                                @click="addIdNumber"
-                                                icon="mdi-plus"
-                                                size="small"
-                                                color="primary"
-                                            ></v-btn>
-                                        </div>
-                                    </v-card>
-                                </v-col>
-
-                                <v-col cols="12" md="4">
                                     <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                 </v-col>
 
+                                <v-col cols="12" class="mb-4">
+                                    <!-- ID Numbers Management -->
+                                    <id-number-dynamic-field
+                                        v-model:model-value="editedItem.id_number"
+                                        :id-number-types="idNumberTypes"
+                                    ></id-numbers-dynamic-field>
+                                </v-col>
                             </v-row>
 
                         </template>

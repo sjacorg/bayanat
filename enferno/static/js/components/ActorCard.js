@@ -77,27 +77,24 @@ const ActorCard = Vue.defineComponent({
 
   computed: {
     groupedIdNumbers() {
-      if (!this.actor.id_number || !Array.isArray(this.actor.id_number) || this.actor.id_number.length === 0) {
+      const idNumbers = this.actor.id_number;
+      const typesMap = this.$root.idNumberTypesMap;
+    
+      if (!Array.isArray(idNumbers) || idNumbers.length === 0) {
         return {};
       }
-
-      const grouped = {};
-      this.actor.id_number.forEach(idEntry => {
-        if (idEntry.type && idEntry.number) {
-          const typeId = parseInt(idEntry.type);
-          // Access the parent's idNumberTypesMap through $root
-          const type = this.$root.idNumberTypesMap[typeId];
-          const typeName = type ? (type.title_tr || type.title) : `Unknown Type ${typeId}`;
-          
-          if (!grouped[typeName]) {
-            grouped[typeName] = [];
-          }
-          grouped[typeName].push(idEntry.number);
-        }
-      });
-
-      return grouped;
-    }
+    
+      return idNumbers.reduce((acc, { type, number }) => {
+        if (!type || !number) return acc;
+    
+        const typeId = parseInt(type);
+        const typeInfo = typesMap[typeId];
+        const typeName = typeInfo?.title_tr || typeInfo?.title || `Unknown Type ${typeId}`;
+    
+        (acc[typeName] ||= []).push(number);
+        return acc;
+      }, {});
+    }    
   },
 
   data: function () {
@@ -301,9 +298,9 @@ const ActorCard = Vue.defineComponent({
         </v-card>
 
         <!-- ID Numbers - only show if there are any -->
-        <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-2 my-1 pa-2 d-flex align-center">
-          <div class="d-flex align-center w-100">
-            <div class="text-subtitle-2 mr-3">{{ translations.idNumber_ }}:</div>
+        <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-8 my-2">
+          <div class="d-flex flex-column">
+            <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumber_ }}</div>
             <div class="flex-chips">
               <template v-for="(group, typeName) in groupedIdNumbers" :key="typeName">
                 <v-chip size="small" class="flex-chip mr-1 mb-1" variant="outlined">

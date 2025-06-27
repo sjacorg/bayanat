@@ -334,6 +334,7 @@
     <script src="/static/js/components/ImageGallery.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/IdNumberDynamicField.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -566,8 +567,8 @@
                     medias: [],
                     actor_relations: [],
                     bulletin_relations: [],
-                    incident_relations: []
-
+                    incident_relations: [],
+                    id_number: [{ type: null, number: null, id: generateRandomId() }]
                 },
                 defaultItem: {
                     description: "",
@@ -590,7 +591,7 @@
                         mode: 1
                     }],
                     roles: [],
-                    id_number: []
+                    id_number: [{ type: null, number: null, id: generateRandomId() }]
                 },
 
                 //events
@@ -620,12 +621,6 @@
 
                 idNumberTypes: [],
                 idNumberTypesMap: {},
-
-                // For adding new ID numbers in the form
-                newIdNumber: {
-                    type: null,
-                    number: ''
-                }
             }),
 
             computed: {
@@ -770,20 +765,6 @@
                     });
                 {% endif  %}
 
-                // Fetch and cache IDNumberType data for ID number display and editing
-                axios.get('/admin/api/idnumbertypes/').then(res => {
-                    this.idNumberTypes = res.data.items || [];
-                    // Create a lookup map for quick access
-                    this.idNumberTypesMap = {};
-                    this.idNumberTypes.forEach(type => {
-                        this.idNumberTypesMap[type.id] = type;
-                    });
-                }).catch(e => {
-                    this.idNumberTypes = [];
-                    this.idNumberTypesMap = {};
-                    console.log('Failed to fetch ID number types:', e.message);
-                });
-
                 // display confirmation alert if edit dialog is open.
                 let self = this;
                 window.addEventListener("beforeunload", function (e) {
@@ -857,48 +838,24 @@
                             });
                     },
 
-                // Get ID number type name for display
-                getIdNumberTypeName(typeId) {
-                    const type = this.idNumberTypesMap[parseInt(typeId)];
-                    return type ? (type.title_tr || type.title) : `Unknown Type ${typeId}`;
-                },
+                fetchIdNumberTypes() {
+                    // If already loaded the exit
+                    if (this.idNumberTypes.length) return
 
-                // Add a new ID number to the current actor
-                addIdNumber() {
-                    if (!this.newIdNumber.type || !this.newIdNumber.number.trim()) {
-                        return;
-                    }
-
-                    // Initialize id_number array if it doesn't exist
-                    if (!this.editedItem.id_number) {
-                        this.editedItem.id_number = [];
-                    }
-
-                    // Add the new ID number
-                    this.editedItem.id_number.push({
-                        type: this.newIdNumber.type.toString(),
-                        number: this.newIdNumber.number.trim()
+                    // Fetch and cache IDNumberType data for ID number display and editing
+                    axios.get('/admin/api/idnumbertypes/').then(res => {
+                        this.idNumberTypes = res.data.items || [];
+                        // Create a lookup map for quick access
+                        this.idNumberTypesMap = {};
+                        this.idNumberTypes.forEach(type => {
+                            this.idNumberTypesMap[type.id] = type;
+                        });
+                    }).catch(err => {
+                        this.idNumberTypes = [];
+                        this.idNumberTypesMap = {};
+                        console.error('Error fetching id number types:', err);
+                        this.showSnack(handleRequestError(err));
                     });
-
-                    // Clear the form
-                    this.newIdNumber = {
-                        type: null,
-                        number: ''
-                    };
-                },
-
-                // Remove an ID number by index
-                removeIdNumber(index) {
-                    if (this.editedItem.id_number && index >= 0 && index < this.editedItem.id_number.length) {
-                        this.editedItem.id_number.splice(index, 1);
-                    }
-                },
-
-                // Update an ID number field at a specific index
-                updateIdNumber(index, field, value) {
-                    if (this.editedItem.id_number && index >= 0 && index < this.editedItem.id_number.length) {
-                        this.editedItem.id_number[index][field] = field === 'type' ? value.toString() : value.trim();
-                    }
                 },
 
                 validateForm() {
@@ -1352,6 +1309,8 @@
                 showActor(id) {
                     this.actorLoader = true;
 
+                    this.fetchIdNumberTypes();
+
                     axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
@@ -1539,6 +1498,8 @@
                 editItem(item) {
                     this.actorDrawer = false;
 
+                    this.fetchIdNumberTypes();
+
                     if (!item.id) {
                         this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
                         this.dialog = true;
@@ -1558,6 +1519,8 @@
                                 this.resetSwitchers();
                                 this.handleStatus(item);
 
+                                // Normalize idnumber type
+                                this.editedItem.id_number = this.editedItem.id_number?.map(idEntry => ({ ...idEntry, type: Number(idEntry.type) })) ?? []
                             });
 
 
@@ -1603,11 +1566,29 @@
 
                 },
 
+                cleanupIdNumbers() {
+                    let idNumbers = this.editedItem.id_number ?? [];
+
+                    // Filter out entries where type or number is missing or just whitespace
+                    idNumbers = idNumbers.filter(entry => entry.type?.toString().trim() && entry.number?.toString().trim());
+
+                    // Normalize all fields to trimmed strings
+                    idNumbers = idNumbers.map(entry => ({
+                        type: entry.type.toString().trim(),
+                        number: entry.number.toString().trim()
+                    }));
+
+                    // Save cleaned data back
+                    this.editedItem.id_number = idNumbers;
+                },
+
                 save() {
                     if (!this.valid) {
                         this.showSnack("{{ _('Please review the form for errors.')}}");
                         return;
                     }
+
+                    this.cleanupIdNumbers();
 
                     this.saving = true;
                     if (this.editedItem.id) {
@@ -1821,6 +1802,7 @@
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
         app.component('PreviewCard', PreviewCard);
+        app.component('IdNumberDynamicField', IdNumberDynamicField);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);
