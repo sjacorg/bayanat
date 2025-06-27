@@ -91,7 +91,7 @@ const IdNumberDynamicField = Vue.defineComponent({
                     ></v-select>
                     
                     <v-text-field
-                        v-model="idEntry.number"
+                        :model-value="idEntry.number"
                         :label="translations.number_"
                         class="w-100"
                         @update:model-value="updateIdNumber(index, 'number', $event)"

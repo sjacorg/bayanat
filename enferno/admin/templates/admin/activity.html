@@ -266,6 +266,8 @@
 
       items: [],
       itemsLength: 10,
+
+      idNumberTypes: [],
     }),
 
     computed: {
@@ -303,6 +305,19 @@
     },
 
     methods: {
+        fetchIdNumberTypes() {
+          // If already loaded the exit
+          if (this.idNumberTypes.length) return
+
+          // Fetch and cache IDNumberType data for ID number display and editing
+          axios.get('/admin/api/idnumbertypes/').then(res => {
+            this.idNumberTypes = res.data.items || [];
+          }).catch(err => {
+            this.idNumberTypes = [];
+            console.error('Error fetching id number types:', err);
+            this.showSnack(handleRequestError(err));
+          });
+        },
 
          has_role(user, role) {
           for (r of user.roles) {
