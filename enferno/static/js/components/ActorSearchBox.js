@@ -35,22 +35,6 @@ const ActorSearchBox = Vue.defineComponent({
     };
   },
   watch: {
-    id_number: {
-      handler(newVal) {
-        // Create a filtered copy of newVal omitting null values
-        const filteredIdNumber = Object.fromEntries(
-          Object.entries(newVal)
-            .filter(([_, v]) => v !== null)
-            .map(([key, value]) => [key, value.toString().trim()]),
-        );
-
-        this.q = {
-          ...this.q,
-          id_number: filteredIdNumber,
-        };
-      },
-      deep: true,
-    },
     q: {
       handler(newVal) {
         this.$emit('update:modelValue', newVal);
@@ -70,11 +54,35 @@ const ActorSearchBox = Vue.defineComponent({
   mounted() {
     this.$root.fetchIdNumberTypes();
     this.q.locTypes = this.q.locTypes || this.translations.actorLocTypes_.map((x) => x.code);
+    if ('id_number' in this.q) {
+      this.id_number = {
+        type: this.q?.id_number?.type || null,
+        number: this.q?.id_number?.number || null,
+      };
+    }
   },
 
   computed: {
     showGeoMap() {
       return this.q.locTypes?.length > 0;
+    },
+  },
+
+  methods: {
+    updateIdNumber(field, value) {
+      this.id_number[field] = value;
+
+      // Create a filtered copy of newVal omitting null values
+      const filteredIdNumber = Object.fromEntries(
+        Object.entries(this.id_number)
+          .filter(([_, v]) => v !== null)
+          .map(([key, value]) => [key, value.toString().trim()]),
+      );
+
+      this.q = {
+        ...this.q,
+        id_number: filteredIdNumber,
+      };
     },
   },
 
@@ -675,20 +683,20 @@ const ActorSearchBox = Vue.defineComponent({
                 <v-card-text class="pb-0">
                   <div class="d-flex align-center ga-4 mb-2">
                     <v-select
-                        :model-value="Number(id_number.type) || Number(q?.id_number?.type) || null"
+                        :model-value="Number(id_number.type) || null"
                         :items="$root.idNumberTypes"
                         item-title="title"
                         item-value="id"
                         :label="translations.idType_"
                         class="w-100"
-                        @update:model-value="id_number.type = $event"
+                        @update:model-value="updateIdNumber('type', $event)"
                     ></v-select>
                     
                     <v-text-field
-                        :model-value="id_number.number || q?.id_number?.number || null"
+                        :model-value="id_number.number || null"
                         :label="translations.number_"
                         class="w-100"
-                        @update:model-value="id_number.number = $event"
+                        @update:model-value="updateIdNumber('number', $event)"
                         @keydown.enter="$event.target.blur()"
                     ></v-text-field>
                   </div>
@@ -701,6 +709,4 @@ const ActorSearchBox = Vue.defineComponent({
       </v-card>
 
     `,
-
-  methods: {},
 });
