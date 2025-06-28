@@ -61,7 +61,6 @@
                                     api="/admin/api/location-types/"
                                     item-title="title"
                                     item-value="id"
-                                    @input="checkLevel"
                                     :rules="[validationRules.required()]"
                                     :multiple="false"
                                     label="{{ _('Location Type') }}">
@@ -80,7 +79,7 @@
                                     v-model="editedItem.admin_level"
                                     @update:model-value="restrictSearch"
                                     :multiple="false"
-                                    :rules="adminLevelRule"
+                                    :rules="editedItem.location_type?.title === 'Administrative Location' ? [validationRules.required()] : []"
                                     label="{{ _('Admin Level') }}">
                                 </search-field>
 
