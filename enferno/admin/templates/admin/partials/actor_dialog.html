@@ -317,16 +317,16 @@
                                 </v-col>
 
                                 <v-col cols="12" md="4">
-                                    <v-text-field
-                                            v-model="editedItem.id_number"
-                                            label="{{ _('ID Number') }}"
-                                    ></v-text-field>
-                                </v-col>
-
-                                <v-col cols="12" md="4">
                                     <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                 </v-col>
 
+                                <v-col cols="12" class="mb-4">
+                                    <!-- ID Numbers Management -->
+                                    <id-number-dynamic-field
+                                        v-model:model-value="editedItem.id_number"
+                                        :id-number-types="idNumberTypes"
+                                    ></id-numbers-dynamic-field>
+                                </v-col>
                             </v-row>
 
                         </template>

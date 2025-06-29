@@ -297,6 +297,8 @@
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/id-number-mixin.js"></script>
+
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -334,6 +336,7 @@
     <script src="/static/js/components/ImageGallery.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/IdNumberDynamicField.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -376,7 +379,7 @@
                 "tinymce-editor": Editor,
             },
 
-            mixins: [mediaMixin, globalMixin],
+            mixins: [mediaMixin, globalMixin, idNumberMixin],
 
             data: () => ({
                 valid: false,
@@ -566,8 +569,8 @@
                     medias: [],
                     actor_relations: [],
                     bulletin_relations: [],
-                    incident_relations: []
-
+                    incident_relations: [],
+                    id_number: []
                 },
                 defaultItem: {
                     description: "",
@@ -589,7 +592,8 @@
                     actor_profiles: [{
                         mode: 1
                     }],
-                    roles: []
+                    roles: [],
+                    id_number: []
                 },
 
                 //events
@@ -615,7 +619,7 @@
                 bulkTimer: 0,
 
                 actor: {},
-                actorLoader: false
+                actorLoader: false,
             }),
 
             computed: {
@@ -743,10 +747,6 @@
                 mediaDialog(val) {
                     val || this.closeMediaDialog();
                 },
-
-                options: {
-                    handler: "refresh"
-                }
             },
             mounted: function () {
 
@@ -759,9 +759,6 @@
                         console.log(e.message);
                     });
                 {% endif  %}
-
-
-
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -1287,6 +1284,8 @@
                 showActor(id) {
                     this.actorLoader = true;
 
+                    this.fetchIdNumberTypes();
+
                     axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
@@ -1474,6 +1473,8 @@
                 editItem(item) {
                     this.actorDrawer = false;
 
+                    this.fetchIdNumberTypes();
+
                     if (!item.id) {
                         this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
                         this.dialog = true;
@@ -1492,7 +1493,6 @@
                                 this.editedItem.comments = '';
                                 this.resetSwitchers();
                                 this.handleStatus(item);
-
                             });
 
 
@@ -1538,11 +1538,29 @@
 
                 },
 
+                cleanupIdNumbers() {
+                    let idNumbers = this.editedItem.id_number ?? [];
+
+                    // Filter out entries where type or number is missing or just whitespace
+                    idNumbers = idNumbers.filter(entry => entry.type?.toString().trim() && entry.number?.toString().trim());
+
+                    // Normalize all fields to trimmed strings
+                    idNumbers = idNumbers.map(entry => ({
+                        type: entry.type.toString().trim(),
+                        number: entry.number.toString().trim()
+                    }));
+
+                    // Save cleaned data back
+                    this.editedItem.id_number = idNumbers;
+                },
+
                 save() {
                     if (!this.valid) {
                         this.showSnack("{{ _('Please review the form for errors.')}}");
                         return;
                     }
+
+                    this.cleanupIdNumbers();
 
                     this.saving = true;
                     if (this.editedItem.id) {
@@ -1756,6 +1774,7 @@
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
         app.component('PreviewCard', PreviewCard);
+        app.component('IdNumberDynamicField', IdNumberDynamicField);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);

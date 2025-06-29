@@ -15,6 +15,7 @@ from .ClaimedViolation import ClaimedViolation
 from .Country import Country
 from .Dialect import Dialect
 from .Ethnography import Ethnography
+from .IDNumberType import IDNumberType
 from .Event import Event
 from .Eventtype import Eventtype
 from .GeoLocation import GeoLocation

@@ -162,8 +162,23 @@
                     <dd>{{ actor.no_children or '-' }}</dd>
                 </div>
                 <div>
-                    <dt>National ID Number</dt>
-                    <dd>{{ actor.id_number or '-' }}</dd>
+                    <dt>ID Numbers</dt>
+                    <dd>
+                        {% set grouped_ids = actor.get_grouped_id_numbers() %}
+                        {% if grouped_ids %}
+                            {% for type_name, numbers in grouped_ids.items() %}
+                                <div class="id-group">
+                                    <strong>{{ type_name }}:</strong>
+                                    {% for number in numbers %}
+                                        <span class="tag">{{ number }}</span>{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% if not loop.last %}<br>{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </dd>
                 </div>
             </article>
 

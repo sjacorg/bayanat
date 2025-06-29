@@ -6,8 +6,9 @@ import sqlalchemy
 from flask_babel import gettext
 from flask_login import current_user
 from geoalchemy2 import Geography
-from sqlalchemy import ARRAY, func
+from sqlalchemy import ARRAY, func, event, DDL
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql import text
 
 import enferno.utils.typing as t
@@ -18,6 +19,8 @@ from enferno.admin.models.Event import Event
 from enferno.admin.models.Atob import Atob
 from enferno.admin.models.Itoa import Itoa
 from enferno.admin.models.Location import Location
+
+from enferno.admin.models.IDNumberType import IDNumberType
 
 from enferno.admin.models.tables import (
     actor_roles,
@@ -136,7 +139,7 @@ class Actor(db.Model, BaseMixin):
         "Dialect", secondary="actor_dialects", backref=db.backref("actors", lazy="dynamic")
     )
 
-    id_number = db.Column(db.String(255))
+    id_number = db.Column(JSONB, default=[], nullable=False)
 
     status = db.Column(db.String(255))
 
@@ -178,7 +181,15 @@ class Actor(db.Model, BaseMixin):
             postgresql_using="gin",
             postgresql_ops={"tags": "array_ops"},
         ),
+        db.Index(
+            "ix_actor_id_number_gin",
+            "id_number",
+            postgresql_using="gin",
+        ),
         db.CheckConstraint("name IS NOT NULL OR name_ar IS NOT NULL", name="check_name"),
+        db.CheckConstraint(
+            "validate_actor_id_number(id_number)", name="check_actor_id_number_element_structure"
+        ),
     )
 
     # helper property to make all entities consistent
@@ -380,7 +391,22 @@ class Actor(db.Model, BaseMixin):
 
         self.nickname = json["nickname"] if "nickname" in json else None
         self.nickname_ar = json["nickname_ar"] if "nickname_ar" in json else None
-        self.id_number = json["id_number"] if "id_number" in json else None
+
+        # Handle id_number array format
+        if "id_number" in json:
+            if isinstance(json["id_number"], list):
+                # Already in the correct format (list of objects)
+                self.id_number = json["id_number"]
+            elif isinstance(json["id_number"], str) and json["id_number"].strip():
+                # Legacy string format - convert to array with default type (1)
+                self.id_number = [{"type": "1", "number": json["id_number"]}]
+            else:
+                # Empty or null value
+                self.id_number = []
+            # Mark the field as modified for SQLAlchemy to save changes
+            flag_modified(self, "id_number")
+        else:
+            self.id_number = []
 
         if "origin_place" in json and json["origin_place"] and "id" in json["origin_place"]:
             self.origin_place_id = json["origin_place"]["id"]
@@ -586,6 +612,8 @@ class Actor(db.Model, BaseMixin):
                 self.incident_relations_dict, Incident.__tablename__
             ),
         }
+        if self.id_number:
+            output.update(self.flatten_id_numbers())
         return output
 
     def get_modified_date(self) -> datetime:
@@ -797,7 +825,7 @@ class Actor(db.Model, BaseMixin):
             ],
             "nationalities": [country.to_dict() for country in getattr(self, "nationalities", [])],
             "dialects": [dialect.to_dict() for dialect in getattr(self, "dialects", [])],
-            "id_number": self.id_number or None,
+            "id_number": self.id_number or [],
             # assigned to
             "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
             # first peer reviewer
@@ -1007,3 +1035,103 @@ class Actor(db.Model, BaseMixin):
                 )
 
         return flattened
+
+    def flatten_id_numbers(self) -> dict[str, Any]:
+        """
+        Return a flattened dictionary representation of the actor's id numbers.
+        For exports, just return the JSON representation which is safer and performs better.
+        """
+        if not self.id_number:
+            return {}
+
+        return {"id_numbers": json.dumps(self.id_number)}
+
+    def get_grouped_id_numbers(self) -> dict[str, list[str]]:
+        """
+        Return a dictionary of ID numbers grouped by type name.
+        Format: {"typeName": [number1, number2], "type2Name": [number3]}
+        """
+        if not self.id_number:
+            return {}
+
+        # Extract all unique type IDs first
+        type_ids = set()
+        for id_entry in self.id_number:
+            if isinstance(id_entry, dict) and "type" in id_entry:
+                try:
+                    type_ids.add(int(id_entry["type"]))
+                except (ValueError, TypeError):
+                    pass
+
+        # Single query to get all IDNumberType records we need
+        id_types_map = {}
+        if type_ids:
+            id_types = IDNumberType.query.filter(IDNumberType.id.in_(type_ids)).all()
+            id_types_map = {id_type.id: id_type for id_type in id_types}
+
+        # Group numbers by type name
+        grouped = {}
+        for id_entry in self.id_number:
+            if not isinstance(id_entry, dict) or "type" not in id_entry or "number" not in id_entry:
+                continue
+
+            type_id = id_entry["type"]
+            number = id_entry["number"]
+
+            try:
+                type_id_int = int(type_id)
+                id_type = id_types_map.get(type_id_int)
+                type_name = id_type.title if id_type else f"Unknown Type {type_id}"
+            except (ValueError, TypeError):
+                type_name = f"Invalid Type {type_id}"
+
+            if type_name not in grouped:
+                grouped[type_name] = []
+            grouped[type_name].append(number)
+
+        return grouped
+
+
+# DDL event to create the validation function for fresh installs
+create_validation_function = DDL(
+    """
+CREATE OR REPLACE FUNCTION validate_actor_id_number(id_number_data JSONB)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Check if it's a valid array type
+    IF jsonb_typeof(id_number_data) != 'array' THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Check if it's an empty array (always valid)
+    IF jsonb_array_length(id_number_data) = 0 THEN
+        RETURN TRUE;
+    END IF;
+    
+    -- Check each element has the required structure and valid data
+    RETURN (
+        SELECT bool_and(
+            jsonb_typeof(elem->'type') = 'string' AND 
+            jsonb_typeof(elem->'number') = 'string' AND
+            (elem->'type') IS NOT NULL AND 
+            (elem->'number') IS NOT NULL AND
+            trim((elem->>'type')) != '' AND
+            trim((elem->>'number')) != '' AND
+            (elem->>'type') ~ '^[0-9]+$'
+        )
+        FROM jsonb_array_elements(id_number_data) AS elem
+    );
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+"""
+)
+
+drop_validation_function = DDL(
+    """
+DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
+"""
+)
+
+# Register DDL events to ensure function exists for both fresh installs and migrations
+event.listen(Actor.__table__, "before_create", create_validation_function)
+event.listen(Actor.__table__, "after_drop", drop_validation_function)
