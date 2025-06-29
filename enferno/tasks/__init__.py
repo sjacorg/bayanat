@@ -945,6 +945,9 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
 
     export_request = Export.query.get(previous_result)
 
+    if not export_request:
+        return False
+
     # check if we need to export media files
     if not export_request.include_media:
         return export_request.id
@@ -968,7 +971,15 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
 
             if cfg.FILESYSTEM_LOCAL:
                 # copy file (including metadata)
-                shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
+                try:
+                    shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
+                except Exception as e:
+                    logger.error(
+                        f"Error copying Export #{export_request.id} file from {media.media_dir}/{media.media_file} to {target_file}: {str(e)}",
+                        exc_info=True,
+                    )
+                    clear_failed_export(export_request)
+                    return False  # to stop chain
             else:
                 s3 = boto3.client(
                     "s3",
@@ -983,6 +994,8 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                         f"Error downloading Export #{export_request.id} file from S3.",
                         exc_info=True,
                     )
+                    clear_failed_export(export_request)
+                    return False  # to stop chain
 
         time.sleep(0.05)
     return export_request.id
