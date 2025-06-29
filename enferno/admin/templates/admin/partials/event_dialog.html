@@ -50,7 +50,7 @@
 </v-card>
 
 
-<v-dialog v-model="eventDialog" max-width="880px">
+<v-dialog v-model="eventDialog" max-width="880px" v-bind="rightDialogProps">
     <v-card>
         <v-toolbar title="{{ _('Event') }}">
 

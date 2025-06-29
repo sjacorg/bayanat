@@ -837,6 +837,9 @@ div.jsondiffpatch-child-node-type-array:after {
 .z-1 {
     z-index: 1;
 }
+.left-auto {
+    left: auto !important;
+}
 
 /* wrap chips */
 .flex-chips {

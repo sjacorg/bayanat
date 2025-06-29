@@ -291,6 +291,7 @@
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/SplitView.js"></script>
 
     <script src="/static/js/components/RelatedBulletinsCard.js"></script>
     <script src="/static/js/components/RelatedActorsCard.js"></script>
@@ -360,6 +361,7 @@
             mixins: [globalMixin],
             data: () => ({
                 valid: false,
+                rightDialogProps: null,
                 translations: window.translations,
                 validationRules: validationRules,
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
@@ -1629,6 +1631,7 @@
         });
 
 
+        app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
         app.component('UniField', UniField);
         app.component('DualField', DualField);

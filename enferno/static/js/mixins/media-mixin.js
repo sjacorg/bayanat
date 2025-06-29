@@ -17,6 +17,8 @@ let mediaMixin = {
         files: [],
         category: null,
       },
+      expandedMedia: null,
+      expandedMediaType: null,
       mediaTitle__: true,
       upMediaBtnDisabled: true,
       videoDialog: false,
@@ -418,5 +420,27 @@ let mediaMixin = {
         console.log(error);
       }
     },
+
+    handleExpandedMedia(media, mediaType) {
+      this.expandedMedia = media;
+      this.expandedMediaType = mediaType;
+
+      if (!media || !mediaType) return
+
+      this.$nextTick(() => {
+        if (['video', 'audio'].includes(mediaType)) {
+          this.viewMedia(media)
+        }
+        this.$refs.expandedMediaRef?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+        })
+      })
+
+    },
+    closeExpandedMedia() {
+      this.expandedMedia = null;
+      this.expandedMediaType = null;
+    }
   }
 };

@@ -264,11 +264,11 @@
                         ></v-progress-circular>
                     </v-overlay>
                     <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
-                                      ref="relateBulletins"></relate-bulletins>
+                                      ref="relateBulletins" :dialog-props="rightDialogProps"></relate-bulletins>
                     <relate-actors @relate="relateActor" :exids="exActors"
-                                   ref="relateActors"></relate-actors>
+                                   ref="relateActors" :dialog-props="rightDialogProps" :show-create-actor-button="true"></relate-actors>
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
-                                      ref="relateIncidents"></relate-incidents>
+                                      ref="relateIncidents" :dialog-props="rightDialogProps"></relate-incidents>
 
 
                     {% include 'admin/partials/video_player_dialog.html' %}
@@ -362,6 +362,7 @@
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/SplitView.js"></script>
 
     <script src="/static/js/components/RelatedBulletinsCard.js"></script>
     <script src="/static/js/components/RelatedActorsCard.js"></script>
@@ -375,6 +376,7 @@
     <script src="/static/js/components/BulletinSearchBox.js"></script>
     <script src="/static/js/components/ActorSearchBox.js"></script>
     <script src="/static/js/components/IncidentSearchBox.js"></script>
+    <script src="/static/js/components/ShortActorDialog.js"></script>
 
 
 
@@ -443,17 +445,26 @@
 
 
                 components: {
-
                     "tinymce-editor": Editor, // <- Important part,
                 },
 
 
                 data: () => ({
-
                     helper: {}, // helper object for review items
 
                     valid: false,
-
+                    leftDialogProps: {
+                        width: "60%",
+                        'min-width': "350",
+                        location: "start",
+                        fullscreen: true,
+                    },
+                    rightDialogProps: {
+                        width: "60%",
+                        'min-width': "350",
+                        'content-class': 'absolute right-0 left-auto',
+                        fullscreen: true,
+                    },
                     translations: translations,
                     validationRules: validationRules,
                     advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
@@ -481,7 +492,6 @@
 
 
                     },
-
 
                     assignBulletin: {},
                     selfAssignDialog: false,
@@ -516,6 +526,7 @@
                     fsloading: true,
 
 
+                    actorDialog: false,
                     dialog: dialog,
                     saving: false,
                     eventDialog: false,
@@ -1564,6 +1575,8 @@
 
                     close() {
                         this.dialog = false;
+                        this.actorDialog = false;
+                        this.closeExpandedMedia()
                         setTimeout(() => {
                             this.editedItem = Object.assign({}, this.defaultItem);
 
@@ -1595,7 +1608,8 @@
                                 this.refresh();
                                 this.close();
                             }).catch(err => {
-                                console.error(err.response?.data);
+                                console.error(err);
+                                this.showSnack(handleRequestError(err));
                                 this.saving = false;
                             });
                         } else {
@@ -1607,7 +1621,8 @@
                                 this.showSnack(response.data.message);
                                 this.close();
                             }).catch(err => {
-                                console.error(err.response?.data);
+                                console.error(err);
+                                this.showSnack(handleRequestError(err));
                                 this.saving = false;
                             });
                         }
@@ -1699,13 +1714,14 @@
                         });
 
                     },
-                    relateActor(actor) {
+                    relateActor(actor, relationData = {}) {
                         // get list of existing attached actors
                         let ex = this.editedItem.actor_relations.map(x => x.actor.id);
 
                         if (!ex.includes(actor.id)) {
                             relation = {
-                                actor: actor
+                                actor: actor,
+                                ...relationData
                             };
                             this.editedItem.actor_relations.push(relation);
                             this.relateActorResults.removeById(actor.id);
@@ -1790,6 +1806,7 @@
         ;
 
 
+        app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
         app.component('UniField', UniField);
         app.component('DualField', DualField);
@@ -1831,6 +1848,7 @@
         app.component('mp-field', MPField);
         app.component('mp-card', MPCard);
         app.component('ActorProfiles', ActorProfiles);
+        app.component('ShortActorDialog', ShortActorDialog);
 
 
         app.use(router);

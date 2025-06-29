@@ -1,4 +1,6 @@
-<v-dialog v-model="mediaDialog" max-width="500px">
+<v-dialog v-model="mediaDialog"
+    v-bind="leftDialogProps"
+>
     <template #activator="{props}">
         <v-card>
             <v-toolbar class="handle">
@@ -16,22 +18,31 @@
                 >
             </v-toolbar>
 
+            <div v-if="expandedMedia" ref="expandedMediaRef" class="w-100">
+                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer" class="mb-6" style="height: fit-content; max-height: 50vh;"></div>
+                <div  v-if="expandedMediaType === 'pdf'">
+                    <object :data="expandedMedia.s3url" class="w-100" style="height: 50vh;"></object>
+                </div>
+                <div v-if="expandedMediaType === 'image'">
+                    <v-img :src="expandedMedia.s3url" class="bg-grey-lighten-2" style="height: 50vh;"></v-img>
+                </div>
+            </div>
+            
             <!--  Grid of Media Items -->
-
             <v-card-text id="medias">
-
-
-
                 <image-gallery prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
-                               @video-click="viewMediaPlayerDialog"
-                               @audio-click="viewMediaPlayerDialog"
+                               @video-click="viewMediaPlayerDialog($event); closeExpandedMedia() "
+                               @audio-click="viewMediaPlayerDialog($event); closeExpandedMedia()"
                                @remove-media="removeMedia"
-                ></image-gallery>
-
+                >
+                    <template #top-actions="{ media, mediaType }">
+                      <v-btn size="small" variant="text" icon="mdi-arrow-expand-all" @click="handleExpandedMedia(media, mediaType)"></v-btn> 
+                    </template>
+                </image-gallery>
             </v-card-text>
         </v-card>
     </template>
-    <v-card>
+    <v-card class="flex-grow-1">
         <v-card-title>
             <span class="headline">{{ _('Media File') }}</span>
         </v-card-title>
