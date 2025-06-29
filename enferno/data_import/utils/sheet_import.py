@@ -768,7 +768,8 @@ class SheetImport:
 
         for field in self.map:
             # loop only selected mapped columns
-            if len(self.map.get(field)) > 0:
+            field_value = self.map.get(field)
+            if field_value and len(field_value) > 0:
                 try:
                     self.gen_value(field)
                 except Exception as e:
@@ -781,13 +782,26 @@ class SheetImport:
         if self.vmap:
             for field in list(self.vmap.keys()):
                 # check if csv row actually has a value for this
-                csv_value = getattr(self.actor, field)
-                if csv_value:
-                    if Actor.query.filter(getattr(Actor, field) == str(csv_value)).first():
-                        self.data_import.fail(
-                            f"Existing Actor with the same {field} detected. Skipping..."
-                        )
-                        return
+                if field in ActorProfile.__table__.columns:
+                    # Field is in ActorProfile, check against actor profile
+                    csv_value = getattr(self.actor_profile, field)
+                    if csv_value:
+                        if ActorProfile.query.filter(
+                            getattr(ActorProfile, field) == str(csv_value)
+                        ).first():
+                            self.data_import.fail(
+                                f"Existing Actor Profile with the same {field} detected. Skipping..."
+                            )
+                            return
+                else:
+                    # Field is in Actor, check against actor
+                    csv_value = getattr(self.actor, field)
+                    if csv_value:
+                        if Actor.query.filter(getattr(Actor, field) == str(csv_value)).first():
+                            self.data_import.fail(
+                                f"Existing Actor with the same {field} detected. Skipping..."
+                            )
+                            return
 
         self.actor.comments = f"Created via Sheet Import - Batch: {self.batch_id}"
         self.actor.status = "Machine Created"
