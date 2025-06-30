@@ -786,20 +786,25 @@ class SheetImport:
                     # Field is in ActorProfile, check against actor profile
                     csv_value = getattr(self.actor_profile, field)
                     if csv_value:
-                        if ActorProfile.query.filter(
+                        existing_profile = ActorProfile.query.filter(
                             getattr(ActorProfile, field) == str(csv_value)
-                        ).first():
+                        ).first()
+                        if existing_profile:
+                            existing_actor = existing_profile.actor
                             self.data_import.fail(
-                                f"Existing Actor Profile with the same {field} detected. Skipping..."
+                                f"Existing Actor Profile with the same {field} detected. Actor ID: {existing_actor.id}. Skipping..."
                             )
                             return
                 else:
                     # Field is in Actor, check against actor
                     csv_value = getattr(self.actor, field)
                     if csv_value:
-                        if Actor.query.filter(getattr(Actor, field) == str(csv_value)).first():
+                        existing_actor = Actor.query.filter(
+                            getattr(Actor, field) == str(csv_value)
+                        ).first()
+                        if existing_actor:
                             self.data_import.fail(
-                                f"Existing Actor with the same {field} detected. Skipping..."
+                                f"Existing Actor with the same {field} detected. Actor ID: {existing_actor.id}. Skipping..."
                             )
                             return
 
