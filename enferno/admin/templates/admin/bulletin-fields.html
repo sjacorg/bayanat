@@ -2,7 +2,31 @@
 
 <v-main>
   <v-container fluid>
-    Bulletin fields
+    <v-card style="height: calc(100vh - 95px);">
+      <v-toolbar class="flex-md-column">
+        <v-toolbar-title>{{ _('Bulletin Fields Configuration') }}</v-toolbar-title>
+
+        <template #append>
+            <v-text-field
+              density="compact"
+              class="mr-2"
+              placeholder="{{ _('Search') }}"
+              prepend-inner-icon="mdi-magnify"
+              max-width="300px"
+              width="200px"
+              hide-details
+            ></v-text-field>
+            <v-btn prepend-icon="mdi-plus" class="mr-2" variant="outlined"
+              >{{ _('Add new field') }}</v-btn
+            >
+            <v-btn prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat"
+              >{{ _('Save changes') }}</v-btn
+            >
+        </template>
+      </v-toolbar>
+
+      <v-card-text></v-card-text>
+    </v-card>
   </v-container>
 </v-main>
 
@@ -17,10 +41,21 @@
     delimiters: delimiters,
     mixins: [globalMixin],
     data: () => ({
-        drawer: drawer,
+      drawer: drawer,
     }),
-
-    computed: {},
+    mounted() {
+        this.fetchDynamicFields();
+    },
+    methods: {
+        fetchDynamicFields() {
+            try {
+                axios.get('/admin/api/dynamic-fields')
+            } catch (err) {
+                console.err(err)
+                this.showSnack(handleRequestError(err))
+            }
+        }
+    },
   });
 
   app.use(router);
