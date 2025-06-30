@@ -1167,6 +1167,7 @@
                         if (this.loading) return;
 
                         this.loading = true;
+                        const startTime = new Date()
 
                         const requestData = {
                             q: this.search,
@@ -1177,6 +1178,11 @@
 
                         axios.post('/admin/api/bulletins/', requestData)
                             .then((response) => {
+                                const endTime = new Date()
+                                const duration = endTime - startTime
+                                this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
+                                console.log(`API call took ${duration}ms`)
+                                
                                 this.items = response.data.items;
                                 if ('total' in response.data) {
                                     this.totalCount = response.data.total
