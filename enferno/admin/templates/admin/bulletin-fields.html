@@ -2,30 +2,53 @@
 
 <v-main>
   <v-container fluid>
-    <v-card style="height: calc(100vh - 95px);">
+    <v-card style="height: calc(100vh - 95px)">
       <v-toolbar class="flex-md-column">
         <v-toolbar-title>{{ _('Bulletin Fields Configuration') }}</v-toolbar-title>
 
         <template #append>
-            <v-text-field
-              density="compact"
-              class="mr-2"
-              placeholder="{{ _('Search') }}"
-              prepend-inner-icon="mdi-magnify"
-              max-width="300px"
-              width="200px"
-              hide-details
-            ></v-text-field>
-            <v-btn prepend-icon="mdi-plus" class="mr-2" variant="outlined"
-              >{{ _('Add new field') }}</v-btn
-            >
-            <v-btn prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat"
-              >{{ _('Save changes') }}</v-btn
-            >
+          <v-text-field
+            density="compact"
+            class="mr-2"
+            placeholder="{{ _('Search') }}"
+            prepend-inner-icon="mdi-magnify"
+            max-width="300px"
+            width="200px"
+            hide-details
+          ></v-text-field>
+          <v-btn prepend-icon="mdi-plus" class="mr-2" variant="outlined"
+            >{{ _('Add new field') }}</v-btn
+          >
+          <v-btn prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat"
+            >{{ _('Save changes') }}</v-btn
+          >
         </template>
       </v-toolbar>
 
-      <v-card-text></v-card-text>
+      <v-card-text>
+        <v-expansion-panels>
+          <v-expansion-panel>
+            <v-expansion-panel-title disable-icon-rotate>
+              <template #default="{ expanded }">
+                <v-icon class="mr-4" size="24">
+                  ${ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }
+                </v-icon>
+                <span class="text-h6 font-weight-bold">Item</span>
+              </template>
+              <template v-slot:actions="{ expanded }">
+                <v-btn :color="expanded ? 'error' : 'primary'" variant="text"
+                  >${expanded ? 'Collapse' : 'Expand'}</v-btn
+                >
+              </template>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+              exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </v-card-text>
     </v-card>
   </v-container>
 </v-main>
@@ -44,17 +67,17 @@
       drawer: drawer,
     }),
     mounted() {
-        this.fetchDynamicFields();
+      this.fetchDynamicFields();
     },
     methods: {
-        fetchDynamicFields() {
-            try {
-                axios.get('/admin/api/dynamic-fields')
-            } catch (err) {
-                console.err(err)
-                this.showSnack(handleRequestError(err))
-            }
+      fetchDynamicFields() {
+        try {
+          axios.get('/admin/api/dynamic-fields');
+        } catch (err) {
+          console.err(err);
+          this.showSnack(handleRequestError(err));
         }
+      },
     },
   });
 
