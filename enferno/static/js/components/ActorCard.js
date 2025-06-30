@@ -86,12 +86,19 @@ const ActorCard = Vue.defineComponent({
       return idNumbers.reduce((acc, { type, number }) => {
         if (!type || !number) return acc;
     
-        const typeName = type?.title_tr || type?.title || `Unknown Type ${type.id}`;
+        const key = type.id; // group by type.id to avoid duplicate keys
+        if (!acc[key]) {
+          acc[key] = {
+            title: type.title || `Unknown Type ${type.id}`,
+            title_tr: type.title_tr || null,
+            numbers: []
+          };
+        }
     
-        (acc[typeName] ||= []).push(number);
+        acc[key].numbers.push(number);
         return acc;
       }, {});
-    }    
+    }   
   },
 
   data: function () {
@@ -301,7 +308,7 @@ const ActorCard = Vue.defineComponent({
             <div class="flex-chips">
               <template v-for="(group, typeName) in groupedIdNumbers" :key="typeName">
                 <v-chip size="small" class="flex-chip mr-1 mb-1" variant="outlined">
-                  <strong>{{ typeName }}:&nbsp;</strong> {{ group.join(', ') }}
+                  <strong>{{ group.title }}:&nbsp;</strong> {{ group.numbers.join(', ') }}
                 </v-chip>
               </template>
             </div>
