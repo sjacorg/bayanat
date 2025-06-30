@@ -186,7 +186,7 @@ function getInfraMessage(status) {
   
     // Check for HTML response by Content-Type header
     const ct = response?.headers?.['content-type'] || '';
-    if (ct.includes('text/html') && response?.status) {
+    if (ct.includes('text/html') && response?.status >= 500) {
       return getInfraMessage(response.status);
     }
   
