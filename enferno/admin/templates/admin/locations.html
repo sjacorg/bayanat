@@ -183,6 +183,7 @@
 
             },
             data: () => ({
+                validationRules: validationRules,
                 translations: window.translations,
                 adminValid: false,
                 valid: false,
@@ -240,42 +241,15 @@
             }),
 
             computed: {
-                adminLevelRule(){
-                    return [ this.adminValid ? v=>true : this.rules.required];
-                }, 
-                titleRule(){
-                    return [this.editedItem.title || this.editedItem.title_ar ? v => true : v=>"{{_('Title or Title (Ar) is required')}}"]
-                },
-                checkAdminLevel() {
-                    if (this.editedItem.location_type?.title === 'Administrative Location') {
-
-                        return 'required';
-                    }
-
-
-                },
-
                 formTitle() {
                     return !this.editedItem.id ? "{{_('New Location')}}" : "{{_('Edit Location')}}";
-                },
-
-                latlngValid() {
-                    if (this.editedItem.latlng) {
-                        if (this.editedItem.latlng.lat && this.editedItem.latlng.lng) {
-                            return true;
-                        }
-                        if (!this.editedItem.latlng.lat && !this.editedItem.latlng.lng) {
-                            return true;
-                        }
-                    }
-                    return false;
                 }
             },
 
             watch: {
-                'editedItem.location_type': function (val){
+                'editedItem.location_type': function (newLocationType){
+                    this.checkLevel();
                     this.validateAdminLevel();
-                    console.log('location type changed: ', val)
                 },
                 'editedItem.admin_level': function (val){
                     this.validateAdminLevel();
@@ -318,15 +292,12 @@
             },
 
             methods: {
-                validateAdminLevel(){
-                    if (this.editedItem.location_type?.title === 'Administrative Location')
-                        if(this.rules.required(this.editedItem.admin_level)!==true){
-                            this.adminValid = false;
-                            this.$refs?.form?.validate();
-                            return;
-                        }
-                    this.adminValid = true;
-                    this.$refs?.form?.validate()
+                validateAdminLevel() {
+                    const isAdministrative = this.editedItem.location_type?.title === 'Administrative Location';
+                    const hasAdminLevel = !!this.editedItem.admin_level;
+
+                    this.adminValid = !isAdministrative || hasAdminLevel;
+                    this.$refs?.form?.validate();
                 },
                 resetSearch() {
                     this.q = {};
