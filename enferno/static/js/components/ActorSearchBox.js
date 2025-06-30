@@ -695,6 +695,9 @@ const ActorSearchBox = Vue.defineComponent({
                         :label="translations.idType_"
                         class="w-100"
                         @update:model-value="updateIdNumber('type', $event)"
+                        :hint="translations.leaveBlankToIncludeAllTypes_"
+                        persistent-hint
+                        clearable
                     ></v-select>
                     
                     <v-text-field
@@ -703,6 +706,7 @@ const ActorSearchBox = Vue.defineComponent({
                         class="w-100"
                         @update:model-value="updateIdNumber('number', $event)"
                         @keydown.enter="$event.target.blur()"
+                        clearable
                     ></v-text-field>
                   </div>
                 </v-card-text>

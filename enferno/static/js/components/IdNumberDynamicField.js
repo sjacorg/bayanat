@@ -19,9 +19,16 @@ const IdNumberDynamicField = Vue.defineComponent({
       };
     },
     methods: {
+        generateRandomId() {
+          const timestamp = Date.now().toString(36);
+          const random = Math.random().toString(36).slice(2, 7);
+
+          return `${timestamp}-${random}`;
+        },
+
         addIdNumber() {
           const current = Array.isArray(this.modelValue) ? this.modelValue : [];
-          this.$emit('update:modelValue', [...current, { type: null, number: null, id: generateRandomId() }]);
+          this.$emit('update:modelValue', [...current, { type: null, number: null, id: this.generateRandomId() }]);
         },
       
         removeIdNumber(index) {
@@ -59,22 +66,46 @@ const IdNumberDynamicField = Vue.defineComponent({
           updated.splice(index, 1, updatedItem);
           this.$emit('update:modelValue', updated);
         },
+
+        normalizeIds(list) {
+          const updated = list.map(item => ({
+            ...item,
+            id: item.id || this.generateRandomId()
+          }));
+        
+          const needsUpdate = updated.some((item, i) => item.id !== list[i].id);
+          if (needsUpdate) {
+            this.$emit('update:modelValue', updated);
+            return true;
+          }
+        
+          return false;
+        }
     },
     watch: {
         modelValue: {
             immediate: true,
             handler(newVal) {
               if (!Array.isArray(newVal) || newVal.length === 0) {
-                this.$emit('update:modelValue', [{ type: null, number: null, id: generateRandomId() }]);
+                this.$emit('update:modelValue', [{ type: null, number: null, id: this.generateRandomId() }]);
+                return;
               }
+
+              this.normalizeIds(newVal);
             }
         }
     },      
     template: /*html*/`
         <v-card>
-            <v-card-item>
-                <v-card-title>{{ translations.idNumber_ }}</v-card-title>
-            </v-card-item>
+            <v-toolbar>
+                <v-toolbar-title>{{ translations.idNumbers_ }}</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-btn
+                  @click="addIdNumber()"
+                  color="primary"
+                  icon="mdi-plus-circle"
+                ></v-btn>
+            </v-toolbar>
             
             <!-- Display and edit existing ID numbers -->
             <v-card-text class="pb-0">
@@ -109,16 +140,6 @@ const IdNumberDynamicField = Vue.defineComponent({
                     ></v-btn>
                 </div>
             </v-card-text>
-
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                    @click="addIdNumber"
-                    prepend-icon="mdi-plus"
-                    color="primary"
-                    variant="flat"
-                >Add new row</v-btn>
-            </v-card-actions>
         </v-card>
     `,
   });

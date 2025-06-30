@@ -300,11 +300,11 @@ const ActorCard = Vue.defineComponent({
         <!-- ID Numbers - only show if there are any -->
         <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-8 my-2">
           <div class="d-flex flex-column">
-            <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumber_ }}</div>
+            <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumbers_ }}</div>
             <div class="flex-chips">
               <template v-for="(group, typeName) in groupedIdNumbers" :key="typeName">
                 <v-chip size="small" class="flex-chip mr-1 mb-1" variant="outlined">
-                  <strong>{{ typeName }}:</strong> {{ group.join(', ') }}
+                  <strong>{{ typeName }}:&nbsp;</strong> {{ group.join(', ') }}
                 </v-chip>
               </template>
             </div>
