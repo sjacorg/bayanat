@@ -181,6 +181,9 @@ const FieldBuilderDialog = Vue.defineComponent({
                     >
                       <v-select
                         label="Field type*"
+                        :options="fieldTypes"
+                        item-label="label"
+                        item-value="value"
                       ></v-select>
                     </v-col>
                   </v-row>
