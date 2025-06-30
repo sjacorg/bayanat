@@ -1,5 +1,7 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
+<field-builder-dialog v-model="isFieldBuilderDialogOpen"></field-builder-dialog>
+
 <v-main>
   <v-container fluid>
     <v-card style="height: calc(100vh - 95px)">
@@ -16,7 +18,11 @@
             width="200px"
             hide-details
           ></v-text-field>
-          <v-btn prepend-icon="mdi-plus" class="mr-2" variant="outlined"
+          <v-btn
+            prepend-icon="mdi-plus"
+            class="mr-2"
+            variant="outlined"
+            @click="isFieldBuilderDialogOpen = true"
             >{{ _('Add new field') }}</v-btn
           >
           <v-btn prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat"
@@ -54,6 +60,7 @@
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
+<script src="/static/js/components/FieldBuilderDialog.js"></script>
 
 <script>
   const { createApp } = Vue;
@@ -65,6 +72,7 @@
     mixins: [globalMixin],
     data: () => ({
       drawer: drawer,
+      isFieldBuilderDialogOpen: false,
     }),
     mounted() {
       this.fetchDynamicFields();
@@ -80,6 +88,8 @@
       },
     },
   });
+
+  app.component('FieldBuilderDialog', FieldBuilderDialog);
 
   app.use(router);
   app.use(vuetify).mount('#app');
