@@ -67,20 +67,30 @@ const IdNumberDynamicField = Vue.defineComponent({
           this.$emit('update:modelValue', updated);
         },
 
-        normalizeIds(list) {
-          const updated = list.map(item => ({
-            ...item,
-            id: item.id || this.generateRandomId()
-          }));
+        normalizeIdsAndShape(list) {
+          const normalized = list.map(item => {
+            const typeId = typeof item.type === 'object' ? item?.type?.id : item?.type;
+            return {
+              type: typeId || null,
+              number: item?.number || null,
+              id: item?.id || this.generateRandomId()
+            };
+          });
         
-          const needsUpdate = updated.some((item, i) => item.id !== list[i].id);
+          const needsUpdate = normalized.some((item, i) =>
+            item.type !== list[i].type ||
+            item.number !== list[i].number ||
+            !list[i].id
+          );
+        
           if (needsUpdate) {
-            this.$emit('update:modelValue', updated);
+            this.$emit('update:modelValue', normalized);
             return true;
           }
         
           return false;
         }
+        
     },
     watch: {
         modelValue: {
@@ -91,7 +101,7 @@ const IdNumberDynamicField = Vue.defineComponent({
                 return;
               }
 
-              this.normalizeIds(newVal);
+              this.normalizeIdsAndShape(newVal);
             }
         }
     },      

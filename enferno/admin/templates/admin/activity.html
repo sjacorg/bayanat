@@ -148,7 +148,6 @@
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
-    <script src="/static/js/mixins/id-number-mixin.js"></script>
 
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
@@ -216,7 +215,7 @@
 
   const app = createApp({
     delimiters: delimiters,
-    mixins: [globalMixin, idNumberMixin],
+    mixins: [globalMixin],
     data: () => ({
       translations: window.translations,
 

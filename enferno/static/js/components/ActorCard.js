@@ -78,7 +78,6 @@ const ActorCard = Vue.defineComponent({
   computed: {
     groupedIdNumbers() {
       const idNumbers = this.actor.id_number;
-      const typesMap = this.$root.idNumberTypesMap;
     
       if (!Array.isArray(idNumbers) || idNumbers.length === 0) {
         return {};
@@ -87,9 +86,7 @@ const ActorCard = Vue.defineComponent({
       return idNumbers.reduce((acc, { type, number }) => {
         if (!type || !number) return acc;
     
-        const typeId = parseInt(type);
-        const typeInfo = typesMap[typeId];
-        const typeName = typeInfo?.title_tr || typeInfo?.title || `Unknown Type ${typeId}`;
+        const typeName = type?.title_tr || type?.title || `Unknown Type ${type.id}`;
     
         (acc[typeName] ||= []).push(number);
         return acc;
