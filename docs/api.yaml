@@ -7324,7 +7324,14 @@ components:
             type:
               type: string
             id_number:
-              type: string
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: "ID number type ID as string. Either of type or number can be omitted to be wildcard"
+                number:
+                  type: string
+                  description: "ID number value. Either of type or number can be omitted to be wildcard"
             locTypes:
               type: array
               items:
@@ -8896,7 +8903,14 @@ components:
               id:
                 type: integer
         id_number:
-          type: string
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              number:
+                type: string
         origin_place:
           type: object
           properties:
@@ -9208,7 +9222,14 @@ components:
           items:
             $ref: '#/components/schemas/ComponentDataItem'
         id_number:
-          type: string
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                $ref: '#/components/schemas/ComponentDataItem'
+              number:
+                type: string
         assigned_to:
           $ref: '#/components/schemas/UserCompactItem'
         first_peer_reviewer:

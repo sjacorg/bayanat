@@ -38,6 +38,44 @@ from enferno.utils.logging_utils import get_logger
 logger = get_logger()
 
 
+# ID Number Types cache - efficient lookup without querying DB on every actor serialization
+_id_number_types_cache = {}
+_cache_loaded = False
+
+
+def _load_id_number_types_cache():
+    """Load all ID number types into memory cache."""
+    global _id_number_types_cache, _cache_loaded
+    _id_number_types_cache = {}
+
+    from enferno.admin.models.IDNumberType import IDNumberType
+
+    try:
+        id_types = IDNumberType.query.all()
+        _id_number_types_cache = {id_type.id: id_type.to_dict() for id_type in id_types}
+        _cache_loaded = True
+    except Exception as e:
+        logger.warning(f"Failed to load ID number types cache: {e}")
+        _cache_loaded = False
+
+
+def _invalidate_id_number_types_cache():
+    """Invalidate the ID number types cache."""
+    global _id_number_types_cache, _cache_loaded
+    _id_number_types_cache = {}
+    _cache_loaded = False
+
+
+def _get_id_number_type(type_id: int) -> dict[str, Any]:
+    """Get ID number type from cache, loading cache if needed."""
+    global _id_number_types_cache, _cache_loaded
+
+    if not _cache_loaded:
+        _load_id_number_types_cache()
+
+    return _id_number_types_cache.get(type_id, {"id": type_id, "title": f"Unknown Type {type_id}"})
+
+
 class Actor(db.Model, BaseMixin):
     """
     SQL Alchemy model for actors
@@ -825,7 +863,10 @@ class Actor(db.Model, BaseMixin):
             ],
             "nationalities": [country.to_dict() for country in getattr(self, "nationalities", [])],
             "dialects": [dialect.to_dict() for dialect in getattr(self, "dialects", [])],
-            "id_number": self.id_number or [],
+            "id_number": [
+                {"type": _get_id_number_type(int(id_number["type"])), "number": id_number["number"]}
+                for id_number in getattr(self, "id_number", [])
+            ],
             # assigned to
             "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
             # first peer reviewer
@@ -1135,3 +1176,28 @@ DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
 # Register DDL events to ensure function exists for both fresh installs and migrations
 event.listen(Actor.__table__, "before_create", create_validation_function)
 event.listen(Actor.__table__, "after_drop", drop_validation_function)
+
+
+# Cache invalidation event handlers for IDNumberType changes
+def _on_id_number_type_change(mapper, connection, target):
+    """Invalidate cache when IDNumberType is modified."""
+    _invalidate_id_number_types_cache()
+
+
+# Set up event listeners to invalidate cache when IDNumberType changes
+# These will be registered when IDNumberType is imported
+def _register_id_number_type_cache_events():
+    """Register cache invalidation events for IDNumberType."""
+    try:
+        from enferno.admin.models.IDNumberType import IDNumberType
+
+        event.listen(IDNumberType, "after_insert", _on_id_number_type_change)
+        event.listen(IDNumberType, "after_update", _on_id_number_type_change)
+        event.listen(IDNumberType, "after_delete", _on_id_number_type_change)
+    except ImportError:
+        # IDNumberType not available yet
+        pass
+
+
+# Register events on module load
+_register_id_number_type_cache_events()
