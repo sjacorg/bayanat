@@ -2812,6 +2812,12 @@ def relationship_info() -> Response:
     )
 
 
+# Bulletin fields routes
+@admin.route("/bulletin-fields/", defaults={"id": None})
+def bulletin_fields(id: Optional[t.id]) -> str:
+    """Endpoint for bulletin fields configuration."""
+    return render_template("admin/bulletin-fields.html")
+
 # Bulletin routes
 @admin.route("/bulletins/", defaults={"id": None})
 @admin.route("/bulletins/<int:id>")

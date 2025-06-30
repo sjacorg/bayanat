@@ -1,0 +1,31 @@
+{% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
+
+<v-main>
+  <v-container fluid>
+    Bulletin fields
+  </v-container>
+</v-main>
+
+{% endblock %} {% block outside %} {% endblock %} {% block js %}
+
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
+  const vuetify = createVuetify(vuetifyConfig);
+
+  const app = createApp({
+    delimiters: delimiters,
+    mixins: [globalMixin],
+    data: () => ({
+        drawer: drawer,
+    }),
+
+    computed: {},
+  });
+
+  app.use(router);
+  app.use(vuetify).mount('#app');
+
+  window.app = app;
+</script>
+{% endblock %}

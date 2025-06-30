@@ -160,6 +160,7 @@ const routes = [
 
     {path: '/admin/bulletins/:id', name: 'bulletin', component: Vue.defineComponent({})},
     {path: '/admin/bulletins/', name: 'bulletins', component: Vue.defineComponent({})},
+    {path: '/admin/bulletin-fields/', name: 'bulletin-fields', component: Vue.defineComponent({})},
     {path: '/admin/actors/:id', name: 'actor', component: Vue.defineComponent({})},
     {path: '/admin/actors/', name: 'actors', component: Vue.defineComponent({})},
     {path: '/admin/incidents/:id', name: 'incident', component: Vue.defineComponent({})},
