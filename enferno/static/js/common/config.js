@@ -91,12 +91,10 @@ const vuetifyConfig = {
             dark: {
                 dark: true, // Explicitly set the dark theme as dark
                 colors: {
-                    white: '#333', // Adapted to the more complex structure of your dark theme
                     // Adapted to the more complex structure of your dark theme
                     primary: '#09a7a6',
                     grey: '#999', // Only one shade represented for simplicity
                     'blue-grey': '#222', // Base color, assuming primary shade
-                    black: '#ddd', // Base color
                     gv: '#019985', // Darken2 shade assumed for simplicity
                     lime: '#303030',
                     teal: '#008080',

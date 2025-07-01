@@ -422,6 +422,11 @@ let mediaMixin = {
     },
 
     handleExpandedMedia(media, mediaType) {
+      const isSameContent = this.expandedMedia?.s3url === media?.s3url
+      if (isSameContent) {
+        return this.closeExpandedMedia();
+      }
+
       this.expandedMedia = media;
       this.expandedMediaType = mediaType;
 

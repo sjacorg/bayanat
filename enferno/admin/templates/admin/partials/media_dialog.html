@@ -19,24 +19,24 @@
             </v-toolbar>
 
             <div v-if="expandedMedia" ref="expandedMediaRef" class="w-100">
-                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer" class="inner-video-full-height mb-6" style="height: 50vh;"></div>
+                <div v-if="['video', 'audio'].includes(expandedMediaType)" ref="playerContainer" class="inner-video-full-height" style="height: 40vh;"></div>
                 <div  v-if="expandedMediaType === 'pdf'">
-                    <object :data="expandedMedia.s3url" class="w-100" style="height: 50vh;"></object>
+                    <object :data="expandedMedia.s3url" class="w-100" style="height: 40vh;"></object>
                 </div>
                 <div v-if="expandedMediaType === 'image'">
-                    <v-img :src="expandedMedia.s3url" class="bg-grey-lighten-2" style="height: 50vh;"></v-img>
+                    <v-img :src="expandedMedia.s3url" class="bg-grey-lighten-2" style="height: 40vh;"></v-img>
                 </div>
             </div>
             
             <!--  Grid of Media Items -->
             <v-card-text id="medias">
-                <image-gallery prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
+                <image-gallery :horizontal="Boolean(expandedMedia)" prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
                                @video-click="viewMediaPlayerDialog($event); closeExpandedMedia() "
                                @audio-click="viewMediaPlayerDialog($event); closeExpandedMedia()"
                                @remove-media="removeMedia"
                 >
                     <template #top-actions="{ media, mediaType }">
-                      <v-btn size="small" variant="text" icon="mdi-arrow-expand-all" @click="handleExpandedMedia(media, mediaType)"></v-btn> 
+                      <v-btn size="small" variant="text" :icon="expandedMedia?.s3url === media?.s3url ? 'mdi-arrow-collapse' : 'mdi-arrow-expand'" @click="handleExpandedMedia(media, mediaType)"></v-btn> 
                     </template>
                 </image-gallery>
             </v-card-text>
