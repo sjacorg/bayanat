@@ -2,7 +2,6 @@ from enferno.extensions import db
 from enferno.utils.base import ComponentDataMixin
 
 from enferno.utils.logging_utils import get_logger
-from sqlalchemy import text
 
 logger = get_logger()
 
@@ -17,21 +16,6 @@ class IDNumberType(db.Model, ComponentDataMixin):
         Returns:
             int: Number of actors that have this ID number type in their id_number array
         """
+        from enferno.admin.models.Actor import Actor
 
-        result = db.session.execute(
-            text(
-                """
-                SELECT COUNT(*) 
-                FROM actor 
-                WHERE jsonb_array_length(id_number) > 0 
-                AND EXISTS (
-                    SELECT 1 
-                    FROM jsonb_array_elements(id_number) AS elem 
-                    WHERE elem->>'type' = :id_type
-                )
-            """
-            ),
-            {"id_type": str(self.id)},
-        ).scalar()
-
-        return result or 0
+        return Actor.query.filter(Actor.id_number.op("@>")([{"type": str(self.id)}])).count()

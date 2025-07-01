@@ -879,17 +879,14 @@ class SearchUtils:
         if type:
             query.append(Actor.type == type)
 
-            # ID Number search - now searches within JSONB array
+            # ID Number search - using JSONB containment operators for efficiency
         id_number = q.get("id_number", None)
         if id_number and isinstance(id_number, dict):
             type_value = id_number.get("type", "").strip()
             number_value = id_number.get("number", "").strip()
 
-            # Skip if both are empty
-            if not type_value and not number_value:
-                pass
-            elif type_value and number_value:
-                # Both type and number provided - search for specific type with specific number
+            if type_value and number_value:
+                # Both provided - exact match for type and partial match for number
                 search = "%{}%".format(number_value)
                 query.append(
                     func.exists(
@@ -904,16 +901,10 @@ class SearchUtils:
                     )
                 )
             elif type_value:
-                # Only type provided - search for all actors with this ID type (number is wildcard)
-                query.append(
-                    func.exists(
-                        select(1)
-                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
-                        .where(func.jsonb_extract_path_text(text("elem"), "type") == type_value)
-                    )
-                )
+                # Type only - use containment operator
+                query.append(Actor.id_number.op("@>")([{"type": type_value}]))
             elif number_value:
-                # Only number provided - search across all ID types (type is wildcard)
+                # Number only - use LIKE with jsonb_array_elements
                 search = "%{}%".format(number_value)
                 query.append(
                     func.exists(

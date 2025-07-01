@@ -38,44 +38,6 @@ from enferno.utils.logging_utils import get_logger
 logger = get_logger()
 
 
-# ID Number Types cache - efficient lookup without querying DB on every actor serialization
-_id_number_types_cache = {}
-_cache_loaded = False
-
-
-def _load_id_number_types_cache():
-    """Load all ID number types into memory cache."""
-    global _id_number_types_cache, _cache_loaded
-    _id_number_types_cache = {}
-
-    from enferno.admin.models.IDNumberType import IDNumberType
-
-    try:
-        id_types = IDNumberType.query.all()
-        _id_number_types_cache = {id_type.id: id_type.to_dict() for id_type in id_types}
-        _cache_loaded = True
-    except Exception as e:
-        logger.warning(f"Failed to load ID number types cache: {e}")
-        _cache_loaded = False
-
-
-def _invalidate_id_number_types_cache():
-    """Invalidate the ID number types cache."""
-    global _id_number_types_cache, _cache_loaded
-    _id_number_types_cache = {}
-    _cache_loaded = False
-
-
-def _get_id_number_type(type_id: int) -> dict[str, Any]:
-    """Get ID number type from cache, loading cache if needed."""
-    global _id_number_types_cache, _cache_loaded
-
-    if not _cache_loaded:
-        _load_id_number_types_cache()
-
-    return _id_number_types_cache.get(type_id, {"id": type_id, "title": f"Unknown Type {type_id}"})
-
-
 class Actor(db.Model, BaseMixin):
     """
     SQL Alchemy model for actors
@@ -432,15 +394,7 @@ class Actor(db.Model, BaseMixin):
 
         # Handle id_number array format
         if "id_number" in json:
-            if isinstance(json["id_number"], list):
-                # Already in the correct format (list of objects)
-                self.id_number = json["id_number"]
-            elif isinstance(json["id_number"], str) and json["id_number"].strip():
-                # Legacy string format - convert to array with default type (1)
-                self.id_number = [{"type": "1", "number": json["id_number"]}]
-            else:
-                # Empty or null value
-                self.id_number = []
+            self.id_number = json.get("id_number", [])
             # Mark the field as modified for SQLAlchemy to save changes
             flag_modified(self, "id_number")
         else:
@@ -863,10 +817,7 @@ class Actor(db.Model, BaseMixin):
             ],
             "nationalities": [country.to_dict() for country in getattr(self, "nationalities", [])],
             "dialects": [dialect.to_dict() for dialect in getattr(self, "dialects", [])],
-            "id_number": [
-                {"type": _get_id_number_type(int(id_number["type"])), "number": id_number["number"]}
-                for id_number in getattr(self, "id_number", [])
-            ],
+            "id_number": self._get_formatted_id_numbers(),
             # assigned to
             "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
             # first peer reviewer
@@ -1095,42 +1046,56 @@ class Actor(db.Model, BaseMixin):
         if not self.id_number:
             return {}
 
-        # Extract all unique type IDs first
-        type_ids = set()
-        for id_entry in self.id_number:
-            if isinstance(id_entry, dict) and "type" in id_entry:
-                try:
-                    type_ids.add(int(id_entry["type"]))
-                except (ValueError, TypeError):
-                    pass
+        # Get all ID types in one query
+        id_types = {t.id: t.title for t in IDNumberType.query.all()}
 
-        # Single query to get all IDNumberType records we need
-        id_types_map = {}
-        if type_ids:
-            id_types = IDNumberType.query.filter(IDNumberType.id.in_(type_ids)).all()
-            id_types_map = {id_type.id: id_type for id_type in id_types}
-
-        # Group numbers by type name
+        # Group by type name
         grouped = {}
-        for id_entry in self.id_number:
-            if not isinstance(id_entry, dict) or "type" not in id_entry or "number" not in id_entry:
-                continue
-
-            type_id = id_entry["type"]
-            number = id_entry["number"]
-
-            try:
-                type_id_int = int(type_id)
-                id_type = id_types_map.get(type_id_int)
-                type_name = id_type.title if id_type else f"Unknown Type {type_id}"
-            except (ValueError, TypeError):
-                type_name = f"Invalid Type {type_id}"
-
-            if type_name not in grouped:
-                grouped[type_name] = []
-            grouped[type_name].append(number)
+        for entry in self.id_number:
+            if isinstance(entry, dict) and entry.get("type") and entry.get("number"):
+                type_id = entry["type"]
+                try:
+                    type_id_int = int(type_id)
+                    type_name = id_types.get(type_id_int, f"Unknown Type {type_id}")
+                except (ValueError, TypeError):
+                    type_name = f"Invalid Type {type_id}"
+                grouped.setdefault(type_name, []).append(entry["number"])
 
         return grouped
+
+    def _get_formatted_id_numbers(self) -> list[dict[str, Any]]:
+        """
+        Get formatted ID numbers with type information.
+        Queries IDNumberType table once per call.
+        """
+        if not self.id_number:
+            return []
+
+        # Get all ID types in one query
+        id_types = {t.id: t.to_dict() for t in IDNumberType.query.all()}
+
+        formatted_numbers = []
+        for id_number in self.id_number:
+            if isinstance(id_number, dict) and "type" in id_number and "number" in id_number:
+                try:
+                    type_id = int(id_number["type"])
+                    id_type = id_types.get(
+                        type_id, {"id": type_id, "title": f"Unknown Type {type_id}"}
+                    )
+                    formatted_numbers.append({"type": id_type, "number": id_number["number"]})
+                except (ValueError, TypeError):
+                    # Handle invalid type_id
+                    formatted_numbers.append(
+                        {
+                            "type": {
+                                "id": id_number["type"],
+                                "title": f"Invalid Type {id_number['type']}",
+                            },
+                            "number": id_number["number"],
+                        }
+                    )
+
+        return formatted_numbers
 
 
 # DDL event to create the validation function for fresh installs
@@ -1176,28 +1141,3 @@ DROP FUNCTION IF EXISTS validate_actor_id_number(JSONB);
 # Register DDL events to ensure function exists for both fresh installs and migrations
 event.listen(Actor.__table__, "before_create", create_validation_function)
 event.listen(Actor.__table__, "after_drop", drop_validation_function)
-
-
-# Cache invalidation event handlers for IDNumberType changes
-def _on_id_number_type_change(mapper, connection, target):
-    """Invalidate cache when IDNumberType is modified."""
-    _invalidate_id_number_types_cache()
-
-
-# Set up event listeners to invalidate cache when IDNumberType changes
-# These will be registered when IDNumberType is imported
-def _register_id_number_type_cache_events():
-    """Register cache invalidation events for IDNumberType."""
-    try:
-        from enferno.admin.models.IDNumberType import IDNumberType
-
-        event.listen(IDNumberType, "after_insert", _on_id_number_type_change)
-        event.listen(IDNumberType, "after_update", _on_id_number_type_change)
-        event.listen(IDNumberType, "after_delete", _on_id_number_type_change)
-    except ImportError:
-        # IDNumberType not available yet
-        pass
-
-
-# Register events on module load
-_register_id_number_type_cache_events()
