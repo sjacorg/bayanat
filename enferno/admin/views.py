@@ -2862,23 +2862,15 @@ def api_bulletins(validated_data: dict) -> Response:
     base_query = search.get_query()
 
     if include_count and cursor is None:
-        # Single query approach: use window function to get count with results
-        # Only do this on first page to avoid performance overhead on pagination
-        count_subquery = (
-            base_query.add_columns(func.count().over().label("total_count"))
-            .order_by(Bulletin.id.desc())
-            .limit(per_page + 1)
-        )
+        # Separate count query approach: optimized for performance
+        # Count the exact same filtered result set that would be paginated
+        count_query = select(func.count()).select_from(base_query.subquery())
+        total_count = db.session.execute(count_query).scalar()
 
-        result = db.session.execute(count_subquery)
-        rows = result.all()
-
-        if rows:
-            items = [row[0] for row in rows]  # Extract Bulletin objects
-            total_count = rows[0].total_count if rows else 0
-        else:
-            items = []
-            total_count = 0
+        # Fast data query without window function overhead
+        main_query = base_query.order_by(Bulletin.id.desc()).limit(per_page + 1)
+        result = db.session.execute(main_query)
+        items = result.scalars().unique().all()
 
         # Determine if there are more pages
         has_more = len(items) > per_page
