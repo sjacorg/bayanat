@@ -34,7 +34,7 @@ const MediaCard = Vue.defineComponent({
       };
     },
     durationFormatted() {
-      return this.videoDuration ? this.formatDuration(this.videoDuration) : 'N/A';
+      return this.videoDuration ? this.formatDuration(this.videoDuration) : null;
     },
     actionTooltip() {
       switch (this.mediaType) {
@@ -166,7 +166,7 @@ const MediaCard = Vue.defineComponent({
       </v-toolbar>
       <v-divider></v-divider>
       <v-sheet>
-        <uni-field :english="media.title || 'Untitled'" :arabic="media.title_ar || ''"/>
+        <uni-field :english="media.title || 'Untitled'" :arabic="media.title_ar || ''" class="py-0 my-0" />
       </v-sheet>
       <v-divider></v-divider>
 
@@ -191,6 +191,9 @@ const MediaCard = Vue.defineComponent({
             <v-img v-if="mediaType === 'video'" :src="videoThumbnail" height="180" cover class="bg-grey-lighten-2">
               <div class="d-flex align-center justify-center fill-height">
                 <v-btn icon="mdi-play-circle" variant="text" size="x-large" :class="['custom-play-icon', thumbnailBrightness > 128 ? 'dark-play-icon' : 'light-play-icon']"></v-btn>
+              </div>
+              <div v-if="mediaType === 'video' && durationFormatted" class="d-flex justify-center text-caption position-absolute bottom-0 right-0 text-white mb-2 mr-2 px-1 rounded-sm" style="background: rgba(0, 0, 0, 0.6);">
+                {{ durationFormatted }}
               </div>
             </v-img>
 
@@ -224,10 +227,10 @@ const MediaCard = Vue.defineComponent({
         </v-hover>
       </v-card-text>
 
-      <v-card-text class="px-2">
+      <v-card-text class="px-2 py-1">
         
         <div class=" cursor-pointer" @click="copyToClipboard(media.filename)">
-          <v-list-item class="text-caption ml-1">
+          <v-list-item class="text-caption ml-1 py-0">
             <template v-slot:prepend>
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props }">
@@ -243,7 +246,7 @@ const MediaCard = Vue.defineComponent({
           </v-list-item>
         </div>
         <div class="d-flex align-center  cursor-pointer" @click="copyToClipboard(media.etag)">
-          <v-list-item class="text-caption ml-1">
+          <v-list-item class="text-caption ml-1 py-0">
             <template v-slot:prepend>
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props }">
@@ -257,21 +260,6 @@ const MediaCard = Vue.defineComponent({
             </template>
             {{ media.etag }}
           </v-list-item>
-        </div>
-
-        <div v-if="mediaType === 'video'" class="d-flex ">
-          <v-list-item class="text-caption ml-1">
-            <template v-slot:prepend>
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" icon="mdi-timer-outline"></v-icon>
-                </template>
-                <span><strong>{{ translations.duration_ }}</strong></span>
-              </v-tooltip>
-            </template>
-            {{ durationFormatted }}
-          </v-list-item>
-
         </div>
       </v-card-text>
       
