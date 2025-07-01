@@ -624,6 +624,9 @@
             }),
 
             computed: {
+                simpleIdNumberValue() {
+                    return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id, number: idNumber.number }));
+                },
                 searchEmpty() {
                     return this.search.every(search =>
                         Object.values(search).every(value => !value)
@@ -846,6 +849,13 @@
                         console.error('Error fetching id number types:', err);
                         this.showSnack(handleRequestError(err));
                     })
+                },
+
+                updateIdNumber(updatedItems) {
+                    this.editedItem.id_number = updatedItems.map(item => ({
+                        type: this.idNumberTypes.find(type => Number(type.id) === Number(item.type)),
+                        number: item.number,
+                    }))
                 },
 
                 validateForm() {
@@ -1553,16 +1563,17 @@
 
                 },
 
+                isObject(value) {
+                    return value !== null && typeof value === 'object' && !Array.isArray(value);
+                },
+
                 cleanupIdNumbers() {
                     let idNumbers = this.editedItem.id_number ?? [];
 
-                    // Filter out entries where type or number is missing or just whitespace
-                    idNumbers = idNumbers.filter(entry => entry.type?.toString().trim() && entry.number?.toString().trim());
-
                     // Normalize all fields to trimmed strings
                     idNumbers = idNumbers.map(entry => ({
-                        type: entry.type.toString().trim(),
-                        number: entry.number.toString().trim()
+                        type: this.isObject(entry.type) ? entry.type.id.toString() : entry.type.toString(),
+                        number: entry.number.toString()
                     }));
 
                     // Save cleaned data back

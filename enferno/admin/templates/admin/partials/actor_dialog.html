@@ -323,9 +323,10 @@
                                 <v-col cols="12" class="mb-4">
                                     <!-- ID Numbers Management -->
                                     <id-number-dynamic-field
-                                        v-model:model-value="editedItem.id_number"
+                                        :model-value="simpleIdNumberValue"
+                                        @update:model-value="updateIdNumber"
                                         :id-number-types="idNumberTypes"
-                                    ></id-numbers-dynamic-field>
+                                    ></id-number-dynamic-field>
                                 </v-col>
                             </v-row>
 
