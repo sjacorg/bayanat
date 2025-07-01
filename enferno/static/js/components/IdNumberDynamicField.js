@@ -1,3 +1,5 @@
+const EMPTY_ID_ENTRY = { type: null, number: null };
+
 const IdNumberDynamicField = Vue.defineComponent({
     props: {
       modelValue: {
@@ -11,44 +13,49 @@ const IdNumberDynamicField = Vue.defineComponent({
       },
     },
     emits: ['update:modelValue'],
-    data: () => {
-      return {
-        translations: window.translations,
-        validationRules: validationRules,
-        items: [{ type: null, number: null }],
-      };
-    },
-    mounted() {
-      if (Array.isArray(this.modelValue) && this.modelValue.length > 0) {
-        this.items = this.modelValue
+    data: () => ({
+      translations: window.translations,
+      validationRules: validationRules,
+      items: [ { ...EMPTY_ID_ENTRY } ]
+    }),
+    
+    methods: {
+      emitAndFilterEmptyItems() {
+        const filtered = this.items.filter(i => i.type && i.number);
+        this.$emit('update:modelValue', filtered);
+      },
+      addIdNumber() {
+        this.items.push({ ...EMPTY_ID_ENTRY });
+        this.emitAndFilterEmptyItems();
+      },
+      removeIdNumber(index) {
+        const record = this.items[index];
+        const hasData = Boolean(record?.type || record?.number);
+    
+        if (!hasData || confirm(this.translations.areYouSureYouWantToDeleteThisRecord_)) {
+          this.items.splice(index, 1);
+          this.emitAndFilterEmptyItems();
+        }
+      },
+      updateIdNumber(index, field, value) {
+        if (!this.items[index]) return;
+        this.items[index][field] = value;
+        this.emitAndFilterEmptyItems();
       }
     },
-    methods: {
-        emitAndFilterEmptyItems() {
-          const filteredItems = this.items.filter(item => item.type && item.number);
-          this.$emit('update:modelValue', filteredItems);
-        },
-        addIdNumber() {
-          this.items.push({ type: null, number: null });
-          this.emitAndFilterEmptyItems();
-        },
-        removeIdNumber(index) {
-            const record = this.items[index];
-            const hasData = Boolean(record?.type || record?.number);
-          
-             // Only ask confirmation if the record has data
-            if (!hasData || confirm(translations.areYouSureYouWantToDeleteThisRecord_)) {
-              this.items.splice(index, 1);
-              this.emitAndFilterEmptyItems();
-            }
-        },
-        updateIdNumber(index, field, value) {
-          if (this.items?.[index]?.[field] === undefined) return;
-
-          this.items[index][field] = value;
-          this.emitAndFilterEmptyItems();
-        },        
-    },    
+    watch: {
+      modelValue(newVal) {
+        if (this.hasOnlyEmptyRow && Array.isArray(newVal) && newVal.length > 0) {
+          this.items = [...newVal];
+        }
+      }
+    },
+    computed: {
+      hasOnlyEmptyRow() {
+        const [row] = this.items;
+        return this.items.length === 1 && row?.type === null && row?.number === null;
+      }
+    },  
     template: /*html*/`
         <v-card>
             <v-toolbar>
