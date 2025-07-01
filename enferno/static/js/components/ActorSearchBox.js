@@ -32,6 +32,7 @@ const ActorSearchBox = Vue.defineComponent({
         type: null,
         number: null,
       },
+      idNumberTypes: [],
     };
   },
   watch: {
@@ -57,7 +58,7 @@ const ActorSearchBox = Vue.defineComponent({
   },
 
   mounted() {
-    this.$root.fetchIdNumberTypes();
+    this.fetchIdNumberTypes();
     this.q.locTypes = this.q.locTypes || this.translations.actorLocTypes_.map((x) => x.code);
     if ('id_number' in this.q) {
       this.id_number = {
@@ -74,6 +75,19 @@ const ActorSearchBox = Vue.defineComponent({
   },
 
   methods: {
+    fetchIdNumberTypes() {
+      // If already loaded the exit
+      if (this.idNumberTypes.length) return
+
+      // Fetch and cache IDNumberType data for ID number display and editing
+      axios.get('/admin/api/idnumbertypes/').then(res => {
+          this.idNumberTypes = res.data.items || [];
+      }).catch(err => {
+          this.idNumberTypes = [];
+          console.error('Error fetching id number types:', err);
+          this.showSnack(handleRequestError(err));
+      })
+  },
     updateIdNumber(field, value) {
       this.id_number[field] = value;
 
@@ -689,7 +703,7 @@ const ActorSearchBox = Vue.defineComponent({
                   <div class="d-flex align-center ga-4 mb-2">
                     <v-select
                         :model-value="Number(id_number.type) || null"
-                        :items="$root.idNumberTypes"
+                        :items="idNumberTypes"
                         item-title="title"
                         item-value="id"
                         :label="translations.idType_"
