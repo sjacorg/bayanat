@@ -71,7 +71,7 @@ const ImageGallery = Vue.defineComponent({
   template: `
       <div ref="galleryContainer">
         <v-sheet class="media-grid">
-          <v-sheet v-for="(media,index) in sortedMedia" :key="media.id">
+          <v-sheet v-for="(media,index) in sortedMedia" :key="media.id || media.uuid">
             <media-card
               @video-click="handleVideo"
               @audio-click="handleAudio"
