@@ -625,7 +625,7 @@
 
             computed: {
                 simpleIdNumberValue() {
-                    return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id, number: idNumber.number }));
+                    return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id.toString(), number: idNumber.number.toString() }));
                 },
                 searchEmpty() {
                     return this.search.every(search =>
@@ -1563,36 +1563,22 @@
 
                 },
 
-                isObject(value) {
-                    return value !== null && typeof value === 'object' && !Array.isArray(value);
-                },
-
-                cleanupIdNumbers() {
-                    let idNumbers = this.editedItem.id_number ?? [];
-
-                    // Normalize all fields to trimmed strings
-                    idNumbers = idNumbers.map(entry => ({
-                        type: this.isObject(entry.type) ? entry.type.id.toString() : entry.type.toString(),
-                        number: entry.number.toString()
-                    }));
-
-                    // Save cleaned data back
-                    this.editedItem.id_number = idNumbers;
-                },
-
                 save() {
                     if (!this.valid) {
                         this.showSnack("{{ _('Please review the form for errors.')}}");
                         return;
                     }
 
-                    this.cleanupIdNumbers();
+                    const payload = {
+                        ...this.editedItem,
+                        id_number: this.simpleIdNumberValue
+                    }
 
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
                         axios.put(`/admin/api/actor/${this.editedItem.id}`, {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.showSnack(response.data);
                             this.refresh();
@@ -1605,7 +1591,7 @@
                     } else {
                         //create new record
                         axios.post("/admin/api/actor/", {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.items.unshift(response.data.item)
                             this.showSnack(response.data.message);
