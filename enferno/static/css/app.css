@@ -830,6 +830,10 @@ div.jsondiffpatch-child-node-type-array:after {
     opacity: 1;
 }
 
+.inner-video-full-height .video-js {
+    height: 100% !important;
+}
+
 /* CSS Helpers */
 .overflow-unset {
     overflow: unset;
