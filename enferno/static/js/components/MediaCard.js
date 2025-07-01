@@ -158,8 +158,8 @@ const MediaCard = Vue.defineComponent({
             </v-tooltip>
           </div>
           <div class="d-flex align-center">
-            <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
             <v-btn size="small" variant="text" icon="mdi-magnify-expand" @click="handleMediaClick"></v-btn> 
+            <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
           </div>
         </div>
 
