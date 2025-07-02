@@ -72,22 +72,26 @@ def test_actors_endpoint(
     clean_slate_actors, create_full_actor, request, client_fixture, expected_status
 ):
     """
-    Test the GET actors endpoint in non-restrictive mode with no roles specified.
+    Test the POST actors endpoint in non-restrictive mode with no roles specified.
     """
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
         client_ = request.getfixturevalue(client_fixture)
-        response = client_.get(
+        response = client_.post(
             "/admin/api/actors",
-            json={"q": []},
+            json={"q": [{}], "per_page": 20, "include_count": True},
             headers={"Content-Type": "application/json"},
             follow_redirects=True,
         )
         assert response.status_code == expected_status
-        # If expected response is 200, assert that the response conforms to schema
+        # If expected response is 200, assert that the response conforms to schema and has cursor pagination structure
         if expected_status == 200:
-            conform_to_schema_or_fail(
-                convert_empty_strings_to_none(response.json), ActorsResponseModel
-            )
+            data = response.json
+            assert "items" in data
+            assert "meta" in data
+            assert "total" in data
+            assert "totalType" in data
+            # Validate response conforms to updated schema
+            conform_to_schema_or_fail(convert_empty_strings_to_none(data), ActorsResponseModel)
 
 
 ##### GET /admin/api/actor/<int:id> #####
