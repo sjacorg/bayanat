@@ -860,3 +860,10 @@ div.jsondiffpatch-child-node-type-array:after {
 .lg-outer {
     z-index: 3000 !important;
 }
+
+/* Disable chrome input tint */
+.v-input input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #000 !important;
+}
