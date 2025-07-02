@@ -21,18 +21,18 @@
             <v-tooltip text="{{ _('Visualize Results') }}">
                 <template #activator="{props}">
                     <v-btn
-                        elevation="16"
-                        color="primary"
-                        outlined
-                        icon="mdi-graph"
-                        @click.stop="visualizeResults"
-                        v-bind="props"
-                        v-if="showVisualize"
-                        :loading="visualizeLoading"
-                        variant="elevated"
-                        class="mb-5 mr-5 position-absolute"
-                        style="right: 30px; bottom: 90px; z-index: 1000;"
-                    />
+                            elevation="16"
+                            color="primary"
+                            outlined
+                            icon="mdi-graph"
+                            @click.stop="visualizeResults"
+                            v-bind="props"
+                            v-if="showVisualize"
+                            :loading="visualizeLoading"
+                            variant="elevated"
+                            class="mb-5 mr-5 position-absolute"
+                            style="right: 30px; bottom: 90px; z-index: 1000;"
+                    ></v-btn>
                 </template>
             </v-tooltip>
 
@@ -128,7 +128,7 @@
                                                 class="mr-3 ml-1"
                                                 density="compact"
                                                 v-bind="props"
-                                            />
+                                            ></v-btn>
                                         </template>
                                     </v-tooltip>
 
@@ -212,7 +212,7 @@
                                         size="small"
                                         :color="role.color || 'grey-lighten-1'"
                                         icon="mdi-shield-lock"
-                                    />
+                                    ></v-icon>
                                 </template>
 
                             </v-tooltip>
@@ -425,8 +425,6 @@
 
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/croppr/croppr.min.js"></script>
-
-    <script src="/static/js/directives/intersect.js"></script>
 
     <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
@@ -1184,6 +1182,10 @@
                                 console.log(`API call took ${duration}ms`)
                                 
                                 this.items = response.data.items;
+                                this.showVisualize = !(
+                                    this.search.length === 1 &&
+                                    Object.keys(this.search[0]).length === 0
+                                );
                                 if ('total' in response.data) {
                                     this.totalCount = response.data.total
                                     this.countType = response.data.totalType
@@ -1903,9 +1905,6 @@
         app.component('mp-field', MPField);
         app.component('mp-card', MPCard);
         app.component('ActorProfiles', ActorProfiles);
-
-        app.directive('intersect', intersect);
-
 
         app.use(router);
         app.use(vuetify).mount('#app');
