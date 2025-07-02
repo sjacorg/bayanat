@@ -278,6 +278,17 @@
         },
         mounted() {
             this.setInitialTabStateKey()
+
+            this.$router.afterEach((to) => {
+                const [main, child] = to.hash.slice(1).split('/');
+
+                const mainKey = main && main in this.tabsMap ? main : Object.keys(this.tabsMap)[0];
+                const nested = this.tabsMap[mainKey]?.nestedTabsMap || {};
+                const childKey = child && child in nested ? child : Object.keys(nested)[0] || null;
+
+                this.tabState.main = mainKey;
+                this.tabState.child = Object.keys(nested).length ? childKey : null;
+            });
         },
         data() {
             return {
@@ -326,82 +337,17 @@
                     },
                 },
 
-                alHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Code')}}", value: "code" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-
-                ],
-
-                ltHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-
-                countryHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-
-                ethnoHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-
-                dialectHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-
-                relationHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-                revRelationHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Reverse Title')}}", value: "reverse_title" },
-                    { title: "{{_('Reverse Title (tr)')}}", value: "reverse_title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-
-                mediaHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-                geoHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-
-                potentialHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
-
-                claimedHeaders: [
-                    { title: "{{_('ID')}}", value: "id" },
-                    { title: "{{_('Title')}}", value: "title" },
-                    { title: "{{_('Title (tr)')}}", value: "title_tr" },
-                    { title: "{{_('Actions')}}", value: "actions", align: "end" },
-                ],
+                alHeaders: this.createHeaders('codeAndTitle'),
+                ltHeaders: this.createHeaders('basicTitle'),
+                countryHeaders: this.createHeaders('titleLocalized'),
+                ethnoHeaders: this.createHeaders('titleLocalized'),
+                dialectHeaders: this.createHeaders('titleLocalized'),
+                relationHeaders: this.createHeaders('titleLocalized'),
+                revRelationHeaders: this.createHeaders('titleWithReverseLocalized'),
+                mediaHeaders: this.createHeaders('titleLocalized'),
+                geoHeaders: this.createHeaders('titleLocalized'),
+                potentialHeaders: this.createHeaders('titleLocalized'),
+                claimedHeaders: this.createHeaders('titleLocalized'),
 
                 noDeleteIdsForLocationAdminLevels: [],
                 locationAdminLevels: [],
@@ -419,33 +365,21 @@
                 },
                 deep: true
             },
-            'tabState.main'(parentKey) {
-                this.tabState.main = parentKey;
+            'tabState.main'(mainKey) {
+                const nested = this.tabsMap?.[mainKey]?.nestedTabsMap;
 
-                const hasNestedTabs = this.tabsMap?.[parentKey] && 'nestedTabsMap' in this.tabsMap[parentKey]
+                this.tabState.main = mainKey;
+                this.tabState.child = nested
+                    ? nested[this.tabState.child]
+                        ? this.tabState.child
+                        : Object.keys(nested)[0]
+                    : null;
 
-                if (hasNestedTabs) {
-                    const childKey = this.tabState.child
-
-                    const childKeyExists = this.tabsMap?.[parentKey]?.nestedTabsMap && childKey in this.tabsMap[parentKey].nestedTabsMap
-
-                    if (!childKeyExists) {
-                        this.tabState.child = Object.keys(this.tabsMap[parentKey].nestedTabsMap).find(Boolean)
-                    }
-                } else {
-                    this.tabState.child = null
-                }
-
-                const hash = `#${[this.tabState.main, this.tabState.child].filter(Boolean).join('/')}`
-
-                this.$router.replace({ name: 'component-data', hash })
+                this.updateHash();
             },
-            'tabState.child'(childKey) {
-                this.tabState.child = childKey;
 
-                const hash = `#${[this.tabState.main, this.tabState.child].filter(Boolean).join('/')}`
-
-                this.$router.replace({ name: 'component-data', hash })
+            'tabState.child'() {
+                this.updateHash();
             }
         },
 
@@ -456,10 +390,34 @@
         },
 
         methods: {
+            createHeaders(type, customFields = []) {
+                const base = [{ title: "{{ _('ID') }}", value: 'id' }];
+
+                const fieldMaps = {
+                    codeAndTitle: [{ title: "{{ _('Code') }}", value: 'code' }, { title: "{{ _('Title') }}", value: 'title' }],
+                    basicTitle: [{ title: "{{ _('Title') }}", value: 'title' }],
+                    titleLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Title (tr)') }}", value: 'title_tr' }],
+                    titleWithReverseLocalized: [{ title: "{{ _('Title') }}", value: 'title' }, { title: "{{ _('Title (tr)') }}", value: 'title_tr' }, { title: "{{ _('Reverse Title') }}", value: 'reverse_title' }, { title: "{{ _('Reverse Title (tr)') }}", value: 'reverse_title_tr' }],
+                };
+
+                return [...base, ...(fieldMaps[type] || customFields), { title: "{{ _('Actions') }}", value: 'actions', align: 'end' }];
+            },
+            updateHash() {
+                const { main, child } = this.tabState;
+                const hash = [main, child].filter(Boolean).join('/');
+                this.$router.push({ name: 'component-data', hash: `#${hash}` });
+            },
             setInitialTabStateKey() {
-                if (!window.location.hash) return;
-                this.tabState.main = window.location.hash.replace('#', '').split('/')[0]
-                this.tabState.child = window.location.hash.replace('#', '').split('/')[1]
+                const main = this.tabState.main || Object.keys(this.tabsMap)[0];
+                const nested = this.tabsMap[main]?.nestedTabsMap || {};
+                const child = this.tabState.child || Object.keys(nested)[0] || null;
+
+                const hash = [main, child].filter(Boolean).join('/');
+
+                this.$router.replace({
+                    name: 'component-data',
+                    hash: `#${hash}` 
+                });
             },
             onDragEnd() {
                 if (this.isOrderChanged) {
