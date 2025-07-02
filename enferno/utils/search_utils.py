@@ -749,6 +749,7 @@ class SearchUtils:
                 .all()
             )
             loc_ids = [loc.id for loc in locs]
+            # TODO: residence_place_id is not a valid column in the Actor model. Discuss with team.
             conditions.append(Actor.residence_place_id.in_(loc_ids))
 
         # Origin locations
