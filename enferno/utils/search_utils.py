@@ -92,42 +92,60 @@ class SearchUtils:
             return result
 
         elif self.cls == "actor":
-            return self.build_actor_query()
+            # Get conditions from first query
+            main_stmt, conditions = self.actor_query(self.search[0])
+            final_conditions = conditions
+
+            # Handle nested queries by combining conditions
+            if len(self.search) > 1:
+                for i in range(1, len(self.search)):
+                    _, next_conditions = self.actor_query(self.search[i])
+                    op = self.search[i].get("op", "or")
+
+                    if op == "and":
+                        final_conditions.extend(next_conditions)
+                    elif op == "or":
+                        # Combine conditions with OR
+                        final_conditions = [or_(*conditions, *next_conditions)]
+
+            # Build final query with all conditions and default sorting
+            result = select(Actor)
+            if final_conditions:
+                result = result.where(and_(*final_conditions))
+            return result
+
         elif self.cls == "incident":
-            return self.build_incident_query()
+            # Get conditions from first query
+            main_stmt, conditions = self.incident_query(self.search[0])
+            final_conditions = conditions
+
+            # Handle nested queries by combining conditions
+            if len(self.search) > 1:
+                for i in range(1, len(self.search)):
+                    _, next_conditions = self.incident_query(self.search[i])
+                    op = self.search[i].get("op", "or")
+
+                    if op == "and":
+                        final_conditions.extend(next_conditions)
+                    elif op == "or":
+                        # Combine conditions with OR
+                        final_conditions = [or_(*conditions, *next_conditions)]
+
+            # Build final query with all conditions and default sorting
+            result = select(Incident)
+            if final_conditions:
+                result = result.where(and_(*final_conditions))
+            return result
+
         elif self.cls == "location":
             return self.build_location_query()
-        elif self.cls == "Activity":
+        elif self.cls == "activity":
             return self.build_activity_query()
         return []
 
     def to_dict(self):
         """Return the search arguments."""
         return self.args
-
-    def build_actor_query(self):
-        """Build a query for the actor model."""
-        main = self.actor_query(self.search[0])
-        if len(self.search) == 1:
-            return [main], []
-
-        # link queries starting from second item
-        ops = []
-        queries = [main]
-
-        for i in range(1, len(self.search)):
-            q = self.actor_query(self.search[i])
-            op = self.search[i].get("op", "or")
-            if op == "and":
-                ops.append("intersect")
-            elif op == "or":
-                ops.append("union")
-            queries.append(q)
-        return queries, ops
-
-    def build_incident_query(self):
-        """Build a query for the incident model."""
-        return self.incident_query(self.search)
 
     def build_location_query(self):
         """Build a query for the location model."""
@@ -421,116 +439,142 @@ class SearchUtils:
 
         return stmt, conditions
 
-    def actor_query(self, q: dict) -> list:
-        """
-        Build a query for the actor model.
+    def actor_query(self, q: dict):
+        """Build a select statement for actor search"""
+        conditions = []
 
-        Args:
-            - q: The search query.
+        # Support query using a range of ids
+        if ids := q.get("ids"):
+            conditions.append(Actor.id.in_(ids))
 
-        Returns:
-            - A list of query conditions.
-        """
-        query = []
-
-        tsv = q.get("tsv")
-        if tsv:
+        # Text search - PERFORMANCE OPTIMIZED
+        if tsv := q.get("tsv"):
             words = tsv.split(" ")
-            qsearch = []
+            # Use individual ILIKE conditions for better index performance
+            actor_word_conditions = [
+                Actor.search.ilike(f"%{word}%") for word in words if word.strip()
+            ]
+            profile_word_conditions = [
+                ActorProfile.search.ilike(f"%{word}%") for word in words if word.strip()
+            ]
 
-            for word in words:
-                qsearch.append(
-                    or_(
-                        Actor.search.ilike(f"%{word}%"),
-                        ActorProfile.search.ilike(f"%{word}%"),
+            if actor_word_conditions or profile_word_conditions:
+                # Search in both Actor and ActorProfile
+                search_conditions = []
+                if actor_word_conditions:
+                    search_conditions.extend(actor_word_conditions)
+                if profile_word_conditions:
+                    # Use subquery for profile search
+                    profile_subquery = (
+                        db.session.query(Actor.id)
+                        .join(Actor.actor_profiles)
+                        .filter(and_(*profile_word_conditions))
                     )
-                )
+                    search_conditions.append(Actor.id.in_(profile_subquery))
 
-            subquery = db.session.query(Actor.id).join(Actor.actor_profiles).filter(*qsearch)
-            query.append(Actor.id.in_(subquery))
+                conditions.extend(search_conditions)
 
-        # exclude  filter
-        extsv = q.get("extsv")
-        if extsv:
-            words = extsv.split(" ")
-            conditions = []
+        # Exclude text search
+        if extsv := q.get("extsv"):
+            cleaned_extsv = extsv.strip()
+            if cleaned_extsv:
+                if (
+                    cleaned_extsv.startswith('"')
+                    and cleaned_extsv.endswith('"')
+                    and len(cleaned_extsv) > 2
+                ):
+                    # Remove quotes and treat as exact phrase
+                    phrase = cleaned_extsv[1:-1].strip()
+                    if phrase:
+                        actor_exclude = Actor.search.notilike(f"%{phrase}%")
+                        profile_exclude_subquery = (
+                            db.session.query(Actor.id)
+                            .join(Actor.actor_profiles)
+                            .filter(ActorProfile.search.ilike(f"%{phrase}%"))
+                        )
+                        profile_exclude = ~Actor.id.in_(profile_exclude_subquery)
+                        conditions.extend([actor_exclude, profile_exclude])
+                else:
+                    # Split on spaces and exclude records containing ALL of these words
+                    words = [word.strip() for word in cleaned_extsv.split() if word.strip()]
+                    if words:
+                        actor_word_conditions = [
+                            Actor.search.notilike(f"%{word}%") for word in words
+                        ]
+                        profile_exclude_subquery = (
+                            db.session.query(Actor.id)
+                            .join(Actor.actor_profiles)
+                            .filter(
+                                or_(*[ActorProfile.search.ilike(f"%{word}%") for word in words])
+                            )
+                        )
+                        profile_exclude = ~Actor.id.in_(profile_exclude_subquery)
+                        conditions.append(and_(*actor_word_conditions, profile_exclude))
 
-            for word in words:
-                conditions.append(
-                    or_(
-                        Actor.search.ilike(f"%{word}%"),
-                        ActorProfile.search.ilike(f"%{word}%"),
-                    )
-                )
-
-            subquery = (
-                db.session.query(Actor.id).join(Actor.actor_profiles).filter(or_(*conditions))
-            )
-            query.append(~Actor.id.in_(subquery))
-
-        # nickname
+        # Nickname
         if search := q.get("nickname"):
-            query.append(
+            conditions.append(
                 or_(Actor.nickname.ilike(f"%{search}%"), Actor.nickname_ar.ilike(f"%{search}%"))
             )
 
-        # first name
+        # First name
         if search := q.get("first_name"):
-            query.append(
+            conditions.append(
                 or_(Actor.first_name.ilike(f"%{search}%"), Actor.first_name_ar.ilike(f"%{search}%"))
             )
 
-        # middle name
+        # Middle name
         if search := q.get("middle_name"):
-            query.append(
+            conditions.append(
                 or_(
                     Actor.middle_name.ilike(f"%{search}%"),
                     Actor.middle_name_ar.ilike(f"%{search}%"),
                 )
             )
 
-        # last name
+        # Last name
         if search := q.get("last_name"):
-            query.append(
+            conditions.append(
                 or_(Actor.last_name.ilike(f"%{search}%"), Actor.last_name_ar.ilike(f"%{search}%"))
             )
 
-        # father name
+        # Father name
         if search := q.get("father_name"):
-            query.append(
+            conditions.append(
                 or_(
                     Actor.father_name.ilike(f"%{search}%"),
                     Actor.father_name_ar.ilike(f"%{search}%"),
                 )
             )
 
-        # mother name
+        # Mother name
         if search := q.get("mother_name"):
-            query.append(
+            conditions.append(
                 or_(
                     Actor.mother_name.ilike(f"%{search}%"),
                     Actor.mother_name_ar.ilike(f"%{search}%"),
                 )
             )
 
-        ethno = q.get("ethnography")
-        op = q.get("opEthno")
-        if ethno:
+        # Ethnography
+        if ethno := q.get("ethnography"):
             ids = [item.get("id") for item in ethno]
+            op = q.get("opEthno")
             if op:
-                query.append(Actor.ethnographies.any(Ethnography.id.in_(ids)))
+                conditions.append(Actor.ethnographies.any(Ethnography.id.in_(ids)))
             else:
-                query.extend([Actor.ethnographies.any(Ethnography.id == id) for id in ids])
+                conditions.extend([Actor.ethnographies.any(Ethnography.id == id) for id in ids])
 
-        nationality = q.get("nationality")
-        op = q.get("opNat")
-        if nationality:
+        # Nationality
+        if nationality := q.get("nationality"):
             ids = [item.get("id") for item in nationality]
+            op = q.get("opNat")
             if op:
-                query.append(Actor.nationalities.any(Country.id.in_(ids)))
+                conditions.append(Actor.nationalities.any(Country.id.in_(ids)))
             else:
-                query.extend([Actor.nationalities.any(Country.id == id) for id in ids])
+                conditions.extend([Actor.nationalities.any(Country.id == id) for id in ids])
 
+        # Labels
         if labels := q.get("labels"):
             recursive = q.get("childlabels", None)
             ids = [item.get("id") for item in labels]
@@ -539,11 +583,12 @@ class SearchUtils:
                     # get ids of children // update ids
                     result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
-                    all = direct + Label.get_children(direct)
-                    # remove dups
-                    all = list(set(all))
-                    ids = [label.id for label in all]
-                query.append(Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
+                    all_labels = direct + Label.get_children(direct)
+                    all_labels = list(set(all_labels))
+                    ids = [label.id for label in all_labels]
+                conditions.append(
+                    Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids)))
+                )
             else:
                 if recursive:
                     direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
@@ -552,11 +597,11 @@ class SearchUtils:
                         # add original label + uniquify list
                         children = list(set([label] + children))
                         ids = [child.id for child in children]
-                        query.append(
+                        conditions.append(
                             Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids)))
                         )
                 else:
-                    query.extend(
+                    conditions.extend(
                         [
                             Actor.actor_profiles.any(ActorProfile.labels.any(Label.id == id))
                             for id in ids
@@ -566,8 +611,9 @@ class SearchUtils:
         # Excluded labels
         if exlabels := q.get("exlabels"):
             ids = [item.get("id") for item in exlabels]
-            query.append(~Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
+            conditions.append(~Actor.actor_profiles.any(ActorProfile.labels.any(Label.id.in_(ids))))
 
+        # Verification labels
         if vlabels := q.get("vlabels"):
             ids = [item.get("id") for item in vlabels]
             recursive = q.get("childverlabels", None)
@@ -577,11 +623,10 @@ class SearchUtils:
                     # get ids of children // update ids
                     result = db.session.query(Label).filter(Label.id.in_(ids)).all()
                     direct = [label for label in result]
-                    all = direct + Label.get_children(direct)
-                    # remove dups
-                    all = list(set(all))
-                    ids = [label.id for label in all]
-                query.append(
+                    all_labels = direct + Label.get_children(direct)
+                    all_labels = list(set(all_labels))
+                    ids = [label.id for label in all_labels]
+                conditions.append(
                     Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
                 )
             else:
@@ -593,11 +638,11 @@ class SearchUtils:
                         # add original label + uniquify list
                         children = list(set([label] + children))
                         ids = [child.id for child in children]
-                        query.append(
+                        conditions.append(
                             Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
                         )
                 else:
-                    query.extend(
+                    conditions.extend(
                         [
                             Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id == id))
                             for id in ids
@@ -607,8 +652,11 @@ class SearchUtils:
         # Excluded vlabels
         if exvlabels := q.get("exvlabels"):
             ids = [item.get("id") for item in exvlabels]
-            query.append(~Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids))))
+            conditions.append(
+                ~Actor.actor_profiles.any(ActorProfile.ver_labels.any(Label.id.in_(ids)))
+            )
 
+        # Sources
         if sources := q.get("sources"):
             ids = [item.get("id") for item in sources]
             # children search ?
@@ -618,11 +666,12 @@ class SearchUtils:
                     # get ids of children // update ids
                     result = db.session.query(Source).filter(Source.id.in_(ids)).all()
                     direct = [source for source in result]
-                    all = direct + Source.get_children(direct)
-                    # remove dups
-                    all = list(set(all))
-                    ids = [source.id for source in all]
-                query.append(Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
+                    all_sources = direct + Source.get_children(direct)
+                    all_sources = list(set(all_sources))
+                    ids = [source.id for source in all_sources]
+                conditions.append(
+                    Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids)))
+                )
             else:
                 # and operator (modify children search logic)
                 if recursive:
@@ -632,11 +681,11 @@ class SearchUtils:
                         # add original label + uniquify list
                         children = list(set([source] + children))
                         ids = [child.id for child in children]
-                        query.append(
+                        conditions.append(
                             Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids)))
                         )
                 else:
-                    query.extend(
+                    conditions.extend(
                         [
                             Actor.actor_profiles.any(ActorProfile.sources.any(Source.id == id))
                             for id in ids
@@ -646,53 +695,52 @@ class SearchUtils:
         # Excluded sources
         if exsources := q.get("exsources"):
             ids = [item.get("id") for item in exsources]
-            query.append(~Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
+            conditions.append(
+                ~Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids)))
+            )
 
-        # tags
-        tags = q.get("tags")
-        exact = q.get("inExact")
-
-        if tags:
-            # exact match search
+        # Tags
+        if tags := q.get("tags"):
+            exact = q.get("inExact")
             if exact:
-                conditions = [
+                tag_conditions = [
                     func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
                     for r in tags
                 ]
             else:
-                conditions = [func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in tags]
+                tag_conditions = [
+                    func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in tags
+                ]
 
             # any operator
             op = q.get("opTags", False)
             if op:
-                query.append(or_(*conditions))
+                conditions.append(or_(*tag_conditions))
             else:
-                query.append(and_(*conditions))
+                conditions.append(and_(*tag_conditions))
 
-        # exclude tags
-        extags = q.get("exTags")
-        exact = q.get("exExact")
-        if extags:
-            # exact match
+        # Exclude tags
+        if extags := q.get("exTags"):
+            exact = q.get("exExact")
             if exact:
-                conditions = [
+                tag_conditions = [
                     ~func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
                     for r in extags
                 ]
             else:
-                conditions = [
+                tag_conditions = [
                     ~func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in extags
                 ]
 
             # get all operator
             opextags = q.get("opExTags")
             if opextags:
-                query.append(or_(*conditions))
+                conditions.append(or_(*tag_conditions))
             else:
-                query.append(and_(*conditions))
+                conditions.append(and_(*tag_conditions))
 
-        res_locations = q.get("resLocations", [])
-        if res_locations:
+        # Residence locations
+        if res_locations := q.get("resLocations", []):
             ids = [item.get("id") for item in res_locations]
             # get all child locations
             locs = (
@@ -701,10 +749,10 @@ class SearchUtils:
                 .all()
             )
             loc_ids = [loc.id for loc in locs]
-            query.append(Actor.residence_place_id.in_(loc_ids))
+            conditions.append(Actor.residence_place_id.in_(loc_ids))
 
-        origin_locations = q.get("originLocations", [])
-        if origin_locations:
+        # Origin locations
+        if origin_locations := q.get("originLocations", []):
             ids = [item.get("id") for item in origin_locations]
             # get all child locations
             locs = (
@@ -713,43 +761,41 @@ class SearchUtils:
                 .all()
             )
             loc_ids = [loc.id for loc in locs]
-            query.append(Actor.origin_place_id.in_(loc_ids))
+            conditions.append(Actor.origin_place_id.in_(loc_ids))
 
         # Excluded residence locations
-        ex_res_locations = q.get("exResLocations", [])
-        if ex_res_locations:
+        if ex_res_locations := q.get("exResLocations", []):
             ids = [item.get("id") for item in ex_res_locations]
-            query.append(~Actor.residence_place.has(Location.id.in_(ids)))
-            # Excluded residence locations
+            conditions.append(~Actor.residence_place.has(Location.id.in_(ids)))
 
-        ex_origin_locations = q.get("exOriginLocations", [])
-        if ex_origin_locations:
+        # Excluded origin locations
+        if ex_origin_locations := q.get("exOriginLocations", []):
             ids = [item.get("id") for item in ex_origin_locations]
-            query.append(~Actor.origin_place.has(Location.id.in_(ids)))
+            conditions.append(~Actor.origin_place.has(Location.id.in_(ids)))
 
-        # publish date
+        # Publish date
         if pubdate := q.get("pubdate", None):
-            query.append(
+            conditions.append(
                 Actor.actor_profiles.any(date_between_query(ActorProfile.publish_date, pubdate))
             )
 
-        # documentation date
+        # Documentation date
         if docdate := q.get("docdate", None):
-            query.append(
+            conditions.append(
                 Actor.actor_profiles.any(
                     date_between_query(ActorProfile.documentation_date, docdate)
                 )
             )
 
-        # creation date
+        # Creation date
         if created := q.get("created", None):
-            query.append(date_between_query(Actor.created_at, created))
+            conditions.append(date_between_query(Actor.created_at, created))
 
-        # modified date
+        # Modified date
         if updated := q.get("updated", None):
-            query.append(date_between_query(Actor.updated_at, updated))
+            conditions.append(date_between_query(Actor.updated_at, updated))
 
-        # event search
+        # Event search
         single_event = q.get("singleEvent", None)
         event_dates = q.get("edate", None)
         event_type = q.get("etype", None)
@@ -758,206 +804,207 @@ class SearchUtils:
         if event_dates or event_type or event_location:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
-            conditions = Event.get_event_filters(
+            event_conditions = Event.get_event_filters(
                 dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
             )
             if single_event:
-                query.append(Actor.events.any(and_(*conditions)))
+                conditions.append(Actor.events.any(and_(*event_conditions)))
             else:
-                query.extend([Actor.events.any(condition) for condition in conditions])
+                conditions.extend([Actor.events.any(condition) for condition in event_conditions])
 
         # Access Roles
-        roles = q.get("roles")
-
-        if roles:
-            query.append(Actor.roles.any(Role.id.in_(roles)))
+        if roles := q.get("roles"):
+            conditions.append(Actor.roles.any(Role.id.in_(roles)))
         if q.get("norole"):
-            query.append(~Actor.roles.any())
+            conditions.append(~Actor.roles.any())
 
-        # assigned user(s)
-        assigned = q.get("assigned", [])
-        if assigned:
-            query.append(Actor.assigned_to_id.in_(assigned))
+        # Assigned user(s)
+        if assigned := q.get("assigned", []):
+            conditions.append(Actor.assigned_to_id.in_(assigned))
 
         # First peer reviewer
-        fpr = q.get("reviewer", [])
-        if fpr:
-            query.append(Actor.first_peer_reviewer_id.in_(fpr))
+        if fpr := q.get("reviewer", []):
+            conditions.append(Actor.first_peer_reviewer_id.in_(fpr))
 
-        # workflow status(s)
-        statuses = q.get("statuses", [])
-        if statuses:
-            query.append(Actor.status.in_(statuses))
+        # Workflow status(s)
+        if statuses := q.get("statuses", []):
+            conditions.append(Actor.status.in_(statuses))
 
-        # review status
-        review_action = q.get("reviewAction", None)
-        if review_action:
-            query.append(Actor.review_action == review_action)
+        # Review status
+        if review_action := q.get("reviewAction", None):
+            conditions.append(Actor.review_action == review_action)
 
         # Geospatial search
         loc_types = q.get("locTypes")
         latlng = q.get("latlng")
 
         if loc_types and latlng and (radius := latlng.get("radius")):
-            conditions = []
+            geo_conditions = []
             if "originplace" in loc_types:
-                conditions.append(Actor.geo_query_origin_place(latlng, radius))
+                geo_conditions.append(Actor.geo_query_origin_place(latlng, radius))
             if "events" in loc_types:
-                conditions.append(Actor.geo_query_event_location(latlng, radius))
+                geo_conditions.append(Actor.geo_query_event_location(latlng, radius))
 
-            query.append(or_(*conditions))
+            conditions.append(or_(*geo_conditions))
 
         # ---------- Extra fields -------------
 
         # Occupation
-        occupation = q.get("occupation", None)
-        if occupation:
+        if occupation := q.get("occupation", None):
             search = "%{}%".format(occupation)
-            query.append(or_(Actor.occupation.ilike(search), Actor.occupation_ar.ilike(search)))
+            conditions.append(
+                or_(Actor.occupation.ilike(search), Actor.occupation_ar.ilike(search))
+            )
 
         # Position
-        position = q.get("position", None)
-        if position:
+        if position := q.get("position", None):
             search = "%{}%".format(position)
-            query.append(or_(Actor.position.ilike(search), Actor.position_ar.ilike(search)))
+            conditions.append(or_(Actor.position.ilike(search), Actor.position_ar.ilike(search)))
 
         # Spoken Dialects
-        dialects = q.get("dialects", None)
-        op = q.get("opDialects")
-        if dialects:
+        if dialects := q.get("dialects", None):
+            op = q.get("opDialects")
             ids = [item.get("id") for item in dialects]
             if op:
-                query.append(Actor.dialects.any(Dialect.id.in_(ids)))
+                conditions.append(Actor.dialects.any(Dialect.id.in_(ids)))
             else:
-                query.extend([Actor.dialects.any(Dialect.id == id) for id in ids])
+                conditions.extend([Actor.dialects.any(Dialect.id == id) for id in ids])
 
         # Family Status
-        family_status = q.get("family_status", None)
-        if family_status:
-            query.append(Actor.family_status == family_status)
+        if family_status := q.get("family_status", None):
+            conditions.append(Actor.family_status == family_status)
 
         # Sex
-        sex = q.get("sex", None)
-        if sex:
-            query.append(Actor.sex == sex)
+        if sex := q.get("sex", None):
+            conditions.append(Actor.sex == sex)
 
         # Age
-        age = q.get("age", None)
-        if age:
-            query.append(Actor.age == age)
+        if age := q.get("age", None):
+            conditions.append(Actor.age == age)
 
         # Civilian
-        civilian = q.get("civilian", None)
-        if civilian:
-            query.append(Actor.civilian == civilian)
+        if civilian := q.get("civilian", None):
+            conditions.append(Actor.civilian == civilian)
 
         # Actor type
-        type = q.get("type", None)
-        if type:
-            query.append(Actor.type == type)
+        if type_value := q.get("type", None):
+            conditions.append(Actor.type == type_value)
 
         # National ID card
-        id_number = q.get("id_number", {})
-        if id_number:
+        if id_number := q.get("id_number", {}):
             search = "%{}%".format(id_number)
-            query.append(Actor.id_number.ilike(search))
+            conditions.append(Actor.id_number.ilike(search))
 
         # Related to bulletin search
-        rel_to_bulletin = q.get("rel_to_bulletin")
-        if rel_to_bulletin:
+        if rel_to_bulletin := q.get("rel_to_bulletin"):
             bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
             if bulletin:
                 ids = [a.actor_id for a in bulletin.actor_relations]
-                query.append(Actor.id.in_(ids))
+                conditions.append(Actor.id.in_(ids))
 
         # Related to actor search
-        rel_to_actor = q.get("rel_to_actor")
-        if rel_to_actor:
-            actor = Actor.query.get(int(rel_to_actor))
+        if rel_to_actor := q.get("rel_to_actor"):
+            actor = db.session.query(Actor).get(int(rel_to_actor))
             if actor:
                 ids = [a.get_other_id(actor.id) for a in actor.actor_relations]
-                query.append(Actor.id.in_(ids))
+                conditions.append(Actor.id.in_(ids))
 
         # Related to incident search
-        rel_to_incident = q.get("rel_to_incident")
-        if rel_to_incident:
-            incident = Incident.query.get(int(rel_to_incident))
+        if rel_to_incident := q.get("rel_to_incident"):
+            incident = db.session.query(Incident).get(int(rel_to_incident))
             if incident:
                 ids = [a.actor_id for a in incident.actor_relations]
-                query.append(Actor.id.in_(ids))
+                conditions.append(Actor.id.in_(ids))
 
-        return query
+        # Use CTE to get matching IDs first
+        matching_ids = (
+            select(Actor.id).where(and_(*conditions)).order_by(Actor.id.desc()).cte("matching_ids")
+        )
+
+        # Join with full actor data
+        stmt = select(Actor).join(matching_ids, Actor.id == matching_ids.c.id)
+
+        return stmt, conditions
 
     def incident_query(self, q: dict):
-        """
-        Build a query for the incident model.
+        """Build a select statement for incident search"""
+        conditions = []
 
-        Args:
-            - q: The search query.
+        # Support query using a range of ids
+        if ids := q.get("ids"):
+            conditions.append(Incident.id.in_(ids))
 
-        Returns:
-            - A list of query conditions.
-        """
-        query = []
-
-        tsv = q.get("tsv")
-        if tsv:
+        # Text search - PERFORMANCE OPTIMIZED
+        if tsv := q.get("tsv"):
             words = tsv.split(" ")
-            words = [f"%{w}%" for w in words]
-            query.append(Incident.search.ilike(all_(words)))
+            # Use individual ILIKE conditions instead of ILIKE ALL() to enable GIN trigram index usage
+            word_conditions = [Incident.search.ilike(f"%{word}%") for word in words if word.strip()]
+            if word_conditions:
+                conditions.extend(word_conditions)
 
-        # exclude  filter
-        extsv = q.get("extsv")
-        if extsv:
-            words = extsv.split(" ")
-            words = [f"%{w}%" for w in words]
-            query.append(Incident.search.notilike(all_(words)))
+        # Exclude text search
+        if extsv := q.get("extsv"):
+            cleaned_extsv = extsv.strip()
+            if cleaned_extsv:
+                # Check if it's a quoted phrase for exact matching
+                if (
+                    cleaned_extsv.startswith('"')
+                    and cleaned_extsv.endswith('"')
+                    and len(cleaned_extsv) > 2
+                ):
+                    # Remove quotes and treat as exact phrase
+                    phrase = cleaned_extsv[1:-1].strip()
+                    if phrase:
+                        conditions.append(Incident.search.notilike(f"%{phrase}%"))
+                else:
+                    # Split on spaces and exclude records containing ALL of these words
+                    words = [word.strip() for word in cleaned_extsv.split() if word.strip()]
+                    if words:
+                        word_conditions = [Incident.search.notilike(f"%{word}%") for word in words]
+                        conditions.append(and_(*word_conditions))
 
-        labels = q.get("labels", [])
-        if len(labels):
+        # Labels
+        if labels := q.get("labels", []):
             ids = [item.get("id") for item in labels]
             if q.get("oplabels"):
-                query.append(Incident.labels.any(Label.id.in_(ids)))
+                conditions.append(Incident.labels.any(Label.id.in_(ids)))
             else:
-                query.extend([Incident.labels.any(Label.id == id) for id in ids])
+                conditions.extend([Incident.labels.any(Label.id == id) for id in ids])
 
         # Excluded labels
-        exlabels = q.get("exlabels", [])
-        if len(exlabels):
+        if exlabels := q.get("exlabels", []):
             ids = [item.get("id") for item in exlabels]
-            query.append(~Incident.labels.any(Label.id.in_(ids)))
+            conditions.append(~Incident.labels.any(Label.id.in_(ids)))
 
-        vlabels = q.get("vlabels", [])
-        if len(vlabels):
+        # Verified labels
+        if vlabels := q.get("vlabels", []):
             ids = [item.get("id") for item in vlabels]
             if q.get("opvlabels"):
                 # And query
-                query.append(Incident.ver_labels.any(Label.id.in_(ids)))
+                conditions.append(Incident.ver_labels.any(Label.id.in_(ids)))
             else:
-                query.extend([Incident.ver_labels.any(Label.id == id) for id in ids])
+                conditions.extend([Incident.ver_labels.any(Label.id == id) for id in ids])
 
-        # Excluded vlabels
-        exvlabels = q.get("exvlabels", [])
-        if len(exvlabels):
+        # Excluded verified labels
+        if exvlabels := q.get("exvlabels", []):
             ids = [item.get("id") for item in exvlabels]
-            query.append(~Incident.ver_labels.any(Label.id.in_(ids)))
+            conditions.append(~Incident.ver_labels.any(Label.id.in_(ids)))
 
-        sources = q.get("sources", [])
-        if len(sources):
+        # Sources
+        if sources := q.get("sources", []):
             ids = [item.get("id") for item in sources]
             if q.get("opsources"):
-                query.append(Incident.sources.any(Source.id.in_(ids)))
+                conditions.append(Incident.sources.any(Source.id.in_(ids)))
             else:
-                query.extend([Incident.sources.any(Source.id == id) for id in ids])
+                conditions.extend([Incident.sources.any(Source.id == id) for id in ids])
 
         # Excluded sources
-        exsources = q.get("exsources", [])
-        if len(exsources):
+        if exsources := q.get("exsources", []):
             ids = [item.get("id") for item in exsources]
-            query.append(~Incident.sources.any(Source.id.in_(ids)))
+            conditions.append(~Incident.sources.any(Source.id.in_(ids)))
 
-        locations = q.get("locations", [])
-        if locations:
+        # Locations
+        if locations := q.get("locations", []):
             ids = [item.get("id") for item in locations]
             if q.get("oplocations"):
                 # get all child locations
@@ -967,27 +1014,25 @@ class SearchUtils:
                     .all()
                 )
                 loc_ids = [loc.id for loc in locs]
-                query.append(Incident.locations.any(Location.id.in_(loc_ids)))
+                conditions.append(Incident.locations.any(Location.id.in_(loc_ids)))
             else:
                 # get combined lists of ids for each location
                 id_mix = [Location.get_children_by_id(id) for id in ids]
-                query.extend(Incident.locations.any(Location.id.in_(i)) for i in id_mix)
+                conditions.extend(Incident.locations.any(Location.id.in_(i)) for i in id_mix)
 
-        # Excluded sources
-        exlocations = q.get("exlocations", [])
-        if len(exlocations):
+        # Excluded locations
+        if exlocations := q.get("exlocations", []):
             ids = [item.get("id") for item in exlocations]
-            query.append(~Incident.locations.any(Location.id.in_(ids)))
+            conditions.append(~Incident.locations.any(Location.id.in_(ids)))
 
-        # creation date
+        # Dates
         if created := q.get("created", None):
-            query.append(date_between_query(Incident.created_at, created))
+            conditions.append(date_between_query(Incident.created_at, created))
 
-        # modified date
         if updated := q.get("updated", None):
-            query.append(date_between_query(Incident.updated_at, updated))
+            conditions.append(date_between_query(Incident.updated_at, updated))
 
-        # event search
+        # Events
         single_event = q.get("singleEvent", None)
         event_dates = q.get("edate", None)
         event_type = q.get("etype", None)
@@ -996,81 +1041,83 @@ class SearchUtils:
         if event_dates or event_type or event_location:
             eventtype_id = event_type.get("id") if event_type else None
             event_location_id = event_location.get("id") if event_location else None
-            conditions = Event.get_event_filters(
+            event_conditions = Event.get_event_filters(
                 dates=event_dates, eventtype_id=eventtype_id, event_location_id=event_location_id
             )
             if single_event:
-                query.append(Incident.events.any(and_(*conditions)))
+                conditions.append(Incident.events.any(and_(*event_conditions)))
             else:
-                query.extend([Incident.events.any(condition) for condition in conditions])
+                conditions.extend(
+                    [Incident.events.any(condition) for condition in event_conditions]
+                )
 
         # Access Roles
-        roles = q.get("roles")
-
-        if roles:
-            query.append(Incident.roles.any(Role.id.in_(roles)))
+        if roles := q.get("roles"):
+            conditions.append(Incident.roles.any(Role.id.in_(roles)))
         if q.get("norole"):
-            query.append(~Incident.roles.any())
+            conditions.append(~Incident.roles.any())
 
-        # assigned user(s)
-        assigned = q.get("assigned", [])
-        if assigned:
-            query.append(Incident.assigned_to_id.in_(assigned))
+        # Assignments
+        if assigned := q.get("assigned", []):
+            conditions.append(Incident.assigned_to_id.in_(assigned))
 
         # First peer reviewer
-        fpr = q.get("reviewer", [])
-        if fpr:
-            query.append(Incident.first_peer_reviewer_id.in_(fpr))
+        if fpr := q.get("reviewer", []):
+            conditions.append(Incident.first_peer_reviewer_id.in_(fpr))
 
-        # workflow status(s)
-        statuses = q.get("statuses", [])
-        if statuses:
-            query.append(Incident.status.in_(statuses))
+        # Workflow statuses
+        if statuses := q.get("statuses", []):
+            conditions.append(Incident.status.in_(statuses))
 
-        # review status
-        review_action = q.get("reviewAction", None)
-        if review_action:
-            query.append(Incident.review_action == review_action)
+        # Review status
+        if review_action := q.get("reviewAction", None):
+            conditions.append(Incident.review_action == review_action)
 
-        # potential violation categories
+        # Potential violation categories
         if potential_violation_ids := q.get("potentialVCats", None):
-            query.append(
+            conditions.append(
                 Incident.potential_violations.any(
                     PotentialViolation.id.in_(potential_violation_ids)
                 )
             )
 
-        # claimed violation categories
+        # Claimed violation categories
         if claimed_violation_ids := q.get("claimedVCats", None):
-            query.append(
+            conditions.append(
                 Incident.claimed_violations.any(ClaimedViolation.id.in_(claimed_violation_ids))
             )
 
-        # Related to bulletin search
-        rel_to_bulletin = q.get("rel_to_bulletin")
-        if rel_to_bulletin:
+        # Relations
+        if rel_to_bulletin := q.get("rel_to_bulletin"):
             bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
             if bulletin:
                 ids = [i.incident_id for i in bulletin.incident_relations]
-                query.append(Incident.id.in_(ids))
+                conditions.append(Incident.id.in_(ids))
 
-        # Related to actor search
-        rel_to_actor = q.get("rel_to_actor")
-        if rel_to_actor:
+        if rel_to_actor := q.get("rel_to_actor"):
             actor = db.session.query(Actor).get(int(rel_to_actor))
             if actor:
                 ids = [i.incident_id for i in actor.incident_relations]
-                query.append(Incident.id.in_(ids))
+                conditions.append(Incident.id.in_(ids))
 
-        # Related to incident search
-        rel_to_incident = q.get("rel_to_incident")
-        if rel_to_incident:
+        if rel_to_incident := q.get("rel_to_incident"):
             incident = db.session.query(Incident).get(int(rel_to_incident))
             if incident:
                 ids = [i.get_other_id(incident.id) for i in incident.incident_relations]
-                query.append(Incident.id.in_(ids))
+                conditions.append(Incident.id.in_(ids))
 
-        return query
+        # Use CTE to get matching IDs first
+        matching_ids = (
+            select(Incident.id)
+            .where(and_(*conditions))
+            .order_by(Incident.id.desc())
+            .cte("matching_ids")
+        )
+
+        # Join with full incident data
+        stmt = select(Incident).join(matching_ids, Incident.id == matching_ids.c.id)
+
+        return stmt, conditions
 
     def location_query(self, q: dict) -> list:
         """
