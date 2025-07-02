@@ -24,23 +24,11 @@ const EventCard = Vue.defineComponent({
         </v-chip>
 
         <div class="text-subtitle-2 d-flex mt-2 text-wrap text-break">
-          {{ event.title }}
-           <v-tooltip v-if="event.estimated" location="bottom">
-              <template v-slot:activator="{ props }">
-                <v-icon v-bind="props" icon="mdi-information" class="ml-2"></v-icon>
-              </template>
-              {{ translations.timingForThisEventIsEstimated_ }}
-            </v-tooltip>
+          <uni-field :caption="translations.title_" :english="event.title" :arabic="event.title_ar" disable-spacing></uni-field>
         </div>
-        
-        
-        
 
-      </v-card-text>
-      <v-card-text class="text-caption pt-0">
-
-        <div v-if="event.comments">
-          {{ event.comments }}
+        <div v-if="event.comments" class="mt-n3">
+          <uni-field :caption="translations.comments_" :english="event.comments" :arabic="event.comments_ar" disable-spacing></uni-field>
         </div>
 
 
@@ -50,10 +38,9 @@ const EventCard = Vue.defineComponent({
           {{ event.location.full_string }}
         </v-chip>
 
+        <v-divider v-if="event.from_date || event.to_date || event.estimated" class="my-2"></v-divider>
 
-        <div v-if="event.from_date||event.to_date">
-          <v-divider class="my-2"></v-divider>
-          
+        <div v-if="event.from_date || event.to_date">
           <v-chip prepend-icon="mdi-calendar" label variant="text"  class="text-caption" v-if="event.from_date">
             {{ event.from_date }}
           </v-chip>
@@ -62,6 +49,8 @@ const EventCard = Vue.defineComponent({
             {{ event.to_date }}
           </span>
         </div>
+        
+        <div v-if="event.estimated" class="text-caption text-medium-emphasis d-flex align-center ml-1"><v-icon icon="mdi-information" class="mr-1"></v-icon> {{ translations.timingForThisEventIsEstimated_ }}</div>
       </v-card-text>
 
       <slot name="actions"></slot>

@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import bleach
 import boto3
+from botocore.config import Config as BotoConfig
 from flask import Response, Blueprint, current_app, json, g, send_from_directory
 from flask import request, jsonify, abort, session
 from flask.templating import render_template
@@ -1218,12 +1219,18 @@ def api_location_admin_levels() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
-    query = []
-    result = (
-        LocationAdminLevel.query.filter(*query)
-        .order_by(-LocationAdminLevel.id)
-        .paginate(page=page, per_page=per_page, count=True)
-    )
+    query = request.args.get("q")
+    if query:
+        result = (
+            LocationAdminLevel.query.filter(LocationAdminLevel.title.ilike(f"%{query}%"))
+            .order_by(-LocationAdminLevel.id)
+            .paginate(page=page, per_page=per_page, count=True)
+        )
+    else:
+        result = LocationAdminLevel.query.order_by(-LocationAdminLevel.id).paginate(
+            page=page, per_page=per_page, count=True
+        )
+
     response = {
         "items": [item.to_dict() for item in result.items],
         "perPage": per_page,
@@ -1368,12 +1375,18 @@ def api_location_types() -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
 
-    query = []
-    result = (
-        LocationType.query.filter(*query)
-        .order_by(-LocationType.id)
-        .paginate(page=page, per_page=per_page, count=True)
-    )
+    query = request.args.get("q")
+    if query:
+        result = (
+            LocationType.query.filter(LocationType.title.ilike(f"%{query}%"))
+            .order_by(-LocationType.id)
+            .paginate(page=page, per_page=per_page, count=True)
+        )
+    else:
+        result = LocationType.query.order_by(-LocationType.id).paginate(
+            page=page, per_page=per_page, count=True
+        )
+
     response = {
         "items": [item.to_dict() for item in result.items],
         "perPage": per_page,
@@ -2916,10 +2929,14 @@ def api_bulletin_create(
             bulletin.to_mini(),
             "bulletin",
         )
-
-        return f"Created Bulletin #{bulletin.id}", 200
+        # Select json encoding type
+        mode = request.args.get("mode", "1")
+        return {
+            "message": f"Created Bulletin #{bulletin.id}",
+            "item": bulletin.to_dict(mode=mode),
+        }, 201
     else:
-        return "Error creating Bulletin", 417
+        return {"message": "Error creating Bulletin"}, 417
 
 
 @admin.put("/api/bulletin/<int:id>")
@@ -3422,7 +3439,6 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
-    
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -3592,8 +3608,11 @@ def serve_media(
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
 
+        s3_config = BotoConfig(signature_version='s3v4')
+
         s3 = boto3.client(
             "s3",
+            config=s3_config,
             aws_access_key_id=current_app.config["AWS_ACCESS_KEY_ID"],
             aws_secret_access_key=current_app.config["AWS_SECRET_ACCESS_KEY"],
             region_name=current_app.config["AWS_REGION"],
@@ -3873,9 +3892,11 @@ def api_actor_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
         )
-        return f"Created Actor #{actor.id}", 200
+        # Select json encoding type
+        mode = request.args.get("mode", "1")
+        return {"message": f"Created Actor #{actor.id}", "item": actor.to_dict(mode=mode)}, 201
     else:
-        return "Error creating Actor", 417
+        return {"message": "Error creating Actor"}, 417
 
 
 # update actor endpoint
@@ -4995,9 +5016,14 @@ def api_incident_create(
             incident.to_mini(),
             "incident",
         )
-        return f"Created Incident #{incident.id}", 200
+        # Select json encoding type
+        mode = request.args.get("mode", "1")
+        return {
+            "message": f"Created Incident #{incident.id}",
+            "item": incident.to_dict(mode=mode),
+        }, 201
     else:
-        return "Error creating Incident", 417
+        return {"message": "Error creating Incident"}, 417
 
 
 # update incident endpoint
