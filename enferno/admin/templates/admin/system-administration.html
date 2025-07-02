@@ -914,7 +914,7 @@
             watch: {
                 tab(newTab) {
                     const fullPath = `${window.location.pathname}${window.location.search}`
-                    this.$router.replace(`${fullPath}#${newTab}`)
+                    this.$router.push(`${fullPath}#${newTab}`)
                 }
             },
 
@@ -922,6 +922,14 @@
                 //load configuration
                 this.loadConfiguration();
                 this.loadWhisperModels();
+
+                this.$router.afterEach((to, from) => {
+                    const firstTabKey = Object.keys(this.tabsMap)[0];
+                    const nextTab = to.hash.replace('#', '') || firstTabKey
+                    if (nextTab in this.tabsMap) {
+                        this.tab = nextTab;
+                    }
+                })
             },
 
             computed: {
