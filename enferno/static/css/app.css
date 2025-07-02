@@ -871,41 +871,6 @@ div.jsondiffpatch-child-node-type-array:after {
     white-space: normal;
 }
 
-/* Custom styles for new bayanat design */
-.bayanat-btn {
-    box-shadow: none;
-    text-transform: none;
-    font-size: 0.875rem;
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: normal;
-}
-.outlined-btn {
-    border: thin solid rgba(var(--v-theme-border), 1);
-}
-.bayanat-table {
-    th {
-        color: rgba(var(--v-theme-table-header), 1);
-    }
-    td {
-        color: rgba(var(--v-theme-table-body), 1);
-    }
-}
-.v-input .v-messages__message {
-    line-height: normal;
-}
-.v-slider-track__tick-label {
-    font-size: 0.75rem;
-    color: rgba(var(--v-theme-muted), 1);
-}
-.v-slider-track__tick {
-    border-radius: 50%;
-}
-.v-slider-thumb__surface {
-    border: 2px solid currentColor;
-    background-color: rgb(var(--v-theme-surface-light));
-}
-
 /* Lightgallery.js place above all dialogs */
 .lg-backdrop,
 .lg-outer {

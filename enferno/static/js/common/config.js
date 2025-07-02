@@ -61,7 +61,7 @@ const vuetifyConfig = {
         },
         VBtn: {
             rounded: 'lg',
-            class: 'bayanat-btn'
+            class: 'text-none font-weight-regular text-body-2 elevation-0',
         },
         VTab: {
             VBtn: {
@@ -74,9 +74,6 @@ const vuetifyConfig = {
                 class: '', // Remove the custom classes from tab buttons
                 rounded: 'none', // Reset the border radius
             },
-        },
-        VTable: {
-            class: 'bayanat-table', // Remove the custom classes from tab buttons
         },
         VChip: {
             size: 'small'
