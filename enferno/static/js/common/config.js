@@ -47,6 +47,9 @@ function scrollToFirstError(errors) {
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
+        VApp: {
+            class: 'bg-background',
+        },
         VTextField: {
             variant: 'outlined'
         },
