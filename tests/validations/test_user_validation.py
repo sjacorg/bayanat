@@ -113,14 +113,14 @@ class TestUsernameValidation:
         (
             "/admin/api/checkuser/",
             "a" * 256,
-            "String should have at most 255 characters",
+            "String should have at most 32 characters",
             "item",
             "extract_username",
         ),
         (
             "/admin/api/user/",
             "a" * 256,
-            "String should have at most 255 characters",
+            "String should have at most 32 characters",
             "item.username",
             "extract_dict",
         ),

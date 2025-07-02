@@ -1366,7 +1366,7 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 class UserValidationModel(StrictValidationModel):
     email: Optional[str] = None
-    username: str = Field(min_length=4, max_length=255)
+    username: str = Field(min_length=4, max_length=32)
     password: Optional[str] = None  # Optional on PUT, required on POST
     name: str = Field(min_length=1)
     roles: list[PartialRoleModel] = Field(default_factory=list)
@@ -1435,7 +1435,7 @@ class UserRequestModel(BaseValidationModel):
 
 
 class UserNameCheckValidationModel(BaseValidationModel):
-    item: str = Field(min_length=4, max_length=255)
+    item: str = Field(min_length=4, max_length=32)
 
     @field_validator("item")
     @classmethod
