@@ -1,6 +1,7 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
-<field-builder-dialog v-model="isFieldBuilderDialogOpen"></field-builder-dialog>
+<!-- Field Creation Modal -->
+<field-builder-drawer v-model="isFieldBuilderDrawerOpen"></field-builder-drawer>
 
 <v-main>
   <v-container fluid>
@@ -22,7 +23,7 @@
             prepend-icon="mdi-plus"
             class="mr-2"
             variant="outlined"
-            @click="isFieldBuilderDialogOpen = true"
+            @click="isFieldBuilderDrawerOpen = true"
             >{{ _('Add new field') }}</v-btn
           >
           <v-btn prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat"
@@ -34,12 +35,35 @@
       <v-card-text>
         <v-expansion-panels>
           <v-expansion-panel>
-            <v-expansion-panel-title disable-icon-rotate>
+            <v-expansion-panel-title disable-icon-rotate v-for="field in coreFields" :key="field.name" :field="field" :readonly="true">
               <template #default="{ expanded }">
                 <v-icon class="mr-4" size="24">
                   ${ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }
                 </v-icon>
-                <span class="text-h6 font-weight-bold">Item</span>
+                <span class="text-h6 font-weight-bold">Core fields</span>
+              </template>
+              <template v-slot:actions="{ expanded }">
+                <v-btn :color="expanded ? 'error' : 'primary'" variant="text"
+                  >${expanded ? 'Collapse' : 'Expand'}</v-btn
+                >
+              </template>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+              exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
+
+        <v-expansion-panels>
+          <v-expansion-panel>
+            <v-expansion-panel-title disable-icon-rotate v-for="field in customFields" :key="field.name" :field="field" :readonly="true">
+              <template #default="{ expanded }">
+                <v-icon class="mr-4" size="24">
+                  ${ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }
+                </v-icon>
+                <span class="text-h6 font-weight-bold">Customized fields</span>
               </template>
               <template v-slot:actions="{ expanded }">
                 <v-btn :color="expanded ? 'error' : 'primary'" variant="text"
@@ -60,7 +84,7 @@
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
-<script src="/static/js/components/FieldBuilderDialog.js"></script>
+<script src="/static/js/components/FieldBuilderDrawer.js"></script>
 
 <script>
   const { createApp } = Vue;
@@ -72,7 +96,11 @@
     mixins: [globalMixin],
     data: () => ({
       drawer: drawer,
-      isFieldBuilderDialogOpen: false,
+      isFieldBuilderDrawerOpen: false,
+      coreFields: [],
+      customFields: [],
+      searchQuery: '',
+      loading: false
     }),
     mounted() {
       this.fetchDynamicFields();
@@ -89,7 +117,7 @@
     },
   });
 
-  app.component('FieldBuilderDialog', FieldBuilderDialog);
+  app.component('FieldBuilderDrawer', FieldBuilderDrawer);
 
   app.use(router);
   app.use(vuetify).mount('#app');
