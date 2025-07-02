@@ -41,20 +41,19 @@
                             height="calc(100vh - 328px)"
                             id="incidents-dt"
                             v-model="selected"
+                            hover
                             :headers="headers"
                             @click:row="rowClick"
-                            hover
                             :items="items"
                             :loading="loading"
-                            :items-length="itemsLength"
-                            @update:options="refresh"
-                            :page="options.page"
                             :row-props="rowClass"
+                            :items-length="totalCount"
                             show-select
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
                             class="elevation-1"
+                            hide-default-footer
                     >
 
                         <template v-slot:top>
@@ -81,6 +80,7 @@
                                         @click:append-inner="resetSearch"
                                         prepend-inner-icon="mdi-magnify"
                                         label="{{ _('Search') }}"
+                                        clearable
                                 ></v-text-field>
 
 
@@ -157,9 +157,33 @@
                             </v-toolbar>
                         </template>
 
-                        <template #footer.prepend>
-                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }} ${searchTime} {{ _('seconds') }}</div>
+                        <template #bottom>
+                            <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
+                                <div>{{ _('Search time: ') }}
+                                    ${searchTime} {{ _('seconds') }}</div>
+                                <div>
+                        
+                                    <div class="d-flex flex-row align-center ga-2">
+                                        <div class="d-flex flex-row align-center ga-2">
+                                            {{ _('Items per page:') }}
+                                            <v-select :model-value="perPage" @update:model-value="setNextPerPageValue" hide-details
+                                                density="compact" :items="itemsPerPageOptions" variant="outlined"></v-select>
+                        
+                                        </div>
+                                        <div>
+                                            <span>${rangeStart}-${rangeEnd} of ${totalCount}</span>
+                                            <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text"
+                                                icon="mdi-page-first"></v-btn>
+                                            <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text"
+                                                icon="mdi-chevron-left"></v-btn>
+                                            <v-btn :disabled="loading || !nextCursor" @click="goToNextPage()" variant="text"
+                                                icon="mdi-chevron-right"></v-btn>
+                                        </div>
+                                    </div>
+                                </div>
                         </template>
+                        
+                        <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
                         <template v-slot:item.roles="{item}">
                             <v-tooltip location="top" :text="role.name" v-for="role in item.roles">
@@ -359,6 +383,7 @@
             },
             mixins: [globalMixin],
             data: () => ({
+                itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
                 translations: window.translations,
                 validationRules: validationRules,
@@ -373,6 +398,13 @@
                 btobInfo: [],
                 atoaInfo: [],
 
+                cursorPage: 1,
+                currentCursor: null,          // the current request's cursor
+                nextCursor: null,             // the next cursor from the API
+                cursorHistory: [null],        // page 1 starts at null
+                perPage: window.itemsPerPageOptions?.[0] ?? 20,
+                items: [],
+                selected: [],
 
                 assignIncident: {},
                 selfAssignDialog: false,
@@ -406,7 +438,7 @@
                 roles: [],
 
 
-                fsloading: true,
+                fsloading: false,
 
                 // flags for lazy loaded relations state
                 br_loaded: false,
@@ -491,7 +523,7 @@
                 //rich text config
                 tinyConfig: tinyConfig,
 
-                loading: true,
+                loading: false,
                 parentLoading: false,
                 csvFile: null,
                 options: {},
@@ -576,10 +608,24 @@
 
 
                 incident: {},
-                incidentLoader: false
+                incidentLoader: false,
+
+                fetchingRecordsError: false,
+
+                // Count functionality  
+                totalCount: 0,
             }),
 
             computed: {
+                rangeStart() {
+                    return this.totalCount === 0 ? 0 : (this.cursorPage - 1) * this.perPage + 1;
+                },
+                rangeEnd() {
+                    return this.totalCount === 0 ? 0 : this.rangeStart + this.items.length - 1;
+                },
+                showingItemsOfText() {
+                    return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
+                },
                 searchEmpty() {
                     return !Object.values(this.search).some(Boolean);
                 },
@@ -707,8 +753,8 @@
                     });
                 {% endif  %}
 
-
-
+                // Load initial data
+                this.refresh();
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -957,15 +1003,7 @@
                 },
 
                 doSearch() {
-                    this.options.page = 1;
-
-                    // some good UX
-                    if (this.advSearchExpand) {
-                        this.advSearchExpand = false;
-                    } else {
-                        //this.search = Object.assign({},{tsv:this.search.tsv})
-                    }
-
+                    this.advSearchExpand = this.advSearchExpand && false;
                     this.refresh();
                 },
 
@@ -977,33 +1015,82 @@
 
                 resetSearch() {
                     this.resetQuery();
-                    this.doSearch();
+                    this.refresh();
                 },
 
-                refresh(options) {
+                setNextPerPageValue(nextPerPage) {
+                    this.perPage = nextPerPage;
+                    this.goToFirstPage();
+                },
 
-                    this.options = options || { ...this.options, page: 1 };
+                refresh() {
+                    if (this.loading) return;
 
                     this.loading = true;
-                    const startTime = new Date();
+                    const startTime = new Date()
 
-                    axios.post(`/admin/api/incidents/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
-                        const endTime = new Date();
+                    const requestData = {
+                        q: this.search,
+                        per_page: this.perPage,
+                        cursor: this.currentCursor,
+                        include_count: true,
+                    };
 
-                        this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
-                        this.itemsLength = response.data.total;
-                        this.items = response.data.items;
+                    axios.post('/admin/api/incidents/', requestData)
+                        .then((response) => {
+                            const endTime = new Date()
+                            const duration = endTime - startTime
+                            this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
+                            console.log(`API call took ${duration}ms`)
 
-                        this.showVisualize = !(
-                            Object.keys(this.search).length === 0
-                        );
-                    }).catch(error => {
-                        console.error(error);
-                    }).finally(() => {
-                        this.loading = false;
-                    });
+                            this.items = response.data.items;
+                            this.showVisualize = !(
+                                this.search.length === 1 &&
+                                Object.keys(this.search[0]).length === 0
+                            );
+                            if ('total' in response.data) {
+                                this.totalCount = response.data.total
+                                this.countType = response.data.totalType
+                            }
+                            this.nextCursor = response.data.nextCursor || null;
+                        })
+                        .catch((error) => {
+                            console.error('Error loading data:', error);
+                            this.showSnack('Error loading data');
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
 
+                goToFirstPage() {
+                    if (this.loading) return;
 
+                    this.currentCursor = null;
+                    this.cursorPage = 1
+
+                    this.refresh();
+                },
+
+                goToNextPage() {
+                    if (this.loading || !this.nextCursor) return;
+
+                    this.currentCursor = this.nextCursor;
+                    this.cursorPage++;
+
+                    // Save currentCursor before moving to next page
+                    this.cursorHistory[this.cursorPage - 1] = this.currentCursor;
+
+                    this.refresh();
+                },
+
+                goToPrevPage() {
+                    if (this.loading || this.cursorPage <= 1) return;
+
+                    this.cursorPage--;
+
+                    this.currentCursor = this.cursorHistory[this.cursorPage - 1] || null;
+                    this.refresh();
                 },
 
                 openSaveQueryDialog() {
@@ -1085,12 +1172,11 @@
 
                 allIncidents() {
                     this.search = {};
-                    this.doSearch();
+                    this.refresh();
 
                 },
                 myAssigned() {
                     this.search = {};
-                    this.options.page = 1;
                     this.search.assigned = [this.currentUser.id];
                     this.search.statuses = ["Assigned"];
                     this.refresh();
@@ -1098,7 +1184,6 @@
 
                 myReview() {
                     this.search = {};
-                    this.options.page = 1;
                     this.search.reviewer = [this.currentUser.id];
                     this.search.statuses = ["Peer Review Assigned"];
                     this.refresh();
