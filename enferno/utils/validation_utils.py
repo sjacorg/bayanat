@@ -59,7 +59,7 @@ def validate_username_format(username: str) -> str:
     if not username or not username.strip():
         raise ValidationError("Username cannot be empty.")
 
-    validate_plain_text_field(username, "Username", 255)
+    validate_plain_text_field(username, "Username", 32)
 
     username = username.strip()
 
