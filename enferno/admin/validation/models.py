@@ -16,6 +16,8 @@ import re
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
+from enferno.utils.validation_utils import validate_username_format, validate_email_format
+from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
@@ -1364,7 +1366,7 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 class UserValidationModel(StrictValidationModel):
     email: Optional[str] = None
-    username: str = Field(min_length=1)
+    username: str = Field(min_length=4, max_length=255)
     password: Optional[str] = None  # Optional on PUT, required on POST
     name: str = Field(min_length=1)
     roles: list[PartialRoleModel] = Field(default_factory=list)
@@ -1381,13 +1383,82 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        """
+        Validates the username format and returns the validated username.
+
+        Args:
+            v: The username to validate
+
+        Returns:
+            str: The validated username
+
+        Raises:
+            ValueError: If the username format is invalid
+        """
+        if not v:
+            return v
+
+        try:
+            return validate_username_format(v)
+        except ValidationError as e:
+            raise ValueError(str(e))
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_field(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validates the email format and returns the validated email.
+
+        Args:
+            v: The email to validate
+
+        Returns:
+            Optional[str]: The validated email or None
+
+        Raises:
+            ValueError: If the email format is invalid
+        """
+        if not v:
+            return v
+
+        try:
+            return validate_email_format(v)
+        except ValidationError as e:
+            raise ValueError(str(e))
+
 
 class UserRequestModel(BaseValidationModel):
     item: UserValidationModel
 
 
 class UserNameCheckValidationModel(BaseValidationModel):
-    item: str = Field(min_length=1)
+    item: str = Field(min_length=4, max_length=255)
+
+    @field_validator("item")
+    @classmethod
+    def validate_username_check(cls, v: str) -> str:
+        """
+        Validates the username format for the username check endpoint.
+
+        Args:
+            v: The username to validate
+
+        Returns:
+            str: The validated username
+
+        Raises:
+            ValueError: If the username format is invalid
+        """
+        if not v:
+            raise ValueError("Username cannot be empty")
+
+        try:
+            return validate_username_format(v)
+        except ValidationError as e:
+            raise ValueError(str(e))
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):

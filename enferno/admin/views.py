@@ -3608,7 +3608,7 @@ def serve_media(
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
 
-        s3_config = BotoConfig(signature_version='s3v4')
+        s3_config = BotoConfig(signature_version="s3v4")
 
         s3 = boto3.client(
             "s3",
@@ -4560,13 +4560,11 @@ def api_user_create(
     u = validated_data.get("item")
     username = u.get("username")
 
+    # Check if username already exists
     exists = User.query.filter(User.username == username).first()
-    if len(username) < 4:
-        return "Error, username too short", 417
-    if len(username) > 32:
-        return "Error, username too long", 417
     if exists:
         return "Error, username already exists", 417
+
     user = User()
     user.fs_uniquifier = uuid4().hex
     user.from_json(u)
@@ -4600,16 +4598,7 @@ def api_user_check(
     if not data:
         return "Please select a username", 417
 
-    # validate illegal charachters
-    uclean = bleach.clean(data.strip(), strip=True)
-    if uclean != data:
-        return "Illegal characters detected", 417
-
-    # validate disallowed charachters
-    cats = [unicodedata.category(c)[0] for c in data]
-    if any([cat not in ["L", "N"] for cat in cats]):
-        return "Disallowed characters detected", 417
-
+    # Check if username already exists
     u = User.query.filter(User.username == data).first()
     if u:
         return "Username already exists", 417
@@ -4636,6 +4625,14 @@ def api_user_update(
     user = User.query.get(item.get("id"))
     if user is not None:
         u = validated_data.get("item")
+        username = u.get("username")
+
+        # Check if username already exists (excluding current user)
+        if username:
+            existing_user = User.query.filter(User.username == username, User.id != user.id).first()
+            if existing_user:
+                return "Error, username already exists", 417
+
         user = user.from_json(u)
         if user.save():
             # Record activity
