@@ -459,12 +459,15 @@ class SearchUtils:
             ]
 
             if actor_word_conditions or profile_word_conditions:
-                # Search in both Actor and ActorProfile
+                # Search in both Actor and ActorProfile with OR logic
                 search_conditions = []
+
+                # Actor search conditions (AND'ed together)
                 if actor_word_conditions:
-                    search_conditions.extend(actor_word_conditions)
+                    search_conditions.append(and_(*actor_word_conditions))
+
+                # ActorProfile search conditions (via subquery)
                 if profile_word_conditions:
-                    # Use subquery for profile search
                     profile_subquery = (
                         db.session.query(Actor.id)
                         .join(Actor.actor_profiles)
@@ -472,7 +475,11 @@ class SearchUtils:
                     )
                     search_conditions.append(Actor.id.in_(profile_subquery))
 
-                conditions.extend(search_conditions)
+                # Combine with OR: either Actor matches OR ActorProfile matches
+                if len(search_conditions) > 1:
+                    conditions.append(or_(*search_conditions))
+                else:
+                    conditions.extend(search_conditions)
 
         # Exclude text search
         if extsv := q.get("extsv"):
