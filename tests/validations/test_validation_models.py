@@ -11,7 +11,7 @@ from enferno.admin.validation.models import (
 
 class TestStringValidations:
     def test_min_length_validation(self):
-        """Test that fields with min_length=1 reject empty strings"""
+        """Test that fields with min_length=x reject empty strings"""
 
         # Test BulletinValidationModel title constraint
         with pytest.raises(ValidationError) as exc_info:
@@ -27,7 +27,7 @@ class TestStringValidations:
             UserValidationModel(
                 username="", name="Valid Name", active=True  # Empty string should fail
             )
-        assert "String should have at least 1 character" in str(exc_info.value)
+        assert "String should have at least 4 characters" in str(exc_info.value)
 
 
 class TestNumericValidations:
