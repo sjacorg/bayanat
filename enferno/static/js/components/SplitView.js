@@ -16,6 +16,7 @@ const SplitView = Vue.defineComponent({
   emits: ['leftWidthChanged', 'rightWidthChanged'],
   data() {
     return {
+      dividerWidth: 24,
       ro: null,
       overlayEl: null,
       isHovering: false,
@@ -27,6 +28,9 @@ const SplitView = Vue.defineComponent({
     };
   },
   computed: {
+    halfDividerWidth() {
+      return this.dividerWidth / 2;
+    },
     containerStyle() {
       return {
         width: '100%',
@@ -44,7 +48,7 @@ const SplitView = Vue.defineComponent({
   
       // Only set leftWidth the first time (or if needed)
       if (!this.hasInitialized && width > 0) {
-        this.leftWidth = width / 2;
+        this.leftWidth = width * 0.25;
         this.hasInitialized = true;
       }
     });
@@ -142,19 +146,20 @@ const SplitView = Vue.defineComponent({
     leftWidth: {
       immediate: true,
       handler(leftWidth) {
-        this.$emit('leftWidthChanged', `${leftWidth + 16}px`);
-        this.$emit('rightWidthChanged', `calc(100% - ${leftWidth + 48}px)`);
+        this.$emit('leftWidthChanged', `${leftWidth - this.halfDividerWidth}px`);
+        this.$emit('rightWidthChanged', `calc(100% - ${leftWidth + this.halfDividerWidth}px)`);
       }
     },
   },
   template: `
       <div
-        class="d-flex"
+        class="d-flex h-100"
         :style="containerStyle"
       >
         <div
           v-show="leftSlotVisible"
-          :style="{ width: leftWidth + 'px' }"
+          class="flex-shrink-0 overflow-y-auto"
+          :style="{ width: (leftWidth - halfDividerWidth) + 'px' }"
         >
           <slot name="left" />
         </div>
@@ -164,8 +169,8 @@ const SplitView = Vue.defineComponent({
             @mousedown="startDrag"
             @mouseenter="hoverHandle"
             @mouseleave="leaveHandle"
-            :class="['d-flex justify-center position-relative', dividerClass]"
-            style="cursor: ew-resize; width: 24px;"
+            :class="['d-flex justify-center position-relative flex-shrink-0', dividerClass]"
+            :style="'cursor: ew-resize; width: ' + dividerWidth + 'px;'"
         >
             <v-btn v-if="isHandleHighlighted" icon="mdi-arrow-split-vertical" class="position-absolute" height="24" width="24" style="top: 24px" :variant="isHandleHighlighted ? 'flat' : 'elevated'" :color="isHandleHighlighted ? 'primary' : undefined"></v-btn>
             <v-divider
@@ -177,7 +182,7 @@ const SplitView = Vue.defineComponent({
             ></v-divider>
         </div>
 
-        <div :style="{ width: 'calc(100% - ' + leftWidth + 'px)' }">
+        <div class="flex-shrink-0 overflow-y-auto" :style="{ width: 'calc(100% - ' + (leftWidth + halfDividerWidth) + 'px)' }">
           <slot name="right" />
         </div>
       </div>
