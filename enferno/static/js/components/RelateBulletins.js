@@ -82,7 +82,7 @@ const RelateBulletins = Vue.defineComponent({
 
         <!-- Content -->
         <div class="overflow-y-auto">
-          <split-view :left-slot-visible="showSearch">
+          <split-view :left-slot-visible="showSearch" :left-width-percent="50">
             <template #left>
               <!-- Left Column: Search -->
               <v-col>

@@ -1,8 +1,12 @@
 const SplitView = Vue.defineComponent({
   props: {
-    initialLeftWidth: {
-      type: Number,
-      default: () => window.innerWidth / 2,
+    leftWidthPercent: {
+      type: Boolean,
+      default: 25,
+    },
+    sideSafeAreaPercent: {
+      type: Boolean,
+      default: 25,
     },
     leftSlotVisible: {
       type: Boolean,
@@ -21,7 +25,7 @@ const SplitView = Vue.defineComponent({
       overlayEl: null,
       isHovering: false,
       isDragging: false,
-      leftWidth: this.initialLeftWidth,
+      leftWidth: window.innerWidth / 2,
       currentX: 0,
       frameRequested: false,
       hasInitialized: false,
@@ -48,7 +52,7 @@ const SplitView = Vue.defineComponent({
   
       // Only set leftWidth the first time (or if needed)
       if (!this.hasInitialized && width > 0) {
-        this.leftWidth = width * 0.25;
+        this.leftWidth = width * (this.leftWidthPercent / 100);
         this.hasInitialized = true;
       }
     });
@@ -109,7 +113,7 @@ const SplitView = Vue.defineComponent({
       }
     },
     doDrag() {
-      const mWidth = this.currentWidth * 0.25; // Leave 25% space on each side
+      const mWidth = this.currentWidth * (this.sideSafeAreaPercent / 100); // Leave 25% space on each side
       const containerWidth = this.currentWidth; // live value
       const max = containerWidth - mWidth;
       const newWidth = Math.min(Math.max(this.currentX, mWidth), max);
@@ -182,7 +186,7 @@ const SplitView = Vue.defineComponent({
             ></v-divider>
         </div>
 
-        <div class="flex-shrink-0 overflow-y-auto" :style="{ width: 'calc(100% - ' + (leftWidth + halfDividerWidth) + 'px)' }">
+        <div class="flex-shrink-0 overflow-y-auto" :style="{ width: leftSlotVisible ? 'calc(100% - ' + (leftWidth + halfDividerWidth) + 'px)' : '100%' }">
           <slot name="right" />
         </div>
       </div>
