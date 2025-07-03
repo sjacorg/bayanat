@@ -85,10 +85,13 @@
                     <v-container fluid>
                         <split-view divider-class="mx-4">
                             <template #left>
-                                {% include 'admin/partials/media_dialog.html' %}
+                                <div class="pa-1" style="max-height: calc(100vh - 130px); overflow-y: auto;">
+                                    {% include 'admin/partials/media_dialog.html' %}
+                                </div>
                             </template>
                             <template #right>
-                                    <v-row>
+                                <div class="pa-3" style="max-height: calc(100vh - 130px); overflow-y: auto;">
+                                    <v-row >
                                         <v-col cols="12" md="4">
                                             <dual-field v-model:original="editedItem.title"
                                                         v-model:translation="editedItem.title_ar"
@@ -350,6 +353,7 @@
         
                                         </v-col>
                                     </v-row>
+                                </div>
                             </template>
                         </split-view>
                     </v-container>
