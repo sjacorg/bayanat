@@ -170,13 +170,18 @@ const GeoLocations = Vue.defineComponent({
 
           </v-card-text>
         </v-card>
-        <v-dialog v-if="addDlg" max-width="770" v-model="addDlg" v-bind="dialogProps">
+        <v-dialog v-if="addDlg" v-model="addDlg" v-bind="dialogProps">
           <v-card>
-            <v-toolbar :title="translations.addGeoMarker_">
-              <template #append>
-                <v-btn @click="addDlg=false" icon="mdi-close"></v-btn>
-              </template>
-
+            <v-toolbar color="primary">
+                <v-toolbar-title>{{ translations.addGeoMarker_ }}</v-toolbar-title>
+                <v-spacer></v-spacer>
+            
+                <template #append>
+                  <v-btn :disabled="!eformValid" @click="saveLocation" variant="elevated" class="mx-2">
+                    {{ translations.save_ }}
+                  </v-btn>
+                    <v-btn icon="mdi-close" @click="addDlg=false"></v-btn>
+                </template>
             </v-toolbar>
 
 
@@ -203,13 +208,6 @@ const GeoLocations = Vue.defineComponent({
             <v-card-text>
               <geo-map :radius-controls="false" :others="others" v-model="e.latlng" :map-height="300"></geo-map>
             </v-card-text>
-            <v-card-actions class="pa-4">
-              <v-spacer></v-spacer>
-              <v-btn :disabled="!eformValid" @click="saveLocation" variant="elevated" width="220" color="primary">
-                {{ translations.save_ }}
-              </v-btn>
-              <v-spacer></v-spacer>
-            </v-card-actions>
           </v-card>
 
         </v-dialog>

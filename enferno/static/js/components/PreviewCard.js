@@ -10,23 +10,28 @@ const PreviewCard = Vue.defineComponent({
   },
   data: function () {
     return {
+      translations: window.translations,
       preview: this.modelValue || false,
     };
   },
   template: `
-    <v-dialog max-width="900" v-model="preview" v-bind="dialogProps">
-      <v-sheet v-if="preview" class="mt-2" >
-        <v-toolbar class="header-fixed">
+    <v-dialog v-model="preview" v-bind="dialogProps">
+      <v-card>
+        <v-toolbar color="primary">
+          <v-toolbar-title>{{ translations.preview_ }}</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn icon="mdi-close" @click.stop.prevent="$root.preview = false" x-small right top="10" fab>
-          </v-btn>
+
+          <template #append>
+            <v-btn icon="mdi-close" @click="$root.preview = false"></v-btn>
+          </template>
         </v-toolbar>
         
-
-        <bulletin-card v-if="item && item.class === 'bulletin'" :close="false" :bulletin="item"></bulletin-card>
-        <actor-card v-if="item && item.class === 'actor'" :close="false" :actor="item"></actor-card>
-        <incident-card v-if="item && item.class === 'incident'" :close="false" :incident="item"></incident-card>
-      </v-sheet>
+        <v-card-text class="overflow-y-auto">
+          <bulletin-card v-if="item && item.class === 'bulletin'" :close="false" :bulletin="item"></bulletin-card>
+          <actor-card v-if="item && item.class === 'actor'" :close="false" :actor="item"></actor-card>
+          <incident-card v-if="item && item.class === 'incident'" :close="false" :incident="item"></incident-card>
+        </v-card-text>        
+      </v-card>
     </v-dialog>
   `,
 });

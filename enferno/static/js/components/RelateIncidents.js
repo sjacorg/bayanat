@@ -82,7 +82,7 @@ const RelateIncidents = Vue.defineComponent({
 
         <!-- Content -->
         <div class="overflow-y-auto">
-          <split-view :left-slot-visible="showSearch" class="overflow-y-auto">
+          <split-view :left-slot-visible="showSearch">
             <template #left>
               <!-- Left Column: Search -->
               <v-col>

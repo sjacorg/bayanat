@@ -20,9 +20,8 @@
     <v-form @submit.prevent="save" ref="form" v-model="valid">
         <v-card v-if="dialog" class="overflow-hidden card-edit">
             <v-toolbar
-                    color="primary"
-                    dark
-                    class="card-header"
+                color="primary"
+                class="card-header"
             >
                 <v-toolbar-title>${formTitle} <span class="gv--text" v-if="editedItem.id"> ${editedItem.id}</span>
 
@@ -62,7 +61,7 @@
 
                 </v-toolbar-title>
 
-                <template #append>
+                <template v-if="!isAnyNestedBulletinDialogOpen" #append>
                     <v-btn @click="actorDialog = true" variant="outlined" class="mx-2">
                         {{ _('Create Related Actor') }}
                     </v-btn>
@@ -83,7 +82,7 @@
             >
                 <v-card-text>
                     <v-container fluid>
-                        <split-view divider-class="mx-4">
+                        <split-view divider-class="mx-4" @right-width-changed="rightDialogProps.width = $event">
                             <template #left>
                                 <div class="pa-1" style="max-height: calc(100vh - 130px); overflow-y: auto;">
                                     {% include 'admin/partials/media_dialog.html' %}

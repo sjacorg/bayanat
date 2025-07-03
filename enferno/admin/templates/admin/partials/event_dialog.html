@@ -50,11 +50,16 @@
 </v-card>
 
 
-<v-dialog v-model="eventDialog" max-width="880px" v-bind="rightDialogProps">
+<v-dialog v-model="eventDialog" v-bind="rightDialogProps">
     <v-card>
-        <v-toolbar title="{{ _('Event') }}">
-
-
+        <v-toolbar color="primary">
+            <v-toolbar-title>{{ _('Event') }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+        
+            <template #append>
+                <v-btn variant="elevated" @click="saveEvent" class="mx-2">{{ _('Save') }}</v-btn>
+                <v-btn icon="mdi-close" @click="closeEvent"></v-btn>
+            </template>
         </v-toolbar>
 
         <v-card-text>
@@ -159,10 +164,5 @@
 
             </v-container>
         </v-card-text>
-        <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn variant="plain" @click="closeEvent">{{ _('Close') }}</v-btn>
-            <v-btn color="primary" variant="elevated" @click="saveEvent">{{ _('Save') }}</v-btn>
-        </v-card-actions>
     </v-card>
 </v-dialog>

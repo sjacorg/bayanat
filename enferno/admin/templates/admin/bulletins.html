@@ -461,9 +461,9 @@
                     },
                     rightDialogProps: {
                         width: "60%",
-                        'min-width': "350",
                         'content-class': 'absolute right-0 left-auto',
                         fullscreen: true,
+                        scrim: false,
                     },
                     translations: translations,
                     validationRules: validationRules,
@@ -699,6 +699,10 @@
                 }),
 
                 computed: {
+                    isAnyNestedBulletinDialogOpen() {
+                        return this.actorDialog || this.eventDialog || this.$refs.relateActors.visible ||
+                            this.$refs.relateBulletins.visible || this.$refs.relateIncidents.visible || this.$refs?.geolocs?.addDlg || this.preview;
+                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)

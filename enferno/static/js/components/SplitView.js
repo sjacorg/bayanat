@@ -17,6 +17,7 @@ const SplitView = Vue.defineComponent({
       default: '',
     },
   },
+  emits: ['leftWidthChanged', 'rightWidthChanged'],
   data() {
     return {
       ro: null,
@@ -137,6 +138,15 @@ const SplitView = Vue.defineComponent({
       if (this.overlayEl) {
         document.body.removeChild(this.overlayEl);
         this.overlayEl = null;
+      }
+    },
+  },
+  watch: {
+    leftWidth: {
+      immediate: true,
+      handler(leftWidth) {
+        this.$emit('leftWidthChanged', leftWidth);
+        this.$emit('rightWidthChanged', `calc(100% - ${leftWidth + 48}px)`);
       }
     },
   },

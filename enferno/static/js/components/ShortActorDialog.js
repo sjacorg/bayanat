@@ -205,7 +205,6 @@ const ShortActorDialog = Vue.defineComponent({
   template: /*html*/ `
     <v-dialog
         :modelValue="open"
-        @update:model-value="confirmClose()"
         v-bind="dialogProps"
     >
       <v-toolbar color="primary">
