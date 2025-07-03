@@ -71,24 +71,23 @@ const ImageGallery = Vue.defineComponent({
 
   template: `
       <div ref="galleryContainer">
-        <v-sheet :class="horizontal ? 'media-row' : 'media-grid'">
-          <v-sheet v-for="(media,index) in sortedMedia" :key="media.id || media.uuid">
-            <media-card
-              @video-click="handleVideo"
-              @audio-click="handleAudio"
-              :media="media"
-            >
-              <template v-slot:top-actions="{ media, mediaType }">
-                <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
-              </template>
-              <template v-slot:actions v-if="enableDelete">
-                <v-divider></v-divider>
-                <v-card-actions class="justify-end d-flex py-0" style="min-height: 45px;">
-                    <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
-                </v-card-actions>
-              </template>
-            </media-card>
-          </v-sheet>
+        <v-sheet :class="horizontal ? 'media-row pb-4' : 'media-grid'">
+          <media-card
+            v-for="(media,index) in sortedMedia" :key="media.id || media.uuid"
+            @video-click="handleVideo"
+            @audio-click="handleAudio"
+            :media="media"
+          >
+            <template v-slot:top-actions="{ media, mediaType }">
+              <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
+            </template>
+            <template v-slot:actions v-if="enableDelete">
+              <v-divider></v-divider>
+              <v-card-actions class="justify-end d-flex py-0" style="min-height: 45px;">
+                  <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
+              </v-card-actions>
+            </template>
+          </media-card>
         </v-sheet>
       </div>
   `,

@@ -140,7 +140,7 @@ const MediaCard = Vue.defineComponent({
     }
   },
   template: /*html*/`
-    <v-card style="width:min(350px,100%)"  class="border border-1 mx-2" :disabled="!s3url">
+    <v-card style="width:min(350px,100%); height: fit-content;"  class="border border-1 mx-2" :disabled="!s3url">
       <v-toolbar density="compact" class="px-2">
         <div class="w-100 d-flex justify-space-between align-center">
           <div class="d-flex align-center">
@@ -179,16 +179,16 @@ const MediaCard = Vue.defineComponent({
             <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" ref="thumbnailRef" :href="s3url" target="_blank" :data-src="s3url">
               <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
                 <v-expand-transition>  
-                  <div v-if="isHovering" style="height: 100%;" class="d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
+                  <div v-if="isHovering" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
                     <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
                   </div>
                 </v-expand-transition>
               </img>
             </a>
 
-            <div @click="handleMediaClick">
+            <div @click="handleMediaClick" class="h-100">
             <!-- Video preview -->
-            <v-img v-if="mediaType === 'video'" :src="videoThumbnail" height="180" cover class="bg-grey-lighten-2">
+            <v-img v-if="mediaType === 'video'" :src="videoThumbnail" cover class="bg-grey-lighten-2 h-100">
               <div class="d-flex align-center justify-center fill-height">
                 <v-btn icon="mdi-play-circle" variant="text" size="x-large" :class="['custom-play-icon', thumbnailBrightness > 128 ? 'dark-play-icon' : 'light-play-icon']"></v-btn>
               </div>
@@ -198,13 +198,13 @@ const MediaCard = Vue.defineComponent({
             </v-img>
 
             <!-- PDF preview -->
-            <v-card v-else-if="mediaType === 'pdf'" height="180"
-                    class="d-flex align-center justify-center bg-grey-lighten-2">
+            <div v-else-if="mediaType === 'pdf'"
+                    class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
               <v-icon size="64" color="red">mdi-file-pdf-box</v-icon>
-            </v-card>
+            </div>
 
             <!-- Audio preview -->
-            <v-card v-else-if="mediaType === 'audio'" height="180" class="d-flex align-center justify-center bg-grey-lighten-2">
+            <div v-else-if="mediaType === 'audio'" class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
               <div class="d-flex align-center justify-center fill-height position-relative">
                 <v-icon size="128" color="primary">mdi-music-box</v-icon>
                 <v-btn
@@ -216,12 +216,12 @@ const MediaCard = Vue.defineComponent({
                   style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
                 ></v-btn>
               </div>
-            </v-card>
+            </div>
 
             <!-- Other file types preview -->
-            <v-card v-else-if="mediaType === 'unknown'" height="180" class="d-flex align-center justify-center bg-grey-lighten-2">
+            <div v-else-if="mediaType === 'unknown'" class="d-flex align-center justify-center bg-grey-lighten-2 h-100">
               <v-icon size="64">mdi-file-download</v-icon>
-            </v-card>
+            </div>
             </div>
           </div>
         </v-hover>
@@ -242,23 +242,37 @@ const MediaCard = Vue.defineComponent({
                 </div>
               </v-tooltip>
             </template>
-            {{ media.filename }}
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <div v-bind="props" class="text-truncate">
+                  {{ media.filename }}
+                </div>
+              </template>
+                {{ media.filename }}
+            </v-tooltip>
           </v-list-item>
         </div>
         <div class="d-flex align-center  cursor-pointer" @click="copyToClipboard(media.etag)">
-          <v-list-item class="text-caption ml-1 py-0">
+          <v-list-item class="text-caption ml-1 py-0 text-truncate">
             <template v-slot:prepend>
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props }">
                   <v-icon v-bind="props" icon="mdi-fingerprint"></v-icon>
-                </template>
+                  </template>
                 <div class="d-flex flex-column align-center">
                   <span><strong>{{ translations.etag_ }}</strong></span>
                   <span>{{ translations.click_to_copy_ }}</span>
                 </div>
               </v-tooltip>
             </template>
-            {{ media.etag }}
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <div v-bind="props" class="text-truncate">
+                  {{ media.etag }}
+                </div>
+              </template>
+                {{ media.etag }}
+            </v-tooltip>
           </v-list-item>
         </div>
       </v-card-text>
