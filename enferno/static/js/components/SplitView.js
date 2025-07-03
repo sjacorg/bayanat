@@ -8,10 +8,6 @@ const SplitView = Vue.defineComponent({
       type: Boolean,
       default: true,
     },
-    minWidth: {
-      type: Number,
-      default: 100,
-    },
     dividerClass: {
       type: String,
       default: '',
@@ -109,9 +105,10 @@ const SplitView = Vue.defineComponent({
       }
     },
     doDrag() {
+      const mWidth = this.currentWidth * 0.25; // Leave 25% space on each side
       const containerWidth = this.currentWidth; // live value
-      const max = containerWidth - this.minWidth;
-      const newWidth = Math.min(Math.max(this.currentX, this.minWidth), max);
+      const max = containerWidth - mWidth;
+      const newWidth = Math.min(Math.max(this.currentX, mWidth), max);
     
       if (this.leftWidth !== newWidth) {
         this.leftWidth = newWidth;
@@ -167,9 +164,10 @@ const SplitView = Vue.defineComponent({
             @mousedown="startDrag"
             @mouseenter="hoverHandle"
             @mouseleave="leaveHandle"
-            :class="['d-flex justify-center', dividerClass]"
+            :class="['d-flex justify-center position-relative', dividerClass]"
             style="cursor: ew-resize; width: 24px;"
         >
+            <v-btn v-if="isHandleHighlighted" icon="mdi-arrow-split-vertical" class="position-absolute" height="24" width="24" style="top: 24px" :variant="isHandleHighlighted ? 'flat' : 'elevated'" :color="isHandleHighlighted ? 'primary' : undefined"></v-btn>
             <v-divider
                 vertical
                 :thickness="isHandleHighlighted ? 3 : 1"
