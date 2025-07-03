@@ -174,7 +174,7 @@ const MediaCard = Vue.defineComponent({
       <v-card-text class="text-center pa-0">
         <v-hover v-slot="{ isHovering, props }">
           <div v-bind="props" class="preview-container position-relative cursor-pointer"
-              style="height: 180px;">
+              style="height: 160px;">
             <!-- Image preview -->
             <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" ref="thumbnailRef" :href="s3url" target="_blank" :data-src="s3url">
               <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">

@@ -61,7 +61,7 @@
 
                 </v-toolbar-title>
 
-                <template v-if="!isAnyNestedBulletinDialogOpen" #append>
+                <template #append>
                     <v-btn @click="actorDialog = true" variant="outlined" class="mx-2">
                         {{ _('Create Related Actor') }}
                     </v-btn>

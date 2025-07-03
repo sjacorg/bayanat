@@ -204,8 +204,6 @@ const GeoLocations = Vue.defineComponent({
                 <v-checkbox :label="translations.mainIncident_" v-model="e.main"></v-checkbox>
               </div>
 
-            </v-card-text>
-            <v-card-text>
               <geo-map :radius-controls="false" :others="others" v-model="e.latlng" :map-height="300"></geo-map>
             </v-card-text>
           </v-card>
