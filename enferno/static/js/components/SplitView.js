@@ -1,11 +1,11 @@
 const SplitView = Vue.defineComponent({
   props: {
     leftWidthPercent: {
-      type: Boolean,
+      type: Number,
       default: 25,
     },
     sideSafeAreaPercent: {
-      type: Boolean,
+      type: Number,
       default: 25,
     },
     leftSlotVisible: {
