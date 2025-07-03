@@ -43,9 +43,15 @@
         </v-card>
     </template>
     <v-card class="flex-grow-1">
-        <v-card-title>
-            <span class="headline">{{ _('Media File') }}</span>
-        </v-card-title>
+        <v-toolbar color="dark-primary">
+            <v-toolbar-title>{{ _('Media File') }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+        
+            <template #append>
+                <v-btn variant="elevated" class="mx-2" :disabled="!enableAttach" @click="attachMedia">{{ _('Attach Media') }}</v-btn>
+                <v-btn icon="mdi-close" @click="closeMediaDialog"></v-btn>
+            </template>
+        </v-toolbar>
         <v-card-text>
             <v-container>
                 <v-row>
@@ -98,17 +104,5 @@
 
             </v-container>
         </v-card-text>
-        <v-card-actions class="pa-5">
-            <v-spacer></v-spacer>
-            <v-btn color="grey lighten-1" text @click="closeMediaDialog">{{ _('Cancel') }}</v-btn>
-            <v-btn
-                    color="primary"
-                    variant="elevated"
-                    :disabled="!enableAttach"
-
-                    @click="attachMedia"
-            >{{ _('Attach Media') }}
-            </v-btn>
-        </v-card-actions>
     </v-card>
 </v-dialog>

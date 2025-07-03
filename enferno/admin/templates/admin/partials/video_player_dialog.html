@@ -1,18 +1,16 @@
-<v-dialog persistent v-model="videoDialog"
+<v-dialog v-model="videoDialog"
     v-bind="leftDialogProps"
 >
     <v-card>
-        <v-toolbar>
+        <v-toolbar color="dark-primary">
+            <v-toolbar-title>{{ _('Media player') }}</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn
-
-                    v-if="close"
-                    @click="closeMediaDialog"
-                    icon="mdi-close"
-                    variant="text"
-            ></v-btn>
+        
+            <template #append>
+                <v-btn prepend-icon="mdi-link" variant="elevated" @click="attachSnapshots" class="mx-2">{{ _('Attach Media') }}</v-btn>
+                <v-btn icon="mdi-close" @click="closeMediaDialog"></v-btn>
+            </template>
         </v-toolbar>
-
 
         <v-card-text id="pp" class="mt-3 pt-2">
 
@@ -120,11 +118,5 @@
 
             </div>
         </v-card-text>
-        <v-card-actions class="pa-3">
-            <v-spacer></v-spacer>
-            <v-btn prepend-icon="mdi-link" variant="elevated" @click="attachSnapshots"
-                   color="primary">{{ _('Attach Media') }}</v-btn>
-            <v-spacer></v-spacer>
-        </v-card-actions>
     </v-card>
 </v-dialog>

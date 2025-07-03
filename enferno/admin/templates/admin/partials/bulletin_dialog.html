@@ -82,7 +82,7 @@
             >
                 <v-card-text>
                     <v-container fluid>
-                        <split-view divider-class="mx-4" @right-width-changed="rightDialogProps.width = $event">
+                        <split-view divider-class="mx-4" @left-width-changed="leftDialogProps.width = $event" @right-width-changed="rightDialogProps.width = $event">
                             <template #left>
                                 <div class="pa-1" style="max-height: calc(100vh - 130px); overflow-y: auto;">
                                     {% include 'admin/partials/media_dialog.html' %}
