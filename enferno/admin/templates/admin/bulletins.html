@@ -457,12 +457,16 @@
                         width: "60%",
                         'content-class': 'absolute left-0 right-auto',
                         fullscreen: true,
+                        persistent: true,
+                        'no-click-animation': true,
                         scrim: false,
                     },
                     rightDialogProps: {
                         width: "60%",
                         'content-class': 'absolute right-0 left-auto',
                         fullscreen: true,
+                        persistent: true,
+                        'no-click-animation': true,
                         scrim: false,
                     },
                     translations: translations,
@@ -699,10 +703,6 @@
                 }),
 
                 computed: {
-                    isAnyNestedBulletinDialogOpen() {
-                        return this.actorDialog || this.eventDialog || this.$refs.relateActors.visible ||
-                            this.$refs.relateBulletins.visible || this.$refs.relateIncidents.visible || this.$refs?.geolocs?.addDlg || this.preview;
-                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)
