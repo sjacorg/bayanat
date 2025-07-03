@@ -70,7 +70,7 @@ const RelateIncidents = Vue.defineComponent({
       <v-card class="d-flex flex-column h-screen pa-0" :loading="loading">
         
         <!-- Top Toolbar -->
-        <v-toolbar color="primary">
+        <v-toolbar color="dark-primary">
           <v-btn variant="outlined" @click="toggleSearchPanel" class="ml-2">
             {{ showSearch ? translations.hideSearch_ : translations.showSearch_ }}
           </v-btn>

@@ -7,6 +7,7 @@ const PdfViewer = Vue.defineComponent({
   },
   data: () => {
     return {
+      translations: window.translations,
       viewer: false,
       url: null,
     };
@@ -28,13 +29,13 @@ const PdfViewer = Vue.defineComponent({
       v-model="viewer"
     >
       <v-card v-if="viewer">
-        <v-toolbar>
-          <v-spacer></v-spacer>
-          <v-btn
-              @click.stop.prevent="closePDF"
-              icon="mdi-close"
-              variant="text"
-          ></v-btn>
+        <v-toolbar color="dark-primary">
+            <v-toolbar-title>{{ translations.preview_ }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+        
+            <template #append>
+                <v-btn icon="mdi-close" @click.stop.prevent="closePDF"></v-btn>
+            </template>
         </v-toolbar>
     
         <v-card-text>

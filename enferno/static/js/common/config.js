@@ -74,6 +74,7 @@ const vuetifyConfig = {
                 dark: false, // Explicitly set the light theme as not dark
                 colors: {
                     primary: '#439d92',
+                    'dark-primary': '#35857c',
                     secondary: '#b0bec5',
                     accent: '#8c9eff',
                     error: '#b71c1c',
@@ -93,6 +94,7 @@ const vuetifyConfig = {
                 colors: {
                     // Adapted to the more complex structure of your dark theme
                     primary: '#09a7a6',
+                    'dark-primary': '#0a8786',
                     grey: '#999', // Only one shade represented for simplicity
                     'blue-grey': '#222', // Base color, assuming primary shade
                     gv: '#019985', // Darken2 shade assumed for simplicity

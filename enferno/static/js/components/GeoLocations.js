@@ -172,7 +172,7 @@ const GeoLocations = Vue.defineComponent({
         </v-card>
         <v-dialog v-if="addDlg" v-model="addDlg" v-bind="dialogProps">
           <v-card>
-            <v-toolbar color="primary">
+            <v-toolbar color="dark-primary">
                 <v-toolbar-title>{{ translations.addGeoMarker_ }}</v-toolbar-title>
                 <v-spacer></v-spacer>
             

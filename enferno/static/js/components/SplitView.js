@@ -145,7 +145,7 @@ const SplitView = Vue.defineComponent({
     leftWidth: {
       immediate: true,
       handler(leftWidth) {
-        this.$emit('leftWidthChanged', leftWidth);
+        this.$emit('leftWidthChanged', `${leftWidth + 16}px`);
         this.$emit('rightWidthChanged', `calc(100% - ${leftWidth + 48}px)`);
       }
     },

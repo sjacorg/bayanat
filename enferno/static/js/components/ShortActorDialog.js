@@ -207,7 +207,7 @@ const ShortActorDialog = Vue.defineComponent({
         :modelValue="open"
         v-bind="dialogProps"
     >
-      <v-toolbar color="primary">
+      <v-toolbar color="dark-primary">
         <v-toolbar-title>{{ formTitle }}</v-toolbar-title>
         <v-spacer></v-spacer>
 

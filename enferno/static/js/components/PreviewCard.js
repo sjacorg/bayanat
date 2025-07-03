@@ -17,7 +17,7 @@ const PreviewCard = Vue.defineComponent({
   template: `
     <v-dialog v-model="preview" v-bind="dialogProps">
       <v-card>
-        <v-toolbar color="primary">
+        <v-toolbar color="dark-primary">
           <v-toolbar-title>{{ translations.preview_ }}</v-toolbar-title>
           <v-spacer></v-spacer>
 
