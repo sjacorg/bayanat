@@ -449,37 +449,27 @@ class SearchUtils:
 
         # Text search - PERFORMANCE OPTIMIZED
         if tsv := q.get("tsv"):
-            words = tsv.split(" ")
-            # Use individual ILIKE conditions for better index performance
-            actor_word_conditions = [
-                Actor.search.ilike(f"%{word}%") for word in words if word.strip()
-            ]
-            profile_word_conditions = [
-                ActorProfile.search.ilike(f"%{word}%") for word in words if word.strip()
-            ]
-
-            if actor_word_conditions or profile_word_conditions:
-                # Search in both Actor and ActorProfile with OR logic
-                search_conditions = []
-
-                # Actor search conditions (AND'ed together)
-                if actor_word_conditions:
-                    search_conditions.append(and_(*actor_word_conditions))
-
-                # ActorProfile search conditions (via subquery)
-                if profile_word_conditions:
+            words = [word.strip() for word in tsv.split(" ") if word.strip()]
+            if words:
+                # For each word, create a condition that checks if it exists in either Actor.search OR ActorProfile.search
+                word_conditions = []
+                for word in words:
+                    # Create subquery for ActorProfile search
                     profile_subquery = (
                         db.session.query(Actor.id)
                         .join(Actor.actor_profiles)
-                        .filter(and_(*profile_word_conditions))
+                        .filter(ActorProfile.search.ilike(f"%{word}%"))
                     )
-                    search_conditions.append(Actor.id.in_(profile_subquery))
 
-                # Combine with OR: either Actor matches OR ActorProfile matches
-                if len(search_conditions) > 1:
-                    conditions.append(or_(*search_conditions))
-                else:
-                    conditions.extend(search_conditions)
+                    # For this word, it should match in either Actor.search OR ActorProfile.search
+                    word_condition = or_(
+                        Actor.search.ilike(f"%{word}%"), Actor.id.in_(profile_subquery)
+                    )
+                    word_conditions.append(word_condition)
+
+                # All words must match (AND logic across words)
+                if word_conditions:
+                    conditions.append(and_(*word_conditions))
 
         # Exclude text search
         if extsv := q.get("extsv"):
