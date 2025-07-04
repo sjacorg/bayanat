@@ -305,7 +305,9 @@ const GeoMap = Vue.defineComponent({
     emitValue() {
       const newValue =
         this.lat !== null && this.lng !== null
-          ? { lat: this.lat, lng: this.lng, radius: this.radius }
+          ? this.radiusControls 
+            ? { lat: this.lat, lng: this.lng, radius: this.radius }
+            : { lat: this.lat, lng: this.lng }
           : null;
       this.$emit('update:modelValue', newValue);
     },
@@ -346,7 +348,9 @@ const GeoMap = Vue.defineComponent({
     broadcast() {
       const newValue =
         this.lat !== null && this.lng !== null
-          ? { lat: this.lat, lng: this.lng, radius: this.radius }
+          ? this.radiusControls 
+            ? { lat: this.lat, lng: this.lng, radius: this.radius }
+            : { lat: this.lat, lng: this.lng }
           : null;
       this.$emit('update:modelValue', newValue);
     },
