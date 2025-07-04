@@ -5941,9 +5941,9 @@ def api_notifications() -> Response:
     )
 
     if status:
-        if status.lower() == "read":
+        if status.lower() == Notification.STATUS_READ:
             notifications_query = notifications_query.filter(Notification.read_status == True)
-        elif status.lower() == "unread":
+        elif status.lower() == Notification.STATUS_UNREAD:
             notifications_query = notifications_query.filter(Notification.read_status == False)
 
     if is_urgent is not None:
@@ -5952,18 +5952,45 @@ def api_notifications() -> Response:
 
     # Paginate the results
     paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
-    unread_notifications = (
-        db.session.query(Notification)
-        .filter(
-            Notification.user_id == current_user.id,
-            Notification.read_status == False,
-            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
-        )
-        .all()
-    )
 
-    unread_count = len(unread_notifications)
-    has_unread_urgent_notifications = any(n.is_urgent for n in unread_notifications)
+    # Optimize unread count calculation
+    if status and status.lower() == Notification.STATUS_UNREAD:
+        # When filtering by unread status, use the pagination total
+        unread_count = paginated_notifications.total
+        # For urgent notifications check, we need a separate optimized query
+        has_unread_urgent_notifications = (
+            db.session.query(Notification.id)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.is_urgent == True,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .first()
+            is not None
+        )
+    else:
+        # Use count() instead of all() for better performance
+        unread_count = (
+            db.session.query(Notification)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .count()
+        )
+        has_unread_urgent_notifications = (
+            db.session.query(Notification.id)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.is_urgent == True,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .first()
+            is not None
+        )
 
     response = {
         "items": [notification.to_dict() for notification in paginated_notifications.items],
@@ -5976,40 +6003,6 @@ def api_notifications() -> Response:
     }
 
     return jsonify(response)
-
-
-@admin.route("/api/notifications/unread/count")
-def api_notifications_unread_count() -> Response:
-    """
-    Returns the count of unread internal notifications for the current user,
-    and whether any of them are marked as urgent.
-
-    Example response:
-    {
-        "unread_count": 5,
-        "has_unread_urgent_notifications": true
-    }
-    """
-    # Get all relevant unread internal notifications for the current user
-    unread_notifications = (
-        db.session.query(Notification)
-        .filter(
-            Notification.user_id == current_user.id,
-            Notification.read_status == False,
-            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
-        )
-        .all()
-    )
-
-    unread_count = len(unread_notifications)
-    has_unread_urgent_notifications = any(n.is_urgent for n in unread_notifications)
-
-    return jsonify(
-        {
-            "unread_count": unread_count,
-            "has_unread_urgent_notifications": has_unread_urgent_notifications,
-        }
-    )
 
 
 @admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])

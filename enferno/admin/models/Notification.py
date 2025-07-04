@@ -18,6 +18,10 @@ class Notification(db.Model, BaseMixin):
     DELIVERY_METHOD_SMS = "sms"
     DELIVERY_METHOD_INTERNAL = "internal"
 
+    # Status constants for API filtering
+    STATUS_READ = "read"
+    STATUS_UNREAD = "unread"
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     user = db.relationship("User", foreign_keys=[user_id], backref="user_notifications")

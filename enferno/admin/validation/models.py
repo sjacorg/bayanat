@@ -1743,15 +1743,6 @@ class FullConfigValidationModel(ConfigValidationModel):
     YTDLP_COOKIES: Optional[str] = None
     NOTIFICATIONS: dict[str, NotificationConfigModel] = Field(default_factory=dict)
 
-    @field_validator("NOTIFICATIONS")
-    @classmethod
-    def validate_notifications(
-        cls, v: dict[str, NotificationConfigModel]
-    ) -> dict[str, NotificationConfigModel]:
-        config_dict = {k: v[k].model_dump() for k in v}
-        config_dict = NotificationSettings.prune_read_only_settings(config_dict)
-        return {k: NotificationConfigModel(**v) for k, v in config_dict.items() if v is not None}
-
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
