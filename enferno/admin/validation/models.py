@@ -1359,6 +1359,9 @@ class ActorQueryModel(QueryBaseModel):
 
 class ActorQueryRequestModel(BaseValidationModel):
     q: list[ActorQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=20, ge=1, le=100)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
 
 
 class ActorReviewRequestModel(BaseValidationModel):
@@ -1418,7 +1421,10 @@ class IncidentQueryModel(QueryBaseModel):
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
-    q: Optional[IncidentQueryModel] = None
+    q: list[IncidentQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=20, ge=1, le=100)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
 
 
 class IncidentReviewRequestModel(BaseValidationModel):
