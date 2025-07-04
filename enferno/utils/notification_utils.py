@@ -81,6 +81,7 @@ class NotificationUtils:
         user: User,
         title: str,
         message: str,
+        category: str = Notification.TYPE_GENERAL,
         is_urgent: bool = False,
     ) -> bool:
         # get config
@@ -112,7 +113,7 @@ class NotificationUtils:
         results = []
         for method in delivery_methods:
             _, result = NotificationUtils._send_notification(
-                user, title, message, event_config["category"], method, is_urgent
+                user, title, message, category, method, is_urgent
             )
             results.append(result)
             if not result:
@@ -130,6 +131,7 @@ class NotificationUtils:
         event: str | NotificationEvent,
         title: str,
         message: str,
+        category: str = Notification.TYPE_GENERAL,
         is_urgent: bool = False,
     ) -> bool:
         # get config
@@ -166,7 +168,7 @@ class NotificationUtils:
             admin_results = []
             for method in delivery_methods:
                 _, result = NotificationUtils._send_notification(
-                    admin, title, message, event_config["category"], method, is_urgent
+                    admin, title, message, category, method, is_urgent
                 )
                 admin_results.append(result)
                 if not result:
