@@ -237,11 +237,11 @@
                         <v-progress-circular indeterminate size="64"></v-progress-circular>
                     </v-overlay>
 
-                    <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
+                    <relate-bulletins @relate="relateBulletin($event.item, $event.relation)" :exids="exBulletins"
                                       ref="relateBulletins"></relate-bulletins>
-                    <relate-actors @relate="relateActor" :exids="exActors"
+                    <relate-actors @relate="relateActor($event.item, $event.relation)" :exids="exActors"
                                    ref="relateActors"></relate-actors>
-                    <relate-incidents @relate="relateIncident" :exids="exIncidents"
+                    <relate-incidents @relate="relateIncident($event.item, $event.relation)" :exids="exIncidents"
                                       ref="relateIncidents"></relate-incidents>
 
 
@@ -287,6 +287,7 @@
     <script src="/static/js/tinymce-vue.min.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
@@ -359,7 +360,7 @@
                 "tinymce-editor": Editor, // <- Important part,
 
             },
-            mixins: [globalMixin],
+            mixins: [globalMixin, relationsMixin],
             data: () => ({
                 valid: false,
                 rightDialogProps: null,
@@ -368,14 +369,6 @@
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                 helper: {}, // helper object for review items
-
-                itobInfo: [],
-                itoaInfo: [],
-                itoiInfo: [],
-                atobInfo: [],
-                btobInfo: [],
-                atoaInfo: [],
-
 
                 assignIncident: {},
                 selfAssignDialog: false,
@@ -609,51 +602,15 @@
 
 
                 exBulletins() {
-                    let ids = [];
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.bulletin_relations) {
-                            ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-                        if (this.reviewItem.bulletin_relations) {
-                            ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'bulletin', editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
 
                 exActors() {
-                    let ids = [];
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.actor_relations) {
-                            ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-
-                        if (this.reviewItem.actor_relations) {
-                            ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'actor', editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
 
                 exIncidents() {
-                    let ids = [];
-                    if (this.editedItem?.id) {
-                        ids.push(this.editedItem.id);
-                        if (this.editedItem.incident_relations) {
-                            ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-                        ids.push(this.reviewItem.id);
-                        if (this.reviewItem.incident_relations) {
-                            ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'incident', includeSelf: true, editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
                 
                 formTitle() {
@@ -764,27 +721,8 @@
 
 
             },
-            created() {
-                this.fetchRelationInfo();
-            },
 
             methods: {
-                fetchRelationInfo() {
-                    axios.get('/admin/api/relation/info')
-                        .then(response => {
-                            this.itobInfo = response.data.itobInfo;
-                            this.itoaInfo = response.data.itoaInfo;
-                            this.atobInfo = response.data.atobInfo;
-                            this.atoaInfo = response.data.atoaInfo;
-                            this.btobInfo = response.data.btobInfo;
-                            this.itoiInfo = response.data.itoiInfo;
-                        })
-                        .catch(error => {
-                            console.error('Error fetching relation info:', error);
-                            this.showSnack('Error fetching relation info');
-                        });
-                },
-
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
@@ -1523,13 +1461,15 @@
 
                 },
 
-                relateIncident(incident) {
+                relateIncident(incident, relationData = {}) {
+                    this.closeConfirmRelationDialog();
                     // get list of existing attached incidents
                     let ex = this.editedItem.incident_relations.map(x => x.incident.id);
 
                     if (!ex.includes(incident.id)) {
                         relation = {
-                            incident: incident
+                            incident: incident,
+                            ...relationData
                         };
                         this.editedItem.incident_relations.push(relation);
 
@@ -1564,17 +1504,17 @@
                     });
                 },
 
-                relateBulletin(bulletin) {
+                relateBulletin(bulletin, relationData = {}) {
+                    this.closeConfirmRelationDialog();
                     // get list of existing attached incidents
-
-
                     let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
 
 
                     if (!ex.includes(bulletin.id)) {
 
                         const relation = {
-                            bulletin: bulletin
+                            bulletin: bulletin,
+                            ...relationData
                         };
                         this.editedItem.bulletin_relations.push(relation);
 
@@ -1598,13 +1538,15 @@
                         this.$refs.relateActors.reSearch();
                     });
                 },
-                relateActor(actor) {
+                relateActor(actor, relationData = {}) {
+                    this.closeConfirmRelationDialog();
                     // get list of existing attached actors
                     let ex = this.editedItem.actor_relations.map(x => x.actor.id);
 
                     if (!ex.includes(actor.id)) {
                         relation = {
-                            actor: actor
+                            actor: actor,
+                            ...relationData
                         };
                         this.editedItem.actor_relations.push(relation);
                         this.relateActorResults.removeById(actor.id);

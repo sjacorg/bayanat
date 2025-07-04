@@ -14,6 +14,11 @@ const RelateActors = Vue.defineComponent({
       moreItems: false,
       actor: null,
       showSearch: true,
+      relation: {
+        probability: null,
+        related_as: [],
+        comment: '',
+      }
     };
   },
   methods: {
@@ -58,7 +63,7 @@ const RelateActors = Vue.defineComponent({
     },
     relateItem(item) {
       this.results = this.results.filter((result) => result.id !== item.id);
-      this.$emit('relate', item);
+      this.$emit('relate', { item, relation: this.relation });
     },
     toggleSearchPanel() {
       this.showSearch = !this.showSearch
@@ -127,7 +132,7 @@ const RelateActors = Vue.defineComponent({
                       :show-hide="true"
                     >
                       <template #actions>
-                        <v-btn @click="relateItem(item)" variant="elevated" color="primary">
+                        <v-btn @click="$root.openConfirmRelationDialog(item)" variant="elevated" color="primary">
                           {{ translations.relate_ }}
                         </v-btn>
                       </template>
@@ -146,6 +151,23 @@ const RelateActors = Vue.defineComponent({
             </template>
           </split-view>
         </div>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-if="visible" max-width="450" v-model="$root.isConfirmRelationDialogOpen">
+      <v-card>
+        <relation-card
+          variant="text"
+          v-model:relation="relation"
+          :multi-relation="$root.actorRelationMultiple"
+          :relation-types="$root.actorRelationTypes"
+        ></relation-card>
+        
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="$root.closeConfirmRelationDialog" variant="text">{{ translations.cancel_ }}</v-btn>
+          <v-btn @click="relateItem($root.relationToConfirm)" color="primary" variant="elevated">{{ translations.relate_ }}</v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
     `,

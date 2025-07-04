@@ -95,6 +95,7 @@
 {% block js %}
 
 <script src="/static/js/mixins/media-mixin.js"></script>
+<script src="/static/js/mixins/relations-mixin.js"></script>
 <script src="/static/js/components/BulletinCard.js"></script>
 <script src="/static/js/components/ActorProfiles.js"></script>
 <script src="/static/js/components/ActorCard.js"></script>
@@ -137,17 +138,10 @@
 
         const app = createApp({
             delimiters: delimiters,
-            mixins: [globalMixin, mediaMixin],
+            mixins: [globalMixin, mediaMixin, relationsMixin],
             data: () => ({
 
                 translations: translations,
-
-                itobInfo: [],
-                itoaInfo: [],
-                itoiInfo: [],
-                atobInfo: [],
-                btobInfo: [],
-                atoaInfo: [],
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
@@ -215,27 +209,7 @@
                 }
             })
         },
-        created() {
-            this.fetchRelationInfo();
-        },
         methods: {
-            fetchRelationInfo() {
-                axios.get('/admin/api/relation/info')
-                    .then(response => {
-                        this.itobInfo = response.data.itobInfo;
-                        this.itoaInfo = response.data.itoaInfo;
-                        this.atobInfo = response.data.atobInfo;
-                        this.atoaInfo = response.data.atoaInfo;
-                        this.btobInfo = response.data.btobInfo;
-                        this.itoiInfo = response.data.itoiInfo;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching relation info:', error);
-                        this.showSnack('Error fetching relation info');
-                    });
-            },
-
-
             refresh(options) {
                 this.options = options || { ...this.options, page: 1 };
                 this.loading = true;
