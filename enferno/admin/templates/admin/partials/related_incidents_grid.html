@@ -8,12 +8,12 @@
             <incident-result :incident="item.incident">
 
                 <template #header>
-                    <relation-card
+                    <relation-editor-card
                             variant="text"
                             v-model:relation="editedItem.incident_relations[index]"
                             :multi-relation="incidentRelationMultiple"
                             :relation-types="incidentRelationTypes"
-                    ></relation-card>
+                    ></relation-editor-card>
                     <v-divider></v-divider>
                 </template>
 

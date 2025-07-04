@@ -315,11 +315,11 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
-                            <relation-card
+                            <relation-editor-card
                               v-model:relation="relation"
                               :multi-relation="$root.actorRelationMultiple"
                               :relation-types="$root.actorRelationTypes"
-                            ></relation-card>
+                            ></relation-editor-card>
                           </div>
 
                           <div style="min-width: 0;">

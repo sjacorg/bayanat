@@ -4,12 +4,12 @@
                 <actor-result :actor="item.actor">
                     <!--  attach relationship form -->
                     <template #header>
-                        <relation-card
+                        <relation-editor-card
                                 variant="text"
                                 v-model:relation="editedItem.actor_relations[index]"
                                 :multi-relation="actorRelationMultiple"
                                 :relation-types="actorRelationTypes"
-                        ></relation-card>
+                        ></relation-editor-card>
                         <v-divider></v-divider>
                     </template>
 

@@ -1,4 +1,4 @@
-const RelationCard = Vue.defineComponent({
+const RelationEditorCard = Vue.defineComponent({
   props: {
     relation: {
       type: Object,

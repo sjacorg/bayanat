@@ -153,12 +153,12 @@ const RelateIncidents = Vue.defineComponent({
 
     <v-dialog v-if="visible" max-width="450" v-model="$root.isConfirmRelationDialogOpen">
       <v-card>
-        <relation-card
+        <relation-editor-card
           variant="text"
           v-model:relation="relation"
           :multi-relation="$root.incidentRelationMultiple"
           :relation-types="$root.incidentRelationTypes"
-        ></relation-card>
+        ></relation-editor-card>
         
         <v-card-actions>
           <v-spacer></v-spacer>
