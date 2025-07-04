@@ -1527,6 +1527,8 @@
                     confirmClose() {
                         if (confirm(translations.confirm_)) {
                             this.close();
+                            this.closeMediaDialog();
+                            this.$refs.pdfViewer.closePDF(this.s3url);
                         }
                     },
 

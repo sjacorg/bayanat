@@ -106,11 +106,7 @@ let mediaMixin = {
     },
 
     crop() {
-      if (this.cropper.active) {
-        document.querySelector('.croppr-container').remove();
-        this.cropper.active = false;
-        return;
-      }
+      if (this.cropper.active) this.destroyCrop();
 
       const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
       video.pause();
@@ -177,9 +173,13 @@ let mediaMixin = {
 
         //clear source image
 
-        document.querySelector('.croppr-container').remove();
-        this.cropper.active = false;
+        this.destroyCrop();
       });
+    },
+
+    destroyCrop() {
+      document.querySelector('.croppr-container')?.remove();
+      this.cropper.active = false;
     },
 
     getFileName(path) {
@@ -377,6 +377,7 @@ let mediaMixin = {
     },
 
     closeMediaDialog() {
+      this.destroyCrop();
       this.editedMedia.files = [];
       this.videoDialog = false;
       this.audioDialog = false;
