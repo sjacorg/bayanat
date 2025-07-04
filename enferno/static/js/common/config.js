@@ -184,13 +184,7 @@ function getInfraMessage(status) {
       }).join('\n') || 'An error occurred.';
     }
   
-    // Check for HTML response by Content-Type header
-    const ct = response?.headers?.['content-type'] || '';
-    if (ct.includes('text/html') && response?.status) {
-      return getInfraMessage(response.status);
-    }
-  
-    // Fallback: detect HTML content via DOMParser
+    // Detect HTML content via DOMParser
     if (typeof response?.data === 'string') {
       try {
         const doc = new DOMParser().parseFromString(response.data, 'text/html');
@@ -202,15 +196,15 @@ function getInfraMessage(status) {
         return 'Unexpected error occurred while processing server response.';
       }
     }
-  
-    // No response from server (network issue, timeout, etc.)
-    if (error.request) {
-      return 'No response from server. Contact an admin.';
-    }
-  
+    
     // Axios or JS-level error
     if (error?.message) {
       return error.message || 'An error occurred.';
+    }
+
+    // No response from server (network issue, timeout, etc.)
+    if (error.request) {
+      return 'No response from server. Contact an admin.';
     }
   
     // Total fallback
