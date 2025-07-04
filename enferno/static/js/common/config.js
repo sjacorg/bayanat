@@ -249,32 +249,10 @@ if (__settings__.dark) {
 }
 
 // helper prototype functions
-
-// removes an item from the array based on its id
-Array.prototype.removeById = function (id) {
-    for (let i = 0; i < this.length; i++) {
-        if (this[i].id == id) {
-            this.splice(i, 1);
-            i--;
-        }
-    }
-    return this;
-};
-
-Array.prototype.toURLParams = function (varName) {
-    const pairs = this.map((x) => {
-        return `${varName}=${x}`;
-    });
-    return pairs.join('&');
-};
-
 String.prototype.getFilename = function () {
     return this.substring(this.lastIndexOf('/') + 1)
         .replace(/[\#\?].*$/, '')
         .replace(/\.[^/.]+$/, '');
-};
-String.prototype.trunc = function (n) {
-    return this.substr(0, n - 1) + (this.length > n ? '&hellip;' : '');
 };
 
 String.prototype.getInitials = function () {
@@ -288,29 +266,6 @@ function translate_status(str) {
     // placeholder, will handle translations in a future release
     return str;
 }
-
-String.prototype.toHHMMSS = function () {
-    var sec_num = parseInt(this, 10); // don't forget the second param
-    var hours = Math.floor(sec_num / 3600);
-    var minutes = Math.floor((sec_num - hours * 3600) / 60);
-    var seconds = sec_num - hours * 3600 - minutes * 60;
-
-    if (hours < 10) {
-        hours = '0' + hours;
-    }
-    if (minutes < 10) {
-        minutes = '0' + minutes;
-    }
-    if (seconds < 10) {
-        seconds = '0' + seconds;
-    }
-    return hours + ':' + minutes + ':' + seconds;
-};
-
-String.prototype.formatName = function () {
-    let firstlast = this.split(' ');
-    return firstlast[0].substr(0, 1).toUpperCase() + '.' + firstlast[1];
-};
 
 // relationship information helper
 
