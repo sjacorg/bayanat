@@ -4,56 +4,13 @@
                 <actor-result :actor="item.actor">
                     <!--  attach relationship form -->
                     <template #header>
-                        <v-card variant="text">
-                            <v-card-text>
-
-
-                                <v-list-item title="{{ _('Probability') }}">
-                                    <v-list-item-subtitle>
-                                        <v-chip-group
-                                                v-model="editedItem.actor_relations[index].probability"
-                                                column
-                                                selected-class="bg-primary">
-                                            <v-chip filter v-for="item in translations.probs"
-                                                    size="small">${item.tr}
-                                            </v-chip>
-                                        </v-chip-group>
-                                    </v-list-item-subtitle>
-
-                                </v-list-item>
-
-                                <v-list-item title="{{ _('Related As') }}">
-                                    <v-list-item-subtitle>
-                                        <v-chip-group
-                                                v-model="editedItem.actor_relations[index].related_as"
-                                                column
-                                                filter
-                                                selected-class="bg-primary"
-                                                :multiple="actorRelationMultiple"
-                                        >
-                                            <v-chip v-for="rel in actorRelationTypes"
-                                                    :value="rel.id"
-                                                    :key="rel.id" size="small"> ${rel.title}
-                                            </v-chip>
-                                        </v-chip-group>
-                                    </v-list-item-subtitle>
-                                </v-list-item>
-
-
-                                <v-list-item title="{{ _('Comments') }}">
-                                    <v-list-item-subtitle>
-                                        <v-text-field class="mt-2"
-                                                      v-model="editedItem.actor_relations[index].comment"
-                                                      variant="outlined"
-                                                      rows="1"
-                                                      clearable
-                                        ></v-text-field>
-                                    </v-list-item-subtitle>
-                                </v-list-item>
-
-                            </v-card-text>
-
-                        </v-card>
+                        <relation-card
+                                variant="text"
+                                v-model:relation="editedItem.actor_relations[index]"
+                                :multi-relation="actorRelationMultiple"
+                                :relation-types="actorRelationTypes"
+                        ></relation-card>
+                        <v-divider></v-divider>
                     </template>
 
                     <template #actions>

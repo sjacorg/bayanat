@@ -20,20 +20,18 @@ const ActorResult = Vue.defineComponent({
         <v-card-title class="text-subtitle-2 text-wrap text-break">{{actor.name}}</v-card-title>
         <v-divider></v-divider>
         <slot name="header"></slot>
-        <v-card-text>
-                <v-list-item v-if="actor.sources?.length" :title="translations.sources_">
-                  <v-list-item-subtitle>
-                    <div class="flex-chips">
-                      <v-chip class="flex-chip" size="small" v-for="source in actor.sources" :key="source">
-                        {{ source.title }}
-                      </v-chip>
-                    </div>
-                  </v-list-item-subtitle>
 
-                </v-list-item>
+        <v-card-text v-if="actor.sources?.length">
+          <v-list-item :title="translations.sources_">
+            <v-list-item-subtitle>
+              <div class="flex-chips">
+                <v-chip class="flex-chip" size="small" v-for="source in actor.sources" :key="source">
+                  {{ source.title }}
+                </v-chip>
+              </div>
+            </v-list-item-subtitle>
 
-
-
+          </v-list-item>
         </v-card-text>
 
 

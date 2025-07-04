@@ -315,56 +315,11 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
-                            <v-card>
-                              <v-card-item>
-                                <v-card-title>Relation</v-card-title>
-                              </v-card-item>
-                              <v-card-text>
-                                <v-list-item :title="translations.probability_">
-                                  <v-list-item-subtitle>
-                                    <v-chip-group
-                                      v-model="relation.probability"
-                                      column
-                                      selected-class="bg-primary"
-                                    >
-                                      <v-chip filter v-for="item in translations.probs"
-                                              size="small">{{ item.tr }}
-                                      </v-chip>
-                                    </v-chip-group>
-                                  </v-list-item-subtitle>
-
-                                </v-list-item>
-
-                                <v-list-item :title="translations.relatedAs_">
-                                  <v-list-item-subtitle>
-                                    <v-chip-group
-                                      v-model="relation.related_as"
-                                      column
-                                      filter
-                                      selected-class="bg-primary"
-                                      :multiple="$root.actorRelationMultiple"
-                                    >
-                                      <v-chip v-for="rel in $root.actorRelationTypes"
-                                              :value="rel.id"
-                                              :key="rel.id" size="small"> {{ rel.title }}
-                                      </v-chip>
-                                    </v-chip-group>
-                                  </v-list-item-subtitle>
-                                </v-list-item>
-
-
-                                <v-list-item :title="translations.comments_">
-                                  <v-list-item-subtitle>
-                                    <v-text-field class="mt-2"
-                                                  v-model="relation.comment"
-                                                  variant="outlined"
-                                                  rows="1"
-                                                  clearable
-                                    ></v-text-field>
-                                  </v-list-item-subtitle>
-                                </v-list-item>
-                              </v-card-text>
-                            </v-card>
+                            <relation-card
+                              v-model:relation="relation"
+                              :multi-relation="$root.actorRelationMultiple"
+                              :relation-types="$root.actorRelationTypes"
+                            ></relation-card>
                           </div>
 
                           <div style="min-width: 0;">

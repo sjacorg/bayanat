@@ -78,12 +78,12 @@
             <v-card-text class="pa-0" style="height: calc(100vh - 64px);">
                     <split-view @left-width-changed="leftDialogProps.width = $event" @right-width-changed="rightDialogProps.width = $event">
                         <template #left>
-                            <div class="pa-4">
+                            <div class="mx-4 mb-4 mt-8">
                                 {% include 'admin/partials/media_dialog.html' %}
                             </div>
                         </template>
                         <template #right>
-                                <v-row class="w-100 ma-0">
+                                <v-row class="w-100 mx-0 mb-0 mt-6">
                                     <v-col cols="12" md="4">
                                         <dual-field v-model:original="editedItem.title"
                                                     v-model:translation="editedItem.title_ar"
