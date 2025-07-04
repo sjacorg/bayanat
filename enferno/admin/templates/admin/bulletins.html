@@ -535,24 +535,15 @@
 
 
                     // search and relate bulletin dialog vars
-
-
                     relateBulletinTerm: "",
-                    relateBulletinResults: [],
-                    selectedRelatedBulletins: [],
 
                     // search and relate actor dialog vars
                     relateActorTerm: "",
-                    relateActorResults: [],
-                    selectedRelatedActors: [],
-
 
                     // search and relate incident dialog vars
                     relateIncidentDialog: false,
                     relateIncidentLoader: true,
                     relateIncidentTerm: "",
-                    relateIncidentResults: [],
-                    selectedRelatedIncidents: [],
 
 
                     drawer: drawer,
@@ -1608,104 +1599,52 @@
                         this.closeEvent();
                     },
 
-                    // related bulletins functions --------------------
-
-                    searchRelatedBulletins() {
-
-                        this.$refs.relateBulletins.open();
-                        this.$nextTick(() => {
-                            this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-                            this.$refs.relateBulletins.reSearch();
-                        });
-
-                    },
-
-                    relateBulletin(bulletin, relationData = {}) {
-                        this.closeConfirmRelationDialog();
-                        // get list of existing attached bulletins
-                        let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
-
-                        if (!ex.includes(bulletin.id)) {
-                            relation = {
-                                bulletin: bulletin,
-                                ...relationData,
-                            };
-                            this.editedItem.bulletin_relations.push(relation);
-                        }
-                    },
-
-                    removeBulletin: function (evt, index) {
-                        if (confirm(translations.confirm_)) {
-                            this.editedItem.bulletin_relations.splice(index, 1);
-                        }
-                    },
-
-
-                    // -------------------------------------------------
-
-
-                    // related actors functions ------------------------
-
+                    // related actors functions --------------------
                     searchRelatedActors() {
-                        this.$refs.relateActors.open();
-                        this.$nextTick(() => {
-                            this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-                            this.$refs.relateActors.reSearch();
-                        });
-
+                        this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
                     },
                     relateActor(actor, relationData = {}) {
-                        this.closeConfirmRelationDialog();
-                        // get list of existing attached actors
-                        let ex = this.editedItem.actor_relations.map(x => x.actor.id);
-
-                        if (!ex.includes(actor.id)) {
-                            relation = {
-                                actor: actor,
-                                ...relationData
-                            };
-                            this.editedItem.actor_relations.push(relation);
-                            this.relateActorResults.removeById(actor.id);
-                        }
+                        this.addItemToRelation({
+                            type: 'actor',
+                            relationList: this.editedItem.actor_relations,
+                            item: actor,
+                            relationData,
+                        })
+                    },
+                    removeActor(evt, index) {
+                        this.removeFromRelationList({ relationList: this.editedItem.actor_relations, index })
                     },
 
-                    removeActor: function (evt, index) {
-                        if (confirm(translations.confirm_)) {
-                            this.editedItem.actor_relations.splice(index, 1);
-                        }
+                    // related bulletins functions --------------------
+                    searchRelatedBulletins() {
+                        this.searchRelatedItems({ ref: this.$refs.relateBulletins, searchTerm: this.relateBulletinTerm })
                     },
-
+                    relateBulletin(bulletin, relationData = {}) {
+                        this.addItemToRelation({
+                            type: 'bulletin',
+                            relationList: this.editedItem.bulletin_relations,
+                            item: bulletin,
+                            relationData,
+                        })
+                    },
+                    removeBulletin(evt, index) {
+                        this.removeFromRelationList({ relationList: this.editedItem.bulletin_relations, index })
+                    },
 
                     // related incidents functions ------------------------
-
                     searchRelatedIncidents() {
-
-                        this.$refs.relateIncidents.open();
-                        this.$nextTick(() => {
-                            this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-                            this.$refs.relateIncidents.reSearch();
-                        });
-
+                        this.searchRelatedItems({ ref: this.$refs.relateIncidents, searchTerm: this.relateIncidentTerm })
                     },
                     relateIncident(incident, relationData = {}) {
-                        this.closeConfirmRelationDialog();
-                        // get list of existing attached actors
-                        let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-                        if (!ex.includes(incident.id)) {
-                            relation = {
-                                incident: incident,
-                                ...relationData
-                            };
-                            this.editedItem.incident_relations.push(relation);
-                            this.relateIncidentResults.removeById(incident.id);
-                        }
+                        this.addItemToRelation({
+                            type: 'incident',
+                            relationList: this.editedItem.incident_relations,
+                            item: incident,
+                            relationData,
+                        })
                     },
-
-                    removeIncident: function (evt, index) {
-                        if (confirm(translations.confirm_)) {
-                            this.editedItem.incident_relations.splice(index, 1);
-                        }
+                    removeIncident(evt, index) {
+                        this.removeFromRelationList({ relationList: this.editedItem.incident_relations, index })
                     },
 
                     clearAssignee() {
