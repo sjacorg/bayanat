@@ -6,6 +6,7 @@ from flask.templating import render_template
 from flask_security.decorators import auth_required, current_user, roles_required
 from enferno.admin.constants import Constants
 from enferno.admin.models import Activity
+from enferno.admin.models.Notification import Notification
 from enferno.export.models import Export
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
@@ -76,6 +77,7 @@ def export_bulletins() -> Response:
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
 
@@ -108,6 +110,7 @@ def export_actors() -> Response:
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
         return f"Export request created successfully, id:  {export_request.id} ", 200
@@ -139,6 +142,7 @@ def export_incidents() -> Response:
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
         return f"Export request created successfully, id:  {export_request.id} ", 200
@@ -242,6 +246,7 @@ def change_export_status() -> Response:
                 Constants.NotificationEvent.APPROVE_EXPORT,
                 "Export Request Approved",
                 f"Export request {export_request.id} has been approved by {current_user.username} successfully.",
+                category=Notification.TYPE_UPDATE,
                 is_urgent=True,
             )
 

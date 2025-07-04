@@ -35,6 +35,7 @@ from enferno.admin.models import (
     Location,
     Media,
 )
+from enferno.admin.models.Notification import Notification
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
@@ -242,6 +243,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         User.query.get(cur_user_id),
         "Bulk Operation Status",
         f"Bulk update of {len(ids)} bulletins has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
         is_urgent=True,
     )
 
@@ -363,6 +365,8 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         User.query.get(cur_user_id),
         "Bulk Operation Status",
         f"Bulk update of {len(ids)} actors has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
     )
 
 
@@ -510,6 +514,8 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         User.query.get(cur_user_id),
         "Bulk Operation Status",
         f"Bulk update of {len(ids)} incidents has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
     )
 
 
@@ -527,6 +533,7 @@ def etl_process_file(
             User.query.get(user_id),
             "Batch Status",
             f"Batch {batch_id} has been processed successfully.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
         return "done"
@@ -539,6 +546,7 @@ def etl_process_file(
             User.query.get(user_id),
             "Batch Status",
             f"Batch {batch_id} has failed to process.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
 
@@ -1333,6 +1341,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             User.query.get(user_id),
             "Web Import Status",
             f"Web import of {url} has been completed successfully.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
 
@@ -1347,6 +1356,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             User.query.get(user_id),
             "Web Import Status",
             f"Web import of {url} has failed.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
     except Exception as e:
@@ -1360,6 +1370,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             User.query.get(user_id),
             "Web Import Status",
             f"Web import of {url} has failed.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
 

@@ -2965,6 +2965,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return "Restricted Access", 403
@@ -2983,6 +2984,8 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3006,6 +3009,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 bulletin.first_peer_reviewer,
                 "Review Needed",
                 f"Bulletin {bulletin.id} needs to be reviewed by you.",
+                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
         return f"Saved Bulletin #{bulletin.id}", 200
@@ -3044,6 +3048,8 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3173,6 +3179,8 @@ def api_bulletin_get(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3958,6 +3966,8 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3975,6 +3985,8 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
         actor = actor.from_json(validated_data["item"])
@@ -4029,6 +4041,8 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -4145,6 +4159,8 @@ def api_actor_get(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -4178,6 +4194,8 @@ def api_actor_profiles(actor_id: t.id) -> Response:
             Constants.NotificationEvent.UNAUTHORIZED_ACTION,
             "Unauthorized Action",
             f"Unauthorized attempt to view restricted Actor profiles. User: {current_user.username}",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return HTTPResponse.FORBIDDEN
 
@@ -4638,6 +4656,7 @@ def api_user_create(
             Constants.NotificationEvent.NEW_USER,
             "New User Created",
             f"User {username} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_GENERAL,
             is_urgent=True,
         )
         return f"User {username} has been created successfully", 200
@@ -4715,6 +4734,7 @@ def api_user_update(
                 Constants.NotificationEvent.UPDATE_USER,
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
+                category=Notification.TYPE_UPDATE,
                 is_urgent=True,
             )
             return f"Saved User {user.id} {user.name}", 200
@@ -4783,6 +4803,8 @@ def api_user_force_reset(validated_data: dict) -> Response:
         user,
         "Password Reset",
         "Your password has been reset. Please change it to continue using the application.",
+        category=Notification.TYPE_SECURITY,
+        is_urgent=True,
     )
     return Response(message, mimetype="text/plain")
 
@@ -4806,6 +4828,8 @@ def api_user_force_reset_all() -> Response:
                 user,
                 "Password Reset",
                 "Your password has been reset. Please change it to continue using the application.",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
     return "Forced password reset has been set for all users", 200
 
@@ -4841,6 +4865,8 @@ def api_user_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "User Deleted",
             f"User {user.username} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
         )
         return "Deleted", 200
     else:
@@ -4916,6 +4942,7 @@ def api_role_create(
             Constants.NotificationEvent.NEW_GROUP,
             "New Group Created",
             f"Group {role.name} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
         return "Created", 200
@@ -5151,6 +5178,8 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5168,6 +5197,8 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5224,6 +5255,8 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5339,6 +5372,8 @@ def api_incident_get(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5780,6 +5815,7 @@ def api_config_write(
             Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
         return "Configuration Saved Successfully", 200
