@@ -261,6 +261,10 @@ def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expect
     actor = ActorFactory()
     actor_dict = actor.to_dict()
     actor_dict["actor_profiles"] = [{"mode": 1}]
+    actor_dict["id_number"] = [
+        {"type": str(id_number["type"]["id"]), "number": id_number["number"]}
+        for id_number in actor_dict["id_number"]
+    ]
     response = client_.post(
         "/admin/api/actor",
         headers={"content-type": "application/json"},
@@ -310,6 +314,10 @@ def test_put_actor_endpoint(
     actor_dict["last_name"] = new_last_name
     actor_dict["middle_name"] = new_middle_name
     actor_dict["actor_profiles"] = [{"mode": 1}]
+    actor_dict["id_number"] = [
+        {"type": str(id_number["type"]["id"]), "number": id_number["number"]}
+        for id_number in actor_dict["id_number"]
+    ]
     response = client_.put(
         f"/admin/api/actor/{actor_id}",
         headers={"content-type": "application/json"},
@@ -358,6 +366,10 @@ def test_put_actor_assigned_endpoint(
         actor_dict["first_name"] = new_first_name
         actor_dict["last_name"] = new_last_name
         actor_dict["middle_name"] = new_middle_name
+        actor_dict["id_number"] = [
+            {"type": str(id_number["type"]["id"]), "number": id_number["number"]}
+            for id_number in actor_dict["id_number"]
+        ]
         response = client_.put(
             f"/admin/api/actor/{actor_id}",
             headers={"content-type": "application/json"},

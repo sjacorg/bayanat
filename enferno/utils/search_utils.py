@@ -1,6 +1,6 @@
 import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func
+from sqlalchemy import or_, not_, and_, any_, all_, func, text, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -879,11 +879,40 @@ class SearchUtils:
         if type:
             query.append(Actor.type == type)
 
-        # National ID card
-        id_number = q.get("id_number", {})
-        if id_number:
-            search = "%{}%".format(id_number)
-            query.append(Actor.id_number.ilike(search))
+            # ID Number search - using JSONB containment operators for efficiency
+        id_number = q.get("id_number", None)
+        if id_number and isinstance(id_number, dict):
+            type_value = id_number.get("type", "").strip()
+            number_value = id_number.get("number", "").strip()
+
+            if type_value and number_value:
+                # Both provided - exact match for type and partial match for number
+                search = "%{}%".format(number_value)
+                query.append(
+                    func.exists(
+                        select(1)
+                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
+                        .where(
+                            and_(
+                                func.jsonb_extract_path_text(text("elem"), "type") == type_value,
+                                func.jsonb_extract_path_text(text("elem"), "number").ilike(search),
+                            )
+                        )
+                    )
+                )
+            elif type_value:
+                # Type only - use containment operator
+                query.append(Actor.id_number.op("@>")([{"type": type_value}]))
+            elif number_value:
+                # Number only - use LIKE with jsonb_array_elements
+                search = "%{}%".format(number_value)
+                query.append(
+                    func.exists(
+                        select(1)
+                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
+                        .where(func.jsonb_extract_path_text(text("elem"), "number").ilike(search))
+                    )
+                )
 
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")

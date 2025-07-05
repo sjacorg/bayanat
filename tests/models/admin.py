@@ -191,6 +191,14 @@ class ActorProfileModel(BaseModel):
     ver_labels: Optional[list[LabelModel]] = Field(default_factory=list)
 
 
+class IDNumberTypePopulatedModel(BaseModel):
+    id: int
+    title: str
+    title_tr: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
 class ActorItemMode3Model(BaseModel):
     class_: str = Field(alias="class")  # nolimit
     id: int
@@ -227,7 +235,7 @@ class ActorItemMode3Model(BaseModel):
     ethnographies: list[EthnographyModel] = Field(default_factory=list)
     nationalities: list[CountryModel] = Field(default_factory=list)
     dialects: Optional[list[DialectModel]] = Field(default_factory=list)
-    id_number: Optional[str] = Field(max_length=255, default=None)
+    id_number: list[dict[str, str | IDNumberTypePopulatedModel]] = Field(default_factory=list)
     assigned_to: Optional["UserCompactModel"] = None
     first_peer_reviewer: Optional["UserCompactModel"] = None
     source_link: Optional[str] = Field(default=None, max_length=255)
