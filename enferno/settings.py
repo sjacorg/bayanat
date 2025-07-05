@@ -232,6 +232,7 @@ class Config(object):
     if geo_map_default_center:
         GEO_MAP_DEFAULT_CENTER_LAT = geo_map_default_center.get("lat")
         GEO_MAP_DEFAULT_CENTER_LNG = geo_map_default_center.get("lng")
+        GEO_MAP_DEFAULT_CENTER_RADIUS = geo_map_default_center.get("radius", 1000)
 
     ITEMS_PER_PAGE_OPTIONS = manager.get_config("ITEMS_PER_PAGE_OPTIONS")
     VIDEO_RATES = manager.get_config("VIDEO_RATES")
