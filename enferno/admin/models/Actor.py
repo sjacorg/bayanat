@@ -393,12 +393,8 @@ class Actor(db.Model, BaseMixin):
         self.nickname_ar = json["nickname_ar"] if "nickname_ar" in json else None
 
         # Handle id_number array format
-        if "id_number" in json:
-            self.id_number = json.get("id_number", [])
-            # Mark the field as modified for SQLAlchemy to save changes
-            flag_modified(self, "id_number")
-        else:
-            self.id_number = []
+        self.id_number = json.get("id_number", [])
+        flag_modified(self, "id_number")
 
         if "origin_place" in json and json["origin_place"] and "id" in json["origin_place"]:
             self.origin_place_id = json["origin_place"]["id"]
@@ -781,6 +777,9 @@ class Actor(db.Model, BaseMixin):
             for relation in self.incident_relations:
                 incident_relations_dict.append(relation.to_dict())
 
+        # Get all ID types for id_number formatting
+        id_types = {t.id: t.to_dict() for t in IDNumberType.query.all()}
+
         actor = {
             "class": self.__tablename__,
             "id": self.id,
@@ -817,7 +816,16 @@ class Actor(db.Model, BaseMixin):
             ],
             "nationalities": [country.to_dict() for country in getattr(self, "nationalities", [])],
             "dialects": [dialect.to_dict() for dialect in getattr(self, "dialects", [])],
-            "id_number": self._get_formatted_id_numbers(),
+            "id_number": [
+                {
+                    "type": id_types.get(
+                        int(id_number["type"]),
+                        {"id": id_number["type"], "title": f"Unknown Type {id_number['type']}"},
+                    ),
+                    "number": id_number["number"],
+                }
+                for id_number in getattr(self, "id_number", [])
+            ],
             # assigned to
             "assigned_to": self.assigned_to.to_compact() if self.assigned_to else None,
             # first peer reviewer
@@ -1062,40 +1070,6 @@ class Actor(db.Model, BaseMixin):
                 grouped.setdefault(type_name, []).append(entry["number"])
 
         return grouped
-
-    def _get_formatted_id_numbers(self) -> list[dict[str, Any]]:
-        """
-        Get formatted ID numbers with type information.
-        Queries IDNumberType table once per call.
-        """
-        if not self.id_number:
-            return []
-
-        # Get all ID types in one query
-        id_types = {t.id: t.to_dict() for t in IDNumberType.query.all()}
-
-        formatted_numbers = []
-        for id_number in self.id_number:
-            if isinstance(id_number, dict) and "type" in id_number and "number" in id_number:
-                try:
-                    type_id = int(id_number["type"])
-                    id_type = id_types.get(
-                        type_id, {"id": type_id, "title": f"Unknown Type {type_id}"}
-                    )
-                    formatted_numbers.append({"type": id_type, "number": id_number["number"]})
-                except (ValueError, TypeError):
-                    # Handle invalid type_id
-                    formatted_numbers.append(
-                        {
-                            "type": {
-                                "id": id_number["type"],
-                                "title": f"Invalid Type {id_number['type']}",
-                            },
-                            "number": id_number["number"],
-                        }
-                    )
-
-        return formatted_numbers
 
 
 # DDL event to create the validation function for fresh installs
