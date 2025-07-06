@@ -113,7 +113,10 @@ def setup_db(app):
     yield _db
     from enferno.admin.models.IDNumberType import IDNumberType
 
-    _db.session.query(IDNumberType).delete()
+    try:
+        _db.session.query(IDNumberType).delete()
+    except Exception:
+        pass
     _db.session.remove()
     _db.drop_all()
 
@@ -132,20 +135,23 @@ def setup_db_uninitialized(uninitialized_app):
         with _db.engine.connect() as conn:
             conn.execute(text("CREATE EXTENSION if not exists pg_trgm;"))
             conn.execute(text("CREATE EXTENSION if not exists postgis;"))
-            conn.execute(text("INSERT INTO id_number_types (id, title) VALUES (1, 'National ID');"))
             _db.drop_all()
             _db.create_all()
             generate_user_roles()
             generate_workflow_statues()
             create_default_location_data()
+            conn.execute(text("INSERT INTO id_number_types (id, title) VALUES (1, 'National ID');"))
             conn.commit()
     except Exception as e:
         pass
     yield _db
-    try:
-        from enferno.admin.models.IDNumberType import IDNumberType
+    from enferno.admin.models.IDNumberType import IDNumberType
 
+    try:
         _db.session.query(IDNumberType).delete()
+    except Exception as e:
+        pass
+    try:
         _db.session.remove()
         _db.drop_all()
     except Exception as e:
