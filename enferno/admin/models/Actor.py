@@ -818,10 +818,7 @@ class Actor(db.Model, BaseMixin):
             "dialects": [dialect.to_dict() for dialect in getattr(self, "dialects", [])],
             "id_number": [
                 {
-                    "type": id_types.get(
-                        int(id_number["type"]),
-                        {"id": id_number["type"], "title": f"Unknown Type {id_number['type']}"},
-                    ),
+                    "type": id_types.get(int(id_number["type"])).get("title"),
                     "number": id_number["number"],
                 }
                 for id_number in getattr(self, "id_number", [])

@@ -886,33 +886,19 @@ class SearchUtils:
             number_value = id_number.get("number", "").strip()
 
             if type_value and number_value:
-                # Both provided - exact match for type and partial match for number
-                search = "%{}%".format(number_value)
+                # Both provided - use direct SQL with ILIKE for flexible matching
                 query.append(
-                    func.exists(
-                        select(1)
-                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
-                        .where(
-                            and_(
-                                func.jsonb_extract_path_text(text("elem"), "type") == type_value,
-                                func.jsonb_extract_path_text(text("elem"), "number").ilike(search),
-                            )
-                        )
-                    )
+                    text(
+                        "EXISTS (SELECT 1 FROM jsonb_array_elements(id_number) elem WHERE elem->>'type' ILIKE :type AND elem->>'number' ILIKE :number)"
+                    ).bindparams(type=f"%{type_value}%", number=f"%{number_value}%")
                 )
             elif type_value:
                 # Type only - use containment operator
                 query.append(Actor.id_number.op("@>")([{"type": type_value}]))
             elif number_value:
-                # Number only - use LIKE with jsonb_array_elements
-                search = "%{}%".format(number_value)
-                query.append(
-                    func.exists(
-                        select(1)
-                        .select_from(func.jsonb_array_elements(Actor.id_number).alias("elem"))
-                        .where(func.jsonb_extract_path_text(text("elem"), "number").ilike(search))
-                    )
-                )
+                # Number only - use jsonb_path_exists for ILIKE behavior
+                path = f'$[*] ? (@.number like_regex "{number_value}" flag "i")'
+                query.append(func.jsonb_path_exists(Actor.id_number, path))
 
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")
