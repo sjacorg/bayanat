@@ -110,12 +110,11 @@ class ActorFactory(factory.Factory):
     family_status = factory.Faker("text", max_nb_chars=255)
     no_children = factory.LazyFunction(lambda: str(random.randint(0, 10)))
 
-    @factory.lazy_attribute
-    def id_number(self):
-        from faker import Faker
-
-        fake = Faker()
-        return [{"type": "1", "number": fake.ssn()}]
+    id_number = factory.LazyFunction(
+        lambda: [
+            {"type": "1", "number": factory.Faker("ssn").evaluate(None, None, {"locale": None})}
+        ]
+    )
 
     status = factory.Faker("text", max_nb_chars=255)
     comments = factory.Faker("text", max_nb_chars=255)
