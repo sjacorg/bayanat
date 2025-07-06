@@ -166,6 +166,7 @@
                     
                                         <v-text-field v-bind="inputProps" class="mb-9" v-model="eitem.MEDIA_UPLOAD_MAX_FILE_SIZE"
                                             label="{{ _('Media Max Upload Size') }}" persistent-hint
+                                            suffix="{{ _('MB') }}"
                                             hint="{{ _('Sets the maximum allowed file size for media uploads.') }}"></v-text-field>
                                     </div>
                                 </v-card>
@@ -176,13 +177,13 @@
                             <div v-if="tab === 'security'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
                                     <v-row>
-                                        <v-col cols="12" lg="3">
+                                        <v-col cols="12" lg="4">
                                             <h4 class="subtitle-2 mb-1">{{ _('Password Policies') }}</h4>
                                             <v-text-field v-bind="inputProps" class="mb-9" type="number" label="{{ _('Password Minimum Length') }}"
                                                 persistent-hint hint="{{ _('Minimum required length for passwords') }}" suffix="charachters"
                                                 v-model.number="eitem.SECURITY_PASSWORD_LENGTH_MIN"></v-text-field>
                                         </v-col>
-                                        <v-col cols="12" lg="6">
+                                        <v-col cols="12" lg="8">
                                             <h4 class="subtitle-2 mb-1">{{ _('Password Strength') }}</h4>
                                             <v-slider v-model="eitem.SECURITY_ZXCVBN_MINIMUM_SCORE" min="2" max="4" :tick-size="4"
                                                 :thumb-size="14" :track-size="4" color="primary" show-ticks="always" :ticks="{
@@ -363,26 +364,12 @@
                                                 v-model="eitem.ACTIVITIES['REVIEW']">
                                             </v-switch>
                                         </v-col>
-                                    </v-row>
-                    
-                                    <v-divider class="my-6"></v-divider>
-                    
-                                    <h4 class="subtitle-2 mb-3">{{ _('Files') }}</h4>
-                                    <v-row>
                                         <v-col cols="12" lg="4">
-                                            <div class="text-body-2 mb-n1"><strong>{{ _('Files uploaded') }}</strong>{{ _(' by users.') }}
-                                            </div>
+                                            <div class="text-body-2 mb-n1"><strong>{{ _('Items self-assigned') }}</strong>{{ _(' by users.')
+                                                }}</div>
                                             <v-switch persistent-hint
-                                                hint="{{ _('This setting will enable logging all files uploaded users to media storage.') }}"
-                                                v-model="eitem.ACTIVITIES['UPLOAD']">
-                                            </v-switch>
-                                        </v-col>
-                                        <v-col cols="12" lg="4">
-                                            <div class="text-body-2 mb-n1"><strong>{{ _('Bulk operations queued') }}</strong>{{ _(' by
-                                                users.') }}</div>
-                                            <v-switch persistent-hint
-                                                hint="{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}"
-                                                v-model="eitem.ACTIVITIES['BULK']">
+                                                hint="{{ _('This setting will enable logging all items self-assigned by users.') }}"
+                                                v-model="eitem.ACTIVITIES['SELF-ASSIGN']">
                                             </v-switch>
                                         </v-col>
                                     </v-row>
@@ -401,7 +388,7 @@
                                         </v-col>
                                         <v-col cols="12" lg="4">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Export requests approved') }}</strong>{{ _(' by
-                                                users.') }}</div>
+                                                admins.') }}</div>
                                             <v-switch persistent-hint
                                                 hint="{{ _('This setting will enable logging all export requests approvals by administrators.') }}"
                                                 v-model="eitem.ACTIVITIES['APPROVE']">
@@ -409,7 +396,7 @@
                                         </v-col>
                                         <v-col cols="12" lg="4">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Export requests rejected') }}</strong>{{ _(' by
-                                                users.') }}</div>
+                                                admins.') }}</div>
                                             <v-switch persistent-hint
                                                 hint="{{ _('This setting will enable logging all export requests rejections by administrators.') }}"
                                                 v-model="eitem.ACTIVITIES['REJECT']">
@@ -427,7 +414,7 @@
                     
                                     <v-divider class="my-6"></v-divider>
                     
-                                    <h4 class="subtitle-2 mb-3">{{ _('Login/Logout') }}</h4>
+                                    <h4 class="subtitle-2 mb-3">{{ _('Authentication') }}</h4>
                                     <v-row>
                                         <v-col cols="12" lg="4">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Logins') }}</strong>{{ _(' by users.') }}</div>
@@ -443,16 +430,10 @@
                                                 v-model="eitem.ACTIVITIES['LOGOUT']">
                                             </v-switch>
                                         </v-col>
-                                        <v-col cols="12" lg="4">
-                                            <v-text-field v-bind="inputProps" class="mb-9" type="number" label="{{ _('Activity Retention Period') }}"
-                                                persistent-hint hint="{{ _('Period after which activities will be deleted.') }}"
-                                                suffix="days" v-model.number="eitem.ACTIVITIES_RETENTION"></v-text-field>
-                                        </v-col>
                                     </v-row>
                     
                                     <v-divider class="my-6"></v-divider>
                     
-                                    <h4 class="subtitle-2 mb-3">{{ _('Other') }}</h4>
                                     <v-row>
                                         <v-col cols="12" lg="4">
                                             <div class="text-body-2 mb-n1"><strong>{{ _('Search queries made') }}</strong>{{ _(' by users.')
@@ -462,15 +443,37 @@
                                                 v-model="eitem.ACTIVITIES['SEARCH']">
                                             </v-switch>
                                         </v-col>
+
                                         <v-col cols="12" lg="4">
-                                            <div class="text-body-2 mb-n1"><strong>{{ _('Items self-assigned') }}</strong>{{ _(' by users.')
-                                                }}</div>
+                                            <div class="text-body-2 mb-n1"><strong>{{ _('Files uploaded') }}</strong>{{ _(' by users.') }}
+                                            </div>
                                             <v-switch persistent-hint
-                                                hint="{{ _('This setting will enable logging all items self-assigned by users.') }}"
-                                                v-model="eitem.ACTIVITIES['SELF-ASSIGN']">
+                                                hint="{{ _('This setting will enable logging all files uploaded users to media storage.') }}"
+                                                v-model="eitem.ACTIVITIES['UPLOAD']">
+                                            </v-switch>
+                                        </v-col>
+                                        <v-col cols="12" lg="4">
+                                            <div class="text-body-2 mb-n1"><strong>{{ _('Bulk operations queued') }}</strong>{{ _(' by
+                                                users.') }}</div>
+                                            <v-switch persistent-hint
+                                                hint="{{ _('This setting will enable logging all bulk operations initiated by authorized users on Actors, Bulletins and Incidents.') }}"
+                                                v-model="eitem.ACTIVITIES['BULK']">
                                             </v-switch>
                                         </v-col>
                                     </v-row>
+
+                                    <v-divider class="my-6"></v-divider>
+
+                                    <h4 class="subtitle-2 mb-3">{{ _('Retention period') }}</h4>
+                                    <p class="text-caption text-muted mb-6">{{ _('Period after which all logged activities will be deleted.') }}</p>
+                                    <v-row>
+                                        <v-col cols="12" lg="4">
+                                            <v-text-field v-bind="inputProps" class="mb-9" type="number" label="{{ _('Activity Retention Period') }}"
+                                                persistent-hint
+                                                suffix="days" v-model.number="eitem.ACTIVITIES_RETENTION"></v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                    
                                 </v-card>
                             </div>
                     
@@ -478,7 +481,7 @@
                             <!-- Import tools tab -->
                             <div v-if="tab === 'import'">
                                 <v-card flat :disabled="loading" :loading="loading" class="px-6 py-8">
-                                    <h4 class="subtitle-2 mb-n1">{{ _('Media import tool') }}</h4>
+                                    <h4 class="subtitle-2 mb-n1">{{ _('Media Import tool') }}</h4>
                                     <v-switch persistent-hint
                                         hint="{{ _('Enables importing and parsing media items in bulk into Bulletins.') }}"
                                         v-model="eitem.ETL_TOOL"></v-switch>
@@ -487,9 +490,9 @@
                                         <v-sheet v-show="eitem.ETL_TOOL" class="mt-4">
                                             <v-row>
                                                 <v-col cols="12" lg="6">
-                                                    <h4 class="subtitle-2 mb-n1">{{ _('Media import path scanning') }}</h4>
+                                                    <h4 class="subtitle-2 mb-n1">{{ _('Media Import path scanning') }}</h4>
                                                     <v-switch persistent-hint
-                                                        hint="{{ _('Allow scanning of the import path for files in the Media Import Tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
+                                                        hint="{{ _('Allow scanning of the import path for files in the Media Import tool. The path needs to be set in the .env file for this setting to work. This is done for security purposes. WARNING: This is a DANGEROUS setting and should only be enabled on installation that can utilize this feature. It should be turned on only when it\'s needed.') }}"
                                                         v-model="eitem.ETL_PATH_IMPORT"></v-switch>
                     
                                                     <v-combobox v-bind="inputProps" class="mt-3" multiple chips persistent-hint
@@ -558,7 +561,7 @@
                     
                                     <v-divider class="my-8"></v-divider>
                     
-                                    <h4 class="subtitle-2 mb-n1">{{ _('Sheet import') }}</h4>
+                                    <h4 class="subtitle-2 mb-n1">{{ _('Sheet Import') }}</h4>
                                     <v-switch persistent-hint hint="{{ _('Enables dynamic import of spreadsheets into Actors.') }}"
                                         v-model="eitem.SHEET_IMPORT"></v-switch>
                     
@@ -580,27 +583,24 @@
                                     <v-slide-y-transition>
                                         <v-sheet v-show="eitem.WEB_IMPORT" class="mt-4">
                                             <v-row>
-                                                <v-col cols="12" lg="6">
-                                                    <v-text-field v-bind="inputProps" label="{{ _('Web Import Proxy') }}" persistent-hint
-                                                        hint="{{ _('Proxy URL to use when importing media from web sources (e.g. socks5://user:pass@host:port).') }}"
-                                                        v-model="eitem.YTDLP_PROXY"></v-text-field>
-                                                </v-col>
-                                                <v-col cols="12" lg="6">
-                                                    <v-textarea v-bind="inputProps" label="{{ _('Web Import Cookies') }}" persistent-hint
-                                                        hint="{{ _('Cookie data for authenticated web imports (in Netscape/Mozilla format).') }}"
-                                                        auto-grow rows="1" v-model="eitem.YTDLP_COOKIES"></v-textarea>
-                                                </v-col>
+                                                <v-text-field v-bind="inputProps" label="{{ _('Web Import Proxy') }}" persistent-hint
+                                                    hint="{{ _('Proxy URL to use when importing media from web sources (e.g. socks5://user:pass@host:port).') }}"
+                                                    v-model="eitem.YTDLP_PROXY"></v-text-field>
                                             </v-row>
-                    
-                                            <v-slide-y-transition>
-                                                <v-sheet>
-                                                    <v-combobox v-bind="inputProps" class="mt-3" multiple chips label="{{ _('Allowed Domains') }}"
-                                                        persistent-hint
-                                                        hint="{{ _('List of domains from which media can be imported. Check yt-dlp\'s repository (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list of supported websites.') }}"
-                                                        :items="eitem.YTDLP_ALLOWED_DOMAINS" v-model="eitem.YTDLP_ALLOWED_DOMAINS">
-                                                    </v-combobox>
-                                                </v-sheet>
-                                            </v-slide-y-transition>
+
+                                            <v-row>
+                                                <v-combobox v-bind="inputProps" class="mt-3" multiple chips label="{{ _('Allowed Domains') }}"
+                                                    persistent-hint
+                                                    hint="{{ _('List of domains from which media can be imported. Check yt-dlp\'s repository (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) for a list of supported websites.') }}"
+                                                    :items="eitem.YTDLP_ALLOWED_DOMAINS" v-model="eitem.YTDLP_ALLOWED_DOMAINS">
+                                                </v-combobox>
+                                            </v-row>
+
+                                            <v-row>
+                                                <v-textarea v-bind="inputProps" label="{{ _('Web Import Cookies') }}" persistent-hint
+                                                    hint="{{ _('Cookie data for authenticated web imports (in Netscape/Mozilla format).') }}"
+                                                    auto-grow rows="1" v-model="eitem.YTDLP_COOKIES"></v-textarea>
+                                            </v-row>
                     
                                         </v-sheet>
                                     </v-slide-y-transition>
@@ -688,12 +688,12 @@
                     <v-timeline density="compact" side="end" align="start">
                         <v-timeline-item v-for="(item, index) in revisionsState.items" :key="index" dot-color="primary" size="10">
                             <div class="mt-n1">
-                                <div><b>@${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Current configuration)') }}</b> <span class="text-muted">{{ _('at') }} ${getFormattedDate(item.created_at)}</span></div>
+                                <div><b>${item.user.username}</b> {{ _('updated the settings') }} <b v-if="index === 0">{{ _('(Current settings)') }}</b> <span class="text-muted">{{ _('at') }} ${getFormattedDate(item.created_at)}</span></div>
                                 <div v-if="index > 0 && !DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" class="font-italic">{{ _('No changes in this configuration') }}</div>
                                 <show-details v-else-if="DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" show-more-text="{{ _('Show detailed changes') }}" show-less-text="{{ _('Collapse') }}">
                                     <diff-renderer :diff="DiffTool.getAndRenderDiff(revisionsState?.items?.[index + 1]?.config, item?.config, configLabels)"></diff-renderer>
                                 </show-details>
-                                <v-btn v-if="index !== 0 && DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Reverse to this version') }}</v-btn>
+                                <v-btn v-if="index !== 0 && DiffTool.hasDiff(revisionsState?.items?.[index + 1]?.config, item?.config)" variant="outlined" class="outlined-btn mt-3" density="comfortable" @click.stop="revertVersion(item)">{{ _('Revert to this version') }}</v-btn>
                             </div>
                         </v-timeline-item>
                     </v-timeline>
@@ -876,7 +876,7 @@
                     control: { text: "{{ _('Access control') }}" },
                     logging: { text: "{{ _('Activity monitor') }}" },
                     import: { text: "{{ _('Import tools') }}" },
-                    export: { text: "{{ _('Export tools') }}" },
+                    export: { text: "{{ _('Export') }}" },
                     maps: { text: "{{ _('Maps') }}" },
                     locations: { text: "{{ _('Location') }}" }
                 },
