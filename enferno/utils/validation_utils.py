@@ -1,6 +1,7 @@
 import re
 from html import unescape
 from wtforms.validators import ValidationError
+from zxcvbn import zxcvbn
 
 
 def validate_plain_text_field(
@@ -39,3 +40,12 @@ def validate_plain_text_field(
     clean_name = " ".join(field_data.split())
     if len(clean_name) > max_length:
         raise ValidationError(f"{field_name} is too long (maximum {max_length} characters).")
+
+
+def validate_password_zxcvbn(password: str, minimum_score: int = 3) -> tuple[bool, int]:
+    """
+    Validates a password using zxcvbn.
+    """
+    result = zxcvbn(password)
+    score = result.get("score")
+    return score >= minimum_score, score

@@ -21,6 +21,8 @@ from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
 
+from enferno.utils.validation_utils import validate_password_zxcvbn
+
 logger = get_logger()
 
 
@@ -98,8 +100,19 @@ def install() -> None:
             click.echo("Username already exists.")
         else:
             break
-
-    p = click.prompt("Admin Password?", hide_input=True)
+    while True:
+        p = click.prompt("Admin Password?", hide_input=True)
+        if len(p) < 8:
+            click.echo("Password should be at least 8 characters long!")
+        elif Config.SECURITY_PASSWORD_COMPLEXITY_CHECKER.lower() != "zxcvbn":
+            break
+        valid, score = validate_password_zxcvbn(p, Config.SECURITY_ZXCVBN_MINIMUM_SCORE)
+        if not valid:
+            click.echo(
+                f"Password is too weak (score: {score} < {Config.SECURITY_ZXCVBN_MINIMUM_SCORE}). Please use a stronger password"
+            )
+        else:
+            break
     user = User(username=u, password=hash_password(p), active=1)
     user.name = "Admin"
     user.roles.append(admin_role)
@@ -140,6 +153,13 @@ def create(username: str, password: str) -> None:
         click.echo("Password should be at least 8 characters long!")
         logger.error("Password should be at least 8 characters long!")
         return
+    if Config.SECURITY_PASSWORD_COMPLEXITY_CHECKER.lower() == "zxcvbn":
+        valid, score = validate_password_zxcvbn(password, Config.SECURITY_ZXCVBN_MINIMUM_SCORE)
+        if not valid:
+            click.echo(
+                f"Password is too weak (score: {score} < {Config.SECURITY_ZXCVBN_MINIMUM_SCORE}). Please use a stronger password"
+            )
+            return
     user = User(username=username, password=hash_password(password), active=1)
     if user.save():
         click.echo("User created successfully")

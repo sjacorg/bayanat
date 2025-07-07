@@ -16,6 +16,7 @@ import re
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
+from enferno.utils.validation_utils import validate_password_zxcvbn
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
@@ -1381,6 +1382,21 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
+    @field_validator("password")
+    def validate_password(cls, v):
+        if not v:
+            return v
+        from enferno.settings import Config as cfg
+
+        if cfg.SECURITY_PASSWORD_COMPLEXITY_CHECKER.lower() != "zxcvbn":
+            return v
+        valid, score = validate_password_zxcvbn(v, cfg.SECURITY_ZXCVBN_MINIMUM_SCORE)
+        if not valid:
+            raise ValueError(
+                f"Password is too weak (score: {score} < {cfg.SECURITY_ZXCVBN_MINIMUM_SCORE}). Please use a stronger password."
+            )
+        return v
+
 
 class UserRequestModel(BaseValidationModel):
     item: UserValidationModel
@@ -1391,7 +1407,20 @@ class UserNameCheckValidationModel(BaseValidationModel):
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: str = Field(min_length=1)
+    password: str = Field(min_length=8)
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        from enferno.settings import Config as cfg
+
+        if cfg.SECURITY_PASSWORD_COMPLEXITY_CHECKER.lower() != "zxcvbn":
+            return v
+        valid, score = validate_password_zxcvbn(v, cfg.SECURITY_ZXCVBN_MINIMUM_SCORE)
+        if not valid:
+            raise ValueError(
+                f"Password is too weak (score: {score} < {cfg.SECURITY_ZXCVBN_MINIMUM_SCORE}). Please use a stronger password."
+            )
+        return v
 
 
 class UserForceResetRequestModel(BaseValidationModel):
