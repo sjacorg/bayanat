@@ -265,8 +265,18 @@
                     </v-overlay>
                     <relate-bulletins @relate="relateBulletin($event.item, $event.relation)" :exids="exBulletins"
                                       ref="relateBulletins" :dialog-props="rightDialogProps"></relate-bulletins>
-                    <relate-actors @relate="relateActor($event.item, $event.relation)" :exids="exActors"
-                                   ref="relateActors" :dialog-props="rightDialogProps" :show-create-actor-button="true"></relate-actors>
+                    <relate-actors
+                        @relate="relateActor($event.item, $event.relation)"
+                        :exids="exActors"
+                        ref="relateActors"
+                        :dialog-props="rightDialogProps"
+                    >
+                        <template #actions>
+                            <v-btn variant="outlined" @click="this.actorDialog = true">
+                                {{ _('Create Related Actor') }}
+                            </v-btn>            
+                        </template>
+                    </relate-actors>
                     <relate-incidents @relate="relateIncident($event.item, $event.relation)" :exids="exIncidents"
                                       ref="relateIncidents" :dialog-props="rightDialogProps"></relate-incidents>
 
@@ -388,6 +398,7 @@
     <script src="/static/js/components/RelateBulletins.js"></script>
     <script src="/static/js/components/RelateActors.js"></script>
     <script src="/static/js/components/RelateIncidents.js"></script>
+    <script src="/static/js/components/RelateItemsTemplate.js"></script>
 
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
@@ -1696,6 +1707,7 @@
         app.component('RelateBulletins', RelateBulletins);
         app.component('RelateActors', RelateActors);
         app.component('RelateIncidents', RelateIncidents);
+        app.component('RelateItemsTemplate', RelateItemsTemplate);
         app.component('BulletinResult', BulletinResult);
         app.component('BulletinSearchBox', BulletinSearchBox);
         app.component('ActorSearchBox', ActorSearchBox);
