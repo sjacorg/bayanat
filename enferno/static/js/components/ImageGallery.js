@@ -78,14 +78,8 @@ const ImageGallery = Vue.defineComponent({
             @audio-click="handleAudio"
             :media="media"
           >
-            <template v-slot:top-actions="{ media, mediaType }">
-              <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
-            </template>
-            <template v-slot:actions v-if="enableDelete">
-              <v-divider></v-divider>
-              <v-card-actions class="justify-end d-flex py-0" style="min-height: 45px;">
-                  <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
-              </v-card-actions>
+            <template #actions v-if="enableDelete">
+              <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
             </template>
           </media-card>
         </v-sheet>

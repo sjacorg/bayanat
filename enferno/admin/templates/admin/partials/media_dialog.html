@@ -32,11 +32,7 @@
                             @video-click="viewMediaPlayerDialog($event); closeExpandedMedia() "
                             @audio-click="viewMediaPlayerDialog($event); closeExpandedMedia()"
                             @remove-media="removeMedia"
-            >
-                <template #top-actions="{ media, mediaType }">
-                    <v-btn size="small" variant="text" :icon="expandedMedia?.s3url === media?.s3url ? 'mdi-arrow-collapse' : 'mdi-arrow-expand'" @click="handleExpandedMedia(media, mediaType)"></v-btn> 
-                </template>
-            </image-gallery>
+            ></image-gallery>
     </template>
     <v-card class="flex-grow-1">
         <v-toolbar color="dark-primary">

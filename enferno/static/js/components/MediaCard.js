@@ -157,10 +157,6 @@ const MediaCard = Vue.defineComponent({
               <span>{{ translations.category_ }}</span>
             </v-tooltip>
           </div>
-          <div class="d-flex align-center">
-            <v-btn size="small" variant="text" icon="mdi-magnify-expand" @click="handleMediaClick"></v-btn> 
-            <slot name="top-actions" :media="media" :mediaType="mediaType"></slot>
-          </div>
         </div>
 
       </v-toolbar>
@@ -227,60 +223,65 @@ const MediaCard = Vue.defineComponent({
         </v-hover>
       </v-card-text>
 
-      <v-card-text class="px-2 py-1">
-        
-        <div class=" cursor-pointer" @click="copyToClipboard(media.filename)">
-          <v-list-item class="text-caption ml-1 py-0">
-            <template v-slot:prepend>
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" icon="mdi-file-outline"></v-icon>
+      <v-hover v-slot="{ isHovering, props }">
+        <div v-bind="{ onMouseleave: props.onMouseleave }">
+          <v-card-text v-if="isHovering" class="px-2 py-1">
+            <div class=" cursor-pointer" @click="copyToClipboard(media.filename)">
+              <v-list-item class="text-caption ml-1 py-0">
+                <template v-slot:prepend>
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                      <v-icon v-bind="props" icon="mdi-file-outline"></v-icon>
+                    </template>
+                    <div class="d-flex flex-column align-center">
+                      <span><strong>{{ translations.filename_ }}</strong></span>
+                      <span>{{ translations.click_to_copy_ }}</span>
+                    </div>
+                  </v-tooltip>
                 </template>
-                <div class="d-flex flex-column align-center">
-                  <span><strong>{{ translations.filename_ }}</strong></span>
-                  <span>{{ translations.click_to_copy_ }}</span>
-                </div>
-              </v-tooltip>
-            </template>
-            <v-tooltip location="bottom">
-              <template v-slot:activator="{ props }">
-                <div v-bind="props" class="text-truncate">
-                  {{ media.filename }}
-                </div>
-              </template>
-                {{ media.filename }}
-            </v-tooltip>
-          </v-list-item>
-        </div>
-        <div class="d-flex align-center  cursor-pointer" @click="copyToClipboard(media.etag)">
-          <v-list-item class="text-caption ml-1 py-0 text-truncate">
-            <template v-slot:prepend>
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" icon="mdi-fingerprint"></v-icon>
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <div v-bind="props" class="text-truncate">
+                      {{ media.filename }}
+                    </div>
                   </template>
-                <div class="d-flex flex-column align-center">
-                  <span><strong>{{ translations.etag_ }}</strong></span>
-                  <span>{{ translations.click_to_copy_ }}</span>
-                </div>
-              </v-tooltip>
-            </template>
-            <v-tooltip location="bottom">
-              <template v-slot:activator="{ props }">
-                <div v-bind="props" class="text-truncate">
-                  {{ media.etag }}
-                </div>
-              </template>
-                {{ media.etag }}
-            </v-tooltip>
-          </v-list-item>
+                    {{ media.filename }}
+                </v-tooltip>
+              </v-list-item>
+            </div>
+            <div class="d-flex align-center  cursor-pointer" @click="copyToClipboard(media.etag)">
+              <v-list-item class="text-caption ml-1 py-0 text-truncate">
+                <template v-slot:prepend>
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                      <v-icon v-bind="props" icon="mdi-fingerprint"></v-icon>
+                      </template>
+                    <div class="d-flex flex-column align-center">
+                      <span><strong>{{ translations.etag_ }}</strong></span>
+                      <span>{{ translations.click_to_copy_ }}</span>
+                    </div>
+                  </v-tooltip>
+                </template>
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <div v-bind="props" class="text-truncate">
+                      {{ media.etag }}
+                    </div>
+                  </template>
+                    {{ media.etag }}
+                </v-tooltip>
+              </v-list-item>
+            </div>
+          </v-card-text>
+          
+          <v-divider></v-divider>
+          <v-card-actions class="justify-end d-flex py-0" style="min-height: 45px;">
+            <v-btn v-bind="{ onMouseenter: props.onMouseenter }" size="small" variant="text" icon="mdi-information" color="blue"></v-btn>
+            <v-spacer></v-spacer>
+            <slot name="actions"></slot>
+          </v-card-actions>
         </div>
-      </v-card-text>
-      
-        
-        <slot name="actions">
-        </slot>
-
+      </v-hover>
     </v-card>
   `
 });
