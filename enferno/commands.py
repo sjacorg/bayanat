@@ -21,7 +21,7 @@ from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
 
-from enferno.utils.validation_utils import validate_password_zxcvbn
+from enferno.utils.validation_utils import validate_password_policy
 
 logger = get_logger()
 
@@ -102,17 +102,11 @@ def install() -> None:
             break
     while True:
         p = click.prompt("Admin Password?", hide_input=True)
-        if len(p) < 8:
-            click.echo("Password should be at least 8 characters long!")
-        elif Config.SECURITY_PASSWORD_COMPLEXITY_CHECKER.lower() != "zxcvbn":
+        try:
+            p = validate_password_policy(p)
             break
-        valid, score = validate_password_zxcvbn(p, Config.SECURITY_ZXCVBN_MINIMUM_SCORE)
-        if not valid:
-            click.echo(
-                f"Password is too weak (score: {score} < {Config.SECURITY_ZXCVBN_MINIMUM_SCORE}). Please use a stronger password"
-            )
-        else:
-            break
+        except ValueError as e:
+            click.echo(str(e))
     user = User(username=u, password=hash_password(p), active=1)
     user.name = "Admin"
     user.roles.append(admin_role)

@@ -1,14 +1,20 @@
-from flask_security.forms import RegisterForm, LoginForm
+from flask_security.forms import RegisterForm, LoginForm, ChangePasswordForm
 from flask_security.webauthn import WebAuthnRegisterForm
 from wtforms import StringField
 from wtforms.validators import ValidationError
 
 from flask_wtf import RecaptchaField
-from enferno.utils.validation_utils import validate_plain_text_field
+from enferno.utils.validation_utils import validate_password_policy, validate_plain_text_field
 
 
 class ExtendedRegisterForm(RegisterForm):
     name = StringField("Full Name")
+
+    def validate_password(self, field):
+        try:
+            validate_password_policy(field.data)
+        except ValueError as e:
+            raise ValidationError(str(e))
 
 
 class ExtendedLoginForm(LoginForm):
@@ -26,3 +32,11 @@ class SanitizedWebAuthnRegisterForm(WebAuthnRegisterForm):
 
 class UserInfoForm:
     pass
+
+
+class ExtendedChangePasswordForm(ChangePasswordForm):
+    def validate_password(self, field):
+        try:
+            validate_password_policy(field.data)
+        except ValueError as e:
+            raise ValidationError(str(e))
