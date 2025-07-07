@@ -46,7 +46,9 @@ const RelateItemsTemplate = Vue.defineComponent({
             <split-view :left-slot-visible="showSearch" :left-width-percent="50">
               <template #left>
                 <!-- Left Column: Search -->
-                <slot name="search-box"></slot>
+                <div class="py-4">
+                  <slot name="search-box"></slot>
+                </div>
               </template>
               <template #right>
                 <!-- Right Column -->
@@ -54,7 +56,7 @@ const RelateItemsTemplate = Vue.defineComponent({
                   <v-card-text v-if="loading && !results.length" class="d-flex justify-center align-center pa-5">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                   </v-card-text>
-                <slot name="results-list"></slot>
+                  <slot name="results-list"></slot>
   
                   <!-- Load More / No Results -->
                   <v-card-actions class="px-4 pb-4">

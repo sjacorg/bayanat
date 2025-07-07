@@ -57,9 +57,8 @@ const ActorSearchBox = Vue.defineComponent({
     },
   },
 
-  template: `
-      <v-card outlined class="pa-6">
-
+  template: /*html*/`
+      <div>
         <v-container class="container--fluid">
           <v-row v-if="showOp">
             <v-col>
@@ -651,7 +650,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
         </v-container>
-      </v-card>
+      </div>
 
     `,
 

@@ -68,9 +68,8 @@ const BulletinSearchBox = Vue.defineComponent({
 
   methods: {},
 
-  template: `
-    <v-card>
-      <v-card-text>
+  template: /*html*/`
+      <div>
         <v-container fluid>
           <v-row v-if="showOp">
             <v-col>
@@ -482,9 +481,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-sheet>
 
         </v-container>
-      </v-card-text>
-
-    </v-card>
+      </div>
 
 
 
