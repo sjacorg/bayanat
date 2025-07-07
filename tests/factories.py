@@ -112,7 +112,7 @@ class ActorFactory(factory.Factory):
 
     id_number = factory.LazyFunction(
         lambda: [
-            {"type": "1", "number": factory.Faker("ssn").evaluate(None, None, {"locale": None})}
+            {"type": "1", "number": fake.ssn()}
         ]
     )
 
