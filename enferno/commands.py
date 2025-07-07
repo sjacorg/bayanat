@@ -143,17 +143,11 @@ def create(username: str, password: str) -> None:
         click.echo("User already exists!")
         logger.error("User already exists!")
         return
-    if len(password) < 8:
-        click.echo("Password should be at least 8 characters long!")
-        logger.error("Password should be at least 8 characters long!")
+    try:
+        password = validate_password_policy(password)
+    except ValueError as e:
+        click.echo(str(e))
         return
-    if Config.SECURITY_PASSWORD_COMPLEXITY_CHECKER.lower() == "zxcvbn":
-        valid, score = validate_password_zxcvbn(password, Config.SECURITY_ZXCVBN_MINIMUM_SCORE)
-        if not valid:
-            click.echo(
-                f"Password is too weak (score: {score} < {Config.SECURITY_ZXCVBN_MINIMUM_SCORE}). Please use a stronger password"
-            )
-            return
     user = User(username=username, password=hash_password(password), active=1)
     if user.save():
         click.echo("User created successfully")
