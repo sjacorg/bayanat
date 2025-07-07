@@ -2,13 +2,6 @@ let mediaMixin = {
   mixins: [reauthMixin],
   data: function () {
     return {
-      iconMap: {
-        image: 'mdi-image',
-        video: 'mdi-video',
-        pdf: 'mdi-file-pdf-box',
-        audio: 'mdi-music-box',
-        unknown: 'mdi-file-download'
-      },
       mediaDialog: false,
       media: null,
       medias: [],
@@ -326,7 +319,7 @@ let mediaMixin = {
         videoElement.poster = '/static/img/waveform.png';
       }
 
-      const playerContainer = this.$refs.playerContainer; // Ensure you have a ref="playerContainer" on the container element
+      const playerContainer = this.$refs.inlineMediaRendererRef.$refs.playerContainer || this.$refs.playerContainer; // Ensure you have a ref="playerContainer" on the container element
       playerContainer.prepend(videoElement);
 
       this.mediaPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
