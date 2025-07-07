@@ -889,8 +889,8 @@ class SearchUtils:
                 # Both provided - use direct SQL with ILIKE for flexible matching
                 query.append(
                     text(
-                        "EXISTS (SELECT 1 FROM jsonb_array_elements(id_number) elem WHERE elem->>'type' ILIKE :type AND elem->>'number' ILIKE :number)"
-                    ).bindparams(type=f"%{type_value}%", number=f"%{number_value}%")
+                        "EXISTS (SELECT 1 FROM jsonb_array_elements(id_number) elem WHERE elem->>'type' = :type AND elem->>'number' ILIKE :number)"
+                    ).bindparams(type=type_value, number=f"%{number_value}%")
                 )
             elif type_value:
                 # Type only - use containment operator
