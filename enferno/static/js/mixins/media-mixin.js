@@ -2,6 +2,13 @@ let mediaMixin = {
   mixins: [reauthMixin],
   data: function () {
     return {
+      iconMap: {
+        image: 'mdi-image',
+        video: 'mdi-video',
+        pdf: 'mdi-file-pdf-box',
+        audio: 'mdi-music-box',
+        unknown: 'mdi-file-download'
+      },
       mediaDialog: false,
       media: null,
       medias: [],
