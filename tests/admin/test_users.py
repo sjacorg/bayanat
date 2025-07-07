@@ -235,7 +235,7 @@ post_password_endpoint_roles = [
 def test_post_password_endpoint(request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     WEAK_PASSWORD = "1234567890"
-    SHORT_PASSWORD = "123456"
+    SHORT_PASSWORD = "12345"
     STRONG_PASSWORD = "On3Tw0Thr33!"
     if expected_status == 200:
         response = client_.post(
