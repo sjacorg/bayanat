@@ -107,7 +107,7 @@ from enferno.admin.validation.models import (
     UserRequestModel,
     WebImportValidationModel,
 )
-from enferno.admin.validation.util import validate_with
+from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
 from enferno.tasks import (
     bulk_update_bulletins,
@@ -3608,7 +3608,7 @@ def serve_media(
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
 
-        s3_config = BotoConfig(signature_version='s3v4')
+        s3_config = BotoConfig(signature_version="s3v4")
 
         s3 = boto3.client(
             "s3",
