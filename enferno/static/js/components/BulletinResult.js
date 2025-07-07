@@ -50,7 +50,7 @@ const BulletinResult = Vue.defineComponent({
         
         <v-card-actions class="justify-end">
           <slot name="actions"></slot>
-          <v-tooltip v-if="showHide" location="bottom">
+          <v-tooltip location="bottom">
             <template v-slot:activator="{ props }">
               <v-btn
                 v-bind="props"
@@ -63,7 +63,7 @@ const BulletinResult = Vue.defineComponent({
             </template>
             {{ translations.preview_ }}
           </v-tooltip>
-          <v-tooltip location="bottom">
+          <v-tooltip v-if="showHide" location="bottom">
             <template v-slot:activator="{ props }">
               <v-btn
                 v-bind="props"
