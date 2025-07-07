@@ -30,7 +30,7 @@
                         name="username"
                         prepend-icon="mdi-account"
                         type="text"
-                        :rules="[rules.required]"
+                        :rules="[validationRules.required()]"
                         variant="underlined"
 
 
@@ -48,7 +48,7 @@
                         prepend-icon="mdi-lock-question"
                         type="password"
                         @keyup.enter="submit()"
-                        :rules="[rules.required, rules.min]"
+                        :rules="[validationRules.required(), validationRules.minLength(6)]"
 
                 ></v-text-field>
 
@@ -127,8 +127,7 @@
                     snackMessage: '',
                     email: "",
                     password: "",
-                    rules: validationRules
-
+                    validationRules: validationRules
                 };
             },
             methods: {

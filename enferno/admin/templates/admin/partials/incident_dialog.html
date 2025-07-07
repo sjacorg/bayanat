@@ -37,7 +37,10 @@
                                         v-model:original="editedItem.title"
                                         v-model:translation="editedItem.title_ar"
                                         label-original="{{ _('Title') }}"
-                                        :rules="titleRule"
+                                        :rules="[
+                                            validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
+                                            validationRules.maxLength(255),
+                                        ]"
                                 ></dual-field>
                             </v-col>
 
@@ -224,7 +227,7 @@
 
                                 <v-textarea
                                         v-model="editedItem.comments"
-                                        :rules="[rules.required]"
+                                        :rules="[validationRules.required()]"
                                         label="{{ _('Comments') }}"
                                 >
                                 </v-textarea>
@@ -257,7 +260,9 @@
                                                 multiple
                                                 v-model="editedItem.roles"
                                                 label="{{ _('Restrict Incident to Access Group(s)') }}"
-                                                :rules="accessRule"
+                                                :rules="
+                                                    !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
+                                                "
                                                 clearable
                                         ></v-select>
                                         <v-checkbox

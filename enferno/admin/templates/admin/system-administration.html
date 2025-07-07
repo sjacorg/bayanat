@@ -439,10 +439,22 @@
                                                               persistent-hint
                                                               hint="{{ _('Bayanat\'s Media Import tool can utilize Google\'s Tesseract OCR engine. This enables parsing and extracting text from images and scanned PDF files (requires Tesseract system package).') }}"
                                                               label="{{ _('Enable OCR') }}"
-                                                              v-model="eitem.OCR_ENABLED"></v-switch>
+                                                              {% if not config.HAS_TESSERACT %}
+                                                              disabled
+                                                              :value="false"
+                                                              {% else %}
+                                                              v-model="eitem.OCR_ENABLED"
+                                                              {% endif %}
+                                                              ></v-switch>
+
+                                                                                        {% if not config.HAS_TESSERACT %}
+                                    <v-alert type="warning" class="mb-6" icon="mdi-alert">
+                                        {{ _('Tesseract is not installed. Please install it to enable OCR.') }}
+                                    </v-alert>
+                                    {% endif %}
                                                     
                                                     <v-slide-y-transition>
-                                                        <v-sheet v-show="eitem.OCR_ENABLED"
+                                                        <v-sheet v-show="eitem.OCR_ENABLED && {% if config.HAS_TESSERACT %}true{% else %}false{% endif %}"
                                                                     class=" pa-4 grey lighten-4">
 
                                                             <v-combobox class="mb-9" multiple chips
@@ -459,10 +471,22 @@
                                                               label="{{ _('Enable Transcription') }}"
                                                               persistent-hint
                                                               hint="{{ _('Enables transcription of audio and video files using OpenAI\'s Whisper during import. Bayanat will need to download the specified model below from OpenAI\'s servers. However, the transcription will run locally on the Bayanat server. For more information about the models\' performance, required resources and available language please check:') }} https://github.com/openai/whisper#available-models-and-languages"
-                                                              v-model="eitem.TRANSCRIPTION_ENABLED"></v-switch>
+                                                              {% if not config.HAS_WHISPER %}
+                                                              disabled
+                                                              :value="false"
+                                                              {% else %}
+                                                              v-model="eitem.TRANSCRIPTION_ENABLED"
+                                                              {% endif %}
+                                                              ></v-switch>
+
+                                                                                        {% if not config.HAS_WHISPER %}
+                                    <v-alert type="warning" class="mb-6" icon="mdi-alert">
+                                        {{ _('OpenAI Whisper is not installed. Please install it to enable transcription.') }}
+                                    </v-alert>
+                                    {% endif %}
 
                                                     <v-slide-y-transition>
-                                                        <v-sheet v-show="eitem.TRANSCRIPTION_ENABLED"
+                                                        <v-sheet v-show="eitem.TRANSCRIPTION_ENABLED && {% if config.HAS_WHISPER %}true{% else %}false{% endif %}"
                                                                  class=" pa-4 grey lighten-4">
                                                             <v-combobox class="mb-9" chips
                                                                         persistent-hint

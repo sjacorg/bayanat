@@ -993,6 +993,9 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
 
     export_request = Export.query.get(previous_result)
 
+    if not export_request:
+        return False
+
     # check if we need to export media files
     if not export_request.include_media:
         return export_request.id
@@ -1016,7 +1019,15 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
 
             if cfg.FILESYSTEM_LOCAL:
                 # copy file (including metadata)
-                shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
+                try:
+                    shutil.copy2(f"{media.media_dir}/{media.media_file}", target_file)
+                except Exception as e:
+                    logger.error(
+                        f"Error copying Export #{export_request.id} file from {media.media_dir}/{media.media_file} to {target_file}: {str(e)}",
+                        exc_info=True,
+                    )
+                    clear_failed_export(export_request)
+                    return False  # to stop chain
             else:
                 s3 = boto3.client(
                     "s3",
@@ -1031,6 +1042,8 @@ def generate_export_media(previous_result: int) -> Optional[t.id]:
                         f"Error downloading Export #{export_request.id} file from S3.",
                         exc_info=True,
                     )
+                    clear_failed_export(export_request)
+                    return False  # to stop chain
 
         time.sleep(0.05)
     return export_request.id
@@ -1289,6 +1302,9 @@ def regenerate_locations() -> None:
 
 @celery.task
 def load_whisper_model():
+    if not _flask_app.config["HAS_WHISPER"]:
+        logger.warning("Whisper not available, skipping model load.")
+        return
     try:
         # check if whisper is already downloaded
         whisper_model = cfg.WHISPER_MODEL
@@ -1378,7 +1394,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
 def _get_ytdl_options(with_cookies: bool = False) -> dict:
     """Get yt-dlp options."""
     options = {
-        "format": "mp4[height<=1080]/best[ext=mp4]/best",
+        # removed format to allow yt-dlp to choose the best format
         "outtmpl": str(Media.media_dir / "%(id)s.%(ext)s"),
         "merge_output_format": "mp4",
         "noplaylist": True,
@@ -1401,6 +1417,7 @@ def _download_media(url: str) -> tuple[dict, Path]:
         with yt_dlp.YoutubeDL(_get_ytdl_options()) as ydl:
             info = ydl.extract_info(url, download=True)
             temp_file = Path(ydl.prepare_filename(info))
+            info["requested_downloads"][0].pop("__postprocessors")
             return info, temp_file
 
     except DownloadError as e:

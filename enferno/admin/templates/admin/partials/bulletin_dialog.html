@@ -71,7 +71,10 @@
                                             v-model:translation="editedItem.title_ar"
                                             label-original="{{ _('Original Title') }}"
                                             label-translation="{{ _('Original Title (Ar)') }}"
-                                            :rules="titleRule">
+                                            :rules="[
+                                                validationRules.atLeastOneRequired(editedItem.title, '{{ _('Original Title is required.') }}'),
+                                                validationRules.maxLength(255),
+                                            ]">
                                 </dual-field>
                             </v-col>
 
@@ -79,8 +82,11 @@
                                 <dual-field v-model:original="editedItem.sjac_title"
                                             v-model:translation="editedItem.sjac_title_ar"
                                             label-original="{{ _('Title') }}"
-                                            label-translation="{{ _('Title (Ar)') }}">
-                                </dual-field>
+                                            label-translation="{{ _('Title (Ar)') }}"
+                                            :rules="[
+                                                validationRules.maxLength(255),
+                                            ]"
+                                ></dual-field>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <v-combobox
@@ -214,7 +220,10 @@
                                                   :disabled="source_disabled"
                                                   v-model="editedItem.source_link"
                                                   label="{{ _('Source Link') }}"
-                                                  :rules="linkRule"
+                                                  :rules="[
+                                                    validationRules.required('{{ _('Source link is required unless unavailable.')}}'),
+                                                    validationRules.maxLength(255)
+                                                  ]"
                                     ></v-text-field>
 
 
@@ -253,7 +262,7 @@
 
                                 <v-textarea
                                         required
-                                        :rules="[rules.required]"
+                                        :rules="[validationRules.required()]"
                                         outlined
                                         v-model="editedItem.comments"
                                         label="{{ _('Comments') }}"
@@ -288,7 +297,9 @@
                                             multiple
                                             v-model="editedItem.roles"
                                             label="{{ _('Restrict Bulletin to Access Group(s)') }}"
-                                            :rules="accessRule"
+                                            :rules="
+                                                !unrestricted ? [validationRules.required('{{ _('Access Group(s) are required unless unresticted.')}}')] : []
+                                            "
                                             clearable
                                     ></v-select>
                                     <v-checkbox

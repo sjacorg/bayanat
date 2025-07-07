@@ -13,7 +13,6 @@ from typing import Optional, Any
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
-import os
 
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
@@ -1313,6 +1312,12 @@ class ActorQueryModel(QueryBaseModel):
     last_name: Optional[str] = None
     father_name: Optional[str] = None
     mother_name: Optional[str] = None
+    tags: Optional[list[str]] = Field(default_factory=list)
+    inExact: Optional[bool] = False
+    opTags: Optional[bool] = False
+    exTags: Optional[list[str]] = Field(default_factory=list)
+    exExact: Optional[bool] = False
+    opExTags: Optional[bool] = False
     opEthno: Optional[bool] = None
     ethnography: list[PartialEthnographyModel] = Field(default_factory=list)
     opNat: Optional[bool] = None
@@ -1336,6 +1341,18 @@ class ActorQueryModel(QueryBaseModel):
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
+
+    @field_validator("tags")
+    def validate_tags(cls, v):
+        """
+        Validates the tags field.
+
+        Returns:
+            list<str>: The validated tags value.
+        """
+        if isinstance(v, str):
+            v = [v]
+        return v
 
 
 class ActorQueryRequestModel(BaseValidationModel):

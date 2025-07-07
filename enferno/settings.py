@@ -8,6 +8,7 @@ from dotenv import load_dotenv, find_dotenv
 
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.notification_settings import NotificationSettings
+from enferno.utils.dep_utils import dep_utils
 
 load_dotenv(find_dotenv())
 manager = ConfigManager()
@@ -249,6 +250,8 @@ class Config(object):
         "secure": os.environ.get("SECURE_COOKIES", "True") == "True",
     }
     # logging
+    APP_LOG_ENABLED = os.environ.get("APP_LOG_ENABLED", "True").lower() == "true"
+    CELERY_LOG_ENABLED = os.environ.get("CELERY_LOG_ENABLED", "True").lower() == "true"
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
     LOG_DIR = os.environ.get("LOG_DIR", "logs")
     LOG_FILE = os.environ.get("LOG_FILE", "bayanat.log")
@@ -291,6 +294,9 @@ class Config(object):
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
 
     NOTIFICATIONS = NotificationSettings.get_config()
+    # Dependency Flags
+    HAS_WHISPER = dep_utils.has_whisper
+    HAS_TESSERACT = dep_utils.has_tesseract
 
 
 class TestConfig(Config):

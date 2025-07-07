@@ -37,7 +37,10 @@
                                         v-model:translation="editedItem.title_ar"
                                         label-original="{{ _('Title') }}"
                                         label-translation="{{ _('Title (Ar)') }}"
-                                        :rules="titleRule">
+                                        :rules="[
+                                            validationRules.required('{{_('Title or Title (Ar) is required')}}'),
+                                            validationRules.maxLength(255),
+                                        ]">
                             </dual-field>
                         </v-col>
 
@@ -58,8 +61,7 @@
                                     api="/admin/api/location-types/"
                                     item-title="title"
                                     item-value="id"
-                                    @input="checkLevel"
-                                    :rules="[rules.required]"
+                                    :rules="[validationRules.required()]"
                                     :multiple="false"
                                     label="{{ _('Location Type') }}">
                                 </search-field>
@@ -77,7 +79,7 @@
                                     v-model="editedItem.admin_level"
                                     @update:model-value="restrictSearch"
                                     :multiple="false"
-                                    :rules="adminLevelRule"
+                                    :rules="editedItem.location_type?.title === 'Administrative Location' ? [validationRules.required()] : []"
                                     label="{{ _('Admin Level') }}">
                                 </search-field>
 
