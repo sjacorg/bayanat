@@ -245,7 +245,9 @@ def test_post_password_endpoint(request, client_fixture, expected_status):
         )
         assert response.status_code == 400
         assert "password" in response.json["errors"]
-        assert "should have at least 8 characters" in response.json["errors"]["password"]
+        assert (
+            "Password should be at least 8 characters long!" in response.json["errors"]["password"]
+        )
         response = client_.post(
             "/admin/api/password/",
             headers={"Content-Type": "application/json"},
