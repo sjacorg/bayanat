@@ -11,6 +11,9 @@ from geoalchemy2.shape import WKTElement
 import datetime
 from datetime import datetime as dt
 import pytest
+from faker import Faker
+
+fake = Faker()
 
 from enferno.admin.models import (
     Activity,
@@ -110,11 +113,7 @@ class ActorFactory(factory.Factory):
     family_status = factory.Faker("text", max_nb_chars=255)
     no_children = factory.LazyFunction(lambda: str(random.randint(0, 10)))
 
-    id_number = factory.LazyFunction(
-        lambda: [
-            {"type": "1", "number": fake.ssn()}
-        ]
-    )
+    id_number = factory.LazyFunction(lambda: [{"type": "1", "number": fake.ssn()}])
 
     status = factory.Faker("text", max_nb_chars=255)
     comments = factory.Faker("text", max_nb_chars=255)
