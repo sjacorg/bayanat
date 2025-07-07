@@ -1388,6 +1388,9 @@ class UserValidationModel(StrictValidationModel):
             return v
         from enferno.settings import Config as cfg
 
+        if len(v) < 8:
+            raise ValueError("Password should be at least 8 characters long!")
+
         if cfg.SECURITY_PASSWORD_COMPLEXITY_CHECKER.lower() != "zxcvbn":
             return v
         valid, score = validate_password_zxcvbn(v, cfg.SECURITY_ZXCVBN_MINIMUM_SCORE)
