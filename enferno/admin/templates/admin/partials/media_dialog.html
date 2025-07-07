@@ -33,7 +33,7 @@
                 prioritize-videos
                 :enable-delete="true"
                 :medias="editedItem.medias"
-                @media-click="handleExpandedMedia($event);"
+                @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
                 @remove-media="removeMedia"
             ></image-gallery>
     </template>
