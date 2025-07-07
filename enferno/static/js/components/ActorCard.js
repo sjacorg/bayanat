@@ -34,11 +34,6 @@ const ActorCard = Vue.defineComponent({
       }
       return false;
     },
-
-    viewThumb(s3url) {
-      this.$emit('thumb-click', s3url);
-    },
-
     loadRevisions() {
       this.hloading = true;
       axios
@@ -307,7 +302,7 @@ const ActorCard = Vue.defineComponent({
           <div ref="playerContainer" class="px-2 my-3"></div>
           
           <v-card-text>
-            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
+            <image-gallery prioritize-videos :medias="actor.medias" @media-click="viewMedia"></image-gallery>
           </v-card-text>
         </v-card>
 

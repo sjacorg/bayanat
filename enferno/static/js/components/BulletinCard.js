@@ -317,7 +317,7 @@ const BulletinCard = Vue.defineComponent({
         
         <v-card-text>
           
-          <image-gallery prioritize-videos :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
+          <image-gallery prioritize-videos :medias="bulletin.medias" @media-click="viewMedia"></image-gallery>
         </v-card-text>
       </v-card>
 

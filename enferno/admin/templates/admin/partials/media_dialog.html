@@ -28,10 +28,13 @@
             </div>
             
             <!--  Grid of Media Items -->
-            <image-gallery :horizontal="Boolean(expandedMedia)" prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
-                            @video-click="viewMediaPlayerDialog($event); closeExpandedMedia() "
-                            @audio-click="viewMediaPlayerDialog($event); closeExpandedMedia()"
-                            @remove-media="removeMedia"
+            <image-gallery
+                :horizontal="Boolean(expandedMedia)"
+                prioritize-videos
+                :enable-delete="true"
+                :medias="editedItem.medias"
+                @media-click="handleExpandedMedia($event);"
+                @remove-media="removeMedia"
             ></image-gallery>
     </template>
     <v-card class="flex-grow-1">

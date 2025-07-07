@@ -309,13 +309,13 @@ let mediaMixin = {
       this.disposeMediaPlayer();
     },
 
-    viewMedia(media) {
+    viewMedia({ media, mediaType }) {
       // Cleanup existing player if it exists
       this.disposeMediaPlayer();
       this.media = media;
 
       const videoElement = buildVideoElement();
-      if (media.fileType.includes('audio')) {
+      if (mediaType === 'audio') {
         videoElement.poster = '/static/img/waveform.png';
       }
 
@@ -422,7 +422,7 @@ let mediaMixin = {
       }
     },
 
-    handleExpandedMedia(media, mediaType) {
+    handleExpandedMedia({media, mediaType}) {
       const isSameContent = this.expandedMedia?.s3url === media?.s3url
       if (isSameContent) {
         return this.closeExpandedMedia();
@@ -435,7 +435,7 @@ let mediaMixin = {
 
       this.$nextTick(() => {
         if (['video', 'audio'].includes(mediaType)) {
-          this.viewMedia(media)
+          this.viewMedia({ media, mediaType });
         }
         this.$refs.expandedMediaRef?.scrollIntoView({
             behavior: 'smooth',

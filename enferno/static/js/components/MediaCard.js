@@ -5,7 +5,7 @@ const MediaCard = Vue.defineComponent({
       required: true
     }
   },
-  emits: ['video-click', 'audio-click', 'ready'],
+  emits: ['media-click', 'ready'],
   data() {
     return {
       s3url: '',
@@ -66,16 +66,12 @@ const MediaCard = Vue.defineComponent({
     handleMediaClick() {
       switch (this.mediaType) {
         case 'pdf':
-          this.$root.$refs.pdfViewer.openPDF(this.s3url);
-          break;
+          // this.$root.$refs.pdfViewer.openPDF(this.s3url);
         case 'image':
-          this.$refs.thumbnailRef?.click()
-          break;
+          // this.$refs.thumbnailRef?.click()
         case 'video':
-          this.$emit('video-click', this.media);
-          break;
         case 'audio':
-          this.$emit('audio-click', this.media);
+          this.$emit('media-click', { media: this.media, mediaType: this.mediaType});
           break;
         default:
           this.downloadFile();

@@ -5,7 +5,7 @@ const ImageGallery = Vue.defineComponent({
     horizontal: Boolean,
     prioritizeVideos: Boolean
   },
-  emits: ['remove-media', 'thumb-click', 'video-click', 'audio-click', 'expand-media'],
+  emits: ['remove-media', 'media-click'],
   mounted() {
     this.initLightbox();
   },
@@ -31,9 +31,6 @@ const ImageGallery = Vue.defineComponent({
     }
   },
   methods: {
-    handleVideo(media){
-      this.$emit('video-click', media)
-    },
     sortMediaByFileType(mediaList) {
       if (!mediaList) return [];
       // Sort media list by fileType (video first)
@@ -44,9 +41,6 @@ const ImageGallery = Vue.defineComponent({
       });
 
       return sortedMediaList;
-    },
-    handleAudio(media){
-      this.$emit('audio-click', media)
     },
     initLightbox() {
       const el = this.$refs.galleryContainer;
@@ -74,8 +68,7 @@ const ImageGallery = Vue.defineComponent({
         <v-sheet :class="horizontal ? 'media-row' : 'media-grid'">
           <media-card
             v-for="(media,index) in sortedMedia" :key="media.id || media.uuid"
-            @video-click="handleVideo"
-            @audio-click="handleAudio"
+            @media-click="$emit('media-click', $event)"
             :media="media"
           >
             <template #actions v-if="enableDelete">
