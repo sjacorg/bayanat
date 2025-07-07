@@ -91,9 +91,19 @@ const RelateBulletins = Vue.defineComponent({
           :show-hide="true"
         >
           <template #actions>
-            <v-btn @click="$root.openConfirmRelationDialog(item)" variant="elevated" color="primary">
-              {{ translations.relate_ }}
-            </v-btn>
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  @click="$root.openConfirmRelationDialog(item)"
+                  color="primary"
+                  variant="elevated"
+                  icon="mdi-link-plus"
+                  size="small"
+                ></v-btn>
+              </template>
+              {{ translations.addAsRelated_ }}
+            </v-tooltip>
           </template>
         </bulletin-result>
       </template>

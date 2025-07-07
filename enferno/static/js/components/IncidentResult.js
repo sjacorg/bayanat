@@ -8,7 +8,7 @@ const IncidentResult = Vue.defineComponent({
     }
   },
 
-  template: `
+  template: /*html*/`
       <template v-if="!hide">
         <v-card  hover class="ma-2" v-if="!incident.restricted">
           <v-toolbar density="compact" class="d-flex px-2">
@@ -23,10 +23,32 @@ const IncidentResult = Vue.defineComponent({
             
           <v-card-actions class="justify-end">
             <slot name="actions"></slot>
-            <v-btn v-if="showHide" @click="hide=true" size="small" > {{ translations.hide_ }}</v-btn>
-            <v-btn icon="mdi-eye" size="small" color="primary"
-                   @click.capture="$root.previewItem('/admin/api/incident/'+incident.id+'?mode=3')">
-            </v-btn>
+            <v-tooltip v-if="showHide" location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  @click.capture="$root.previewItem('/admin/api/incident/'+incident.id+'?mode=3')"
+                  color="secondary"
+                  variant="outlined"
+                  icon="mdi-magnify-expand"
+                  size="small"
+                ></v-btn>
+              </template>
+              {{ translations.preview_ }}
+            </v-tooltip>
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  @click="hide=true"
+                  color="secondary"
+                  variant="outlined"
+                  icon="mdi-minus"
+                  size="small"
+                ></v-btn>
+              </template>
+              {{ translations.hideFromResults_ }}
+            </v-tooltip>
           </v-card-actions>
         </v-card>
         <v-card disabled elevation="0" v-else class="restricted">
