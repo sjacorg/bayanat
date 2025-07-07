@@ -1398,7 +1398,7 @@ class UserNameCheckValidationModel(BaseValidationModel):
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: str = Field(min_length=8)
+    password: str  # no assumptions about password policy here, let field validator do the job
 
     @field_validator("password")
     def validate_password(cls, v):
