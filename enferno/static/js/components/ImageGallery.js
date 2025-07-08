@@ -3,7 +3,8 @@ const ImageGallery = Vue.defineComponent({
     medias: Array,
     enableDelete: Boolean,
     horizontal: Boolean,
-    prioritizeVideos: Boolean
+    prioritizeVideos: Boolean,
+    miniMode: Boolean,
   },
   emits: ['remove-media', 'media-click'],
   mounted() {
@@ -63,13 +64,14 @@ const ImageGallery = Vue.defineComponent({
     };
   },
 
-  template: `
+  template: /*html*/`
       <div ref="galleryContainer">
         <v-sheet :class="horizontal ? 'media-row' : 'media-grid'">
           <media-card
             v-for="(media,index) in sortedMedia" :key="media.id || media.uuid"
             @media-click="$emit('media-click', $event)"
             :media="media"
+            :mini-mode="miniMode"
           >
             <template #actions v-if="enableDelete">
               <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    

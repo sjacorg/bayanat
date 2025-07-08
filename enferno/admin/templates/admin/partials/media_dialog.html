@@ -15,13 +15,16 @@
         :media-type="expandedMediaType"
         :use-metadata="true"
         ref="inlineMediaRendererRef"
+        class="mb-4"
+        content-style="height: 60vh;"
       ></inline-media-renderer>
 
       <!--  Grid of Media Items -->
       <image-gallery
         :horizontal="Boolean(expandedMedia)"
         prioritize-videos
-        :enable-delete="true"
+        :mini-mode="Boolean(expandedMedia)"
+        enable-delete
         :medias="editedItem.medias"
         @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
         @remove-media="removeMedia"
