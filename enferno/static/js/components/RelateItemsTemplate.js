@@ -84,7 +84,7 @@ const RelateItemsTemplate = Vue.defineComponent({
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn @click="$root.closeConfirmRelationDialog" variant="text">{{ translations.cancel_ }}</v-btn>
-            <v-btn @click="relateItem($root.relationToConfirm)" color="primary">{{ translations.relate_ }}</v-btn>
+            <v-btn @click="$emit('relate', $root.relationToConfirm)" color="primary">{{ translations.relate_ }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
