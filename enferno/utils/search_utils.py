@@ -451,7 +451,7 @@ class SearchUtils:
         if tsv := q.get("tsv"):
             words = [word.strip() for word in tsv.split(" ") if word.strip()]
             if words:
-                # For each word, create a condition that checks if it exists in either Actor.search OR ActorProfile.search
+                # For each word, create a condition that matches in either Actor.search OR ActorProfile.search
                 word_conditions = []
                 for word in words:
                     # Create subquery for ActorProfile search
@@ -492,21 +492,24 @@ class SearchUtils:
                         profile_exclude = ~Actor.id.in_(profile_exclude_subquery)
                         conditions.extend([actor_exclude, profile_exclude])
                 else:
-                    # Split on spaces and exclude records containing ALL of these words
+                    # Split on spaces and exclude records containing ANY of these words
                     words = [word.strip() for word in cleaned_extsv.split() if word.strip()]
                     if words:
-                        actor_word_conditions = [
-                            Actor.search.notilike(f"%{word}%") for word in words
-                        ]
-                        profile_exclude_subquery = (
-                            db.session.query(Actor.id)
-                            .join(Actor.actor_profiles)
-                            .filter(
-                                or_(*[ActorProfile.search.ilike(f"%{word}%") for word in words])
+                        exclude_conditions = []
+                        for word in words:
+                            # Add Actor.search exclusion condition
+                            exclude_conditions.append(Actor.search.ilike(f"%{word}%"))
+
+                            # Add ActorProfile.search exclusion condition
+                            profile_exclude_subquery = (
+                                db.session.query(Actor.id)
+                                .join(Actor.actor_profiles)
+                                .filter(ActorProfile.search.ilike(f"%{word}%"))
                             )
-                        )
-                        profile_exclude = ~Actor.id.in_(profile_exclude_subquery)
-                        conditions.append(and_(*actor_word_conditions, profile_exclude))
+                            exclude_conditions.append(Actor.id.in_(profile_exclude_subquery))
+
+                        # Exclude if ANY word matches (OR logic)
+                        conditions.append(~or_(*exclude_conditions))
 
         # Nickname
         if search := q.get("nickname"):
