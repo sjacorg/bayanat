@@ -19,11 +19,9 @@
                    :show-edit="true" @edit="editItem"
                    :log="true"
                    :diff="true"
-                   @thumb-click="viewImage"
                    close="true"
                    @close="bulletinDrawer=false"
                    :bulletin="bulletin"></bulletin-card>
     <preview-card ref="prev" :item="pitem" v-model="preview" :dialog-props="dialog ? rightDialogProps : null"></preview-card>
-    <pdf-viewer ref="pdfViewer" :dialog-props="dialog ? leftDialogProps : null"></pdf-viewer>
-        <visualization ref="viz" @error="showSnack($event)"></visualization>
+    <visualization ref="viz" @error="showSnack($event)"></visualization>
 </v-navigation-drawer>

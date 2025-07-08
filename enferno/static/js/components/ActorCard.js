@@ -303,11 +303,12 @@ const ActorCard = Vue.defineComponent({
             :media="expandedMedia"
             :media-type="expandedMediaType"
             ref="inlineMediaRendererRef"
+            @fullscreen="handleFullscreen"
             @close="closeExpandedMedia"
           ></inline-media-renderer>
           
           <v-card-text>
-            <image-gallery prioritize-videos :medias="actor.medias" @media-click="handleExpandedMedia"></image-gallery>
+            <media-grid prioritize-videos :medias="actor.medias" @media-click="handleExpandedMedia"></media-grid>
           </v-card-text>
         </v-card>
 

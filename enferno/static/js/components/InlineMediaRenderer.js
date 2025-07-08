@@ -104,7 +104,7 @@ const InlineMediaRenderer = Vue.defineComponent({
             </div>
           </div>
           <v-spacer></v-spacer>
-          <v-btn @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
+          <v-btn v-if="mediaType !== 'unknown'" @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
           <v-btn icon="mdi-close" class="ml-2" size="small" @click="$emit('close')"></v-btn>
         </v-toolbar>
 
@@ -112,11 +112,10 @@ const InlineMediaRenderer = Vue.defineComponent({
           <div
             v-if="['video', 'audio'].includes(mediaType)"
             ref="playerContainer"
-            class="inner-video-full-height"
-            style="height: 100%"
+            class="inner-video-full-height h-100"
           ></div>
-          <object v-if="mediaType === 'pdf'" :data="media.s3url" class="w-100" style="height: 100%"></object>
-          <v-img v-if="mediaType === 'image'" :src="media.s3url" class="bg-grey-lighten-2" style="height: 100%"></v-img>
+          <pdf-viewer ref="pdfViewer" v-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
+          <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :media="media" :media-type="mediaType" class="h-100"></image-viewer>
         </div>
       </div>
     `,

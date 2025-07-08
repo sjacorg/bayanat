@@ -1,48 +1,39 @@
 const PdfViewer = Vue.defineComponent({
-  props: {
-    dialogProps: {
-      type: Object,
-      default: null
-    }
-  },
+  props: ['media', 'mediaType'],
   data: () => {
     return {
       translations: window.translations,
-      viewer: false,
-      url: null,
+      fullscreen: false,
     };
   },
   methods: {
-    openPDF(url) {
-      this.viewer = true;
-      this.url = url;
-    },
-    closePDF() {
-      this.viewer = false;
-      this.url = null;
+    requestFullscreen() {
+      this.fullscreen = true;
     },
   },
   template: `
-    <v-dialog
-      overlay="false"
-      v-bind="dialogProps"
-      v-model="viewer"
-    >
-      <v-card v-if="viewer">
-        <v-toolbar color="dark-primary">
-            <v-toolbar-title>{{ translations.preview_ }}</v-toolbar-title>
-            <v-spacer></v-spacer>
-        
-            <template #append>
-                <v-btn icon="mdi-close" @click.stop.prevent="closePDF"></v-btn>
-            </template>
-        </v-toolbar>
-    
-        <v-card-text>
-          <object id="pdf" v-if="url" style="width: 100%;height: 80vh" :data='url'></object>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-    
+    <div>
+      <v-dialog
+        v-model="fullscreen"
+        fullscreen
+      >
+        <v-card class="overflow-hidden">
+          <v-toolbar color="dark-primary">
+              <v-toolbar-title>{{ translations.preview_ }}</v-toolbar-title>
+              <v-spacer></v-spacer>
+          
+              <template #append>
+                  <v-btn icon="mdi-close" @click.stop.prevent="fullscreen = false"></v-btn>
+              </template>
+          </v-toolbar>
+      
+          <v-card-text class="pa-0" style="height: calc(100vh - 64px);">
+            <object :data="media?.s3url" class="w-100 h-100"></object>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+
+      <object :data="media?.s3url" class="w-100 h-100"></object>
+    </div>
     `,
 });

@@ -18,11 +18,12 @@
           ref="inlineMediaRendererRef"
           class="mb-4"
           content-style="height: calc(100vh - 450px);"
+          @fullscreen="handleFullscreen"
           @close="closeExpandedMedia"
         ></inline-media-renderer>
         
         <!--  Grid of Media Items -->
-        <image-gallery
+        <media-grid
           :horizontal="Boolean(expandedMedia)"
           prioritize-videos
           :mini-mode="Boolean(expandedMedia)"
@@ -30,7 +31,7 @@
           :medias="editedItem.medias"
           @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
           @remove-media="removeMedia"
-        ></image-gallery>
+        ></media-grid>
       </v-card-text>
     </v-card>
   </template>

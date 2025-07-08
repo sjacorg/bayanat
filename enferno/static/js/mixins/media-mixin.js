@@ -19,7 +19,6 @@ let mediaMixin = {
       },
       expandedMedia: null,
       expandedMediaType: null,
-      mediaTitle__: true,
       upMediaBtnDisabled: true,
       videoDialog: false,
       audioDialog: false,
@@ -99,10 +98,6 @@ let mediaMixin = {
       }
       this.editedMedia.files.push(file);
       this.upMediaBtnDisabled = false;
-    },
-
-    viewImage(item) {
-      viewer.show(item);
     },
 
     crop() {
@@ -345,18 +340,6 @@ let mediaMixin = {
       this.mediaPlayer = null;
       this.media = null;
     },
-    
-    viewMediaPlayerDialog(media) {
-      if (media.fileType.includes('video')) {
-        this.videoDialog = true;
-      } else {
-        this.audioDialog = true;
-      }
-      this.screenshots = [];
-      this.$nextTick(() => {
-        this.viewMedia(media);
-      });
-    },
 
     addMedia(media, item, index) {
       this.editedMedia = JSON.parse(JSON.stringify(this.defaultMedia));
@@ -365,7 +348,6 @@ let mediaMixin = {
       //this.editedMediaIndex = index;
 
       //reset dual fields display to english
-      this.mediaTitle__ = true;
       this.mediaDialog = true;
       //this.locations = this.editedItem.locations;
     },
@@ -409,19 +391,6 @@ let mediaMixin = {
       this.closeMediaDialog();
     },
 
-    onFileUploaded(error, file) {
-      if (!error) {
-        this.upMediaBtnDisabled = false;
-      } else {
-        if (error.code == 409) {
-          this.showSnack('This file already exists in the system');
-        } else {
-          this.showSnack('Error uploading media. Please check your network connection.');
-        }
-        console.log(error);
-      }
-    },
-
     handleExpandedMedia({media, mediaType}) {
       const isSameContent = this.expandedMedia?.s3url === media?.s3url
       if (isSameContent) {
@@ -448,5 +417,21 @@ let mediaMixin = {
       this.expandedMedia = null;
       this.expandedMediaType = null;
     },
+    handleFullscreen() {
+      switch (this.expandedMediaType) {
+        case 'audio':
+        case 'video':
+          this.mediaPlayer?.requestFullscreen()
+          break;
+        case 'image':
+          this.$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()
+          break;
+        case 'pdf':
+          this.$refs.inlineMediaRendererRef?.$refs?.pdfViewer?.requestFullscreen()
+          break;
+        default:
+          break;
+      }
+    }
   }
 };

@@ -1,7 +1,7 @@
 const thumbnailContent = `
   <div @click="handleMediaClick" class="h-100">
     <!-- Image preview -->
-    <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" ref="thumbnailRef" :data-src="s3url">
+    <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" :data-src="s3url">
       <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
         <v-expand-transition>  
           <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
@@ -187,9 +187,7 @@ const MediaCard = Vue.defineComponent({
     handleMediaClick() {
       switch (this.mediaType) {
         case 'pdf':
-          // this.$root.$refs.pdfViewer.openPDF(this.s3url);
         case 'image':
-          // this.$refs.thumbnailRef?.click()
         case 'video':
         case 'audio':
           this.$emit('media-click', { media: this.media, mediaType: this.mediaType});

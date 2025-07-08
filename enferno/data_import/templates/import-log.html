@@ -113,6 +113,8 @@
 <script src="/static/js/components/RelatedIncidentsCard.js"></script>
 
 <script src="/static/js/components/PdfViewer.js"></script>
+<script src="/static/js/components/ImageViewer.js"></script>
+<script src="/static/js/components/InlineMediaRenderer.js"></script>
 <script src="/static/js/components/GlobalMap.js"></script>
 <script src="/static/js/components/Visualization.js"></script>
 <script src="/static/js/videojs/video.min.js"></script>
@@ -122,7 +124,7 @@
 <script src="/static/js/components/ImportLogStatus.js"></script>
 <script src="/static/js/components/ImportLogCard.js"></script>
 <script src="/static/js/components/MPCard.js"></script>
-<script src="/static/js/components/ImageGallery.js"></script>
+<script src="/static/js/components/MediaGrid.js"></script>
 
 {% if config.GOOGLE_MAPS_API_KEY %}
     {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}
@@ -298,6 +300,8 @@
         app.component('incident-result', IncidentResult);
         app.component('uni-field', UniField);
         app.component('pdf-viewer', PdfViewer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('global-map', GlobalMap);
         app.component('visualization', Visualization);
         app.component('preview-card', PreviewCard);
@@ -307,7 +311,7 @@
         app.component('actor-card', ActorCard);
         app.component('incident-card', IncidentCard);
         app.component('event-card', EventCard);
-        app.component('image-gallery', ImageGallery);
+        app.component('media-grid', MediaGrid);
 
         app.component('related-incidents-card', RelatedBulletinsCard);
         app.component('related-actors-card', RelatedActorsCard);

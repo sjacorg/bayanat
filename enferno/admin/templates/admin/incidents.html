@@ -261,9 +261,6 @@
                         </v-card>
 
                     </v-dialog>
-
-                    <pdf-viewer ref="pdfViewer"></pdf-viewer>
-
                 </v-card-text>
             </v-card>
 
@@ -325,13 +322,15 @@
     <script src="/static/js/components/PopDateRangeField.js"></script>
 
     <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
@@ -1536,10 +1535,12 @@
         app.component('PopDateRangeField', PopDateRangeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
-        app.component('ImageGallery', ImageGallery);
+        app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('PreviewCard', PreviewCard);
         app.component('RelationEditorCard', RelationEditorCard);
 

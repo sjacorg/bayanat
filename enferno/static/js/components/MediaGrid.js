@@ -1,4 +1,4 @@
-const ImageGallery = Vue.defineComponent({
+const MediaGrid = Vue.defineComponent({
   props: {
     medias: Array,
     enableDelete: Boolean,
@@ -7,23 +7,6 @@ const ImageGallery = Vue.defineComponent({
     miniMode: Boolean,
   },
   emits: ['remove-media', 'media-click'],
-  mounted() {
-    this.initLightbox();
-  },
-  unmounted() {
-    this.lightboxInstance?.destroy?.();
-    this.lightboxInstance = null;
-  },
-  watch: {
-    medias: {
-      handler() {
-        this.$nextTick(() => {
-          this.lightboxInstance?.refresh?.();
-        });
-      },
-      deep: true,
-    }
-  },
   computed: {
     sortedMedia() {
       if (this.prioritizeVideos) return this.sortMediaByFileType(this.medias);
@@ -43,29 +26,9 @@ const ImageGallery = Vue.defineComponent({
 
       return sortedMediaList;
     },
-    initLightbox() {
-      const el = this.$refs.galleryContainer;
-      if (!el) return;
-
-      this.lightboxInstance = lightGallery(el, {
-        plugins: [lgZoom, lgThumbnail, lgRotate],
-        download: false,
-        showZoomInOutIcons: true,
-        actualSize: false,
-        speed: 500,
-        selector: '.media-item',
-      });
-    },
   },
-
-  data: function () {
-    return {
-      lightboxInstance: null
-    };
-  },
-
   template: /*html*/`
-      <div ref="galleryContainer">
+      <div>
         <v-sheet :class="horizontal ? 'media-row' : 'media-grid'">
           <media-card
             v-for="(media,index) in sortedMedia" :key="media.id || media.uuid"

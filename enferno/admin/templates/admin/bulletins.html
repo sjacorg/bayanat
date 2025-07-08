@@ -406,11 +406,12 @@
     <script src="/static/js/components/PopDateTimeField.js"></script>
     <script src="/static/js/components/PopDateRangeField.js"></script>
     <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -1531,7 +1532,6 @@
                         if (confirm(translations.confirm_)) {
                             this.close();
                             this.closeMediaDialog();
-                            this.$refs.pdfViewer.closePDF(this.s3url);
                         }
                     },
 
@@ -1731,13 +1731,14 @@
         app.component('PopDateTimeField', PopDateTimeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
-        app.component('ImageGallery', ImageGallery);
+        app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
         app.component('PreviewCard', PreviewCard);
         app.component('RelationEditorCard', RelationEditorCard);
         app.component('InlineMediaRenderer', InlineMediaRenderer);
+        app.component('ImageViewer', ImageViewer);
 
         app.component('mix-i', MixI);
         app.component('mix-ii', MixII);

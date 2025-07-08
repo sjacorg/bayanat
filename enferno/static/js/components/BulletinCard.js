@@ -317,12 +317,13 @@ const BulletinCard = Vue.defineComponent({
           :media="expandedMedia"
           :media-type="expandedMediaType"
           ref="inlineMediaRendererRef"
+          @fullscreen="handleFullscreen"
           @close="closeExpandedMedia"
         ></inline-media-renderer>
         
         <v-card-text>
           
-          <image-gallery prioritize-videos :medias="bulletin.medias" @media-click="handleExpandedMedia"></image-gallery>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="handleExpandedMedia"></media-grid>
         </v-card-text>
       </v-card>
 
