@@ -10,17 +10,18 @@
         </v-btn>
       </v-toolbar>
 
-      <inline-media-renderer
+      <v-card-text class="px-0 pt-0">
+        <inline-media-renderer
         :media="expandedMedia"
         :media-type="expandedMediaType"
         :use-metadata="true"
         ref="inlineMediaRendererRef"
         class="mb-4"
-        content-style="height: calc(100vh - 430px);"
-      ></inline-media-renderer>
-
-      <!--  Grid of Media Items -->
-      <image-gallery
+        content-style="height: calc(100vh - 450px);"
+        ></inline-media-renderer>
+        
+        <!--  Grid of Media Items -->
+        <image-gallery
         :horizontal="Boolean(expandedMedia)"
         prioritize-videos
         :mini-mode="Boolean(expandedMedia)"
@@ -28,7 +29,8 @@
         :medias="editedItem.medias"
         @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
         @remove-media="removeMedia"
-      ></image-gallery>
+        ></image-gallery>
+      </v-card-text>
     </v-card>
   </template>
   <v-card class="flex-grow-1">
