@@ -29,7 +29,7 @@
 
                 <v-tooltip location="bottom">
                     <template #activator="{ props }">
-                        <v-btn icon="mdi-crop-square" :="props" variant="flat" @click="crop" class="ma-1">
+                        <v-btn icon="mdi-crop-square" :="props" variant="flat" @click="initCroppr()" class="ma-1">
                         </v-btn>
                     </template>
                     <span>{{ _('Crop Image') }}</span>

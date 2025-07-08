@@ -1,3 +1,5 @@
+<snapshot-dialog v-model="snapshotDialog" v-bind="leftDialogProps"></snapshot-dialog>
+
 <v-dialog v-model="mediaDialog" v-bind="leftDialogProps">
   <template #activator="{props}">
     <v-card>
@@ -5,6 +7,11 @@
         <v-toolbar-title>{{ _('Media') }}</v-toolbar-title>
         <v-spacer></v-spacer>
 
+        <v-btn
+          v-if="expandedMediaType === 'video'"
+          icon="mdi-camera"
+          @click="snapshotDialog = true; initCroppr();"
+        ></v-btn>
         <v-btn class="mx-2 white--text" icon="mdi-plus-circle" color="primary" @click="addMedia">
           <v-icon dark></v-icon>
         </v-btn>
@@ -21,7 +28,7 @@
           @fullscreen="handleFullscreen"
           @close="closeExpandedMedia"
         ></inline-media-renderer>
-        
+
         <!--  Grid of Media Items -->
         <media-grid
           :horizontal="Boolean(expandedMedia)"

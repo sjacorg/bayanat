@@ -410,11 +410,12 @@
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
+    
+    <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
-
-    <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/SnapshotDialog.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
@@ -538,6 +539,7 @@
 
 
                     actorDialog: false,
+                    snapshotDialog: false,
                     dialog: dialog,
                     saving: false,
                     eventDialog: false,
@@ -1735,6 +1737,7 @@
         app.component('MediaCard', MediaCard);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('SnapshotDialog', SnapshotDialog);
         app.component('PreviewCard', PreviewCard);
         app.component('RelationEditorCard', RelationEditorCard);
         app.component('InlineMediaRenderer', InlineMediaRenderer);
