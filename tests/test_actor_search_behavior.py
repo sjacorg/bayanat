@@ -12,7 +12,7 @@ from enferno.utils.search_utils import SearchUtils
 from tests.factories import ActorFactory, ActorProfileFactory, LabelFactory, SourceFactory
 
 
-class SearchV4ActorQuery:
+class PreSearchV4ActorQuery:
     """Replica of the pre-search-v4 actor_query implementation for comparison."""
 
     def actor_query_pre_v4(self, q: dict) -> list:
@@ -99,7 +99,7 @@ class TestActorSearchBehavior:
 
         # Initialize search utilities
         self.search_utils = SearchUtils()
-        self.search_v4 = SearchV4ActorQuery()
+        self.pre_search_v4 = PreSearchV4ActorQuery()
 
     def get_actor_ids_from_current_query(self, search_query: dict) -> set:
         """Get actor IDs from current implementation."""
@@ -120,7 +120,7 @@ class TestActorSearchBehavior:
 
     def get_actor_ids_from_pre_v4_query(self, search_query: dict) -> set:
         """Get actor IDs from pre-search-v4 style implementation."""
-        conditions = self.search_v4.actor_query_pre_v4(search_query)
+        conditions = self.pre_search_v4.actor_query_pre_v4(search_query)
 
         # Execute the query and get IDs, then filter to only our test actors
         if conditions:
