@@ -103,14 +103,13 @@ let mediaMixin = {
 
     initCroppr() {
       if (this.cropper.active) this.destroyCrop();
-
+    
       const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
       video.pause();
-
-      // Define a maximum size for your preview. Adjust this value as needed.
-      const maxPreviewSize = 250; // pixels
     
-      // Calculate new dimensions while maintaining aspect ratio
+      const maxPreviewSize = 250;
+    
+      // calculate preview size
       let newWidth = this.videoMeta.width;
       let newHeight = this.videoMeta.height;
     
@@ -119,29 +118,48 @@ let mediaMixin = {
         newWidth = maxPreviewSize;
       }
     
-      // Create or get the canvas element
-      this.cropper.canvas = document.createElement('canvas');
-      this.cropper.canvas.width = newWidth; // Use scaled width
-      this.cropper.canvas.height = newHeight; // Use scaled height
+      // ✅ Store full-res video frame
+      this.cropper.fullCanvas = document.createElement('canvas');
+      this.cropper.fullCanvas.width = this.videoMeta.width;
+      this.cropper.fullCanvas.height = this.videoMeta.height;
     
-      let context = this.cropper.canvas.getContext('2d');
-      context.fillRect(0, 0, this.cropper.canvas.width, this.cropper.canvas.height);
-      // Draw the video frame onto the canvas, scaled to the new dimensions
-      context.drawImage(video, 0, 0, this.videoMeta.width, this.videoMeta.height, 0, 0, newWidth, newHeight);
+      const fullCtx = this.cropper.fullCanvas.getContext('2d');
+      fullCtx.drawImage(video, 0, 0, this.videoMeta.width, this.videoMeta.height);
+    
+      // 👁️ Create preview canvas (scaled down)
+      this.cropper.canvas = document.createElement('canvas');
+      this.cropper.canvas.width = newWidth;
+      this.cropper.canvas.height = newHeight;
+    
+      const context = this.cropper.canvas.getContext('2d');
+      context.fillRect(0, 0, newWidth, newHeight);
+      context.drawImage(
+        video,
+        0, 0,
+        this.videoMeta.width, this.videoMeta.height,
+        0, 0,
+        newWidth, newHeight
+      );
+    
+      // 📏 Save scale factor between preview and full-res
+      this.cropper.previewScale = newWidth / this.videoMeta.width;
+    
+      // 📷 Update image preview
       let img = document.querySelector('#cropImg');
       if (!img) {
         img = new Image();
         img.id = 'cropImg';
-
+    
         this.$nextTick(() => {
           document.querySelector('.crop').prepend(img);
-        })
+        });
       }
+    
       img.src = this.cropper.canvas.toDataURL('image/jpeg');
       this.cropper.time = Math.round(video.currentTime * 10) / 10;
       this.cropper.tool = new Croppr(img);
       this.cropper.active = true;
-
+    
       this.snapshot = {
         ...this.videoMeta,
         time: this.cropper.time,
@@ -212,29 +230,36 @@ let mediaMixin = {
     getCroppedImageData() {
       return new Promise((resolve) => {
         const crop = this.cropper.tool.getValue();
-        const img = document.querySelector('.croppr-image');
-
-        this.$nextTick(() => {
-          let canvas = document.createElement('canvas');
-          canvas.width = crop.width;
-          canvas.height = crop.height;
+        const fullCanvas = this.cropper.fullCanvas;
+        const scale = this.cropper.previewScale;
     
-          let context = canvas.getContext('2d');
-          context.fillRect(0, 0, crop.width, crop.height);
+        // ✅ Convert crop box from preview scale to full resolution
+        const realX = crop.x / scale;
+        const realY = crop.y / scale;
+        const realW = crop.width / scale;
+        const realH = crop.height / scale;
+    
+        this.$nextTick(() => {
+          const canvas = document.createElement('canvas');
+          canvas.width = realW;
+          canvas.height = realH;
+    
+          const context = canvas.getContext('2d');
+          context.fillRect(0, 0, realW, realH);
           context.drawImage(
-            img,
-            crop.x,
-            crop.y,
-            crop.width,
-            crop.height,
+            fullCanvas,
+            realX,
+            realY,
+            realW,
+            realH,
             0,
             0,
-            crop.width,
-            crop.height,
+            realW,
+            realH
           );
     
           canvas.toBlob((blob) => {
-            resolve(blob); // ✅ return the blob
+            resolve(blob);
           }, 'image/jpeg');
         });
       });
