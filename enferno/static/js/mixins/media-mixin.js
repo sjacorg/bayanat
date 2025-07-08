@@ -437,7 +437,7 @@ let mediaMixin = {
         if (['video', 'audio'].includes(mediaType)) {
           this.viewMedia({ media, mediaType });
         }
-        this.$refs.expandedMediaRef?.scrollIntoView({
+        this.$refs.inlineMediaRendererRef?.$el?.scrollIntoView({
             behavior: 'smooth',
             block: 'center',
         })
@@ -447,6 +447,6 @@ let mediaMixin = {
     closeExpandedMedia() {
       this.expandedMedia = null;
       this.expandedMediaType = null;
-    }
+    },
   }
 };

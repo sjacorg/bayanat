@@ -14,6 +14,7 @@ const InlineMediaRenderer = Vue.defineComponent({
         default: 'height: 450px;'
       },
     },
+    emits: ['fullscreen', 'close'],
     data: () => ({
       translations: window.translations,
       iconMap: {
@@ -103,14 +104,13 @@ const InlineMediaRenderer = Vue.defineComponent({
             </div>
           </div>
           <v-spacer></v-spacer>
-          <v-btn @click="$root.mediaPlayer?.requestFullscreen()" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
-          <v-btn icon="mdi-close" class="ml-2" size="small" @click="$root.closeExpandedMedia()"></v-btn>
+          <v-btn @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
+          <v-btn icon="mdi-close" class="ml-2" size="small" @click="$emit('close')"></v-btn>
         </v-toolbar>
 
         <div :style="contentStyle">
           <div
             v-if="['video', 'audio'].includes(mediaType)"
-            id="playerContainer"
             ref="playerContainer"
             class="inner-video-full-height"
             style="height: 100%"

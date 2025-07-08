@@ -12,23 +12,24 @@
 
       <v-card-text class="px-0 pt-0">
         <inline-media-renderer
-        :media="expandedMedia"
-        :media-type="expandedMediaType"
-        :use-metadata="true"
-        ref="inlineMediaRendererRef"
-        class="mb-4"
-        content-style="height: calc(100vh - 450px);"
+          :media="expandedMedia"
+          :media-type="expandedMediaType"
+          :use-metadata="true"
+          ref="inlineMediaRendererRef"
+          class="mb-4"
+          content-style="height: calc(100vh - 450px);"
+          @close="closeExpandedMedia"
         ></inline-media-renderer>
         
         <!--  Grid of Media Items -->
         <image-gallery
-        :horizontal="Boolean(expandedMedia)"
-        prioritize-videos
-        :mini-mode="Boolean(expandedMedia)"
-        enable-delete
-        :medias="editedItem.medias"
-        @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
-        @remove-media="removeMedia"
+          :horizontal="Boolean(expandedMedia)"
+          prioritize-videos
+          :mini-mode="Boolean(expandedMedia)"
+          enable-delete
+          :medias="editedItem.medias"
+          @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
+          @remove-media="removeMedia"
         ></image-gallery>
       </v-card-text>
     </v-card>

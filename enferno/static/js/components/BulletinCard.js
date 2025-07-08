@@ -317,7 +317,8 @@ const BulletinCard = Vue.defineComponent({
           :media="expandedMedia"
           :media-type="expandedMediaType"
           ref="inlineMediaRendererRef"
-          ></inline-media-renderer>
+          @close="closeExpandedMedia"
+        ></inline-media-renderer>
         
         <v-card-text>
           

@@ -1,16 +1,16 @@
 const thumbnailContent = `
-  <!-- Image preview -->
-  <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" ref="thumbnailRef" :href="s3url" target="_blank" :data-src="s3url">
-    <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
-      <v-expand-transition>  
-        <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
-          <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
-        </div>
-      </v-expand-transition>
-    </img>
-  </a>
-
   <div @click="handleMediaClick" class="h-100">
+    <!-- Image preview -->
+    <a class="media-item h-100 block" v-if="mediaType === 'image' && s3url" ref="thumbnailRef" :data-src="s3url">
+      <img :src="s3url" class="w-100 h-100 bg-grey-lighten-2" style="object-fit: cover;">
+        <v-expand-transition>  
+          <div v-if="isHoveringPreview" class="h-100 d-flex align-center justify-center transition-fast-in-fast-out bg-grey-darken-2 v-card--reveal text-h2">
+            <v-icon size="48" color="white">mdi-magnify-plus</v-icon>
+          </div>
+        </v-expand-transition>
+      </img>
+    </a>
+
     <!-- Video preview -->
     <v-img v-if="mediaType === 'video'" :src="videoThumbnail" cover class="bg-grey-lighten-2 h-100">
       <div class="d-flex align-center justify-center fill-height">
@@ -145,6 +145,13 @@ const MediaCard = Vue.defineComponent({
       videoThumbnail: null,
       translations: window.translations,
       thumbnailBrightness: 0,
+      iconMap: {
+        image: 'mdi-image',
+        video: 'mdi-video',
+        pdf: 'mdi-file-pdf-box',
+        audio: 'mdi-music-box',
+        unknown: 'mdi-file-download'
+      },
     };
   },
   computed: {
@@ -156,27 +163,9 @@ const MediaCard = Vue.defineComponent({
       if (['application/pdf'].includes(fileType)) return 'pdf';
       return 'unknown';
     },
-    iconMap() {
-      return {
-        image: 'mdi-image',
-        video: 'mdi-video',
-        pdf: 'mdi-file-pdf-box',
-        audio: 'mdi-music-box',
-        unknown: 'mdi-file-download'
-      };
-    },
     durationFormatted() {
       return this.videoDuration ? this.formatDuration(this.videoDuration) : null;
     },
-    actionTooltip() {
-      switch (this.mediaType) {
-        case 'image': return this.translations.image_preview_;
-        case 'video': return this.translations.video_preview_;
-        case 'pdf': return this.translations.pdf_preview_;
-        case 'audio': return this.translations.audio_preview_;
-        default: return this.translations.file_preview_;
-      }
-    }
   },
   mounted() {
     this.init();
@@ -279,7 +268,7 @@ const MediaCard = Vue.defineComponent({
         </v-hover>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="d-flex py-0" style="min-height: 45px;">
         <v-menu
           open-on-hover
           location="top"
