@@ -35,7 +35,7 @@ class UserInfoForm:
 
 
 class ExtendedChangePasswordForm(ChangePasswordForm):
-    def validate_password(self, field):
+    def validate_new_password(self, field):
         try:
             validate_password_policy(field.data)
         except ValueError as e:

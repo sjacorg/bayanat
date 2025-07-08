@@ -216,9 +216,10 @@ def reset(username: str, password: str) -> None:
         click.echo("Specified user does not exist!")
         logger.error("Specified user does not exist!")
     else:
-        if len(password) < 8:
-            click.echo("Password should be at least 8 characters long!")
-            logger.error("Password should be at least 8 characters long!")
+        try:
+            password = validate_password_policy(password)
+        except ValueError as e:
+            click.echo(str(e))
             return
         user.password = hash_password(password)
         user.save()

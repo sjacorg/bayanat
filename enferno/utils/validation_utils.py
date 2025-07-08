@@ -57,7 +57,7 @@ def validate_password_policy(p: str) -> str:
     if not (p := p.strip()):
         raise ValueError("Password cannot be empty!")
     # validate length
-    min_length = getattr(cfg, "SECURITY_PASSWORD_MIN_LENGTH", 8)
+    min_length = getattr(cfg, "SECURITY_PASSWORD_LENGTH_MIN")
     if len(p) < min_length:
         raise ValueError(f"Password should be at least {min_length} characters long!")
 
