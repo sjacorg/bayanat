@@ -237,7 +237,7 @@ class SearchUtils:
             recursive = q.get("childlabels", None)
             if q.get("oplabels"):
                 if recursive:
-                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     direct = [label for label in result]
                     all_labels = direct + Label.get_children(direct)
                     all_labels = list(set(all_labels))
@@ -245,7 +245,7 @@ class SearchUtils:
                 conditions.append(Bulletin.labels.any(Label.id.in_(ids)))
             else:
                 if recursive:
-                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     for label in direct:
                         children = Label.get_children([label])
                         children = list(set([label] + children))
@@ -265,7 +265,7 @@ class SearchUtils:
             recursive = q.get("childverlabels", None)
             if q.get("opvlabels"):
                 if recursive:
-                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     direct = [label for label in result]
                     all_labels = direct + Label.get_children(direct)
                     all_labels = list(set(all_labels))
@@ -273,7 +273,7 @@ class SearchUtils:
                 conditions.append(Bulletin.ver_labels.any(Label.id.in_(ids)))
             else:
                 if recursive:
-                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     for label in direct:
                         children = Label.get_children([label])
                         children = list(set([label] + children))
@@ -293,7 +293,7 @@ class SearchUtils:
             recursive = q.get("childsources", None)
             if q.get("opsources"):
                 if recursive:
-                    result = db.session.query(Source).filter(Source.id.in_(ids)).all()
+                    result = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
                     direct = [source for source in result]
                     all_sources = direct + Source.get_children(direct)
                     all_sources = list(set(all_sources))
@@ -301,7 +301,7 @@ class SearchUtils:
                 conditions.append(Bulletin.sources.any(Source.id.in_(ids)))
             else:
                 if recursive:
-                    direct = db.session.query(Source).filter(Source.id.in_(ids)).all()
+                    direct = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
                     for source in direct:
                         children = Source.get_children([source])
                         children = list(set([source] + children))
@@ -319,12 +319,12 @@ class SearchUtils:
         if locations := q.get("locations", []):
             ids = [item.get("id") for item in locations]
             if q.get("oplocations"):
-                locs = (
-                    db.session.query(Location.id)
-                    .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
-                    .all()
-                )
-                loc_ids = [loc.id for loc in locs]
+                locs = db.session.scalars(
+                    select(Location.id).where(
+                        or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids])
+                    )
+                ).all()
+                loc_ids = [loc for loc in locs]
                 conditions.append(Bulletin.locations.any(Location.id.in_(loc_ids)))
             else:
                 id_mix = [Location.get_children_by_id(id) for id in ids]
@@ -394,19 +394,19 @@ class SearchUtils:
 
         # Relations
         if rel_to_bulletin := q.get("rel_to_bulletin"):
-            bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
+            bulletin = db.session.get(Bulletin, int(rel_to_bulletin))
             if bulletin:
                 ids = [b.get_other_id(bulletin.id) for b in bulletin.bulletin_relations]
                 conditions.append(Bulletin.id.in_(ids))
 
         if rel_to_actor := q.get("rel_to_actor"):
-            actor = db.session.query(Actor).get(int(rel_to_actor))
+            actor = db.session.get(Actor, int(rel_to_actor))
             if actor:
                 ids = [b.bulletin_id for b in actor.bulletin_relations]
                 conditions.append(Bulletin.id.in_(ids))
 
         if rel_to_incident := q.get("rel_to_incident"):
-            incident = db.session.query(Incident).get(int(rel_to_incident))
+            incident = db.session.get(Incident, int(rel_to_incident))
             if incident:
                 ids = [b.bulletin_id for b in incident.bulletin_relations]
                 conditions.append(Bulletin.id.in_(ids))
@@ -452,25 +452,17 @@ class SearchUtils:
             words = [word.strip() for word in tsv.split(" ") if word.strip()]
             if words:
                 # For each word, create a condition that matches in either Actor.search OR ActorProfile.search
-                word_conditions = []
+                qsearch = []
                 for word in words:
-                    # Create subquery for ActorProfile search
-                    profile_subquery = (
-                        db.session.query(Actor.id)
-                        .join(Actor.actor_profiles)
-                        .filter(ActorProfile.search.ilike(f"%{word}%"))
+                    qsearch.append(
+                        or_(
+                            Actor.search.ilike(f"%{word}%"),
+                            ActorProfile.search.ilike(f"%{word}%"),
+                        )
                     )
 
-                    # For this word, it should match in either Actor.search OR ActorProfile.search
-                    word_condition = or_(
-                        Actor.search.ilike(f"%{word}%"), Actor.id.in_(profile_subquery)
-                    )
-                    word_conditions.append(word_condition)
-
-                # All words must match (AND logic across words)
-                if word_conditions:
-                    conditions.append(and_(*word_conditions))
-
+                subquery = select(Actor.id).join(Actor.actor_profiles).where(and_(*qsearch))
+                conditions.append(Actor.id.in_(subquery))
         # Exclude text search
         if extsv := q.get("extsv"):
             cleaned_extsv = extsv.strip()
@@ -485,9 +477,9 @@ class SearchUtils:
                     if phrase:
                         actor_exclude = Actor.search.notilike(f"%{phrase}%")
                         profile_exclude_subquery = (
-                            db.session.query(Actor.id)
+                            select(Actor.id)
                             .join(Actor.actor_profiles)
-                            .filter(ActorProfile.search.ilike(f"%{phrase}%"))
+                            .where(ActorProfile.search.ilike(f"%{phrase}%"))
                         )
                         profile_exclude = ~Actor.id.in_(profile_exclude_subquery)
                         conditions.extend([actor_exclude, profile_exclude])
@@ -497,19 +489,21 @@ class SearchUtils:
                     if words:
                         exclude_conditions = []
                         for word in words:
-                            # Add Actor.search exclusion condition
-                            exclude_conditions.append(Actor.search.ilike(f"%{word}%"))
-
-                            # Add ActorProfile.search exclusion condition
-                            profile_exclude_subquery = (
-                                db.session.query(Actor.id)
-                                .join(Actor.actor_profiles)
-                                .filter(ActorProfile.search.ilike(f"%{word}%"))
+                            # Exclude if word matches in either Actor.search OR ActorProfile.search
+                            exclude_conditions.append(
+                                or_(
+                                    Actor.search.ilike(f"%{word}%"),
+                                    ActorProfile.search.ilike(f"%{word}%"),
+                                )
                             )
-                            exclude_conditions.append(Actor.id.in_(profile_exclude_subquery))
 
-                        # Exclude if ANY word matches (OR logic)
-                        conditions.append(~or_(*exclude_conditions))
+                        # Create subquery to find actors that match ANY of the exclude conditions
+                        subquery = (
+                            select(Actor.id)
+                            .join(Actor.actor_profiles)
+                            .where(or_(*exclude_conditions))
+                        )
+                        conditions.append(~Actor.id.in_(subquery))
 
         # Nickname
         if search := q.get("nickname"):
@@ -581,7 +575,7 @@ class SearchUtils:
             if q.get("oplabels"):
                 if recursive:
                     # get ids of children // update ids
-                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     direct = [label for label in result]
                     all_labels = direct + Label.get_children(direct)
                     all_labels = list(set(all_labels))
@@ -591,7 +585,7 @@ class SearchUtils:
                 )
             else:
                 if recursive:
-                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     for label in direct:
                         children = Label.get_children([label])
                         # add original label + uniquify list
@@ -621,7 +615,7 @@ class SearchUtils:
                 # or operator
                 if recursive:
                     # get ids of children // update ids
-                    result = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    result = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     direct = [label for label in result]
                     all_labels = direct + Label.get_children(direct)
                     all_labels = list(set(all_labels))
@@ -632,7 +626,7 @@ class SearchUtils:
             else:
                 # and operator (modify children search logic)
                 if recursive:
-                    direct = db.session.query(Label).filter(Label.id.in_(ids)).all()
+                    direct = db.session.scalars(select(Label).where(Label.id.in_(ids))).all()
                     for label in direct:
                         children = Label.get_children([label])
                         # add original label + uniquify list
@@ -664,7 +658,7 @@ class SearchUtils:
             if q.get("opsources"):
                 if recursive:
                     # get ids of children // update ids
-                    result = db.session.query(Source).filter(Source.id.in_(ids)).all()
+                    result = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
                     direct = [source for source in result]
                     all_sources = direct + Source.get_children(direct)
                     all_sources = list(set(all_sources))
@@ -675,7 +669,7 @@ class SearchUtils:
             else:
                 # and operator (modify children search logic)
                 if recursive:
-                    direct = db.session.query(Source).filter(Source.id.in_(ids)).all()
+                    direct = db.session.scalars(select(Source).where(Source.id.in_(ids))).all()
                     for source in direct:
                         children = Source.get_children([source])
                         # add original label + uniquify list
@@ -743,12 +737,12 @@ class SearchUtils:
         if res_locations := q.get("resLocations", []):
             ids = [item.get("id") for item in res_locations]
             # get all child locations
-            locs = (
-                db.session.query(Location.id)
-                .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
-                .all()
-            )
-            loc_ids = [loc.id for loc in locs]
+            locs = db.session.scalars(
+                select(Location.id).where(
+                    or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids])
+                )
+            ).all()
+            loc_ids = [loc for loc in locs]
             # TODO: residence_place_id is not a valid column in the Actor model. Discuss with team.
             conditions.append(Actor.residence_place_id.in_(loc_ids))
 
@@ -756,12 +750,12 @@ class SearchUtils:
         if origin_locations := q.get("originLocations", []):
             ids = [item.get("id") for item in origin_locations]
             # get all child locations
-            locs = (
-                db.session.query(Location.id)
-                .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
-                .all()
-            )
-            loc_ids = [loc.id for loc in locs]
+            locs = db.session.scalars(
+                select(Location.id).where(
+                    or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids])
+                )
+            ).all()
+            loc_ids = [loc for loc in locs]
             conditions.append(Actor.origin_place_id.in_(loc_ids))
 
         # Excluded residence locations
@@ -898,21 +892,21 @@ class SearchUtils:
 
         # Related to bulletin search
         if rel_to_bulletin := q.get("rel_to_bulletin"):
-            bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
+            bulletin = db.session.get(Bulletin, int(rel_to_bulletin))
             if bulletin:
                 ids = [a.actor_id for a in bulletin.actor_relations]
                 conditions.append(Actor.id.in_(ids))
 
         # Related to actor search
         if rel_to_actor := q.get("rel_to_actor"):
-            actor = db.session.query(Actor).get(int(rel_to_actor))
+            actor = db.session.get(Actor, int(rel_to_actor))
             if actor:
                 ids = [a.get_other_id(actor.id) for a in actor.actor_relations]
                 conditions.append(Actor.id.in_(ids))
 
         # Related to incident search
         if rel_to_incident := q.get("rel_to_incident"):
-            incident = db.session.query(Incident).get(int(rel_to_incident))
+            incident = db.session.get(Incident, int(rel_to_incident))
             if incident:
                 ids = [a.actor_id for a in incident.actor_relations]
                 conditions.append(Actor.id.in_(ids))
@@ -1009,12 +1003,12 @@ class SearchUtils:
             ids = [item.get("id") for item in locations]
             if q.get("oplocations"):
                 # get all child locations
-                locs = (
-                    db.session.query(Location.id)
-                    .filter(or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids]))
-                    .all()
-                )
-                loc_ids = [loc.id for loc in locs]
+                locs = db.session.scalars(
+                    select(Location.id).where(
+                        or_(*[Location.id_tree.like("%[{}]%".format(x)) for x in ids])
+                    )
+                ).all()
+                loc_ids = [loc for loc in locs]
                 conditions.append(Incident.locations.any(Location.id.in_(loc_ids)))
             else:
                 # get combined lists of ids for each location
@@ -1090,19 +1084,19 @@ class SearchUtils:
 
         # Relations
         if rel_to_bulletin := q.get("rel_to_bulletin"):
-            bulletin = db.session.query(Bulletin).get(int(rel_to_bulletin))
+            bulletin = db.session.get(Bulletin, int(rel_to_bulletin))
             if bulletin:
                 ids = [i.incident_id for i in bulletin.incident_relations]
                 conditions.append(Incident.id.in_(ids))
 
         if rel_to_actor := q.get("rel_to_actor"):
-            actor = db.session.query(Actor).get(int(rel_to_actor))
+            actor = db.session.get(Actor, int(rel_to_actor))
             if actor:
                 ids = [i.incident_id for i in actor.incident_relations]
                 conditions.append(Incident.id.in_(ids))
 
         if rel_to_incident := q.get("rel_to_incident"):
-            incident = db.session.query(Incident).get(int(rel_to_incident))
+            incident = db.session.get(Incident, int(rel_to_incident))
             if incident:
                 ids = [i.get_other_id(incident.id) for i in incident.incident_relations]
                 conditions.append(Incident.id.in_(ids))
@@ -1143,8 +1137,8 @@ class SearchUtils:
                 return None
 
             # Directly check if 'lvl' exists in the database and get the object (one query)
-            admin_level = (
-                db.session.query(LocationAdminLevel).filter(LocationAdminLevel.code == lvl).first()
+            admin_level = db.session.scalar(
+                select(LocationAdminLevel).where(LocationAdminLevel.code == lvl)
             )
 
             if admin_level:
