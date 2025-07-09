@@ -1,35 +1,29 @@
-let mediaMixin = {
+const defaultMedia = {
+  title: '',
+  files: [],
+  category: null,
+}
+
+const mediaMixin = {
   mixins: [reauthMixin],
   data: function () {
     return {
       mediaDialog: false,
+      snapshotDialog: false,
       media: null,
-      medias: [],
-      mediaCats: translations.mediaCats,
-      editedMediaIndex: -1,
       editedMedia: {
         title: '',
         files: [],
         category: '',
       },
-      defaultMedia: {
-        title: '',
-        files: [],
-        category: null,
-      },
       expandedMedia: null,
       expandedMediaType: null,
-      upMediaBtnDisabled: true,
-      videoDialog: false,
-      audioDialog: false,
       mediaPlayer: null,
-      playerOptions: {},
       videoMeta: {},
-      audioMeta: {},
-      screenshots: [],
       snapshot: null,
       cropper: {
-        canvas: null,
+        fullCanvas: null, // Full-resolution canvas for cropping
+        canvas: null, // Downscaled preview canvas
         tool: null,
         active: false,
       },
@@ -94,75 +88,57 @@ let mediaMixin = {
       if(this.editedItem.medias.some(m => m.etag === file.etag)) {
         this.showSnack(file.name + ' is already uploaded. Skipping...');
         this.$refs.dropzone.dz.removeFile(file);
-        this.upMediaBtnDisabled = false;
         return;
       }
       this.editedMedia.files.push(file);
-      this.upMediaBtnDisabled = false;
     },
 
     initCroppr() {
       if (this.cropper.active) this.destroyCrop();
     
-      const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
-      video.pause();
+      const videoElement = this.mediaPlayer.el().querySelector('video');
+      videoElement.pause();
     
+      const originalWidth = this.videoMeta.width;
+      const originalHeight = this.videoMeta.height;
       const maxPreviewSize = 250;
     
-      // calculate preview size
-      let newWidth = this.videoMeta.width;
-      let newHeight = this.videoMeta.height;
+      const scaleFactor = Math.min(1, maxPreviewSize / originalWidth);
+      const previewWidth = originalWidth * scaleFactor;
+      const previewHeight = originalHeight * scaleFactor;
     
-      if (newWidth > maxPreviewSize) {
-        newHeight = (newHeight * maxPreviewSize) / newWidth;
-        newWidth = maxPreviewSize;
-      }
+      // Create full-resolution canvas
+      const fullCanvas = document.createElement('canvas');
+      fullCanvas.width = originalWidth;
+      fullCanvas.height = originalHeight;
+      fullCanvas.getContext('2d').drawImage(videoElement, 0, 0, originalWidth, originalHeight);
+      this.cropper.fullCanvas = fullCanvas;
     
-      // ✅ Store full-res video frame
-      this.cropper.fullCanvas = document.createElement('canvas');
-      this.cropper.fullCanvas.width = this.videoMeta.width;
-      this.cropper.fullCanvas.height = this.videoMeta.height;
-    
-      const fullCtx = this.cropper.fullCanvas.getContext('2d');
-      fullCtx.drawImage(video, 0, 0, this.videoMeta.width, this.videoMeta.height);
-    
-      // 👁️ Create preview canvas (scaled down)
-      this.cropper.canvas = document.createElement('canvas');
-      this.cropper.canvas.width = newWidth;
-      this.cropper.canvas.height = newHeight;
-    
-      const context = this.cropper.canvas.getContext('2d');
-      context.fillRect(0, 0, newWidth, newHeight);
-      context.drawImage(
-        video,
-        0, 0,
-        this.videoMeta.width, this.videoMeta.height,
-        0, 0,
-        newWidth, newHeight
+      // Create scaled preview canvas
+      const previewCanvas = document.createElement('canvas');
+      previewCanvas.width = previewWidth;
+      previewCanvas.height = previewHeight;
+      previewCanvas.getContext('2d').drawImage(
+        videoElement,
+        0, 0, originalWidth, originalHeight,
+        0, 0, previewWidth, previewHeight
       );
+      this.cropper.canvas = previewCanvas;
+      this.cropper.previewScale = scaleFactor;
     
-      // 📏 Save scale factor between preview and full-res
-      this.cropper.previewScale = newWidth / this.videoMeta.width;
+      // Update image preview and initialize Croppr
+      this.$nextTick(() => {
+        const previewImage = document.querySelector('#cropImg');
+        previewImage.src = previewCanvas.toDataURL('image/jpeg');
     
-      // 📷 Update image preview
-      let img = document.querySelector('#cropImg');
-      if (!img) {
-        img = new Image();
-        img.id = 'cropImg';
-    
-        this.$nextTick(() => {
-          document.querySelector('.crop').prepend(img);
-        });
-      }
-    
-      img.src = this.cropper.canvas.toDataURL('image/jpeg');
-      this.cropper.time = Math.round(video.currentTime * 10) / 10;
-      this.cropper.tool = new Croppr(img);
-      this.cropper.active = true;
+        this.cropper.time = Math.round(videoElement.currentTime * 10) / 10;
+        this.cropper.tool = new Croppr(previewImage);
+        this.cropper.active = true;
+      });
     
       this.snapshot = {
         ...this.videoMeta,
-        time: this.cropper.time,
+        time: Math.round(videoElement.currentTime * 10) / 10,
         fileType: 'image/jpeg',
         ready: true,
       };
@@ -183,84 +159,66 @@ let mediaMixin = {
       try {
         const blob = await this.getCroppedImageData();
     
-        let data = new FormData();
+        const formData = new FormData();
         let filename = this.snapshot.filename;
-        if (!filename.endsWith('.jpg')) {
-          filename += '.jpg';
-        }
-        data.append('file', blob, filename);
+        if (!filename.endsWith('.jpg')) filename += '.jpg';
+        formData.append('file', blob, filename);
     
-        const response = await axios.post("/admin/api/media/upload", data, {
+        const response = await axios.post("/admin/api/media/upload", formData, {
           headers: { "content-type": false },
         });
     
-        const serverId = response.data;
-        console.log('Response', response.data);
-    
-        this.snapshot.filename = serverId.filename;
-        this.snapshot.etag = serverId.etag;
+        const uploaded = response.data;
+        this.snapshot.filename = uploaded.filename;
+        this.snapshot.etag = uploaded.etag;
         this.snapshot.ready = true;
     
-        let skipped = [];
-    
-        if (this.editedItem.medias.some(media => media.etag === this.snapshot.etag)) {
-          skipped.push(this.snapshot);
-        } else {
-          const mediaItem = {
-            title: form.title,
-            title_ar: form.title_ar,
-            fileType: this.snapshot.fileType,
-            filename: this.snapshot.filename,
-            etag: this.snapshot.etag,
-            time: this.snapshot.time,
-            category: form.category,
-          };
-          this.editedItem.medias.push(mediaItem);
+        const isDuplicate = this.editedItem.medias.some(media => media.etag === uploaded.etag);
+        if (isDuplicate) {
+          this.showSnack(`1 duplicate item skipped.`);
+          return;
         }
     
-        if (skipped.length) {
-          this.showSnack(`${skipped.length} duplicate items skipped.`);
-        }
+        this.editedItem.medias.push({
+          title: form.title,
+          title_ar: form.title_ar,
+          fileType: this.snapshot.fileType,
+          filename: uploaded.filename,
+          etag: uploaded.etag,
+          time: this.snapshot.time,
+          category: form.category,
+        });
+
+        this.snapshotDialog = false;
     
-      } catch (err) {
-        console.error(err?.response?.data || err);
-        this.showSnack(err?.response?.data || "Upload failed.");
+      } catch (error) {
+        console.error(error?.response?.data || error);
+        this.showSnack(error?.response?.data || "Upload failed.");
       }
     },
     getCroppedImageData() {
-      return new Promise((resolve) => {
-        const crop = this.cropper.tool.getValue();
+      return new Promise(resolve => {
+        const cropBox = this.cropper.tool.getValue();
         const fullCanvas = this.cropper.fullCanvas;
         const scale = this.cropper.previewScale;
     
-        // ✅ Convert crop box from preview scale to full resolution
-        const realX = crop.x / scale;
-        const realY = crop.y / scale;
-        const realW = crop.width / scale;
-        const realH = crop.height / scale;
+        const cropX = cropBox.x / scale;
+        const cropY = cropBox.y / scale;
+        const cropWidth = cropBox.width / scale;
+        const cropHeight = cropBox.height / scale;
     
         this.$nextTick(() => {
-          const canvas = document.createElement('canvas');
-          canvas.width = realW;
-          canvas.height = realH;
+          const croppedCanvas = document.createElement('canvas');
+          croppedCanvas.width = cropWidth;
+          croppedCanvas.height = cropHeight;
     
-          const context = canvas.getContext('2d');
-          context.fillRect(0, 0, realW, realH);
-          context.drawImage(
+          croppedCanvas.getContext('2d').drawImage(
             fullCanvas,
-            realX,
-            realY,
-            realW,
-            realH,
-            0,
-            0,
-            realW,
-            realH
+            cropX, cropY, cropWidth, cropHeight,
+            0, 0, cropWidth, cropHeight
           );
     
-          canvas.toBlob((blob) => {
-            resolve(blob);
-          }, 'image/jpeg');
+          croppedCanvas.toBlob(blob => resolve(blob), 'image/jpeg');
         });
       });
     },
@@ -303,10 +261,7 @@ let mediaMixin = {
     },
 
     addMedia(media, item, index) {
-      this.editedMedia = JSON.parse(JSON.stringify(this.defaultMedia));
-      //console.log(this.editedEvent);
-      //enable below to activate edit mode
-      //this.editedMediaIndex = index;
+      this.editedMedia = { ...defaultMedia }
 
       //reset dual fields display to english
       this.mediaDialog = true;
@@ -322,13 +277,9 @@ let mediaMixin = {
     closeMediaDialog() {
       this.destroyCrop();
       this.editedMedia.files = [];
-      this.videoDialog = false;
-      this.audioDialog = false;
       this.mediaDialog = false;
       setTimeout(() => {
-        this.editedMedia = Object.assign({}, this.defaultMedia);
-
-        this.editedMediaIndex = -1;
+        this.editedMedia = { ...defaultMedia }
       }, 300);
     },
 

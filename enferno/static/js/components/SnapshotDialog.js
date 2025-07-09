@@ -9,6 +9,19 @@ const SnapshotDialog = Vue.defineComponent({
           category: null,
         }
     }),
+    watch: {
+      modelValue: {
+        immediate: true,
+        handler(isOpen) {
+          if (isOpen) {
+            // Initialize the form when the dialog opens
+            this.form.title = null;
+            this.form.title_ar = null;
+            this.form.category = null;
+          }
+        }
+      }
+    },
     template: /*html*/ `
       <v-dialog
           :model-value="modelValue"
@@ -30,20 +43,22 @@ const SnapshotDialog = Vue.defineComponent({
         <v-card>
           <v-card-text>
             <!-- Snapshot preview w/ crop support -->
-            <div id="cropImg" class="crop mb-4"></div>
+            <div class="crop mb-4">
+              <img id="cropImg" />
+            </div>
 
             <dual-field
               v-model:original="form.title"
               v-model:translation="form.title_ar"
-              label-original="{{ _('Title') }}"
-              label-translation="{{ _('Title (AR)') }}"
+              :label-original="translations.title_"
+              :label-translation="translations.titleAr_"
             ></dual-field>
           
               <!-- category -->
               <search-field
                 api="/admin/api/mediacategories"
                 v-model="form.category"
-                label="{{ _('Media Category') }}"
+                :label="translations.mediaCategory_"
                 item-title="title"
                 item-value="id"
               ></search-field>

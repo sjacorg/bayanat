@@ -9,9 +9,6 @@ const ImageViewer = Vue.defineComponent({
         },
       };
     },
-    mounted() {
-        this.initInlineLightbox();
-    },
     unmounted() {
         this.destroyInlineLightbox();
         this.destroyFullscreenLightbox();
@@ -69,10 +66,22 @@ const ImageViewer = Vue.defineComponent({
             this.lg.fullscreen = null;
         },
     },
+    watch: {
+        media: {
+          deep: true,
+          immediate: true,
+          handler() {
+            this.$nextTick(() => {
+              this.destroyInlineLightbox();
+              this.initInlineLightbox(); // re-init with latest DOM
+            });
+          }
+        }
+    },
     template: `
         <div ref="imageViewer">
             <a class="media-item h-100 block" :data-src="media.s3url">
-                <img :src="media.s3url" class="w-100 h-100 bg-black" style="object-fit: cover;"></img>
+                <img :src="media.s3url" class="w-100 h-100 bg-black" style="object-fit: contain;"></img>
             </a>
         </div>
       `,

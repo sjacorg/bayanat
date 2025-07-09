@@ -104,7 +104,7 @@ const InlineMediaRenderer = Vue.defineComponent({
             </div>
           </div>
           <v-spacer></v-spacer>
-          <v-btn v-if="mediaType !== 'unknown'" @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
+          <v-btn @click="$emit('fullscreen')" icon="mdi-fullscreen" class="ml-2" size="small"></v-btn>
           <v-btn icon="mdi-close" class="ml-2" size="small" @click="$emit('close')"></v-btn>
         </v-toolbar>
 
