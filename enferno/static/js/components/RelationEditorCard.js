@@ -28,7 +28,7 @@ const RelationEditorCard = Vue.defineComponent({
   template: `
     <v-card>
       <v-card-item>
-        <v-card-title>{{ translations.relation_ }} <v-chip v-if="$root.relationToConfirm?.id" prepend-icon="mdi-identifier" class="ml-1">{{ $root.relationToConfirm?.id }}</span></v-card-title>
+        <v-card-title>{{ translations.relation_ }} <v-chip v-if="$root.relationToConfirm?.id" prepend-icon="mdi-identifier" class="ml-1">{{ $root.relationToConfirm?.id }}</v-chip></v-card-title>
       </v-card-item>
       <v-card-text>
         <v-list-item :title="translations.probability_">
