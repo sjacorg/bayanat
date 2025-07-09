@@ -7,6 +7,7 @@ const defaultActorData = {
   medias: [],
   // related actors
   actor_relations: [],
+  id_number: [],
   // related bulletins
   bulletin_relations: [],
   // related incidents
