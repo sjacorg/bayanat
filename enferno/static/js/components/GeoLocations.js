@@ -9,7 +9,7 @@ const GeoLocations = Vue.defineComponent({
     },
     dialogProps: {
       type: Object,
-      default: () => ({}),
+      default: null,
     },
   },
   emits: ['update:modelValue', 'locations-updated'],
@@ -170,7 +170,7 @@ const GeoLocations = Vue.defineComponent({
 
           </v-card-text>
         </v-card>
-        <v-dialog v-if="addDlg" v-model="addDlg" v-bind="dialogProps">
+        <v-dialog v-if="addDlg" v-model="addDlg" v-bind="dialogProps || { 'max-width': '770px' }">
           <v-card>
             <v-toolbar color="dark-primary">
                 <v-toolbar-title>{{ translations.addGeoMarker_ }}</v-toolbar-title>

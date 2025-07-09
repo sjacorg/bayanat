@@ -1,6 +1,6 @@
-<snapshot-dialog v-model="snapshotDialog" v-bind="leftDialogProps"></snapshot-dialog>
+<snapshot-dialog v-model="snapshotDialog" v-bind="leftDialogProps || { 'max-width': '500px' }"></snapshot-dialog>
 
-<v-dialog v-model="mediaDialog" v-bind="leftDialogProps">
+<v-dialog v-model="mediaDialog" v-bind="leftDialogProps || { 'max-width': '500px' }">
   <template #activator="{props}">
     <v-card>
       <v-toolbar class="handle">
