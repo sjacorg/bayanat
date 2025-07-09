@@ -28,12 +28,12 @@ const PdfViewer = Vue.defineComponent({
           </v-toolbar>
       
           <v-card-text class="pa-0" style="height: calc(100vh - 64px);">
-            <object :data="media?.s3url" class="w-100 h-100"></object>
+            <iframe :src="media?.s3url" class="w-100 h-100" allow="fullscreen" allow-fullscreen></iframe>
           </v-card-text>
         </v-card>
       </v-dialog>
 
-      <object :data="media?.s3url" class="w-100 h-100"></object>
+      <iframe :src="media?.s3url" class="w-100 h-100"   allowfullscreen allow-fullscreen></iframe>
     </div>
     `,
 });
