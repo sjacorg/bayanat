@@ -336,6 +336,7 @@
     <script src="/static/js/components/RelationEditorCard.js"></script>
     <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/ImageViewer.js"></script>
+    <script src="/static/js/components/IdNumberDynamicField.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -556,8 +557,8 @@
                     medias: [],
                     actor_relations: [],
                     bulletin_relations: [],
-                    incident_relations: []
-
+                    incident_relations: [],
+                    id_number: []
                 },
                 defaultItem: {
                     description: "",
@@ -579,7 +580,8 @@
                     actor_profiles: [{
                         mode: 1
                     }],
-                    roles: []
+                    roles: [],
+                    id_number: []
                 },
 
                 //events
@@ -605,10 +607,15 @@
                 bulkTimer: 0,
 
                 actor: {},
-                actorLoader: false
+                actorLoader: false,
+
+                idNumberTypes: [],
             }),
 
             computed: {
+                simpleIdNumberValue() {
+                    return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id.toString(), number: idNumber.number.toString() }));
+                },
                 searchEmpty() {
                     return this.search.every(search =>
                         Object.values(search).every(value => !value)
@@ -696,10 +703,6 @@
                 mediaDialog(val) {
                     val || this.closeMediaDialog();
                 },
-
-                options: {
-                    handler: "refresh"
-                }
             },
             mounted: function () {
 
@@ -712,9 +715,6 @@
                         console.log(e.message);
                     });
                 {% endif  %}
-
-
-
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -769,6 +769,27 @@
             },
 
             methods: {
+                fetchIdNumberTypes() {
+                    // If already loaded the exit
+                    if (this.idNumberTypes.length) return
+
+                    // Fetch and cache IDNumberType data for ID number display and editing
+                    axios.get('/admin/api/idnumbertypes/').then(res => {
+                        this.idNumberTypes = res.data.items || [];
+                    }).catch(err => {
+                        this.idNumberTypes = [];
+                        console.error('Error fetching id number types:', err);
+                        this.showSnack(handleRequestError(err));
+                    })
+                },
+
+                updateIdNumber(updatedItems) {
+                    this.editedItem.id_number = updatedItems.map(item => ({
+                        type: this.idNumberTypes.find(type => Number(type.id) === Number(item.type)),
+                        number: item.number,
+                    }))
+                },
+
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
@@ -1220,6 +1241,8 @@
                 showActor(id) {
                     this.actorLoader = true;
 
+                    this.fetchIdNumberTypes();
+
                     axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
@@ -1407,6 +1430,8 @@
                 editItem(item) {
                     this.actorDrawer = false;
 
+                    this.fetchIdNumberTypes();
+
                     if (!item.id) {
                         this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
                         this.dialog = true;
@@ -1425,7 +1450,6 @@
                                 this.editedItem.comments = '';
                                 this.resetSwitchers();
                                 this.handleStatus(item);
-
                             });
 
 
@@ -1477,11 +1501,16 @@
                         return;
                     }
 
+                    const payload = {
+                        ...this.editedItem,
+                        id_number: this.simpleIdNumberValue
+                    }
+
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
                         axios.put(`/admin/api/actor/${this.editedItem.id}`, {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.showSnack(response.data);
                             this.refresh();
@@ -1494,7 +1523,7 @@
                     } else {
                         //create new record
                         axios.post("/admin/api/actor/", {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.items.unshift(response.data.item)
                             this.showSnack(response.data.message);
@@ -1654,6 +1683,7 @@
         app.component('RelationEditorCard', RelationEditorCard);
         app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('ImageViewer', ImageViewer);
+        app.component('IdNumberDynamicField', IdNumberDynamicField);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);

@@ -28,6 +28,11 @@ const ActorSearchBox = Vue.defineComponent({
       repr: '',
       q: {},
       qName: '',
+      id_number: {
+        type: null,
+        number: null,
+      },
+      idNumberTypes: [],
     };
   },
   watch: {
@@ -40,6 +45,11 @@ const ActorSearchBox = Vue.defineComponent({
     modelValue: function (newVal, oldVal) {
       if (newVal !== oldVal) {
         this.q = newVal;
+
+        this.id_number = {
+          type: this.q?.id_number?.type || null,
+          number: this.q?.id_number?.number || null,
+        };
       }
     },
   },
@@ -48,7 +58,14 @@ const ActorSearchBox = Vue.defineComponent({
   },
 
   mounted() {
+    this.fetchIdNumberTypes();
     this.q.locTypes = this.q.locTypes || this.translations.actorLocTypes_.map((x) => x.code);
+    if ('id_number' in this.q) {
+      this.id_number = {
+        type: this.q?.id_number?.type || null,
+        number: this.q?.id_number?.number || null,
+      };
+    }
   },
 
   computed: {
@@ -57,8 +74,41 @@ const ActorSearchBox = Vue.defineComponent({
     },
   },
 
+  
+  methods: {
+    fetchIdNumberTypes() {
+      // If already loaded the exit
+      if (this.idNumberTypes.length) return
+
+      // Fetch and cache IDNumberType data for ID number display and editing
+      axios.get('/admin/api/idnumbertypes/').then(res => {
+          this.idNumberTypes = res.data.items || [];
+      }).catch(err => {
+          this.idNumberTypes = [];
+          console.error('Error fetching id number types:', err);
+          this.showSnack(handleRequestError(err));
+      })
+  },
+    updateIdNumber(field, value) {
+      this.id_number[field] = value;
+
+      // Create a filtered copy of newVal omitting null values
+      const filteredIdNumber = Object.fromEntries(
+        Object.entries(this.id_number)
+          .filter(([_, v]) => v !== null)
+          .map(([key, value]) => [key, value.toString().trim()]),
+      );
+
+      this.q = {
+        ...this.q,
+        id_number: filteredIdNumber,
+      };
+    },
+  },
+
   template: /*html*/`
       <div>
+
         <v-container class="container--fluid">
           <v-row v-if="showOp">
             <v-col>
@@ -644,8 +694,38 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col md="6">
-              <v-text-field :label="translations.idNumber_" v-model="q.id_number"></v-text-field>
+            <v-col cols="12">
+              <v-card>
+                <v-card-item>
+                    <v-card-title>{{ translations.idNumber_ }}</v-card-title>
+                </v-card-item>
+              
+                <v-card-text class="pb-0">
+                  <div class="d-flex align-center ga-4 mb-2">
+                    <v-select
+                        :model-value="Number(id_number.type) || null"
+                        :items="idNumberTypes"
+                        item-title="title"
+                        item-value="id"
+                        :label="translations.idType_"
+                        class="w-100"
+                        @update:model-value="updateIdNumber('type', $event)"
+                        :hint="translations.leaveBlankToIncludeAllTypes_"
+                        persistent-hint
+                        clearable
+                    ></v-select>
+                    
+                    <v-text-field
+                        :model-value="id_number.number || null"
+                        :label="translations.number_"
+                        class="w-100"
+                        @update:model-value="updateIdNumber('number', $event)"
+                        @keydown.enter="$event.target.blur()"
+                        clearable
+                    ></v-text-field>
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
           </v-row>
 
@@ -653,6 +733,4 @@ const ActorSearchBox = Vue.defineComponent({
       </div>
 
     `,
-
-  methods: {},
 });

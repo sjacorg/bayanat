@@ -70,6 +70,32 @@ const ActorCard = Vue.defineComponent({
     },
   },
 
+  computed: {
+    groupedIdNumbers() {
+      const idNumbers = this.actor.id_number;
+    
+      if (!Array.isArray(idNumbers) || idNumbers.length === 0) {
+        return {};
+      }
+    
+      return idNumbers.reduce((acc, { type, number }) => {
+        if (!type || !number) return acc;
+    
+        const key = type.id; // group by type.id to avoid duplicate keys
+        if (!acc[key]) {
+          acc[key] = {
+            title: type.title || `Unknown Type ${type.id}`,
+            title_tr: type.title_tr || null,
+            numbers: []
+          };
+        }
+    
+        acc[key].numbers.push(number);
+        return acc;
+      }, {});
+    }   
+  },
+
   data: function () {
     return {
       translations: window.translations,
@@ -270,7 +296,19 @@ const ActorCard = Vue.defineComponent({
           </div>
         </v-card>
 
-        <uni-field :caption="translations.idNumber_" :english="actor.id_number"></uni-field>
+        <!-- ID Numbers - only show if there are any -->
+        <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-8 my-2">
+          <div class="d-flex flex-column">
+            <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumbers_ }}</div>
+            <div class="flex-chips">
+              <template v-for="(group, typeName) in groupedIdNumbers" :key="typeName">
+                <v-chip size="small" class="flex-chip mr-1 mb-1" variant="outlined">
+                  <strong>{{ group.title }}:&nbsp;</strong> {{ group.numbers.join(', ') }}
+                </v-chip>
+              </template>
+            </div>
+          </div>
+        </v-card>
 
         <!-- profiles -->
         <actor-profiles v-if="actor.id" :actor-id="actor.id"></actor-profiles>

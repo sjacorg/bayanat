@@ -277,7 +277,7 @@
     
                                         <v-textarea
                                                 required
-                                                :rules="[rules.required]"
+                                                :rules="[validationRules.required()]"
                                                 outlined
                                                 v-model="editedItem.comments"
                                                 label="{{ _('Comments') }}"
