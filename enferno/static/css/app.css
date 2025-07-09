@@ -462,16 +462,6 @@ input[type="date"]::-webkit-input-placeholder {
     gap: 10px;
 }
 
-.media-row {
-    display: flex;
-    gap: 10px;
-    flex-direction: row;
-    overflow-x: auto;
-}
-.media-row > * {
-    flex-shrink: 0;
-}
-
 
 /* sticky related items headers */
 
@@ -838,11 +828,6 @@ div.jsondiffpatch-child-node-type-array:after {
 
 .drop-indicator.active {
     opacity: 1;
-}
-
-.inner-video-full-height .video-js {
-    height: 100% !important;
-    padding: 0 !important;
 }
 
 /* CSS Helpers */

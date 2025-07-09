@@ -1515,7 +1515,9 @@
                     close() {
                         this.dialog = false;
                         this.actorDialog = false;
-                        this.closeExpandedMedia()
+                        this.closeExpandedMedia();
+                        this.closeMediaDialog();
+                        this.closeSnapshotDialog();
                         setTimeout(() => {
                             this.editedItem = Object.assign({}, this.defaultItem);
 
@@ -1528,8 +1530,6 @@
                     confirmClose() {
                         if (confirm(translations.confirm_)) {
                             this.close();
-                            this.closeMediaDialog();
-                            this.closeSnapshotDialog();
                         }
                     },
 

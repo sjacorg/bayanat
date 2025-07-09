@@ -484,7 +484,7 @@ const DEFAULT_VIDEOJS_OPTIONS = {
 }
 function buildVideoElement() {
     const videoElement = document.createElement('video');
-    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9';
+    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9 h-100 pa-0';
     videoElement.setAttribute('crossorigin', 'anonymous');
     videoElement.setAttribute('controls', '');
     videoElement.setAttribute('width', '620');

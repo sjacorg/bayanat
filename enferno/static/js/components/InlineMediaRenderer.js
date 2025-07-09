@@ -112,7 +112,7 @@ const InlineMediaRenderer = Vue.defineComponent({
           <div
             v-if="['video', 'audio'].includes(mediaType)"
             ref="playerContainer"
-            class="inner-video-full-height h-100"
+            class="h-100"
           ></div>
           <pdf-viewer ref="pdfViewer" v-if="mediaType === 'pdf'" :media="media" :media-type="mediaType" class="w-100 h-100"></pdf-viewer>
           <image-viewer ref="imageViewer" v-if="mediaType === 'image'" :media="media" :media-type="mediaType" class="h-100"></image-viewer>

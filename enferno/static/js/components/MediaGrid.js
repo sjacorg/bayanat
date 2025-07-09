@@ -29,12 +29,13 @@ const MediaGrid = Vue.defineComponent({
   },
   template: /*html*/`
       <div>
-        <v-sheet :class="horizontal ? 'media-row' : 'media-grid'">
+        <v-sheet :class="horizontal ? 'd-flex ga-2 flex-row overflow-x-auto' : 'media-grid'">
           <media-card
             v-for="(media,index) in sortedMedia" :key="media.id || media.uuid"
             @media-click="$emit('media-click', $event)"
             :media="media"
             :mini-mode="miniMode"
+            class="flex-shrink-0"
           >
             <template #actions v-if="enableDelete">
               <v-btn size="small" variant="text" icon="mdi-delete-sweep" v-if="!media.main" @click="$emit('remove-media', index)"  color="red"></v-btn>    
