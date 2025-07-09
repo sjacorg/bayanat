@@ -222,14 +222,8 @@ var tinyConfig = {
     table_grid: false,
     menubar: false,
     toolbar:
-        'undo redo | styleselect | bold italic underline strikethrough backcolor | outdent indent | numlist bullist | link image | align | ltr rtl | table | removeformat | searchreplace | fullscreen',
-    toolbar_groups: {
-        align: {
-            icon: 'aligncenter',
-            tooltip: 'Align',
-            items: 'alignleft aligncenter alignright alignjustify',
-        },
-    },
+        'undo redo | styleselect | bold italic underline strikethrough backcolor | outdent indent | numlist bullist | link image | alignleft aligncenter alignright alignjustify | ltr rtl | table | removeformat | searchreplace | fullscreen',
+
     table_toolbar:
         'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
 
@@ -241,6 +235,7 @@ var tinyConfig = {
     ],
     cleanup: true,
 };
+
 
 // adjust rich text editor theme based on mode
 if (__settings__.dark) {
