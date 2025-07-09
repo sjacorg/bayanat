@@ -281,10 +281,6 @@
                                       ref="relateIncidents" :dialog-props="rightDialogProps"></relate-incidents>
 
 
-                    {% include 'admin/partials/video_player_dialog.html' %}
-                    {% include 'admin/partials/audio_player_dialog.html' %}
-
-
                     <v-dialog width="600" v-model="selfAssignDialog">
                         <v-card class="pa-3">
                             <v-card-title>{{ _('Self Assign Bulletin') }} #${assignBulletin.id}</v-card-title>
@@ -539,7 +535,6 @@
 
 
                     actorDialog: false,
-                    snapshotDialog: false,
                     dialog: dialog,
                     saving: false,
                     eventDialog: false,

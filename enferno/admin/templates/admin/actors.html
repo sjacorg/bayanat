@@ -250,10 +250,6 @@
                     <relate-incidents @relate="relateIncident($event.item, $event.relation)" :exids="exIncidents"
                                       ref="relateIncidents"></relate-incidents>
 
-                    {% include 'admin/partials/video_player_dialog.html' %}
-                    {% include 'admin/partials/audio_player_dialog.html' %}
-
-
                     <v-dialog width="600" v-model="selfAssignDialog">
                         <v-card class="pa-3">
                             <v-card-title>{{ _('Self Assign Actor') }} #${assignActor.id}</v-card-title>
@@ -458,7 +454,6 @@
                 eventParams: {typ: 'for_actor'},
                 reviewDialog: false,
                 reviewKey: 0,
-                playerOptions: {},
 
                 // search and relate actor dialog vars
                 relateActorDialog: false,
@@ -476,7 +471,6 @@
                 relateIncidentTerm: "",
 
                 actorDrawer: false,
-                snapshotDialog: false,
                 bulkActorDrawer: false,
 
                 exportDrawer: false,
