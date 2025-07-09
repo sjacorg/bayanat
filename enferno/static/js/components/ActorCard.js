@@ -297,7 +297,7 @@ const ActorCard = Vue.defineComponent({
         </v-card>
 
         <!-- ID Numbers - only show if there are any -->
-        <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-8 my-2">
+        <v-card v-if="actor.id_number && actor.id_number?.length > 0" variant="flat" class="mx-8 my-2">
           <div class="d-flex flex-column">
             <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumbers_ }}</div>
             <div class="flex-chips">
