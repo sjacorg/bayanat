@@ -35,7 +35,7 @@ const allowedKeys = [
   'tags',
   'comments',
   'status',
-  'roles'
+  'roles',
   // add others if needed
 ];
 
@@ -85,6 +85,7 @@ const ShortActorDialog = Vue.defineComponent({
       related_as: null,
       comment: null,
     },
+    idNumberTypes: [],
     valid: false,
     unrestricted: false,
     translations: window.translations,
@@ -101,8 +102,37 @@ const ShortActorDialog = Vue.defineComponent({
     formTitle() {
       return this.editedItem?.id ? this.translations.editActor_ : this.translations.newActor_;
     },
+    simpleIdNumberValue() {
+      return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id.toString(), number: idNumber.number.toString() }));
+    },
+  },
+  mounted() {
+    this.fetchIdNumberTypes();
   },
   methods: {
+    fetchIdNumberTypes() {
+      // If already loaded the exit
+      if (this.idNumberTypes.length) return;
+
+      // Fetch and cache IDNumberType data for ID number display and editing
+      axios
+        .get('/admin/api/idnumbertypes/')
+        .then((res) => {
+          this.idNumberTypes = res.data.items || [];
+        })
+        .catch((err) => {
+          this.idNumberTypes = [];
+          console.error('Error fetching id number types:', err);
+          this.showSnack(handleRequestError(err));
+        });
+    },
+
+    updateIdNumber(updatedItems) {
+      this.editedItem.id_number = updatedItems.map((item) => ({
+        type: this.idNumberTypes.find((type) => Number(type.id) === Number(item.type)),
+        number: item.number,
+      }));
+    },
     shouldDisplayField(mode, fieldName) {
       return this.profileModes.find((x) => x.id === mode).fields.includes(fieldName);
     },
@@ -149,10 +179,15 @@ const ShortActorDialog = Vue.defineComponent({
         ];
       }
 
+      const payload = {
+        ...this.editedItem,
+        id_number: this.simpleIdNumberValue
+    }
+
       //create new record
       axios
         .post('/admin/api/actor/', {
-          item: this.editedItem,
+          item: payload,
         })
         .then((response) => {
           if (response?.data?.item?.id) {
@@ -165,7 +200,7 @@ const ShortActorDialog = Vue.defineComponent({
               },
             });
             // Reset filters values on RelateActors component
-            this.$root.$refs.relateActors.q = {}
+            this.$root.$refs.relateActors.q = {};
           }
           this.showSnack(response.data.message);
           this.close();
@@ -190,7 +225,7 @@ const ShortActorDialog = Vue.defineComponent({
         // but only the keys used in this short actor dialog form
         const relateData = this.$root.$refs.relateActors.q;
         const filteredData = Object.fromEntries(
-          Object.entries(relateData).filter(([key]) => allowedKeys.includes(key))
+          Object.entries(relateData).filter(([key]) => allowedKeys.includes(key)),
         );
 
         this.editedItem = {
@@ -279,8 +314,13 @@ const ShortActorDialog = Vue.defineComponent({
                               ></location-search-field>
                           </div>
 
-                          <div style="min-width: 0;">
-                              <v-text-field v-model="editedItem.id_number" :label="translations.idNumber_"></v-text-field>
+                          <div style="grid-column: 1 / -1; min-width: 0;">
+                              <!-- ID Numbers Management -->
+                              <id-number-dynamic-field
+                                  :model-value="simpleIdNumberValue"
+                                  @update:model-value="updateIdNumber"
+                                  :id-number-types="idNumberTypes"
+                              ></id-number-dynamic-field>
                           </div>
 
                           <div style="min-width: 0;">
