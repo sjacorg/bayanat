@@ -80,6 +80,8 @@ const relationsMixin = {
           ...relationData,
         };
         relationList.push(relation);
+
+        this.showSnack(`Item ${item.id} has been related successfully`);
       }
     },
 

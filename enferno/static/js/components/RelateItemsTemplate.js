@@ -16,6 +16,7 @@ const RelateItemsTemplate = Vue.defineComponent({
       '$root.isConfirmRelationDialogOpen'(isOpen) {
         if (!isOpen) {
           this.relation = { probability: null, related_as: [], comment: '' }
+          this.$root.relationToConfirm = null
         }
       }
     },
