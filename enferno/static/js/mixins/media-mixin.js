@@ -109,9 +109,16 @@ const mediaMixin = {
     
       const originalWidth = this.videoMeta.width;
       const originalHeight = this.videoMeta.height;
-      const maxPreviewSize = 250;
-    
-      const scaleFactor = Math.min(1, maxPreviewSize / originalWidth);
+      const maxPreviewWidth = 600;
+      const maxPreviewHeight = 600;
+
+      // Calculate scale factor that keeps aspect ratio and fits within both limits
+      const scaleFactor = Math.min(
+        maxPreviewWidth / originalWidth,
+        maxPreviewHeight / originalHeight,
+        1 // Don't upscale if it's already smaller
+      );
+
       const previewWidth = originalWidth * scaleFactor;
       const previewHeight = originalHeight * scaleFactor;
     
