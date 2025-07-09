@@ -54,9 +54,9 @@ const RelateIncidents = Vue.defineComponent({
       this.page += 1;
       this.search();
     },
-    relateItem(item) {
+    relateItem({ item, relationData }) {
       this.results = this.results.filter((result) => result.id !== item.id);
-      this.$emit('relate', { item, relation: this.relation });
+      this.$emit('relate', { item, relationData });
     },
   },
 
@@ -71,7 +71,7 @@ const RelateIncidents = Vue.defineComponent({
       :has-more="hasMore"
       :multi-relation="$root.incidentRelationMultiple"
       :relation-types="$root.incidentRelationTypes"
-      @relate="relateItem($root.relationToConfirm)"
+      @relate="relateItem"
     >
       <template v-if="$slots.actions" #actions>
         <slot name="actions"></slot>

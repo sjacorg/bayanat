@@ -263,10 +263,10 @@
                                 size="64"
                         ></v-progress-circular>
                     </v-overlay>
-                    <relate-bulletins @relate="relateBulletin($event.item, $event.relation)" :exids="exBulletins"
+                    <relate-bulletins @relate="relateBulletin" :exids="exBulletins"
                                       ref="relateBulletins" :dialog-props="rightDialogProps"></relate-bulletins>
                     <relate-actors
-                        @relate="relateActor($event.item, $event.relation)"
+                        @relate="relateActor"
                         :exids="exActors"
                         ref="relateActors"
                         :dialog-props="rightDialogProps"
@@ -277,7 +277,7 @@
                             </v-btn>            
                         </template>
                     </relate-actors>
-                    <relate-incidents @relate="relateIncident($event.item, $event.relation)" :exids="exIncidents"
+                    <relate-incidents @relate="relateIncident" :exids="exIncidents"
                                       ref="relateIncidents" :dialog-props="rightDialogProps"></relate-incidents>
 
 
@@ -1612,11 +1612,11 @@
                     searchRelatedActors() {
                         this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
                     },
-                    relateActor(actor, relationData = {}) {
+                    relateActor({ item, relationData }) {
                         this.addItemToRelation({
                             type: 'actor',
                             relationList: this.editedItem.actor_relations,
-                            item: actor,
+                            item,
                             relationData,
                         })
                     },
@@ -1628,11 +1628,11 @@
                     searchRelatedBulletins() {
                         this.searchRelatedItems({ ref: this.$refs.relateBulletins, searchTerm: this.relateBulletinTerm })
                     },
-                    relateBulletin(bulletin, relationData = {}) {
+                    relateBulletin({ item, relationData }) {
                         this.addItemToRelation({
                             type: 'bulletin',
                             relationList: this.editedItem.bulletin_relations,
-                            item: bulletin,
+                            item,
                             relationData,
                         })
                     },
@@ -1644,11 +1644,11 @@
                     searchRelatedIncidents() {
                         this.searchRelatedItems({ ref: this.$refs.relateIncidents, searchTerm: this.relateIncidentTerm })
                     },
-                    relateIncident(incident, relationData = {}) {
+                    relateIncident({ item, relationData }) {
                         this.addItemToRelation({
                             type: 'incident',
                             relationList: this.editedItem.incident_relations,
-                            item: incident,
+                            item,
                             relationData,
                         })
                     },
