@@ -19,8 +19,6 @@ const RelateItemsTemplate = Vue.defineComponent({
         }
       }
     },
-    // TODO: Clean up relation variable when `isConfirmRelationDialogOpen = false`
-  
     template: /*html*/ `
       <v-dialog :model-value="visible" @update:model-value="$emit('update:visible', $event)" v-bind="dialogProps">
         <v-card class="d-flex flex-column h-screen pa-0" :loading="loading">

@@ -93,8 +93,16 @@ const mediaMixin = {
       this.editedMedia.files.push(file);
     },
 
+    openSnapshotDialog() {
+      this.snapshotDialog = true;
+    },
+    closeSnapshotDialog() {
+      this.snapshotDialog = false;
+    },
+
     initCroppr() {
       if (this.cropper.active) this.destroyCrop();
+      this.openSnapshotDialog();
     
       const videoElement = this.mediaPlayer.el().querySelector('video');
       videoElement.pause();
@@ -189,7 +197,7 @@ const mediaMixin = {
           category: form.category,
         });
 
-        this.snapshotDialog = false;
+        this.closeSnapshotDialog();
     
       } catch (error) {
         console.error(error?.response?.data || error);
