@@ -16,7 +16,7 @@ import re
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
-from enferno.utils.validation_utils import validate_username_format, validate_email_format
+from enferno.utils.validation_utils import validate_plain_text_field, validate_email_format
 from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
@@ -1402,7 +1402,8 @@ class UserValidationModel(StrictValidationModel):
             return v
 
         try:
-            return validate_username_format(v)
+            validate_plain_text_field(v, "Username", 32, check_unicode=True)
+            return v
         except ValidationError as e:
             raise ValueError(str(e))
 
@@ -1456,7 +1457,8 @@ class UserNameCheckValidationModel(BaseValidationModel):
             raise ValueError("Username cannot be empty")
 
         try:
-            return validate_username_format(v)
+            validate_plain_text_field(v, "Username", 32, check_unicode=True)
+            return v
         except ValidationError as e:
             raise ValueError(str(e))
 

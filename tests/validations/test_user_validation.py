@@ -1,7 +1,6 @@
 import pytest
 from wtforms.validators import ValidationError
-from enferno.utils.validation_utils import validate_username_format, validate_email_format
-from tests.factories import UserFactory
+from enferno.utils.validation_utils import validate_plain_text_field, validate_email_format
 
 
 @pytest.fixture(scope="function")
@@ -41,8 +40,7 @@ class TestUsernameValidation:
 
         for username in valid_usernames:
             # Should not raise any exception
-            result = validate_username_format(username)
-            assert result == username
+            validate_plain_text_field(username, "Username", 32, check_unicode=True)
 
     def test_invalid_usernames_with_special_chars(self):
         """Test that usernames with disallowed special characters are rejected."""
@@ -73,60 +71,49 @@ class TestUsernameValidation:
 
         for username in invalid_usernames:
             with pytest.raises(ValidationError):
-                validate_username_format(username)
+                validate_plain_text_field(username, "Username", 32, check_unicode=True)
 
     def test_empty_username(self):
         """Test that empty usernames are rejected."""
         with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_username_format("")
+            validate_plain_text_field("", "Username", 32, check_unicode=True)
 
         with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_username_format("   ")
+            validate_plain_text_field("   ", "Username", 32, check_unicode=True)
 
-    # Helper functions for payload creation
-    def extract_username(self, user):
-        return user.username
-
-    def extract_dict(self, user):
-        return {
-            "username": user.username,
-            "email": user.email,
-            "name": user.name if hasattr(user, "name") else "Test User",
-            "active": True,
-        }
-
-    params = [
-        (
-            "/admin/api/checkuser/",
-            "a",
-            "String should have at least 4 characters",
-            "item",
-            "extract_username",
-        ),
-        (
-            "/admin/api/user/",
-            "a",
-            "String should have at least 4 characters",
-            "item.username",
-            "extract_dict",
-        ),
-        (
-            "/admin/api/checkuser/",
-            "a" * 256,
-            "String should have at most 32 characters",
-            "item",
-            "extract_username",
-        ),
-        (
-            "/admin/api/user/",
-            "a" * 256,
-            "String should have at most 32 characters",
-            "item.username",
-            "extract_dict",
-        ),
-    ]
-
-    @pytest.mark.parametrize("url,username,error_message,field,payload_extractor", params)
+    @pytest.mark.parametrize(
+        "url,username,error_message,field,is_checkuser",
+        [
+            (
+                "/admin/api/checkuser/",
+                "a",
+                "String should have at least 4 characters",
+                "item",
+                True,
+            ),
+            (
+                "/admin/api/user/",
+                "a",
+                "String should have at least 4 characters",
+                "item.username",
+                False,
+            ),
+            (
+                "/admin/api/checkuser/",
+                "a" * 256,
+                "String should have at most 32 characters",
+                "item",
+                True,
+            ),
+            (
+                "/admin/api/user/",
+                "a" * 256,
+                "String should have at most 32 characters",
+                "item.username",
+                False,
+            ),
+        ],
+    )
     def test_username_length_validation(
         self,
         ensure_setup_complete,
@@ -135,17 +122,18 @@ class TestUsernameValidation:
         username,
         error_message,
         field,
-        payload_extractor,
+        is_checkuser,
     ):
         """Test username length validation using endpoints as basic format validation doesn't cover length."""
-        user = UserFactory()
-        user.username = username
-        # Ensure email is valid so it doesn't interfere with username validation
-        user.email = "test@example.com"
-
-        # Get the method and call it to create the payload
-        method = getattr(self, payload_extractor)
-        payload = method(user)
+        if is_checkuser:
+            payload = username
+        else:
+            payload = {
+                "username": username,
+                "email": "test@example.com",
+                "name": "Test User",
+                "active": True,
+            }
 
         response = admin_client.post(url, json={"item": payload})
         assert response.status_code == 400
