@@ -261,6 +261,7 @@ def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expect
     actor = ActorFactory()
     actor_dict = actor.to_dict()
     actor_dict["actor_profiles"] = [{"mode": 1}]
+    actor_dict["id_number"] = actor.id_number
     response = client_.post(
         "/admin/api/actor",
         headers={"content-type": "application/json"},
@@ -310,6 +311,7 @@ def test_put_actor_endpoint(
     actor_dict["last_name"] = new_last_name
     actor_dict["middle_name"] = new_middle_name
     actor_dict["actor_profiles"] = [{"mode": 1}]
+    actor_dict["id_number"] = actor.id_number
     response = client_.put(
         f"/admin/api/actor/{actor_id}",
         headers={"content-type": "application/json"},
@@ -358,6 +360,7 @@ def test_put_actor_assigned_endpoint(
         actor_dict["first_name"] = new_first_name
         actor_dict["last_name"] = new_last_name
         actor_dict["middle_name"] = new_middle_name
+        actor_dict["id_number"] = actor.id_number
         response = client_.put(
             f"/admin/api/actor/{actor_id}",
             headers={"content-type": "application/json"},
@@ -430,10 +433,12 @@ def test_put_actor_review_endpoint(
         actor = get_first_or_fail(Actor)
         id = actor.id
         assert actor.review != nb.review
+        nb_dict = nb.to_dict()
+        nb_dict["id_number"] = nb.id_number
         response = client_.put(
             f"/admin/api/actor/review/{id}",
             headers={"content-type": "application/json"},
-            json={"item": nb.to_dict()},
+            json={"item": nb_dict},
         )
         assert response.status_code == expected_status
         found_actor = Actor.query.filter(Actor.id == id).first()
