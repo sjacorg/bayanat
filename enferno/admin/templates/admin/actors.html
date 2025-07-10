@@ -167,7 +167,7 @@
                         
                                         </div>
                                         <div>
-                                            <span>${rangeStart}-${rangeEnd} of ${totalCount}</span>
+                                            <span>${rangeStart.toLocaleString('en-US')}-${rangeEnd.toLocaleString('en-US')} of ${totalCount.toLocaleString('en-US')}</span>
                                             <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text"
                                                 icon="mdi-page-first"></v-btn>
                                             <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text"
@@ -357,6 +357,7 @@
     <script src="/static/js/components/ImageGallery.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/IdNumberDynamicField.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -598,8 +599,8 @@
                     medias: [],
                     actor_relations: [],
                     bulletin_relations: [],
-                    incident_relations: []
-
+                    incident_relations: [],
+                    id_number: []
                 },
                 defaultItem: {
                     description: "",
@@ -621,7 +622,8 @@
                     actor_profiles: [{
                         mode: 1
                     }],
-                    roles: []
+                    roles: [],
+                    id_number: []
                 },
 
                 //events
@@ -653,6 +655,7 @@
 
                 // Count functionality  
                 totalCount: 0,
+                idNumberTypes: [],
             }),
 
             computed: {
@@ -665,6 +668,10 @@
                 showingItemsOfText() {
                     return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
                 },
+                simpleIdNumberValue() {
+                    return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id.toString(), number: idNumber.number.toString() }));
+                },
+
                 searchEmpty() {
                     return this.search.every(search =>
                         Object.values(search).every(value => !value)
@@ -789,10 +796,6 @@
                 mediaDialog(val) {
                     val || this.closeMediaDialog();
                 },
-
-                options: {
-                    handler: "refresh"
-                }
             },
             mounted: function () {
 
@@ -866,7 +869,7 @@
             },
 
             methods: {
-                 fetchRelationInfo() {
+                fetchRelationInfo() {
                         axios.get('/admin/api/relation/info')
                             .then(response => {
                                 this.itobInfo = response.data.itobInfo;
@@ -880,7 +883,28 @@
                                 console.error('Error fetching relation info:', error);
                                 this.showSnack('Error fetching relation info');
                             });
-                    },
+                },
+
+                fetchIdNumberTypes() {
+                    // If already loaded the exit
+                    if (this.idNumberTypes.length) return
+
+                    // Fetch and cache IDNumberType data for ID number display and editing
+                    axios.get('/admin/api/idnumbertypes/').then(res => {
+                        this.idNumberTypes = res.data.items || [];
+                    }).catch(err => {
+                        this.idNumberTypes = [];
+                        console.error('Error fetching id number types:', err);
+                        this.showSnack(handleRequestError(err));
+                    })
+                },
+
+                updateIdNumber(updatedItems) {
+                    this.editedItem.id_number = updatedItems.map(item => ({
+                        type: this.idNumberTypes.find(type => Number(type.id) === Number(item.type)),
+                        number: item.number,
+                    }))
+                },
 
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
@@ -1371,6 +1395,8 @@
                 showActor(id) {
                     this.actorLoader = true;
 
+                    this.fetchIdNumberTypes();
+
                     axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
                         this.actorDrawer = true;
@@ -1558,6 +1584,8 @@
                 editItem(item) {
                     this.actorDrawer = false;
 
+                    this.fetchIdNumberTypes();
+
                     if (!item.id) {
                         this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
                         this.dialog = true;
@@ -1576,7 +1604,6 @@
                                 this.editedItem.comments = '';
                                 this.resetSwitchers();
                                 this.handleStatus(item);
-
                             });
 
 
@@ -1628,11 +1655,16 @@
                         return;
                     }
 
+                    const payload = {
+                        ...this.editedItem,
+                        id_number: this.simpleIdNumberValue
+                    }
+
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
                         axios.put(`/admin/api/actor/${this.editedItem.id}`, {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.showSnack(response.data);
                             this.refresh();
@@ -1645,7 +1677,7 @@
                     } else {
                         //create new record
                         axios.post("/admin/api/actor/", {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.items.unshift(response.data.item)
                             this.showSnack(response.data.message);
@@ -1840,6 +1872,7 @@
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
         app.component('PreviewCard', PreviewCard);
+        app.component('IdNumberDynamicField', IdNumberDynamicField);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);

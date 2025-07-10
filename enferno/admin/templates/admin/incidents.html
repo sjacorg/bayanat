@@ -170,7 +170,7 @@
                         
                                         </div>
                                         <div>
-                                            <span>${rangeStart}-${rangeEnd} of ${totalCount}</span>
+                                            <span>${rangeStart.toLocaleString('en-US')}-${rangeEnd.toLocaleString('en-US')} of ${totalCount.toLocaleString('en-US')}</span>
                                             <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text"
                                                 icon="mdi-page-first"></v-btn>
                                             <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text"
