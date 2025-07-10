@@ -1235,7 +1235,7 @@ def merge_graphs(result_set: Any, entity_type: str, graph_utils: GraphUtils) -> 
     """
     graph = None
     for item in result_set.all():
-        current_graph = json.dumps(graph_utils.get_graph_json(entity_type, item.id))
+        current_graph = graph_utils.get_graph_json(entity_type, item.id)
         graph = current_graph if graph is None else graph_utils.merge_graphs(graph, current_graph)
     return graph
 
