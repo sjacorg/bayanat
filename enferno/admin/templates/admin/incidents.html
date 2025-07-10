@@ -326,6 +326,7 @@
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
     <script src="/static/js/components/RelationEditorCard.js"></script>
+    <script src="/static/js/components/EventsSection.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
@@ -1037,13 +1038,6 @@
                 },
 
 
-                removeEvent: function (evt, index) {
-                    if (confirm("{{ _('Confirm deleting this event?')}}")) {
-                        this.editedItem.events.splice(index, 1);
-                    }
-                },
-
-
                 //reset initial visible fields to english language
 
                 resetSwitchers: function () {
@@ -1404,40 +1398,6 @@
                     }
                 },
 
-                editEvent(evt, item, index) {
-                    this.editedEvent = Object.assign({}, item);
-                    //console.log(this.editedEvent);
-                    this.editedEventIndex = index;
-
-                    //reset dual fields display to english
-                    this.eventTitle__ = true;
-                    this.eventComments__ = true;
-                    this.eventDialog = true;
-                    //this.locations = this.editedItem.locations;
-                },
-
-                closeEvent() {
-                    this.eventDialog = false;
-                    setTimeout(() => {
-                        this.editedEvent = Object.assign({}, this.defaultEvent);
-                        this.editedEventIndex = -1;
-                    }, 300);
-                },
-
-                saveEvent() {
-                    if (this.editedEventIndex > -1) {
-                        Object.assign(
-                            this.editedItem.events[this.editedEventIndex],
-                            this.editedEvent
-                        );
-                        //update record
-                    } else {
-                        this.editedItem.events.push(this.editedEvent);
-                        //create new record
-                    }
-                    this.closeEvent();
-                },
-
                 // related actors functions --------------------
                 searchRelatedActors() {
                     this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
@@ -1541,6 +1501,7 @@
         app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('PreviewCard', PreviewCard);
         app.component('RelationEditorCard', RelationEditorCard);
+        app.component('EventsSection', EventsSection);
 
 
         app.use(router).use(vuetify).mount("#app");

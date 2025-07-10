@@ -58,6 +58,10 @@ const ShortActorDialog = Vue.defineComponent({
       type: Object,
       default: () => ({}),
     },
+    eventParams: {
+      type: Object,
+      default: () => ({}),
+    },
     allowedRoles: {
       type: Array,
       default: () => [],
@@ -73,9 +77,6 @@ const ShortActorDialog = Vue.defineComponent({
     open: {
       type: Boolean,
       default: false,
-    },
-    showSnack: {
-      type: Function,
     },
   },
   emits: ['update:open', 'close', 'createActor'],
@@ -124,7 +125,7 @@ const ShortActorDialog = Vue.defineComponent({
         .catch((err) => {
           this.idNumberTypes = [];
           console.error('Error fetching id number types:', err);
-          this.showSnack(handleRequestError(err));
+          this.$root.showSnack(handleRequestError(err));
         });
     },
 
@@ -155,14 +156,14 @@ const ShortActorDialog = Vue.defineComponent({
         if (valid) {
           this.save();
         } else {
-          this.showSnack(translations.pleaseReviewFormForErrors_);
+          this.$root.showSnack(translations.pleaseReviewFormForErrors_);
           scrollToFirstError(errors);
         }
       });
     },
     save() {
       if (!this.valid) {
-        this.showSnack(translations.pleaseReviewFormForErrors_);
+        this.$root.showSnack(translations.pleaseReviewFormForErrors_);
         return;
       }
 
@@ -203,12 +204,12 @@ const ShortActorDialog = Vue.defineComponent({
             // Reset filters values on RelateActors component
             this.$root.$refs.relateActors.q = {};
           }
-          this.showSnack(response.data.message);
+          this.$root.showSnack(response.data.message);
           this.close();
         })
         .catch((err) => {
           console.error(err.response?.data);
-          this.showSnack(handleRequestError(err));
+          this.$root.showSnack(handleRequestError(err));
           this.saving = false;
         });
     },
@@ -352,7 +353,7 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
-                              <slot name="events"></slot>
+                            <events-section :edited-item="editedItem" :dialog-props="dialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                           </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">

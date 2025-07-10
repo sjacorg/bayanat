@@ -418,6 +418,7 @@
     <script src="/static/js/dropzone.min.js"></script>
     <script src="/static/js/components/VueDropzone.js"></script>
     <script src="/static/js/components/IdNumberDynamicField.js"></script>
+    <script src="/static/js/components/EventsSection.js"></script>
 
 
     <script src="/static/js/components/MPCard.js"></script>
@@ -1232,14 +1233,6 @@
                     },
 
 
-                    removeEvent: function (evt, index) {
-                        if (confirm("{{ _('Confirm deleting this event?')}}")) {
-                            this.editedItem.events.splice(index, 1);
-                        }
-
-                    },
-
-
                     //reset initial visible fields to english language
 
                     resetSwitchers: function () {
@@ -1570,46 +1563,6 @@
                         }
                     },
 
-                    editEvent(evt, item, index) {
-                        this.eventDialog = true;
-
-                        this.$nextTick(() => {
-                            this.editedEvent = Object.assign({}, item);
-
-                            this.editedEventIndex = index;
-
-                            //reset dual fields display to english
-                            this.eventTitle__ = true;
-                            this.eventComments__ = true;
-
-                        })
-
-                        //this.locations = this.editedItem.locations;
-                    },
-
-                    closeEvent() {
-                        this.eventDialog = false;
-                        setTimeout(() => {
-                            this.editedEvent = Object.assign({}, this.defaultEvent);
-                            this.editedEventIndex = -1;
-                        }, 300);
-                    },
-
-                    saveEvent() {
-
-                        if (this.editedEventIndex > -1) {
-                            Object.assign(
-                                this.editedItem.events[this.editedEventIndex],
-                                this.editedEvent
-                            );
-                            //update record
-                        } else {
-                            this.editedItem.events.push(this.editedEvent);
-                            //create new record
-                        }
-                        this.closeEvent();
-                    },
-
                     // related actors functions --------------------
                     searchRelatedActors() {
                         this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
@@ -1748,6 +1701,7 @@
         app.component('ActorProfiles', ActorProfiles);
         app.component('ShortActorDialog', ShortActorDialog);
         app.component('IdNumberDynamicField', IdNumberDynamicField);
+        app.component('EventsSection', EventsSection);
 
 
         app.use(router);
