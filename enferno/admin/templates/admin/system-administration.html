@@ -569,10 +569,14 @@
                     
                                     <v-slide-y-transition>
                                         <v-sheet v-show="eitem.SHEET_IMPORT" class="mt-4">
-                                            <v-combobox v-bind="inputProps" multiple chips persistent-hint
-                                                hint="{{ _('Allowed spreadsheet extensions for Sheets Import Tool.') }}"
-                                                label="{{ _('Allowed Sheets Extensions') }}" :items="eitem.SHEETS_ALLOWED_EXTENSIONS"
-                                                v-model="eitem.SHEETS_ALLOWED_EXTENSIONS"></v-combobox>
+                                            <v-row>
+                                                <v-col cols="12" lg="6">
+                                                    <v-combobox v-bind="inputProps" multiple chips persistent-hint
+                                                        hint="{{ _('Allowed spreadsheet extensions for Sheets Import Tool.') }}"
+                                                        label="{{ _('Allowed Sheets Extensions') }}" :items="eitem.SHEETS_ALLOWED_EXTENSIONS"
+                                                        v-model="eitem.SHEETS_ALLOWED_EXTENSIONS"></v-combobox>
+                                                </v-col>
+                                            </v-row>
                                         </v-sheet>
                                     </v-slide-y-transition>
                     
