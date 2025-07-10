@@ -925,19 +925,19 @@
                 filter_related_to_bulletin(id) {
                     this.bulletinDrawer = false;
                     this.search = {rel_to_bulletin: id};
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
                     this.bulletinDrawer = false;
                     this.search = {rel_to_actor: id};
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
                     this.bulletinDrawer = false;
                     this.search = {rel_to_incident: id};
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 previewItem(endpoint) {
@@ -958,7 +958,7 @@
                             clearInterval(this.bulkTimer);
                             //reset search pager
                             this.options.page = 1;
-                            this.refresh();
+                            this.goToFirstPage();
                             this.showSnack("{{_('Bulk Update is finished!')}}")
                         }
                     });
@@ -1003,7 +1003,7 @@
 
                 doSearch() {
                     this.advSearchExpand = this.advSearchExpand && false;
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 resetQuery() {
@@ -1014,7 +1014,7 @@
 
                 resetSearch() {
                     this.resetQuery();
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 setNextPerPageValue(nextPerPage) {
@@ -1171,21 +1171,21 @@
 
                 allIncidents() {
                     this.search = {};
-                    this.refresh();
+                    this.goToFirstPage();
 
                 },
                 myAssigned() {
                     this.search = {};
                     this.search.assigned = [this.currentUser.id];
                     this.search.statuses = ["Assigned"];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 myReview() {
                     this.search = {};
                     this.search.reviewer = [this.currentUser.id];
                     this.search.statuses = ["Peer Review Assigned"];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
 
