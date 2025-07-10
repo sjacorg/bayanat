@@ -210,6 +210,23 @@
                                 </editable-table>
                             </div>
                         </div>
+                        <div v-if="tabState.main === 'identification'">
+                            <v-tabs mandatory height="64" v-model="tabState.child">
+                                <v-tab v-for="(childTab, key) in tabsMap[tabState.main].nestedTabsMap" :key="key" class="px-7" :value="key">
+                                    ${childTab.text}
+                                </v-tab>
+                            </v-tabs>
+                            <v-divider></v-divider>
+                        
+                            <div class="overflow-y-auto" style="max-height: calc(100dvh - 248px);">
+                                <div v-if="tabState.child === 'id-number-types'">
+                                    <editable-table title="{{ _('ID Number Types') }}" :item-headers="idNumberTypeHeaders"
+                                        :editable-columns="['title','title_tr']" delete-endpoint="/admin/api/idnumbertype"
+                                        save-endpoint="/admin/api/idnumbertype" load-endpoint="/admin/api/idnumbertypes/?per_page=1000">
+                                    </editable-table>
+                                </div>
+                            </div>
+                        </div>
                         <div v-if="tabState.main === 'violation'">
                             <v-tabs mandatory height="64" v-model="tabState.child">
                                 <v-tab class="px-7" value="potential-violation">
@@ -328,6 +345,12 @@
                     },
                     media: { text: "{{ _('Media Categories') }}" },
                     geolocation: { text: "{{ _('Geo Location') }}" },
+                    identification: {
+                        text: "{{ _('Identification') }}",
+                            nestedTabsMap: {
+                            ['id-number-types']: { text: "{{ _('ID Number Types') }}" }
+                        }
+                    },
                     violation: {
                         text: "{{ _('Violation Categories') }}",
                         nestedTabsMap: {
@@ -343,6 +366,7 @@
                 ethnoHeaders: this.createHeaders('titleLocalized'),
                 dialectHeaders: this.createHeaders('titleLocalized'),
                 relationHeaders: this.createHeaders('titleLocalized'),
+                idNumberTypeHeaders: this.createHeaders('titleLocalized'),
                 revRelationHeaders: this.createHeaders('titleWithReverseLocalized'),
                 mediaHeaders: this.createHeaders('titleLocalized'),
                 geoHeaders: this.createHeaders('titleLocalized'),
