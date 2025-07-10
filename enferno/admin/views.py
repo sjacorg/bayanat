@@ -4014,10 +4014,7 @@ def api_actors(validated_data: dict) -> Response:
         - actors in json format / success or error
     """
     # log search query
-    if request.method == "POST":
-        q = validated_data.get("q", [{}])
-    else:
-        q = request.args.get("q", [{}])
+    q = validated_data.get("q", [{}])
     if q and q != [{}]:
         Activity.create(
             current_user,
@@ -4027,34 +4024,107 @@ def api_actors(validated_data: dict) -> Response:
             "actor",
         )
 
-    su = SearchUtils({"q": q}, cls="actor")
-    queries, ops = su.get_query()
-    result = Actor.query.filter(*queries.pop(0))
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", 20)
+    include_count = validated_data.get("include_count", False)
 
-    # nested queries
-    if len(queries) > 0:
-        while queries:
-            nextOp = ops.pop(0)
-            nextQuery = queries.pop(0)
-            if nextOp == "union":
-                result = result.union(Actor.query.filter(*nextQuery))
-            elif nextOp == "intersect":
-                result = result.intersect(Actor.query.filter(*nextQuery))
+    search = SearchUtils({"q": q}, "actor")
+    base_query = search.get_query()
 
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
-    result = result.order_by(Actor.updated_at.desc()).paginate(
-        page=page, per_page=per_page, count=True
-    )
-    # Select json encoding type
-    mode = request.args.get("mode", "1")
+    if include_count and cursor is None:
+        # Check if this is a simple listing query (no search filters)
+        is_simple_listing = q == [{}] or not any(
+            bool(filter_dict) for filter_dict in q if filter_dict
+        )
+
+        if is_simple_listing:
+            # For simple listing: use fast COUNT(*) directly on table (~50ms)
+            total_count = db.session.execute(select(func.count(Actor.id))).scalar()
+
+            # Fast data query without window function overhead
+            main_query = base_query.order_by(Actor.id.desc()).limit(per_page + 1)
+            result = db.session.execute(main_query)
+            items = result.scalars().unique().all()
+        else:
+            # For search queries: keep original window function approach
+            count_subquery = (
+                base_query.add_columns(func.count().over().label("total_count"))
+                .order_by(Actor.id.desc())
+                .limit(per_page + 1)
+            )
+
+            result = db.session.execute(count_subquery)
+            rows = result.all()
+
+            if rows:
+                items = [row[0] for row in rows]  # Extract Actor objects
+                total_count = rows[0].total_count if rows else 0
+            else:
+                items = []
+                total_count = 0
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+    else:
+        # Fast pagination approach: no counting overhead
+        main_query = base_query.order_by(Actor.id.desc())
+        if cursor:
+            main_query = main_query.where(Actor.id < int(cursor))
+
+        paginated_query = main_query.limit(per_page + 1)
+        result = db.session.execute(paginated_query)
+        items = result.scalars().unique().all()
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+        total_count = None
+
+    # Minimal serialization for list view
+    serialized_items = [
+        {
+            "id": item.id,
+            "name": item.name,
+            "status": item.status,
+            "assigned_to": (
+                {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                if item.assigned_to
+                else None
+            ),
+            "roles": (
+                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
+                if item.roles
+                else []
+            ),
+            "_status": item.status,
+            "review_action": item.review_action,
+        }
+        for item in items
+    ]
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": per_page,
-        "total": result.total,
+        "items": serialized_items,
+        "nextCursor": next_cursor,
+        "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    # Add count if it was calculated
+    if include_count and cursor is None and total_count is not None:
+        response["total"] = total_count
+        response["totalType"] = "exact"
+
+    return jsonify(response)
 
 
 # create actor endpoint
@@ -5153,29 +5223,108 @@ def api_incidents(validated_data: dict) -> Response:
             "incident",
         )
 
-    query = []
+    q = validated_data.get("q", [{}])
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", 20)
+    include_count = validated_data.get("include_count", False)
 
-    su = SearchUtils(validated_data, cls="incident")
+    search = SearchUtils(validated_data, cls="incident")
+    base_query = search.get_query()
 
-    query = su.get_query()
+    if include_count and cursor is None:
+        # Check if this is a simple listing query (no search filters)
+        is_simple_listing = q == [{}] or not any(
+            bool(filter_dict) for filter_dict in q if filter_dict
+        )
 
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
+        if is_simple_listing:
+            # For simple listing: use fast COUNT(*) directly on table (~50ms)
+            total_count = db.session.execute(select(func.count(Incident.id))).scalar()
 
-    result = (
-        Incident.query.filter(*query)
-        .order_by(Incident.updated_at.desc())
-        .paginate(page=page, per_page=per_page, count=True)
-    )
-    # Select json encoding type
-    mode = request.args.get("mode", "1")
+            # Fast data query without window function overhead
+            main_query = base_query.order_by(Incident.id.desc()).limit(per_page + 1)
+            result = db.session.execute(main_query)
+            items = result.scalars().unique().all()
+        else:
+            # For search queries: keep original window function approach
+            count_subquery = (
+                base_query.add_columns(func.count().over().label("total_count"))
+                .order_by(Incident.id.desc())
+                .limit(per_page + 1)
+            )
+
+            result = db.session.execute(count_subquery)
+            rows = result.all()
+
+            if rows:
+                items = [row[0] for row in rows]  # Extract Incident objects
+                total_count = rows[0].total_count if rows else 0
+            else:
+                items = []
+                total_count = 0
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+    else:
+        # Fast pagination approach: no counting overhead
+        main_query = base_query.order_by(Incident.id.desc())
+        if cursor:
+            main_query = main_query.where(Incident.id < int(cursor))
+
+        paginated_query = main_query.limit(per_page + 1)
+        result = db.session.execute(paginated_query)
+        items = result.scalars().unique().all()
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+        total_count = None
+
+    # Minimal serialization for list view
+    serialized_items = [
+        {
+            "id": item.id,
+            "title": item.title,
+            "status": item.status,
+            "assigned_to": (
+                {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                if item.assigned_to
+                else None
+            ),
+            "roles": (
+                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
+                if item.roles
+                else []
+            ),
+            "_status": item.status,
+            "review_action": item.review_action,
+        }
+        for item in items
+    ]
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": per_page,
-        "total": result.total,
+        "items": serialized_items,
+        "nextCursor": next_cursor,
+        "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    # Add count if it was calculated
+    if include_count and cursor is None and total_count is not None:
+        response["total"] = total_count
+        response["totalType"] = "exact"
+
+    return jsonify(response)
 
 
 @admin.post("/api/incident/")
