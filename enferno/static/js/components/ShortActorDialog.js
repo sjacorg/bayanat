@@ -94,9 +94,9 @@ const ShortActorDialog = Vue.defineComponent({
     validationRules: validationRules,
     tab: 0,
     profileModes: [
-      { id: 1, title: "Normal", fields: ['source'] }, // Normal Profile
-      { id: 2, title: "Main", fields: [] }, // Main Profile
-      { id: 3, title: "Missing Person", fields: ['source', 'mp'] }, // Missing Person Profile
+      { id: 1, title: window.translations.normal_, fields: ['source'] }, // Normal Profile
+      { id: 2, title: window.translations.main_, fields: [] }, // Main Profile
+      { id: 3, title: window.translations.missingPerson_, fields: ['source', 'mp'] }, // Missing Person Profile
     ],
     saving: false,
   }),
