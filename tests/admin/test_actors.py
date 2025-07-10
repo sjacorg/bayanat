@@ -85,6 +85,7 @@ def test_actors_endpoint(
         assert response.status_code == expected_status
         # If expected response is 200, assert that the response conforms to schema
         if expected_status == 200:
+            print(response.json)
             conform_to_schema_or_fail(
                 convert_empty_strings_to_none(response.json), ActorsResponseModel
             )
@@ -110,7 +111,8 @@ def test_actor_endpoint(
         # Perform additional checks
         if expected_status == 200:
             # Mode 1
-            data = convert_empty_strings_to_none(load_data(response))
+            # data = convert_empty_strings_to_none(load_data(response))
+            data = response.json["data"]
             conform_to_schema_or_fail(data, ActorItemMinModel)
             assert "comments" not in dict.keys(data)
             # Mode 2
@@ -118,7 +120,8 @@ def test_actor_endpoint(
                 f"/admin/api/actor/{actor.id}?mode=2", headers={"Content-Type": "application/json"}
             )
             assert response.status_code == 200
-            data = convert_empty_strings_to_none(load_data(response))
+            # data = convert_empty_strings_to_none(load_data(response))
+            data = response.json["data"]
             conform_to_schema_or_fail(data, ActorItemMode2Model)
             assert "comments" in dict.keys(data)
             assert "bulletin_relations" not in dict.keys(data)
@@ -127,7 +130,8 @@ def test_actor_endpoint(
                 f"/admin/api/actor/{actor.id}?mode=3", headers={"Content-Type": "application/json"}
             )
             assert response.status_code == 200
-            data = convert_empty_strings_to_none(load_data(response))
+            # data = convert_empty_strings_to_none(load_data(response))
+            data = response.json["data"]
             conform_to_schema_or_fail(data, ActorItemMode3Model)
             assert "actor_profiles" in dict.keys(data)
             assert "comments" in dict.keys(data)
@@ -136,7 +140,8 @@ def test_actor_endpoint(
                 f"/admin/api/actor/{actor.id}", headers={"Content-Type": "application/json"}
             )
             assert response.status_code == 200
-            data = convert_empty_strings_to_none(load_data(response))
+            # data = convert_empty_strings_to_none(load_data(response))
+            data = response.json["data"]
             conform_to_schema_or_fail(data, ActorItemMode3PlusModel)
             assert "bulletin_relations" in dict.keys(data)
 

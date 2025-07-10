@@ -1,4 +1,4 @@
-from typing import Union, get_args, get_origin
+from typing import Optional, Union, get_args, get_origin
 from pydantic import BaseModel, ConfigDict, model_validator
 
 
@@ -6,7 +6,7 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class BaseResponseModel(StrictModel):
+class BaseResponseDataModel(StrictModel):
     @model_validator(mode="before")
     @classmethod
     def validate_items(cls, values):
@@ -52,3 +52,7 @@ class BaseResponseModel(StrictModel):
 
         values["items"] = validated_items  # Replace the original list with validated items
         return values
+
+
+class BaseResponseModel(StrictModel):
+    message: Optional[str] = None
