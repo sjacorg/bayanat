@@ -51,7 +51,6 @@
 
 <div id="app" class="justify-center full-height align-center min-vh-100">
     <v-app v-cloak class="h-screen">
-        <v-layout>
             {% block nav %}
                 {% include 'nav-bar.html' %}
                 {% include 'nav-drawer.html' %}
@@ -59,8 +58,6 @@
             {% endblock %}
             {% block content %}
             {% endblock %}
-
-        </v-layout>
 
         <v-snackbar v-model="snackbar" multi-line>
 

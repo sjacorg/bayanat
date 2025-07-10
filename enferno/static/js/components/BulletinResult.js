@@ -8,7 +8,7 @@ const BulletinResult = Vue.defineComponent({
     }
   },
 
-  template: `
+  template: /*html*/`
     <template v-if="!hide">
       <v-card v-if="!bulletin.restricted" hover class="ma-2">
         <v-toolbar density="compact" class="d-flex px-2">
@@ -24,12 +24,7 @@ const BulletinResult = Vue.defineComponent({
         <slot name="header"></slot>
         
         
-        <v-card-text>
-        
-            
-
-
-
+        <v-card-text v-if="bulletin.locations?.length || bulletin.sources?.length">
               <v-list-item v-if="bulletin.locations?.length" :title="translations.locations_">
                 <v-list-item-subtitle opacity="1">
                   <div class="flex-chips">
@@ -51,18 +46,36 @@ const BulletinResult = Vue.defineComponent({
                 </v-list-item-subtitle>
 
               </v-list-item>
-          
-        
         </v-card-text>
         
         <v-card-actions class="justify-end">
           <slot name="actions"></slot>
-          <v-btn size="small" v-if="showHide" @click="hide=true" variant="plain"> {{ translations.hide_ }}</v-btn>
-          <v-btn size="small" icon="mdi-eye"
-                 @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')"
-                 color="primary">
-
-          </v-btn>
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                @click.capture="$root.previewItem('/admin/api/bulletin/'+bulletin.id+'?mode=3')"
+                color="secondary"
+                variant="outlined"
+                icon="mdi-magnify-expand"
+                size="small"
+              ></v-btn>
+            </template>
+            {{ translations.preview_ }}
+          </v-tooltip>
+          <v-tooltip v-if="showHide" location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                @click="hide=true"
+                color="secondary"
+                variant="outlined"
+                icon="mdi-minus"
+                size="small"
+              ></v-btn>
+            </template>
+            {{ translations.hideFromResults_ }}
+          </v-tooltip>
         </v-card-actions>
       </v-card>
 

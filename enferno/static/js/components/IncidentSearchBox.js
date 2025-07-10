@@ -56,11 +56,8 @@ const IncidentSearchBox = Vue.defineComponent({
     },
   },
 
-  template: `
-      <v-sheet>
-        <v-card class="pa-4">
-
-
+  template: /*html*/`
+      <div>
           <v-container class="fluid">
             <v-row>
               <v-col>
@@ -338,11 +335,6 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
           </v-container>
-
-
-        </v-card>
-
-
-      </v-sheet>
+      </div>
     `,
 });

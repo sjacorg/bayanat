@@ -1,103 +1,101 @@
-<v-dialog v-model="mediaDialog" max-width="500px">
-    <template #activator="{props}">
-        <v-card>
-            <v-toolbar class="handle">
-                <v-toolbar-title>{{ _('Media') }}</v-toolbar-title>
-                <v-spacer></v-spacer>
+<snapshot-dialog v-model="snapshotDialog" v-bind="leftDialogProps || { 'max-width': '500px' }"></snapshot-dialog>
 
-                <v-btn
-                        class="mx-2 white--text"
-                        icon="mdi-plus-circle"
-                        color="primary"
-                        @click="addMedia"
-                >
-                    <v-icon dark></v-icon>
-                </v-btn
-                >
-            </v-toolbar>
-
-            <!--  Grid of Media Items -->
-
-            <v-card-text id="medias">
-
-
-
-                <image-gallery prioritize-videos :enable-delete="true" :medias="editedItem.medias" @thumb-click="viewImage"
-                               @video-click="viewMediaPlayerDialog"
-                               @audio-click="viewMediaPlayerDialog"
-                               @remove-media="removeMedia"
-                ></image-gallery>
-
-            </v-card-text>
-        </v-card>
-    </template>
+<v-dialog v-model="mediaDialog" v-bind="leftDialogProps || { 'max-width': '500px' }">
+  <template #activator="{props}">
     <v-card>
-        <v-card-title>
-            <span class="headline">{{ _('Media File') }}</span>
-        </v-card-title>
-        <v-card-text>
-            <v-container>
-                <v-row>
-                    <v-col cols="12">
+      <v-toolbar class="handle">
+        <v-toolbar-title>{{ _('Media') }}</v-toolbar-title>
+        <v-spacer></v-spacer>
 
+        <v-btn
+          v-if="expandedMediaType === 'video'"
+          icon="mdi-camera"
+          @click="initCroppr();"
+        ></v-btn>
+        <v-btn class="mx-2 white--text" icon="mdi-plus-circle" color="primary" @click="addMedia">
+          <v-icon dark></v-icon>
+        </v-btn>
+      </v-toolbar>
 
-                        <vue-dropzone ref="dropzone" id="dropzone" :options="dzOpts"
-                                      @vdropzone-error="showError"
-                                      @vdropzone-removed-file="fileRemoved"
-                                      @vdropzone-file-added="fileAdded"
-                                      @vdropzone-success="uploadSuccess"></vue-dropzone>
+      <v-card-text class="px-0 pt-0">
+        <inline-media-renderer
+          :media="expandedMedia"
+          :media-type="expandedMediaType"
+          :use-metadata="true"
+          ref="inlineMediaRendererRef"
+          class="mb-4"
+          content-style="height: calc(100vh - 450px);"
+          @fullscreen="handleFullscreen"
+          @close="closeExpandedMedia"
+        ></inline-media-renderer>
 
-
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <v-col cols="12" md="6">
-                        <dual-field
-                                v-model:original="editedMedia.title"
-                                v-model:translation="editedMedia.title_ar"
-                                label-original="{{ _('Title') }}"
-                                label-translation="{{ _('Title (AR)') }}"
-                        >
-
-                        </dual-field>
-
-
-                    </v-col>
-
-                    <v-col cols="12" md="6">
-                        <v-card class="d-flex" variant="text">
-                            <!-- category -->
-
-                            <search-field
-                                    label="{{ _('Media Category') }}"
-                                    api="/admin/api/mediacategories"
-                                    v-model="editedMedia.category"
-                                    item-title="title"
-                                    item-value="id"
-                            >
-
-                            </search-field>
-
-                        </v-card>
-                    </v-col>
-                </v-row>
-
-
-
-
-            </v-container>
-        </v-card-text>
-        <v-card-actions class="pa-5">
-            <v-spacer></v-spacer>
-            <v-btn color="grey lighten-1" text @click="closeMediaDialog">{{ _('Cancel') }}</v-btn>
-            <v-btn
-                    color="primary"
-                    variant="elevated"
-                    :disabled="!enableAttach"
-
-                    @click="attachMedia"
-            >{{ _('Attach Media') }}
-            </v-btn>
-        </v-card-actions>
+        <!--  Grid of Media Items -->
+        <media-grid
+          :horizontal="Boolean(expandedMedia)"
+          prioritize-videos
+          :mini-mode="Boolean(expandedMedia)"
+          enable-delete
+          :medias="editedItem.medias"
+          @media-click="handleExpandedMedia($event); $refs.bulletinDialogSplitViewRef.resetToCenter();"
+          @remove-media="removeMedia"
+        ></media-grid>
+      </v-card-text>
     </v-card>
+  </template>
+  <v-card class="flex-grow-1">
+    <v-toolbar color="dark-primary">
+      <v-toolbar-title>{{ _('Media File') }}</v-toolbar-title>
+      <v-spacer></v-spacer>
+
+      <template #append>
+        <v-btn variant="elevated" class="mx-2" :disabled="!enableAttach" @click="attachMedia"
+          >{{ _('Attach Media') }}</v-btn
+        >
+        <v-btn icon="mdi-close" @click="closeMediaDialog"></v-btn>
+      </template>
+    </v-toolbar>
+    <v-card-text>
+      <v-container>
+        <v-row>
+          <v-col cols="12">
+            <vue-dropzone
+              ref="dropzone"
+              id="dropzone"
+              :options="dzOpts"
+              @vdropzone-error="showError"
+              @vdropzone-removed-file="fileRemoved"
+              @vdropzone-file-added="fileAdded"
+              @vdropzone-success="uploadSuccess"
+            ></vue-dropzone>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" md="6">
+            <dual-field
+              v-model:original="editedMedia.title"
+              v-model:translation="editedMedia.title_ar"
+              label-original="{{ _('Title') }}"
+              label-translation="{{ _('Title (AR)') }}"
+            >
+            </dual-field>
+          </v-col>
+
+          <v-col cols="12" md="6">
+            <v-card class="d-flex" variant="text">
+              <!-- category -->
+
+              <search-field
+                label="{{ _('Media Category') }}"
+                api="/admin/api/mediacategories"
+                v-model="editedMedia.category"
+                item-title="title"
+                item-value="id"
+              >
+              </search-field>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-card-text>
+  </v-card>
 </v-dialog>

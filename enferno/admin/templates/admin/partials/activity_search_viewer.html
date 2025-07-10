@@ -1,13 +1,11 @@
-<v-dialog v-model="activitySearchViews" class="w-sm-100 w-md-75 w-lg-50">
-    <v-sheet>
+<v-dialog v-model="activitySearchViews" class="w-sm-100 w-md-75 w-lg-50" scrollable>
+    <v-card>
         <v-toolbar class="header-fixed">
             <v-spacer></v-spacer>
-            <v-btn fab text @click="closeSearch()">
-                <v-icon>mdi-close</v-icon>
-            </v-btn>
+            <v-btn icon="mdi-close" @click="closeSearch()"></v-btn>
         </v-toolbar>
-        <v-card>
-            <v-overlay v-model="activitySearchViews" absolute contained persistent opacity="0"></v-overlay>
+        <v-card-text class="position-relative">
+            <v-overlay v-model="activitySearchViews" absolute contained persistent opacity="0" scroll-strategy="none"></v-overlay>
             <v-expansion-panels v-if="searchClass!='incident'" multiple accordion v-model="searchPanels">
                 <v-expansion-panel v-for="(q,i) in search">
                     <v-expansion-panel-title>${translations.query_} ${i+1} 
@@ -47,6 +45,6 @@
                 :is-admin="has_role(currentUser,'Admin')"
             >
             </incident-search-box>
-        </v-card>
-    </v-sheet>
+        </v-card-text>
+    </v-card>
 </v-dialog>

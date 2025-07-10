@@ -9,59 +9,13 @@
                              :show-hide="false">
                 <!--  attach relationship form -->
                 <template #header>
-                    <v-card class="rounded-0">
-                        <v-card-text>
-                            <v-list-item title="{{ _('Probability') }}">
-                                <v-list-item-subtitle>
-                                    <v-chip-group
-                                            v-model="editedItem.bulletin_relations[index].probability"
-                                            column
-                                            selected-class="bg-primary"
-                                    >
-                                        <v-chip filter v-for="item in translations.probs" size="small">
-                                            ${item.tr}
-                                        </v-chip>
-                                    </v-chip-group>
-                                </v-list-item-subtitle>
-                            </v-list-item>
-
-
-                            <v-list-item title="{{ _('Related As') }}">
-                                <v-list-item-subtitle>
-                                    <v-chip-group
-                                            v-model="editedItem.bulletin_relations[index].related_as"
-                                            column
-                                            :multiple="bulletinRelationMultiple"
-                                            selected-class="bg-primary"
-                                            filter
-                                    >
-                                        <v-chip
-                                            v-for="rel in bulletinRelationTypes"
-                                            :value="rel.id"
-                                            :key="rel.id"
-                                            size="small"
-                                        >
-                                        ${rel.title}
-                                        </v-chip>
-
-                                    </v-chip-group>
-                                </v-list-item-subtitle>
-                            </v-list-item>
-
-                            <v-list-item title="{{ _('Comments') }}">
-                                <v-text-field class="mt-2"
-                                              variant="outlined"
-                                              v-model="editedItem.bulletin_relations[index].comment"
-
-
-                                ></v-text-field>
-                            </v-list-item>
-
-
-                        </v-card-text>
-
-
-                    </v-card>
+                    <relation-editor-card
+                            variant="text"
+                            v-model:relation="editedItem.bulletin_relations[index]"
+                            :multi-relation="bulletinRelationMultiple"
+                            :relation-types="bulletinRelationTypes"
+                    ></relation-editor-card>
+                    <v-divider></v-divider>
                 </template>
 
                 <template #actions>

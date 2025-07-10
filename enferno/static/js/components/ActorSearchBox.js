@@ -74,6 +74,7 @@ const ActorSearchBox = Vue.defineComponent({
     },
   },
 
+  
   methods: {
     fetchIdNumberTypes() {
       // If already loaded the exit
@@ -105,8 +106,8 @@ const ActorSearchBox = Vue.defineComponent({
     },
   },
 
-  template: /*html*/ `
-      <v-card outlined class="pa-6">
+  template: /*html*/`
+      <div>
 
         <v-container class="container--fluid">
           <v-row v-if="showOp">
@@ -729,7 +730,7 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
 
         </v-container>
-      </v-card>
+      </div>
 
     `,
 });

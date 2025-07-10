@@ -34,11 +34,6 @@ const ActorCard = Vue.defineComponent({
       }
       return false;
     },
-
-    viewThumb(s3url) {
-      this.$emit('thumb-click', s3url);
-    },
-
     loadRevisions() {
       this.hloading = true;
       axios
@@ -302,7 +297,7 @@ const ActorCard = Vue.defineComponent({
         </v-card>
 
         <!-- ID Numbers - only show if there are any -->
-        <v-card v-if="actor.id_number && actor.id_number.length > 0" variant="flat" class="mx-8 my-2">
+        <v-card v-if="actor.id_number && actor.id_number?.length > 0" variant="flat" class="mx-8 my-2">
           <div class="d-flex flex-column">
             <div class="text-subtitle-2 text-medium-emphasis">{{ translations.idNumbers_ }}</div>
             <div class="flex-chips">
@@ -342,10 +337,16 @@ const ActorCard = Vue.defineComponent({
               <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
           </v-toolbar>
 
-          <div ref="playerContainer" class="px-2 my-3"></div>
+          <inline-media-renderer
+            :media="expandedMedia"
+            :media-type="expandedMediaType"
+            ref="inlineMediaRendererRef"
+            @fullscreen="handleFullscreen"
+            @close="closeExpandedMedia"
+          ></inline-media-renderer>
           
           <v-card-text>
-            <image-gallery prioritize-videos :medias="actor.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
+            <media-grid prioritize-videos :medias="actor.medias" @media-click="handleExpandedMedia"></media-grid>
           </v-card-text>
         </v-card>
 
