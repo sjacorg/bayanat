@@ -650,7 +650,7 @@ class ActorValidationModel(StrictValidationModel):
     dialects: list[PartialDialectModel] = Field(default_factory=list)
     nickname: Optional[str] = DEFAULT_STRING_FIELD
     nickname_ar: Optional[str] = DEFAULT_STRING_FIELD
-    id_number: Optional[str] = DEFAULT_STRING_FIELD
+    id_number: list[dict[str, str]] = Field(default_factory=list)
     origin_place: Optional[PartialOriginPlaceModel] = None
     events: list[PartialEventModel] = Field(default_factory=list)
     medias: list[PartialMediaModel] = Field(default_factory=list)
@@ -1336,7 +1336,7 @@ class ActorQueryModel(QueryBaseModel):
     age: Optional[str] = None
     civilian: Optional[str] = None
     type_: Optional[str] = Field(default=None, alias="type")
-    id_number: Optional[str] = None
+    id_number: Optional[dict[str, str]] = None
     locTypes: list[str] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel] = None
     childlabels: Optional[bool] = False
