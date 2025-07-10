@@ -58,7 +58,9 @@ const vuetifyConfig = {
         },
         VCombobox: {
             variant: 'outlined'
-
+        },
+        VAutocomplete: {
+            variant: 'outlined'
         },
         VChip: {
             size: 'small'

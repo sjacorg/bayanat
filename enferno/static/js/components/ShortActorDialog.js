@@ -259,7 +259,7 @@ const ShortActorDialog = Vue.defineComponent({
           <v-card class="overflow-hidden">
               <v-sheet id="card-content" class="overflow-y-auto">
                   <v-card-text>
-                      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start;">
+                      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(clamp(0px, 33.33%, 340px), 1fr)); gap: 16px; align-items: start;">
                           <div style="min-width: 0;">
                               <dual-field
                                   v-model:original="editedItem.first_name"
@@ -295,9 +295,42 @@ const ShortActorDialog = Vue.defineComponent({
                                   ]"
                               ></dual-field>
                           </div>
+                          <div style="min-width: 0;">
+                            <dual-field
+                              v-model:original="editedItem.father_name"
+                              v-model:translation="editedItem.father_name_ar"
+                              :label-original="translations.fathersName_"
+                              :label-translation="translations.fathersNameAr_"
+                              :rules="[
+                                  validationRules.maxLength(255),
+                              ]"
+                            ></dual-field>
+                          </div>
+                          <div style="min-width: 0;">
+                            <dual-field
+                              v-model:original="editedItem.mother_name"
+                              v-model:translation="editedItem.mother_name_ar"
+                              :label-original="translations.mothersName_"
+                              :label-translation="translations.mothersNameAr_"
+                              :rules="[
+                                  validationRules.maxLength(255),
+                              ]"
+                            ></dual-field>
+                          </div>
 
                           <div style="min-width: 0;">
                               <v-select :items="translations.actorSex" item-title="tr" item-value="en" v-model="editedItem.sex" clearable :label="translations.sex_"></v-select>
+                          </div>
+
+                          <div style="min-width: 0;">
+                            <v-select
+                              :items="translations.actorAge"
+                              item-title="tr"
+                              item-value="en"
+                              v-model="editedItem.age"
+                              clearable
+                              :label="translations.minorAdult_"
+                            ></v-select>
                           </div>
 
                           <div style="min-width: 0;">
@@ -315,6 +348,58 @@ const ShortActorDialog = Vue.defineComponent({
                                   :label="translations.placeOfOrigin_"
                               ></location-search-field>
                           </div>
+                          <div style="min-width: 0;">
+                            <dual-field
+                              v-model:original="editedItem.occupation"
+                              v-model:translation="editedItem.occupation_ar"
+                              :label-original="translations.occupation_"
+                              :label-translation="translations.occupationAr_"
+                              :rules="[
+                                  validationRules.maxLength(255),
+                              ]"
+                            ></dual-field>
+                          </div>
+                          <div style="min-width: 0;">
+                            <dual-field
+                              v-model:original="editedItem.position"
+                              v-model:translation="editedItem.position_ar"
+                              :label-original="translations.position_"
+                              :label-translation="translations.positionAr_"
+                              :rules="[
+                                  validationRules.maxLength(255),
+                              ]"
+                            ></dual-field>
+                          </div>
+                          <div style="min-width: 0;">
+                            <v-autocomplete
+                              :items="translations.actorFamilyStatuses"
+                              clearable
+                              item-title="tr"
+                              item-value="en"
+                              v-model="editedItem.family_status"
+                              :label="translations.familyStatus_"
+                            ></v-autocomplete>
+                          </div>
+                          <div style="min-width: 0;">
+                            <v-text-field :label="translations.noOfChildren_"
+                              v-model="editedItem.no_children"
+                              :rules="[validationRules.integer()]"></v-text-field>
+                          </div>
+                          <div style="min-width: 0;">
+                            <search-field
+                              v-model="editedItem.nationalities"
+                              api="/admin/api/countries/"
+                              item-title="title"
+                              item-value="title"
+                              :multiple="true"
+                              clearable
+                              :label="translations.nationalities_"
+                            ></search-field>
+                          </div>
+
+                          <div style="min-width: 0;">
+                              <v-combobox chips multiple v-model="editedItem.tags" :label="translations.tags_"></v-combobox>
+                          </div>
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
                               <!-- ID Numbers Management -->
@@ -325,9 +410,6 @@ const ShortActorDialog = Vue.defineComponent({
                               ></id-number-dynamic-field>
                           </div>
 
-                          <div style="min-width: 0;">
-                              <v-combobox chips multiple v-model="editedItem.tags" :label="translations.tags_"></v-combobox>
-                          </div>
 
                           <div v-if="editedItem.actor_profiles?.length" class="position-relative" style="grid-column: 1 / -1; min-width: 0;">
                               <v-window class="w-100 border" v-model="tab">
@@ -336,6 +418,15 @@ const ShortActorDialog = Vue.defineComponent({
                                           <!-- Source Link -->
                                           <v-card-text v-if="shouldDisplayField(profile.mode, 'source')">
                                               <v-text-field class="mx-2" variant="outlined" v-model="profile.originid" :disabled="profile.originidDisabled" :label="translations.originId_"></v-text-field>
+                                          </v-card-text>
+
+                                          <v-card-text>
+                                            <div class="text-subtitle-2 pa-1 ">{{ translations.description_ }}</div>
+                                            <tinymce-editor
+                                                    :key="index"
+                                                    :init="$root.tinyConfig"
+                                                    v-model="profile.description"
+                                            ></tinymce-editor>
                                           </v-card-text>
 
                                           <v-card-text>

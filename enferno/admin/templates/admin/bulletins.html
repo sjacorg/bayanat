@@ -454,14 +454,7 @@
         const app = createApp({
                 delimiters: delimiters,
 
-
                 mixins: [mediaMixin, globalMixin, relationsMixin],
-
-
-                components: {
-                    "tinymce-editor": Editor, // <- Important part,
-                },
-
 
                 data: () => ({
                     helper: {}, // helper object for review items
@@ -1698,6 +1691,7 @@
         app.component('mix-iii', MixIII);
         app.component('mp-field', MPField);
         app.component('mp-card', MPCard);
+        app.component('tinymce-editor', Editor);
         app.component('ActorProfiles', ActorProfiles);
         app.component('ShortActorDialog', ShortActorDialog);
         app.component('IdNumberDynamicField', IdNumberDynamicField);
