@@ -67,20 +67,25 @@ def test_incidents_endpoint(
     clean_slate_incidents, create_full_incident, request, client_fixture, expected_status
 ):
     """
-    Test the GET incidents endpoint in non-restrictive mode with no roles specified.
+    Test the POST incidents endpoint in non-restrictive mode with no roles specified.
     """
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
         client_ = request.getfixturevalue(client_fixture)
-        response = client_.get(
+        response = client_.post(
             "/admin/api/incidents",
-            json={"q": {}},
+            json={"q": [{}], "per_page": 20, "include_count": True},
             headers={"content-type": "application/json"},
             follow_redirects=True,
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            data = convert_empty_strings_to_none(load_data(response))
-            conform_to_schema_or_fail(data, IncidentsResponseModel)
+            data = response.json
+            assert "items" in data
+            assert "meta" in data
+            assert "total" in data
+            assert "totalType" in data
+            # Validate response conforms to updated schema
+            conform_to_schema_or_fail(convert_empty_strings_to_none(data), IncidentsResponseModel)
 
 
 ##### GET /admin/api/incident/<int:id> #####
