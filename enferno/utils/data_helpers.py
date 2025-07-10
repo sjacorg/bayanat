@@ -5,6 +5,7 @@ from hashlib import md5
 from enferno.admin.models import (
     ClaimedViolation,
     Eventtype,
+    IDNumberType,
     LocationAdminLevel,
     LocationType,
     PotentialViolation,
@@ -152,6 +153,7 @@ def import_default_data() -> None:
         (Country, "enferno/data/countries.csv"),
         (MediaCategory, "enferno/data/media_categories.csv"),
         (GeoLocationType, "enferno/data/geo_location_types.csv"),
+        (IDNumberType, "enferno/data/id_number_types.csv"),
     ]
 
     for model, path in items:
