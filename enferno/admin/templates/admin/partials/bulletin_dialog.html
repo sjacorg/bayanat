@@ -61,9 +61,6 @@
                 </v-toolbar-title>
 
                 <template #append>
-                    <v-btn @click="actorDialog = true" variant="outlined" class="mx-2">
-                        {{ _('Create Related Actor') }}
-                    </v-btn>
                     <v-btn @click="validateForm" :disabled="saving" :loading="saving" variant="elevated" class="mx-2">
                         {{ _('Save Bulletin') }}
                     </v-btn>
