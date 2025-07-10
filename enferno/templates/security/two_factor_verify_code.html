@@ -2,9 +2,9 @@
 render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% block content %}
 
 <v-main class="d-flex flex-column align-center justify-center bg-background">
-  <v-card class="login-card mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
-    <v-card-title class="login-title px-0 pb-0">{{ _("Authentication app") }}</v-card-title>
-    <v-card-subtitle class="login-subtitle px-0 pb-4"
+  <v-card class="mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
+    <v-card-title class="text-h4 text-center font-weight-bold px-0 pb-0">{{ _("Authentication app") }}</v-card-title>
+    <v-card-subtitle class="text-subtitle-2 text-pre-wrap text-center px-0 pb-4"
       >{{ _("Please enter your authentication code") }}</v-card-subtitle
     >
     <form ref="twoFactorVerifyCodeFormRef">
