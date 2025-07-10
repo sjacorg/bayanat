@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import ActorHistory, BulletinHistory, IncidentHistory, LocationHistory
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.admin.test_actors import clean_slate_actors
 from tests.admin.test_bulletins import clean_slate_bulletins
 from tests.admin.test_incidents import clean_slate_incidents

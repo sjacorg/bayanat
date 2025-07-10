@@ -19,7 +19,7 @@ from enferno.utils.data_helpers import import_default_data
 from enferno.utils.http_response import HTTPResponse
 
 from enferno.admin.validation.models import WizardConfigRequestModel
-from enferno.admin.validation.util import validate_with
+from enferno.utils.validation_utils import validate_with
 
 bp_setup = Blueprint("setup", __name__, static_folder="../static")
 

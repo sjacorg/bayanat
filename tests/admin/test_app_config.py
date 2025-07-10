@@ -5,7 +5,7 @@ import pytest
 
 from enferno.admin.models import AppConfig
 from enferno.admin.validation.models import FullConfigValidationModel
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import TestConfig
 from enferno.utils.config_utils import ConfigManager
 from tests.factories import AppConfigFactory
