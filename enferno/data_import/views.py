@@ -41,7 +41,7 @@ def data_import_before_request() -> Optional[Response]:
     """Function to check if user is authenticated before accessing the data import routes."""
     # only admins allowed to interact with these routes
     if not (current_user.has_role("Admin")):
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.json_error("Forbidden", status=403)
 
 
 @imports.route("/log/")
@@ -73,9 +73,9 @@ def api_import_get(id: t.id) -> Response:
     data_import = DataImport.query.get(id)
 
     if data_import is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("Data import not found", status=404)
     else:
-        return json.dumps(data_import.to_dict()), 200
+        return HTTPResponse.json_ok(data=data_import.to_dict(), status=200)
 
 
 @imports.post("/api/imports/")
@@ -107,7 +107,7 @@ def api_imports() -> Response:
         "total": result.total,
     }
 
-    return Response(json.dumps(response), content_type="application/json")
+    return HTTPResponse.json_ok(data=response, status=200)
 
 
 # Data Import Backend API
@@ -121,7 +121,7 @@ def media_import() -> Response:
         - html page of the etl backend.
     """
     if not current_app.config["ETL_TOOL"]:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("ETL tool not found", status=404)
     return render_template("media-import.html")
 
 
@@ -134,12 +134,14 @@ def path_process() -> Response:
         not current_app.config.get("ETL_PATH_IMPORT")
         or current_app.config.get("ETL_ALLOWED_PATH") is None
     ):
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.json_error("Forbidden", status=403)
 
     allowed_path = Path(current_app.config.get("ETL_ALLOWED_PATH"))
 
     if not allowed_path.is_dir():
-        return "Allowed import path is not configured correctly", 417
+        return HTTPResponse.json_error(
+            "Allowed import path is not configured correctly", status=417
+        )
 
     sub_path = request.json.get("path")
     if sub_path == "":
@@ -149,10 +151,10 @@ def path_process() -> Response:
         if safe_path:
             import_path = Path(safe_path)
         else:
-            return HTTPResponse.FORBIDDEN
+            return HTTPResponse.json_error("Forbidden", status=403)
 
     if not import_path.is_dir():
-        return "Invalid path specified", 417
+        return HTTPResponse.json_error("Invalid path specified", status=417)
 
     recursive = request.json.get("recursive", False)
     if recursive:
@@ -165,7 +167,7 @@ def path_process() -> Response:
 
     output = [{"filename": os.path.basename(file), "path": file} for file in files]
 
-    return json.dumps(output), 200
+    return HTTPResponse.json_ok(data=output, status=200)
 
 
 @imports.post("/media/process")
@@ -184,7 +186,7 @@ def etl_process() -> Response:
 
     process_files.delay(files=files, meta=meta, user_id=current_user.id, batch_id=batch_id)
 
-    return batch_id, 200
+    return HTTPResponse.json_ok(data=batch_id, status=200)
 
 
 # CSV Tool
@@ -198,7 +200,7 @@ def csv_dashboard() -> Response:
         - html page of the csv backend.
     """
     if not current_app.config.get("SHEET_IMPORT"):
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("Sheet import not found", status=404)
     return render_template("sheets-import.html")
 
 
@@ -213,7 +215,7 @@ def api_local_csv_upload() -> Response:
         # validate immediately
         allowed_extensions = current_app.config["SHEETS_ALLOWED_EXTENSIONS"]
         if not Media.validate_file_extension(f.filename, allowed_extensions):
-            return "This file type is not allowed", 415
+            return HTTPResponse.json_error("This file type is not allowed", status=415)
         # final file
         filename = Media.generate_file_name(f.filename)
         filepath = (import_dir / filename).as_posix()
@@ -223,10 +225,10 @@ def api_local_csv_upload() -> Response:
         etag = get_file_hash(filepath)
 
         response = {"etag": etag, "filename": filename, "original_filename": f.filename}
-        return Response(json.dumps(response), content_type="application/json"), 200
+        return HTTPResponse.json_ok(data=response, status=200)
     except Exception as e:
         logger.error(e, exc_info=True)
-        return f"Request Failed", 417
+        return HTTPResponse.json_error("Request Failed", status=417)
 
 
 @imports.delete("/api/csv/upload/")
@@ -253,9 +255,9 @@ def api_csv_analyze() -> Response:
     result = SheetImport.parse_csv(filepath)
 
     if result:
-        return json.dumps(result)
+        return HTTPResponse.json_ok(data=result, status=200)
     else:
-        return "Problem parsing sheet file", 417
+        return HTTPResponse.json_error("Problem parsing sheet file", status=417)
 
 
 # Excel sheet selector
@@ -269,7 +271,7 @@ def api_xls_sheet() -> Response:
     filepath = (import_dir / filename).as_posix()
     sheets = SheetImport.get_sheets(filepath)
 
-    return json.dumps(sheets)
+    return HTTPResponse.json_ok(data=sheets, status=200)
 
 
 @imports.post("/api/xls/analyze")
@@ -286,9 +288,9 @@ def api_xls_analyze() -> Response:
     result = SheetImport.parse_excel(filepath, sheet)
 
     if result:
-        return Response(json.dumps(result, sort_keys=False), content_type="application/json"), 200
+        return HTTPResponse.json_ok(data=result, status=200)
     else:
-        return "Problem parsing sheet file", 417
+        return HTTPResponse.json_error("Problem parsing sheet file", status=417)
 
 
 # Saved Searches
@@ -301,7 +303,7 @@ def api_mappings() -> Response:
         - successful json feed of mappings or error.
     """
     mappings = Mapping.query.all()
-    return json.dumps([map.to_dict() for map in mappings]), 200
+    return HTTPResponse.json_ok(data=[map.to_dict() for map in mappings], status=200)
 
 
 @imports.post("/api/mapping/")
@@ -325,11 +327,13 @@ def api_mapping_create() -> Response:
         flag_modified(map, "data")
 
         if map.save():
-            return {"message": f"Mapping #{map.id} created successfully", "id": map.id}, 200
+            return HTTPResponse.json_ok(
+                data={"id": map.id}, message=f"Mapping #{map.id} created successfully", status=200
+            )
         else:
-            return "Error creating Mapping", 417
+            return HTTPResponse.json_error("Error creating Mapping", status=417)
     else:
-        return "Update request missing parameters data", 417
+        return HTTPResponse.json_error("Update request missing parameters data", status=417)
 
 
 @imports.put("/api/mapping/<int:id>")
@@ -354,14 +358,18 @@ def api_mapping_update(id: t.id) -> Response:
             map.data = data
             map.user_id = current_user.id
             if map.save():
-                return {"message": f"Mapping #{map.id} updated successfully", "id": map.id}, 200
+                return HTTPResponse.json_ok(
+                    data={"id": map.id},
+                    message=f"Mapping #{map.id} updated successfully",
+                    status=200,
+                )
             else:
-                return "Error updating Mapping", 417
+                return HTTPResponse.json_error("Error updating Mapping", status=417)
         else:
-            return "Update request missing parameters data", 417
+            return HTTPResponse.json_error("Update request missing parameters data", status=417)
 
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("Mapping not found", status=404)
 
 
 @imports.post("/api/process-sheet")
@@ -421,14 +429,14 @@ def api_process_sheet() -> Response:
                 roles,
             )
 
-    return batch_id, 200
+    return HTTPResponse.json_ok(data=batch_id, status=200)
 
 
 @imports.get("/api/whisper/models/")
 @roles_required("Admin")
 def api_whisper_models() -> Response:
     """Returns the list of whisper models."""
-    return jsonify({"models": Constants.WHISPER_MODEL_OPTS})
+    return HTTPResponse.json_ok(data={"models": Constants.WHISPER_MODEL_OPTS}, status=200)
 
 
 @imports.get("/api/whisper/languages/")
@@ -438,6 +446,6 @@ def api_whisper_languages() -> Response:
     if current_app.config["HAS_WHISPER"]:
         from whisper.tokenizer import TO_LANGUAGE_CODE
 
-        return jsonify({"languages": TO_LANGUAGE_CODE})
+        return HTTPResponse.json_ok(data={"languages": TO_LANGUAGE_CODE}, status=200)
     else:
-        return jsonify({"languages": []})
+        return HTTPResponse.json_ok(data={"languages": []}, status=200)

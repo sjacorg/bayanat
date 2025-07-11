@@ -1,6 +1,7 @@
 import pytest
 from pydantic import parse_obj_as
 
+from enferno.admin.validation.util import convert_empty_strings_to_none
 from tests.admin.test_atoa_infos import clean_slate_atoa_infos, create_atoa_info
 from tests.admin.test_atob_infos import clean_slate_atob_infos, create_atob_info
 from tests.admin.test_btob_infos import clean_slate_btob_infos, create_btob_info
@@ -20,7 +21,6 @@ from tests.models.admin import (
     ItoaInfoItemModel,
     ItobInfoItemModel,
 )
-from tests.test_utils import load_data
 
 
 tables = [
@@ -66,7 +66,7 @@ def test_relation_info_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        data = load_data(response)
+        data = convert_empty_strings_to_none(response.json)["data"]
         for t, _, create, _, _ in tables:
             key = f"{t}Info"
             assert key in data

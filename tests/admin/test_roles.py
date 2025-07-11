@@ -55,7 +55,7 @@ def test_roles_endpoint(request, client_fixture, expected_status):
     response = client_.get("/admin/api/roles/", headers={"Content-Type": "application/json"})
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) == len(Role.query.all())
+        assert len(response.json["data"]["items"]) == len(Role.query.all())
 
 
 ##### POST /admin/api/role/ #####

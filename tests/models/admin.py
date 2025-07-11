@@ -614,7 +614,7 @@ class LabelModel(LabelMode2Model):
 
 
 class LabelsResponseDataModel(BaseResponseDataModel):
-    items: list[LabelMode2Model | LabelModel]
+    items: list[Union[LabelMode2Model, LabelModel]]
     perPage: int
     total: int
 
@@ -884,8 +884,6 @@ class HistoryHelperItemModel(BaseModel):
 
 class HistoryHelpersResponseDataModel(BaseResponseDataModel):
     items: list[HistoryHelperItemModel]
-    perPage: int
-    total: int
 
 
 class HistoryHelpersResponseModel(BaseResponseModel):
@@ -893,7 +891,7 @@ class HistoryHelpersResponseModel(BaseResponseModel):
 
 
 class UsersResponseDataModel(BaseResponseDataModel):
-    items: list[UserCompactModel | UserItemModel]
+    items: list[Union[UserCompactModel, UserItemModel]]
     perPage: int
     total: int
 

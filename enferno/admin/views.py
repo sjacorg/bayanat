@@ -1935,7 +1935,7 @@ def api_id_number_types() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.json_ok(response, status=200)
 
 
 @admin.post("/api/idnumbertype")
@@ -1964,9 +1964,11 @@ def api_id_number_type_create(
             id_number_type.to_mini(),
             "idnumbertype",
         )
-        return f"Item created successfully ID {id_number_type.id}", 200
+        return HTTPResponse.json_ok(
+            message=f"Item created successfully ID #{id_number_type.id}", status=200
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.json_error("Creation failed.", status=417)
 
 
 @admin.put("/api/idnumbertype/<int:id>")
@@ -1995,11 +1997,11 @@ def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
                 id_number_type.to_mini(),
                 "idnumbertype",
             )
-            return "Updated", 200
+            return HTTPResponse.json_ok(message="Updated", status=200)
         else:
-            return "Error saving item", 417
+            return HTTPResponse.json_error("Error saving item", status=417)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("ID Number Type not found", status=404)
 
 
 @admin.delete("/api/idnumbertype/<int:id>")
@@ -2018,15 +2020,15 @@ def api_id_number_type_delete(
     """
     id_number_type = IDNumberType.query.get(id)
     if id_number_type is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("ID Number Type not found", status=404)
 
     # Check if this ID number type is referenced by any actor.id_number[].type
     referenced_count = id_number_type.get_ref_count()
 
     if referenced_count > 0:
-        return (
+        return HTTPResponse.json_error(
             f"Cannot delete ID Number Type #{id_number_type.id}. It is referenced by {referenced_count} actor(s).",
-            409,
+            status=409,
         )
 
     if id_number_type.delete():
@@ -2038,9 +2040,11 @@ def api_id_number_type_delete(
             id_number_type.to_mini(),
             "idnumbertype",
         )
-        return f"ID Number Type Deleted {id_number_type.id}", 200
+        return HTTPResponse.json_ok(
+            message=f"ID Number Type Deleted #{id_number_type.id}", status=200
+        )
     else:
-        return "Error deleting ID Number Type", 417
+        return HTTPResponse.json_error("Error deleting ID Number Type", status=417)
 
 
 @admin.route("/api/atoainfos/", methods=["GET", "POST"])

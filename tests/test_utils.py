@@ -11,31 +11,6 @@ import enferno.utils.typing as t
 logger = get_logger()
 
 
-# if the content-type: application/json header is missing, use json.loads to parse the
-# plaintext response into json
-def load_data(response: Any) -> dict:
-    """
-    Function to load response data into a dictionary. Some json data
-    might be sent as plaintext, so this function will attempt to parse
-    the response text into a json object.
-
-    Args:
-        - response: The response object to parse.
-
-    Returns:
-        - The parsed json data.
-    """
-    if response.json is None and response.text:
-        try:
-            json_data = json.loads(response.text)
-        except json.JSONDecodeError as e:
-            logger.error(f"Response is not in valid JSON format: {e}", exc_info=True)
-            return None
-    else:
-        json_data = response.json
-    return json_data
-
-
 # utility function to get first record of entity or fail
 def get_first_or_fail(entity: t.Model) -> t.Model:
     """

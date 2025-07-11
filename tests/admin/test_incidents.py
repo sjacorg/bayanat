@@ -24,7 +24,6 @@ from tests.admin.data.generators import (
 from tests.test_utils import (
     conform_to_schema_or_fail,
     get_first_or_fail,
-    load_data,
     get_uid_from_client,
 )
 
@@ -79,7 +78,7 @@ def test_incidents_endpoint(
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)
             conform_to_schema_or_fail(data, IncidentsResponseModel)
 
 
@@ -108,26 +107,26 @@ def test_incident_endpoint(
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMode3PlusModel)
             assert "bulletin_relations" in dict.keys(data)
             # Mode 1
             response = client_.get(
                 f"/admin/api/incident/{incident.id}?mode=1", headers={"Accept": "application/json"}
             )
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMinModel)
             # Mode 2
             response = client_.get(
                 f"/admin/api/incident/{incident.id}?mode=2", headers={"Accept": "application/json"}
             )
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMode2Model)
             # Mode 3
             response = client_.get(
                 f"/admin/api/incident/{incident.id}?mode=3", headers={"Accept": "application/json"}
             )
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, IncidentItemMode3Model)
 
 
@@ -442,4 +441,9 @@ def test_get_incident_relations_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert all([x["incident"]["id"] in [i2.id, i3.id] for x in load_data(response)["items"]])
+        assert all(
+            [
+                x["incident"]["id"] in [i2.id, i3.id]
+                for x in convert_empty_strings_to_none(response.json)["data"]["items"]
+            ]
+        )

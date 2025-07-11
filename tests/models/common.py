@@ -6,7 +6,7 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class BaseResponseDataModel(StrictModel):
+class BaseResponseDataModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_items(cls, values):
