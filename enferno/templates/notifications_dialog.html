@@ -1,0 +1,61 @@
+<v-dialog
+    v-model="notifications.ui.dialogVisible"
+    :width="notifications.ui.dialogFullscreen ? null : 800"
+    :fullscreen="notifications.ui.dialogFullscreen"
+>
+    <v-card variant="flat">
+        <div>
+            <v-toolbar class="position-sticky top-0" style="z-index: 2;" border flat title="{{ _('Notifications') }}">
+                <template #append>
+                    <v-btn v-if="notifications.ui.dialogFullscreen" icon="mdi-fullscreen-exit" @click="notifications.ui.dialogFullscreen = false"></v-btn>
+                    <v-btn v-else icon="mdi-fullscreen" @click="notifications.ui.dialogFullscreen = true"></v-btn>
+                    <v-btn icon="mdi-close" @click="notifications.ui.dialogVisible=false"></v-btn>
+                </template>
+            </v-toolbar>
+
+            <div :class="['d-flex', { 'flex-column': $vuetify.display.mobile }]">
+                <div class="position-sticky" style="top: 66px; z-index: 1; min-width: 200px;">
+                    <v-list class="position-sticky" style="top: 66px; z-index: 1;">
+                        <v-list-item :active="notifications.ui.currentTab === 'all'" color="primary" density="compact" slim @click="notifications.ui.currentTab = 'all'" prepend-icon="mdi-bell" rounded="md">
+                            <v-list-item-title>{{ _('All') }}</v-list-item-title>
+                            <template #append>
+                                ${notifications.total}
+                            </template>
+                        </v-list-item>
+                        <v-list-item :active="notifications.ui.currentTab === 'unread'" color="primary" density="compact" slim @click="notifications.ui.currentTab = 'unread'" prepend-icon="mdi-inbox-outline" rounded="md">
+                            <v-list-item-title>{{ _('Unread') }}</v-list-item-title>
+                            <template #append>
+                                ${notifications.unreadCount}
+                            </template>
+                        </v-list-item>
+                        <v-list-item :active="notifications.ui.currentTab === 'read'" color="primary" density="compact" slim @click="notifications.ui.currentTab = 'read'" prepend-icon="mdi-inbox-full-outline" rounded="md">
+                            <v-list-item-title>{{ _('Read') }}</v-list-item-title>
+                            <template #append>
+                                ${notifications.total - notifications.unreadCount}
+                            </template>
+                        </v-list-item>
+                    </v-list>
+                    <v-divider v-if="$vuetify.display.mobile" style="z-index: 1;" :vertical="!$vuetify.display.mobile"></v-divider>
+                </div>
+                <v-divider v-if="!$vuetify.display.mobile" style="z-index: 1;" :vertical="!$vuetify.display.mobile"></v-divider>
+            
+                <div class="w-100">
+                    <v-window v-model="notifications.ui.currentTab" style="min-height: calc(100vh - 251px);">
+                        <v-window-item v-for="tab in ['all', 'unread', 'read']" :key="tab" :value="tab">
+                            <notifications-list
+                                :config="{ hideScrollFeedback: false, maxTitleLines: false, maxSubtitleLines: false }"
+                                :notifications="notifications.items"
+                                :initial-loading="notifications.status.initialLoading"
+                                :has-more="notifications.hasMore"
+                                :loading-more="notifications.status.loadingMore"
+                                @read-notification="readNotification"
+                                @load-notifications="loadNotifications(notifications.pagination)"
+                                :load-error="notifications.status.loadError"
+                            />
+                        </v-window-item>
+                    </v-window>
+                </div>
+            </div>
+        </div>
+    </v-card>
+</v-dialog>

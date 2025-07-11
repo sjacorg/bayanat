@@ -1,4 +1,5 @@
 from enum import Enum
+from enferno.utils.notification_settings import NotificationSettings
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -1381,6 +1382,25 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_email(cls, v):
+        from enferno.settings import Config as cfg
+
+        if cfg.MAIL_ENABLED:
+            if email := v.get("email"):
+                try:
+                    domain = email.split("@")[-1]
+                except Exception:
+                    raise ValueError("Error, invalid email format")
+                if "*" in cfg.MAIL_ALLOWED_DOMAINS:
+                    return v
+                if domain.lower() not in cfg.MAIL_ALLOWED_DOMAINS:
+                    raise ValueError("Error, email domain not allowed")
+            else:
+                raise ValueError("Error, email is required")
+        return v
+
 
 class UserRequestModel(BaseValidationModel):
     item: UserValidationModel
@@ -1454,6 +1474,11 @@ class ActivitiesModel(BaseModel):
     UPDATE: bool = Field(default=False)
     UPLOAD: bool = Field(default=False)
     VIEW: bool = Field(default=False)
+
+
+class NotificationConfigModel(BaseValidationModel):
+    email_enabled: Optional[bool] = None
+    in_app_enabled: Optional[bool] = None
 
 
 class ConfigValidationModel(StrictValidationModel):
@@ -1719,15 +1744,44 @@ class FullConfigValidationModel(ConfigValidationModel):
     ADV_ANALYSIS: bool
     SETUP_COMPLETE: bool = Field(default=True)
     LOCATIONS_INCLUDE_POSTAL_CODE: bool
+    MAIL_ENABLED: bool
+    MAIL_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
+    MAIL_SERVER: Optional[str] = None
+    MAIL_PORT: Optional[int] = None
+    MAIL_USE_TLS: Optional[bool] = None
+    MAIL_USE_SSL: Optional[bool] = None
+    MAIL_USERNAME: Optional[str] = None
+    MAIL_PASSWORD: Optional[str] = None
+    MAIL_DEFAULT_SENDER: Optional[str] = None
     TRANSCRIPTION_ENABLED: bool
     WHISPER_MODEL: Optional[str] = None
     YTDLP_PROXY: Optional[str] = None
     YTDLP_ALLOWED_DOMAINS: list[str] = Field(default_factory=list)
     YTDLP_COOKIES: Optional[str] = None
+    NOTIFICATIONS: dict[str, NotificationConfigModel] = Field(default_factory=dict)
 
     @model_validator(mode="before")
     def ensure_setup_complete(cls, values):
         values["SETUP_COMPLETE"] = True
+        return values
+
+    @model_validator(mode="before")
+    def validate_mail_settings(cls, values):
+        if values.get("MAIL_ENABLED"):
+            if (
+                not values.get("MAIL_SERVER")
+                or not values.get("MAIL_PORT")
+                or not values.get("MAIL_USERNAME")
+                or not values.get("MAIL_PASSWORD")
+                or not values.get("MAIL_DEFAULT_SENDER")
+            ):
+                raise ValueError(
+                    "MAIL_SERVER, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD must be provided if MAIL_ENABLED is True"
+                )
+            if not values.get("MAIL_ALLOWED_DOMAINS"):
+                raise ValueError(
+                    "MAIL_ALLOWED_DOMAINS must be provided and not empty if MAIL_ENABLED is True"
+                )
         return values
 
     @model_validator(mode="before")
