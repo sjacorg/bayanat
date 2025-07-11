@@ -218,7 +218,7 @@ const ShortActorDialog = Vue.defineComponent({
     parentItem: {
       handler(newParentItem) {
         this.editedItem.comments = `First Data Analysis from Bulletin ${newParentItem.id ? '#' + newParentItem.id : ''}`;
-        this.editedItem.status = 'Machine Created';
+        this.editedItem.status = 'Human Created';
         this.editedItem.roles = newParentItem.roles;
         const actorProfile = this.editedItem.actor_profiles.find(Boolean);
         actorProfile.sources = newParentItem.sources;
