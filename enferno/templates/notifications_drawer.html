@@ -1,5 +1,5 @@
 <v-navigation-drawer
-        v-model="isNotificationsDrawerVisible"
+        v-model="notifications.ui.drawerVisible"
         location="right"
         temporary
         width="300"
@@ -17,18 +17,18 @@
                     </template>
                     {{ _('Open notifications dialog') }}
                 </v-tooltip>
-                <v-btn icon="mdi-close" @click="isNotificationsDrawerVisible=false"></v-btn>
+                <v-btn icon="mdi-close" @click="notifications.ui.drawerVisible=false"></v-btn>
             </template>
         </v-toolbar>
 
         <notifications-list
-            :notifications="notifications"
-            :is-initial-loading-notifications="isInitialLoadingNotifications"
-            :has-more-notifications="hasMoreNotifications"
-            :is-loading-more-notifications="isLoadingMoreNotifications"
+            :notifications="notifications.items"
+            :initial-loading="notifications.status.initialLoading"
+            :has-more="notifications.hasMore"
+            :loading-more="notifications.status.loadingMore"
             @read-notification="readNotification"
-            @load-notifications="loadNotifications(notificationsPagination)"
-            :unable-to-load-notifications="unableToLoadNotifications"
+            @load-notifications="loadNotifications(notifications.pagination)"
+            :load-error="notifications.status.loadError"
         />
     </v-card>
 </v-navigation-drawer>

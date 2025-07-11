@@ -1,37 +1,37 @@
 <v-dialog
-    v-model="isNotificationsDialogVisible"
-    :width="isNotificationsDialogFullscreen ? null : 800"
-    :fullscreen="isNotificationsDialogFullscreen"
+    v-model="notifications.ui.dialogVisible"
+    :width="notifications.ui.dialogFullscreen ? null : 800"
+    :fullscreen="notifications.ui.dialogFullscreen"
 >
     <v-card variant="flat">
         <div>
             <v-toolbar class="position-sticky top-0" style="z-index: 2;" border flat title="{{ _('Notifications') }}">
                 <template #append>
-                    <v-btn v-if="isNotificationsDialogFullscreen" icon="mdi-fullscreen-exit" @click="isNotificationsDialogFullscreen = false"></v-btn>
-                    <v-btn v-else icon="mdi-fullscreen" @click="isNotificationsDialogFullscreen = true"></v-btn>
-                    <v-btn icon="mdi-close" @click="isNotificationsDialogVisible=false"></v-btn>
+                    <v-btn v-if="notifications.ui.dialogFullscreen" icon="mdi-fullscreen-exit" @click="notifications.ui.dialogFullscreen = false"></v-btn>
+                    <v-btn v-else icon="mdi-fullscreen" @click="notifications.ui.dialogFullscreen = true"></v-btn>
+                    <v-btn icon="mdi-close" @click="notifications.ui.dialogVisible=false"></v-btn>
                 </template>
             </v-toolbar>
 
             <div :class="['d-flex', { 'flex-column': $vuetify.display.mobile }]">
                 <div class="position-sticky" style="top: 66px; z-index: 1; min-width: 200px;">
                     <v-list class="position-sticky" style="top: 66px; z-index: 1;">
-                        <v-list-item :active="currentNotificationTab === 'all'" color="primary" density="compact" slim @click="currentNotificationTab = 'all'" prepend-icon="mdi-bell" rounded="md">
+                        <v-list-item :active="notifications.ui.currentTab === 'all'" color="primary" density="compact" slim @click="notifications.ui.currentTab = 'all'" prepend-icon="mdi-bell" rounded="md">
                             <v-list-item-title>{{ _('All') }}</v-list-item-title>
                             <template #append>
-                                ${totalNotifications}
+                                ${notifications.total}
                             </template>
                         </v-list-item>
-                        <v-list-item :active="currentNotificationTab === 'unread'" color="primary" density="compact" slim @click="currentNotificationTab = 'unread'" prepend-icon="mdi-inbox-outline" rounded="md">
+                        <v-list-item :active="notifications.ui.currentTab === 'unread'" color="primary" density="compact" slim @click="notifications.ui.currentTab = 'unread'" prepend-icon="mdi-inbox-outline" rounded="md">
                             <v-list-item-title>{{ _('Unread') }}</v-list-item-title>
                             <template #append>
-                                ${unreadNotificationsCount}
+                                ${notifications.unreadCount}
                             </template>
                         </v-list-item>
-                        <v-list-item :active="currentNotificationTab === 'read'" color="primary" density="compact" slim @click="currentNotificationTab = 'read'" prepend-icon="mdi-inbox-full-outline" rounded="md">
+                        <v-list-item :active="notifications.ui.currentTab === 'read'" color="primary" density="compact" slim @click="notifications.ui.currentTab = 'read'" prepend-icon="mdi-inbox-full-outline" rounded="md">
                             <v-list-item-title>{{ _('Read') }}</v-list-item-title>
                             <template #append>
-                                ${totalNotifications - unreadNotificationsCount}
+                                ${notifications.total - notifications.unreadCount}
                             </template>
                         </v-list-item>
                     </v-list>
@@ -40,18 +40,17 @@
                 <v-divider v-if="!$vuetify.display.mobile" style="z-index: 1;" :vertical="!$vuetify.display.mobile"></v-divider>
             
                 <div class="w-100">
-                    <v-window v-model="currentNotificationTab" style="min-height: calc(100vh - 251px);">
+                    <v-window v-model="notifications.ui.currentTab" style="min-height: calc(100vh - 251px);">
                         <v-window-item v-for="tab in ['all', 'unread', 'read']" :key="tab" :value="tab">
                             <notifications-list
-                                :notifications="notifications"
-                                :is-initial-loading-notifications="isInitialLoadingNotifications"
-                                :has-more-notifications="hasMoreNotifications"
-                                :is-loading-more-notifications="isLoadingMoreNotifications"
+                                :config="{ hideScrollFeedback: false, maxTitleLines: false, maxSubtitleLines: false }"
+                                :notifications="notifications.items"
+                                :initial-loading="notifications.status.initialLoading"
+                                :has-more="notifications.hasMore"
+                                :loading-more="notifications.status.loadingMore"
                                 @read-notification="readNotification"
-                                @load-notifications="loadNotifications(notificationsPagination)"
-                                :max-title-lines="false"
-                                :max-subtitle-lines="false"
-                                :unable-to-load-notifications="unableToLoadNotifications"
+                                @load-notifications="loadNotifications(notifications.pagination)"
+                                :load-error="notifications.status.loadError"
                             />
                         </v-window-item>
                     </v-window>

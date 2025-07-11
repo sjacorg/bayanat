@@ -1,14 +1,19 @@
 const NotificationsList = Vue.defineComponent({
-    props: [
-        'isInitialLoadingNotifications',
-        'notifications',
-        'hasMoreNotifications',
-        'isLoadingMoreNotifications',
-        'maxTitleLines',
-        'maxSubtitleLines',
-        'hideScrollFeedback',
-        'unableToLoadNotifications'
-    ],
+    props: {
+        initialLoading: { type: Boolean, default: false },
+        notifications: { type: [Array, null], required: true },
+        hasMore: { type: Boolean, default: false },
+        loadingMore: { type: Boolean, default: false },
+        loadError: { type: Boolean, default: false },
+        config: {
+            type: Object,
+            default: () => ({
+                maxTitleLines: 1,
+                maxSubtitleLines: 2,
+                hideScrollFeedback: false
+            })
+        }
+    },
     emits: ['readNotification', 'loadNotifications'],
     data() {
         return {
@@ -40,11 +45,11 @@ const NotificationsList = Vue.defineComponent({
     },
     template: `
         <div>
-            <v-container v-if="isInitialLoadingNotifications && !notifications" class="text-center">
+            <v-container v-if="initialLoading && !notifications" class="text-center">
                 <v-progress-circular color="primary" indeterminate></v-progress-circular>
             </v-container>
 
-            <v-container v-else-if="!isInitialLoadingNotifications && !notifications?.length && !unableToLoadNotifications">
+            <v-container v-else-if="!initialLoading && !notifications?.length && !loadError">
                 <v-empty-state icon="mdi-bell">
                     <template v-slot:headline>
                         <div class="text-h5">
@@ -60,7 +65,7 @@ const NotificationsList = Vue.defineComponent({
                 </v-empty-state>
             </v-container>
 
-            <v-container v-else-if="unableToLoadNotifications && !notifications?.length">
+            <v-container v-else-if="loadError && !notifications?.length">
                 <v-empty-state icon="mdi-bell-off">
                     <template v-slot:headline>
                         <div class="text-h5">
@@ -78,7 +83,7 @@ const NotificationsList = Vue.defineComponent({
                         <v-btn
                             color="primary"
                             @click="$emit('loadNotifications')"
-                            :loading="isInitialLoadingNotifications"
+                            :loading="initialLoading"
                         >
                             {{ translations.retry_ }}
                         </v-btn>
@@ -99,9 +104,9 @@ const NotificationsList = Vue.defineComponent({
                 >
                     <v-card-title class="pb-1 d-flex justify-space-between align-center">
                         <div 
-                            :class="['text-body-1', { 'font-weight-bold': !notification.read_status }]" 
-                            :style="getLineClampStyles(maxTitleLines ?? 1)"
-                            v-html="notification.title"
+                            :class="['text-body-1', { 'font-weight-bold': !notification?.read_status }]" 
+                            :style="getLineClampStyles(config.maxTitleLines)"
+                            v-html="notification?.title"
                         ></div>
                         <v-tooltip location="bottom">
                             <template v-slot:activator="{ props }">
@@ -112,8 +117,8 @@ const NotificationsList = Vue.defineComponent({
                     </v-card-title>
                     <v-card-subtitle>
                         <div 
-                            :style="getLineClampStyles(maxSubtitleLines ?? 2)"
-                            v-html="notification.message"
+                            :style="getLineClampStyles(config.maxSubtitleLines)"
+                            v-html="notification?.message"
                         ></div>
                         <div class="d-flex justify-space-between align-center my-2">
                             <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
@@ -132,7 +137,7 @@ const NotificationsList = Vue.defineComponent({
             </v-container>
 
             <v-alert
-                v-if="unableToLoadNotifications && notifications?.length"
+                v-if="loadError && notifications?.length"
                 type="error"
                 class="ma-2"
                 :title="translations.oops_"
@@ -140,10 +145,10 @@ const NotificationsList = Vue.defineComponent({
                 density="compact"
             ></v-alert>
 
-            <template v-if="!hideScrollFeedback">
+            <template v-if="!config.hideScrollFeedback">
                 <v-btn
-                    v-if="notifications?.length && hasMoreNotifications"
-                    :loading="isLoadingMoreNotifications"
+                    v-if="notifications?.length && hasMore"
+                    :loading="loadingMore"
                     block
                     rounded="0"
                     height="48"
@@ -153,7 +158,7 @@ const NotificationsList = Vue.defineComponent({
                     {{ translations.loadMore_ }}
                 </v-btn>
 
-                <v-container v-else-if="!hasMoreNotifications && notifications?.length" class="text-center text-caption py-3">
+                <v-container v-else-if="!hasMore && notifications?.length" class="text-center text-caption py-3">
                     {{ translations.noMoreNotificationsToLoad_ }}
                 </v-container>
             </template>

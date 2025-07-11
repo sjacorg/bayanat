@@ -131,7 +131,7 @@ const globalMixin = {
 
       // Close the notifications drawer if the settings drawer is open
       if (this.settingsDrawer) {
-        this.isNotificationsDrawerVisible = false;
+        this.notifications.ui.drawerVisible = false;
       }
     },
     updateLang(l) {

@@ -1,5 +1,5 @@
 <v-dialog
-    v-model="isImportantNotificationsDialogVisible"
+    v-model="notifications.ui.importantDialogVisible"
     :width="800"
     persistent
 >
@@ -7,13 +7,13 @@
         <v-toolbar class="position-sticky top-0" style="z-index: 2;" border flat title="{{ _('Important notifications') }}"></v-toolbar>
 
         <v-card-text class="flex-grow-1 overflow-y-auto">
-            <notifications-list :hide-scroll-feedback="true" :notifications="importantNotifications" :max-title-lines="false" :max-subtitle-lines="false" :unable-to-load-notifications="unableToLoadNotifications" />
+            <notifications-list :config="{ hideScrollFeedback: true, maxTitleLines: false, maxSubtitleLines: false }" :notifications="notifications.importantItems" :load-error="notifications.status.loadError" />
         </v-card-text>
 
         <v-card-actions class="bg-surface border-t position-sticky bottom-0">
             <v-spacer></v-spacer>
         
-            <v-btn :disabled="isMarkingAsReadImportantNotifications" :loading="isMarkingAsReadImportantNotifications" variant="flat" color="primary" @click="markAsReadImportantNotifications()">
+            <v-btn :disabled="notifications.status.markingImportantAsRead" :loading="notifications.status.markingImportantAsRead" variant="flat" color="primary" @click="markAsReadnotifications.importantItems()">
                 Mark as read
             </v-btn>
         </v-card-actions>

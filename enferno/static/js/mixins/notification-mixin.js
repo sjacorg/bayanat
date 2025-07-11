@@ -4,137 +4,148 @@ const notificationMixin = {
   },
   computed: {
     hasUnreadNotifications() {
-      return Boolean(this.unreadNotificationsCount)
+      return Boolean(this.notifications.unreadCount)
     },
   },
   data: () => ({
-    // notifications drawer
-    isImportantNotificationsDialogVisible: false,
-    isInitialLoadingNotifications: false,
-    isMarkingAsReadImportantNotifications: false,
-    isLoadingMoreNotifications: false,
-    isNotificationsDrawerVisible: false,
-    isNotificationsDialogFullscreen: false,
-    isNotificationsDialogVisible: false,
-    unreadNotificationsCount: 0,
-    unableToLoadNotifications: false,
-    importantNotifications: [],
-    notifications: null,
-    totalNotifications: 0,
-    hasMoreNotifications: false,
-    currentNotificationTab: 'all',
-    notificationsPagination: {
-      page: 1,
-      per_page: 10,
+    // New state
+    notifications: {
+      items: null,
+      importantItems: [],
+      unreadCount: 0,
+      total: 0,
+      hasMore: false,
+      pagination: {
+        page: 1,
+        per_page: 10
+      },
+      intervalId: null,
+      status: {
+        initialLoading: false,
+        loadingMore: false,
+        markingImportantAsRead: false,
+        loadError: false
+      },
+      ui: {
+        drawerVisible: false,
+        dialogVisible: false,
+        importantDialogVisible: false,
+        dialogFullscreen: false,
+        currentTab: 'all'
+      }
     },
-    notificationIntervalId: null
   }),
 
   async mounted() {
-    this.refetchNotifications();
-
-    // Only poll when document is visible to save resources
-    this.notificationIntervalId = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        this.refetchNotifications();
-      }
-    }, 60_000);
-    
-    // Add visibility change listener
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        this.refetchNotifications();
-      }
-    });
+    this.refetchNotifications(); // Initial fetch
+    this.startPolling();
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
   },
   beforeUnmount() {
-    clearInterval(this.notificationIntervalId);
+    this.stopPolling();
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
   },
 
   methods: {
+    handleVisibilityChange() {
+        if (document.visibilityState === 'visible') {
+            this.refetchNotifications(); // Fetch immediately on becoming visible
+            this.startPolling();
+        } else {
+            this.stopPolling();
+        }
+    },
+    startPolling() {
+        if (this.notifications.intervalId) return; // Prevent multiple intervals
+        this.notifications.intervalId = setInterval(this.refetchNotifications, 60000);
+    },
+    stopPolling() {
+        clearInterval(this.notifications.intervalId);
+        this.notifications.intervalId = null;
+    },
     async markAsReadImportantNotifications() {
       try {
-        this.isMarkingAsReadImportantNotifications = true;
-        await Promise.all(this.importantNotifications.map(async notification => {
+        this.notifications.status.markingImportantAsRead = true;
+        await Promise.all(this.notifications.importantItems.map(async notification => {
           await this.readNotification(notification)
         }))
       } catch (error) {
         console.error(error);
         this.showSnack(handleRequestError(error))
       } finally {
-        this.isMarkingAsReadImportantNotifications = false;
-        this.isImportantNotificationsDialogVisible = false;
+        this.notifications.status.markingImportantAsRead = false;
+        this.notifications.ui.importantDialogVisible = false;
       }
     },
     toggleNotificationsDialog() {
       // Toggle the notifications dialog
-      this.isNotificationsDialogVisible = !this.isNotificationsDialogVisible;
+      this.notifications.ui.dialogVisible = !this.notifications.ui.dialogVisible;
 
       // Close the settings dialog if the notifications dialog is open
-      if (this.isNotificationsDialogVisible) {
+      if (this.notifications.ui.dialogVisible) {
         this.settingsDrawer = false;
-        this.isNotificationsDrawerVisible = false;
+        this.notifications.ui.drawerVisible = false;
 
         // Load notifications if not already loaded
-        if (!this.notifications) {
+        if (!this.notifications.items) {
           this.loadNotifications({ page: 1 });
         }
       }
     },
     toggleNotificationsDrawer() {
       // Toggle the notifications drawer
-      this.isNotificationsDrawerVisible = !this.isNotificationsDrawerVisible;
+      this.notifications.ui.drawerVisible = !this.notifications.ui.drawerVisible;
 
       // Close the settings drawer if the notifications drawer is open
-      if (this.isNotificationsDrawerVisible) {
+      if (this.notifications.ui.drawerVisible) {
         this.settingsDrawer = false;
 
         // Load notifications if not already loaded
-        if (!this.notifications) {
+        if (!this.notifications.items) {
           this.loadNotifications({ page: 1 });
         }
       }
     },
     async loadImportantNotifications() {
       try {
-        if (this.isImportantNotificationsDialogVisible) return;
+        if (this.notifications.ui.importantDialogVisible) return;
 
         // Construct query parameters
         const response = await axios.get(`/admin/api/notifications?is_urgent=true&status=unread&per_page=30`);
 
         if (response?.data?.items?.length) {
-          this.importantNotifications = response.data.items;
-          this.isImportantNotificationsDialogVisible = true;
-          this.unableToLoadNotifications = false;
+          this.notifications.importantItems = response.data.items;
+          this.notifications.ui.importantDialogVisible = true;
+          this.notifications.status.loadError = false;
         }
 
         return response
       } catch (error) {
         const errorMessage = error?.response?.data?.message || error.message || "Failed to load notifications";
         this.showSnack(errorMessage);
-        this.unableToLoadNotifications = true;
+        this.notifications.status.loadError = true;
       }
     },
     async loadNotifications(options) {
       // Prevent concurrent loading or invalid state
-      if (this.isLoadingMoreNotifications || this.isInitialLoadingNotifications) return;
+      if (this.notifications.status.loadingMore || this.notifications.status.initialLoading) return;
 
       try {
         // Set appropriate loading state
         if (options?.page === 1) {
-          this.isInitialLoadingNotifications = true;
-          this.notificationsPagination = {
+          this.notifications.status.initialLoading = true;
+          this.notifications.pagination = {
             page: 1,
             per_page: 10,
           };
         } else {
-          this.isLoadingMoreNotifications = true;
+          this.notifications.status.loadingMore = true;
         }
 
-        const nextOptions = { ...this.notificationsPagination, ...options }
+        const nextOptions = { ...this.notifications.pagination, ...options }
 
-        if (this.currentNotificationTab !== 'all') {
-          nextOptions.status = this.currentNotificationTab;
+        if (this.notifications.ui.currentTab !== 'all') {
+          nextOptions.status = this.notifications.ui.currentTab;
         }
 
         // Construct query parameters
@@ -144,43 +155,43 @@ const notificationMixin = {
         if (!response?.data) return
 
         if (options?.page === 1) {
-          this.notifications = [];
-          this.hasMoreNotifications = false;
+          this.notifications.items = [];
+          this.notifications.hasMore = false;
         }
 
         // Destructure response data
         const { items: nextNotifications = [], total, hasMore, unreadCount = 0, hasUnreadUrgentNotifications = false } = response?.data || {};
 
-        this.unreadNotificationsCount = unreadCount
+        this.notifications.unreadCount = unreadCount
         if (hasUnreadUrgentNotifications) {
-          this.loadImportantNotifications()
+          this.loadnotifications.importantItems()
         }
 
         // Update state
-        this.notifications = [...(this.notifications || []), ...nextNotifications];
-        if (this.currentNotificationTab === 'all') {
-          this.totalNotifications = total || 0;
+        this.notifications.items = [...(this.notifications.items || []), ...nextNotifications];
+        if (this.notifications.ui.currentTab === 'all') {
+          this.notifications.total = total || 0;
         }
-        this.hasMoreNotifications = Boolean(hasMore);
+        this.notifications.hasMore = Boolean(hasMore);
 
         // Increment page if more notifications are available
-        if (this.hasMoreNotifications) {
-          this.notificationsPagination = {
-            ...this.notificationsPagination,
-            page: (this.notificationsPagination.page || 1) + 1,
+        if (this.notifications.hasMore) {
+          this.notifications.pagination = {
+            ...this.notifications.pagination,
+            page: (this.notifications.pagination.page || 1) + 1,
           };
         }
 
-        this.unableToLoadNotifications = false;
+        this.notifications.status.loadError = false;
       } catch (error) {
         console.error(error)
         const errorMessage = error?.response?.data?.message || error.message || "Failed to load notifications";
         this.showSnack(errorMessage);
-        this.unableToLoadNotifications = true;
+        this.notifications.status.loadError = true;
       } finally {
         // Reset loading states
-        this.isInitialLoadingNotifications = false;
-        this.isLoadingMoreNotifications = false;
+        this.notifications.status.initialLoading = false;
+        this.notifications.status.loadingMore = false;
       }
     },
     async readNotification(nextNotification) {
@@ -188,11 +199,11 @@ const notificationMixin = {
       if (!nextNotification?.id || nextNotification?.read_status) return;
 
       // Find the matching important notification
-      const matchingImportantNotification = this.importantNotifications?.find(
+      const matchingImportantNotification = this.notifications.importantItems?.find(
         notification => notification.id === nextNotification.id
       );
       // Find the matching notification
-      const matchingNotification = this.notifications?.find(
+      const matchingNotification = this.notifications.items?.find(
         notification => notification.id === nextNotification.id
       );
 
@@ -200,7 +211,7 @@ const notificationMixin = {
       if (matchingImportantNotification) matchingImportantNotification.read_status = true;
       if (matchingNotification) matchingNotification.read_status = true;
 
-      let notificationsCountCopy = this.unreadNotificationsCount
+      let notificationsCountCopy = this.notifications.unreadCount
       if (matchingNotification || matchingImportantNotification) {
         this.decrementNotificationsCount()
       }
@@ -216,33 +227,20 @@ const notificationMixin = {
         if (matchingImportantNotification) matchingImportantNotification.read_status = false;
         if (matchingNotification) matchingNotification.read_status = false;
 
-        this.unreadNotificationsCount = notificationsCountCopy
-      }
-    },
-    async fetchUnreadNotificationCount() {
-      const response = await axios.get('/admin/api/notifications/unread/count');
-
-      if (!response?.data) return
-
-      this.unreadNotificationsCount = response?.data?.unread_count ?? 0;
-      if (Boolean(response?.data?.has_unread_urgent_notifications)) {
-        await this.loadImportantNotifications()
+        this.notifications.unreadCount = notificationsCountCopy
       }
     },
     async refetchNotifications() {
-      this.fetchUnreadNotificationCount();
-
-      if (!this.notifications) return;
       this.loadNotifications({ page: 1 });
     },
     decrementNotificationsCount() {
-      if (this.unreadNotificationsCount > 0) {
-        this.unreadNotificationsCount -= 1;
+      if (this.notifications.unreadCount > 0) {
+        this.notifications.unreadCount -= 1;
       }
     }
   },
   watch: {
-    currentNotificationTab() {
+    'notifications.ui.currentTab'() {
       this.loadNotifications({ page: 1 });
     }
   },

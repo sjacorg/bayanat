@@ -63,7 +63,7 @@
         <v-btn v-bind="props" icon @click="toggleNotificationsDrawer()">
           <v-badge
             color="error"
-            :content="unreadNotificationsCount"
+            :content="notifications.unreadCount"
             :model-value="hasUnreadNotifications"
             :max="9"
           >
