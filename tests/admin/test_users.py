@@ -349,6 +349,7 @@ def test_user_sessions(
         f"/admin/api/user/{u.id}/sessions",
         headers={"Content-Type": "application/json"},
     )
+    print(response.json)
     assert response.status_code == expected_status
     if expected_status == 200:
         conform_to_schema_or_fail(

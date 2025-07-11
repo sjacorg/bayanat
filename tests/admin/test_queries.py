@@ -8,7 +8,6 @@ from tests.factories import QueryFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
     get_uid_from_client,
-    load_data,
 )
 
 #### PYDANTIC MODELS #####
@@ -73,7 +72,7 @@ def test_queries_endpoint(
     assert response.status_code == expected_status
     if expected_status == 200:
         queries = TypeAdapter(List[QueryItemModel]).validate_python(
-            convert_empty_strings_to_none(load_data(response))
+            convert_empty_strings_to_none(response.json)["data"]
         )
         conform_to_schema_or_fail({"queries": queries}, QueriesResponseModel)
 

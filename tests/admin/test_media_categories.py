@@ -58,7 +58,7 @@ def test_mediacategories_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) > 0
+        assert len(response.json["data"]["items"]) > 0
         conform_to_schema_or_fail(response.json, MediaCategoriesResponseModel)
 
 

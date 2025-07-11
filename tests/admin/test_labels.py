@@ -80,13 +80,13 @@ def test_labels_endpoint(
     assert response.status_code == expected_status
     if expected_status == 200:
         if create_label.verified:
-            assert len(response.json["items"]) == 0
+            assert len(response.json["data"]["items"]) == 0
             response = client_.get(
                 "/admin/api/labels?fltr=all",
                 headers={"Content-Type": "application/json"},
                 follow_redirects=True,
             )
-        label = response.json["items"][0]
+        label = response.json["data"]["items"][0]
         assert label
         if create_label.for_bulletin:
             assert label["for_bulletin"]

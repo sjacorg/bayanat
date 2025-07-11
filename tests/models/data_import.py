@@ -1,6 +1,7 @@
 from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict
 
+from tests.models.common import BaseResponseDataModel, BaseResponseModel
 from tests.models.user import UserCompactModel
 
 
@@ -23,10 +24,14 @@ class DataImportItemModel(BaseModel):
     imported_at: Optional[str] = None
 
 
-class DataImportResponseModel(BaseModel):
+class DataImportDataModel(BaseResponseDataModel):
     items: list[DataImportItemModel]
     total: int
     perPage: int
+
+
+class DataImportResponseModel(BaseResponseModel):
+    data: DataImportDataModel
 
 
 class MediaPathItemModel(BaseModel):
@@ -46,6 +51,10 @@ class EtlImportModel(BaseModel):
     mode: Optional[int]
 
 
-class CsvImportResponseModel(BaseModel):
+class CsvImportDataModel(BaseModel):
     etag: str
     filename: str
+
+
+class CsvImportResponseModel(BaseResponseModel):
+    data: CsvImportDataModel
