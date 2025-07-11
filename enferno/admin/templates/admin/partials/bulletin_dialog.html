@@ -8,9 +8,8 @@
     :event-params="{typ: 'for_actor'}"
     :allowed-roles="allowedRoles"
     :parent-item="editedItem"
-    :show-snack="showSnack"
-    :can-restrict-view="{{ config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin")|tojson }}"
-    @create-actor="relateActor"
+    :can-restrict-view="{% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}true{% else %}false{% endif %}"
+    @create-actor="relateCreatedActor"
     :dialog-props="rightDialogProps"
 >
 </short-actor-dialog>

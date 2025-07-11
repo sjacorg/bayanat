@@ -671,19 +671,6 @@
                     jobs: [],
                     bulkTimer: 0,
 
-
-                    //events
-                    editedEventIndex: -1,
-                    editedEvent: {
-                        title: ""
-                    },
-                    defaultEvent: {
-                        title: "",
-                        from_date: '',
-                        to_date: ''
-                    },
-
-
                     bulletin: {},
                     bulletinLoader: false,
 
@@ -1559,6 +1546,11 @@
                     // related actors functions --------------------
                     searchRelatedActors() {
                         this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
+                    },
+                    relateCreatedActor({ item, relationData }) {
+                        this.relateActor({ item, relationData })
+                        // Reset filters values on RelateActors component
+                        this.$refs.relateActors.q = {};
                     },
                     relateActor({ item, relationData }) {
                         this.addItemToRelation({

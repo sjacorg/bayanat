@@ -1,3 +1,9 @@
+const getDefaultEvent = () => ({
+  title: "",
+  from_date: '',
+  to_date: ''
+})
+
 const EventsSection = Vue.defineComponent({
   props: {
     editedItem: { type: Object },
@@ -12,9 +18,8 @@ const EventsSection = Vue.defineComponent({
     translations: window.translations,
     valid: false,
     eventDialog: false,
-    editedEvent: {
-      title: '',
-    },
+    editedEventIndex: -1,
+    editedEvent: getDefaultEvent(),
   }),
   computed: {
     allowedDateFrom() {
@@ -75,7 +80,7 @@ const EventsSection = Vue.defineComponent({
     closeEvent() {
       this.eventDialog = false;
       setTimeout(() => {
-        this.editedEvent = Object.assign({}, this.defaultEvent);
+        this.editedEvent = getDefaultEvent();
         this.editedEventIndex = -1;
       }, 300);
     },

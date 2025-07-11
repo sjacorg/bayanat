@@ -201,8 +201,6 @@ const ShortActorDialog = Vue.defineComponent({
                 comment: this.relation.comment,
               },
             });
-            // Reset filters values on RelateActors component
-            this.$root.$refs.relateActors.q = {};
           }
           this.$root.showSnack(response.data.message);
           this.close();
@@ -456,7 +454,7 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
 
                           <div style="min-width: 0;">
-                              <v-textarea outlined v-model="editedItem.comments" :rules="[rules.required]" :label="translations.comments_"></v-textarea>
+                              <v-textarea outlined v-model="editedItem.comments" :rules="[validationRules.required()]" :label="translations.comments_"></v-textarea>
                           </div>
 
                           <div style="min-width: 0;">
