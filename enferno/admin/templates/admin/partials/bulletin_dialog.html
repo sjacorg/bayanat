@@ -6,6 +6,7 @@
     :status-items="statusItems"
     :adv-features="advFeatures"
     :event-params="{typ: 'for_actor'}"
+    :prefill-data="$refs.relateActors.q"
     :allowed-roles="allowedRoles"
     :parent-item="editedItem"
     :can-restrict-view="{% if config.AC_USERS_CAN_RESTRICT_NEW or current_user.has_role("Admin") %}true{% else %}false{% endif %}"
