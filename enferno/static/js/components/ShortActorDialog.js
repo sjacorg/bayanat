@@ -1,4 +1,4 @@
-const defaultActorData = {
+const getDefaultActorData = () => ({
   description: '',
   type: 'Person',
   // related events
@@ -20,7 +20,7 @@ const defaultActorData = {
     },
   ],
   roles: [],
-};
+});
 
 const allowedKeys = [
   'first_name',
@@ -81,7 +81,7 @@ const ShortActorDialog = Vue.defineComponent({
   },
   emits: ['update:open', 'close', 'createActor'],
   data: () => ({
-    editedItem: { ...defaultActorData },
+    editedItem: getDefaultActorData(),
     relation: {
       probability: null,
       related_as: null,
@@ -146,7 +146,7 @@ const ShortActorDialog = Vue.defineComponent({
     close() {
       this.$emit('update:open', false);
       setTimeout(() => {
-        this.editedItem = { ...defaultActorData };
+        this.editedItem = getDefaultActorData();
         this.unrestricted = false;
         this.saving = false;
       }, 300);

@@ -1,13 +1,13 @@
-const defaultRelation = {
+const getDefaultRelation = () => ({
   probability: null,
   related_as: [],
   comment: '',
-};
+});
 
 const relationsMixin = {
   data: () => ({
     isConfirmRelationDialogOpen: false,
-    relationToConfirm: { ...defaultRelation },
+    relationToConfirm: getDefaultRelation(),
     itobInfo: [],
     itoaInfo: [],
     atobInfo: [],
@@ -40,7 +40,7 @@ const relationsMixin = {
       this.isConfirmRelationDialogOpen = true;
     },
     closeConfirmRelationDialog() {
-      this.relationToConfirm = { ...defaultRelation };
+      this.relationToConfirm = getDefaultRelation();
       this.isConfirmRelationDialogOpen = false;
     },
     getExcludedIds({ type, includeSelf = false, editedItem, reviewItem } = {}) {

@@ -1,8 +1,8 @@
-const defaultMedia = {
+const getDefaultMedia = () => ({
   title: '',
   files: [],
   category: null,
-}
+})
 
 const mediaMixin = {
   mixins: [reauthMixin],
@@ -276,7 +276,7 @@ const mediaMixin = {
     },
 
     addMedia(media, item, index) {
-      this.editedMedia = { ...defaultMedia }
+      this.editedMedia = getDefaultMedia()
 
       //reset dual fields display to english
       this.mediaDialog = true;
@@ -294,7 +294,7 @@ const mediaMixin = {
       this.editedMedia.files = [];
       this.mediaDialog = false;
       setTimeout(() => {
-        this.editedMedia = { ...defaultMedia }
+        this.editedMedia = getDefaultMedia()
       }, 300);
     },
 
