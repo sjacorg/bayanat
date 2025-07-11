@@ -13,7 +13,7 @@
         <v-card-actions class="bg-surface border-t position-sticky bottom-0">
             <v-spacer></v-spacer>
         
-            <v-btn :disabled="notifications.status.markingImportantAsRead" :loading="notifications.status.markingImportantAsRead" variant="flat" color="primary" @click="markAsReadnotifications.importantItems()">
+            <v-btn :disabled="notifications.status.markingImportantAsRead" :loading="notifications.status.markingImportantAsRead" variant="flat" color="primary" @click="markAsReadImportantNotifications()">
                 Mark as read
             </v-btn>
         </v-card-actions>
