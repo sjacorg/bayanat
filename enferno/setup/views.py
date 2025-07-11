@@ -133,7 +133,7 @@ def check_data_imported() -> Dict[str, str]:
     """Check if default data has been imported."""
     if User.query.first() is not None:
         if not current_user.has_role("Admin"):
-            return HTTPResponse.FORBIDDEN
+            return HTTPResponse.json_error("Forbidden", status=403)
 
     data_exists = (
         Eventtype.query.first() is not None

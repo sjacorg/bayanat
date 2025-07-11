@@ -159,7 +159,7 @@ def require_view_history(f):
             or current_user.view_simple_history
             or current_user.view_full_history
         ):
-            return HTTPResponse.FORBIDDEN
+            return HTTPResponse.json_error("Forbidden", status=403)
         return f(*args, **kwargs)
 
     return decorated_function
@@ -183,7 +183,7 @@ def can_assign_roles(func):
                     "bulletin",
                     details="Unauthorized attempt to assign roles.",
                 )
-                return HTTPResponse.UNAUTHORIZED
+                return HTTPResponse.json_error("Unauthorized", status=401)
         return func(*args, **kwargs)
 
     return decorated_function
@@ -493,7 +493,7 @@ def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("Event type not found", status=404)
 
     eventtype = eventtype.from_json(validated_data["item"])
     if eventtype.save():
@@ -525,7 +525,7 @@ def api_eventtype_delete(
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.json_error("Event type not found", status=404)
 
     if eventtype.delete():
         Activity.create(
