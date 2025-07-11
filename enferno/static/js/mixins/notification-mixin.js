@@ -127,109 +127,107 @@ const notificationMixin = {
       }
     },
     async loadNotifications(options) {
-      // Prevent concurrent loading or invalid state
-      if (this.notifications.status.loadingMore || this.notifications.status.initialLoading) return;
+      const isFirstPage = options?.page === 1;
+      const status = this.notifications.status;
+
+      if (status.isLoadingMore || status.isLoadingInitial) return;
 
       try {
-        // Set appropriate loading state
-        if (options?.page === 1) {
-          this.notifications.status.initialLoading = true;
+        // Set loading flags
+        if (isFirstPage) {
+          status.isLoadingInitial = true;
           this.notifications.pagination = {
             page: 1,
-            per_page: 10,
-          };
+            per_page: 10
+          }
         } else {
-          this.notifications.status.loadingMore = true;
+          status.isLoadingMore = true;
         }
 
-        const nextOptions = { ...this.notifications.pagination, ...options }
+        const query = {
+          ...this.notifications.pagination,
+          ...options,
+        };
 
         if (this.notifications.ui.currentTab !== 'all') {
-          nextOptions.status = this.notifications.ui.currentTab;
+          query.status = this.notifications.ui.currentTab;
         }
 
-        // Construct query parameters
-        const queryParams = new URLSearchParams(nextOptions);
-        const response = await axios.get(`/admin/api/notifications?${queryParams.toString()}`);
+        const queryParams = new URLSearchParams(query);
+        const { data } = await axios.get(`/admin/api/notifications?${queryParams.toString()}`);
 
-        if (!response?.data) return
+        if (!data) return;
 
-        if (options?.page === 1) {
+        if (isFirstPage) {
           this.notifications.items = [];
           this.notifications.hasMore = false;
         }
 
-        // Destructure response data
-        const { items: nextNotifications = [], total, hasMore, unreadCount = 0, hasUnreadUrgentNotifications = false } = response?.data || {};
+        const {
+          items: newItems = [],
+          total = 0,
+          hasMore = false,
+          unreadCount = 0,
+          hasUnreadUrgentNotifications = false
+        } = data;
 
-        this.notifications.unreadCount = unreadCount
+        this.notifications.unreadCount = unreadCount;
+
         if (hasUnreadUrgentNotifications) {
-          this.loadnotifications.importantItems()
+          this.loadImportantNotifications();
         }
 
-        // Update state
-        this.notifications.items = [...(this.notifications.items || []), ...nextNotifications];
+        this.notifications.items = [...(this.notifications.items || []), ...newItems];
+
         if (this.notifications.ui.currentTab === 'all') {
-          this.notifications.total = total || 0;
-        }
-        this.notifications.hasMore = Boolean(hasMore);
-
-        // Increment page if more notifications are available
-        if (this.notifications.hasMore) {
-          this.notifications.pagination = {
-            ...this.notifications.pagination,
-            page: (this.notifications.pagination.page || 1) + 1,
-          };
+          this.notifications.total = total;
         }
 
-        this.notifications.status.loadError = false;
+        this.notifications.hasMore = hasMore;
+
+        if (hasMore) {
+          this.notifications.pagination.page += 1;
+        }
+
+        status.hasLoadError = false;
       } catch (error) {
-        console.error(error)
-        const errorMessage = error?.response?.data?.message || error.message || "Failed to load notifications";
-        this.showSnack(errorMessage);
-        this.notifications.status.loadError = true;
+        console.error(error);
+        this.showSnack(error?.response?.data?.message || error.message || "Failed to load notifications");
+        status.hasLoadError = true;
       } finally {
-        // Reset loading states
-        this.notifications.status.initialLoading = false;
-        this.notifications.status.loadingMore = false;
+        status.isLoadingInitial = false;
+        status.isLoadingMore = false;
       }
     },
-    async readNotification(nextNotification) {
-      // Validate the notification object and its status
-      if (!nextNotification?.id || nextNotification?.read_status) return;
-
-      // Find the matching important notification
-      const matchingImportantNotification = this.notifications.importantItems?.find(
-        notification => notification.id === nextNotification.id
-      );
-      // Find the matching notification
-      const matchingNotification = this.notifications.items?.find(
-        notification => notification.id === nextNotification.id
-      );
-
-      // Update the read status if the notification is found
-      if (matchingImportantNotification) matchingImportantNotification.read_status = true;
-      if (matchingNotification) matchingNotification.read_status = true;
-
-      let notificationsCountCopy = this.notifications.unreadCount
-      if (matchingNotification || matchingImportantNotification) {
-        this.decrementNotificationsCount()
-      }
-
+    async readNotification(notification) {
+      if (!notification?.id || notification.read_status) return;
+    
+      const setReadStatusMatchingNotification = (list, isRead) => {
+        const match = list?.find(n => n.id === notification.id);
+        if (match) match.read_status = isRead;
+        return Boolean(match);
+      };
+    
+      const updatedInList = setReadStatusMatchingNotification(this.notifications.items, true);
+      const updatedInImportant = setReadStatusMatchingNotification(this.notifications.importantItems, true);
+    
+      const unreadWasDecremented = updatedInList || updatedInImportant;
+      const previousUnreadCount = this.notifications.unreadCount;
+    
+      if (unreadWasDecremented) this.decrementNotificationsCount();
+    
       try {
-        const notificationId = nextNotification.id
-        await axios.post(`/admin/api/notifications/${notificationId}/read`)
+        await axios.post(`/admin/api/notifications/${notification.id}/read`);
       } catch (error) {
-        console.error(error)
-        this.showSnack(handleRequestError(error))
-
-        // Revert the read status if the request failed
-        if (matchingImportantNotification) matchingImportantNotification.read_status = false;
-        if (matchingNotification) matchingNotification.read_status = false;
-
-        this.notifications.unreadCount = notificationsCountCopy
+        console.error(error);
+        this.showSnack(handleRequestError(error));
+    
+        // Revert state if request failed
+        setReadStatusMatchingNotification(this.notifications.items, false);
+        setReadStatusMatchingNotification(this.notifications.importantItems, false);
+        this.notifications.unreadCount = previousUnreadCount;
       }
-    },
+    },    
     async refetchNotifications() {
       this.loadNotifications({ page: 1 });
     },
