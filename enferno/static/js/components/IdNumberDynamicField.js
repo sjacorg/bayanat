@@ -1,4 +1,4 @@
-const EMPTY_ID_ENTRY = { type: null, number: null };
+const getEmptyIdEntry = () => ({ type: null, number: null });
 
 const IdNumberDynamicField = Vue.defineComponent({
     props: {
@@ -16,7 +16,7 @@ const IdNumberDynamicField = Vue.defineComponent({
     data: () => ({
       translations: window.translations,
       validationRules: validationRules,
-      items: [ { ...EMPTY_ID_ENTRY } ]
+      items: [getEmptyIdEntry()]
     }),
     
     methods: {
@@ -25,7 +25,7 @@ const IdNumberDynamicField = Vue.defineComponent({
         this.$emit('update:modelValue', filtered);
       },
       addIdNumber() {
-        this.items.push({ ...EMPTY_ID_ENTRY });
+        this.items.push(getEmptyIdEntry());
         this.emitAndFilterEmptyItems();
       },
       removeIdNumber(index) {
