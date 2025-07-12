@@ -87,7 +87,7 @@ const ShortActorDialog = Vue.defineComponent({
       return this.editedItem?.id ? this.translations.editActor_ : this.translations.newActor_;
     },
     simpleIdNumberValue() {
-      return this.editedItem.id_number?.map(idNumber => ({ type: idNumber?.type?.id?.toString(), number: idNumber?.number?.toString() }));
+      return this.editedItem.id_number?.map(idNumber => ({ type: idNumber?.type?.id ? idNumber?.type?.id?.toString() : idNumber?.type, number: idNumber?.number?.toString() }));
     },
   },
   mounted() {
@@ -380,7 +380,6 @@ const ShortActorDialog = Vue.defineComponent({
 
                           <div style="grid-column: 1 / -1; min-width: 0;">
                               <!-- ID Numbers Management -->
-                               P: {{simpleIdNumberValue}}
                               <id-number-dynamic-field
                                   :model-value="simpleIdNumberValue"
                                   @update:model-value="updateIdNumber"

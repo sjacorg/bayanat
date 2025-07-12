@@ -44,9 +44,12 @@ const IdNumberDynamicField = Vue.defineComponent({
       }
     },
     watch: {
-      modelValue(newVal) {
-        if (this.hasOnlyEmptyRow && Array.isArray(newVal) && newVal.length > 0) {
-          this.items = [...newVal];
+      modelValue: {
+        immediate: true,
+        handler(newVal) {
+          if (this.hasOnlyEmptyRow && Array.isArray(newVal) && newVal.length > 0) {
+            this.items = [...newVal];
+          }
         }
       }
     },

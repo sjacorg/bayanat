@@ -267,6 +267,7 @@
                                       ref="relateBulletins" :dialog-props="rightDialogProps"></relate-bulletins>
                     <relate-actors
                         @relate="relateActor"
+                        @change-query="relateActorSearchTerms = $event"
                         :exids="exActors"
                         ref="relateActors"
                         :dialog-props="rightDialogProps"
@@ -676,10 +677,21 @@
 
                     webImportDlg: false,
                     webUrl: '',
-                    webImportLoading: false
+                    webImportLoading: false,
+                    relateActorSearchTerms: {},
                 }),
 
                 computed: {
+                    actorFormPrefillData() {
+                        console.log(this.relateActorSearchTerms)
+                        const searchTerms = JSON.parse(JSON.stringify(this.relateActorSearchTerms));
+
+                        if ('id_number' in searchTerms) {
+                            searchTerms.id_number = [searchTerms.id_number];
+                        }
+
+                        return searchTerms
+                    },
                     searchEmpty() {
                         return this.search.every(search =>
                             Object.values(search).every(value => !value)
