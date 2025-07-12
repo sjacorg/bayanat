@@ -35,7 +35,11 @@ from enferno.extensions import db, session, babel, rds, debug_toolbar, limiter
 from enferno.public.views import bp_public
 from enferno.setup.views import bp_setup
 from enferno.settings import Config
-from enferno.user.forms import ExtendedRegisterForm, ExtendedLoginForm
+from enferno.user.forms import (
+    ExtendedRegisterForm,
+    ExtendedLoginForm,
+    SanitizedWebAuthnRegisterForm,
+)
 from enferno.user.models import User, Role
 from enferno.user.models import WebAuthn
 from enferno.user.views import bp_user
@@ -99,6 +103,7 @@ def register_extensions(app):
     # Initialize security options with common configurations
     security_options = {
         "register_form": ExtendedRegisterForm,
+        "wan_register_form": SanitizedWebAuthnRegisterForm,
     }
 
     # Add the login form to the security options if reCAPTCHA is enabled

@@ -1,5 +1,6 @@
+import re
 from dateutil.parser import parse
-from sqlalchemy import or_, not_, and_, any_, all_, func
+from sqlalchemy import or_, not_, and_, any_, all_, func, text, select
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 
 from enferno.admin.models import (
@@ -158,7 +159,8 @@ class SearchUtils:
             # exact match search
             if exact:
                 conditions = [
-                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in ref
+                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{re.escape(r)}\y")
+                    for r in ref
                 ]
             else:
                 conditions = [func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref]
@@ -177,7 +179,8 @@ class SearchUtils:
             # exact match
             if exact:
                 conditions = [
-                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{r}\y") for r in exref
+                    ~func.array_to_string(Bulletin.tags, " ").op("~*")(f"\y{re.escape(r)}\y")
+                    for r in exref
                 ]
             else:
                 conditions = [
@@ -668,6 +671,49 @@ class SearchUtils:
             ids = [item.get("id") for item in exsources]
             query.append(~Actor.actor_profiles.any(ActorProfile.sources.any(Source.id.in_(ids))))
 
+        # tags
+        tags = q.get("tags")
+        exact = q.get("inExact")
+
+        if tags:
+            # exact match search
+            if exact:
+                conditions = [
+                    func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in tags
+                ]
+            else:
+                conditions = [func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in tags]
+
+            # any operator
+            op = q.get("opTags", False)
+            if op:
+                query.append(or_(*conditions))
+            else:
+                query.append(and_(*conditions))
+
+        # exclude tags
+        extags = q.get("exTags")
+        exact = q.get("exExact")
+        if extags:
+            # exact match
+            if exact:
+                conditions = [
+                    ~func.array_to_string(Actor.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
+                    for r in extags
+                ]
+            else:
+                conditions = [
+                    ~func.array_to_string(Actor.tags, " ").ilike(f"%{r}%") for r in extags
+                ]
+
+            # get all operator
+            opextags = q.get("opExTags")
+            if opextags:
+                query.append(or_(*conditions))
+            else:
+                query.append(and_(*conditions))
+
         res_locations = q.get("resLocations", [])
         if res_locations:
             ids = [item.get("id") for item in res_locations]
@@ -833,11 +879,26 @@ class SearchUtils:
         if type:
             query.append(Actor.type == type)
 
-        # National ID card
-        id_number = q.get("id_number", {})
-        if id_number:
-            search = "%{}%".format(id_number)
-            query.append(Actor.id_number.ilike(search))
+            # ID Number search - using JSONB containment operators for efficiency
+        id_number = q.get("id_number", None)
+        if id_number and isinstance(id_number, dict):
+            type_value = id_number.get("type", "").strip()
+            number_value = id_number.get("number", "").strip()
+
+            if type_value and number_value:
+                # Both provided - use direct SQL with ILIKE for flexible matching
+                query.append(
+                    text(
+                        "EXISTS (SELECT 1 FROM jsonb_array_elements(id_number) elem WHERE elem->>'type' = :type AND elem->>'number' ILIKE :number)"
+                    ).bindparams(type=type_value, number=f"%{number_value}%")
+                )
+            elif type_value:
+                # Type only - use containment operator
+                query.append(Actor.id_number.op("@>")([{"type": type_value}]))
+            elif number_value:
+                # Number only - use jsonb_path_exists for ILIKE behavior
+                path = f'$[*] ? (@.number like_regex "{number_value}" flag "i")'
+                query.append(func.jsonb_path_exists(Actor.id_number, path))
 
         # Related to bulletin search
         rel_to_bulletin = q.get("rel_to_bulletin")

@@ -11,6 +11,9 @@ from geoalchemy2.shape import WKTElement
 import datetime
 from datetime import datetime as dt
 import pytest
+from faker import Faker
+
+fake = Faker()
 
 from enferno.admin.models import (
     Activity,
@@ -30,6 +33,7 @@ from enferno.admin.models import (
     Eventtype,
     GeoLocation,
     GeoLocationType,
+    IDNumberType,
     Incident,
     IncidentHistory,
     ItoaInfo,
@@ -108,7 +112,9 @@ class ActorFactory(factory.Factory):
     position_ar = factory.LazyAttribute(lambda obj: f"{obj.position} (Ar)"[:255])
     family_status = factory.Faker("text", max_nb_chars=255)
     no_children = factory.LazyFunction(lambda: str(random.randint(0, 10)))
-    id_number = factory.Faker("ssn")
+
+    id_number = factory.LazyFunction(lambda: [{"type": "1", "number": fake.ssn()}])
+
     status = factory.Faker("text", max_nb_chars=255)
     comments = factory.Faker("text", max_nb_chars=255)
     review = factory.Faker("text")
@@ -291,6 +297,14 @@ class EthnographyFactory(factory.Factory):
         model = Ethnography
 
     title = factory.Sequence(lambda n: f"Ethnography {n}")
+
+
+class IDNumberTypeFactory(factory.Factory):
+    class Meta:
+        model = IDNumberType
+
+    title = factory.Sequence(lambda n: f"IDNumberType {n}")
+    title_tr = factory.Sequence(lambda n: f"IDNumberType Tr {n}")
 
 
 class AtoaInfoFactory(factory.Factory):

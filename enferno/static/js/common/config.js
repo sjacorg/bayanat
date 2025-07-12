@@ -1,9 +1,48 @@
 // common validation rules
 
 const validationRules = {
-    required: (value) => !!value || 'Required.',
-    min: (v) => v.length >= 6 || 'Min 6 characters',
+    required: (message = window.translations.thisFieldIsRequired_) => {
+        return v => hasValue(v) || message;
+    },
+    atLeastOneRequired: (value, message = window.translations.thisFieldIsRequired_) => {
+        return v => hasValue(value) || message;
+    },
+    maxLength: (max, message) => {
+        const defaultMessage = window.translations.mustBeMaxCharactersOrFewer_(max);
+        return v => isValidLength(v, max, "max") || message || defaultMessage;
+    },
+    minLength: (min, message) => {
+        const defaultMessage = window.translations.mustBeAtLeastCharacters_(min);
+        return v => isValidLength(v, min, "min") || message || defaultMessage;
+    },
+    integer: (message) => {
+        const defaultMessage = window.translations.pleaseEnterAValidNumber_;
+        return v => !v || /^\d+$/.test(v) || message || defaultMessage;
+    },
 };
+
+// Helper functions
+function hasValue(value) {
+    return Array.isArray(value) ? value.length > 0 : !!value;
+}
+
+function isValidLength(value, limit, type) {
+    if (!value) return true; // Allow empty values
+    const length = Array.isArray(value) ? value.length : value.length;
+    return type === "max" ? length <= limit : length >= limit;
+}
+
+function scrollToFirstError(errors) {
+    const invalidFieldId = errors.find((error) => Boolean(error?.id))?.id
+    const element = document.getElementById(invalidFieldId)
+    element?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+    })
+    if (element?.focus) {
+        setTimeout(() => element.focus(), 300) // Wait for scroll to complete
+    }
+}
 
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
@@ -95,6 +134,9 @@ const debounce = (fn, time) => {
 //register leaflet map components
 const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 
+// Set axios defaults
+axios.defaults.headers.common['Accept'] = 'application/json';
+
 //global axios error handler - can be used to define global exception handling on ajax failures
 axios.interceptors.response.use(
     function (response) {
@@ -113,30 +155,66 @@ axios.interceptors.response.use(
     },
 );
 
-function handleRequestError(error) {
-    if (error?.response?.data?.response?.errors) {
-        return error?.response?.data?.response?.errors?.join('\n') || 'An error occurred.';
-    } else if (error?.response?.data?.errors) {
-        const errors = error?.response?.data?.errors;
-        let message = '';
-        for(const field in errors){
-            let fieldName = field;
-            if (fieldName.startsWith('item.')){
-                fieldName = fieldName.substring(5);
-            }
-            message += `<strong style="color:#b71c1c;">[${!fieldName.includes("__root__") ? fieldName : 'Validation Error'}]:</strong> ${errors[field]}<br/>`;
-        }
-        return message;
-    } else if (error?.response?.data) {
-        if (error?.response?.data?.includes('<!DOCTYPE html>')) return 'An error occurred.'
-        return error.response.data || 'An error occurred.';
-    } else if (error.request) {
-        return 'No response from server. Contact an admin.';
-    } else if (error?.message) {
-        return error.message || 'An error occurred.';
-    } else {
-        return 'Request failed. Check your network connection.';
+function getInfraMessage(status) {
+    switch (status) {
+      case 502:
+      case 503:
+        return 'Service temporarily unavailable, please try again shortly.';
+      case 500:
+        return 'Server error, please try again or contact support.';
+      default:
+        return 'Unexpected error, please contact support if the issue persists.';
     }
+  }
+  
+ function handleRequestError(error) {
+    const response = error?.response;
+  
+    // Handle known API error format
+    if (response?.data?.response?.errors) {
+      return response.data.response.errors.join('\n');
+    }
+  
+    if (response?.data?.errors) {
+      const errors = response.data.errors;
+      return Object.entries(errors).map(([field, message]) => {
+        const fieldName = field.startsWith('item.') ? field.slice(5) : field;
+        const label = fieldName.includes('__root__') ? 'Validation Error' : fieldName;
+        return `[${label}]: ${message}`;
+      }).join('\n') || 'An error occurred.';
+    }
+  
+    // Check for HTML response by Content-Type header
+    const ct = response?.headers?.['content-type'] || '';
+    if (ct.includes('text/html') && response?.status) {
+      return getInfraMessage(response.status);
+    }
+  
+    // Fallback: detect HTML content via DOMParser
+    if (typeof response?.data === 'string') {
+      try {
+        const doc = new DOMParser().parseFromString(response.data, 'text/html');
+        if (doc.body.children.length && response?.status) {
+          return getInfraMessage(response.status);
+        }
+        return response.data; // It's a plain string, safe to show
+      } catch {
+        return 'Unexpected error occurred while processing server response.';
+      }
+    }
+  
+    // No response from server (network issue, timeout, etc.)
+    if (error.request) {
+      return 'No response from server. Contact an admin.';
+    }
+  
+    // Axios or JS-level error
+    if (error?.message) {
+      return error.message || 'An error occurred.';
+    }
+  
+    // Total fallback
+    return 'Request failed. Check your network connection.';
 }
 
 //  in-page router for bulletins/actors/incidents pages
@@ -388,7 +466,20 @@ function prepareEventLocations(parentId, events) {
     });
 }
 
-function parseResponse(dzFile) {
+function findUploadedFileByUUID(acceptedFiles, uuid) {
+    const file = acceptedFiles.find(
+        file => file.status === 'success' && normalizeDropzoneResponse(file).uuid === uuid
+    );
+
+    if (!file) {
+        console.warn('Could not find matching file for UUID:', uuid);
+        return null;
+    }
+
+    return normalizeDropzoneResponse(file);
+}
+
+function normalizeDropzoneResponse(dzFile) {
     // helper method to convert xml response to friendly json format
     const response = JSON.parse(dzFile.xhr.response);
 

@@ -12,7 +12,6 @@ from typing import Optional, Any
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
-import os
 
 from enferno.admin.constants import Constants
 from enferno.admin.validation.util import SanitizedField, one_must_exist
@@ -649,7 +648,7 @@ class ActorValidationModel(StrictValidationModel):
     dialects: list[PartialDialectModel] = Field(default_factory=list)
     nickname: Optional[str] = DEFAULT_STRING_FIELD
     nickname_ar: Optional[str] = DEFAULT_STRING_FIELD
-    id_number: Optional[str] = DEFAULT_STRING_FIELD
+    id_number: list[dict[str, str]] = Field(default_factory=list)
     origin_place: Optional[PartialOriginPlaceModel] = None
     events: list[PartialEventModel] = Field(default_factory=list)
     medias: list[PartialMediaModel] = Field(default_factory=list)
@@ -1312,6 +1311,12 @@ class ActorQueryModel(QueryBaseModel):
     last_name: Optional[str] = None
     father_name: Optional[str] = None
     mother_name: Optional[str] = None
+    tags: Optional[list[str]] = Field(default_factory=list)
+    inExact: Optional[bool] = False
+    opTags: Optional[bool] = False
+    exTags: Optional[list[str]] = Field(default_factory=list)
+    exExact: Optional[bool] = False
+    opExTags: Optional[bool] = False
     opEthno: Optional[bool] = None
     ethnography: list[PartialEthnographyModel] = Field(default_factory=list)
     opNat: Optional[bool] = None
@@ -1329,12 +1334,24 @@ class ActorQueryModel(QueryBaseModel):
     age: Optional[str] = None
     civilian: Optional[str] = None
     type_: Optional[str] = Field(default=None, alias="type")
-    id_number: Optional[str] = None
+    id_number: Optional[dict[str, str]] = None
     locTypes: list[str] = Field(default_factory=list)
     latlng: Optional[LatLngRadiusModel] = None
     childlabels: Optional[bool] = False
     childverlabels: Optional[bool] = False
     childsources: Optional[bool] = False
+
+    @field_validator("tags")
+    def validate_tags(cls, v):
+        """
+        Validates the tags field.
+
+        Returns:
+            list<str>: The validated tags value.
+        """
+        if isinstance(v, str):
+            v = [v]
+        return v
 
 
 class ActorQueryRequestModel(BaseValidationModel):
