@@ -1,6 +1,15 @@
 const RelateActors = Vue.defineComponent({
-  props: ['exids', 'dialogProps'],
-  emits: ['relate'],
+  props: {
+    exids: {
+      type: Array,
+      default: () => ([])
+    },
+    dialogProps: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  emits: ['relate', 'changeQuery'],
   data: () => {
     return {
       translations: window.translations,
@@ -59,7 +68,14 @@ const RelateActors = Vue.defineComponent({
       this.$emit('relate', { item, relationData });
     },
   },
-
+  watch: {
+    q: {
+      deep: true,
+      handler(nextQuery) {
+        this.$emit('changeQuery', nextQuery)
+      }
+    }
+  },
   template: /*html*/ `
     <relate-items-template
       v-model:visible="visible"

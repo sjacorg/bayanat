@@ -1,5 +1,14 @@
 const RelateIncidents = Vue.defineComponent({
-  props: ['exids', 'dialogProps'],
+  props: {
+    exids: {
+      type: Array,
+      default: () => ([])
+    },
+    dialogProps: {
+      type: Object,
+      default: () => ({})
+    }
+  },
   emits: ['relate'],
   data: () => {
     return {

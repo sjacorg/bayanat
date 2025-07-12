@@ -1,6 +1,15 @@
 const RelateBulletins = Vue.defineComponent({
-  props: ['exids', 'dialogProps'], // Changed 'value' to 'modelValue'
-  emits: ['relate'], // Explicitly define emitted events
+  props: {
+    exids: {
+      type: Array,
+      default: () => ([])
+    },
+    dialogProps: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  emits: ['relate'],
   data() {
     return {
       translations: window.translations,
