@@ -440,7 +440,12 @@ const ShortActorDialog = Vue.defineComponent({
                               v-model:relation="relation"
                               :multi-relation="$root.actorRelationMultiple"
                               :relation-types="$root.actorRelationTypes"
-                            ></relation-editor-card>
+                              :title="translations.relationshipWithBulletin_(parentItem.id ? '#' + parentItem.id : '')"
+                            >
+                              <template #append>
+                                <v-alert type="info" variant="tonal" density="compact" :text="translations.relationshipBetweenActorAndBulletinWillBeCreated_"></v-alert>
+                              </template>
+                            </relation-editor-card>
                           </div>
 
                           <div style="min-width: 0;">
