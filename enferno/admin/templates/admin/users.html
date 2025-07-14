@@ -170,6 +170,8 @@
                                             <div class="d-flex align-center">
 
                                                 <v-text-field
+                                                        @blur="checkPassword"
+                                                        @input="checkPassword"
                                                         placeholder="{{ _('Password') }}"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
@@ -179,10 +181,6 @@
                                                         :rules="disablePassword ? [] : [validationRules.required()]"
                                                         :error-messages="errorsMap?.password"
                                                 ></v-text-field>
-
-                                                <span v-if="!disablePassword && editedItem.password?.length > 1 "
-                                                      class="green--text">{{ _('Strong Password') }}</span>
-
 
                                                 <v-btn @click.stop="enablePassword"
                                                        v-if="editedItem.id" class="mb-3 mx-1"
@@ -535,15 +533,22 @@
                             this.errorsMap = { ...this.errorsMap, username: null }
                         })
                         .catch(err => {
-                            const errors = err?.response?.data?.errors
-                            if (errors?.item) {
-                                this.errorsMap = { ...this.errorsMap, username: [err.response.data.errors.item] }
-                            } else {
-                                this.showSnack(handleRequestError(err));
-                            }
+                            this.errorsMap = { ...this.errorsMap, username: ['Username is invalid or already taken'] }
                         })
                     }, 350)
-
+                ,
+                checkPassword:
+                    debounce(function (evt) {
+                        axios.post('/admin/api/password/', { password: evt.target.value }, {
+                            suppressGlobalErrorHandler: true,
+                        })
+                        .then(() => {
+                            this.errorsMap = { ...this.errorsMap, password: null }
+                        })
+                        .catch(err => {
+                            this.errorsMap = { ...this.errorsMap, password: ['Your password is too weak. Try adding uppercase letters, numbers, or symbols'] }
+                        })
+                    }, 350)
                 ,
 
                 getRoles() {
