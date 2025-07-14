@@ -127,6 +127,7 @@
                                 </template>
                             </v-toolbar>
                             <v-card-text>
+                                <v-form @submit.prevent="save" ref="form" v-model="valid">
                                 <v-container>
                                     <v-row>
 
@@ -136,6 +137,8 @@
 
                                                     label="{{ _('Full Name') }}"
                                                     v-model="editedItem.name"
+                                                    :rules="[validationRules.required()]"
+                                                    :error-messages="errorsMap?.name"
                                             ></v-text-field>
 
                                         </v-col>
@@ -148,6 +151,9 @@
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
+                                                        :rules="[validationRules.required()]"
+                                                        type="email"
+                                                        :error-messages="errorsMap?.email"
                                                 ></v-text-field>
                                                 <v-btn @click.stop="enableEmail"
                                                        v-if="editedItem.id" class="my-auto mx-1"
@@ -170,6 +176,8 @@
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                                         :type="showPassword ? 'text' : 'password'"
                                                         @click:append="showPassword = !showPassword"
+                                                        :rules="[validationRules.required()]"
+                                                        :error-messages="errorsMap?.password"
                                                 ></v-text-field>
 
                                                 <span v-if="!disablePassword && editedItem.password?.length > 1 "
@@ -195,6 +203,8 @@
                                                               @input="checkUsername"
                                                               label="{{ _('Username') }}"
                                                               :disabled="disableUsername"
+                                                              :rules="[validationRules.required()]"
+                                                              :error-messages="errorsMap?.username"
                                                               v-model="editedItem.username"></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
@@ -262,6 +272,7 @@
                                         </v-col>
                                     </v-row>
                                 </v-container>
+                                </v-form>
                             </v-card-text>
                             <v-card-text class="text-center">
                                 <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
@@ -277,7 +288,7 @@
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
                                 <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="save" color="primary" variant="elevated">
+                                <v-btn @click="validateForm" color="primary" variant="elevated">
                                     {{ _('Save') }}
                                 </v-btn>
                             </v-card-actions>
@@ -311,6 +322,7 @@
                 showPassword: false,
                 drawer: drawer,
                 translations: window.translations,
+                validationRules: validationRules,
                 options: {},
 
                 headers: [
@@ -338,7 +350,9 @@
                 isAdmin: false,
                 userDrawer: false,
                 user: null,
-                session_id: '{{ session.sid }}'
+                session_id: '{{ session.sid }}',
+                valid: false,
+                errorsMap: null
             }),
 
             mixins: [globalMixin],
@@ -514,20 +528,20 @@
 
                 checkUsername:
                     debounce(function (evt) {
-                        axios.post('/admin/api/checkuser/', {item: this.editedItem.username}).then(
-                            res => {
-
+                        axios.post('/admin/api/checkuser/', {item: this.editedItem.username}, {
+                            suppressGlobalErrorHandler: true,
+                        })
+                        .then(() => {
+                            this.errorsMap = { ...this.errorsMap, username: null }
+                        })
+                        .catch(err => {
+                            const errors = err?.response?.data?.errors
+                            if (errors?.item) {
+                                this.errorsMap = { ...this.errorsMap, username: [err.response.data.errors.item] }
+                            } else {
+                                this.showSnack(handleRequestError(err));
                             }
-                        ).catch(
-                            err => {
-                                this.$refs.form.setErrors({username: [err.response.data]});
-                            }
-                        ).finally(
-                            () => {
-
-                            }
-                        )
-
+                        })
                     }, 350)
 
                 ,
@@ -598,33 +612,55 @@
                     }, 300);
                 },
 
+                validateForm() {
+                    this.$refs.form.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.save();
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError(errors)
+                        }
+                    });
+                },
+
                 save() {
+                    const handleError = (err) => {
+                        const errors = err?.response?.data?.errors
+                        if (errors) {
+                            const nextErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => ([key.replace('item.', ''), [value]])))
+                            this.errorsMap = {
+                                ...nextErrors,
+                                ...(nextErrors.email ? { email: 'Invalid email address' } : {})
+                            }
+                        } else {
+                            this.showSnack(handleRequestError(err));
+                        }
+                    }
                     // edit mode
                     if (this.editedItem.id) {
-                        axios.put(`/admin/api/user/`, {item: this.editedItem})
+                        axios.put(`/admin/api/user/`, {item: this.editedItem}, {
+                            suppressGlobalErrorHandler: true,
+                        })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            console.error(err);
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        });
+                                this.errorsMap = null
+                            }).catch(handleError);
 
                     } else {
                         // create mode
 
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem})
+                            .post("/admin/api/user/", {item: this.editedItem}, {
+                                suppressGlobalErrorHandler: true,
+                            })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-
-
-                        });
+                                this.errorsMap = null
+                            }).catch(handleError);
                     }
 
                 }
