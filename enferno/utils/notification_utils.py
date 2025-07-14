@@ -1,7 +1,6 @@
 from enferno.admin.models.Notification import Notification
 from enferno.user.models import Role, User
 from enferno.extensions import db
-from enferno.utils.notification_settings import NotificationSettings
 from enferno.utils.logging_utils import get_logger
 from enferno.utils.email_utils import EmailUtils
 from enferno.admin.constants import Constants
@@ -87,7 +86,7 @@ class NotificationUtils:
         # get config
         from enferno.settings import Config as cfg
 
-        config = NotificationSettings.get_config()
+        config = cfg.NOTIFICATIONS
 
         if isinstance(event, str):
             event = event.upper()
@@ -137,7 +136,7 @@ class NotificationUtils:
         # get config
         from enferno.settings import Config as cfg
 
-        config = NotificationSettings.get_config()
+        config = cfg.NOTIFICATIONS
 
         if isinstance(event, str):
             event = event.upper()

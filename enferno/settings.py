@@ -294,7 +294,7 @@ class Config(object):
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
 
-    NOTIFICATIONS = NotificationSettings.get_config()
+    NOTIFICATIONS = manager.get_config("NOTIFICATIONS")
     # Dependency Flags
     HAS_WHISPER = dep_utils.has_whisper
     HAS_TESSERACT = dep_utils.has_tesseract
