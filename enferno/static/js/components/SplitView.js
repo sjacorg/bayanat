@@ -26,7 +26,7 @@ const SplitView = Vue.defineComponent({
       isHovering: false,
       isDragging: false,
       leftWidth: window.innerWidth / 2,
-      currentX: 0,
+      currentWidth: window.innerWidth,
       frameRequested: false,
       hasInitialized: false,
     };
@@ -47,16 +47,8 @@ const SplitView = Vue.defineComponent({
   },
   mounted() {
     this.ro = new ResizeObserver(() => {
-      const width = this.$el?.offsetWidth || 0;
-      this.currentWidth = width;
-  
-      // Only set leftWidth the first time (or if needed)
-      if (!this.hasInitialized && width > 0) {
-        this.leftWidth = width * (this.leftWidthPercent / 100);
-        this.hasInitialized = true;
-      }
+      this.onResize();
     });
-  
     this.ro.observe(this.$el);
   },
   beforeUnmount() {
@@ -65,63 +57,69 @@ const SplitView = Vue.defineComponent({
     }
   },
   methods: {
+    onResize() {
+      const width = this.$el?.offsetWidth || 0;
+      this.currentWidth = width;
+
+      const min = width * (this.sideSafeAreaPercent / 100);
+      const max = width - min;
+
+      if (!this.hasInitialized && width > 0) {
+        this.leftWidth = width * (this.leftWidthPercent / 100);
+        this.hasInitialized = true;
+      }
+
+      if (this.leftWidth < min || this.leftWidth > max) {
+        this.resetToCenter();
+      }
+    },
     resetToCenter() {
       this.leftWidth = this.currentWidth / 2;
     },
-    hoverHandle(e) {
+    hoverHandle() {
       this.isHovering = true;
     },
-    leaveHandle(e) {
+    leaveHandle() {
       this.isHovering = false;
     },
     startDrag(e) {
       if (e.button !== 0) return;
-    
       const bounds = this.$el.getBoundingClientRect();
       this.currentX = e.clientX - bounds.left;
-    
       this.isDragging = true;
-    
       document.addEventListener('mousemove', this.queueDragFrame);
       document.addEventListener('mouseup', this.stopDrag);
       document.body.style.cursor = 'ew-resize';
-    
-      this.createOverlay?.(); // optional overlay
-    },   
-    
+      this.createOverlay?.();
+    },
     stopDrag() {
       if (!this.isDragging) return;
-    
       this.isDragging = false;
       this.frameRequested = false;
       document.body.style.cursor = '';
-    
       document.removeEventListener('mousemove', this.queueDragFrame);
       document.removeEventListener('mouseup', this.stopDrag);
-    
       this.removeOverlay?.();
     },
     queueDragFrame(e) {
       if (!this.isDragging) return;
-    
       const bounds = this.$el.getBoundingClientRect();
       this.currentX = e.clientX - bounds.left;
-    
       if (!this.frameRequested) {
         this.frameRequested = true;
         requestAnimationFrame(this.doDrag);
       }
     },
     doDrag() {
-      const mWidth = this.currentWidth * (this.sideSafeAreaPercent / 100); // Leave 25% space on each side
-      const containerWidth = this.currentWidth; // live value
+      const mWidth = this.currentWidth * (this.sideSafeAreaPercent / 100);
+      const containerWidth = this.currentWidth;
       const max = containerWidth - mWidth;
       const newWidth = Math.min(Math.max(this.currentX, mWidth), max);
-    
+
       if (this.leftWidth !== newWidth) {
         this.leftWidth = newWidth;
       }
-    
+
       this.frameRequested = false;
     },
     createOverlay() {
@@ -138,7 +136,6 @@ const SplitView = Vue.defineComponent({
       document.body.appendChild(el);
       this.overlayEl = el;
     },
-
     removeOverlay() {
       if (this.overlayEl) {
         document.body.removeChild(this.overlayEl);
@@ -154,41 +151,53 @@ const SplitView = Vue.defineComponent({
         this.$emit('rightWidthChanged', `calc(100% - ${leftWidth + this.halfDividerWidth}px)`);
       }
     },
+    leftSlotVisible(val) {
+      if (val) this.resetToCenter();
+    }
   },
   template: `
+    <div class="d-flex h-100" :style="containerStyle">
       <div
-        class="d-flex h-100"
-        :style="containerStyle"
+        v-show="leftSlotVisible"
+        class="flex-shrink-0 overflow-y-auto"
+        :style="{ width: (leftWidth - halfDividerWidth) + 'px' }"
       >
-        <div
-          v-show="leftSlotVisible"
-          class="flex-shrink-0 overflow-y-auto"
-          :style="{ width: (leftWidth - halfDividerWidth) + 'px' }"
-        >
-          <slot name="left" />
-        </div>
-
-        <div
-            v-if="leftSlotVisible"
-            @mousedown="startDrag"
-            @mouseenter="hoverHandle"
-            @mouseleave="leaveHandle"
-            :class="['d-flex justify-center position-relative flex-shrink-0', dividerClass]"
-            :style="'cursor: ew-resize; width: ' + dividerWidth + 'px;'"
-        >
-            <v-btn v-if="isHandleHighlighted" icon="mdi-arrow-split-vertical" class="position-absolute" height="24" width="24" style="top: 24px" :variant="isHandleHighlighted ? 'flat' : 'elevated'" :color="isHandleHighlighted ? 'primary' : undefined"></v-btn>
-            <v-divider
-                vertical
-                :thickness="isHandleHighlighted ? 3 : 1"
-                :color="isHandleHighlighted ? 'primary' : undefined"
-                :opacity="isHandleHighlighted ? 1 : undefined"
-                style="height: 100%"
-            ></v-divider>
-        </div>
-
-        <div class="flex-shrink-0 overflow-y-auto" :style="{ width: leftSlotVisible ? 'calc(100% - ' + (leftWidth + halfDividerWidth) + 'px)' : '100%' }">
-          <slot name="right" />
-        </div>
+        <slot name="left" />
       </div>
-    `,
+
+      <div
+        v-if="leftSlotVisible"
+        @mousedown="startDrag"
+        @mouseenter="hoverHandle"
+        @mouseleave="leaveHandle"
+        :class="['d-flex justify-center position-relative flex-shrink-0', dividerClass]"
+        :style="'cursor: ew-resize; width: ' + dividerWidth + 'px;'"
+      >
+        <v-btn
+          v-if="isHandleHighlighted"
+          icon="mdi-arrow-split-vertical"
+          class="position-absolute"
+          height="24"
+          width="24"
+          style="top: 24px"
+          :variant="isHandleHighlighted ? 'flat' : 'elevated'"
+          :color="isHandleHighlighted ? 'primary' : undefined"
+        ></v-btn>
+        <v-divider
+          vertical
+          :thickness="isHandleHighlighted ? 3 : 1"
+          :color="isHandleHighlighted ? 'primary' : undefined"
+          :opacity="isHandleHighlighted ? 1 : undefined"
+          style="height: 100%"
+        ></v-divider>
+      </div>
+
+      <div
+        class="flex-shrink-0 overflow-y-auto"
+        :style="{ width: leftSlotVisible ? 'calc(100% - ' + (leftWidth + halfDividerWidth) + 'px)' : '100%' }"
+      >
+        <slot name="right" />
+      </div>
+    </div>
+  `,
 });
