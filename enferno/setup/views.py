@@ -78,17 +78,17 @@ def create_admin() -> Any:
     admin_role = Role.query.filter(Role.name == "Admin").first()
 
     if admin_role.users.all():
-        return HTTPResponse.json_error("Admin user already exists", status=400)
+        return HTTPResponse.error("Admin user already exists")
 
     data = request.json
     username = data.get("username")
     password = data.get("password")
 
     if not username or not password:
-        return HTTPResponse.json_error("Username and password are required", status=400)
+        return HTTPResponse.error("Username and password are required")
 
     if User.query.filter(User.username == username.lower()).first():
-        return HTTPResponse.json_error("Username already exists", status=400)
+        return HTTPResponse.error("Username already exists")
 
     new_admin = User(username=username, password=hash_password(password), active=1, name="Admin")
     new_admin.roles.append(admin_role)
@@ -97,14 +97,13 @@ def create_admin() -> Any:
     try:
         db.session.commit()
         login_user(new_admin)
-        return HTTPResponse.json_ok(
+        return HTTPResponse.created(
             message="Admin user installed successfully",
             data={"item": new_admin.to_dict()},
-            status=201,
         )
     except Exception as e:
         db.session.rollback()
-        return HTTPResponse.json_error("Failed to create admin user", status=500)
+        return HTTPResponse.error("Failed to create admin user", status=500)
 
 
 @bp_setup.get("/api/check-admin")
@@ -112,13 +111,9 @@ def check_admin() -> Dict[str, str]:
     """Check if an admin user exists."""
     admin_role = Role.query.filter(Role.name == "Admin").first()
     if admin_role and admin_role.users.first():
-        return HTTPResponse.json_ok(
-            data={"status": "exists"}, message="Admin user already exists", status=200
-        )
+        return HTTPResponse.success(data={"status": "exists"}, message="Admin user already exists")
     else:
-        return HTTPResponse.json_ok(
-            data={"status": "not_found"}, message="No admin user found", status=200
-        )
+        return HTTPResponse.success(data={"status": "not_found"}, message="No admin user found")
 
 
 @bp_setup.post("/api/import-data")
@@ -127,9 +122,9 @@ def import_data() -> Response:
     """Import default data into the database."""
     try:
         import_default_data()
-        return HTTPResponse.json_ok(message="Default data imported successfully", status=200)
+        return HTTPResponse.success(message="Default data imported successfully")
     except Exception as e:
-        return HTTPResponse.json_error("Failed to import default data", status=500)
+        return HTTPResponse.error("Failed to import default data", status=500)
 
 
 @bp_setup.get("/api/check-data-imported")
@@ -137,7 +132,7 @@ def check_data_imported() -> Dict[str, str]:
     """Check if default data has been imported."""
     if User.query.first() is not None:
         if not current_user.has_role("Admin"):
-            return HTTPResponse.json_error("Forbidden", status=403)
+            return HTTPResponse.forbidden()
 
     data_exists = (
         Eventtype.query.first() is not None
@@ -145,14 +140,13 @@ def check_data_imported() -> Dict[str, str]:
         and ClaimedViolation.query.first() is not None
     )
     if data_exists:
-        return HTTPResponse.json_ok(
-            data={"status": "imported"}, message="Default data has been imported", status=200
+        return HTTPResponse.success(
+            data={"status": "imported"}, message="Default data has been imported"
         )
     else:
-        return HTTPResponse.json_ok(
+        return HTTPResponse.success(
             data={"status": "not_imported"},
             message="Default data has not been imported",
-            status=200,
         )
 
 
@@ -161,7 +155,7 @@ def get_default_config() -> Dict[str, Any]:
     """Retrieve the default configuration for specific keys."""
     if User.query.first() is not None:
         if not current_user.has_role("Admin"):
-            return HTTPResponse.json_error("Forbidden", status=403)
+            return HTTPResponse.forbidden()
 
     required_keys = [
         "FILESYSTEM_LOCAL",
@@ -189,8 +183,8 @@ def get_default_config() -> Dict[str, Any]:
 
     default_config = ConfigManager.DEFAULT_CONFIG
     filtered_config = {key: default_config[key] for key in required_keys if key in default_config}
-    return HTTPResponse.json_ok(
-        data=filtered_config, message="Default configuration retrieved successfully", status=200
+    return HTTPResponse.success(
+        data=filtered_config, message="Default configuration retrieved successfully"
     )
 
 
@@ -214,6 +208,6 @@ def api_config_write(
     conf["SETUP_COMPLETE"] = True
 
     if ConfigManager.write_config(conf):
-        return HTTPResponse.json_ok(message="Configuration Saved Successfully", status=200)
+        return HTTPResponse.success(message="Configuration Saved Successfully")
     else:
-        return HTTPResponse.json_error("Unable to Save Configuration", status=417)
+        return HTTPResponse.error("Unable to Save Configuration", status=417)

@@ -5,16 +5,8 @@ from flask import Response
 class HTTPResponse:
     """Utility class for HTTP responses."""
 
-    OK = Response("OK", status=200)
-    UNAUTHORIZED = Response("Unauthorized", status=401)
-    FORBIDDEN = Response("Forbidden", status=403)
-    NOT_FOUND = Response("Not Found", status=404)
-    REQUEST_EXPIRED = Response("Request Expired", 410)
-    BAD_REQUEST = Response("Bad Request", status=400)
-    INTERNAL_SERVER_ERROR = Response("Internal Server Error", status=500)
-
     @staticmethod
-    def json_ok(data: dict = None, message: str = None, status: int = 200):
+    def _json_response(data: dict = None, message: str = None, status: int = 200):
         """Standard JSON response for success."""
         response_data = {}
         if data is not None:
@@ -24,9 +16,34 @@ class HTTPResponse:
         return Response(json.dumps(response_data), status=status, content_type="application/json")
 
     @staticmethod
-    def json_error(message: str, status: int = 400, errors: any = None):
+    def _json_error(message: str, status: int = 400, errors: any = None):
         """Standard JSON response for error."""
         response_data = {"message": message}
         if errors:
             response_data["errors"] = errors
         return Response(json.dumps(response_data), status=status, content_type="application/json")
+
+    @staticmethod
+    def success(data=None, message=None, status=200):
+        """200 OK response"""
+        return HTTPResponse._json_response(data, message, status)
+
+    @staticmethod
+    def created(data=None, message=None):
+        """201 Created response"""
+        return HTTPResponse._json_response(data, message, 201)
+
+    @staticmethod
+    def error(message, status=400, errors=None):
+        """Error response with custom status"""
+        return HTTPResponse._json_error(message, status, errors)
+
+    @staticmethod
+    def not_found(message="Not found"):
+        """404 Not Found"""
+        return HTTPResponse.error(message, 404)
+
+    @staticmethod
+    def forbidden(message="Forbidden"):
+        """403 Forbidden"""
+        return HTTPResponse.error(message, 403)
