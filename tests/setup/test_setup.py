@@ -66,6 +66,7 @@ def test_setup_wizard_create_admin_user(uninitialized_app, session_uninitialized
     )
     assert response.status_code == 201
     assert response.json["message"] == "Admin user installed successfully"
+    assert response.json["data"]["item"]["username"] == "testAdmin"
 
     admin = User.query.filter(User.username == "testAdmin").first()
     assert admin is not None

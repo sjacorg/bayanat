@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import AtoaInfosResponseModel
+from tests.models.admin import AtoaInfoCreatedResponseModel, AtoaInfosResponseModel
 
 ##### FIXTURES #####
 
@@ -67,7 +67,7 @@ def test_atoainfos_endpoint(
 ##### POST /admin/api/atoainfo #####
 
 post_atoainfo_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -87,7 +87,10 @@ def test_post_atoainfo_endpoint(clean_slate_atoa_infos, request, client_fixture,
     found_atoa_info = AtoaInfo.query.filter(
         AtoaInfo.title == atoa_info.title and AtoaInfo.reverse_title == atoa_info.reverse_title
     ).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), AtoaInfoCreatedResponseModel
+        )
         assert found_atoa_info
     else:
         assert found_atoa_info is None

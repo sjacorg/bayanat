@@ -97,7 +97,11 @@ def create_admin() -> Any:
     try:
         db.session.commit()
         login_user(new_admin)
-        return HTTPResponse.json_ok(message="Admin user installed successfully", status=201)
+        return HTTPResponse.json_ok(
+            message="Admin user installed successfully",
+            data={"item": new_admin.to_dict()},
+            status=201,
+        )
     except Exception as e:
         db.session.rollback()
         return HTTPResponse.json_error("Failed to create admin user", status=500)

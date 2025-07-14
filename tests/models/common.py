@@ -56,3 +56,32 @@ class BaseResponseDataModel(BaseModel):
 
 class BaseResponseModel(StrictModel):
     message: Optional[str] = None
+
+
+class BaseCreatedResponseDataModel(BaseModel):
+    @model_validator(mode="before")
+    @classmethod
+    def validate_item(cls, values):
+        item_type = cls.model_fields.get("item")
+        if not item_type:
+            raise ValueError("The 'item' field is not defined in the subclass.")
+
+        item_type = item_type.annotation
+        if get_origin(item_type) is Union:
+            models = get_args(item_type)
+        else:
+            models = [item_type]
+
+        item = values.get("item")
+        if not item:
+            raise ValueError("The 'item' field is not defined in the subclass.")
+
+        for model in models:
+            try:
+                validated_item = model.model_validate(item)
+                values["item"] = validated_item
+                return values
+            except ValueError:
+                continue
+
+        raise ValueError(f"None of the models match for item: {item}")

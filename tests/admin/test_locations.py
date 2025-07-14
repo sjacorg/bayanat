@@ -17,7 +17,11 @@ from tests.test_utils import (
 
 ##### PYDANTIC MODELS #####
 
-from tests.models.admin import LocationItemModel, LocationResponseModel
+from tests.models.admin import (
+    LocationCreatedResponseModel,
+    LocationItemModel,
+    LocationResponseModel,
+)
 
 ##### FIXTURES #####
 
@@ -111,9 +115,9 @@ def test_location_endpoint(create_location, request, client_fixture, expected_st
 ##### POST /admin/api/location #####
 
 post_location_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
-    ("mod_client", 200),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -135,7 +139,10 @@ def test_post_location_endpoint(
     )
     assert response.status_code == expected_status
     found_location = Location.query.filter(Location.title == location.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), LocationCreatedResponseModel
+        )
         assert found_location
     else:
         assert found_location is None

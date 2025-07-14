@@ -10,7 +10,10 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import LocationAdminLevelsResponseModel
+from tests.models.admin import (
+    LocationAdminLevelCreatedResponseModel,
+    LocationAdminLevelsResponseModel,
+)
 
 ##### FIXTURES #####
 
@@ -65,7 +68,7 @@ def test_lals_endpoint(clean_slate_lals, create_lal, request, client_fixture, ex
 ##### POST /admin/api/location-admin-level #####
 
 post_lal_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -84,7 +87,10 @@ def test_post_lal_endpoint(clean_slate_lals, request, client_fixture, expected_s
     )
     assert response.status_code == expected_status
     found_lal = LocationAdminLevel.query.filter(LocationAdminLevel.code == lal.code).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), LocationAdminLevelCreatedResponseModel
+        )
         assert found_lal
     else:
         assert found_lal is None

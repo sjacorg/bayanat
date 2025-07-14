@@ -71,7 +71,9 @@ def export_bulletins() -> Response:
         )
 
         return HTTPResponse.json_ok(
-            message=f"Export request created successfully, id:  {export_request.id} ", status=200
+            message=f"Export request created successfully, id:  {export_request.id} ",
+            data={"item": export_request.to_dict()},
+            status=201,
         )
     return HTTPResponse.json_error("Error creating export request", status=417)
 
@@ -97,7 +99,9 @@ def export_actors() -> Response:
             Export.__table__.name,
         )
         return HTTPResponse.json_ok(
-            message=f"Export request created successfully, id:  {export_request.id} ", status=200
+            message=f"Export request created successfully, id:  {export_request.id} ",
+            data={"item": export_request.to_dict()},
+            status=201,
         )
     return HTTPResponse.json_error("Error creating export request", status=417)
 
@@ -123,7 +127,9 @@ def export_incidents() -> Response:
             Export.__table__.name,
         )
         return HTTPResponse.json_ok(
-            message=f"Export request created successfully, id:  {export_request.id} ", status=200
+            message=f"Export request created successfully, id:  {export_request.id} ",
+            data={"item": export_request.to_dict()},
+            status=201,
         )
     return HTTPResponse.json_error("Error creating export request", status=417)
 

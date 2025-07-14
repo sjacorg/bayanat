@@ -11,7 +11,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import ClaimedViolationsResponseModel
+from tests.models.admin import ClaimedViolationCreatedResponseModel, ClaimedViolationsResponseModel
 
 ##### FIXTURES #####
 
@@ -75,9 +75,9 @@ def test_cvs_endpoint(clean_slate_cvs, create_cv, request, client_fixture, expec
 ##### POST /admin/api/claimedviolation #####
 
 post_cv_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
-    ("mod_client", 200),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -94,7 +94,10 @@ def test_post_cv_endpoint(clean_slate_cvs, request, client_fixture, expected_sta
     )
     assert response.status_code == expected_status
     found_cv = ClaimedViolation.query.filter(ClaimedViolation.title == cv.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), ClaimedViolationCreatedResponseModel
+        )
         assert found_cv
     else:
         assert found_cv is None

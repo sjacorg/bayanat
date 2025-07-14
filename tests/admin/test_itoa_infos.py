@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import ItoaInfosResponseModel
+from tests.models.admin import ItoaInfoCreatedResponseModel, ItoaInfosResponseModel
 
 ##### FIXTURES #####
 
@@ -67,7 +67,7 @@ def test_itoainfos_endpoint(
 ##### POST /admin/api/itoainfo #####
 
 post_itoainfo_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -87,7 +87,10 @@ def test_post_itoainfo_endpoint(clean_slate_itoa_infos, request, client_fixture,
     found_itoa_info = ItoaInfo.query.filter(
         ItoaInfo.title == itoa_info.title and ItoaInfo.reverse_title == itoa_info.reverse_title
     ).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), ItoaInfoCreatedResponseModel
+        )
         assert found_itoa_info
     else:
         assert found_itoa_info is None

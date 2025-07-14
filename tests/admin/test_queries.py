@@ -12,7 +12,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import QueriesResponseModel, QueryItemModel
+from tests.models.admin import QueriesResponseModel, QueryCreatedResponseModel, QueryItemModel
 
 ##### FIXTURES #####
 
@@ -109,9 +109,9 @@ def test_query_exists_endpoint(
 
 ##### POST /admin/api/query/ #####
 post_query_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 200),
-    ("mod_client", 200),
+    ("admin_client", 201),
+    ("da_client", 201),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -127,7 +127,10 @@ def test_post_query_endpoint(clean_slate_queries, request, client_fixture, expec
     )
     assert response.status_code == expected_status
     found_q = Query.query.filter(Query.name == query.name).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), QueryCreatedResponseModel
+        )
         assert found_q
     else:
         assert found_q is None

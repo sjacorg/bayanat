@@ -30,6 +30,7 @@ from tests.test_utils import (
 ##### PYDANTIC MODELS #####
 
 from tests.models.admin import (
+    IncidentCreatedResponseModel,
     IncidentsResponseModel,
     IncidentItemMode3PlusModel,
     IncidentItemMode3Model,
@@ -233,6 +234,9 @@ def test_post_incident_endpoint(clean_slate_incidents, request, client_fixture, 
     assert response.status_code == expected_status
     found_incident = Incident.query.filter(Incident.title == incident.title).first()
     if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), IncidentCreatedResponseModel
+        )
         assert found_incident
     else:
         assert found_incident is None

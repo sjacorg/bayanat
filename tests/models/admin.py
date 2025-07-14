@@ -1,7 +1,12 @@
 from typing import Any, ForwardRef, Optional, Union
 from pydantic import BaseModel, Field
 from tests.models.user import UserCompactModel, RoleModel, UserItemModel
-from tests.models.common import BaseResponseModel, StrictModel, BaseResponseDataModel
+from tests.models.common import (
+    BaseCreatedResponseDataModel,
+    BaseResponseModel,
+    StrictModel,
+    BaseResponseDataModel,
+)
 
 ## PYDANTIC MODELS ##
 
@@ -57,6 +62,14 @@ class LocationResponseDataModel(BaseResponseDataModel):
 
 class LocationResponseModel(BaseResponseModel):
     data: LocationResponseDataModel
+
+
+class LocationCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: LocationItemModel
+
+
+class LocationCreatedResponseModel(BaseResponseModel):
+    data: LocationCreatedResponseDataModel
 
 
 class LocationRequestModel(BaseModel):
@@ -347,6 +360,16 @@ class ActorsResponseModel(BaseResponseModel):
     data: ActorsResponseDataModel
 
 
+class ActorCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[
+        ActorItemMinModel, ActorItemMode2Model, ActorItemMode3Model, ActorItemMode3PlusModel
+    ]
+
+
+class ActorCreatedResponseModel(BaseResponseModel):
+    data: ActorCreatedResponseDataModel
+
+
 class ActorRequestModel(BaseModel):
     item: dict
 
@@ -487,6 +510,19 @@ class BulletinsResponseModel(BaseResponseModel):
     data: BulletinsResponseDataModel
 
 
+class BulletinCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[
+        BulletinItemMinModel,
+        BulletinItemMode2Model,
+        BulletinItemMode3Model,
+        BulletinItemMode3PlusModel,
+    ]
+
+
+class BulletinCreatedResponseModel(BaseResponseModel):
+    data: BulletinCreatedResponseDataModel
+
+
 class BulletinRequestModel(BaseModel):
     item: dict
 
@@ -590,6 +626,19 @@ class IncidentsResponseModel(BaseResponseModel):
     data: IncidentsResponseDataModel
 
 
+class IncidentCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[
+        IncidentItemMinModel,
+        IncidentItemMode2Model,
+        IncidentItemMode3Model,
+        IncidentItemMode3PlusModel,
+    ]
+
+
+class IncidentCreatedResponseModel(BaseResponseModel):
+    data: IncidentCreatedResponseDataModel
+
+
 class IncidentRequestModel(BaseModel):
     item: dict
 
@@ -623,6 +672,14 @@ class LabelsResponseModel(BaseResponseModel):
     data: LabelsResponseDataModel
 
 
+class LabelCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[LabelMode2Model, LabelModel]
+
+
+class LabelCreatedResponseModel(BaseResponseModel):
+    data: LabelCreatedResponseDataModel
+
+
 class EventTypeItemModel(BaseModel):
     id: int
     title: Optional[str] = None
@@ -643,6 +700,14 @@ class EventtypesResponseModel(BaseResponseModel):
     data: EventtypesResponseDataModel
 
 
+class EventtypeCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: EventTypeItemModel
+
+
+class EventtypeCreatedResponseModel(BaseResponseModel):
+    data: EventtypeCreatedResponseDataModel
+
+
 class PotentialViolationItemModel(BaseModel):
     id: int
     title: Optional[str] = None
@@ -658,6 +723,14 @@ class PotentialViolationsResponseModel(BaseResponseModel):
     data: PotentialViolationsResponseDataModel
 
 
+class PotentialViolationCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: PotentialViolationItemModel
+
+
+class PotentialViolationCreatedResponseModel(BaseResponseModel):
+    data: PotentialViolationCreatedResponseDataModel
+
+
 class ClaimedViolationItemModel(BaseModel):
     id: int
     title: Optional[str] = None
@@ -671,6 +744,14 @@ class ClaimedViolationsResponseDataModel(BaseResponseDataModel):
 
 class ClaimedViolationsResponseModel(BaseResponseModel):
     data: ClaimedViolationsResponseDataModel
+
+
+class ClaimedViolationCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ClaimedViolationItemModel
+
+
+class ClaimedViolationCreatedResponseModel(BaseResponseModel):
+    data: ClaimedViolationCreatedResponseDataModel
 
 
 class SourceItemModel(BaseModel):
@@ -692,6 +773,14 @@ class SourcesResponseModel(BaseResponseModel):
     data: SourcesResponseDataModel
 
 
+class SourceCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: SourceItemModel
+
+
+class SourceCreatedResponseModel(BaseResponseModel):
+    data: SourceCreatedResponseDataModel
+
+
 class LocationAdminLevelItemModel(BaseModel):
     id: int
     code: int
@@ -708,6 +797,14 @@ class LocationAdminLevelsResponseModel(BaseResponseModel):
     data: LocationAdminLevelsResponseDataModel
 
 
+class LocationAdminLevelCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: LocationAdminLevelItemModel
+
+
+class LocationAdminLevelCreatedResponseModel(BaseResponseModel):
+    data: LocationAdminLevelCreatedResponseDataModel
+
+
 class LocationTypesResponseDataModel(BaseResponseDataModel):
     items: list[LocationTypeModel]
     perPage: int
@@ -716,6 +813,14 @@ class LocationTypesResponseDataModel(BaseResponseDataModel):
 
 class LocationTypesResponseModel(BaseResponseModel):
     data: LocationTypesResponseDataModel
+
+
+class LocationTypeCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: LocationTypeModel
+
+
+class LocationTypeCreatedResponseModel(BaseResponseModel):
+    data: LocationTypeCreatedResponseDataModel
 
 
 class CountriesResponseDataModel(BaseResponseDataModel):
@@ -728,6 +833,14 @@ class CountriesResponseModel(BaseResponseModel):
     data: CountriesResponseDataModel
 
 
+class CountryCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: CountryModel
+
+
+class CountryCreatedResponseModel(BaseResponseModel):
+    data: CountryCreatedResponseDataModel
+
+
 class EthnographiesResponseDataModel(BaseResponseDataModel):
     items: list[EthnographyModel]
     perPage: int
@@ -736,6 +849,14 @@ class EthnographiesResponseDataModel(BaseResponseDataModel):
 
 class EthnographiesResponseModel(BaseResponseModel):
     data: EthnographiesResponseDataModel
+
+
+class EthnographyCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: EthnographyModel
+
+
+class EthnographyCreatedResponseModel(BaseResponseModel):
+    data: EthnographyCreatedResponseDataModel
 
 
 class AtoaInfoItemModel(BaseModel):
@@ -756,6 +877,14 @@ class AtoaInfosResponseModel(BaseResponseModel):
     data: AtoaInfosResponseDataModel
 
 
+class AtoaInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: AtoaInfoItemModel
+
+
+class AtoaInfoCreatedResponseModel(BaseResponseModel):
+    data: AtoaInfoCreatedResponseDataModel
+
+
 class AtobInfoItemModel(BaseModel):
     id: int
     title: str
@@ -772,6 +901,14 @@ class AtobInfosResponseDataModel(BaseResponseDataModel):
 
 class AtobInfosResponseModel(BaseResponseModel):
     data: AtobInfosResponseDataModel
+
+
+class AtobInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: AtobInfoItemModel
+
+
+class AtobInfoCreatedResponseModel(BaseResponseModel):
+    data: AtobInfoCreatedResponseDataModel
 
 
 class BtobInfoItemModel(BaseModel):
@@ -792,6 +929,14 @@ class BtobInfosResponseModel(BaseResponseModel):
     data: BtobInfosResponseDataModel
 
 
+class BtobInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: BtobInfoItemModel
+
+
+class BtobInfoCreatedResponseModel(BaseResponseModel):
+    data: BtobInfoCreatedResponseDataModel
+
+
 class ItoaInfoItemModel(BaseModel):
     id: int
     title: str
@@ -808,6 +953,14 @@ class ItoaInfosResponseDataModel(BaseResponseDataModel):
 
 class ItoaInfosResponseModel(BaseResponseModel):
     data: ItoaInfosResponseDataModel
+
+
+class ItoaInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ItoaInfoItemModel
+
+
+class ItoaInfoCreatedResponseModel(BaseResponseModel):
+    data: ItoaInfoCreatedResponseDataModel
 
 
 class ItobInfoItemModel(BaseModel):
@@ -828,6 +981,14 @@ class ItobInfosResponseModel(BaseResponseModel):
     data: ItobInfosResponseDataModel
 
 
+class ItobInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ItobInfoItemModel
+
+
+class ItobInfoCreatedResponseModel(BaseResponseModel):
+    data: ItobInfoCreatedResponseDataModel
+
+
 class ItoiInfoItemModel(BaseModel):
     id: int
     title: str
@@ -844,6 +1005,14 @@ class ItoiInfosResponseDataModel(BaseResponseDataModel):
 
 class ItoiInfosResponseModel(BaseResponseModel):
     data: ItoiInfosResponseDataModel
+
+
+class ItoiInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ItoiInfoItemModel
+
+
+class ItoiInfoCreatedResponseModel(BaseResponseModel):
+    data: ItoiInfoCreatedResponseDataModel
 
 
 class MediaCategoryItemModel(BaseModel):
@@ -864,6 +1033,14 @@ class MediaCategoriesResponseModel(BaseResponseModel):
     data: MediaCategoriesResponseDataModel
 
 
+class MediaCategoryCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: MediaCategoryItemModel
+
+
+class MediaCategoryCreatedResponseModel(BaseResponseModel):
+    data: MediaCategoryCreatedResponseDataModel
+
+
 class GeoLocationTypesResponseDataModel(BaseResponseDataModel):
     items: list[MediaCategoryItemModel]
     perPage: int
@@ -872,6 +1049,14 @@ class GeoLocationTypesResponseDataModel(BaseResponseDataModel):
 
 class GeoLocationTypesResponseModel(BaseResponseModel):
     data: GeoLocationTypesResponseDataModel
+
+
+class GeoLocationTypeCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: MediaCategoryItemModel
+
+
+class GeoLocationTypeCreatedResponseModel(BaseResponseModel):
+    data: GeoLocationTypeCreatedResponseDataModel
 
 
 class HistoryHelperItemModel(BaseModel):
@@ -900,6 +1085,14 @@ class UsersResponseModel(BaseResponseModel):
     data: UsersResponseDataModel
 
 
+class UserCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[UserCompactModel, UserItemModel]
+
+
+class UserCreatedResponseModel(BaseResponseModel):
+    data: UserCreatedResponseDataModel
+
+
 class RolesResponseDataModel(BaseResponseDataModel):
     items: list[RoleModel]
     perPage: int
@@ -908,6 +1101,14 @@ class RolesResponseDataModel(BaseResponseDataModel):
 
 class RolesResponseModel(BaseResponseModel):
     data: RolesResponseDataModel
+
+
+class RoleCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: RoleModel
+
+
+class RoleCreatedResponseModel(BaseResponseModel):
+    data: RoleCreatedResponseDataModel
 
 
 class ActivityItemModel(BaseModel):
@@ -939,6 +1140,14 @@ class QueryItemModel(BaseModel):
 
 class QueriesResponseModel(BaseModel):
     queries: list[QueryItemModel]
+
+
+class QueryCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: QueryItemModel
+
+
+class QueryCreatedResponseModel(BaseResponseModel):
+    data: QueryCreatedResponseDataModel
 
 
 class AppConfigItemModel(BaseModel):

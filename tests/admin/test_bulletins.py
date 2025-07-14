@@ -30,6 +30,7 @@ from tests.test_utils import (
 ##### PYDANTIC MODELS #####
 
 from tests.models.admin import (
+    BulletinCreatedResponseModel,
     BulletinsResponseModel,
     BulletinItemMode3PlusModel,
     BulletinItemMode3Model,
@@ -257,6 +258,9 @@ def test_post_bulletin_endpoint(clean_slate_bulletins, request, client_fixture, 
     assert response.status_code == expected_status
     found_bulletin = Bulletin.query.filter(Bulletin.title == bulletin.title).first()
     if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), BulletinCreatedResponseModel
+        )
         assert found_bulletin
     else:
         assert found_bulletin is None

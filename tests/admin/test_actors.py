@@ -27,6 +27,7 @@ from tests.test_utils import (
 ##### PYDANTIC MODELS #####
 
 from tests.models.admin import (
+    ActorCreatedResponseModel,
     ActorsResponseModel,
     ActorItemMinModel,
     ActorItemMode2Model,
@@ -273,6 +274,9 @@ def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expect
     # If expected status 200, assert that actor was created,
     # Else assert it was not created
     if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), ActorCreatedResponseModel
+        )
         assert found_actor
     else:
         assert found_actor is None

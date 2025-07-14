@@ -326,7 +326,12 @@ def api_label_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
-        return HTTPResponse.json_ok(message=f"Created Label #{label.id}")
+        mode = request.args.get("mode", "1")
+        return HTTPResponse.json_ok(
+            message=f"Created Label #{label.id}",
+            data={"item": label.to_dict(mode=mode)},
+            status=201,
+        )
     else:
         return HTTPResponse.json_error("Save Failed", status=417)
 
@@ -472,7 +477,9 @@ def api_eventtype_create(
             eventtype.to_mini(),
             "eventtype",
         )
-        return HTTPResponse.json_ok(message=f"Created Event #{eventtype.id}", status=200)
+        return HTTPResponse.json_ok(
+            message=f"Created Event #{eventtype.id}", data={"item": eventtype.to_dict()}, status=201
+        )
     else:
         return HTTPResponse.json_error("Save Failed", status=417)
 
@@ -612,7 +619,9 @@ def api_potentialviolation_create(
             "potentialviolation",
         )
         return HTTPResponse.json_ok(
-            message=f"Created Potential Violation #{potentialviolation.id}", status=200
+            message=f"Created Potential Violation #{potentialviolation.id}",
+            data={"item": potentialviolation.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Save Failed", status=417)
@@ -756,7 +765,9 @@ def api_claimedviolation_create(
             "claimedviolation",
         )
         return HTTPResponse.json_ok(
-            message=f"Created Claimed Violation #{claimedviolation.id}", status=200
+            message=f"Created Claimed Violation #{claimedviolation.id}",
+            data={"item": claimedviolation.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Save Failed", status=417)
@@ -919,7 +930,9 @@ def api_source_create(
             source.to_mini(),
             "source",
         )
-        return HTTPResponse.json_ok(message=f"Created Source #{source.id}", status=200)
+        return HTTPResponse.json_ok(
+            message=f"Created Source #{source.id}", data={"item": source.to_dict()}, status=201
+        )
     else:
         return HTTPResponse.json_error("Save Failed", status=417)
 
@@ -1088,7 +1101,11 @@ def api_location_create(
             location.to_mini(),
             "location",
         )
-        return HTTPResponse.json_ok(message=f"Created Location #{location.id}", status=200)
+        return HTTPResponse.json_ok(
+            message=f"Created Location #{location.id}",
+            data={"item": location.to_dict()},
+            status=201,
+        )
 
 
 @admin.put("/api/location/<int:id>")
@@ -1288,7 +1305,9 @@ def api_location_admin_level_create(
             "adminlevel",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{admin_level.id}", status=200
+            message=f"Item created successfully ID #{admin_level.id}",
+            data={"item": admin_level.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -1445,7 +1464,9 @@ def api_location_type_create(
             "locationtype",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{location_type.id}", status=200
+            message=f"Item created successfully ID #{location_type.id}",
+            data={"item": location_type.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -1578,7 +1599,9 @@ def api_country_create(
             "country",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{country.id}", status=200
+            message=f"Item created successfully ID #{country.id}",
+            data={"item": country.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -1709,7 +1732,9 @@ def api_ethnography_create(
             "ethnography",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{ethnography.id}", status=200
+            message=f"Item created successfully ID #{ethnography.id}",
+            data={"item": ethnography.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -1837,7 +1862,9 @@ def api_dialect_create(
             "dialect",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{dialect.id}", status=200
+            message=f"Item created successfully ID #{dialect.id}",
+            data={"item": dialect.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -1965,7 +1992,9 @@ def api_id_number_type_create(
             "idnumbertype",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{id_number_type.id}", status=200
+            message=f"Item created successfully ID #{id_number_type.id}",
+            data={"item": id_number_type.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2097,7 +2126,9 @@ def api_atoainfo_create(
             "atoainfo",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{atoainfo.id}", status=200
+            message=f"Item created successfully ID #{atoainfo.id}",
+            data={"item": atoainfo.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2215,7 +2246,9 @@ def api_atobinfo_create(
             "atobinfo",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{atobinfo.id}", status=200
+            message=f"Item created successfully ID #{atobinfo.id}",
+            data={"item": atobinfo.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2333,7 +2366,9 @@ def api_btobinfo_create(
             "btobinfo",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{btobinfo.id}", status=200
+            message=f"Item created successfully ID #{btobinfo.id}",
+            data={"item": btobinfo.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2451,7 +2486,9 @@ def api_itoainfo_create(
             "itoainfo",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{itoainfo.id}", status=200
+            message=f"Item created successfully ID #{itoainfo.id}",
+            data={"item": itoainfo.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2569,7 +2606,9 @@ def api_itobinfo_create(
             "itobinfo",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{itobinfo.id}", status=200
+            message=f"Item created successfully ID #{itobinfo.id}",
+            data={"item": itobinfo.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2683,7 +2722,9 @@ def api_itoiinfo_create(
             "itoiinfo",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{itoiinfo.id}", status=200
+            message=f"Item created successfully ID #{itoiinfo.id}",
+            data={"item": itoiinfo.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2801,7 +2842,9 @@ def api_mediacategory_create(
             "mediacategory",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{mediacategory.id}", status=200
+            message=f"Item created successfully ID #{mediacategory.id}",
+            data={"item": mediacategory.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -2921,7 +2964,9 @@ def api_geolocationtype_create(
             "geolocationtype",
         )
         return HTTPResponse.json_ok(
-            message=f"Item created successfully ID #{geolocationtype.id}", status=200
+            message=f"Item created successfully ID #{geolocationtype.id}",
+            data={"item": geolocationtype.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Creation failed.", status=417)
@@ -3125,7 +3170,9 @@ def api_bulletin_create(
         # Select json encoding type
         mode = request.args.get("mode", "1")
         return HTTPResponse.json_ok(
-            message=f"Created Bulletin #{bulletin.id}", data=bulletin.to_dict(mode=mode), status=201
+            message=f"Created Bulletin #{bulletin.id}",
+            data={"item": bulletin.to_dict(mode=mode)},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Error creating Bulletin", status=417)
@@ -4788,7 +4835,9 @@ def api_user_create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
         return HTTPResponse.json_ok(
-            message=f"User {username} has been created successfully", status=200
+            message=f"User {username} has been created successfully",
+            data={"item": user.to_dict()},
+            status=201,
         )
     else:
         return HTTPResponse.json_error("Error creating user", status=417)
@@ -5035,7 +5084,7 @@ def api_role_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
-        return HTTPResponse.json_ok(message="Created", status=200)
+        return HTTPResponse.json_ok(message="Created", data={"item": role.to_dict()}, status=201)
 
     else:
         return HTTPResponse.json_error("Save Failed", status=417)
@@ -5661,7 +5710,9 @@ def api_query_create() -> Response:
         query.query_type = query_type
         query.user_id = current_user.id
         query.save()
-        return HTTPResponse.json_ok(message="Query successfully saved", status=200)
+        return HTTPResponse.json_ok(
+            message="Query successfully saved", data={"item": query.to_dict()}, status=201
+        )
     else:
         return HTTPResponse.json_error("Error parsing query data", status=417)
 
