@@ -1107,13 +1107,14 @@
                 },
 
                 resetFields() {
-                    this.fields = this.backup;
-                    // hack to bypass js passing vars by reference
-                    this.map = JSON.parse(JSON.stringify(this.defaultMap));
-                    this.mapName = "{{ _('New Map')}}";
-                    this.mapid = null;
-                    this.vmap = {};
-
+                    if (confirm("{{ _('Are you sure you want to reset this mapping?')}}")) {
+                        this.fields = this.backup;
+                        // hack to bypass js passing vars by reference
+                        this.map = JSON.parse(JSON.stringify(this.defaultMap));
+                        this.mapName = "{{ _('New Map')}}";
+                        this.mapid = null;
+                        this.vmap = {};
+                    }
                 },
 
 
