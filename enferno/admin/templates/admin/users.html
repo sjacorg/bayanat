@@ -546,7 +546,7 @@
                             this.errorsMap = { ...this.errorsMap, password: null }
                         })
                         .catch(err => {
-                            this.errorsMap = { ...this.errorsMap, password: ['Your password is too weak. Try adding uppercase letters, numbers, or symbols'] }
+                            this.errorsMap = { ...this.errorsMap, password: ['Your password is too weak'] }
                         })
                     }, 350)
                 ,
@@ -635,8 +635,10 @@
                         if (errors) {
                             const nextErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => ([key.replace('item.', ''), [value]])))
                             this.errorsMap = {
+                                ...(this.errorsMap?.username ? { username: this.errorsMap?.username } : {}),
+                                ...(this.errorsMap?.password ? { password: this.errorsMap?.password } : {}),
                                 ...nextErrors,
-                                ...(nextErrors.email ? { email: 'Invalid email address' } : {})
+                                ...(nextErrors.email ? { email: 'Invalid email address' } : {}),
                             }
                         } else {
                             this.showSnack(handleRequestError(err));
