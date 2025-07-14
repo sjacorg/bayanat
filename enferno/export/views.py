@@ -11,7 +11,6 @@ from enferno.export.models import Export
 from enferno.tasks import generate_export
 from enferno.utils.http_response import HTTPResponse
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.notification_utils import NotificationUtils
 import enferno.utils.typing as t
 
 export = Blueprint(
@@ -73,7 +72,7 @@ def export_bulletins() -> Response:
             Export.__table__.name,
         )
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
@@ -106,7 +105,7 @@ def export_actors() -> Response:
             Export.__table__.name,
         )
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
@@ -138,7 +137,7 @@ def export_incidents() -> Response:
             Export.__table__.name,
         )
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
@@ -242,7 +241,7 @@ def change_export_status() -> Response:
             export_request.save()
 
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.APPROVE_EXPORT,
                 "Export Request Approved",
                 f"Export request {export_request.id} has been approved by {current_user.username} successfully.",

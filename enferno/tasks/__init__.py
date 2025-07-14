@@ -47,7 +47,6 @@ from enferno.data_import.utils.media_import import MediaImport
 from enferno.data_import.utils.sheet_import import SheetImport
 from enferno.utils.data_helpers import get_file_hash, media_check_duplicates
 from enferno.utils.logging_utils import get_logger
-from enferno.utils.notification_utils import NotificationUtils
 from enferno.utils.pdf_utils import PDFUtil
 from enferno.utils.search_utils import SearchUtils
 from enferno.utils.graph_utils import GraphUtils
@@ -238,7 +237,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
     # Notify admin
-    NotificationUtils.send_notification_to_user_for_event(
+    Notification.send_notification_to_user_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         User.query.get(cur_user_id),
         "Bulk Operation Status",
@@ -360,7 +359,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
     # Notify admin
-    NotificationUtils.send_notification_to_user_for_event(
+    Notification.send_notification_to_user_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         User.query.get(cur_user_id),
         "Bulk Operation Status",
@@ -509,7 +508,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
     # Notify admin
-    NotificationUtils.send_notification_to_user_for_event(
+    Notification.send_notification_to_user_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         User.query.get(cur_user_id),
         "Bulk Operation Status",
@@ -528,7 +527,7 @@ def etl_process_file(
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
         # Notify admin
-        NotificationUtils.send_notification_to_user_for_event(
+        Notification.send_notification_to_user_for_event(
             Constants.NotificationEvent.BATCH_STATUS,
             User.query.get(user_id),
             "Batch Status",
@@ -541,7 +540,7 @@ def etl_process_file(
         log = DataImport.query.get(data_import_id)
         log.fail(e)
         # Notify admin
-        NotificationUtils.send_notification_to_user_for_event(
+        Notification.send_notification_to_user_for_event(
             Constants.NotificationEvent.BATCH_STATUS,
             User.query.get(user_id),
             "Batch Status",
@@ -1352,7 +1351,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         _start_etl_process(final_filename, url, batch_id, user_id, import_id)
 
         # Notify user
-        NotificationUtils.send_notification_to_user_for_event(
+        Notification.send_notification_to_user_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             User.query.get(user_id),
             "Web Import Status",
@@ -1367,7 +1366,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
         # Notify user
-        NotificationUtils.send_notification_to_user_for_event(
+        Notification.send_notification_to_user_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             User.query.get(user_id),
             "Web Import Status",
@@ -1381,7 +1380,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
         # Notify user
-        NotificationUtils.send_notification_to_user_for_event(
+        Notification.send_notification_to_user_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             User.query.get(user_id),
             "Web Import Status",

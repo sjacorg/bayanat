@@ -25,7 +25,6 @@ import shortuuid
 
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification
-from enferno.utils.notification_utils import NotificationUtils
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
@@ -3071,7 +3070,7 @@ def api_bulletin_create(
 
         # Notify user
         if bulletin.assigned_to:
-            NotificationUtils.send_notification_to_user_for_event(
+            Notification.send_notification_to_user_for_event(
                 Constants.NotificationEvent.NEW_ASSIGNMENT,
                 bulletin.assigned_to,
                 "New Assignment",
@@ -3117,7 +3116,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
@@ -3136,7 +3135,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update unassigned Bulletin {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Bulletin {id}. User: {current_user.username}",
@@ -3160,7 +3159,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
         )
         if pre_status != bulletin.status and bulletin.status == "Peer Review Assigned":
             # Notify assigned user
-            NotificationUtils.send_notification_to_user_for_event(
+            Notification.send_notification_to_user_for_event(
                 Constants.NotificationEvent.REVIEW_NEEDED,
                 bulletin.first_peer_reviewer,
                 "Review Needed",
@@ -3200,7 +3199,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
@@ -3331,7 +3330,7 @@ def api_bulletin_get(
                 details=f"Unauthorized attempt to view restricted Bulletin {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Bulletin {id}. User: {current_user.username}",
@@ -4123,7 +4122,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
@@ -4142,7 +4141,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update unassigned Actor {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Actor {id}. User: {current_user.username}",
@@ -4198,7 +4197,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
@@ -4316,7 +4315,7 @@ def api_actor_get(
                 details="Unauthorized attempt to view restricted Actor.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Actor {id}. User: {current_user.username}",
@@ -4351,7 +4350,7 @@ def api_actor_profiles(actor_id: t.id) -> Response:
             details="Unauthorized attempt to view restricted Actor profiles.",
         )
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.UNAUTHORIZED_ACTION,
             "Unauthorized Action",
             f"Unauthorized attempt to view restricted Actor profiles. User: {current_user.username}",
@@ -4813,7 +4812,7 @@ def api_user_create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.NEW_USER,
             "New User Created",
             f"User {username} has been created by {current_user.username} successfully.",
@@ -4891,7 +4890,7 @@ def api_user_update(
                 "user",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UPDATE_USER,
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
@@ -4959,7 +4958,7 @@ def api_user_force_reset(validated_data: dict) -> Response:
     user.set_security_reset_key()
     message = f"Forced password reset has been set for user {user.username}"
     # Notify user
-    NotificationUtils.send_notification_to_user_for_event(
+    Notification.send_notification_to_user_for_event(
         Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
         user,
         "Password Reset",
@@ -4984,7 +4983,7 @@ def api_user_force_reset_all() -> Response:
         if not user.security_reset_key:
             user.set_security_reset_key()
             # Notify user
-            NotificationUtils.send_notification_to_user_for_event(
+            Notification.send_notification_to_user_for_event(
                 Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
                 user,
                 "Password Reset",
@@ -5022,7 +5021,7 @@ def api_user_delete(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "User Deleted",
             f"User {user.username} has been deleted by {current_user.username} successfully.",
@@ -5099,7 +5098,7 @@ def api_role_create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.NEW_GROUP,
             "New Group Created",
             f"Group {role.name} has been created by {current_user.username} successfully.",
@@ -5340,7 +5339,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
@@ -5359,7 +5358,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update unassigned Incident {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Incident {id}. User: {current_user.username}",
@@ -5417,7 +5416,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
@@ -5534,7 +5533,7 @@ def api_incident_get(
                 details=f"Unauthorized attempt to view restricted Incident {id}.",
             )
             # Notify admins
-            NotificationUtils.send_notification_to_admins_for_event(
+            Notification.send_notification_to_admins_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Incident {id}. User: {current_user.username}",
@@ -5977,7 +5976,7 @@ def api_config_write(
 
     if ConfigManager.write_config(conf):
         # Notify admins
-        NotificationUtils.send_notification_to_admins_for_event(
+        Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",

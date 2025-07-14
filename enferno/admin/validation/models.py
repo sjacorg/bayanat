@@ -1,5 +1,4 @@
 from enum import Enum
-from enferno.utils.notification_settings import NotificationSettings
 from pydantic import (
     BaseModel,
     ConfigDict,
