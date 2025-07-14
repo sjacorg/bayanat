@@ -80,14 +80,14 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-              <v-col  md="12" >
+              <v-col  cols="12" >
                   <pop-date-range-field
                       :label="translations.createdDate_"
                       v-model="q.created"
                   />
               </v-col>
 
-              <v-col  md="12">
+              <v-col  cols="12">
                   <pop-date-range-field
                       :label="translations.updatedDate_"
                       v-model="q.updated"
@@ -96,8 +96,8 @@ const IncidentSearchBox = Vue.defineComponent({
             </v-row>
 
             <v-row>
-            <v-col md="12">
-              <v-card>
+            <v-col cols="12">
+              <v-card class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
                 </v-toolbar>

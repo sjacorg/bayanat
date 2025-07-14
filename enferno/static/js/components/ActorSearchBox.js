@@ -136,7 +136,6 @@ const ActorSearchBox = Vue.defineComponent({
                   clearable
               ></v-text-field>
               
-              <div class="d-flex align-center">
                 <v-combobox
                     v-model="q.tags"
                     :label="translations.inTagsAll_"
@@ -145,15 +144,12 @@ const ActorSearchBox = Vue.defineComponent({
                     closable-chips
                     clearable
                 ></v-combobox>
-
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opTags" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
                 <v-checkbox label="Exact Match" v-model="q.inExact" color="primary"
-                            class="mx-3"></v-checkbox>
-
+                            class="me-4"></v-checkbox>
               </div>
-
-              <div class="d-flex align-center">
 
                 <v-combobox
                     v-model="q.exTags"
@@ -163,78 +159,73 @@ const ActorSearchBox = Vue.defineComponent({
                     closable-chips
                     clearable
                 ></v-combobox>
-
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.all_" v-model="q.opExTags" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
                 <v-checkbox :label="translations.exactMatch_" v-model="q.exExact" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
             </v-col>
           </v-row>
 
           <v-row>
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
+            <v-col cols="12">
                 <pop-date-range-field
                     :label="translations.publishDate_"
                     v-model="q.pubdate"
                 ></pop-date-range-field>
-              </div>
-            </v-col>
-
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
-                <pop-date-range-field 
-                    :label="translations.documentationDate_"
-                    v-model="q.docdate"
-                ></pop-date-range-field>
-              </div>
             </v-col>
           </v-row>
 
           <v-row>
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
+            <v-col cols="12">
+                <pop-date-range-field 
+                    :label="translations.documentationDate_"
+                    v-model="q.docdate"
+                ></pop-date-range-field>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12">
                 <pop-date-range-field 
                     :label="translations.createdDate_"
                     v-model="q.created"
                 ></pop-date-range-field>
-              </div>
             </v-col>
+          </v-row>
 
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
+          <v-row>
+            <v-col cols="12">
                 <pop-date-range-field
                     :label="translations.updatedDate_"
                     v-model="q.updated"
                 ></pop-date-range-field>
-              </div>
             </v-col>
           </v-row>
 
           <v-row>
             <v-col md="12">
-              <v-alert text color="grey lighten-1" class="pa-5 my-3">
-                <div class="d-flex align-baseline justify-lg-space-between">
+              <v-card class="mb-4">
+                <v-toolbar :title=" translations.events_ ">
+                  
+                </v-toolbar>
+                <v-card-text class="d-flex align-enter ga-2">
 
-
-                  <span class="black--text font-weight-bold text-h6">{{ translations.events_ }}</span>
-                  <v-checkbox :label="translations.singleEvent_" v-model="q.singleEvent" color="primary"
-                              class="ma-3"></v-checkbox>
-                </div>
-
-
-                <div class="d-flex align-baseline">
-                  <pop-date-range-field
+                <pop-date-range-field
                       :label="translations.eventDate_"
                       v-model="q.edate" 
                       
                   ></pop-date-range-field>
-
+                  
+                  <v-checkbox :label="translations.singleEvent_" v-model="q.singleEvent" color="primary"
+                              class="ma-3"></v-checkbox>
+                  
+                </v-card-text>
+                <v-card-text class="d-flex align-center ga-2">
 
                   <search-field
-                      class="ml-6 mb-3"
                       persistent-hint
                       :hint="translations.selEventType_"
                       v-model="q.etype"
@@ -246,10 +237,6 @@ const ActorSearchBox = Vue.defineComponent({
                       :label="translations.eventType_"
                   ></search-field>
 
-
-                </div>
-
-
                 <location-search-field
                   v-model="q.elocation"
                   api="/admin/api/locations/"
@@ -257,11 +244,10 @@ const ActorSearchBox = Vue.defineComponent({
                   item-value="id"
                   :multiple="false"
                   :label="translations.includeEventLocations_"
-              ></location-search-field>
+                ></location-search-field>
 
-
-            </v-alert>
-
+                </v-card-text>
+              </v-card>
           </v-col>
         </v-row>
 
@@ -411,10 +397,7 @@ const ActorSearchBox = Vue.defineComponent({
         <v-row>
 
           <v-col>
-            <div class="d-flex">
-
                 <search-field
-
                     v-model="q.sources"
                     api="/admin/api/sources/"
                     item-title="title"
@@ -422,10 +405,10 @@ const ActorSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeSources_"
                 ></search-field>
+            <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opsources" color="primary"
-                            class="mx-3"></v-checkbox>
-
-              </div>
+                          class="me-4"></v-checkbox>
+            </div>
 
               <search-field
                   v-model="q.exsources"
@@ -444,7 +427,6 @@ const ActorSearchBox = Vue.defineComponent({
 
           <v-row>
             <v-col>
-              <div class="d-flex">
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
@@ -454,8 +436,9 @@ const ActorSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeLabels_"
                 ></search-field>
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.oplabels" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
               <search-field
@@ -475,7 +458,6 @@ const ActorSearchBox = Vue.defineComponent({
           </v-row>
           <v-row>
             <v-col>
-              <div class="d-flex">
                 <search-field
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
@@ -485,8 +467,9 @@ const ActorSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeVerLabels_"
                 ></search-field>
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opvlabels" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
               <search-field
@@ -634,7 +617,6 @@ const ActorSearchBox = Vue.defineComponent({
           <v-row>
             <v-col md="12">
 
-              <div class="d-flex align-center">
                 <search-field
                     api="/admin/api/dialects/"
                     :multiple="true"
@@ -644,9 +626,9 @@ const ActorSearchBox = Vue.defineComponent({
                     v-model="q.dialects"
                     :label="translations.spokenDialects_"
                 ></search-field>
-            
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opDialects" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
             </v-col>
@@ -655,7 +637,6 @@ const ActorSearchBox = Vue.defineComponent({
           <v-row>
             <v-col md="12">
 
-              <div class="d-flex align-center">
                 <search-field
                     api="/admin/api/ethnographies/"
                     :multiple="true"
@@ -665,9 +646,9 @@ const ActorSearchBox = Vue.defineComponent({
                     v-model="q.ethnography"
                     :label="translations.ethnography_"
                 ></search-field>
-             
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opEthno" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
             </v-col>
@@ -676,18 +657,18 @@ const ActorSearchBox = Vue.defineComponent({
           <v-row>
             <v-col md="12">
 
-              <div class="d-flex align-center">
                 <search-field
-                                        v-model="q.nationality"
-                                        api="/admin/api/countries/"
-                                        item-title="title"
-                                        item-value="title"
-                                        :multiple="true"
-                                        clearable
-                                        :label="translations.nationality_"
-                                ></search-field>
+                    v-model="q.nationality"
+                    api="/admin/api/countries/"
+                    item-title="title"
+                    item-value="title"
+                    :multiple="true"
+                    clearable
+                    :label="translations.nationality_"
+                ></search-field>
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" v-model="q.opNat" color="primary"
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
             </v-col>
@@ -701,29 +682,30 @@ const ActorSearchBox = Vue.defineComponent({
                 </v-card-item>
               
                 <v-card-text class="pb-0">
-                  <div class="d-flex align-center ga-4 mb-2">
-                    <v-select
-                        :model-value="Number(id_number.type) || null"
-                        :items="idNumberTypes"
-                        item-title="title"
-                        item-value="id"
-                        :label="translations.idType_"
-                        class="w-100"
-                        @update:model-value="updateIdNumber('type', $event)"
-                        :hint="translations.leaveBlankToIncludeAllTypes_"
-                        persistent-hint
-                        clearable
-                    ></v-select>
-                    
-                    <v-text-field
-                        :model-value="id_number.number || null"
-                        :label="translations.number_"
-                        class="w-100"
-                        @update:model-value="updateIdNumber('number', $event)"
-                        @keydown.enter="$event.target.blur()"
-                        clearable
-                    ></v-text-field>
-                  </div>
+                  <v-row class="mb-2">
+                    <v-col cols="12" sm="6">
+                      <v-select
+                          :model-value="Number(id_number.type) || null"
+                          :items="idNumberTypes"
+                          item-title="title"
+                          item-value="id"
+                          :label="translations.idType_"
+                          @update:model-value="updateIdNumber('type', $event)"
+                          :hint="translations.leaveBlankToIncludeAllTypes_"
+                          persistent-hint
+                          clearable
+                      ></v-select>
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                      <v-text-field
+                          :model-value="id_number.number || null"
+                          :label="translations.number_"
+                          @update:model-value="updateIdNumber('number', $event)"
+                          @keydown.enter="$event.target.blur()"
+                          clearable
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
                 </v-card-text>
               </v-card>
             </v-col>
