@@ -151,7 +151,7 @@
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
-                                                        :rules="[validationRules.required()]"
+                                                        :rules="disableEmail ? [] : [validationRules.required()]"
                                                         type="email"
                                                         :error-messages="errorsMap?.email"
                                                 ></v-text-field>
@@ -176,7 +176,7 @@
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                                         :type="showPassword ? 'text' : 'password'"
                                                         @click:append="showPassword = !showPassword"
-                                                        :rules="[validationRules.required()]"
+                                                        :rules="disablePassword ? [] : [validationRules.required()]"
                                                         :error-messages="errorsMap?.password"
                                                 ></v-text-field>
 
@@ -203,7 +203,7 @@
                                                               @input="checkUsername"
                                                               label="{{ _('Username') }}"
                                                               :disabled="disableUsername"
-                                                              :rules="[validationRules.required()]"
+                                                              :rules="disableUsername ? [] : [validationRules.required()]"
                                                               :error-messages="errorsMap?.username"
                                                               v-model="editedItem.username"></v-text-field>
 
@@ -605,6 +605,7 @@
                     this.dialog = false;
                     this.showPassword = false;
                     this.isAdmin = false;
+                    this.errorsMap = null;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;
@@ -645,7 +646,6 @@
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                                this.errorsMap = null
                             }).catch(handleError);
 
                     } else {
@@ -659,7 +659,6 @@
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                                this.errorsMap = null
                             }).catch(handleError);
                     }
 
