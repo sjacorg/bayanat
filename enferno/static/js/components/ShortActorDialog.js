@@ -236,7 +236,7 @@ const ShortActorDialog = Vue.defineComponent({
           <v-card class="overflow-hidden">
               <v-sheet id="card-content" class="overflow-y-auto">
                   <v-card-text>
-                      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(clamp(0px, 33.33%, 340px), 1fr)); gap: 16px; align-items: start;">
+                      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start;">
                           <div style="min-width: 0;">
                               <dual-field
                                   v-model:original="editedItem.first_name"
