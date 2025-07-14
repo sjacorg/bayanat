@@ -683,14 +683,20 @@
 
                 computed: {
                     actorFormPrefillData() {
-                        console.log(this.relateActorSearchTerms)
-                        const searchTerms = JSON.parse(JSON.stringify(this.relateActorSearchTerms));
+                        const prefillKeys = ['first_name', 'middle_name', 'last_name', 'nickname', 'father_name', 'mother_name', 'id_number'];
+
+                        // Clone only the needed keys
+                        const searchTerms = Object.fromEntries(
+                            prefillKeys
+                                .filter(key => key in this.relateActorSearchTerms)
+                                .map(key => [key, this.relateActorSearchTerms[key]])
+                        );
 
                         if ('id_number' in searchTerms) {
                             searchTerms.id_number = [searchTerms.id_number];
                         }
 
-                        return searchTerms
+                        return searchTerms;
                     },
                     searchEmpty() {
                         return this.search.every(search =>

@@ -274,6 +274,17 @@ const ShortActorDialog = Vue.defineComponent({
                           </div>
                           <div style="min-width: 0;">
                             <dual-field
+                              v-model:original="editedItem.nickname"
+                              v-model:translation="editedItem.nickname_ar"
+                              :label-original="translations.nickname_"
+                              :label-translation="translations.nicknameAr_"
+                              :rules="[
+                                  validationRules.maxLength(255),
+                              ]"
+                            ></dual-field>
+                          </div>
+                          <div style="min-width: 0;">
+                            <dual-field
                               v-model:original="editedItem.father_name"
                               v-model:translation="editedItem.father_name_ar"
                               :label-original="translations.fathersName_"
