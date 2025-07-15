@@ -68,9 +68,8 @@ const BulletinSearchBox = Vue.defineComponent({
 
   methods: {},
 
-  template: `
-    <v-card>
-      <v-card-text>
+  template: /*html*/`
+      <div>
         <v-container fluid>
           <v-row v-if="showOp">
             <v-col>
@@ -106,39 +105,39 @@ const BulletinSearchBox = Vue.defineComponent({
                   clearable
               ></v-text-field>
               
-              <div class="d-flex align-center">
-                <v-combobox
-                    v-model="q.tags"
-                    :label="translations.inTags_"
-                    multiple
-                    chips
-                    closable-chips
-                    small-chips
-                    clearable
-                ></v-combobox>
-
+              <v-combobox
+                  v-model="q.tags"
+                  :label="translations.inTags_"
+                  multiple
+                  chips
+                  closable-chips
+                  small-chips
+                  clearable
+              ></v-combobox>
+                    
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.opTags" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
                 <v-checkbox label="Exact Match" dense v-model="q.inExact" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
 
               </div>
 
-              <div class="d-flex align-center">
-
-                <v-combobox
+              
+              <v-combobox
                     v-model="q.exTags"
                     :label="translations.exTags_"
                     multiple
                     chips
                     closable-chips
                     clearable
-                ></v-combobox>
-
+                    ></v-combobox>
+                    
+              <div class="d-flex align-center">
                 <v-checkbox :label="translations.all_" dense v-model="q.opExTags" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
                 <v-checkbox :label="translations.exactMatch_" dense v-model="q.exExact" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
 
@@ -146,49 +145,41 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
 
           <v-row>
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
+            <v-col cols="12">
                 <pop-date-range-field
                     ref="publishDateComponent"
                     :label="translations.publishDate_"
                     v-model="q.pubdate"
                 />
-              </div>
             </v-col>
 
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
+            <v-col cols="12">
                 <pop-date-range-field
                     :label="translations.documentationDate_"
                     v-model="q.docdate"
                 />
-              </div>
             </v-col>
           </v-row>
 
           <v-row>
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
+            <v-col cols="12">
                 <pop-date-range-field
                     :label="translations.createdDate_"
                     v-model="q.created"
                 />
-              </div>
             </v-col>
 
-            <v-col md="6">
-              <div class="d-flex flex-wrap">
+            <v-col cols="12">
                 <pop-date-range-field
                     :label="translations.updatedDate_"
                     v-model="q.updated"
                 />
-              </div>
             </v-col>
           </v-row>
 
           <v-row>
             <v-col md="12">
-              <v-card>
+              <v-card class="mb-4">
                 <v-toolbar :title=" translations.events_ ">
                   
                 </v-toolbar>
@@ -339,19 +330,17 @@ const BulletinSearchBox = Vue.defineComponent({
           <v-row>
 
             <v-col>
-              <div class="d-flex">
-
-                <search-field
-
+              <search-field
                     v-model="q.sources"
                     api="/admin/api/sources/"
                     item-title="title"
                     item-value="id"
                     :multiple="true"
                     :label="translations.includeSources_"
-                ></search-field>
+              ></search-field>
+              <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.opsources" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
 
               </div>
 
@@ -373,7 +362,6 @@ const BulletinSearchBox = Vue.defineComponent({
 
           <v-row>
             <v-col>
-              <div class="d-flex">
                 <search-field
                     v-model="q.labels"
                     api="/admin/api/labels/"
@@ -383,8 +371,9 @@ const BulletinSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeLabels_"
                 ></search-field>
+                <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.oplabels" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
               <search-field
@@ -404,7 +393,6 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-row>
           <v-row>
             <v-col>
-              <div class="d-flex">
                 <search-field
                     v-model="q.vlabels"
                     api="/admin/api/labels/"
@@ -414,8 +402,9 @@ const BulletinSearchBox = Vue.defineComponent({
                     :multiple="true"
                     :label="translations.includeVerLabels_"
                 ></search-field>
+                <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.opvlabels" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
 
               <search-field
@@ -434,7 +423,6 @@ const BulletinSearchBox = Vue.defineComponent({
 
           <v-row>
             <v-col>
-              <div class="d-flex">
                 <location-search-field
                     v-model="q.locations"
                     api="/admin/api/locations/"
@@ -444,8 +432,9 @@ const BulletinSearchBox = Vue.defineComponent({
                     :label="translations.includeLocations_"
 
                 ></location-search-field>
+                <div class="d-flex align-center flex-wrap">
                 <v-checkbox :label="translations.any_" dense v-model="q.oplocations" color="primary" small
-                            class="mx-3"></v-checkbox>
+                            class="me-4"></v-checkbox>
               </div>
               <location-search-field
                   v-model="q.exlocations"
@@ -492,9 +481,7 @@ const BulletinSearchBox = Vue.defineComponent({
           </v-sheet>
 
         </v-container>
-      </v-card-text>
-
-    </v-card>
+      </div>
 
 
 

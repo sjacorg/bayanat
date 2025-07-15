@@ -16,8 +16,8 @@
                 class="overflow-y-auto pa-7">
             <v-card variant="outlined" max-width="900" class="mx-auto">
                 <bulletin-card v-if="reviewItem && reviewItem.class=='bulletin'"
-                               @thumb-click="viewImage" :close="false" :bulletin="reviewItem"></bulletin-card>
-                <actor-card v-if="reviewItem.class=='actor'" @thumb-click="viewImage"
+                               :close="false" :bulletin="reviewItem"></bulletin-card>
+                <actor-card v-if="reviewItem.class=='actor'"
                             :close="false"
                             :actor="reviewItem"></actor-card>
                 <incident-card v-if="reviewItem.class=='incident'" :close="false"
