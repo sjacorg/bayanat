@@ -1635,6 +1635,7 @@
                                 item: this.editedItem
                             }).then(response => {
                                 this.items.unshift(response.data.item);
+                                this.totalCount += 1;
                                 this.showSnack(response.data.message);
                                 this.close();
                             }).catch(err => {
