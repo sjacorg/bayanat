@@ -119,6 +119,7 @@
                     </v-data-table-server>
                     <v-dialog v-model="dialog" max-width="1200px">
                         <v-card>
+                        <v-form @submit="validateForm" ref="form" v-model="valid">
                             <v-toolbar :title="formTitle">
                                 <template #append>
                                     <v-btn icon @click="close">
@@ -164,17 +165,18 @@
                                             <div class="d-flex align-center">
 
                                                 <v-text-field
-                                                        placeholder="{{ _('Password') }}"
+                                                        label="{{ _('Password') }}"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                                         :type="showPassword ? 'text' : 'password'"
                                                         @click:append="showPassword = !showPassword"
+                                                        :rules="disablePassword ? [] : [
+                                                            validationRules.required(),
+                                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                            validationRules.checkPassword()
+                                                        ]"
                                                 ></v-text-field>
-
-                                                <span v-if="!disablePassword && editedItem.password?.length > 1 "
-                                                      class="green--text">{{ _('Strong Password') }}</span>
-
 
                                                 <v-btn @click.stop="enablePassword"
                                                        v-if="editedItem.id" class="mb-3 mx-1"
@@ -277,10 +279,11 @@
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
                                 <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="save" color="primary" variant="elevated">
+                                <v-btn type="submit" color="primary" variant="elevated">
                                     {{ _('Save') }}
                                 </v-btn>
                             </v-card-actions>
+                        </v-form>
                         </v-card>
                     </v-dialog>
 
@@ -311,6 +314,7 @@
                 showPassword: false,
                 drawer: drawer,
                 translations: window.translations,
+                validationRules: validationRules,
                 options: {},
 
                 headers: [
@@ -338,7 +342,8 @@
                 isAdmin: false,
                 userDrawer: false,
                 user: null,
-                session_id: '{{ session.sid }}'
+                session_id: '{{ session.sid }}',
+                valid: false,
             }),
 
             mixins: [globalMixin],
@@ -391,6 +396,17 @@
 
 
             methods: {
+                validateForm() {
+                    this.$refs.form.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.save();
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError(errors)
+                        }
+                    });
+                },
+
                 showUser(user_id) {
                     axios.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
