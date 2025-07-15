@@ -1,21 +1,5 @@
 const globalMixin = {
   mixins: [reauthMixin, notificationMixin],
-  computed: {
-    allowedDateFrom() {
-      if (this.editedEvent?.to_date){
-        // ensure date is not after the to_date
-        return (current) => current <= dayjs(this.editedEvent.to_date).toDate();
-      }
-      return () => true;
-    },
-    allowedDateTo() {
-      if (this.editedEvent?.from_date){
-        // ensure date is not before the from_date
-        return (current) => current >= dayjs(this.editedEvent.from_date).toDate();
-      }
-      return () => true;
-    },
-  },
   data: () => ({
     snackbar: false,
     snackMessage: '',
