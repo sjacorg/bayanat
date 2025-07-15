@@ -1,5 +1,5 @@
-// common validation rules
-
+// Common validation rules
+// Each rule returns `true` if valid, or a string error message if invalid
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
@@ -19,6 +19,12 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
+    externalError(error) {
+        return () => {
+          if (!error) return true;
+          return Array.isArray(error) ? error[0] : error;
+        };
+    }
 };
 
 // Helper functions

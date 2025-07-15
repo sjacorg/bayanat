@@ -137,8 +137,8 @@
 
                                                     label="{{ _('Full Name') }}"
                                                     v-model="editedItem.name"
-                                                    :rules="[validationRules.required()]"
-                                                    :error-messages="errorsMap?.name"
+                                                    :rules="[validationRules.required(), validationRules.externalError(errorsMap?.name)]"
+                                                    @input="resetError('name')"
                                             ></v-text-field>
 
                                         </v-col>
@@ -151,9 +151,9 @@
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
-                                                        :rules="disableEmail ? [] : [validationRules.required()]"
+                                                        :rules="disableEmail ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.email)]"
+                                                        @input="resetError('email')"
                                                         type="email"
-                                                        :error-messages="errorsMap?.email"
                                                 ></v-text-field>
                                                 <v-btn @click.stop="enableEmail"
                                                        v-if="editedItem.id" class="my-auto mx-1"
@@ -178,9 +178,8 @@
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                                         :type="showPassword ? 'text' : 'password'"
                                                         @click:append="showPassword = !showPassword"
-                                                        :rules="disablePassword ? [] : [validationRules.required()]"
-                                                        :error-messages="errorsMap?.password"
-                                                        :hint="strongPassword && 'Strong password'"
+                                                        :rules="disablePassword ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.password)]"
+                                                        :hint="strongPassword ? 'Strong password' : null"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enablePassword"
@@ -202,8 +201,7 @@
                                                               @input="checkUsername"
                                                               label="{{ _('Username') }}"
                                                               :disabled="disableUsername"
-                                                              :rules="disableUsername ? [] : [validationRules.required()]"
-                                                              :error-messages="errorsMap?.username"
+                                                              :rules="disableUsername ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.username)]"
                                                               v-model="editedItem.username"></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
@@ -405,6 +403,9 @@
 
 
             methods: {
+                resetError(key) {
+                    if (key in this.errorsMap) this.errorsMap[key] = null
+                },
                 showUser(user_id) {
                     axios.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
@@ -525,7 +526,7 @@
                         })
                         .catch(err => {
                             this.errorsMap = { ...this.errorsMap, username: ['Username is invalid or already taken'] }
-                        })
+                        }).finally(() => this.$refs.form.validate())
                     }, 350)
                 ,
                 checkPassword:
@@ -540,7 +541,7 @@
                         .catch(err => {
                             this.strongPassword = false;
                             this.errorsMap = { ...this.errorsMap, password: ['Your password is too weak'] }
-                        })
+                        }).finally(() => this.$refs.form.validate())
                     }, 350)
                 ,
 
@@ -635,8 +636,9 @@
                                 ...(this.errorsMap?.username ? { username: this.errorsMap?.username } : {}),
                                 ...(this.errorsMap?.password ? { password: this.errorsMap?.password } : {}),
                                 ...nextErrors,
-                                ...(nextErrors.email ? { email: 'Invalid email address' } : {}),
+                                ...(nextErrors?.email ? { email: 'Invalid email address' } : {}),
                             }
+                            this.$refs.form.validate()
                         } else {
                             this.showSnack(handleRequestError(err));
                         }
