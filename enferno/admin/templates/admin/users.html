@@ -172,7 +172,7 @@
                                                 <v-text-field
                                                         @blur="checkPassword"
                                                         @input="checkPassword"
-                                                        placeholder="{{ _('Password') }}"
+                                                        label="{{ _('Password') }}"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
@@ -180,6 +180,7 @@
                                                         @click:append="showPassword = !showPassword"
                                                         :rules="disablePassword ? [] : [validationRules.required()]"
                                                         :error-messages="errorsMap?.password"
+                                                        :hint="strongPassword && 'Strong password'"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enablePassword"
@@ -350,7 +351,8 @@
                 user: null,
                 session_id: '{{ session.sid }}',
                 valid: false,
-                errorsMap: null
+                errorsMap: null,
+                strongPassword: false,
             }),
 
             mixins: [globalMixin],
@@ -500,17 +502,6 @@
                     }
                 },
 
-                passwordRules() {
-                    if (this.editedItem.id && this.disablePassword) {
-                        // edit mode
-                        return ''
-
-                    } else {
-
-                        return 'required|min:10|checkPassword'
-                    }
-                },
-
                 enableUsername() {
                     this.disableUsername = false;
                 },
@@ -543,9 +534,11 @@
                             suppressGlobalErrorHandler: true,
                         })
                         .then(() => {
+                            this.strongPassword = true;
                             this.errorsMap = { ...this.errorsMap, password: null }
                         })
                         .catch(err => {
+                            this.strongPassword = false;
                             this.errorsMap = { ...this.errorsMap, password: ['Your password is too weak'] }
                         })
                     }, 350)
@@ -598,6 +591,7 @@
                 },
 
                 editItem(item) {
+                    this.strongPassword = false;
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = {...item};
@@ -611,6 +605,7 @@
                     this.showPassword = false;
                     this.isAdmin = false;
                     this.errorsMap = null;
+                    this.strongPassword = false;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;
@@ -633,8 +628,10 @@
                     const handleError = (err) => {
                         const errors = err?.response?.data?.errors
                         if (errors) {
+                            // Format errors from api to `field: [string]`
                             const nextErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => ([key.replace('item.', ''), [value]])))
                             this.errorsMap = {
+                                // Persist username and password errors as they are validated using the endpoint
                                 ...(this.errorsMap?.username ? { username: this.errorsMap?.username } : {}),
                                 ...(this.errorsMap?.password ? { password: this.errorsMap?.password } : {}),
                                 ...nextErrors,
