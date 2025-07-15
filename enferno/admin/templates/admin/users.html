@@ -630,14 +630,19 @@
                     const handleError = (err) => {
                         const errors = err?.response?.data?.errors
                         if (errors) {
-                            // Format errors from api to `field: [string]`
+                            // Normalize: convert { "item.field": "message" } => { field: ["message"] }
                             const nextErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => ([key.replace('item.', ''), [value]])))
+
+                            // Override email message for something simpler
+                            if (nextErrors?.email) {
+                                nextErrors.email = ['Invalid email address'];
+                            }
+
                             this.errorsMap = {
                                 // Persist username and password errors as they are validated using the endpoint
                                 ...(this.errorsMap?.username ? { username: this.errorsMap?.username } : {}),
                                 ...(this.errorsMap?.password ? { password: this.errorsMap?.password } : {}),
                                 ...nextErrors,
-                                ...(nextErrors?.email ? { email: 'Invalid email address' } : {}),
                             }
                             this.$refs.form.validate()
                         } else {
