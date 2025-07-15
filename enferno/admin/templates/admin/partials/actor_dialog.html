@@ -317,16 +317,17 @@
                                 </v-col>
 
                                 <v-col cols="12" md="4">
-                                    <v-text-field
-                                            v-model="editedItem.id_number"
-                                            label="{{ _('ID Number') }}"
-                                    ></v-text-field>
-                                </v-col>
-
-                                <v-col cols="12" md="4">
                                     <v-combobox chips multiple v-model="editedItem.tags" label="{{ _('Tags') }}"></v-combobox>
                                 </v-col>
 
+                                <v-col cols="12" class="mb-4">
+                                    <!-- ID Numbers Management -->
+                                    <id-number-dynamic-field
+                                        :model-value="simpleIdNumberValue"
+                                        @update:model-value="updateIdNumber"
+                                        :id-number-types="idNumberTypes"
+                                    ></id-number-dynamic-field>
+                                </v-col>
                             </v-row>
 
                         </template>
@@ -893,9 +894,7 @@
 
                         <v-row>
                             <v-col col="12">
-
-                                {% include 'admin/partials/event_dialog.html' %}
-
+                                <events-section :edited-item="editedItem" :dialog-props="rightDialogProps" :show-copy-icon="advFeatures" :event-params="eventParams"></events-section>
                             </v-col>
 
                         </v-row>
