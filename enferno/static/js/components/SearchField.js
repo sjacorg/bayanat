@@ -170,11 +170,9 @@ const SearchField = Vue.defineComponent({
       :rules="rules"
       
     >
-      <template v-slot:append>
-      <v-btn icon="mdi-content-copy" variant="plain"  v-if="showCopyIcon" @click="copyValue">
-        
-      </v-btn>
-    </template>
+      <template v-if="showCopyIcon" v-slot:append>
+        <v-btn icon="mdi-content-copy" variant="plain" @click="copyValue"></v-btn>
+      </template>
     </v-combobox>
   `,
 });
