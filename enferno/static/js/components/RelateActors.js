@@ -1,6 +1,15 @@
 const RelateActors = Vue.defineComponent({
-  props: ['modelValue', 'show', 'exids'],
-  emits: ['update:modelValue', 'relate'],
+  props: {
+    exids: {
+      type: Array,
+      default: () => ([])
+    },
+    dialogProps: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  emits: ['relate', 'changeQuery'],
   data: () => {
     return {
       translations: window.translations,
@@ -11,38 +20,10 @@ const RelateActors = Vue.defineComponent({
       page: 1,
       perPage: 10,
       total: 0,
-      moreItems: false,
-      actor: null,
-      showActor: false,
+      hasMore: false,
     };
   },
-  mounted() {},
-
-  watch: {
-    results: {
-      handler(val, old) {},
-      deep: true,
-    },
-
-    modelValue: function (val) {
-      this.$emit('update:modelValue', val);
-    },
-  },
-
   methods: {
-    viewActor(a) {
-      axios
-        .get(`/admin/api/actor/${a.id}`)
-        .then((response) => {
-          this.actor = response.data;
-          this.showActor = true;
-        })
-        .catch((error) => {
-          this.showActor = false;
-          this.showSnack(this.translations.notFound_);
-        });
-    },
-
     open() {
       this.visible = true;
     },
@@ -55,7 +36,7 @@ const RelateActors = Vue.defineComponent({
       this.search();
     },
 
-    search(q = {}) {
+    search() {
       this.loading = true;
       axios
         .post(`/admin/api/actors/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
@@ -71,11 +52,7 @@ const RelateActors = Vue.defineComponent({
             response.data.items.filter((x) => !ex_arr.includes(x.id)),
           );
 
-          if (this.page * this.perPage >= this.total) {
-            this.moreItems = false;
-          } else {
-            this.moreItems = true;
-          }
+          this.hasMore = this.page * this.perPage < this.total;
         })
         .catch((err) => {
           console.log(err.response.data);
@@ -86,93 +63,67 @@ const RelateActors = Vue.defineComponent({
       this.page += 1;
       this.search();
     },
-    relateItem(item) {
-      this.results = this.results.filter(result => result.id !== item.id);
-      this.$emit('relate', item);
+    relateItem({ item, relationData }) {
+      this.results = this.results.filter((result) => result.id !== item.id);
+      this.$emit('relate', { item, relationData });
     },
   },
-
-  template: `
-      <v-dialog v-model="visible" class="w-sm-100 w-md-75">
-      <v-sheet>
-
-        <v-container class="fluid fill-height">
-          <v-row>
-            <v-col cols="12" md="4">
-
-              <v-card variant="outlined">
-                <actor-search-box 
-                  @search="reSearch" 
-                  v-model="q"
-                  :show-op="false"
-                  :extra-filters="false">
-                </actor-search-box>
-              </v-card>
-
-              <v-card tile class="text-center  search-toolbar" elevation="0" color="grey lighten-4">
-               <v-card-text>
-                  <v-btn color="primary" @click="reSearch">{{ translations.search_ }}</v-btn>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="8">
-
-              <v-card :loading="loading">
-
-                <v-toolbar class="handle">
-                    <v-toolbar-title>{{ translations.advSearch_ }}</v-toolbar-title>
-                  <v-spacer></v-spacer>
-                  <v-btn @click="visible=false" icon="mdi-close"></v-btn>
-                </v-toolbar>
-
-                <v-divider></v-divider>
-
-                <v-card-text v-if="loading" class="d-flex pa-5" justify-center align-center>
-                  <v-progress-circular class="ma-auto" indeterminate
-                                       color="primary"></v-progress-circular>
-                </v-card-text>
-
-
-                <v-card class="pa-2" tile color="grey lighten-4">
-
-                  <actor-result v-for="(item, i) in results" :key="i" :actor="item" :show-hide="true">
-                    <template v-slot:actions>
-                      <v-btn @click="relateItem(item)" variant="elevated" color="primary">{{ translations.relate_ }}
-                      </v-btn>
-                    </template>
-                  </actor-result>
-                </v-card>
-
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn icon @click="loadMore" v-if="moreItems" color="third">
-                    <v-icon>mdi-dots-horizontal</v-icon>
-                  </v-btn>
-                  <v-sheet small v-else class="heading" color=" grey--text"> {{ translations.noResults_ }} </v-sheet>
-                  <v-spacer></v-spacer>
-                </v-card-actions>
-              </v-card>
-            </v-col>
-
-          </v-row>
-        </v-container>
-
-        <v-dialog v-model="showActor" max-width="550">
-          <v-sheet>
-            <div class="d-flex justify-end">
-              <v-btn @click="showActor=false" small text fab right="10">
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
-            </div>
-            <actor-card :actor="actor"></actor-card>
-          </v-sheet>
-        </v-dialog>
-
-
-      </v-sheet>
-
-
-      </v-dialog>
-
+  watch: {
+    q: {
+      deep: true,
+      handler(nextQuery) {
+        this.$emit('changeQuery', nextQuery)
+      }
+    }
+  },
+  template: /*html*/ `
+    <relate-items-template
+      v-model:visible="visible"
+      :dialog-props="dialogProps"
+      :loading="loading"
+      :results="results"
+      @search="reSearch"
+      @load-more="loadMore"
+      :has-more="hasMore"
+      :multi-relation="$root.actorRelationMultiple"
+      :relation-types="$root.actorRelationTypes"
+      @relate="relateItem"
+    >
+      <template v-if="$slots.actions" #actions>
+        <slot name="actions"></slot>
+      </template>
+      <template #search-box>
+        <actor-search-box 
+          v-model="q"
+          @search="reSearch"
+          :extra-filters="false"
+          :show-op="false"
+        ></actor-search-box>
+      </template>
+      <template #results-list>
+        <actor-result
+          v-for="(item, i) in results"
+          :key="i"
+          :actor="item"
+          :show-hide="true"
+        >
+          <template #actions>
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  @click="$root.openConfirmRelationDialog(item)"
+                  color="primary"
+                  variant="elevated"
+                  icon="mdi-link-plus"
+                  size="small"
+                ></v-btn>
+              </template>
+              {{ translations.addAsRelated_ }}
+            </v-tooltip>
+          </template>
+        </actor-result>
+      </template>
+    </relate-items-template>
     `,
 });

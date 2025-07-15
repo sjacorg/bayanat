@@ -39,7 +39,7 @@
                 <v-card-text>
                     <v-data-table-server
                             fixed-header
-                            height="calc(100vh - 328px)"
+                            height="calc(100vh - 331px)"
                             id="actors-dt"
                             v-model="selected"
                             hover
@@ -250,10 +250,6 @@
                     <relate-incidents @relate="relateIncident" :exids="exIncidents"
                                       ref="relateIncidents"></relate-incidents>
 
-                    {% include 'admin/partials/video_player_dialog.html' %}
-                    {% include 'admin/partials/audio_player_dialog.html' %}
-
-
                     <v-dialog width="600" v-model="selfAssignDialog">
                         <v-card class="pa-3">
                             <v-card-title>{{ _('Self Assign Actor') }} #${assignActor.id}</v-card-title>
@@ -297,10 +293,12 @@
     <script src="/static/js/components/VueDropzone.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/SplitView.js"></script>
 
     <script src="/static/js/components/BulletinCard.js"></script>
     <script src="/static/js/components/ActorProfiles.js"></script>
@@ -316,6 +314,7 @@
     <script src="/static/js/components/BulletinResult.js"></script>
     <script src="/static/js/components/ActorResult.js"></script>
     <script src="/static/js/components/IncidentResult.js"></script>
+    <script src="/static/js/components/RelateItemsTemplate.js"></script>
 
     <script src="/static/js/components/RelateBulletins.js"></script>
     <script src="/static/js/components/RelateActors.js"></script>
@@ -331,12 +330,18 @@
     <script src="/static/js/components/PopDateRangeField.js"></script>
     <script src="/static/js/components/PopDateTimeField.js"></script>
     <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/RelationEditorCard.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
+    <script src="/static/js/components/IdNumberDynamicField.js"></script>
+    <script src="/static/js/components/EventsSection.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/SnapshotDialog.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
@@ -376,23 +381,17 @@
                 "tinymce-editor": Editor,
             },
 
-            mixins: [mediaMixin, globalMixin],
+            mixins: [mediaMixin, globalMixin, relationsMixin],
 
             data: () => ({
                 valid: false,
-
+                leftDialogProps: null,
+                rightDialogProps: null,
                 translations: window.translations,
                 validationRules: validationRules,
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                 helper: {}, // helper object for review items
-
-                itobInfo: [],
-                itoaInfo: [],
-                itoiInfo: [],
-                atobInfo: [],
-                btobInfo: [],
-                atoaInfo: [],
 
                 assignActor: {},
                 selfAssignDialog: false,
@@ -457,28 +456,21 @@
                 eventParams: {typ: 'for_actor'},
                 reviewDialog: false,
                 reviewKey: 0,
-                playerOptions: {},
 
                 // search and relate actor dialog vars
                 relateActorDialog: false,
                 relateActorLoader: true,
                 relateActorTerm: "",
-                relateActorResults: [],
-                selectedRelatedActors: [],
 
                 // search and relate bulletin dialog vars
                 relateBulletinDialog: false,
                 relateBulletinLoader: true,
                 relateBulletinTerm: "",
-                relateBulletinResults: [],
-                selectedRelatedBulletins: [],
 
                 // search and relate incident dialog vars
                 relateIncidentDialog: false,
                 relateIncidentLoader: true,
                 relateIncidentTerm: "",
-                relateIncidentResults: [],
-                selectedRelatedIncidents: [],
 
                 actorDrawer: false,
                 bulkActorDrawer: false,
@@ -566,8 +558,8 @@
                     medias: [],
                     actor_relations: [],
                     bulletin_relations: [],
-                    incident_relations: []
-
+                    incident_relations: [],
+                    id_number: []
                 },
                 defaultItem: {
                     description: "",
@@ -589,19 +581,8 @@
                     actor_profiles: [{
                         mode: 1
                     }],
-                    roles: []
-                },
-
-                //events
-                editedEventIndex: -1,
-                editedEvent: {
-                    title: ""
-                },
-                defaultEvent: {
-                    title: "",
-                    from_date: '',
-                    to_date: ''
-
+                    roles: [],
+                    id_number: []
                 },
 
                 reviewItem: {},
@@ -615,10 +596,15 @@
                 bulkTimer: 0,
 
                 actor: {},
-                actorLoader: false
+                actorLoader: false,
+
+                idNumberTypes: [],
             }),
 
             computed: {
+                simpleIdNumberValue() {
+                    return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id.toString(), number: idNumber.number.toString() }));
+                },
                 searchEmpty() {
                     return this.search.every(search =>
                         Object.values(search).every(value => !value)
@@ -655,52 +641,15 @@
                 },
 
                 exBulletins() {
-                    let ids = [];
-
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.bulletin_relations) {
-                            ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-                        if (this.reviewItem.bulletin_relations) {
-                            ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'bulletin', editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
 
                 exActors() {
-                    let ids = [];
-                    ids.push(this.editedItem.id);
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.actor_relations) {
-                            ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-                        ids.push(this.reviewItem.id);
-                        if (this.reviewItem.actor_relations) {
-                            ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'actor', includeSelf: true, editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
 
                 exIncidents() {
-                    let ids = [];
-
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.incident_relations) {
-                            ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-                        if (this.reviewItem.incident_relations) {
-                            ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'incident', editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
 
 
@@ -743,10 +692,6 @@
                 mediaDialog(val) {
                     val || this.closeMediaDialog();
                 },
-
-                options: {
-                    handler: "refresh"
-                }
             },
             mounted: function () {
 
@@ -759,9 +704,6 @@
                         console.log(e.message);
                     });
                 {% endif  %}
-
-
-
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -815,26 +757,27 @@
 
             },
 
-            created(){
-              this.fetchRelationInfo();
-            },
-
             methods: {
-                 fetchRelationInfo() {
-                        axios.get('/admin/api/relation/info')
-                            .then(response => {
-                                this.itobInfo = response.data.itobInfo;
-                                this.itoaInfo = response.data.itoaInfo;
-                                this.atobInfo = response.data.atobInfo;
-                                this.atoaInfo = response.data.atoaInfo;
-                                this.btobInfo = response.data.btobInfo;
-                                this.itoiInfo = response.data.itoiInfo;
-                            })
-                            .catch(error => {
-                                console.error('Error fetching relation info:', error);
-                                this.showSnack('Error fetching relation info');
-                            });
-                    },
+                fetchIdNumberTypes() {
+                    // If already loaded the exit
+                    if (this.idNumberTypes.length) return
+
+                    // Fetch and cache IDNumberType data for ID number display and editing
+                    axios.get('/admin/api/idnumbertypes/').then(res => {
+                        this.idNumberTypes = res.data.items || [];
+                    }).catch(err => {
+                        this.idNumberTypes = [];
+                        console.error('Error fetching id number types:', err);
+                        this.showSnack(handleRequestError(err));
+                    })
+                },
+
+                updateIdNumber(updatedItems) {
+                    this.editedItem.id_number = updatedItems.map(item => ({
+                        type: this.idNumberTypes.find(type => Number(type.id) === Number(item.type)),
+                        number: item.number,
+                    }))
+                },
 
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
@@ -1251,13 +1194,6 @@
                 },
 
 
-                removeEvent: function (evt, index) {
-                    if (confirm("{{ _('Confirm deleting this event?')}}")) {
-                        this.editedItem.events.splice(index, 1);
-                    }
-                },
-
-
                 //reset initial visible fields to english language
 
                 resetSwitchers: function () {
@@ -1286,6 +1222,8 @@
 
                 showActor(id) {
                     this.actorLoader = true;
+
+                    this.fetchIdNumberTypes();
 
                     axios.get(`/admin/api/actor/${id}?mode=3`).then(response => {
                         this.actor = response.data;
@@ -1474,6 +1412,8 @@
                 editItem(item) {
                     this.actorDrawer = false;
 
+                    this.fetchIdNumberTypes();
+
                     if (!item.id) {
                         this.editedItem = JSON.parse(JSON.stringify(this.defaultItem));
                         this.dialog = true;
@@ -1492,7 +1432,6 @@
                                 this.editedItem.comments = '';
                                 this.resetSwitchers();
                                 this.handleStatus(item);
-
                             });
 
 
@@ -1544,11 +1483,16 @@
                         return;
                     }
 
+                    const payload = {
+                        ...this.editedItem,
+                        id_number: this.simpleIdNumberValue
+                    }
+
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
                         axios.put(`/admin/api/actor/${this.editedItem.id}`, {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.showSnack(response.data);
                             this.refresh();
@@ -1561,7 +1505,7 @@
                     } else {
                         //create new record
                         axios.post("/admin/api/actor/", {
-                            item: this.editedItem
+                            item: payload
                         }).then(response => {
                             this.items.unshift(response.data.item)
                             this.showSnack(response.data.message);
@@ -1572,40 +1516,6 @@
                             this.saving = false
                         });
                     }
-                },
-
-                editEvent(evt, item, index) {
-                    this.editedEvent = Object.assign({}, item);
-                    //console.log(this.editedEvent);
-                    this.editedEventIndex = index;
-
-                    //reset dual fields display to english
-                    this.eventTitle__ = true;
-                    this.eventComments__ = true;
-                    this.eventDialog = true;
-                    //this.locations = this.editedItem.locations;
-                },
-
-                closeEvent() {
-                    this.eventDialog = false;
-                    setTimeout(() => {
-                        this.editedEvent = Object.assign({}, this.defaultEvent);
-                        this.editedEventIndex = -1;
-                    }, 300);
-                },
-
-                saveEvent() {
-                    if (this.editedEventIndex > -1) {
-                        Object.assign(
-                            this.editedItem.events[this.editedEventIndex],
-                            this.editedEvent
-                        );
-                        //update record
-                    } else {
-                        this.editedItem.events.push(this.editedEvent);
-                        //create new record
-                    }
-                    this.closeEvent();
                 },
 
                 // related actors functions --------------------
@@ -1624,93 +1534,52 @@
 
                 },
 
+                // related actors functions --------------------
                 searchRelatedActors() {
-                    this.$refs.relateActors.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-                        this.$refs.relateActors.reSearch();
-                    });
+                    this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
                 },
-
-                relateActor(actor) {
-                    // get list of existing attached actors
-                    let ex = this.editedItem.actor_relations.map(x => x.actor.id);
-
-                    if (!ex.includes(actor.id)) {
-                        relation = {
-                            actor: actor
-                        };
-                        this.editedItem.actor_relations.push(relation);
-                        this.relateActorResults.removeById(actor.id);
-                    }
+                relateActor({ item, relationData }) {
+                    this.addItemToRelation({
+                        type: 'actor',
+                        relationList: this.editedItem.actor_relations,
+                        item,
+                        relationData,
+                    })
                 },
-
-                removeActor: function (evt, index) {
-                    if (confirm(translations.confirm_)) {
-                        this.editedItem.actor_relations.splice(index, 1);
-                    }
+                removeActor(evt, index) {
+                    this.removeFromRelationList({ relationList: this.editedItem.actor_relations, index })
                 },
-
 
                 // related bulletins functions --------------------
-
                 searchRelatedBulletins() {
-
-                    this.$refs.relateBulletins.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-                        this.$refs.relateBulletins.reSearch();
-                    });
+                    this.searchRelatedItems({ ref: this.$refs.relateBulletins, searchTerm: this.relateBulletinTerm })
                 },
-
-                relateBulletin(bulletin) {
-                    // get list of existing attached bulletins
-                    let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
-
-                    if (!ex.includes(bulletin.id)) {
-                        relation = {
-                            bulletin: bulletin
-                        };
-                        this.editedItem.bulletin_relations.push(relation);
-                        this.relateBulletinResults.removeById(bulletin.id);
-                    }
+                relateBulletin({ item, relationData }) {
+                    this.addItemToRelation({
+                        type: 'bulletin',
+                        relationList: this.editedItem.bulletin_relations,
+                        item,
+                        relationData,
+                    })
                 },
-
-                removeBulletin: function (evt, index) {
-                    if (confirm(translations.confirm_)) {
-                        this.editedItem.bulletin_relations.splice(index, 1);
-                    }
+                removeBulletin(evt, index) {
+                    this.removeFromRelationList({ relationList: this.editedItem.bulletin_relations, index })
                 },
-
 
                 // related incidents functions ------------------------
-
                 searchRelatedIncidents() {
-
-                    this.$refs.relateIncidents.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-                        this.$refs.relateIncidents.reSearch();
-                    });
-
+                    this.searchRelatedItems({ ref: this.$refs.relateIncidents, searchTerm: this.relateIncidentTerm })
                 },
-                relateIncident(incident) {
-                    // get list of existing attached actors
-                    let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-                    if (!ex.includes(incident.id)) {
-                        relation = {
-                            incident: incident
-                        };
-                        this.editedItem.incident_relations.push(relation);
-                        this.relateIncidentResults.removeById(incident.id);
-                    }
+                relateIncident({ item, relationData }) {
+                    this.addItemToRelation({
+                        type: 'incident',
+                        relationList: this.editedItem.incident_relations,
+                        item,
+                        relationData,
+                    })
                 },
-
-                removeIncident: function (evt, index) {
-                    if (confirm(translations.confirm_)) {
-                        this.editedItem.incident_relations.splice(index, 1);
-                    }
+                removeIncident(evt, index) {
+                    this.removeFromRelationList({ relationList: this.editedItem.incident_relations, index })
                 },
 
                 clearAssignee() {
@@ -1727,6 +1596,7 @@
             }
         });
 
+        app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
         app.component('UniField', UniField);
         app.component('DualField', DualField);
@@ -1741,6 +1611,7 @@
         app.component('IncidentSearchBox', IncidentSearchBox);
         app.component('ActorResult', ActorResult);
         app.component('IncidentResult', IncidentResult);
+        app.component('RelateItemsTemplate', RelateItemsTemplate);
         app.component('BulletinCard', BulletinCard);
         app.component('ActorProfiles', ActorProfiles);
         app.component('ActorCard', ActorCard);
@@ -1751,11 +1622,17 @@
         app.component('PopDateRangeField', PopDateRangeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
-        app.component('ImageGallery', ImageGallery);
+        app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('SnapshotDialog', SnapshotDialog);
         app.component('PreviewCard', PreviewCard);
+        app.component('RelationEditorCard', RelationEditorCard);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('IdNumberDynamicField', IdNumberDynamicField);
+        app.component('EventsSection', EventsSection);
 
         app.component('RelatedBulletinsCard', RelatedBulletinsCard);
         app.component('RelatedActorsCard', RelatedActorsCard);
