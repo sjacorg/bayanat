@@ -17,9 +17,17 @@ const EditableTable = Vue.defineComponent({
       type: Array,
       required: true,
     },
+    height: {
+      type: String,
+      default: null,
+    },
     title: {
       type: String,
       default: 'Editable Table',
+    },
+    addButtonLabel: {
+      type: String,
+      default: 'Add new',
     },
     allowAdd: {
       type: Boolean,
@@ -41,43 +49,69 @@ const EditableTable = Vue.defineComponent({
       type: Array,
       default: () => ['title'],
     },
+    columnsList: {
+      type: Array,
+      default: () => ['code', 'title', 'title_tr', 'reverse_title', 'reverse_title_tr'],
+    },
   },
   template: `
       <div>
-        <v-data-table :headers="itemHeaders" :items="itemList" :items-per-page-options="$root.itemsPerPageOptions" class="elevation-1">
+        <v-data-table :loading="isLoadingList || dialogState.isLoading" fixed-header fixed-footer :height="height" :headers="itemHeaders" :items="itemList" :items-per-page-options="$root.itemsPerPageOptions">
         
           <template v-slot:top>
-            <v-toolbar :title="title" class="d-flex justify-space-between align-center" color="white">
+            <v-toolbar class="d-flex justify-space-between align-center" color="white">
+              <v-toolbar-title class="text-subtitle-1">{{ title }}</v-toolbar-title>
 
-              <v-btn v-if="allowAdd" icon="mdi-plus" @click="itemAdd" class="mx-3" variant="elevated" color="primary" size="x-small"></v-btn>
+              <v-btn class="mx-3" v-if="allowAdd" prepend-icon="mdi-plus-circle" @click="itemAdd()" variant="elevated" color="primary">{{ addButtonLabel }}</v-btn>
             </v-toolbar>
           </template>
 
-          <template v-for="column in ['title', 'title_tr', 'reverse_title_tr', 'reverse_title', 'code']" v-slot:[\`item.\${column}\`]="{ item }">
-            <v-text-field
-              v-if="isEditable(item) && item.id === editableItem.id && editableColumns.includes(column)"
-              v-model="editableItem[column]"
-              :hide-details="true"
-              density="compact"
-              single-line
-              :autofocus="column === 'title'"
-            ></v-text-field>
-            <span v-else>{{ item[column] }}</span>
+          <template v-for="column in columnsList" v-slot:[\`item.\${column}\`]="{ item }">
+            <span>{{ item[column] }}</span>
           </template>
 
           <template v-slot:item.actions="{ item }">
-            <div v-if="isActionable(item)">
-              <template v-if="item.id === editableItem.id">
-                <v-icon size="small" class="mr-3" @click="itemCancel">mdi-window-close</v-icon>
-                <v-icon size="small" @click="itemSave(item)">mdi-content-save</v-icon>
-              </template>
-              <template v-else>
-                <v-icon v-if="isEditable(item)" size="small" class="mr-3" @click="itemEdit(item)">mdi-pencil</v-icon>
-                <v-icon v-if="deleteEndpoint && isDeletable(item)" size="small" @click="itemDelete(item)">mdi-delete</v-icon>
-              </template>
+            <div class="d-inline-flex ga-1" v-if="isActionable(item)">
+              <v-btn v-if="isEditable(item)" variant="plain" size="small" @click="itemEdit(item)" icon="mdi-pencil"></v-btn>
+              <v-btn v-if="deleteEndpoint && isDeletable(item)" variant="plain" size="small" @click="itemDelete(item)" icon="mdi-delete-sweep"></v-btn>
             </div>
           </template>
         </v-data-table>
+
+        <v-dialog v-model="dialogState.isOpen" max-width="900px">
+          <v-card :title="dialogTitles[dialogState.mode]">
+              <v-card-text>
+                  <v-container>
+                      <v-row>
+                        <template v-for="(column, index) in columnsList">
+                          <v-col v-if="isEditable(dialogState.item) && editableColumns.includes(column)" cols="12" md="6">
+                            <v-text-field
+                              variant="outlined"
+                              :label="getHeaderTextById(column)"
+                              v-model="dialogState.item[column]"
+                              :autofocus="index === 0"
+                            ></v-text-field>
+                          </v-col>
+                        </template>
+                      </v-row>
+                  </v-container>
+              </v-card-text>
+
+              <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    @click="dialogState.isOpen = false"
+                  >Cancel</v-btn>
+                  <v-btn
+                    :loading="dialogState.isLoading"
+                    color="primary"
+                    @click="itemSave()"
+                    variant="elevated"
+                  >Save</v-btn
+                  >
+              </v-card-actions>
+          </v-card>
+      </v-dialog>
       </div>
     `,
   data: function () {
@@ -85,6 +119,13 @@ const EditableTable = Vue.defineComponent({
       itemList: [],
       editableItem: {},
       translations: window.translations,
+      isLoadingList: false,
+      dialogState: {
+        isLoading: false,
+        isOpen: false,
+        mode: 'insert',
+        item: null
+      },
     };
   },
   emits: ['items-updated'],
@@ -93,8 +134,17 @@ const EditableTable = Vue.defineComponent({
     this.loadItems();
   },
   mixins: [globalMixin],
+  computed: {
+    dialogTitles() {
+      return {
+        insert: this.translations.newItem_,
+        update: `${this.translations.editItem_} ${this.dialogState.item?.id ?? ''}`,
+      }
+    }
+  },
   methods: {
     loadItems() {
+      this.isLoadingList = true;
       axios
         .get(this.loadEndpoint)
         .then((res) => {
@@ -103,40 +153,56 @@ const EditableTable = Vue.defineComponent({
         })
         .catch((e) => {
           console.log(e.response.data);
+        })
+        .finally(() => {
+          this.isLoadingList = false;
         });
     },
 
     itemEdit(item) {
-      this.editableItem = JSON.parse(JSON.stringify(item));
+      this.dialogState = {
+        isLoading: false,
+        isOpen: true,
+        mode: 'update',
+        item: JSON.parse(JSON.stringify(item)),
+      };
     },
 
-    itemSave(item) {
-      const endpoint = item.id ? `${this.saveEndpoint}/${item.id}` : this.saveEndpoint;
-      const method = item.id ? 'put' : 'post';
+    itemSave() {
+      this.dialogState.isLoading = true;
+      const endpoint = this.dialogState.item?.id ? `${this.saveEndpoint}/${this.dialogState.item.id}` : this.saveEndpoint;
+      const method = this.dialogState.item?.id ? 'put' : 'post';
 
       // fix for location admin levels
-      if(this.itemHeaders.find(header => header.value === 'code') && !item.id){
+      if(this.itemHeaders.find(header => header.value === 'code') && !this.dialogState.item?.id){
         const maxCode = this.itemList.reduce((acc, item) => acc > item.code ? acc : item.code, 0);
-        this.editableItem.code = Number(maxCode) + 1;
+        this.dialogState.item.code = Number(maxCode) + 1;
       }
 
-      axios[method](endpoint, { item: this.editableItem })
+      axios[method](endpoint, { item: this.dialogState.item })
         .then((res) => {
           this.loadItems();
           this.$root.showSnack(res.data);
           this.$emit('items-updated', this.itemList);
+          this.dialogState.isOpen = false;
         })
         .finally(() => {
-          this.editableItem = {};
+          this.dialogState.item = {};
+          this.dialogState.isLoading = false;
         });
     },
 
     itemCancel() {
-      this.editableItem = {};
+      this.dialogState.item = {};
     },
 
     itemAdd() {
-      this.itemList.unshift({});
+      this.dialogState = {
+        isLoading: false,
+        isOpen: true,
+        mode: 'insert',
+        item: {}
+      }
     },
 
     itemDelete(item) {
@@ -150,14 +216,17 @@ const EditableTable = Vue.defineComponent({
           });
       }
     },
+    getHeaderTextById(column) {
+      return this.itemHeaders?.find((header) => header?.value === column)?.title
+    },
     isActionable(item) {
-      return !this.noActionIds.includes(item.id);
+      return !this.noActionIds.includes(item?.id);
     },
     isDeletable(item) {
-      return !this.noDeleteActionIds.includes(item.id);
+      return !this.noDeleteActionIds.includes(item?.id);
     },
     isEditable(item) {
-      return !this.noEditActionIds.includes(item.id);
+      return !this.noEditActionIds.includes(item?.id);
     },
   },
 });
