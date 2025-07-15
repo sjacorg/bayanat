@@ -19,6 +19,29 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
+    matchesField: (otherValue, message) => {
+        const defaultMessage = window.translations.fieldsDoNotMatch_;
+        return v => v === otherValue || message || defaultMessage;
+    },
+    checkPassword: (message) => {
+        const defaultMessage = window.translations.passwordTooWeak_;
+        let timeout;
+      
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(timeout);
+      
+            timeout = setTimeout(async () => {
+              try {
+                await axios.post('/admin/api/password/', { password: v });
+                resolve(true);
+              } catch (err) {
+                resolve(message || defaultMessage);
+              }
+            }, 350);
+          });
+        };
+    }
 };
 
 // Helper functions
