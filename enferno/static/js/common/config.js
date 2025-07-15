@@ -568,3 +568,8 @@ function buildVideoElement() {
 
     return videoElement;
 }
+
+// Deep clone utility for nested refs or reactive data
+function deepClone(value) {
+    return JSON.parse(JSON.stringify(value));
+}
