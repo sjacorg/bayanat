@@ -404,6 +404,7 @@
 
             methods: {
                 resetError(key) {
+                    if (!this.errorsMap) return
                     if (key in this.errorsMap) this.errorsMap[key] = null
                 },
                 showUser(user_id) {
