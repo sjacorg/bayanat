@@ -47,8 +47,14 @@ function scrollToFirstError(errors) {
 // global vuetify config object passed to most pages of the system
 const vuetifyConfig = {
     defaults: {
+        VRow: {
+            dense: true,
+        },
+        VApp: {
+            class: 'bg-background',
+        },
         VTextField: {
-            variant: 'outlined'
+            variant: 'outlined',
         },
         VSelect: {
             variant: 'outlined'
@@ -58,10 +64,35 @@ const vuetifyConfig = {
         },
         VCombobox: {
             variant: 'outlined'
-
+        },
+        VAutocomplete: {
+            variant: 'outlined'
+        },
+        VBtn: {
+            rounded: 'lg',
+            class: 'text-none font-weight-regular text-body-2 elevation-0',
+        },
+        VTab: {
+            VBtn: {
+                class: '', // Remove the custom classes from tab buttons
+                rounded: 'none', // Reset the border radius
+            },
+        },
+        VBtnGroup: {
+            VBtn: {
+                class: '', // Remove the custom classes from tab buttons
+                rounded: 'none', // Reset the border radius
+            },
         },
         VChip: {
             size: 'small'
+        },
+        VSwitch: {
+            color: 'primary',
+            density: 'compact'
+        },
+        VCheckbox: {
+            density: 'compact'
         },
         VDataTableServer: {
             itemsPerPageOptions: window.itemsPerPageOptions,
@@ -74,6 +105,7 @@ const vuetifyConfig = {
                 dark: false, // Explicitly set the light theme as not dark
                 colors: {
                     primary: '#439d92',
+                    'dark-primary': '#35857c',
                     secondary: '#b0bec5',
                     accent: '#8c9eff',
                     error: '#b71c1c',
@@ -87,21 +119,28 @@ const vuetifyConfig = {
                     gv: '#9ECCC3',
                     pv: '#295651',
                     background: '#FAFAFA',
+                    muted: '#79747E',
+                    border: '#D9D9D9',
+                    'table-header': '#9E9E9E',
+                    'table-body': '#666666'
                 },
             },
             dark: {
                 dark: true, // Explicitly set the dark theme as dark
                 colors: {
-                    white: '#333', // Adapted to the more complex structure of your dark theme
                     // Adapted to the more complex structure of your dark theme
                     primary: '#09a7a6',
+                    'dark-primary': '#0a8786',
                     grey: '#999', // Only one shade represented for simplicity
                     'blue-grey': '#222', // Base color, assuming primary shade
-                    black: '#ddd', // Base color
                     gv: '#019985', // Darken2 shade assumed for simplicity
                     lime: '#303030',
                     teal: '#008080',
                     // You might need to adjust or add additional custom colors here
+                    muted: '#A59E99',
+                    border: '#444444',
+                    'table-header': '#B0B0B0',
+                    'table-body': '#ffffffb3'
                 },
             },
         },
@@ -239,6 +278,8 @@ const routes = [
     {path: '/import/log/', name: 'logs', component: Vue.defineComponent({})},
     {path: '/admin/users/:id', name: 'user', component: Vue.defineComponent({})},
     {path: '/admin/users/', name: 'users', component: Vue.defineComponent({})},
+    { path: '/admin/component-data/', name: 'component-data', component: Vue.defineComponent({}) },
+    { path: '/admin/system-administration/', name: 'system-administration', component: Vue.defineComponent({}) },
 
 ];
 
@@ -262,14 +303,8 @@ var tinyConfig = {
     table_grid: false,
     menubar: false,
     toolbar:
-        'undo redo | styleselect | bold italic underline strikethrough backcolor | outdent indent | numlist bullist | link image | align | ltr rtl | table | removeformat | searchreplace | fullscreen',
-    toolbar_groups: {
-        align: {
-            icon: 'aligncenter',
-            tooltip: 'Align',
-            items: 'alignleft aligncenter alignright alignjustify',
-        },
-    },
+        'undo redo | styleselect | bold italic underline strikethrough backcolor | outdent indent | numlist bullist | link image | alignleft aligncenter alignright alignjustify | ltr rtl | table | removeformat | searchreplace | fullscreen',
+
     table_toolbar:
         'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
 
@@ -282,6 +317,7 @@ var tinyConfig = {
     cleanup: true,
 };
 
+
 // adjust rich text editor theme based on mode
 if (__settings__.dark) {
     tinyConfig.skin = 'oxide-dark';
@@ -289,32 +325,10 @@ if (__settings__.dark) {
 }
 
 // helper prototype functions
-
-// removes an item from the array based on its id
-Array.prototype.removeById = function (id) {
-    for (let i = 0; i < this.length; i++) {
-        if (this[i].id == id) {
-            this.splice(i, 1);
-            i--;
-        }
-    }
-    return this;
-};
-
-Array.prototype.toURLParams = function (varName) {
-    const pairs = this.map((x) => {
-        return `${varName}=${x}`;
-    });
-    return pairs.join('&');
-};
-
 String.prototype.getFilename = function () {
     return this.substring(this.lastIndexOf('/') + 1)
         .replace(/[\#\?].*$/, '')
         .replace(/\.[^/.]+$/, '');
-};
-String.prototype.trunc = function (n) {
-    return this.substr(0, n - 1) + (this.length > n ? '&hellip;' : '');
 };
 
 String.prototype.getInitials = function () {
@@ -328,29 +342,6 @@ function translate_status(str) {
     // placeholder, will handle translations in a future release
     return str;
 }
-
-String.prototype.toHHMMSS = function () {
-    var sec_num = parseInt(this, 10); // don't forget the second param
-    var hours = Math.floor(sec_num / 3600);
-    var minutes = Math.floor((sec_num - hours * 3600) / 60);
-    var seconds = sec_num - hours * 3600 - minutes * 60;
-
-    if (hours < 10) {
-        hours = '0' + hours;
-    }
-    if (minutes < 10) {
-        minutes = '0' + minutes;
-    }
-    if (seconds < 10) {
-        seconds = '0' + seconds;
-    }
-    return hours + ':' + minutes + ':' + seconds;
-};
-
-String.prototype.formatName = function () {
-    let firstlast = this.split(' ');
-    return firstlast[0].substr(0, 1).toUpperCase() + '.' + firstlast[1];
-};
 
 // relationship information helper
 
@@ -569,7 +560,7 @@ const DEFAULT_VIDEOJS_OPTIONS = {
 }
 function buildVideoElement() {
     const videoElement = document.createElement('video');
-    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered w-100';
+    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9 h-100 pa-0';
     videoElement.setAttribute('crossorigin', 'anonymous');
     videoElement.setAttribute('controls', '');
     videoElement.setAttribute('width', '620');
