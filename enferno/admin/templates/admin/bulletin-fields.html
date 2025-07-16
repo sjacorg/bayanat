@@ -32,10 +32,10 @@
         </template>
       </v-toolbar>
 
-      <v-card-text>
-        <v-expansion-panels>
+      <v-card-text class="d-flex flex-column ga-4">
+        <v-expansion-panels v-for="field in coreFields" :key="field.name">
           <v-expansion-panel>
-            <v-expansion-panel-title disable-icon-rotate v-for="field in coreFields" :key="field.name" :field="field" :readonly="true">
+            <v-expansion-panel-title disable-icon-rotate>
               <template #default="{ expanded }">
                 <v-icon class="mr-4" size="24">
                   ${ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }
@@ -56,9 +56,9 @@
           </v-expansion-panel>
         </v-expansion-panels>
 
-        <v-expansion-panels>
+        <v-expansion-panels v-for="field in customFields" :key="field.name">
           <v-expansion-panel>
-            <v-expansion-panel-title disable-icon-rotate v-for="field in customFields" :key="field.name" :field="field" :readonly="true">
+            <v-expansion-panel-title disable-icon-rotate>
               <template #default="{ expanded }">
                 <v-icon class="mr-4" size="24">
                   ${ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }
@@ -97,8 +97,8 @@
     data: () => ({
       drawer: drawer,
       isFieldBuilderDrawerOpen: false,
-      coreFields: [],
-      customFields: [],
+      coreFields: [{name: 'one'}, { name: 'two' }],
+      customFields: [{ name: 'three' }, { name: 'four' }],
       searchQuery: '',
       loading: false
     }),
