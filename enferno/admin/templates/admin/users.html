@@ -119,7 +119,7 @@
                     </v-data-table-server>
                     <v-dialog v-model="dialog" max-width="1200px">
                         <v-card>
-                        <v-form @submit="validateForm" ref="form" v-model="valid">
+                        <v-form @submit.prevent="validateForm" ref="form" v-model="valid">
                             <v-toolbar :title="formTitle">
                                 <template #append>
                                     <v-btn icon @click="close">
@@ -199,11 +199,7 @@
                                                               label="{{ _('Username') }}"
                                                               :disabled="disableUsername"
                                                               v-model="editedItem.username"
-                                                              :rules="disableUsername ? [] : [
-                                                                validationRules.required(),
-                                                                validationRules.minLength(4),
-                                                                validationRules.checkUsername()
-                                                            ]"
+                                                              :rules="usernameRules"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
@@ -352,6 +348,7 @@
                 session_id: '{{ session.sid }}',
                 valid: false,
                 errorsMap: {},
+                usernameCopy: null,
             }),
 
             mixins: [globalMixin],
@@ -359,6 +356,28 @@
             computed: {
                 formTitle() {
                     return this.editedItem?.id ? "{{_('Edit Item')}}" : "{{_('New Item')}}";
+                },
+                usernameRules() {
+                    // If username field is disabled, no validation needed
+                    if (this.disableUsername) return [];
+
+                    // Base rules: always required and at least 4 characters
+                    const rules = [
+                        this.validationRules.required(),
+                        this.validationRules.minLength(4),
+                    ];
+
+                    const isNew = !this.editedItem.id;
+                    const hasChanged = this.editedItem.username !== this.usernameCopy;
+
+                    // Only check uniqueness:
+                    // - If creating a new item
+                    // - Or if editing and username was changed
+                    if (isNew || hasChanged) {
+                        rules.push(this.validationRules.checkUsername());
+                    }
+
+                    return rules;
                 }
             },
 
@@ -589,6 +608,7 @@
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = {...item};
+                    this.usernameCopy = item.username;
                     this.disableUsername = this.disablePassword = this.disableEmail = true;
                     this.dialog = true;
                 },
@@ -598,6 +618,8 @@
                     this.dialog = false;
                     this.showPassword = false;
                     this.isAdmin = false;
+                    this.usernameCopy = null;
+                    this.errorsMap = null;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;
@@ -623,7 +645,7 @@
                     // edit mode
                     if (this.editedItem.id) {
                         axios.put(`/admin/api/user/`, {item: this.editedItem})
-                            .then(response => {
+                        .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
