@@ -176,7 +176,7 @@ def test_post_checkuser_endpoint(
             headers={"Content-Type": "application/json"},
             json={"item": u.username},
         )
-        assert response.status_code == 417
+        assert response.status_code == 409
         # Check for a fresh username
     u = UserFactory()
     response = client_.post(
