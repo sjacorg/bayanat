@@ -1402,7 +1402,7 @@ class UserValidationModel(StrictValidationModel):
             return v
 
         try:
-            validate_plain_text_field(v, "Username", 32, check_unicode=True)
+            validate_plain_text_field(v, "Username", 32)
             return v
         except ValidationError as e:
             raise ValueError(str(e))
@@ -1428,7 +1428,7 @@ class UserValidationModel(StrictValidationModel):
         try:
             return validate_email_format(v)
         except ValidationError as e:
-            raise ValueError(str(e))
+            raise ValueError("Invalid email format")
 
 
 class UserRequestModel(BaseValidationModel):
@@ -1457,7 +1457,7 @@ class UserNameCheckValidationModel(BaseValidationModel):
             raise ValueError("Username cannot be empty")
 
         try:
-            validate_plain_text_field(v, "Username", 32, check_unicode=True)
+            validate_plain_text_field(v, "Username", 32)
             return v
         except ValidationError as e:
             raise ValueError(str(e))

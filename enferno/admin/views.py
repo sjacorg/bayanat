@@ -4699,7 +4699,7 @@ def api_user_create(
     # Check if username already exists
     exists = User.query.filter(User.username == username).first()
     if exists:
-        return "Error, username already exists", 417
+        return "Error, username already exists", 409
 
     user = User()
     user.fs_uniquifier = uuid4().hex
@@ -4737,7 +4737,7 @@ def api_user_check(
     # Check if username already exists
     u = User.query.filter(User.username == data).first()
     if u:
-        return "Username already exists", 417
+        return "Username already exists", 409
     else:
         return "Username ok", 200
 
@@ -4767,7 +4767,7 @@ def api_user_update(
         if username:
             existing_user = User.query.filter(User.username == username, User.id != user.id).first()
             if existing_user:
-                return "Error, username already exists", 417
+                return "Error, username already exists", 409
 
         user = user.from_json(u)
         if user.save():

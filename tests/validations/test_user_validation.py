@@ -23,7 +23,7 @@ def ensure_setup_complete(app):
 class TestUsernameValidation:
     """Test cases for username validation."""
 
-    def test_valid_usernames(self):
+    def test_valid_plaintext_with_unicode(self):
         """Test that valid usernames pass validation."""
         valid_usernames = [
             "user123",
@@ -40,7 +40,20 @@ class TestUsernameValidation:
 
         for username in valid_usernames:
             # Should not raise any exception
-            validate_plain_text_field(username, "Username", 32, check_unicode=True)
+            validate_plain_text_field(username, "Username", 32, allow_unicode=True)
+
+    def test_valid_plaintext_without_unicode(self):
+        """Test that valid usernames pass validation."""
+        valid_usernames = [
+            "user123",
+            "testuser",
+            "myusername",
+            "00user",
+        ]
+
+        for username in valid_usernames:
+            # Should not raise any exception
+            validate_plain_text_field(username, "Username", 32, allow_unicode=False)
 
     def test_invalid_usernames_with_special_chars(self):
         """Test that usernames with disallowed special characters are rejected."""
@@ -71,15 +84,26 @@ class TestUsernameValidation:
 
         for username in invalid_usernames:
             with pytest.raises(ValidationError):
-                validate_plain_text_field(username, "Username", 32, check_unicode=True)
+                validate_plain_text_field(username, "Username", 32, allow_unicode=True)
+
+    def test_invalid_usernames_with_unicode(self):
+        """Test that usernames with unicode characters are rejected."""
+        invalid_usernames = [
+            "üser123",
+            "test_user",
+            "my-username",
+        ]
+        for username in invalid_usernames:
+            with pytest.raises(ValidationError):
+                validate_plain_text_field(username, "Username", 32, allow_unicode=False)
 
     def test_empty_username(self):
         """Test that empty usernames are rejected."""
         with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_plain_text_field("", "Username", 32, check_unicode=True)
+            validate_plain_text_field("", "Username", 32, allow_unicode=True)
 
         with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_plain_text_field("   ", "Username", 32, check_unicode=True)
+            validate_plain_text_field("   ", "Username", 32, allow_unicode=True)
 
     @pytest.mark.parametrize(
         "url,username,error_message,field,is_checkuser",
