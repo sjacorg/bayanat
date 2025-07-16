@@ -150,21 +150,12 @@ class Notification(db.Model, BaseMixin):
         Returns:
             bool: True if notification was sent, False otherwise
         """
-        # get config
         from enferno.settings import Config as cfg
 
-        config = cfg.NOTIFICATIONS
+        # get config
+        event_config = Notification._get_notification_config(event)
 
-        if isinstance(event, str):
-            event = event.upper()
-        else:
-            event = event.value
-
-        if event not in config:
-            raise ValueError(f"Event {event} not found in config")
-
-        event_config = config[event]
-
+        # get delivery methods
         delivery_methods = []
         if cfg.MAIL_ENABLED and "email_enabled" in event_config and event_config["email_enabled"]:
             delivery_methods.append(Notification.DELIVERY_METHOD_EMAIL)
@@ -197,6 +188,30 @@ class Notification(db.Model, BaseMixin):
         return any(results)
 
     @staticmethod
+    def _get_notification_config(event: str | NotificationEvent) -> dict:
+        if isinstance(event, str):
+            event = event.upper()
+        else:
+            event = event.value
+
+        if event in [
+            NotificationEvent.LOGIN_NEW_IP.value,
+            NotificationEvent.PASSWORD_CHANGE.value,
+            NotificationEvent.TWO_FACTOR_CHANGE.value,
+            NotificationEvent.RECOVERY_CODES_CHANGE.value,
+            NotificationEvent.FORCE_PASSWORD_CHANGE.value,
+        ]:
+            return {"in_app_enabled": True, "email_enabled": True, "category": "security"}
+        else:
+            from enferno.settings import Config as cfg
+
+            event_config = cfg.NOTIFICATIONS.get(event)
+            if event_config:
+                return event_config
+            else:
+                raise ValueError(f"Event {event} not found in config")
+
+    @staticmethod
     def send_notification_to_admins_for_event(
         event: str | NotificationEvent,
         title: str,
@@ -219,17 +234,7 @@ class Notification(db.Model, BaseMixin):
         # get config
         from enferno.settings import Config as cfg
 
-        config = cfg.NOTIFICATIONS
-
-        if isinstance(event, str):
-            event = event.upper()
-        else:
-            event = event.value
-
-        if event not in config:
-            raise ValueError(f"Event {event} not found in config")
-
-        event_config = config[event]
+        event_config = Notification._get_notification_config(event)
 
         # get delivery methods
         delivery_methods = []

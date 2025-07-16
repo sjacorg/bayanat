@@ -161,32 +161,6 @@ class ConfigManager:
             ],
             "YTDLP_COOKIES": "",
             "NOTIFICATIONS": {
-                # Security events are always enabled and override any user config
-                NotificationEvent.LOGIN_NEW_IP.value: {
-                    "email_enabled": True,
-                    "in_app_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.PASSWORD_CHANGE.value: {
-                    "email_enabled": True,
-                    "in_app_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.TWO_FACTOR_CHANGE.value: {
-                    "email_enabled": True,
-                    "in_app_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.RECOVERY_CODES_CHANGE.value: {
-                    "email_enabled": True,
-                    "in_app_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.FORCE_PASSWORD_CHANGE.value: {
-                    "email_enabled": True,
-                    "in_app_enabled": True,
-                    "category": "security",
-                },
                 # Configurable events
                 NotificationEvent.NEW_USER.value: {
                     "email_enabled": True,
@@ -353,25 +327,9 @@ class ConfigManager:
         value = self.config.get(cfg)
         # Also implement fallback if dict key exists but is null/false/empty
         if value is not None:
-            if cfg == "NOTIFICATIONS":
-                value = ConfigManager.override_security_notifications(value)
             return value
         else:
             return ConfigManager.DEFAULT_CONFIG.get(cfg)
-
-    @staticmethod
-    def override_security_notifications(value: dict) -> dict:
-        # Security events are always enabled and override any user config
-        security_events = [
-            NotificationEvent.LOGIN_NEW_IP.value,
-            NotificationEvent.PASSWORD_CHANGE.value,
-            NotificationEvent.TWO_FACTOR_CHANGE.value,
-            NotificationEvent.RECOVERY_CODES_CHANGE.value,
-            NotificationEvent.FORCE_PASSWORD_CHANGE.value,
-        ]
-        for event in security_events:
-            value[event] = {"in_app_enabled": True, "email_enabled": True, "category": "security"}
-        return value
 
     @staticmethod
     def get_default_config(cfg):

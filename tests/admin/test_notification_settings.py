@@ -1,5 +1,6 @@
 import pytest
 from enferno.admin.constants import Constants
+from enferno.admin.models.Notification import Notification
 from tests.test_utils import load_data
 
 NotificationEvent = Constants.NotificationEvent
@@ -12,8 +13,6 @@ def test_notification_settings_get_config():
     """Test that get_config returns configuration with security events enforced."""
     from enferno.settings import Config as cfg
 
-    config = cfg.NOTIFICATIONS
-
     # Verify that security events are always enabled
     security_events = [
         "LOGIN_NEW_IP",
@@ -24,10 +23,10 @@ def test_notification_settings_get_config():
     ]
 
     for event in security_events:
-        assert event in config
-        assert config[event]["in_app_enabled"] is True
-        assert config[event]["email_enabled"] is True
-        assert config[event]["category"] == "security"
+        config = Notification._get_notification_config(event)
+        assert config["in_app_enabled"] is True
+        assert config["email_enabled"] is True
+        assert config["category"] == "security"
 
 
 #### INTEGRATION TESTS ####
@@ -38,7 +37,7 @@ def test_notification_settings_get_config_includes_security_events(admin_client)
     response = admin_client.get("/admin/api/configuration/")
     current_configuration = load_data(response)["config"]
 
-    # Verify that security events are present and properly configured
+    # Verify that ALWAYS-ON security events are NOT present in the config
     notifications = current_configuration["NOTIFICATIONS"]
     security_events = [
         "LOGIN_NEW_IP",
@@ -49,10 +48,7 @@ def test_notification_settings_get_config_includes_security_events(admin_client)
     ]
 
     for event in security_events:
-        assert event in notifications
-        assert notifications[event]["in_app_enabled"] is True
-        assert notifications[event]["email_enabled"] is True
-        assert notifications[event]["category"] == "security"
+        assert event not in notifications
 
 
 def test_put_config_basic_functionality(admin_client):
