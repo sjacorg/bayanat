@@ -25,35 +25,6 @@ const validationRules = {
           return Array.isArray(error) ? error[0] : error;
         };
     },
-    checkUsername: (message) => {
-        const defaultMessage = window.translations.usernameInvalidOrAlreadyTaken_;
-        let timeout;
-
-        return (v) => {
-          return new Promise((resolve) => {
-            clearTimeout(timeout);
-
-            timeout = setTimeout(async () => {
-              try {
-                await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
-                resolve(true);
-              } catch (err) {
-                switch (err?.response?.status) {
-                    case 409:
-                        resolve(window.translations.usernameAlreadyTaken_)
-                        break;
-                    case 400:
-                        resolve(window.translations.usernameInvalid_)
-                        break;
-                    default:
-                        resolve(message || defaultMessage);
-                        break;
-                }
-              }
-            }, 350);
-          });
-        };
-    }
 };
 
 // Helper functions

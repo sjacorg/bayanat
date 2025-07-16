@@ -150,7 +150,7 @@
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
-                                                        :rules="disableEmail ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.email)]"
+                                                        :rules="disableEmail ? [] : [validationRules.externalError(errorsMap?.email)]"
                                                         @input="resetError('email')"
                                                         type="email"
                                                 ></v-text-field>
@@ -199,7 +199,12 @@
                                                               label="{{ _('Username') }}"
                                                               :disabled="disableUsername"
                                                               v-model="editedItem.username"
-                                                              :rules="usernameRules"
+                                                              :rules="disableUsername ? [] : [
+                                                                    validationRules.required(),
+                                                                    validationRules.minLength(4),
+                                                                    validationRules.externalError(errorsMap?.username)
+                                                                ]"
+                                                                @input="resetError('username')"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
@@ -357,28 +362,6 @@
                 formTitle() {
                     return this.editedItem?.id ? "{{_('Edit Item')}}" : "{{_('New Item')}}";
                 },
-                usernameRules() {
-                    // If username field is disabled, no validation needed
-                    if (this.disableUsername) return [];
-
-                    // Base rules: always required and at least 4 characters
-                    const rules = [
-                        this.validationRules.required(),
-                        this.validationRules.minLength(4),
-                    ];
-
-                    const isNew = !this.editedItem.id;
-                    const hasChanged = this.editedItem.username !== this.usernameCopy;
-
-                    // Only check uniqueness:
-                    // - If creating a new item
-                    // - Or if editing and username was changed
-                    if (isNew || hasChanged) {
-                        rules.push(this.validationRules.checkUsername());
-                    }
-
-                    return rules;
-                }
             },
 
             created() {
@@ -629,12 +612,16 @@
 
                 save() {
                     const handleError = (err) => {
+                        const usernameAlreadyTaken = err?.response?.status === 409
                         const errors = err?.response?.data?.errors
-                        if (errors) {
+                        if (errors || usernameAlreadyTaken) {
                             // Normalize: convert { "item.field": "message" } => { field: ["message"] }
-                            const nextErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => ([key.replace('item.', ''), [value]])))
+                            let nextErrors = Object.fromEntries(Object.entries(errors ?? {}).map(([key, value]) => ([key.replace('item.', ''), [value]])))
                             // Override email message for something simpler
-                            if (nextErrors?.email) nextErrors.email = ['Invalid email address'];
+                            if (nextErrors?.email) nextErrors.email = [translations.emailInvalid_];
+                            if (nextErrors?.username) nextErrors.username = [translations.usernameInvalid_];
+                            if (usernameAlreadyTaken) nextErrors = { ...nextErrors, username: [translations.usernameAlreadyTaken_]};
+
                             this.errorsMap = { ...nextErrors }
                             this.$refs.form.validate()
                         } else {
@@ -644,7 +631,7 @@
 
                     // edit mode
                     if (this.editedItem.id) {
-                        axios.put(`/admin/api/user/`, {item: this.editedItem})
+                        axios.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                         .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
@@ -654,7 +641,7 @@
                     } else {
                         // create mode
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem})
+                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
