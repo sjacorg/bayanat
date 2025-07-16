@@ -38,7 +38,7 @@
                 <v-card-text>
                     <v-data-table-server
                             fixed-header
-                            height="calc(100vh - 328px)"
+                            height="calc(100vh - 331px)"
                             id="incidents-dt"
                             v-model="selected"
                             :headers="headers"
@@ -261,9 +261,6 @@
                         </v-card>
 
                     </v-dialog>
-
-                    <pdf-viewer ref="pdfViewer"></pdf-viewer>
-
                 </v-card-text>
             </v-card>
 
@@ -287,10 +284,12 @@
     <script src="/static/js/tinymce-vue.min.js"></script>
 
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/relations-mixin.js"></script>
     <script src="/static/js/components/GeoMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/SplitView.js"></script>
 
     <script src="/static/js/components/RelatedBulletinsCard.js"></script>
     <script src="/static/js/components/RelatedActorsCard.js"></script>
@@ -314,6 +313,7 @@
     <script src="/static/js/components/RelateBulletins.js"></script>
     <script src="/static/js/components/RelateActors.js"></script>
     <script src="/static/js/components/RelateIncidents.js"></script>
+    <script src="/static/js/components/RelateItemsTemplate.js"></script>
 
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
@@ -322,12 +322,16 @@
     <script src="/static/js/components/PopDateRangeField.js"></script>
 
     <script src="/static/js/components/GeoLocations.js"></script>
-    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/MediaCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
+    <script src="/static/js/components/RelationEditorCard.js"></script>
+    <script src="/static/js/components/EventsSection.js"></script>
 
     <script src="/static/js/actorConfig.js"></script>
     <script src="/static/js/components/PdfViewer.js"></script>
+    <script src="/static/js/components/ImageViewer.js"></script>
+    <script src="/static/js/components/InlineMediaRenderer.js"></script>
     <script src="/static/js/components/Visualization.js"></script>
     <script src="/static/js/element-resize-detector.min.js"></script>
     <script src="/static/js/force-graph.min.js"></script>
@@ -357,21 +361,15 @@
                 "tinymce-editor": Editor, // <- Important part,
 
             },
-            mixins: [globalMixin],
+            mixins: [globalMixin, relationsMixin],
             data: () => ({
                 valid: false,
+                rightDialogProps: null,
                 translations: window.translations,
+                validationRules: validationRules,
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                 helper: {}, // helper object for review items
-
-                itobInfo: [],
-                itoaInfo: [],
-                itoiInfo: [],
-                atobInfo: [],
-                btobInfo: [],
-                atoaInfo: [],
-
 
                 assignIncident: {},
                 selfAssignDialog: false,
@@ -422,30 +420,21 @@
                 reviewDialog: false,
                 eventParams: {typ: 'for_bulletin'},
                 reviewKey: 0,
-                playerOptions: {},
-
 
                 // search and relate bulletin dialog vars
                 relateBulletinDialog: false,
                 relateBulletinLoader: true,
                 relateBulletinTerm: "",
-                relateBulletinResults: [],
-                selectedRelatedBulletins: [],
-
 
                 // search and relate incident dialog vars
                 relateIncidentDialog: false,
                 relateIncidentLoader: true,
                 relateIncidentTerm: "",
-                relateIncidentResults: [],
-                selectedRelatedIncidents: [],
 
                 // search and relate actor dialog vars
                 relateActorDialog: false,
                 relateActorLoader: true,
                 relateActorTerm: "",
-                relateActorResults: [],
-                selectedRelatedActors: [],
 
                 drawer: drawer,
                 incidentDrawer: false,
@@ -564,16 +553,6 @@
                 jobs: [],
                 bulkTimer: 0,
 
-                //events
-                editedEventIndex: -1,
-                editedEvent: {
-                    title: ""
-                },
-                defaultEvent: {
-                    title: ""
-                },
-
-
                 incident: {},
                 incidentLoader: false
             }),
@@ -581,14 +560,6 @@
             computed: {
                 searchEmpty() {
                     return !Object.values(this.search).some(Boolean);
-                },
-
-                titleRule() {
-                    return [this.editedItem.title ? v => true : v => "{{ _('Original Title is required.') }}"]
-                },
-
-                accessRule() {
-                    return [this.unrestricted || this.editedItem.roles?.length ? v => true : v => "{{ _('Access Group(s) are required unless unresticted.') }}"]
                 },
 
                 bulletinRelationTypes() {
@@ -613,51 +584,15 @@
 
 
                 exBulletins() {
-                    let ids = [];
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.bulletin_relations) {
-                            ids = ids.concat(this.editedItem.bulletin_relations.map(x => x.bulletin.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-                        if (this.reviewItem.bulletin_relations) {
-                            ids = ids.concat(this.reviewItem.bulletin_relations.map(x => x.bulletin.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'bulletin', editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
 
                 exActors() {
-                    let ids = [];
-                    if (this.editedItem?.id) {
-                        if (this.editedItem.actor_relations) {
-                            ids = ids.concat(this.editedItem.actor_relations.map(x => x.actor.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-
-                        if (this.reviewItem.actor_relations) {
-                            ids = ids.concat(this.reviewItem.actor_relations.map(x => x.actor.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'actor', editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
 
                 exIncidents() {
-                    let ids = [];
-                    if (this.editedItem?.id) {
-                        ids.push(this.editedItem.id);
-                        if (this.editedItem.incident_relations) {
-                            ids = ids.concat(this.editedItem.incident_relations.map(x => x.incident.id));
-                        }
-                    } else if (this.reviewItem?.id) {
-                        ids.push(this.reviewItem.id);
-                        if (this.reviewItem.incident_relations) {
-                            ids = ids.concat(this.reviewItem.incident_relations.map(x => x.incident.id));
-                        }
-                    }
-
-                    return ids;
+                    return this.getExcludedIds({ type: 'incident', includeSelf: true, editedItem: this.editedItem, reviewItem: this.reviewItem });
                 },
                 
                 formTitle() {
@@ -768,27 +703,8 @@
 
 
             },
-            created() {
-                this.fetchRelationInfo();
-            },
 
             methods: {
-                fetchRelationInfo() {
-                    axios.get('/admin/api/relation/info')
-                        .then(response => {
-                            this.itobInfo = response.data.itobInfo;
-                            this.itoaInfo = response.data.itoaInfo;
-                            this.atobInfo = response.data.atobInfo;
-                            this.atoaInfo = response.data.atoaInfo;
-                            this.btobInfo = response.data.btobInfo;
-                            this.itoiInfo = response.data.itoiInfo;
-                        })
-                        .catch(error => {
-                            console.error('Error fetching relation info:', error);
-                            this.showSnack('Error fetching relation info');
-                        });
-                },
-
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
@@ -1109,13 +1025,6 @@
                     this.search.reviewer = [this.currentUser.id];
                     this.search.statuses = ["Peer Review Assigned"];
                     this.refresh();
-                },
-
-
-                removeEvent: function (evt, index) {
-                    if (confirm("{{ _('Confirm deleting this event?')}}")) {
-                        this.editedItem.events.splice(index, 1);
-                    }
                 },
 
 
@@ -1469,9 +1378,8 @@
                         axios.post("/admin/api/incident/", {
                             item: this.editedItem
                         }).then(response => {
-                            this.items.push(this.editedItem);
-                            this.showSnack(response.data);
-                            this.refresh();
+                            this.items.unshift(response.data.item);
+                            this.showSnack(response.data.message);
                             this.close();
                         }).catch(err => {
                             console.error(err.response?.data);
@@ -1480,146 +1388,52 @@
                     }
                 },
 
-                editEvent(evt, item, index) {
-                    this.editedEvent = Object.assign({}, item);
-                    //console.log(this.editedEvent);
-                    this.editedEventIndex = index;
-
-                    //reset dual fields display to english
-                    this.eventTitle__ = true;
-                    this.eventComments__ = true;
-                    this.eventDialog = true;
-                    //this.locations = this.editedItem.locations;
+                // related actors functions --------------------
+                searchRelatedActors() {
+                    this.searchRelatedItems({ ref: this.$refs.relateActors, searchTerm: this.relateActorTerm })
                 },
-
-                closeEvent() {
-                    this.eventDialog = false;
-                    setTimeout(() => {
-                        this.editedEvent = Object.assign({}, this.defaultEvent);
-                        this.editedEventIndex = -1;
-                    }, 300);
+                relateActor({ item, relationData }) {
+                    this.addItemToRelation({
+                        type: 'actor',
+                        relationList: this.editedItem.actor_relations,
+                        item,
+                        relationData,
+                    })
                 },
-
-                saveEvent() {
-                    if (this.editedEventIndex > -1) {
-                        Object.assign(
-                            this.editedItem.events[this.editedEventIndex],
-                            this.editedEvent
-                        );
-                        //update record
-                    } else {
-                        this.editedItem.events.push(this.editedEvent);
-                        //create new record
-                    }
-                    this.closeEvent();
+                removeActor(evt, index) {
+                    this.removeFromRelationList({ relationList: this.editedItem.actor_relations, index })
                 },
-
-                // related incidents functions --------------------
-
-                searchRelatedIncidents() {
-
-                    this.$refs.relateIncidents.open();
-
-                    this.$nextTick(() => {
-                        this.$refs.relateIncidents.q = {tsv: this.relateIncidentTerm};
-
-                        this.$refs.relateIncidents.reSearch();
-                    });
-
-                },
-
-                relateIncident(incident) {
-                    // get list of existing attached incidents
-                    let ex = this.editedItem.incident_relations.map(x => x.incident.id);
-
-                    if (!ex.includes(incident.id)) {
-                        relation = {
-                            incident: incident
-                        };
-                        this.editedItem.incident_relations.push(relation);
-
-                        this.relateIncidentResults.removeById(incident.id);
-                    }
-                },
-
-                removeIncident: function (evt, index) {
-                    if (confirm(translations.confirm_)) {
-                        this.editedItem.incident_relations.splice(index, 1);
-                    }
-                },
-
-                // handles preview buttons when relating incidents (launches dialog)
-                viewIncident: function (evt, incident) {
-                    this.previewIncident = incident;
-                    this.previewIncidentDialog = true;
-                },
-
-
-                // -------------------------------------------------
-
 
                 // related bulletins functions --------------------
-
                 searchRelatedBulletins() {
-
-                    this.$refs.relateBulletins.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateBulletins.q = {tsv: this.relateBulletinTerm};
-                        this.$refs.relateBulletins.reSearch();
-                    });
+                    this.searchRelatedItems({ ref: this.$refs.relateBulletins, searchTerm: this.relateBulletinTerm })
+                },
+                relateBulletin({ item, relationData }) {
+                    this.addItemToRelation({
+                        type: 'bulletin',
+                        relationList: this.editedItem.bulletin_relations,
+                        item,
+                        relationData,
+                    })
+                },
+                removeBulletin(evt, index) {
+                    this.removeFromRelationList({ relationList: this.editedItem.bulletin_relations, index })
                 },
 
-                relateBulletin(bulletin) {
-                    // get list of existing attached incidents
-
-
-                    let ex = this.editedItem.bulletin_relations.map(x => x.bulletin.id);
-
-
-                    if (!ex.includes(bulletin.id)) {
-
-                        const relation = {
-                            bulletin: bulletin
-                        };
-                        this.editedItem.bulletin_relations.push(relation);
-
-                    }
+                // related incidents functions ------------------------
+                searchRelatedIncidents() {
+                    this.searchRelatedItems({ ref: this.$refs.relateIncidents, searchTerm: this.relateIncidentTerm })
                 },
-
-                removeBulletin: function (evt, index) {
-                    if (confirm(translations.confirm_)) {
-                        this.editedItem.bulletin_relations.splice(index, 1);
-                    }
+                relateIncident({ item, relationData }) {
+                    this.addItemToRelation({
+                        type: 'incident',
+                        relationList: this.editedItem.incident_relations,
+                        item,
+                        relationData,
+                    })
                 },
-
-
-                // related actors functions ------------------------
-
-                searchRelatedActors() {
-
-                    this.$refs.relateActors.open();
-                    this.$nextTick(() => {
-                        this.$refs.relateActors.q = {tsv: this.relateActorTerm};
-                        this.$refs.relateActors.reSearch();
-                    });
-                },
-                relateActor(actor) {
-                    // get list of existing attached actors
-                    let ex = this.editedItem.actor_relations.map(x => x.actor.id);
-
-                    if (!ex.includes(actor.id)) {
-                        relation = {
-                            actor: actor
-                        };
-                        this.editedItem.actor_relations.push(relation);
-                        this.relateActorResults.removeById(actor.id);
-                    }
-                },
-
-                removeActor: function (evt, index) {
-                    if (confirm(translations.confirm_)) {
-                        this.editedItem.actor_relations.splice(index, 1);
-                    }
+                removeIncident(evt, index) {
+                    this.removeFromRelationList({ relationList: this.editedItem.incident_relations, index })
                 },
 
                 clearAssignee() {
@@ -1637,6 +1451,7 @@
         });
 
 
+        app.component('SplitView', SplitView);
         app.component('SearchField', SearchField);
         app.component('UniField', UniField);
         app.component('DualField', DualField);
@@ -1645,6 +1460,7 @@
         app.component('RelateBulletins', RelateBulletins);
         app.component('RelateActors', RelateActors);
         app.component('RelateIncidents', RelateIncidents);
+        app.component('RelateItemsTemplate', RelateItemsTemplate);
         app.component('BulletinResult', BulletinResult);
         app.component('BulletinSearchBox', BulletinSearchBox);
         app.component('ActorSearchBox', ActorSearchBox);
@@ -1667,11 +1483,15 @@
         app.component('PopDateRangeField', PopDateRangeField);
         app.component('GeoLocations', GeoLocations);
         app.component('GlobalMap', GlobalMap);
-        app.component('ImageGallery', ImageGallery);
+        app.component('MediaGrid', MediaGrid);
         app.component('MediaCard', MediaCard);
         app.component('Visualization', Visualization);
         app.component('PdfViewer', PdfViewer);
+        app.component('ImageViewer', ImageViewer);
+        app.component('InlineMediaRenderer', InlineMediaRenderer);
         app.component('PreviewCard', PreviewCard);
+        app.component('RelationEditorCard', RelationEditorCard);
+        app.component('EventsSection', EventsSection);
 
 
         app.use(router).use(vuetify).mount("#app");

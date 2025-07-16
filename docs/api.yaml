@@ -1612,6 +1612,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: q
+          schema:
+            type: string
+            description: Query string to filter location admin levels by title.
       responses:
         '200':
           description: OK
@@ -1793,6 +1798,14 @@ paths:
         - DA
       security:
         - SessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: q
+          schema:
+            type: string
+            description: Query string to filter location types by title.
       responses:
         '200':
           description: OK
@@ -2328,6 +2341,146 @@ paths:
               schema:
                 type: string
                 example: "Error deleting dialect"
+  /admin/api/idnumbertypes:
+    get:
+      operationId: getIDNumberTypes
+      tags:
+        - Protected
+        - ID Number Type Management
+      summary: Get a paginated list of all ID Number Types
+      description: |
+        Returns a paginated list of all ID number types, (optionally) satisfying a search query.
+        
+        Roles accepted:
+        - Admin
+        - Mod
+        - DA
+      security:
+        - SessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/queries_single'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedResponse'
+  /admin/api/idnumbertype:
+    post:
+      operationId: createIDNumberType
+      tags:
+        - Protected
+        - ID Number Type Management
+      summary: Create a new ID Number Type
+      description: |
+        Create a new ID number type with the provided properties.
+        
+        Roles accepted:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComponentRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ItemCreatedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+        '417':
+          $ref: '#/components/responses/SaveFailedResponse'
+  /admin/api/idnumbertype/{id}:
+    put:
+      operationId: updateIDNumberType
+      tags:
+        - Protected
+        - ID Number Type Management
+      summary: Update an existing ID Number Type
+      description: |
+        Update the ID number type with `{id}` with the provided properties.
+        
+        Roles accepted:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Id of the ID Number Type to be updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComponentRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Updated !"
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundTextResponse'
+        '417':
+          $ref: '#/components/responses/SaveFailedResponse'
+    delete:
+      operationId: deleteIDNumberType
+      tags:
+        - Protected
+        - ID Number Type Management
+      summary: Delete an existing ID Number Type
+      description: |
+        Delete the ID number type with `{id}`.
+        
+        Roles accepted:
+        - Admin
+      security:
+        - SessionCookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Id of the ID Number Type to be deleted.
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "ID Number Type Deleted #{id}"
+        '401':
+          $ref: '#/components/responses/UnauthenticatedJsonResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedJsonResponse'
+        '417':
+          description: Could not delete ID number type.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Error deleting ID number type"
   /admin/api/atoainfos:
     get:
       operationId: getAtoaInfos
@@ -3532,14 +3685,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateBulletinRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Bulletin #{id} !"
+                $ref: '#/components/schemas/BulletinCreateResponse'
+        '417':
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -4468,20 +4629,27 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateActorRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Actor #{id} !"
+                $ref: '#/components/schemas/ActorCreateResponse'
+        '417':
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
-        '417':
-          $ref: '#/components/responses/SaveFailedResponse'
+
   /admin/api/actor/{id}:
     get:
       operationId: getActor
@@ -5634,14 +5802,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateIncidentRequest'
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
+        schema:
+          type: integer
       responses:
-        '200':
+        '201':
           description: OK
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Created Incident #{id} !"
+                $ref: '#/components/schemas/IncidentCreateResponse'
+        '417':
+          $ref: '#/components/schemas/BaseItemCreateResponse'
         '401':
           $ref: '#/components/responses/UnauthenticatedJsonResponse'
         '403':
@@ -7046,6 +7222,32 @@ components:
             mother_name:
               type: string
               description: Search query for mother name.
+            tags:
+              type: array
+              items:
+                type: string
+              description: List of tags to include in the search.
+            inExact:
+              type: boolean
+              description: Whether to use exact word boundary matching for include tags.
+              default: false
+            opTags:
+              type: boolean
+              description: Tags include queries operator. true for OR (any), false for AND (all).
+              default: false
+            exTags:
+              type: array
+              items:
+                type: string
+              description: List of tags to exclude from the search.
+            exExact:
+              type: boolean
+              description: Whether to use exact word boundary matching for exclude tags.
+              default: false
+            opExTags:
+              type: boolean
+              description: Tags exclude queries operator. true for OR (any), false for AND (all).
+              default: false
             opEthno:
               type: boolean
               description: Ethnography queries operator. true for OR, false for AND
@@ -7122,7 +7324,14 @@ components:
             type:
               type: string
             id_number:
-              type: string
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: "ID number type ID as string. Either of type or number can be omitted to be wildcard"
+                number:
+                  type: string
+                  description: "ID number value. Either of type or number can be omitted to be wildcard"
             locTypes:
               type: array
               items:
@@ -8694,7 +8903,14 @@ components:
               id:
                 type: integer
         id_number:
-          type: string
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              number:
+                type: string
         origin_place:
           type: object
           properties:
@@ -9006,7 +9222,14 @@ components:
           items:
             $ref: '#/components/schemas/ComponentDataItem'
         id_number:
-          type: string
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                $ref: '#/components/schemas/ComponentDataItem'
+              number:
+                type: string
         assigned_to:
           $ref: '#/components/schemas/UserCompactItem'
         first_peer_reviewer:
@@ -9578,3 +9801,29 @@ components:
               items:
                 type: string
               example: ['You do not have permission to view this resource.']
+    BaseItemCreateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    BulletinCreateResponse:
+      type: object
+      allOf: 
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/BulletinItem'
+    ActorCreateResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/ActorItem'
+    IncidentCreateResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseItemCreateResponse'
+        - properties:
+            item:
+              $ref: '#/components/schemas/IncidentItem'
