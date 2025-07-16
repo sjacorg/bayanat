@@ -526,7 +526,7 @@
 
                 checkUsername:
                     debounce(function (evt) {
-                        axios.post('/admin/api/checkuser/', {item: this.editedItem.username}).then(
+                        axios.post('/admin/api/checkuser/', {item: this.editedItem.username}, { suppressGlobalErrorHandler: true }).then(
                             res => {
 
                             }
@@ -613,30 +613,23 @@
                 save() {
                     // edit mode
                     if (this.editedItem.id) {
-                        axios.put(`/admin/api/user/`, {item: this.editedItem})
+                        axios.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            console.error(err);
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        });
+                            })
 
                     } else {
                         // create mode
 
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem})
+                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-
-
-                        });
+                            })
                     }
 
                 }
