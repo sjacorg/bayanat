@@ -166,6 +166,8 @@
 
                                                 <v-text-field
                                                         label="{{ _('Password') }}"
+                                                        :color="isStrongPassword ? 'success' : undefined"
+                                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
@@ -174,7 +176,7 @@
                                                         :rules="disablePassword ? [] : [
                                                             validationRules.required(),
                                                             validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
-                                                            validationRules.checkPassword()
+                                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
                                                         ]"
                                                 ></v-text-field>
 
@@ -344,6 +346,7 @@
                 user: null,
                 session_id: '{{ session.sid }}',
                 valid: false,
+                isStrongPassword: false,
             }),
 
             mixins: [globalMixin],
@@ -396,6 +399,10 @@
 
 
             methods: {
+                onPasswordCheckResponse(response) {
+                    this.isStrongPassword = response === true
+                },
+
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {

@@ -23,7 +23,7 @@ const validationRules = {
         const defaultMessage = window.translations.fieldsDoNotMatch_;
         return v => v === otherValue || message || defaultMessage;
     },
-    checkPassword: (message) => {
+    checkPassword: ({ onResponse }) => {
         const defaultMessage = window.translations.passwordTooWeak_;
         let timeout;
       
@@ -33,10 +33,12 @@ const validationRules = {
       
             timeout = setTimeout(async () => {
               try {
-                await axios.post('/admin/api/password/', { password: v });
+                await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
+                onResponse(true);
                 resolve(true);
-              } catch (err) {
-                resolve(message || defaultMessage);
+            } catch (err) {
+                onResponse(err);
+                resolve(defaultMessage);
               }
             }, 350);
           });
@@ -207,8 +209,10 @@ axios.interceptors.response.use(
         return response;
     },
     function (error) {
-        const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
-        document.dispatchEvent(globalRequestErrorEvent);
+        if (!error.config?.suppressGlobalErrorHandler) {
+            const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
+            document.dispatchEvent(globalRequestErrorEvent);
+        }
         // Check for session expiration errors (401 Unauthorized)
         if ([401].includes(error?.response?.status)) {
             const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });
