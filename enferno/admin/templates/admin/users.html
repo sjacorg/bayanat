@@ -119,6 +119,7 @@
                     </v-data-table-server>
                     <v-dialog v-model="dialog" max-width="1200px">
                         <v-card>
+                        <v-form @submit="validateForm" ref="form" v-model="valid">
                             <v-toolbar :title="formTitle">
                                 <template #append>
                                     <v-btn icon @click="close">
@@ -127,7 +128,6 @@
                                 </template>
                             </v-toolbar>
                             <v-card-text>
-                                <v-form @submit.prevent="save" ref="form" v-model="valid">
                                 <v-container>
                                     <v-row>
 
@@ -137,8 +137,6 @@
 
                                                     label="{{ _('Full Name') }}"
                                                     v-model="editedItem.name"
-                                                    :rules="[validationRules.required(), validationRules.externalError(errorsMap?.name)]"
-                                                    @input="resetError('name')"
                                             ></v-text-field>
 
                                         </v-col>
@@ -151,9 +149,6 @@
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
-                                                        :rules="disableEmail ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.email)]"
-                                                        @input="resetError('email')"
-                                                        type="email"
                                                 ></v-text-field>
                                                 <v-btn @click.stop="enableEmail"
                                                        v-if="editedItem.id" class="my-auto mx-1"
@@ -170,16 +165,12 @@
                                             <div class="d-flex align-center">
 
                                                 <v-text-field
-                                                        @blur="checkPassword"
-                                                        @input="checkPassword"
-                                                        label="{{ _('Password') }}"
+                                                        placeholder="{{ _('Password') }}"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                                         :type="showPassword ? 'text' : 'password'"
                                                         @click:append="showPassword = !showPassword"
-                                                        :rules="disablePassword ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.password)]"
-                                                        :hint="strongPassword ? 'Strong password' : null"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enablePassword"
@@ -197,12 +188,16 @@
                                     <v-row>
                                         <v-col>
                                             <div class="d-flex">
-                                                <v-text-field @blur="checkUsername"
-                                                              @input="checkUsername"
+                                                <v-text-field
                                                               label="{{ _('Username') }}"
                                                               :disabled="disableUsername"
-                                                              :rules="disableUsername ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.username)]"
-                                                              v-model="editedItem.username"></v-text-field>
+                                                              v-model="editedItem.username"
+                                                              :rules="[
+                                                                validationRules.required(),
+                                                                validationRules.minLength(4),
+                                                                validationRules.checkUsername()
+                                                            ]"
+                                                ></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
                                                        v-if="editedItem.id" class="my-auto mx-1"
@@ -269,7 +264,6 @@
                                         </v-col>
                                     </v-row>
                                 </v-container>
-                                </v-form>
                             </v-card-text>
                             <v-card-text class="text-center">
                                 <v-btn v-if="editedItem.two_factor_devices?.length"  prepend-icon="mdi-lock-remove" class="mx-2" @click="revoke2fa(editedItem.id)">
@@ -285,10 +279,11 @@
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
                                 <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="validateForm" color="primary" variant="elevated">
+                                <v-btn type="submit" color="primary" variant="elevated">
                                     {{ _('Save') }}
                                 </v-btn>
                             </v-card-actions>
+                        </v-form>
                         </v-card>
                     </v-dialog>
 
@@ -349,8 +344,6 @@
                 user: null,
                 session_id: '{{ session.sid }}',
                 valid: false,
-                errorsMap: null,
-                strongPassword: false,
             }),
 
             mixins: [globalMixin],
@@ -403,10 +396,17 @@
 
 
             methods: {
-                resetError(key) {
-                    if (!this.errorsMap) return
-                    if (key in this.errorsMap) this.errorsMap[key] = null
+                validateForm() {
+                    this.$refs.form.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.save();
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError(errors)
+                        }
+                    });
                 },
+
                 showUser(user_id) {
                     axios.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
@@ -504,6 +504,17 @@
                     }
                 },
 
+                passwordRules() {
+                    if (this.editedItem.id && this.disablePassword) {
+                        // edit mode
+                        return ''
+
+                    } else {
+
+                        return 'required|min:10|checkPassword'
+                    }
+                },
+
                 enableUsername() {
                     this.disableUsername = false;
                 },
@@ -515,36 +526,6 @@
                 enableEmail() {
                     this.disableEmail = false;
                 },
-
-
-                checkUsername:
-                    debounce(function (evt) {
-                        axios.post('/admin/api/checkuser/', {item: this.editedItem.username}, {
-                            suppressGlobalErrorHandler: true,
-                        })
-                        .then(() => {
-                            this.errorsMap = { ...this.errorsMap, username: null }
-                        })
-                        .catch(err => {
-                            this.errorsMap = { ...this.errorsMap, username: ['Username is invalid or already taken'] }
-                        }).finally(() => this.$refs.form.validate())
-                    }, 350)
-                ,
-                checkPassword:
-                    debounce(function (evt) {
-                        axios.post('/admin/api/password/', { password: evt.target.value }, {
-                            suppressGlobalErrorHandler: true,
-                        })
-                        .then(() => {
-                            this.strongPassword = true;
-                            this.errorsMap = { ...this.errorsMap, password: null }
-                        })
-                        .catch(err => {
-                            this.strongPassword = false;
-                            this.errorsMap = { ...this.errorsMap, password: ['Your password is too weak'] }
-                        }).finally(() => this.$refs.form.validate())
-                    }, 350)
-                ,
 
                 getRoles() {
 
@@ -593,7 +574,6 @@
                 },
 
                 editItem(item) {
-                    this.strongPassword = false;
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = {...item};
@@ -606,8 +586,6 @@
                     this.dialog = false;
                     this.showPassword = false;
                     this.isAdmin = false;
-                    this.errorsMap = null;
-                    this.strongPassword = false;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;
@@ -615,63 +593,33 @@
                     }, 300);
                 },
 
-                validateForm() {
-                    this.$refs.form.validate().then(({ valid, errors }) => {
-                        if (valid) {
-                            this.save();
-                        } else {
-                            this.showSnack("{{ _('Please review the form for errors.')}}")
-                            scrollToFirstError(errors)
-                        }
-                    });
-                },
-
                 save() {
-                    const handleError = (err) => {
-                        const errors = err?.response?.data?.errors
-                        if (errors) {
-                            // Normalize: convert { "item.field": "message" } => { field: ["message"] }
-                            const nextErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => ([key.replace('item.', ''), [value]])))
-
-                            // Override email message for something simpler
-                            if (nextErrors?.email) {
-                                nextErrors.email = ['Invalid email address'];
-                            }
-
-                            this.errorsMap = {
-                                // Persist username and password errors as they are validated using the endpoint
-                                ...(this.errorsMap?.username ? { username: this.errorsMap?.username } : {}),
-                                ...(this.errorsMap?.password ? { password: this.errorsMap?.password } : {}),
-                                ...nextErrors,
-                            }
-                            this.$refs.form.validate()
-                        } else {
-                            this.showSnack(handleRequestError(err));
-                        }
-                    }
                     // edit mode
                     if (this.editedItem.id) {
-                        axios.put(`/admin/api/user/`, {item: this.editedItem}, {
-                            suppressGlobalErrorHandler: true,
-                        })
+                        axios.put(`/admin/api/user/`, {item: this.editedItem})
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(handleError);
+                            }).catch(err => {
+                            console.error(err);
+                            this.showSnack(this.parseValidationError(err?.response?.data));
+                        });
 
                     } else {
                         // create mode
 
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem}, {
-                                suppressGlobalErrorHandler: true,
-                            })
+                            .post("/admin/api/user/", {item: this.editedItem})
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(handleError);
+                            }).catch(err => {
+                            this.showSnack(this.parseValidationError(err?.response?.data));
+
+
+                        });
                     }
 
                 }

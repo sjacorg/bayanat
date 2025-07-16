@@ -24,6 +24,25 @@ const validationRules = {
           if (!error) return true;
           return Array.isArray(error) ? error[0] : error;
         };
+    },
+    checkUsername: (message) => {
+        const defaultMessage = window.translations.usernameInvalidOrAlreadyTaken_;
+        let timeout;
+
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(timeout);
+
+            timeout = setTimeout(async () => {
+              try {
+                await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
+                resolve(true);
+              } catch (err) {
+                resolve(message || defaultMessage);
+              }
+            }, 350);
+          });
+        };
     }
 };
 
