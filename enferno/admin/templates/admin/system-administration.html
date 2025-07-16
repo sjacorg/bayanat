@@ -682,10 +682,8 @@
                                         <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Login from new IP') }}</h4>
                                             <div class="d-flex ga-10">
-                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.LOGIN_NEW_IP.in_app_enabled"></v-switch>
-                                                <v-switch color="primary" hide-details label="{{ _('Email') }}"
-                                                    v-model="eitem.NOTIFICATIONS.LOGIN_NEW_IP.email_enabled"></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('Email') }}" :model-value="true" disabled></v-switch>
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user logs in from a new IP address.')
                                                 }}</p>
@@ -694,10 +692,8 @@
                                         <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Change password') }}</h4>
                                             <div class="d-flex ga-10">
-                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.PASSWORD_CHANGE.in_app_enabled"></v-switch>
-                                                <v-switch color="primary" hide-details label="{{ _('Email') }}"
-                                                    v-model="eitem.NOTIFICATIONS.PASSWORD_CHANGE.email_enabled"></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('Email') }}" :model-value="true" disabled></v-switch>
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user changes their password.') }}</p>
                                         </v-col>
@@ -705,10 +701,8 @@
                                         <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Add/Change 2FA') }}</h4>
                                             <div class="d-flex ga-10">
-                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.in_app_enabled"></v-switch>
-                                                <v-switch color="primary" hide-details label="{{ _('Email') }}"
-                                                    v-model="eitem.NOTIFICATIONS.TWO_FACTOR_CHANGE.email_enabled"></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('Email') }}" :model-value="true" disabled></v-switch>
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user sets up or updates 2FA.') }}</p>
                                         </v-col>
@@ -716,10 +710,8 @@
                                         <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Add/Change recovery codes') }}</h4>
                                             <div class="d-flex ga-10">
-                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.in_app_enabled"></v-switch>
-                                                <v-switch color="primary" hide-details label="{{ _('Email') }}"
-                                                    v-model="eitem.NOTIFICATIONS.RECOVERY_CODES_CHANGE.email_enabled"></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('Email') }}" :model-value="true" disabled></v-switch>
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when a user updates recovery codes.') }}</p>
                                         </v-col>
@@ -727,10 +719,8 @@
                                         <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Force password change') }}</h4>
                                             <div class="d-flex ga-10">
-                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.in_app_enabled"></v-switch>
-                                                <v-switch color="primary" hide-details label="{{ _('Email') }}"
-                                                    v-model="eitem.NOTIFICATIONS.FORCE_PASSWORD_CHANGE.email_enabled"></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('In-app') }}" :model-value="true" disabled></v-switch>
+                                                <v-switch color="primary" hide-details label="{{ _('Email') }}" :model-value="true" disabled></v-switch>
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _("Notify when a password reset is enforced.") }}</p>
                                         </v-col>
