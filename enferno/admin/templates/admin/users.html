@@ -133,10 +133,11 @@
 
                                         <v-col cols="12" md="4">
                                             <v-text-field
-                                                    autocomplete="new-password"
-
                                                     label="{{ _('Full Name') }}"
                                                     v-model="editedItem.name"
+                                                    :rules="[
+                                                        validationRules.required(),
+                                                    ]"
                                             ></v-text-field>
 
                                         </v-col>
@@ -149,6 +150,9 @@
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
+                                                        :rules="disableEmail ? [] : [validationRules.required(), validationRules.externalError(errorsMap?.email)]"
+                                                        @input="resetError('email')"
+                                                        type="email"
                                                 ></v-text-field>
                                                 <v-btn @click.stop="enableEmail"
                                                        v-if="editedItem.id" class="my-auto mx-1"
@@ -195,7 +199,7 @@
                                                               label="{{ _('Username') }}"
                                                               :disabled="disableUsername"
                                                               v-model="editedItem.username"
-                                                              :rules="[
+                                                              :rules="disableUsername ? [] : [
                                                                 validationRules.required(),
                                                                 validationRules.minLength(4),
                                                                 validationRules.checkUsername()
@@ -347,6 +351,7 @@
                 user: null,
                 session_id: '{{ session.sid }}',
                 valid: false,
+                errorsMap: {},
             }),
 
             mixins: [globalMixin],
@@ -399,6 +404,10 @@
 
 
             methods: {
+                resetError(key) {
+                    if (!this.errorsMap) return
+                    if (key in this.errorsMap) this.errorsMap[key] = null
+                },
                 validateForm() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
@@ -597,6 +606,20 @@
                 },
 
                 save() {
+                    const handleError = (err) => {
+                        const errors = err?.response?.data?.errors
+                        if (errors) {
+                            // Normalize: convert { "item.field": "message" } => { field: ["message"] }
+                            const nextErrors = Object.fromEntries(Object.entries(errors).map(([key, value]) => ([key.replace('item.', ''), [value]])))
+                            // Override email message for something simpler
+                            if (nextErrors?.email) nextErrors.email = ['Invalid email address'];
+                            this.errorsMap = { ...nextErrors }
+                            this.$refs.form.validate()
+                        } else {
+                            this.showSnack(handleRequestError(err));
+                        }
+                    }
+
                     // edit mode
                     if (this.editedItem.id) {
                         axios.put(`/admin/api/user/`, {item: this.editedItem})
@@ -604,25 +627,17 @@
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            console.error(err);
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        });
+                            }).catch(handleError);
 
                     } else {
                         // create mode
-
                         axios
                             .post("/admin/api/user/", {item: this.editedItem})
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-
-
-                        });
+                            }).catch(handleError);
                     }
 
                 }
