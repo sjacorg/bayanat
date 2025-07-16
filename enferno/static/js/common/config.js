@@ -38,7 +38,17 @@ const validationRules = {
                 await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
                 resolve(true);
               } catch (err) {
-                resolve(message || defaultMessage);
+                switch (err?.response?.status) {
+                    case 409:
+                        resolve(window.translations.usernameAlreadyTaken_)
+                        break;
+                    case 400:
+                        resolve(window.translations.usernameInvalid_)
+                        break;
+                    default:
+                        resolve(message || defaultMessage);
+                        break;
+                }
               }
             }, 350);
           });
