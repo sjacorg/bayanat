@@ -174,7 +174,7 @@
                                                 ></v-text-field>
 
                                                 <span v-if="!disablePassword && editedItem.password?.length > 1 "
-                                                    class="green--text">{{ _('Strong Password') }}</span>
+                                                      class="green--text">{{ _('Strong Password') }}</span>
 
                                                 <v-btn @click.stop="enablePassword"
                                                        v-if="editedItem.id" class="mb-3 mx-1"
