@@ -1,5 +1,5 @@
 // common validation rules
-
+let passwordCheckTimeout;
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
@@ -25,13 +25,13 @@ const validationRules = {
     },
     checkPassword: ({ onResponse }) => {
         const defaultMessage = window.translations.passwordTooWeak_;
-        let timeout;
+        
       
         return (v) => {
           return new Promise((resolve) => {
-            clearTimeout(timeout);
+            clearTimeout(passwordCheckTimeout);
       
-            timeout = setTimeout(async () => {
+            passwordCheckTimeout = setTimeout(async () => {
               try {
                 await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
                 onResponse(true);

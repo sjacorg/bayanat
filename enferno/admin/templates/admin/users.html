@@ -178,7 +178,9 @@
                                                             validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
                                                             validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
                                                         ]"
-                                                ></v-text-field>
+                                                        @input="isStrongPassword = false"
+                                                >
+                                                </v-text-field>
 
                                                 <v-btn @click.stop="enablePassword"
                                                        v-if="editedItem.id" class="mb-3 mx-1"
