@@ -504,17 +504,6 @@
                     }
                 },
 
-                passwordRules() {
-                    if (this.editedItem.id && this.disablePassword) {
-                        // edit mode
-                        return ''
-
-                    } else {
-
-                        return 'required|min:10|checkPassword'
-                    }
-                },
-
                 enableUsername() {
                     this.disableUsername = false;
                 },
