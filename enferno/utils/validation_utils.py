@@ -9,7 +9,7 @@ def validate_plain_text_field(
     field_data: str,
     field_name: str = "Field",
     max_length: int = 64,
-    check_unicode: bool = False,
+    allow_unicode: bool = False,
     allowed_unciode_categories: set[chr] = {"L", "N"},
     other_allowed_chars: set[chr] = {"_", "-"},
 ) -> None:
@@ -26,9 +26,9 @@ def validate_plain_text_field(
         field_data: The field data to validate
         field_name: The name of the field for error messages (default: "Field")
         max_length: Maximum allowed length for the field (default: 64)
-        check_unicode: Whether to check for Unicode characters (default: False)
-        allowed_unciode_categories: Set of Unicode categories to allow (default: {'L', 'N'})
-        other_allowed_chars: Set of other characters to allow (default: {'_', '-'})
+        allow_unicode: Whether to allow Unicode characters (default: False)
+        allowed_unciode_categories: Set of Unicode categories to allow (default: {'L', 'N'}) (only used if allow_unicode is True)
+        other_allowed_chars: Set of other characters to allow (default: {'_', '-'}) (only used if allow_unicode is True)
 
     Raises:
         ValidationError: If the field contains HTML, entities, is too long, or contains invalid Unicode characters
@@ -53,12 +53,18 @@ def validate_plain_text_field(
     if len(clean_name) > max_length:
         raise ValidationError(f"{field_name} is too long (maximum {max_length} characters).")
 
-    if check_unicode and (allowed_unciode_categories or other_allowed_chars):
+    if not allow_unicode:
+        if re.search(r"[^a-zA-Z0-9\s]", clean_name):
+            raise ValidationError(
+                f"{field_name} contains invalid characters. Please enter plain text/numbers only."
+            )
+
+    elif allow_unicode and (allowed_unciode_categories or other_allowed_chars):
         for char in clean_name:
             if other_allowed_chars and char in other_allowed_chars:
                 continue
             if unicodedata.category(char)[0] not in allowed_unciode_categories:
-                raise ValidationError(f"{field_name} contains invalid characters.")
+                raise ValidationError(f"{field_name} contains invalid character: {char}")
 
 
 def validate_email_format(email: str) -> str:
