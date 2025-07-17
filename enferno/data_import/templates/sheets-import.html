@@ -231,23 +231,7 @@
                                             </v-icon>
                                         </v-sheet>
 
-                                        <drop-field v-model="map.originid"
-                                                    caption="{{ _('Origin ID') }}">
-                                            <template v-slot:extra>
-                                                <v-btn-toggle v-model="vmap.originid"
-                                                              color="primary"
-                                                              group>
-                                                    <v-tooltip location="top" text="{{_('Make it Unique!')}}">
-                                                        <template #activator="{ props }">
-                                                    <v-btn
-                                                            :="props"
-                                                            variant="plain"
-                                                            icon="mdi-key" value="1"></v-btn>
-                                                        </template>
-                                                    </v-tooltip>
-                                                </v-btn-toggle>
-                                            </template>
-                                        </drop-field>
+
                                     </v-row>
 
                                     <v-row style="gap: 20px">
@@ -367,6 +351,23 @@
                                             </h3>
 
                                             <v-row>
+                                                <drop-field v-model="map.originid"
+                                                            caption="{{ _('Origin ID') }}">
+                                                    <template v-slot:extra>
+                                                        <v-btn-toggle v-model="vmap.originid"
+                                                                      color="primary"
+                                                                      group>
+                                                            <v-tooltip location="top" text="{{_('Make it Unique!')}}">
+                                                                <template #activator="{ props }">
+                                                            <v-btn
+                                                                    :="props"
+                                                                    variant="plain"
+                                                                    icon="mdi-key" value="1"></v-btn>
+                                                                </template>
+                                                            </v-tooltip>
+                                                        </v-btn-toggle>
+                                                    </template>
+                                                </drop-field>
                                                 <drop-field v-model="map.sources"
                                                             caption="{{ _('Sources') }}"></drop-field>
                                                 <drop-field v-model="map.labels"

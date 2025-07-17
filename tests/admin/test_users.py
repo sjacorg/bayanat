@@ -4,7 +4,7 @@ import uuid
 import pytest
 from flask import current_app
 from enferno.admin.models import Activity
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.user.models import User, Session, WebAuthn
 
 from tests.factories import UserFactory, create_webauthn_for
