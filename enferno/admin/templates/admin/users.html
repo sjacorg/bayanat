@@ -166,7 +166,7 @@
 
                                                 <v-text-field
                                                         label="{{ _('Password') }}"
-                                                        :color="isStrongPassword ? 'success' : undefined"
+                                                        :class="isStrongPassword ? 'text-success' : undefined"
                                                         :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
