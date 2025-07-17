@@ -1,63 +1,97 @@
-{% extends "login-layout.html" %}
-{% from "security/_macros.html" import prop_next, render_field_with_errors, render_field %}
-{% block navbar %} {% endblock %}
-{% block content %}
+{% extends "login-layout.html" %} {% from "security/_macros.html" import prop_next,
+render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% block content %}
 
+<v-main class="d-flex flex-column align-center justify-center bg-background">
+  <v-card class="mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
+    <v-card-title class="text-h4 text-center font-weight-bold px-0 pb-0">{{ _("Authentication app") }}</v-card-title>
+    <v-card-subtitle class="text-subtitle-2 text-pre-wrap text-center px-0 pb-4"
+      >{{ _("Please enter your authentication code") }}</v-card-subtitle
+    >
+    <form ref="twoFactorVerifyCodeFormRef">
+      {{ two_factor_verify_code_form.hidden_tag() }}
+      <v-card-text class="pa-0">
+        <label class="mb-n2 d-block">{{ _('Authentication code') }}</label>
+        <v-otp-input autofocus name="code" max-width="100%" @finish="submitForm"></v-otp-input>
+        <p class="text-caption text-medium-emphasis mb-6 mt-n2">
+          {{ _('The authentication code consists of 6 digits and is generated within your Authenticator app.') }}
+        </p>
+      </v-card-text>
 
-    <v-card style="width:min(90%,500px)" class="ma-auto mt-12">
-        <v-toolbar color="primary" >
-            <v-toolbar-title>{{ _("Two-factor Authentication") }}</v-toolbar-title>
-        </v-toolbar>
-    <v-card-text>{% include "security/_messages.html" %}</v-card-text>
-        <v-card-title class="mt-3">{{ _("Please enter your authentication code") }}</v-card-title>
-        <form action="{{ url_for_security('two_factor_token_validation') }}" method="POST"
-              name="two_factor_verify_code_form">
-            {{ two_factor_verify_code_form.hidden_tag() }}
-            <v-card-text>
-                <v-text-field name="code" placeholder="Enter code"></v-text-field>
-            </v-card-text>
+      <v-card-text v-if="error" class="px-0 pt-0">
+        <div class="error-messages">
+          <v-alert color="error" variant="tonal">${error}</v-alert>
+        </div>
+      </v-card-text>
 
-            {% if two_factor_verify_code_form.errors %}
-                <v-card-text>
-                    <div class="error-messages">
-                        {% for field, errors in two_factor_verify_code_form.errors.items() %}
-                            {% for error in errors %}
-                                <v-alert dismissible dense color="error" dark>{{ error }}</v-alert>
-                            {% endfor %}
-                        {% endfor %}
-                    </div>
-                </v-card-text>
-            {% endif %}
+      <v-card-actions class="pa-0 d-block">
+        <v-btn variant="outlined" block href="{{ url_for_security('mf_recovery') }}" prepend-icon="mdi-lifebuoy">{{ _('Recovery Code')}}</v-btn>
+      </v-card-actions>
+    </form>
+  </v-card>
 
-            <v-card-actions class="justify-space-between pa-4">
-                <div class="d-flex">
-                    <v-btn variant="text" href="{{ url_for_security('tf_select') }}{{ prop_next() }}">{{ _('Back')}}</v-btn>
-                    <v-btn variant="text" href="/mf-recovery">{{ _('Recovery Code')}}</v-btn>
-                    <v-btn variant="text" href="/login">{{ _('Logout')}}</v-btn>
-                </div>
-                <v-btn color="primary" variant="elevated" type="submit">{{ _("Submit") }}</v-btn>
-            </v-card-actions>
-        </form>
-    </v-card>
+  <div class="mt-6 w-100 d-flex justify-space-between" style="max-width: 424px">
+    <v-btn
+      href="{{ url_for_security('tf_select') }}{{ prop_next() }}"
+      color="primary"
+      variant="outlined"
+      prepend-icon="mdi-chevron-left"
+      >{{ _('Back') }}</v-btn
+    >
+    <v-btn href="{{ url_for_security('login') }}" color="error" variant="outlined"
+      >{{ _('Log out') }}</v-btn
+    >
+  </div>
+</v-main>
 
+<v-card class="elevation-0 my-5 d-none" color="grey lighten-4">
+  <v-card-text>
+    <form
+      action="{{ url_for_security('two_factor_rescue') }}"
+      method="POST"
+      name="two_factor_rescue_form"
+    >
+      {{ two_factor_rescue_form.hidden_tag() }} {{
+      render_field_with_errors(two_factor_rescue_form.help_setup) }} {% if problem=="lost_device" %}
+      <p>{{ _("The code for authentication was sent to your email address") }}</p>
+      {% endif %} {% if problem=="no_mail_access" %}
+      <p>{{ _("A mail was sent to us in order to reset your application account") }}</p>
+      {% endif %}
+      <v-btn color="primary" type="submit">{{ _("Submit") }}</v-btn>
+    </form>
+  </v-card-text>
+</v-card>
 
-    <v-card class="elevation-0 my-5 d-none" color="grey lighten-4">
-        <v-card-text>
-            <form action="{{ url_for_security('two_factor_rescue') }}" method="POST" name="two_factor_rescue_form">
-                {{ two_factor_rescue_form.hidden_tag() }}
-                {{ render_field_with_errors(two_factor_rescue_form.help_setup) }}
-                {% if problem=="lost_device" %}
-                    <p>{{ _("The code for authentication was sent to your email address") }}</p>
-                {% endif %}
-                {% if problem=="no_mail_access" %}
-                    <p>{{ _("A mail was sent to us in order to reset your application account") }}</p>
-                {% endif %}
-                <v-btn color="primary" type="submit">{{ _("Submit") }}</v-btn>
-            </form>
-        </v-card-text>
-    </v-card>
+{% endblock %} {% block js %}
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
 
-   
+  const vuetify = createVuetify(vuetifyConfig);
+
+  const app = createApp({
+    delimiters: delimiters,
+    data() {
+      return {
+        error: null
+      };
+    },
+    methods: {
+      async submitForm(code) {
+        try {
+          const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+          const response = await axios.post('/tf-validate', {
+            csrf_token: csrfToken,
+            code: code,
+          });
+
+          window.location.href = '/dashboard'
+        } catch (error) {
+          this.error = handleRequestError(error)
+        }
+      },
+    },
+  });
+  app.use(vuetify).mount('#app');
+</script>
 {% endblock %}
-
-
