@@ -85,7 +85,7 @@ render_field_with_errors, render_field %} {% block navbar %} {% endblock %} {% b
             code: code,
           });
 
-          window.location.href = '/dashboard'
+          window.location.href = "{{ config.SECURITY_POST_LOGIN_VIEW }}"
         } catch (error) {
           this.error = handleRequestError(error)
         }
