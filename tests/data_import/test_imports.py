@@ -18,7 +18,6 @@ from tests.test_utils import (
     conform_to_schema_or_fail,
     create_csv_for_entities,
     create_xls_file,
-    get_first_or_fail,
     load_data,
 )
 
@@ -280,7 +279,7 @@ def test_post_analyze_xls_endpoint(
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", import_csv_analyze_endpoint_roles)
-def post_mapping_endpoint(request, clean_slate_imports, client_fixture, expected_status):
+def test_post_mapping_endpoint(request, clean_slate_imports, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
     response = client_.post(
         "/import/api/mapping",
@@ -297,20 +296,26 @@ def post_mapping_endpoint(request, clean_slate_imports, client_fixture, expected
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", import_csv_analyze_endpoint_roles)
-def put_mapping_endpoint(
-    request, clean_slate_imports, create_mapping, client_fixture, expected_status
-):
-    map = get_first_or_fail(Mapping).to_dict()
+def test_put_mapping_endpoint(request, clean_slate_imports, users, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
-    map["name"] = "new_name"
+    admin_user, _, _, _ = users
+
+    # Create a mapping that belongs to the admin user
+    mapping = MappingFactory()
+    mapping.user_id = admin_user.id
+    session = request.getfixturevalue("session")
+    session.add(mapping)
+    session.commit()
+
+    map_dict = mapping.to_dict()
     response = client_.put(
-        f"/import/api/mapping/{map['id']}",
+        f"/import/api/mapping/{map_dict['id']}",
         content_type="application/json",
-        json=map,
+        json={"name": "new_name", "data": {"map": map_dict["data"]}},
         follow_redirects=True,
     )
     assert response.status_code == expected_status
-    found_map = Mapping.query.get(map["id"]).to_dict()
+    found_map = Mapping.query.get(map_dict["id"]).to_dict()
     if expected_status == 200:
         assert found_map["name"] == "new_name"
     else:
@@ -321,16 +326,26 @@ def put_mapping_endpoint(
 
 
 @pytest.mark.parametrize("client_fixture, expected_status", import_csv_analyze_endpoint_roles)
-def delete_mapping_endpoint(
-    request, session, clean_slate_imports, create_mapping, client_fixture, expected_status
+def test_delete_mapping_endpoint(
+    request, session, clean_slate_imports, users, client_fixture, expected_status
 ):
     client_ = request.getfixturevalue(client_fixture)
-    response = client_.delete(f"/import/api/mapping/{create_mapping.id}")
+    admin_user, _, _, _ = users
+
+    # Create a mapping that belongs to the admin user
+    mapping = MappingFactory()
+    mapping.user_id = admin_user.id
+    session.add(mapping)
+    session.commit()
+
+    response = client_.delete(
+        f"/import/api/mapping/{mapping.id}", headers={"Content-Type": "application/json"}
+    )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert session.get(Mapping, create_mapping.id) is None
+        assert session.get(Mapping, mapping.id) is None
     else:
-        assert session.get(Mapping, create_mapping.id) is not None
+        assert session.get(Mapping, mapping.id) is not None
 
 
 different_admin_delete_mapping_endpoint_roles = [
@@ -341,17 +356,24 @@ different_admin_delete_mapping_endpoint_roles = [
 ]
 
 
-@pytest.mark.parametrize("client_fixture, expected_status", import_csv_analyze_endpoint_roles)
-def delete_mapping_endpoint_for_user(
+@pytest.mark.parametrize(
+    "client_fixture, expected_status", different_admin_delete_mapping_endpoint_roles
+)
+def test_delete_mapping_endpoint_for_another_user(
     request, session, clean_slate_imports, create_mapping_for_user, client_fixture, expected_status
 ):
+    from uuid import uuid4
+
     client_ = request.getfixturevalue(client_fixture)
     new_admin = UserFactory()
+    new_admin.fs_uniquifier = uuid4().hex  # Ensure unique identifier
     new_admin.roles.append(session.scalar(select(Role).where(Role.name == "Admin")))
     session.add(new_admin)
     session.commit()
     mapping = create_mapping_for_user(new_admin.id)
-    response = client_.delete(f"/import/api/mapping/{mapping.id}")
+    response = client_.delete(
+        f"/import/api/mapping/{mapping.id}", headers={"Content-Type": "application/json"}
+    )
     assert response.status_code == expected_status
 
 

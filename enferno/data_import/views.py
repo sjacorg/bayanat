@@ -371,11 +371,11 @@ def api_mapping_delete(id: t.id) -> Response:
     """
     API Endpoint delete a mapping object.
     """
-    map = db.session.get(Mapping, id)
-    if map:
-        if not map.user_id == current_user.id:
+    mapping = db.session.get(Mapping, id)
+    if mapping:
+        if not mapping.user_id == current_user.id:
             return HTTPResponse.FORBIDDEN
-        if map.delete():
+        if mapping.delete():
             return f"Mapping #{id} deleted successfully", 200
         else:
             return "Error deleting Mapping", 417
