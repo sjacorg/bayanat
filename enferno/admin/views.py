@@ -108,7 +108,7 @@ from enferno.admin.validation.models import (
     UserRequestModel,
     WebImportValidationModel,
 )
-from enferno.admin.validation.util import validate_with
+from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
 from enferno.tasks import (
     bulk_update_bulletins,
@@ -4695,11 +4695,18 @@ def api_user_create(
     # validate existing
     u = validated_data.get("item")
     username = u.get("username")
+    if email := u.get("email"):
+        query = User.query.filter(or_(User.username == username, User.email == email))
+    else:
+        query = User.query.filter(User.username == username)
 
-    # Check if username already exists
-    exists = User.query.filter(User.username == username).first()
-    if exists:
-        return "Error, username already exists", 409
+    existing_user = query.first()
+
+    if existing_user:
+        if existing_user.username == username:
+            return "Error, username already exists", 409
+        elif existing_user.email == email:
+            return "Error, email already exists", 409
 
     user = User()
     user.fs_uniquifier = uuid4().hex
@@ -4763,11 +4770,21 @@ def api_user_update(
         u = validated_data.get("item")
         username = u.get("username")
 
-        # Check if username already exists (excluding current user)
-        if username:
-            existing_user = User.query.filter(User.username == username, User.id != user.id).first()
-            if existing_user:
+        # Check if username or email already exists (excluding current user)
+        if email := u.get("email"):
+            query = User.query.filter(
+                or_(User.username == username, User.email == email), User.id != user.id
+            )
+        else:
+            query = User.query.filter(User.username == username, User.id != user.id)
+
+        existing_user = query.first()
+
+        if existing_user:
+            if existing_user.username == username:
                 return "Error, username already exists", 409
+            elif existing_user.email == email:
+                return "Error, email already exists", 409
 
         user = user.from_json(u)
         if user.save():

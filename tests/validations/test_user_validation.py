@@ -179,6 +179,7 @@ class TestEmailValidation:
             "user+tag@example.net",
             "test123@test-domain.com",
             "user_name@subdomain.example.com",
+            "can@göloğlu.com",
         ]
 
         for email in valid_emails:
