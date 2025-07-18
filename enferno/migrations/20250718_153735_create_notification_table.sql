@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS notification (
 );
 
 -- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS ix_notification_user_id ON notification (user_id);
 CREATE INDEX IF NOT EXISTS ix_notification_user_read ON notification (user_id, read_status);
 CREATE INDEX IF NOT EXISTS ix_notification_user_type ON notification (user_id, notification_type);
 
