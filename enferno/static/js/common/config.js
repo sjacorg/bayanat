@@ -1,5 +1,7 @@
 // Common validation rules
 // Each rule returns `true` if valid, or a string error message if invalid
+let checkUsernameTimeout;
+
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
@@ -25,6 +27,41 @@ const validationRules = {
           return Array.isArray(error) ? error[0] : error;
         };
     },
+    checkUsername: ({ initialUsername, onResponse }) => {
+        const defaultMessage = window.translations.usernameInvalidOrAlreadyTaken_;
+
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(checkUsernameTimeout);
+
+            checkUsernameTimeout = setTimeout(async () => {
+              try {
+                if (v === initialUsername) {
+                    onResponse(true);
+                    resolve(true);
+                } else {
+                    await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
+                    onResponse(true);
+                    resolve(true);
+                }
+              } catch (err) {
+                onResponse(err);
+                switch (err?.response?.status) {
+                    case 409:
+                        resolve(window.translations.usernameAlreadyTaken_)
+                        break;
+                    case 400:
+                        resolve(window.translations.usernameInvalid_)
+                        break;
+                    default:
+                        resolve(defaultMessage);
+                        break;
+                }
+              }
+            }, 350);
+          });
+        };
+    }
 };
 
 // Helper functions

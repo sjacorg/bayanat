@@ -197,14 +197,16 @@
                                             <div class="d-flex">
                                                 <v-text-field
                                                               label="{{ _('Username') }}"
+                                                              :class="isUsernameAvailable ? 'text-success' : undefined"
+                                                              :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
                                                               :disabled="disableUsername"
                                                               v-model="editedItem.username"
                                                               :rules="disableUsername ? [] : [
                                                                     validationRules.required(),
                                                                     validationRules.minLength(4),
-                                                                    validationRules.externalError(errorsMap?.username)
+                                                                    validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
                                                                 ]"
-                                                                @input="resetError('username')"
+                                                              @input="isUsernameAvailable = false"
                                                 ></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
@@ -353,7 +355,8 @@
                 session_id: '{{ session.sid }}',
                 valid: false,
                 errorsMap: {},
-                usernameCopy: null,
+                initialUsername: null,
+                isUsernameAvailable: false,
             }),
 
             mixins: [globalMixin],
@@ -406,6 +409,13 @@
 
 
             methods: {
+                onUsernameCheckResponse(response) {
+                    if (this.editedItem.username === this.initialUsername) {
+                        this.isUsernameAvailable = false
+                    } else {
+                        this.isUsernameAvailable = response === true
+                    }
+                },
                 resetError(key) {
                     if (!this.errorsMap) return
                     if (key in this.errorsMap) this.errorsMap[key] = null
@@ -591,7 +601,8 @@
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = {...item};
-                    this.usernameCopy = item.username;
+                    this.isUsernameAvailable = false;
+                    this.initialUsername = item.username;
                     this.disableUsername = this.disablePassword = this.disableEmail = true;
                     this.dialog = true;
                 },
@@ -601,7 +612,8 @@
                     this.dialog = false;
                     this.showPassword = false;
                     this.isAdmin = false;
-                    this.usernameCopy = null;
+                    this.initialUsername = null;
+                    this.isUsernameAvailable = false;
                     this.errorsMap = null;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
