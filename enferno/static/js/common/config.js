@@ -1,4 +1,6 @@
-// common validation rules
+// Common validation rules
+// Each rule returns `true` if valid, or a string error message if invalid
+let checkUsernameTimeout;
 
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
@@ -19,6 +21,47 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
+    externalError(error) {
+        return () => {
+          if (!error) return true;
+          return Array.isArray(error) ? error[0] : error;
+        };
+    },
+    checkUsername: ({ initialUsername, onResponse }) => {
+        const defaultMessage = window.translations.usernameInvalidOrAlreadyTaken_;
+
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(checkUsernameTimeout);
+
+            checkUsernameTimeout = setTimeout(async () => {
+              try {
+                if (v === initialUsername) {
+                    onResponse(true);
+                    resolve(true);
+                } else {
+                    await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
+                    onResponse(true);
+                    resolve(true);
+                }
+              } catch (err) {
+                onResponse(err);
+                switch (err?.response?.status) {
+                    case 409:
+                        resolve(window.translations.usernameAlreadyTaken_)
+                        break;
+                    case 400:
+                        resolve(window.translations.usernameInvalid_)
+                        break;
+                    default:
+                        resolve(defaultMessage);
+                        break;
+                }
+              }
+            }, 350);
+          });
+        };
+    }
 };
 
 // Helper functions
@@ -184,8 +227,10 @@ axios.interceptors.response.use(
         return response;
     },
     function (error) {
-        const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
-        document.dispatchEvent(globalRequestErrorEvent);
+        if (!error.config?.suppressGlobalErrorHandler) {
+            const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
+            document.dispatchEvent(globalRequestErrorEvent);
+        }
         // Check for session expiration errors (401 Unauthorized)
         if ([401].includes(error?.response?.status)) {
             const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });
