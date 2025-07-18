@@ -14,7 +14,7 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.admin.validation.util import SanitizedField, one_must_exist
+from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
 from enferno.utils.validation_utils import validate_password_policy
 
