@@ -22,3 +22,4 @@ repos:
     rev: v8.18.1
     hooks:
       - id: gitleaks
+        exclude: tests/
