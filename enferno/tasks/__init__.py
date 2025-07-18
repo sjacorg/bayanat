@@ -23,6 +23,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
 from werkzeug.utils import safe_join
 
+from enferno.admin.constants import Constants
 from enferno.admin.models import (
     Bulletin,
     Actor,
@@ -34,6 +35,7 @@ from enferno.admin.models import (
     Location,
     Media,
 )
+from enferno.admin.models.Notification import Notification
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
@@ -234,6 +236,15 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.1)
 
     logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    # Notify admin
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        User.query.get(cur_user_id),
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} bulletins has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
+    )
 
 
 @celery.task
@@ -347,6 +358,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.25)
 
     logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    # Notify admin
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        User.query.get(cur_user_id),
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} actors has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
+    )
 
 
 @celery.task
@@ -487,6 +507,15 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.25)
 
     logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    # Notify admin
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        User.query.get(cur_user_id),
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} incidents has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
+    )
 
 
 @celery.task(rate_limit=10)
@@ -497,10 +526,28 @@ def etl_process_file(
     try:
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
+        # Notify admin
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            User.query.get(user_id),
+            "Batch Status",
+            f"Batch {batch_id} has been processed successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
         return "done"
     except Exception as e:
         log = DataImport.query.get(data_import_id)
         log.fail(e)
+        # Notify admin
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            User.query.get(user_id),
+            "Batch Status",
+            f"Batch {batch_id} has failed to process.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
 
 
 # this will publish a message to redis and will be captured by the front-end client
@@ -1303,16 +1350,44 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         # Start ETL process
         _start_etl_process(final_filename, url, batch_id, user_id, import_id)
 
+        # Notify user
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has been completed successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
+
     except ValueError as e:
         # Handle specific error messages without traceback
         logger.error(f"Download failed: {str(e)}")
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
+        # Notify user
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has failed.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
     except Exception as e:
         # Handle other errors with traceback
         logger.error(f"Download failed: {str(e)}", exc_info=True)
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
+        # Notify user
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has failed.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
 
 
 def _get_ytdl_options(with_cookies: bool = False) -> dict:

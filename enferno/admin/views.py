@@ -23,6 +23,8 @@ from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
 
+from enferno.admin.constants import Constants
+from enferno.admin.models.Notification import Notification
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
@@ -3065,6 +3067,18 @@ def api_bulletin_create(
             bulletin.to_mini(),
             "bulletin",
         )
+
+        # Notify user
+        if bulletin.assigned_to:
+            Notification.send_notification_to_user_for_event(
+                Constants.NotificationEvent.NEW_ASSIGNMENT,
+                bulletin.assigned_to,
+                "New Assignment",
+                f"You have been assigned to Bulletin {bulletin.id}.",
+                category=Notification.TYPE_UPDATE,
+                is_urgent=True,
+            )
+
         # Select json encoding type
         mode = request.args.get("mode", "1")
         return {
@@ -3101,6 +3115,14 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 "bulletin",
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
         if not current_user.has_role("Admin") and current_user != bulletin.assigned_to:
@@ -3112,7 +3134,17 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 "bulletin",
                 details=f"Unauthorized attempt to update unassigned Bulletin {id}.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update unassigned Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
+
+        pre_status = bulletin.status
 
         bulletin = bulletin.from_json(validated_data["item"])
 
@@ -3125,6 +3157,16 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
             bulletin.to_mini(),
             "bulletin",
         )
+        if pre_status != bulletin.status and bulletin.status == "Peer Review Assigned":
+            # Notify assigned user
+            Notification.send_notification_to_user_for_event(
+                Constants.NotificationEvent.REVIEW_NEEDED,
+                bulletin.first_peer_reviewer,
+                "Review Needed",
+                f"Bulletin {bulletin.id} needs to be reviewed by you.",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
         return f"Saved Bulletin #{bulletin.id}", 200
     else:
         return HTTPResponse.NOT_FOUND
@@ -3155,6 +3197,14 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 validated_data,
                 "bulletin",
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3278,6 +3328,14 @@ def api_bulletin_get(
                 bulletin.to_mini(),
                 "bulletin",
                 details=f"Unauthorized attempt to view restricted Bulletin {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to view restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3575,6 +3633,7 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -4062,6 +4121,14 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 "actor",
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
         if not current_user.has_role("Admin") and current_user != actor.assigned_to:
@@ -4072,6 +4139,14 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 request.json,
                 "actor",
                 details=f"Unauthorized attempt to update unassigned Actor {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update unassigned Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
         actor = actor.from_json(validated_data["item"])
@@ -4120,6 +4195,14 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 validated_data,
                 "actor",
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -4231,6 +4314,14 @@ def api_actor_get(
                 "actor",
                 details="Unauthorized attempt to view restricted Actor.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to view restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
 
@@ -4257,6 +4348,14 @@ def api_actor_profiles(actor_id: t.id) -> Response:
             actor.to_mini(),
             "actor",
             details="Unauthorized attempt to view restricted Actor profiles.",
+        )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+            "Unauthorized Action",
+            f"Unauthorized attempt to view restricted Actor profiles. User: {current_user.username}",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return HTTPResponse.FORBIDDEN
 
@@ -4712,6 +4811,14 @@ def api_user_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.NEW_USER,
+            "New User Created",
+            f"User {username} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_GENERAL,
+            is_urgent=True,
+        )
         return f"User {username} has been created successfully", 200
     else:
         return "Error creating user", 417
@@ -4782,6 +4889,14 @@ def api_user_update(
                 user.to_mini(),
                 "user",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UPDATE_USER,
+                "User Updated",
+                f"User {user.username} has been updated by {current_user.username} successfully.",
+                category=Notification.TYPE_UPDATE,
+                is_urgent=True,
+            )
             return f"Saved User {user.id} {user.name}", 200
         else:
             return f"Error saving User {user.id} {user.name}", 417
@@ -4842,6 +4957,15 @@ def api_user_force_reset(validated_data: dict) -> Response:
         return Response(message, mimetype="text/plain")
     user.set_security_reset_key()
     message = f"Forced password reset has been set for user {user.username}"
+    # Notify user
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
+        user,
+        "Password Reset",
+        "Your password has been reset. Please change it to continue using the application.",
+        category=Notification.TYPE_SECURITY,
+        is_urgent=True,
+    )
     return Response(message, mimetype="text/plain")
 
 
@@ -4858,6 +4982,15 @@ def api_user_force_reset_all() -> Response:
         # check if user already has a password reset flag
         if not user.security_reset_key:
             user.set_security_reset_key()
+            # Notify user
+            Notification.send_notification_to_user_for_event(
+                Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
+                user,
+                "Password Reset",
+                "Your password has been reset. Please change it to continue using the application.",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
     return "Forced password reset has been set for all users", 200
 
 
@@ -4886,6 +5019,14 @@ def api_user_delete(
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
+        )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "User Deleted",
+            f"User {user.username} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
         )
         return "Deleted", 200
     else:
@@ -4955,6 +5096,14 @@ def api_role_create(
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
+        )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.NEW_GROUP,
+            "New Group Created",
+            f"Group {role.name} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
         )
         return "Created", 200
 
@@ -5189,6 +5338,14 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 "incident",
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
         if not current_user.has_role("Admin") and current_user != incident.assigned_to:
@@ -5199,6 +5356,14 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 request.json,
                 "incident",
                 details=f"Unauthorized attempt to update unassigned Incident {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update unassigned Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5249,6 +5414,14 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 validated_data,
                 "incident",
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5358,6 +5531,14 @@ def api_incident_get(
                 incident.to_mini(),
                 "incident",
                 details=f"Unauthorized attempt to view restricted Incident {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to view restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5794,6 +5975,14 @@ def api_config_write(
     conf = validated_data.get("conf")
 
     if ConfigManager.write_config(conf):
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
+            "System Settings Changed",
+            f"System settings have been updated by {current_user.username} successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
         return "Configuration Saved Successfully", 200
     else:
         return "Unable to Save Configuration", 417
@@ -5922,6 +6111,133 @@ def api_logs() -> Response:
             return "Error sending log file", 417
     else:
         return "Log file not found", 404
+
+
+# Notifications
+@admin.route("/api/notifications")
+def api_notifications() -> Response:
+    """
+    Endpoint to return paginated notifications for the current user.
+    Accepts query parameters:
+    - page: page number (default: 1)
+    - per_page: number of notifications per page (default: 10)
+    - status: status of the notifications to filter by (default: all, can be "read" or "unread", any other value will return all notifications)
+
+    Returns:
+        - JSON response containing notifications and pagination info
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    status = request.args.get("status")
+    is_urgent = request.args.get("is_urgent")
+
+    # Query notifications for current user, ordered by creation date descending
+    notifications_query = (
+        db.session.query(Notification)
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
+        .order_by(Notification.created_at.desc())
+    )
+
+    if status:
+        if status.lower() == Notification.STATUS_READ:
+            notifications_query = notifications_query.filter(Notification.read_status == True)
+        elif status.lower() == Notification.STATUS_UNREAD:
+            notifications_query = notifications_query.filter(Notification.read_status == False)
+
+    if is_urgent is not None:
+        is_urgent_bool = is_urgent.lower() == "true"
+        notifications_query = notifications_query.filter(Notification.is_urgent.is_(is_urgent_bool))
+
+    # Paginate the results
+    paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
+
+    # Optimize unread count calculation
+    if status and status.lower() == Notification.STATUS_UNREAD:
+        # When filtering by unread status, use the pagination total
+        unread_count = paginated_notifications.total
+        # For urgent notifications check, we need a separate optimized query
+        has_unread_urgent_notifications = (
+            db.session.query(Notification.id)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.is_urgent == True,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .first()
+            is not None
+        )
+    else:
+        # Use count() instead of all() for better performance
+        unread_count = (
+            db.session.query(Notification)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .count()
+        )
+        has_unread_urgent_notifications = (
+            db.session.query(Notification.id)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.is_urgent == True,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .first()
+            is not None
+        )
+
+    response = {
+        "items": [notification.to_dict() for notification in paginated_notifications.items],
+        "currentPage": page,
+        "perPage": per_page,
+        "total": paginated_notifications.total,
+        "hasMore": paginated_notifications.has_next,
+        "unreadCount": unread_count,
+        "hasUnreadUrgentNotifications": has_unread_urgent_notifications,
+    }
+
+    return jsonify(response)
+
+
+@admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
+def api_mark_notification_read(notification_id: int) -> Response:
+    """
+    Endpoint to mark a specific notification as read.
+
+    Args:
+        notification_id: ID of the notification to mark as read
+
+    Returns:
+        - Success response if notification is marked as read
+        - Error response if notification doesn't exist or user doesn't have permission
+    """
+    notification = db.session.get(Notification, notification_id)
+
+    if not notification:
+        return HTTPResponse.NOT_FOUND
+
+    # Verify the notification belongs to the current user
+    if notification.user_id != current_user.id:
+        return HTTPResponse.FORBIDDEN
+
+    try:
+        notification.mark_as_read()
+        return (
+            jsonify(
+                {"message": "Notification marked as read", "notification": notification.to_dict()}
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.error(f"Error marking notification as read: {str(e)}", exc_info=True)
+        return HTTPResponse.INTERNAL_SERVER_ERROR
 
 
 @admin.post("/api/bulletin/web")
