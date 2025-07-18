@@ -104,8 +104,6 @@ def validate_email_format(email: str) -> str:
 
     try:
         # Use email-validator library for unicode/IDN support
-        # Check DNS to False for practical use (avoid rejecting valid format emails due to DNS issues)
-        # TODO: Discuss with team if this should be a config option
         validated_email = validate_email(email.strip(), check_deliverability=False)
         return validated_email.normalized
     except EmailNotValidError as e:
