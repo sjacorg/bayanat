@@ -1,5 +1,7 @@
 import re
+import unicodedata
 from html import unescape
+from email_validator import validate_email, EmailNotValidError
 from functools import wraps
 from typing import Any, Type, Annotated
 from flask import request
@@ -23,7 +25,13 @@ from wtforms.validators import ValidationError as WTFormsValidationError
 
 
 def validate_plain_text_field(
-    field_data: str, field_name: str = "Field", max_length: int = 64
+    field_data: str,
+    field_name: str = "Field",
+    max_length: int = 64,
+    allow_unicode: bool = False,
+    allow_whitespace: bool = False,
+    allowed_unciode_categories: set[chr] = {"L", "N"},
+    other_allowed_chars: set[chr] = {"_", "-"},
 ) -> None:
     """
     Validates that a field contains only plain text and rejects any HTML content.
@@ -31,13 +39,20 @@ def validate_plain_text_field(
     This function explicitly rejects HTML tags, HTML entities, and overly long strings
     instead of silently sanitizing them, providing clear feedback to users.
 
+    If check_unicode is True, the function will also validate that the field contains only Unicode characters
+    in the allowed_unciode_categories or other_allowed_chars set.
+
     Args:
         field_data: The field data to validate
         field_name: The name of the field for error messages (default: "Field")
         max_length: Maximum allowed length for the field (default: 64)
+        allow_unicode: Whether to allow Unicode characters (default: False)
+        allow_whitespace: Whether to allow whitespace characters when `allow_unicode` is `False`. Use `allowed_unicode_categories` or `other_allowed_chars` to allow whitespace characters when allow_unicode is `True`. (only used if allow_unicode is False) (default: False)
+        allowed_unciode_categories: Set of Unicode categories to allow (default: {'L', 'N'}) (only used if allow_unicode is True)
+        other_allowed_chars: Set of other characters to allow (default: {'_', '-'}) (only used if allow_unicode is True)
 
     Raises:
-        ValidationError: If the field contains HTML, entities, or is too long
+        ValidationError: If the field contains HTML, entities, is too long, or contains invalid Unicode characters
     """
     if not field_data or not field_data.strip():
         raise WTFormsValidationError(f"{field_name} cannot be empty.")
@@ -58,6 +73,44 @@ def validate_plain_text_field(
     clean_name = " ".join(field_data.split())
     if len(clean_name) > max_length:
         raise WTFormsValidationError(f"{field_name} is too long (maximum {max_length} characters).")
+
+    if not allow_unicode:
+        search_string = r"[^a-zA-Z0-9]" if not allow_whitespace else r"[^a-zA-Z0-9\s]"
+        if re.search(search_string, clean_name):
+            raise WTFormsValidationError(
+                f"{field_name} contains invalid characters. Please enter plain text/numbers only."
+            )
+
+    elif allow_unicode and (allowed_unciode_categories or other_allowed_chars):
+        for char in clean_name:
+            if other_allowed_chars and char in other_allowed_chars:
+                continue
+            if unicodedata.category(char)[0] not in allowed_unciode_categories:
+                raise WTFormsValidationError(f"{field_name} contains invalid character: {char}")
+
+
+def validate_email_format(email: str) -> str:
+    """
+    Validates email format including unicode/IDN support.
+
+    Args:
+        email: The email address to validate
+
+    Returns:
+        str: The normalized email address
+
+    Raises:
+        ValidationError: If the email format is invalid
+    """
+    if not email or not email.strip():
+        raise WTFormsValidationError("Email cannot be empty.")
+
+    try:
+        # Use email-validator library for unicode/IDN support
+        validated_email = validate_email(email.strip(), check_deliverability=False)
+        return validated_email.normalized
+    except EmailNotValidError as e:
+        raise WTFormsValidationError(f"Invalid email format: {str(e)}")
 
 
 # =============================================================================

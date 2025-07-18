@@ -11,21 +11,25 @@ class TestPlainTextValidation:
     def test_valid_plain_text(self):
         """Test that valid plain text passes validation"""
         # These should all pass without raising exceptions
-        validate_plain_text_field("My Phone", "Device name")
-        validate_plain_text_field("iPhone 15", "Device name")
-        validate_plain_text_field("Work Laptop", "Device name")
-        validate_plain_text_field("  Tablet  ", "Device name")  # whitespace should be normalized
+        validate_plain_text_field("My Phone", "Device name", allow_whitespace=True)
+        validate_plain_text_field("iPhone 15", "Device name", allow_whitespace=True)
+        validate_plain_text_field("Work Laptop", "Device name", allow_whitespace=True)
+        validate_plain_text_field(
+            "  Tablet  ", "Device name", allow_whitespace=True
+        )  # whitespace should be normalized
 
     def test_empty_field_rejection(self):
         """Test that empty fields are rejected"""
         with pytest.raises(ValidationError, match="Device name cannot be empty"):
-            validate_plain_text_field("", "Device name")
+            validate_plain_text_field("", "Device name", allow_whitespace=True)
 
         with pytest.raises(ValidationError, match="Device name cannot be empty"):
-            validate_plain_text_field("   ", "Device name")  # only whitespace
+            validate_plain_text_field(
+                "   ", "Device name", allow_whitespace=True
+            )  # only whitespace
 
         with pytest.raises(ValidationError, match="Device name cannot be empty"):
-            validate_plain_text_field(None, "Device name")
+            validate_plain_text_field(None, "Device name", allow_whitespace=True)
 
     def test_html_tags_rejection(self):
         """Test that HTML tags are rejected"""
@@ -41,7 +45,7 @@ class TestPlainTextValidation:
 
         for test_case in html_test_cases:
             with pytest.raises(ValidationError, match="cannot contain HTML tags"):
-                validate_plain_text_field(test_case, "Device name")
+                validate_plain_text_field(test_case, "Device name", allow_whitespace=True)
 
     def test_html_entities_rejection(self):
         """Test that HTML entities are rejected"""
