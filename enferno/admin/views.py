@@ -110,7 +110,7 @@ from enferno.admin.validation.models import (
     UserRequestModel,
     WebImportValidationModel,
 )
-from enferno.admin.validation.util import validate_with
+from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
 from enferno.tasks import (
     bulk_update_bulletins,

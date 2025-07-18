@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import ItoaInfo
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import ItoaInfoFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,

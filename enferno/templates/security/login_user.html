@@ -1,121 +1,118 @@
-{% extends 'login-layout.html' %}
-{% block nav %}{% endblock %}
-{% block content %}
+{% extends 'login-layout.html' %} {% block nav %}{% endblock %} {% block content %}
 
-    <v-main class="d-flex flex-column align-center justify-center">
-
-
-
-    <v-card class="mx-auto mb-5 elevation-23  w-33 ">
-
-
-        <v-toolbar title="{{ _('Account Login') }}" color="primary">
-        </v-toolbar>
-        <v-card-text>
-
-           <v-form
-
-                    action="{{ url_for_security('login') }}"
-                    method="post"
-                    id="loginForm"
-                    ref="form"
-                    @submit.prevent
-            >
-                {{ login_user_form.hidden_tag() }}
-
-                <v-text-field
-
-                        autocomplete="chrome-off"
-                        label="{{ _('Login') }}"
-                        name="username"
-                        prepend-icon="mdi-account"
-                        type="text"
-                        :rules="[validationRules.required()]"
-                        variant="underlined"
-
-
-                >
-                </v-text-field>
-
-                <v-text-field
-                        class="mt-2"
-                        variant="underlined"
-                        id="password"
-                        autocomplete="chrome-off"
-
-                        label="{{ _('Password') }}"
-                        name="password"
-                        prepend-icon="mdi-lock-question"
-                        type="password"
-                        @keyup.enter="submit()"
-                        :rules="[validationRules.required(), validationRules.minLength(6)]"
-
-                ></v-text-field>
-
-
-
-                {% if login_user_form.recaptcha %}
-                    {{ login_user_form.recaptcha }}
-                {% endif %}
-
-            </v-form>
-        </v-card-text>
-{% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-    <v-card-text>
-
-
-                {% for category, message in messages %}
-                    <v-alert type="{{ category }}" dense dismissible>{{ message }}</v-alert>
-                {% endfor %}
-            </v-card-text>
-        {% endif %}
-    {% endwith %}
-
-
-
-        {% if login_user_form.username.errors or login_user_form.password.errors %}
-            <v-card-text>
-                <v-alert type="error" dense dismissible> {{ _('Invalid username or password!') }}
-                </v-alert>
-            </v-card-text>
-        {% endif %}
-        
-        <v-card-actions class="px-4 pb-6">
-
-            <v-btn variant="elevated" class="mx-auto my-3" block size="large" @click.once="submit"
-                   color="primary">
-                {{ _('Login') }}</v-btn>
-        </v-card-actions>
-    </v-card>
-    <v-card>
-        {% if config.GOOGLE_OAUTH_ENABLED %}
-
-
-            <v-card-text class="text-center">
-                <a href="/auth"><img width="191"
-                                     src="/static/img/google-login/2x/btn_google_signin_light_normal_web@2x.png"
-                                     alt=""></a>
-            </v-card-text>
-        {% endif %}
-
-    </v-card>
-    <v-snackbar absolute button
-                v-model="snackBar"
+<v-main class="d-flex flex-column align-center justify-center bg-background">
+  <v-card class="mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
+    <v-card-title class="text-h4 text-center font-weight-bold px-0 pb-0">{{ _('Welcome to Bayanat') }}</v-card-title>
+    <v-card-subtitle class="text-subtitle-2 text-pre-wrap text-center px-0 pb-4"
+      >{{ _('Please enter your details below to log in.') }}</v-card-subtitle
     >
-        ${snackMessage}
-        <v-btn variant="text" color="primary" @click.native="value = false">{{ _('Close') }}</v-btn>
-    </v-snackbar>
+    <v-card-text class="pl-0 pr-0">
+      <v-form
+        action="{{ url_for_security('login') }}"
+        method="post"
+        id="loginForm"
+        ref="form"
+        @submit.prevent
+      >
+        {{ login_user_form.hidden_tag() }}
+
+        <label for="username" class="text-body-2 mb-1 d-block">{{ _('Username') }}</label>
+        <v-text-field
+          autocomplete="chrome-off"
+          id="username"
+          name="username"
+          placeholder="{{ _('Username') }}"
+          type="text"
+          :rules="[validationRules.required()]"
+          prepend-inner-icon="mdi-account-outline"
+          variant="outlined"
+          density="compact"
+        >
+        </v-text-field>
+
+        <label for="password" class="text-body-2 mb-1 d-block">{{ _('Password') }}</label>
+        <v-text-field
+          class="mt-2"
+          id="password"
+          autocomplete="chrome-off"
+          name="password"
+          placeholder="{{ _('Password') }}"
+          @keyup.enter="submit()"
+          @click:append-inner="showPassword = !showPassword"
+          :rules="[validationRules.required(), validationRules.minLength(6)]"
+          prepend-inner-icon="mdi-lock-outline"
+          :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+          :type="showPassword ? 'text' : 'password'"
+          variant="outlined"
+          density="compact"
+          hide-details
+        ></v-text-field>
+
+        {% if login_user_form.recaptcha %} {{ login_user_form.recaptcha }} {% endif %}
+      </v-form>
+    </v-card-text>
+    <v-card-text class="pt-0 pl-0 pr-0"> {% include "security/_messages.html" %}</v-card-text>
+    {% if login_user_form.username.errors or login_user_form.password.errors %}
+    <v-card-text class="pt-0 pl-0 pr-0">
+      <v-alert type="error" variant="tonal"> {{ _('Invalid username or password!') }} </v-alert>
+    </v-card-text>
+    {% endif %}
+
+    <v-card-actions class="d-flex flex-column ga-4 pl-0 pr-0">
+      <v-btn variant="flat" block size="large" @click.once="submit" color="primary">
+        {{ _('Login') }}</v-btn
+      >
+      {% if config.GOOGLE_OAUTH_ENABLED %}
+      <a href="/auth"
+        ><img
+          width="191"
+          src="/static/img/google-login/2x/btn_google_signin_light_normal_web@2x.png"
+          alt=""
+      /></a>
+      {% endif %}
+    </v-card-actions>
+  </v-card>
+  <v-snackbar absolute button v-model="snackBar">
+    ${snackMessage}
+    <v-btn variant="text" color="primary" @click.native="value = false">{{ _('Close') }}</v-btn>
+  </v-snackbar>
 </v-main>
 
 {% endblock %} {% block js %}
 
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
 
-    <script>
-        const {createApp} = Vue;
-        const {createVuetify} = Vuetify;
+  const vuetify = createVuetify(vuetifyConfig);
 
-        const vuetify = createVuetify(vuetifyConfig);
+  const app = createApp({
+    data() {
+      return {
+        menu: null,
+        errors: '',
+        snackBar: false,
+        snackMessage: '',
+        email: '',
+        password: '',
+        validationRules: validationRules,
+        showPassword: false,
+      };
+    },
+    methods: {
+      showSnack(message) {
+        this.snackMessage = message;
+        this.snackBar = true;
+      },
+      submit() {
+        document.getElementById('loginForm').submit();
+      },
+    },
+    mounted() {
+      // Your mounted logic here
+    },
+    delimiters: delimiters,
+  });
 
         const app = createApp({
 

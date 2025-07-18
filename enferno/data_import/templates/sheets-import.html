@@ -81,10 +81,8 @@
                         </v-autocomplete>
 
                         <template v-if="selectedMap">
-                            <v-btn @click="step=2" class=" mx-2" color="primary" elevation="0">
-
+                            <v-btn @click="step='three'" class=" mx-2" color="primary" elevation="0">
                                 {{ _('Continue') }}
-
                             </v-btn>
                         </template>
 
@@ -100,7 +98,7 @@
 
                 <v-stepper-window-item value="two">
                     <v-sheet class=" pa-3 align-center d-flex">
-                        <v-btn small @click="step=1"
+                        <v-btn small @click="step='one'"
                         >
                             {{ _('Back') }}
                         </v-btn>
@@ -231,23 +229,7 @@
                                             </v-icon>
                                         </v-sheet>
 
-                                        <drop-field v-model="map.originid"
-                                                    caption="{{ _('Origin ID') }}">
-                                            <template v-slot:extra>
-                                                <v-btn-toggle v-model="vmap.originid"
-                                                              color="primary"
-                                                              group>
-                                                    <v-tooltip location="top" text="{{_('Make it Unique!')}}">
-                                                        <template #activator="{ props }">
-                                                    <v-btn
-                                                            :="props"
-                                                            variant="plain"
-                                                            icon="mdi-key" value="1"></v-btn>
-                                                        </template>
-                                                    </v-tooltip>
-                                                </v-btn-toggle>
-                                            </template>
-                                        </drop-field>
+
                                     </v-row>
 
                                     <v-row style="gap: 20px">
@@ -367,6 +349,23 @@
                                             </h3>
 
                                             <v-row>
+                                                <drop-field v-model="map.originid"
+                                                            caption="{{ _('Origin ID') }}">
+                                                    <template v-slot:extra>
+                                                        <v-btn-toggle v-model="vmap.originid"
+                                                                      color="primary"
+                                                                      group>
+                                                            <v-tooltip location="top" text="{{_('Make it Unique!')}}">
+                                                                <template #activator="{ props }">
+                                                            <v-btn
+                                                                    :="props"
+                                                                    variant="plain"
+                                                                    icon="mdi-key" value="1"></v-btn>
+                                                                </template>
+                                                            </v-tooltip>
+                                                        </v-btn-toggle>
+                                                    </template>
+                                                </drop-field>
                                                 <drop-field v-model="map.sources"
                                                             caption="{{ _('Sources') }}"></drop-field>
                                                 <drop-field v-model="map.labels"
@@ -1107,13 +1106,14 @@
                 },
 
                 resetFields() {
-                    this.fields = this.backup;
-                    // hack to bypass js passing vars by reference
-                    this.map = JSON.parse(JSON.stringify(this.defaultMap));
-                    this.mapName = "{{ _('New Map')}}";
-                    this.mapid = null;
-                    this.vmap = {};
-
+                    if (confirm("{{ _('Are you sure you want to reset this mapping?')}}")) {
+                        this.fields = this.backup;
+                        // hack to bypass js passing vars by reference
+                        this.map = JSON.parse(JSON.stringify(this.defaultMap));
+                        this.mapName = "{{ _('New Map')}}";
+                        this.mapid = null;
+                        this.vmap = {};
+                    }
                 },
 
 
