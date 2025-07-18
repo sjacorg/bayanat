@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import LocationTypesResponseModel
+from tests.models.admin import LocationTypeCreatedResponseModel, LocationTypesResponseModel
 
 ##### FIXTURES #####
 
@@ -67,7 +67,7 @@ def test_location_types_endpoint(
 ##### POST /admin/api/location-type #####
 
 post_lt_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -87,7 +87,10 @@ def test_post_location_type_endpoint(
     )
     assert response.status_code == expected_status
     found_lt = LocationType.query.filter(LocationType.title == lt.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), LocationTypeCreatedResponseModel
+        )
         assert found_lt
     else:
         assert found_lt is None
