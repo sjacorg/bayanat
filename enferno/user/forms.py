@@ -21,7 +21,7 @@ class SanitizedWebAuthnRegisterForm(WebAuthnRegisterForm):
     def validate_name(self, field):
         """Validate the name field to ensure it contains only plain text"""
         # Use the new validation utility that rejects HTML instead of sanitizing
-        validate_plain_text_field(field.data, "Device name", max_length=64)
+        validate_plain_text_field(field.data, "Device name", max_length=64, allow_whitespace=True)
 
 
 class UserInfoForm:

@@ -29,6 +29,7 @@ def validate_plain_text_field(
     field_name: str = "Field",
     max_length: int = 64,
     allow_unicode: bool = False,
+    allow_whitespace: bool = False,
     allowed_unciode_categories: set[chr] = {"L", "N"},
     other_allowed_chars: set[chr] = {"_", "-"},
 ) -> None:
@@ -46,6 +47,7 @@ def validate_plain_text_field(
         field_name: The name of the field for error messages (default: "Field")
         max_length: Maximum allowed length for the field (default: 64)
         allow_unicode: Whether to allow Unicode characters (default: False)
+        allow_whitespace: Whether to allow whitespace characters when `allow_unicode` is `False`. Use `allowed_unicode_categories` or `other_allowed_chars` to allow whitespace characters when allow_unicode is `True`. (only used if allow_unicode is False) (default: False)
         allowed_unciode_categories: Set of Unicode categories to allow (default: {'L', 'N'}) (only used if allow_unicode is True)
         other_allowed_chars: Set of other characters to allow (default: {'_', '-'}) (only used if allow_unicode is True)
 
@@ -73,7 +75,8 @@ def validate_plain_text_field(
         raise WTFormsValidationError(f"{field_name} is too long (maximum {max_length} characters).")
 
     if not allow_unicode:
-        if re.search(r"[^a-zA-Z0-9\s]", clean_name):
+        search_string = r"[^a-zA-Z0-9]" if not allow_whitespace else r"[^a-zA-Z0-9\s]"
+        if re.search(search_string, clean_name):
             raise WTFormsValidationError(
                 f"{field_name} contains invalid characters. Please enter plain text/numbers only."
             )
