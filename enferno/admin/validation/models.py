@@ -8,7 +8,7 @@ from pydantic import (
     HttpUrl,
     ValidationInfo,
 )
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
@@ -1209,6 +1209,18 @@ class BulletinQueryValidationModel(QueryBaseModel):
 
 class BulletinQueryRequestModel(BaseValidationModel):
     q: list[BulletinQueryValidationModel] = Field(default_factory=list)
+    per_page: int = Field(default=20, ge=1, le=100)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        from enferno.settings import Config as cfg
+
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class EntityReviewValidationModel(BaseValidationModel):
@@ -1356,6 +1368,18 @@ class ActorQueryModel(QueryBaseModel):
 
 class ActorQueryRequestModel(BaseValidationModel):
     q: list[ActorQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=20, ge=1, le=100)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        from enferno.settings import Config as cfg
+
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class ActorReviewRequestModel(BaseValidationModel):
@@ -1415,7 +1439,19 @@ class IncidentQueryModel(QueryBaseModel):
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
-    q: Optional[IncidentQueryModel] = None
+    q: list[IncidentQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=20, ge=1, le=100)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        from enferno.settings import Config as cfg
+
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class IncidentReviewRequestModel(BaseValidationModel):
