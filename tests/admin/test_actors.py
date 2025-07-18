@@ -78,7 +78,7 @@ def test_actors_endpoint(
         client_ = request.getfixturevalue(client_fixture)
         response = client_.post(
             "/admin/api/actors",
-            json={"q": [{}], "per_page": 20, "include_count": True},
+            json={"q": [{}], "per_page": 30, "include_count": True},
             headers={"Content-Type": "application/json"},
             follow_redirects=True,
         )
