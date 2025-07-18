@@ -1213,6 +1213,15 @@ class BulletinQueryRequestModel(BaseValidationModel):
     cursor: Optional[str] = None
     include_count: Optional[bool] = False
 
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        from enferno.settings import Config as cfg
+
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
+
 
 class EntityReviewValidationModel(BaseValidationModel):
     review: Optional[SanitizedField] = None
@@ -1363,6 +1372,15 @@ class ActorQueryRequestModel(BaseValidationModel):
     cursor: Optional[str] = None
     include_count: Optional[bool] = False
 
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        from enferno.settings import Config as cfg
+
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
+
 
 class ActorReviewRequestModel(BaseValidationModel):
     item: EntityReviewValidationModel
@@ -1425,6 +1443,15 @@ class IncidentQueryRequestModel(BaseValidationModel):
     per_page: int = Field(default=20, ge=1, le=100)
     cursor: Optional[str] = None
     include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        from enferno.settings import Config as cfg
+
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class IncidentReviewRequestModel(BaseValidationModel):

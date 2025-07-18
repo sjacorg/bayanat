@@ -2991,7 +2991,7 @@ def api_bulletins(validated_data: dict) -> Response:
 
     q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
-    per_page = validated_data.get("per_page", 20)
+    per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
     search = SearchUtils({"q": q}, "bulletin")
@@ -4025,7 +4025,7 @@ def api_actors(validated_data: dict) -> Response:
         )
 
     cursor = validated_data.get("cursor")
-    per_page = validated_data.get("per_page", 20)
+    per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
     search = SearchUtils({"q": q}, "actor")
@@ -5225,7 +5225,7 @@ def api_incidents(validated_data: dict) -> Response:
 
     q = validated_data.get("q", [{}])
     cursor = validated_data.get("cursor")
-    per_page = validated_data.get("per_page", 20)
+    per_page = validated_data.get("per_page", PER_PAGE)
     include_count = validated_data.get("include_count", False)
 
     search = SearchUtils(validated_data, cls="incident")
