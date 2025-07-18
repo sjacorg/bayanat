@@ -1225,19 +1225,30 @@
 
                 deleteMap() {
                     if (!this.mapid) return
-                    if (confirm("{{ _('Are you sure you want to delete this mapping?')}}")) {
-                        // delete existing map
-                        axios.delete(`/import/api/mapping/${this.mapid}`)
+                    if (!confirm("{{ _('Are you sure you want to delete this mapping?')}}")) return
+
+                    const backupMaps = [...this.maps]; // Backup
+                    const backupMapId = this.mapid; // Backup
+                    const backupSelectedMap = this.maps.find(map => map.id === this.mapid); // Backup
+                    // const mapIndex = this.maps.findIndex(map => map.id === this.mapid);
+
+                    // // Optimistic update
+                    this.maps = this.maps.filter(map => map.id !== this.mapid);
+                    this.resetFields();
+                    this.selectedMap = null;
+                    this.mapid = null
+
+                    axios.delete(`/import/api/mapping/${this.mapid}`)
                         .then(res => {
                             this.showSnack(res.data);
-                            this.maps = this.maps.filter(map => map.id !== this.mapid)
-                            this.resetFields();
-                            this.selectedMap = null;
-                            this.mapid = null
                         }).catch(err => {
+                            // Revert on error
+                            this.maps = backupMaps;
+                            this.mapid = backupMapId;
+                            this.loadMap(backupSelectedMap)
+                            this.showSnack('Delete mapping failed');
                             console.log(err.response);
                         });
-                    }
                 },
                 updateMap() {
                     const payload = {
