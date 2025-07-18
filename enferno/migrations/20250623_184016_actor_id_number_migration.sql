@@ -46,10 +46,11 @@ WHERE id_number IS NOT NULL AND id_number != '';
 ALTER TABLE actor ADD COLUMN id_number_temp JSONB;
 
 -- Migrate existing string data to JSONB array format
+-- FIXED: Only convert non-empty, non-whitespace strings to JSON arrays
 UPDATE actor 
 SET id_number_temp = CASE 
-    WHEN id_number IS NOT NULL AND id_number != '' 
-    THEN jsonb_build_array(jsonb_build_object('type', '1', 'number', id_number))
+    WHEN id_number IS NOT NULL AND trim(id_number) != '' 
+    THEN jsonb_build_array(jsonb_build_object('type', '1', 'number', trim(id_number)))
     ELSE '[]'::jsonb
 END;
 
