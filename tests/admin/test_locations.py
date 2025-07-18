@@ -5,7 +5,7 @@ import pytest
 
 from enferno.admin.models import Location, LocationType
 
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.tasks import regenerate_locations
 from tests.factories import LocationFactory, create_location, LocationTypeFactory
 
