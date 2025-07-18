@@ -313,11 +313,17 @@ const BulletinCard = Vue.defineComponent({
             <v-toolbar-title class="text-subtitle-1">{{ translations.media_ }}</v-toolbar-title>
         </v-toolbar>
 
-        <div ref="playerContainer" class="px-2 my-3"></div>
+        <inline-media-renderer
+          :media="expandedMedia"
+          :media-type="expandedMediaType"
+          ref="inlineMediaRendererRef"
+          @fullscreen="handleFullscreen"
+          @close="closeExpandedMedia"
+        ></inline-media-renderer>
         
         <v-card-text>
           
-          <image-gallery prioritize-videos :medias="bulletin.medias" @thumb-click="viewThumb" @video-click="viewMedia" @audio-click="viewMedia"></image-gallery>
+          <media-grid prioritize-videos :medias="bulletin.medias" @media-click="handleExpandedMedia"></media-grid>
         </v-card-text>
       </v-card>
 
