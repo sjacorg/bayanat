@@ -70,11 +70,11 @@ def validate_plain_text_field(
     # Normalize whitespace and validate length
     clean_name = " ".join(field_data.split())
     if len(clean_name) > max_length:
-        raise ValidationError(f"{field_name} is too long (maximum {max_length} characters).")
+        raise WTFormsValidationError(f"{field_name} is too long (maximum {max_length} characters).")
 
     if not allow_unicode:
         if re.search(r"[^a-zA-Z0-9\s]", clean_name):
-            raise ValidationError(
+            raise WTFormsValidationError(
                 f"{field_name} contains invalid characters. Please enter plain text/numbers only."
             )
 
@@ -83,7 +83,7 @@ def validate_plain_text_field(
             if other_allowed_chars and char in other_allowed_chars:
                 continue
             if unicodedata.category(char)[0] not in allowed_unciode_categories:
-                raise ValidationError(f"{field_name} contains invalid character: {char}")
+                raise WTFormsValidationError(f"{field_name} contains invalid character: {char}")
 
 
 def validate_email_format(email: str) -> str:
@@ -100,7 +100,7 @@ def validate_email_format(email: str) -> str:
         ValidationError: If the email format is invalid
     """
     if not email or not email.strip():
-        raise ValidationError("Email cannot be empty.")
+        raise WTFormsValidationError("Email cannot be empty.")
 
     try:
         # Use email-validator library for unicode/IDN support
@@ -109,7 +109,7 @@ def validate_email_format(email: str) -> str:
         validated_email = validate_email(email.strip(), check_deliverability=False)
         return validated_email.normalized
     except EmailNotValidError as e:
-        raise ValidationError(f"Invalid email format: {str(e)}")
+        raise WTFormsValidationError(f"Invalid email format: {str(e)}")
 
 
 # =============================================================================

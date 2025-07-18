@@ -1426,7 +1426,8 @@ class UserValidationModel(StrictValidationModel):
             return v
 
         try:
-            return validate_email_format(v)
+            v = validate_email_format(v)
+            return v
         except ValidationError as e:
             raise ValueError("Invalid email format")
 
