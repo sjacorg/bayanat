@@ -672,6 +672,57 @@
                                     </div>
                                 </v-card>
                             </div>
+
+                            <!-- Mail tab -->
+                            <div v-if="tab === 'mail'">
+                                <v-card :disabled="loading" :loading="loading" class="px-6 py-8">
+                                    <h4 class="subtitle-2 mb-n1">{{ _('Enable Mail System') }}</h4>
+                                    <v-switch color="primary" class="mb-4" v-model="eitem.MAIL_ENABLED" persistent-hint
+                                        hint="{{ _('Enables sending emails from Bayanat.') }}">
+                                    </v-switch>
+                            
+                                    <v-slide-y-transition>
+                                        <v-sheet v-show="eitem.MAIL_ENABLED">
+                                            <v-row>
+                                                <v-col cols="12" lg="6">
+                                                    <v-text-field v-bind="inputProps" label="{{ _('Mail Server') }}" persistent-hint
+                                                        hint="{{ _('SMTP server for sending emails.') }}" v-model="eitem.MAIL_SERVER"></v-text-field>
+                                                </v-col>
+                                            
+                                                <v-col cols="12" lg="6">
+                                                    <v-text-field v-bind="inputProps" label="{{ _('Mail Port') }}" persistent-hint
+                                                        hint="{{ _('Port for SMTP server.') }}" v-model.number="eitem.MAIL_PORT"></v-text-field>
+                                                </v-col>
+                                            
+                                                <v-col cols="12" lg="6">
+                                                    <v-switch color="primary" class="my-2" label="{{ _('Use TLS') }}" v-model="eitem.MAIL_USE_TLS" persistent-hint
+                                                    hint="{{ _('Use TLS for SMTP server.') }}"></v-switch>
+                                                </v-col>
+
+                                                <v-col cols="12" lg="6">
+                                                    <v-switch color="primary" class="my-2" label="{{ _('Use SSL') }}" v-model="eitem.MAIL_USE_SSL" persistent-hint
+                                                        hint="{{ _('Use SSL for SMTP server.') }}"></v-switch>
+                                                </v-col>
+
+                                                <v-col cols="12" lg="6">
+                                                    <v-text-field v-bind="inputProps" label="{{ _('Mail Username') }}" persistent-hint hint="{{ _('Username for SMTP server.') }}"
+                                                        v-model="eitem.MAIL_USERNAME"></v-text-field>
+                                                </v-col>
+
+                                                <v-col cols="12" lg="6">
+                                                    <v-text-field v-bind="inputProps" label="{{ _('Mail Password') }}" persistent-hint hint="{{ _('Password for SMTP server.') }}"
+                                                        v-model="eitem.MAIL_PASSWORD"></v-text-field>
+                                                </v-col>
+
+                                                <v-col cols="12" lg="6">
+                                                    <v-text-field v-bind="inputProps" label="{{ _('Mail Default Sender') }}" persistent-hint
+                                                        hint="{{ _('Default sender for emails.') }}" v-model="eitem.MAIL_DEFAULT_SENDER"></v-text-field>
+                                                </v-col>
+                                            </v-row>
+                                        </v-sheet>
+                                    </v-slide-y-transition>
+                                </v-card>
+                            </div>
                         </div>
                     </v-card>
                 </div>
@@ -886,7 +937,8 @@
                     import: { text: "{{ _('Import tools') }}" },
                     export: { text: "{{ _('Export') }}" },
                     maps: { text: "{{ _('Maps') }}" },
-                    locations: { text: "{{ _('Location') }}" }
+                    locations: { text: "{{ _('Location') }}" },
+                    mail: { text: "{{ _('Mail') }}" }
                 },
 
 
