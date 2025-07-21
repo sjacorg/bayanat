@@ -18,6 +18,7 @@ from enferno.admin.models import (
     Ethnography,
     Dialect,
     Activity,
+    IDNumberType,
 )
 from enferno.data_import.models import DataImport
 
@@ -628,6 +629,38 @@ class SheetImport:
                     self.data_import.add_to_log(f"Event: {event}")
                     self.handle_mismatch("event", event)
 
+    def set_idnumbers(self, map_item: Any) -> None:
+        """
+        Method to set idnumbers.
+        """
+        idnumbers = []
+        for idnumber in map_item:
+            idn = {}
+            for attr in idnumber:
+                if attr == "type" and idnumber.get(attr):
+                    idn["type"] = idnumber.get(attr)
+                else:
+                    if idnumber.get(attr):
+                        idn[attr] = self.row.get(idnumber.get(attr)[0])
+            idnumbers.append(idn)
+        if idnumbers:
+            for idnumber in idnumbers:
+                if not idnumber or not idnumber.get("type") or not idnumber.get("number"):
+                    self.handle_mismatch("idnumber", idnumber)
+                    continue
+                idn_type = IDNumberType.query.get(int(idnumber["type"]))
+                if not idn_type:
+                    self.handle_mismatch("idnumber_type", idnumber["type"])
+                    idn_type = "1"
+                else:
+                    idn_type = str(idn_type.id)
+                idn = {
+                    "type": idn_type,
+                    "number": idnumber["number"],
+                }
+                self.actor.id_number.append(idn)
+                self.data_import.add_to_log(f"Processed idnumber")
+
     def set_reporters(self, map_item: Any) -> None:
         """
         Method to set location columns.
@@ -716,6 +749,10 @@ class SheetImport:
 
         elif field in details_list:
             self.set_details(field, value)
+            return
+
+        elif field == "id_number":
+            self.set_idnumbers(map_item)
             return
 
         # basic form : directly mapped value
