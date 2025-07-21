@@ -1183,9 +1183,13 @@
                     // add countries to actor config
                     let config = translations;
 
+                    const nextMap = {
+                        ...this.map,
+                        id_number: this.map.id_number.filter(idEntry => idEntry.type && idEntry.number) 
+                    }
 
                     axios.post('/import/api/process-sheet', {
-                        map: this.map,
+                        map: nextMap,
                         vmap: this.vmap,
                         sheet: this.selectedSheet,
                         roles: this.roles,
