@@ -3019,8 +3019,17 @@ def api_bulletins(validated_data: dict) -> Response:
 
     # Select json encoding type
     mode = request.args.get("mode", "1")
+
+    # Apply permission checks for each item
+    items = []
+    for item in result.items:
+        if current_user and current_user.can_access(item):
+            items.append(item.to_dict(mode=mode))
+        else:
+            items.append(item.restricted_json())
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
+        "items": items,
         "perPage": per_page,
         "total": result.total,
     }
@@ -3983,8 +3992,17 @@ def api_actors(validated_data: dict) -> Response:
     )
     # Select json encoding type
     mode = request.args.get("mode", "1")
+
+    # Apply permission checks for each item
+    items = []
+    for item in result.items:
+        if current_user and current_user.can_access(item):
+            items.append(item.to_dict(mode=mode))
+        else:
+            items.append(item.restricted_json())
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
+        "items": items,
         "perPage": per_page,
         "total": result.total,
     }
@@ -5104,8 +5122,17 @@ def api_incidents(validated_data: dict) -> Response:
     )
     # Select json encoding type
     mode = request.args.get("mode", "1")
+
+    # Apply permission checks for each item
+    items = []
+    for item in result.items:
+        if current_user and current_user.can_access(item):
+            items.append(item.to_dict(mode=mode))
+        else:
+            items.append(item.restricted_json())
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
+        "items": items,
         "perPage": per_page,
         "total": result.total,
     }
