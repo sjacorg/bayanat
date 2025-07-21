@@ -80,7 +80,7 @@ const IdNumberDynamicField = Vue.defineComponent({
             
             <!-- Display and edit existing ID numbers -->
             <v-card-text class="pb-0">
-                <div v-for="(idEntry, index) in items" :key="idEntry.id ?? index" class="d-flex align-center ga-4 mb-2">
+                <div v-for="(idEntry, index) in items" :key="idEntry?.id ?? index" class="d-flex align-center ga-4 mb-2">
                     <v-select
                         :model-value="Number(idEntry.type) || null"
                         :items="idNumberTypes"
