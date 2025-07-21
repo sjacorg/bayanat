@@ -37,7 +37,7 @@ const validationRules = {
                 onResponse(true);
                 resolve(true);
             } catch (err) {
-                onResponse(err);
+                onResponse(false);
                 resolve(defaultMessage);
               }
             }, 350);

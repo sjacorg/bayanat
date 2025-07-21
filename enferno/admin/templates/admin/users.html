@@ -119,7 +119,7 @@
                     </v-data-table-server>
                     <v-dialog v-model="dialog" max-width="1200px">
                         <v-card>
-                        <v-form @submit="validateForm" ref="form" v-model="valid">
+                        <v-form ref="form" v-model="valid">
                             <v-toolbar :title="formTitle">
                                 <template #append>
                                     <v-btn icon @click="close">
@@ -283,7 +283,7 @@
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
                                 <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn type="submit" color="primary" variant="elevated">
+                                <v-btn @click="validateAndSave" color="primary" variant="elevated">
                                     {{ _('Save') }}
                                 </v-btn>
                             </v-card-actions>
@@ -405,7 +405,7 @@
                     this.isStrongPassword = response === true
                 },
 
-                validateForm() {
+                validateAndSave() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
                             this.save();
