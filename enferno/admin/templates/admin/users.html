@@ -119,6 +119,7 @@
                     </v-data-table-server>
                     <v-dialog v-model="dialog" max-width="1200px">
                         <v-card>
+                        <v-form ref="form" v-model="valid">
                             <v-toolbar :title="formTitle">
                                 <template #append>
                                     <v-btn icon @click="close">
@@ -132,10 +133,11 @@
 
                                         <v-col cols="12" md="4">
                                             <v-text-field
-                                                    autocomplete="new-password"
-
                                                     label="{{ _('Full Name') }}"
                                                     v-model="editedItem.name"
+                                                    :rules="[
+                                                        validationRules.required(),
+                                                    ]"
                                             ></v-text-field>
 
                                         </v-col>
@@ -148,6 +150,9 @@
                                                         label="{{ _('Email') }}"
                                                         :disabled="disableEmail"
                                                         v-model="editedItem.email"
+                                                        :rules="disableEmail ? [] : [validationRules.externalError(errorsMap?.email)]"
+                                                        @input="resetError('email')"
+                                                        type="email"
                                                 ></v-text-field>
                                                 <v-btn @click.stop="enableEmail"
                                                        v-if="editedItem.id" class="my-auto mx-1"
@@ -175,7 +180,6 @@
                                                 <span v-if="!disablePassword && editedItem.password?.length > 1 "
                                                       class="green--text">{{ _('Strong Password') }}</span>
 
-
                                                 <v-btn @click.stop="enablePassword"
                                                        v-if="editedItem.id" class="mb-3 mx-1"
                                                        icon="mdi-pencil"
@@ -191,11 +195,19 @@
                                     <v-row>
                                         <v-col>
                                             <div class="d-flex">
-                                                <v-text-field @blur="checkUsername"
-                                                              @input="checkUsername"
+                                                <v-text-field
                                                               label="{{ _('Username') }}"
+                                                              :class="isUsernameAvailable ? 'text-success' : undefined"
+                                                              :hint="isUsernameAvailable ? '{{ _('Username available') }}' : undefined"
                                                               :disabled="disableUsername"
-                                                              v-model="editedItem.username"></v-text-field>
+                                                              v-model="editedItem.username"
+                                                              :rules="disableUsername ? [] : [
+                                                                    validationRules.required(),
+                                                                    validationRules.minLength(4),
+                                                                    validationRules.checkUsername({ initialUsername, onResponse: onUsernameCheckResponse })
+                                                                ]"
+                                                              @input="isUsernameAvailable = false"
+                                                ></v-text-field>
 
                                                 <v-btn @click.stop="enableUsername"
                                                        v-if="editedItem.id" class="my-auto mx-1"
@@ -277,10 +289,11 @@
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
                                 <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="save" color="primary" variant="elevated">
+                                <v-btn @click="validateAndSave" color="primary" variant="elevated">
                                     {{ _('Save') }}
                                 </v-btn>
                             </v-card-actions>
+                        </v-form>
                         </v-card>
                     </v-dialog>
 
@@ -311,6 +324,7 @@
                 showPassword: false,
                 drawer: drawer,
                 translations: window.translations,
+                validationRules: validationRules,
                 options: {},
 
                 headers: [
@@ -338,7 +352,11 @@
                 isAdmin: false,
                 userDrawer: false,
                 user: null,
-                session_id: '{{ session.sid }}'
+                session_id: '{{ session.sid }}',
+                valid: false,
+                errorsMap: {},
+                initialUsername: null,
+                isUsernameAvailable: false,
             }),
 
             mixins: [globalMixin],
@@ -346,7 +364,7 @@
             computed: {
                 formTitle() {
                     return this.editedItem?.id ? "{{_('Edit Item')}}" : "{{_('New Item')}}";
-                }
+                },
             },
 
             created() {
@@ -391,6 +409,28 @@
 
 
             methods: {
+                onUsernameCheckResponse(response) {
+                    if (this.editedItem.username === this.initialUsername) {
+                        this.isUsernameAvailable = false
+                    } else {
+                        this.isUsernameAvailable = response === true
+                    }
+                },
+                resetError(key) {
+                    if (!this.errorsMap) return
+                    if (key in this.errorsMap) this.errorsMap[key] = null
+                },
+                validateAndSave() {
+                    this.$refs.form.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.save();
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError(errors)
+                        }
+                    });
+                },
+
                 showUser(user_id) {
                     axios.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
@@ -511,27 +551,6 @@
                     this.disableEmail = false;
                 },
 
-
-                checkUsername:
-                    debounce(function (evt) {
-                        axios.post('/admin/api/checkuser/', {item: this.editedItem.username}).then(
-                            res => {
-
-                            }
-                        ).catch(
-                            err => {
-                                this.$refs.form.setErrors({username: [err.response.data]});
-                            }
-                        ).finally(
-                            () => {
-
-                            }
-                        )
-
-                    }, 350)
-
-                ,
-
                 getRoles() {
 
                     axios.get(`/admin/api/roles/`).then(response => {
@@ -582,6 +601,8 @@
                     this.userDrawer = false;
                     this.editedIndex = this.items.indexOf(item);
                     this.editedItem = {...item};
+                    this.isUsernameAvailable = false;
+                    this.initialUsername = item.username;
                     this.disableUsername = this.disablePassword = this.disableEmail = true;
                     this.dialog = true;
                 },
@@ -591,6 +612,9 @@
                     this.dialog = false;
                     this.showPassword = false;
                     this.isAdmin = false;
+                    this.initialUsername = null;
+                    this.isUsernameAvailable = false;
+                    this.errorsMap = null;
                     setTimeout(() => {
                         this.editedItem = Object.assign({}, this.defaultItem);
                         this.disableUsername = this.disablePassword = this.disableEmail = true;
@@ -599,32 +623,42 @@
                 },
 
                 save() {
+                    const handleError = (err) => {
+                        const usernameAlreadyTaken = err?.response?.status === 409
+                        const errors = err?.response?.data?.errors
+                        if (errors || usernameAlreadyTaken) {
+                            // Normalize: convert { "item.field": "message" } => { field: ["message"] }
+                            let nextErrors = Object.fromEntries(Object.entries(errors ?? {}).map(([key, value]) => ([key.replace('item.', ''), [value]])))
+                            // Override email message for something simpler
+                            if (nextErrors?.email) nextErrors.email = [translations.emailInvalid_];
+                            if (nextErrors?.username) nextErrors.username = [translations.usernameInvalid_];
+                            if (usernameAlreadyTaken) nextErrors = { ...nextErrors, username: [translations.usernameAlreadyTaken_]};
+
+                            this.errorsMap = { ...nextErrors }
+                            this.$refs.form.validate()
+                        } else {
+                            // this.showSnack(handleRequestError(err));
+                        }
+                    }
+
                     // edit mode
                     if (this.editedItem.id) {
-                        axios.put(`/admin/api/user/`, {item: this.editedItem})
-                            .then(response => {
+                        axios.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
+                        .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            console.error(err);
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        });
+                            }).catch(handleError);
 
                     } else {
                         // create mode
-
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem})
+                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-
-
-                        });
+                            }).catch(handleError);
                     }
 
                 }
