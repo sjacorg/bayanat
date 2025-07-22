@@ -1383,7 +1383,7 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
-    @field_validator("username")
+    @field_validator("username", mode="before")  # mode="before" to run before str_strip_whitespace
     @classmethod
     def validate_username(cls, v: str) -> str:
         """
@@ -1401,6 +1401,8 @@ class UserValidationModel(StrictValidationModel):
         if not v:
             return v
 
+        if v != v.strip():
+            raise ValueError("Username cannot contain leading or trailing whitespace")
         try:
             validate_plain_text_field(v, "Username", 32)
             return v
@@ -1439,7 +1441,7 @@ class UserRequestModel(BaseValidationModel):
 class UserNameCheckValidationModel(BaseValidationModel):
     item: str = Field(min_length=4, max_length=32)
 
-    @field_validator("item")
+    @field_validator("item", mode="before")  # mode="before" to run before str_strip_whitespace
     @classmethod
     def validate_username_check(cls, v: str) -> str:
         """
@@ -1456,7 +1458,8 @@ class UserNameCheckValidationModel(BaseValidationModel):
         """
         if not v:
             raise ValueError("Username cannot be empty")
-
+        if v != v.strip():
+            raise ValueError("Username cannot contain leading or trailing whitespace")
         try:
             validate_plain_text_field(v, "Username", 32)
             return v
