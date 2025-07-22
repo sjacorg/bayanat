@@ -39,8 +39,8 @@ const ImageViewer = Vue.defineComponent({
 
             // When the user rotates the image, it may overflow the preview container.
             // This is a workaround to force the image to fit within the container.
-            this.addRotateListener(this.lg.inline);
-            this.setupZoomHack(this.lg.inline);
+            this.addRotateListener(this.lg.fullscreen);
+            this.setupZoomHack(this.lg.fullscreen);
         },
         initInlineLightbox(nextOptions) {
             const el = this.$refs.imageViewer;
