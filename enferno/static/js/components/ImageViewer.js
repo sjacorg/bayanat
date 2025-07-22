@@ -15,7 +15,7 @@ const ImageViewer = Vue.defineComponent({
       requestFullscreen(nextOptions) {
         const el = this.$refs.imageViewer;
         if (!el) return;
-  
+
         const defaultOptions = {
           plugins: [lgZoom, lgThumbnail, lgRotate],
           download: false,
@@ -24,23 +24,25 @@ const ImageViewer = Vue.defineComponent({
           speed: 0,
           selector: '.media-item',
         };
-  
+
         const options = { ...defaultOptions, ...nextOptions };
-  
+
         this.lg.fullscreen = lightGallery(el, options);
         this.lg.fullscreen.openGallery(0);
-  
-        // Add rotate event listener (same as inline)
-        this.addRotateListener(this.lg.fullscreen);
-  
+
         this.lg.fullscreen.el.addEventListener('lgAfterClose', () => {
           this.destroyFullscreenLightbox();
         });
+
+        // When the user rotates the image, it may overflow the preview container.
+        // This is a workaround to force the image to fit within the container.
+        this.addRotateListener(this.lg.fullscreen);
+        this.setupZoomHack(this.lg.fullscreen);
       },
       initInlineLightbox(nextOptions) {
         const el = this.$refs.imageViewer;
         if (!el) return;
-  
+
         const defaultOptions = {
           plugins: [lgZoom, lgThumbnail, lgRotate],
           download: false,
@@ -51,64 +53,79 @@ const ImageViewer = Vue.defineComponent({
           container: el,
           closable: false,
         };
-  
+
         const options = { ...defaultOptions, ...nextOptions };
-  
+
         this.lg.inline = lightGallery(el, options);
         this.lg.inline.openGallery(0);
-  
-        // Add rotate event listener (same as fullscreen)
+
+        // When the user rotates the image, it may overflow the preview container.
+        // This is a workaround to force the image to fit within the container.
         this.addRotateListener(this.lg.inline);
+        this.setupZoomHack(this.lg.inline);
       },
       addRotateListener(lgInstance) {
-        if (!lgInstance || !lgInstance.el) return;
-      
-        // Listen for both rotate left and rotate right events
+        if (!lgInstance?.el) return;
+
         ['lgRotateLeft', 'lgRotateRight'].forEach(evtName => {
           lgInstance.el.addEventListener(evtName, (evt) => {
-            const rotate = evt.detail.rotate; // Rotation angle in degrees (0, 90, 180, 270)
+            const rotate = evt.detail.rotate;
 
             const container = lgInstance.$content.firstElement;
             const imgWrapper = container.querySelector('.lg-img-rotate');
             const img = container.querySelector('img.lg-object');
 
             if (!container || !imgWrapper || !img) return;
-      
+
             const { width: containerW, height: containerH } = container.getBoundingClientRect();
             const { naturalWidth: naturalW, naturalHeight: naturalH } = img;
-      
-            // Check if image is rotated by 90 or 270 degrees (dimensions swap)
+
             const isRotated = rotate % 180 !== 0;
             const imgW = isRotated ? naturalH : naturalW;
             const imgH = isRotated ? naturalW : naturalH;
-      
-            // Calculate scale to fit the image inside the container
+
             const scale = Math.min(containerW / imgW, containerH / imgH);
 
+            // Image gets rotated, so we flip width/height
             if (isRotated) {
-              // Apply scaled width and height, swapping due to rotation
               imgWrapper.style.width = `${imgH * scale}px`;
               imgWrapper.style.height = `${imgW * scale}px`;
-      
-              // Center the image wrapper inside the container
+
               const leftMargin = (containerW - imgWrapper.offsetWidth) / 2;
               const topMargin = (containerH - imgWrapper.offsetHeight) / 2;
-      
+
               imgWrapper.style.marginLeft = `${leftMargin}px`;
               imgWrapper.style.marginTop = `${topMargin}px`;
             } else {
-              // Reset styles when image is not rotated
+              // Reset any rotation-related dimensions
               ['width', 'height', 'marginLeft', 'marginTop'].forEach(prop => {
                 imgWrapper.style[prop] = null;
               });
             }
-      
-            // Remove any max size constraints on the image itself
+
             img.style.maxWidth = '';
             img.style.maxHeight = '';
           });
         });
-      },      
+      },
+      // HACK: Flip twice to fix zoom-drag not working after zoom in via button
+      forceEnableDrag(lgInstance) {
+        const flipBtn = lgInstance.$toolbar?.firstElement?.querySelector('#lg-flip-hor');
+        if (flipBtn) {
+          flipBtn.click();
+          flipBtn.click();
+        }
+      },
+      // Setup event listeners on zoom buttons to trigger drag fix
+      setupZoomHack(lgInstance) {
+        const zoomInBtn = lgInstance.$toolbar?.firstElement?.querySelector('.lg-zoom-in');
+        const zoomOutBtn = lgInstance.$toolbar?.firstElement?.querySelector('.lg-zoom-out');
+
+        const handler = () => this.forceEnableDrag(lgInstance);
+
+        zoomInBtn?.addEventListener('click', handler);
+        zoomOutBtn?.addEventListener('click', handler);
+      },
       destroyInlineLightbox() {
         this.lg.inline?.destroy();
         this.lg.inline = null;
@@ -138,4 +155,3 @@ const ImageViewer = Vue.defineComponent({
       </div>
     `,
   });
-  
