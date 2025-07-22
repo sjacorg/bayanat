@@ -3057,27 +3057,36 @@ def api_bulletins(validated_data: dict) -> Response:
 
         total_count = None
 
-    # Minimal serialization for list view
-    serialized_items = [
-        {
-            "id": item.id,
-            "title": item.title,
-            "status": item.status,
-            "assigned_to": (
-                {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                if item.assigned_to
-                else None
-            ),
-            "roles": (
-                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
-                if item.roles
-                else []
-            ),
-            "_status": item.status,
-            "review_action": item.review_action,
-        }
-        for item in items
-    ]
+    # Minimal serialization for list view with permission checks
+    serialized_items = []
+    for item in items:
+        if current_user and current_user.can_access(item):
+            # User has access - return full details
+            serialized_items.append(
+                {
+                    "id": item.id,
+                    "title": item.title,
+                    "status": item.status,
+                    "assigned_to": (
+                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                        if item.assigned_to
+                        else None
+                    ),
+                    "roles": (
+                        [
+                            {"id": role.id, "name": role.name, "color": role.color}
+                            for role in item.roles
+                        ]
+                        if item.roles
+                        else []
+                    ),
+                    "_status": item.status,
+                    "review_action": item.review_action,
+                }
+            )
+        else:
+            # User doesn't have access - return restricted info only
+            serialized_items.append({"id": item.id, "restricted": True})
 
     response = {
         "items": serialized_items,
@@ -4091,27 +4100,36 @@ def api_actors(validated_data: dict) -> Response:
 
         total_count = None
 
-    # Minimal serialization for list view
-    serialized_items = [
-        {
-            "id": item.id,
-            "name": item.name,
-            "status": item.status,
-            "assigned_to": (
-                {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                if item.assigned_to
-                else None
-            ),
-            "roles": (
-                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
-                if item.roles
-                else []
-            ),
-            "_status": item.status,
-            "review_action": item.review_action,
-        }
-        for item in items
-    ]
+    # Minimal serialization for list view with permission checks
+    serialized_items = []
+    for item in items:
+        if current_user and current_user.can_access(item):
+            # User has access - return full details
+            serialized_items.append(
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "status": item.status,
+                    "assigned_to": (
+                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                        if item.assigned_to
+                        else None
+                    ),
+                    "roles": (
+                        [
+                            {"id": role.id, "name": role.name, "color": role.color}
+                            for role in item.roles
+                        ]
+                        if item.roles
+                        else []
+                    ),
+                    "_status": item.status,
+                    "review_action": item.review_action,
+                }
+            )
+        else:
+            # User doesn't have access - return restricted info only
+            serialized_items.append({"id": item.id, "restricted": True})
 
     response = {
         "items": serialized_items,
@@ -5291,27 +5309,36 @@ def api_incidents(validated_data: dict) -> Response:
 
         total_count = None
 
-    # Minimal serialization for list view
-    serialized_items = [
-        {
-            "id": item.id,
-            "title": item.title,
-            "status": item.status,
-            "assigned_to": (
-                {"id": item.assigned_to.id, "name": item.assigned_to.name}
-                if item.assigned_to
-                else None
-            ),
-            "roles": (
-                [{"id": role.id, "name": role.name, "color": role.color} for role in item.roles]
-                if item.roles
-                else []
-            ),
-            "_status": item.status,
-            "review_action": item.review_action,
-        }
-        for item in items
-    ]
+    # Minimal serialization for list view with permission checks
+    serialized_items = []
+    for item in items:
+        if current_user and current_user.can_access(item):
+            # User has access - return full details
+            serialized_items.append(
+                {
+                    "id": item.id,
+                    "title": item.title,
+                    "status": item.status,
+                    "assigned_to": (
+                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                        if item.assigned_to
+                        else None
+                    ),
+                    "roles": (
+                        [
+                            {"id": role.id, "name": role.name, "color": role.color}
+                            for role in item.roles
+                        ]
+                        if item.roles
+                        else []
+                    ),
+                    "_status": item.status,
+                    "review_action": item.review_action,
+                }
+            )
+        else:
+            # User doesn't have access - return restricted info only
+            serialized_items.append({"id": item.id, "restricted": True})
 
     response = {
         "items": serialized_items,
