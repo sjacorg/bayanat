@@ -1,5 +1,5 @@
 const ImageViewer = Vue.defineComponent({
-    props: ['media', 'mediaType', 'class'],
+    props: ['media', 'mediaType'],
     data: () => ({
       translations: window.translations,
       lg: {
@@ -68,11 +68,9 @@ const ImageViewer = Vue.defineComponent({
           lgInstance.el.addEventListener(evtName, (evt) => {
             const rotate = evt.detail.rotate; // Rotation angle in degrees (0, 90, 180, 270)
 
-            const c = evt.target.closest('.lg-outer');
-      
-            const container = lgInstance.el.querySelector('.lg-content');
-            const imgWrapper = lgInstance.el.querySelector('.lg-img-rotate');
-            const img = lgInstance.el.querySelector('img.lg-object');
+            const container = lgInstance.$content.firstElement;
+            const imgWrapper = container.querySelector('.lg-img-rotate');
+            const img = container.querySelector('img.lg-object');
 
             if (!container || !imgWrapper || !img) return;
       
@@ -133,7 +131,7 @@ const ImageViewer = Vue.defineComponent({
       }
     },
     template: `
-      <div ref="imageViewer" class="class">
+      <div ref="imageViewer">
         <a class="media-item h-100 block" :data-src="media.s3url">
           <img :src="media.s3url" class="w-100 h-100 bg-black" style="object-fit: contain;" />
         </a>
