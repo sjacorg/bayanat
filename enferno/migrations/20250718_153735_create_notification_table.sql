@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS notification (
     read_at TIMESTAMP,
     is_urgent BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
 );
 
 -- Create indexes for better query performance

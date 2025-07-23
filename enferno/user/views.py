@@ -206,12 +206,19 @@ def load_settings() -> Response:
 def after_password_change(sender, user) -> None:
     """Reset the security reset key after password change, send notification to user"""
     user.unset_security_reset_key()
-    Notification.send_notification_to_user_for_event(
-        Constants.NotificationEvent.PASSWORD_CHANGE,
-        user,
-        "Password Changed",
-        "Your password has been changed.",
-    )
+    if "Admin" in user.roles:
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.PASSWORD_CHANGE,
+            "An Admin Changed Their Password",
+            f"An admin {user.username} has changed their password. Please verify their new password.",
+        )
+    else:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.PASSWORD_CHANGE,
+            user,
+            "Password Changed",
+            "Your password has been changed.",
+        )
 
 
 @bp_user.before_app_request
@@ -245,7 +252,6 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
     new_session.save()
 
     # Check if logged in from a different IP address
-    # TODO: Confirm if these fields are being updated correctly prior to this step
     if current_user.current_login_ip != current_user.last_login_ip:
         Notification.send_notification_to_user_for_event(
             Constants.NotificationEvent.LOGIN_NEW_IP,
@@ -262,9 +268,18 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
 
 @tf_profile_changed.connect
 def after_tf_profile_change(sender, user, **extra_args) -> None:
-    Notification.send_notification_to_user_for_event(
-        Constants.NotificationEvent.TWO_FACTOR_CHANGE,
-        user,
-        "Two-Factor Profile Changed",
-        "Your two-factor profile has been changed. Please verify your new profile.",
-    )
+    if user.has_role("Admin"):
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.TWO_FACTOR_CHANGE,
+            "An Admin Changed Their Two-Factor Profile",
+            f"An admin {user.username} has changed their two-factor profile. Please verify their new profile.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
+    else:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.TWO_FACTOR_CHANGE,
+            user,
+            "Two-Factor Profile Changed",
+            "Your two-factor profile has been changed. Please verify your new profile.",
+        )

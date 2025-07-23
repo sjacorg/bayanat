@@ -36,6 +36,7 @@ from enferno.public.views import bp_public
 from enferno.setup.views import bp_setup
 from enferno.settings import Config
 from enferno.user.forms import (
+    ExtendedMfRecoveryCodesForm,
     ExtendedRegisterForm,
     ExtendedLoginForm,
     SanitizedWebAuthnRegisterForm,
@@ -101,6 +102,7 @@ def register_extensions(app):
     security_options = {
         "register_form": ExtendedRegisterForm,
         "wan_register_form": SanitizedWebAuthnRegisterForm,
+        "mf_recovery_codes_form": ExtendedMfRecoveryCodesForm,
     }
 
     # Add the login form to the security options if reCAPTCHA is enabled

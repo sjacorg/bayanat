@@ -164,32 +164,26 @@ class ConfigManager:
                 # Configurable events
                 NotificationEvent.NEW_USER.value: {
                     "email_enabled": True,
-                    "in_app_enabled": True,
                     "category": "security",
                 },
                 NotificationEvent.UPDATE_USER.value: {
                     "email_enabled": True,
-                    "in_app_enabled": True,
                     "category": "security",
                 },
                 NotificationEvent.NEW_GROUP.value: {
                     "email_enabled": True,
-                    "in_app_enabled": True,
                     "category": "security",
                 },
                 NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {
                     "email_enabled": True,
-                    "in_app_enabled": True,
                     "category": "security",
                 },
                 NotificationEvent.LOGIN_NEW_COUNTRY.value: {
                     "email_enabled": True,
-                    "in_app_enabled": True,
                     "category": "security",
                 },
                 NotificationEvent.UNAUTHORIZED_ACTION.value: {
                     "email_enabled": True,
-                    "in_app_enabled": True,
                     "category": "security",
                 },
                 NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {
@@ -204,12 +198,10 @@ class ConfigManager:
                 },
                 NotificationEvent.NEW_EXPORT.value: {
                     "email_enabled": False,
-                    "in_app_enabled": True,
                     "category": "update",
                 },
                 NotificationEvent.EXPORT_APPROVED.value: {
                     "email_enabled": False,
-                    "in_app_enabled": True,
                     "category": "update",
                 },
                 NotificationEvent.NEW_BATCH.value: {
@@ -238,6 +230,11 @@ class ConfigManager:
                     "category": "update",
                 },
                 NotificationEvent.REVIEW_NEEDED.value: {
+                    "in_app_enabled": True,
+                    "email_enabled": False,
+                    "category": "update",
+                },
+                NotificationEvent.WEB_IMPORT_STATUS.value: {
                     "in_app_enabled": True,
                     "email_enabled": False,
                     "category": "update",

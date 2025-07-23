@@ -382,6 +382,13 @@ def api_label_delete(
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Label Deleted",
+            f"Label {label.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Deleted Label #{label.id}", 200
     else:
         return "Error deleting Label", 417
@@ -537,6 +544,13 @@ def api_eventtype_delete(
             eventtype.to_mini(),
             "eventtype",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Event Type Deleted",
+            f"Event Type {eventtype.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Deleted Event Type #{eventtype.id}", 200
     else:
         return "Error deleting Event Type", 417
@@ -674,6 +688,13 @@ def api_potentialviolation_delete(
             Activity.STATUS_SUCCESS,
             potentialviolation.to_mini(),
             "potentialviolation",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Potential Violation Deleted",
+            f"Potential Violation {potentialviolation.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Potential Violation #{potentialviolation.id}", 200
     else:
@@ -813,6 +834,13 @@ def api_claimedviolation_delete(
             Activity.STATUS_SUCCESS,
             claimedviolation.to_mini(),
             "claimedviolation",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Claimed Violation Deleted",
+            f"Claimed Violation {claimedviolation.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Claimed Violation #{claimedviolation.id}", 200
     else:
@@ -971,6 +999,13 @@ def api_source_delete(
             Activity.STATUS_SUCCESS,
             source.to_mini(),
             "source",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Source Deleted",
+            f"Source {source.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Source #{source.id}", 200
     else:
@@ -1145,6 +1180,13 @@ def api_location_delete(
             Activity.STATUS_SUCCESS,
             location.to_mini(),
             "location",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Location Deleted",
+            f"Location {location.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Location #{location.id}", 200
     else:
@@ -1346,6 +1388,13 @@ def api_location_admin_level_delete(id: t.id) -> Response:
             admin_level.to_mini(),
             "adminlevel",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Location Admin Level Deleted",
+            f"Location Admin Level {admin_level.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Location Admin Level Deleted #{admin_level.id}", 200
     else:
         return "Error deleting Location Admin Level", 417
@@ -1488,6 +1537,13 @@ def api_location_type_delete(
             location_type.to_mini(),
             "locationtype",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Location Type Deleted",
+            f"Location Type {location_type.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Location Type Deleted #{location_type.id}", 200
     else:
         return "Error deleting Location Type", 417
@@ -1618,6 +1674,13 @@ def api_country_delete(
             country.to_mini(),
             "country",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Country Deleted",
+            f"Country {country.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Country Deleted #{country.id}", 200
     else:
         return "Error deleting Country", 417
@@ -1747,6 +1810,13 @@ def api_ethnography_delete(
             ethnography.to_mini(),
             "ethnography",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Ethnography Deleted",
+            f"Ethnography {ethnography.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Ethnography Deleted #{ethnography.id}", 200
     else:
         return "Error deleting Ethnography", 417
@@ -1872,6 +1942,13 @@ def api_dialect_delete(
             Activity.STATUS_SUCCESS,
             dialect.to_mini(),
             "dialect",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Dialect Deleted",
+            f"Dialect {dialect.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Dialect Deleted #{dialect.id}", 200
     else:
@@ -2008,6 +2085,13 @@ def api_id_number_type_delete(
             id_number_type.to_mini(),
             "idnumbertype",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ID Number Type Deleted",
+            f"ID Number Type {id_number_type.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"ID Number Type Deleted {id_number_type.id}", 200
     else:
         return "Error deleting ID Number Type", 417
@@ -2127,6 +2211,13 @@ def api_atoainfo_delete(
             atoainfo.to_mini(),
             "atoainfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "AtoaInfo Deleted",
+            f"AtoaInfo {atoainfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"AtoaInfo Deleted #{atoainfo.id}", 200
     else:
         return "Error deleting Atoa Info", 417
@@ -2242,6 +2333,13 @@ def api_atobinfo_delete(
             Activity.STATUS_SUCCESS,
             atobinfo.to_mini(),
             "atobinfo",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "AtobInfo Deleted",
+            f"AtobInfo {atobinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"AtobInfo Deleted #{atobinfo.id}", 200
     else:
@@ -2359,6 +2457,13 @@ def api_btobinfo_delete(
             btobinfo.to_mini(),
             "btobinfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "BtobInfo Deleted",
+            f"BtobInfo {btobinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"BtobInfo Deleted #{btobinfo.id}", 200
     else:
         return "Error deleting Btob Info", 417
@@ -2475,6 +2580,13 @@ def api_itoainfo_delete(
             itoainfo.to_mini(),
             "itoainfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ItoaInfo Deleted",
+            f"ItoaInfo {itoainfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"ItoaInfo Deleted #{itoainfo.id}", 200
     else:
         return "Error deleting Itoa Info", 417
@@ -2586,6 +2698,13 @@ def api_itobinfo_delete(
             Activity.STATUS_SUCCESS,
             itobinfo.to_mini(),
             "itobinfo",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ItobInfo Deleted",
+            f"ItobInfo {itobinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"ItobInfo Deleted #{itobinfo.id}", 200
     else:
@@ -2703,6 +2822,13 @@ def api_itoiinfo_delete(
             itoiinfo.to_mini(),
             "itoiinfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ItoiInfo Deleted",
+            f"ItoiInfo {itoiinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"ItoiInfo Deleted #{itoiinfo.id}", 200
     else:
         return "Error deleting Itoi Info", 417
@@ -2819,6 +2945,13 @@ def api_mediacategory_delete(
             mediacategory.to_mini(),
             "mediacategory",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Media Category Deleted",
+            f"Media Category {mediacategory.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"MediaCategory Deleted #{mediacategory.id}", 200
     else:
         return "Error deleting Media Category", 417
@@ -2934,6 +3067,13 @@ def api_geolocationtype_delete(
             Activity.STATUS_SUCCESS,
             geolocationtype.to_mini(),
             "geolocationtype",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "GeoLocation Type Deleted",
+            f"GeoLocation Type {geolocationtype.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"GeoLocationType Deleted #{geolocationtype.id}", 200
     else:
@@ -3068,17 +3208,6 @@ def api_bulletin_create(
             "bulletin",
         )
 
-        # Notify user
-        if bulletin.assigned_to:
-            Notification.send_notification_to_user_for_event(
-                Constants.NotificationEvent.NEW_ASSIGNMENT,
-                bulletin.assigned_to,
-                "New Assignment",
-                f"You have been assigned to Bulletin {bulletin.id}.",
-                category=Notification.TYPE_UPDATE,
-                is_urgent=True,
-            )
-
         # Select json encoding type
         mode = request.args.get("mode", "1")
         return {
@@ -3144,8 +3273,6 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
             )
             return "Restricted Access", 403
 
-        pre_status = bulletin.status
-
         bulletin = bulletin.from_json(validated_data["item"])
 
         bulletin.create_revision()
@@ -3157,16 +3284,6 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
             bulletin.to_mini(),
             "bulletin",
         )
-        if pre_status != bulletin.status and bulletin.status == "Peer Review Assigned":
-            # Notify assigned user
-            Notification.send_notification_to_user_for_event(
-                Constants.NotificationEvent.REVIEW_NEEDED,
-                bulletin.first_peer_reviewer,
-                "Review Needed",
-                f"Bulletin {bulletin.id} needs to be reviewed by you.",
-                category=Notification.TYPE_SECURITY,
-                is_urgent=True,
-            )
         return f"Saved Bulletin #{bulletin.id}", 200
     else:
         return HTTPResponse.NOT_FOUND
@@ -4816,7 +4933,7 @@ def api_user_create(
             Constants.NotificationEvent.NEW_USER,
             "New User Created",
             f"User {username} has been created by {current_user.username} successfully.",
-            category=Notification.TYPE_GENERAL,
+            category=Notification.TYPE_SECURITY,
             is_urgent=True,
         )
         return f"User {username} has been created successfully", 200
@@ -4894,7 +5011,7 @@ def api_user_update(
                 Constants.NotificationEvent.UPDATE_USER,
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
-                category=Notification.TYPE_UPDATE,
+                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return f"Saved User {user.id} {user.name}", 200
@@ -5025,7 +5142,7 @@ def api_user_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "User Deleted",
             f"User {user.username} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_UPDATE,
+            category=Notification.TYPE_SECURITY,
             is_urgent=True,
         )
         return "Deleted", 200
@@ -5102,7 +5219,7 @@ def api_role_create(
             Constants.NotificationEvent.NEW_GROUP,
             "New Group Created",
             f"Group {role.name} has been created by {current_user.username} successfully.",
-            category=Notification.TYPE_UPDATE,
+            category=Notification.TYPE_SECURITY,
             is_urgent=True,
         )
         return "Created", 200
@@ -5171,6 +5288,13 @@ def api_role_delete(
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Role Deleted",
+            f"Role {role.name} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return "Deleted", 200
     else:
@@ -5980,7 +6104,7 @@ def api_config_write(
             Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
-            category=Notification.TYPE_UPDATE,
+            category=Notification.TYPE_SECURITY,
             is_urgent=True,
         )
         return "Configuration Saved Successfully", 200

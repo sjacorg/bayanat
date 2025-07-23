@@ -162,6 +162,15 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_assignee:
                 bulletin.assigned_to_id = None
             elif assigned_to_id:
+                if not bulletin.assigned_to_id or bulletin.assigned_to_id != assigned_to_id:
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.NEW_ASSIGNMENT,
+                        bulletin.assigned_to,
+                        "New Assignment",
+                        f"You have been assigned to Bulletin {bulletin.id}.",
+                        category=Notification.TYPE_UPDATE,
+                        is_urgent=True,
+                    )
                 bulletin.assigned_to_id = assigned_to_id
                 if not status:
                     bulletin.status = "Assigned"
@@ -172,6 +181,18 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_reviewer:
                 bulletin.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
+                if (
+                    not bulletin.first_peer_reviewer_id
+                    or bulletin.first_peer_reviewer_id != first_peer_reviewer_id
+                ):
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.REVIEW_NEEDED,
+                        bulletin.first_peer_reviewer,
+                        "Review Needed",
+                        f"Bulletin {bulletin.id} needs to be reviewed by you.",
+                        category=Notification.TYPE_SECURITY,
+                        is_urgent=True,
+                    )
                 bulletin.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     bulletin.status = "Peer Review Assigned"
@@ -284,6 +305,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_assignee:
                 actor.assigned_to_id = None
             elif assigned_to_id:
+                if not actor.assigned_to_id or actor.assigned_to_id != assigned_to_id:
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.NEW_ASSIGNMENT,
+                        actor.assigned_to,
+                        "New Assignment",
+                        f"You have been assigned to Actor {actor.id}.",
+                        category=Notification.TYPE_UPDATE,
+                        is_urgent=True,
+                    )
                 actor.assigned_to_id = assigned_to_id
                 if not status:
                     actor.status = "Assigned"
@@ -294,6 +324,18 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_reviewer:
                 actor.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
+                if (
+                    not actor.first_peer_reviewer_id
+                    or actor.first_peer_reviewer_id != first_peer_reviewer_id
+                ):
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.REVIEW_NEEDED,
+                        actor.first_peer_reviewer,
+                        "Review Needed",
+                        f"Actor {actor.id} needs to be reviewed by you.",
+                        category=Notification.TYPE_SECURITY,
+                        is_urgent=True,
+                    )
                 actor.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     actor.status = "Peer Review Assigned"
@@ -413,6 +455,15 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_assignee:
                 incident.assigned_to_id = None
             elif assigned_to_id:
+                if not incident.assigned_to_id or incident.assigned_to_id != assigned_to_id:
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.NEW_ASSIGNMENT,
+                        incident.assigned_to,
+                        "New Assignment",
+                        f"You have been assigned to Incident {incident.id}.",
+                        category=Notification.TYPE_UPDATE,
+                        is_urgent=True,
+                    )
                 incident.assigned_to_id = assigned_to_id
                 if not status:
                     incident.status = "Assigned"
@@ -423,6 +474,18 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_reviewer:
                 incident.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
+                if (
+                    not incident.first_peer_reviewer_id
+                    or incident.first_peer_reviewer_id != first_peer_reviewer_id
+                ):
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.REVIEW_NEEDED,
+                        incident.first_peer_reviewer,
+                        "Review Needed",
+                        f"Incident {incident.id} needs to be reviewed by you.",
+                        category=Notification.TYPE_SECURITY,
+                        is_urgent=True,
+                    )
                 incident.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     incident.status = "Peer Review Assigned"

@@ -88,7 +88,6 @@ def test_put_configuration(request, client_fixture, expected_status):
         current_conf = ConfigManager.serialize()
         if "LANGUAGES" in current_conf:
             current_conf.pop("LANGUAGES")
-
         updated_conf = {
             **current_conf,
             "ETL_VID_EXT": updated_etl_vid_ext,
@@ -103,7 +102,7 @@ def test_put_configuration(request, client_fixture, expected_status):
             )
             assert response.status_code == expected_status
             if expected_status == 200:
-                called_conf_write_argument = FullConfigValidationModel(
-                    **convert_empty_strings_to_none(updated_conf)
-                ).model_dump(by_alias=True, exclude_none=True)
+                called_conf_write_argument = FullConfigValidationModel(**updated_conf).model_dump(
+                    by_alias=True, exclude_none=True
+                )
                 mock_write_config.assert_called_once_with(called_conf_write_argument)

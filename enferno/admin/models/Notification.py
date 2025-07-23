@@ -194,6 +194,7 @@ class Notification(db.Model, BaseMixin):
         else:
             event = event.value
 
+        # BOTH IN APP AND EMAIL ALWAYS-ON SECURITY EVENTS
         if event in [
             NotificationEvent.LOGIN_NEW_IP.value,
             NotificationEvent.PASSWORD_CHANGE.value,
@@ -202,14 +203,29 @@ class Notification(db.Model, BaseMixin):
             NotificationEvent.FORCE_PASSWORD_CHANGE.value,
         ]:
             return {"in_app_enabled": True, "email_enabled": True, "category": "security"}
-        else:
-            from enferno.settings import Config as cfg
+        from enferno.settings import Config as cfg
 
-            event_config = cfg.NOTIFICATIONS.get(event)
-            if event_config:
-                return event_config
-            else:
-                raise ValueError(f"Event {event} not found in config")
+        if not (event_config := cfg.NOTIFICATIONS.get(event)):
+            raise ValueError(f"Event {event} not found in config")
+
+        # Create a copy to avoid mutating the original config
+        event_config = event_config.copy()
+
+        # IN APP ALWAYS-ON EVENTS
+        if event in [
+            # SECURITY
+            NotificationEvent.NEW_USER.value,
+            NotificationEvent.UPDATE_USER.value,
+            NotificationEvent.NEW_GROUP.value,
+            NotificationEvent.SYSTEM_SETTINGS_CHANGE.value,
+            NotificationEvent.LOGIN_NEW_COUNTRY.value,
+            NotificationEvent.UNAUTHORIZED_ACTION.value,
+            # EXPORTS
+            NotificationEvent.EXPORT_APPROVED.value,
+            NotificationEvent.NEW_EXPORT.value,
+        ]:
+            event_config["in_app_enabled"] = True
+        return event_config
 
     @staticmethod
     def send_notification_to_admins_for_event(
