@@ -206,11 +206,11 @@ def load_settings() -> Response:
 def after_password_change(sender, user) -> None:
     """Reset the security reset key after password change, send notification to user"""
     user.unset_security_reset_key()
-    if "Admin" in user.roles:
+    if user.has_role("Admin"):
         Notification.send_notification_to_admins_for_event(
             Constants.NotificationEvent.PASSWORD_CHANGE,
             "An Admin Changed Their Password",
-            f"An admin {user.username} has changed their password. Please verify their new password.",
+            f"An admin {user.username} has changed their password.",
         )
     else:
         Notification.send_notification_to_user_for_event(
@@ -218,6 +218,7 @@ def after_password_change(sender, user) -> None:
             user,
             "Password Changed",
             "Your password has been changed.",
+            category=Notification.TYPE_SECURITY,
         )
 
 
@@ -285,4 +286,5 @@ def after_tf_profile_change(sender, user, **extra_args) -> None:
             user,
             "Two-Factor Profile Changed",
             "Your two-factor profile has been changed. Please verify your new profile.",
+            category=Notification.TYPE_SECURITY,
         )
