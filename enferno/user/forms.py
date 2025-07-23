@@ -1,16 +1,23 @@
-from flask_security.forms import RegisterForm, LoginForm
+from flask_security.forms import RegisterForm, LoginForm, ChangePasswordForm
 from flask_security import MfRecoveryCodesForm
 from flask_security.decorators import current_user
 from flask_security.webauthn import WebAuthnRegisterForm
 from wtforms import StringField
+from wtforms.validators import ValidationError
 from enferno.admin.models import Notification
 from enferno.admin.constants import Constants
 from flask_wtf import RecaptchaField
-from enferno.utils.validation_utils import validate_plain_text_field
+from enferno.utils.validation_utils import validate_password_policy, validate_plain_text_field
 
 
 class ExtendedRegisterForm(RegisterForm):
     name = StringField("Full Name")
+
+    def validate_password(self, field):
+        try:
+            validate_password_policy(field.data)
+        except ValueError as e:
+            raise ValidationError(str(e))
 
 
 class ExtendedLoginForm(LoginForm):
@@ -42,3 +49,11 @@ class ExtendedMfRecoveryCodesForm(MfRecoveryCodesForm):
             )
             return True
         return False
+
+
+class ExtendedChangePasswordForm(ChangePasswordForm):
+    def validate_new_password(self, field):
+        try:
+            validate_password_policy(field.data)
+        except ValueError as e:
+            raise ValidationError(str(e))

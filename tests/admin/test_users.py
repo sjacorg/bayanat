@@ -286,15 +286,30 @@ post_password_endpoint_roles = [
 @pytest.mark.parametrize("client_fixture, expected_status", post_password_endpoint_roles)
 def test_post_password_endpoint(request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
-    WEAK_PASSWORD = "123456"
+    WEAK_PASSWORD = "1234567890"
+    SHORT_PASSWORD = "12345"
     STRONG_PASSWORD = "On3Tw0Thr33!"
     if expected_status == 200:
         response = client_.post(
             "/admin/api/password/",
             headers={"Content-Type": "application/json"},
+            json={"password": SHORT_PASSWORD},
+        )
+        assert response.status_code == 400
+        assert "password" in response.json["errors"]
+        assert "Password should be at least " in response.json["errors"]["password"]
+        assert "characters long!" in response.json["errors"]["password"]
+        response = client_.post(
+            "/admin/api/password/",
+            headers={"Content-Type": "application/json"},
             json={"password": WEAK_PASSWORD},
         )
-        assert response.status_code == 409
+        assert response.status_code == 400
+        assert "password" in response.json["errors"]
+        assert (
+            "Password is too weak (score: 0 < 3). Please use a stronger password"
+            in response.json["errors"]["password"]
+        )
     response = client_.post(
         "/admin/api/password/",
         headers={"Content-Type": "application/json"},
