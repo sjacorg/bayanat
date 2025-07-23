@@ -114,35 +114,7 @@
     delimiters: delimiters,
   });
 
-        const app = createApp({
-
-            data() {
-                return {
-                    menu: null,
-                    errors: '',
-                    snackBar: false,
-                    snackMessage: '',
-                    email: "",
-                    password: "",
-                    validationRules: validationRules
-                };
-            },
-            methods: {
-                showSnack(message) {
-                    this.snackMessage = message;
-                    this.snackBar = true;
-                },
-                submit() {
-                    document.getElementById('loginForm').submit();
-                }
-            },
-            delimiters: delimiters
-        });
-
-
-        app.use(vuetify).mount('#app');
-
-
-    </script>
+  app.use(vuetify).mount("#app");
+</script>
 
 {% endblock %}
