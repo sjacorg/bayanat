@@ -5,7 +5,7 @@
 
 <v-main>
   <v-container fluid>
-    <v-card style="height: calc(100vh - 95px)">
+    <v-card style="height: calc(100vh - 100px)">
       <v-toolbar class="flex-md-column">
         <v-toolbar-title>{{ _('Bulletin Fields Configuration') }}</v-toolbar-title>
 
@@ -33,58 +33,28 @@
       </v-toolbar>
 
       <v-card-text class="d-flex flex-column ga-4">
-        <v-expansion-panels v-for="field in coreFields" :key="field.name">
-          <v-expansion-panel>
-            <v-expansion-panel-title disable-icon-rotate>
-              <template #default="{ expanded }">
-                <v-icon class="mr-4" size="24">
-                  ${ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }
-                </v-icon>
-                <span class="text-h6 font-weight-bold">Core fields</span>
-              </template>
-              <template v-slot:actions="{ expanded }">
-                <v-btn :color="expanded ? 'error' : 'primary'" variant="text"
-                  >${expanded ? 'Collapse' : 'Expand'}</v-btn
-                >
-              </template>
-            </v-expansion-panel-title>
-            <v-expansion-panel-text>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-              exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
-
-        <v-expansion-panels v-for="field in customFields" :key="field.name">
-          <v-expansion-panel>
-            <v-expansion-panel-title disable-icon-rotate>
-              <template #default="{ expanded }">
-                <v-icon class="mr-4" size="24">
-                  ${ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }
-                </v-icon>
-                <span class="text-h6 font-weight-bold">Customized fields</span>
-              </template>
-              <template v-slot:actions="{ expanded }">
-                <v-btn :color="expanded ? 'error' : 'primary'" variant="text"
-                  >${expanded ? 'Collapse' : 'Expand'}</v-btn
-                >
-              </template>
-            </v-expansion-panel-title>
-            <v-expansion-panel-text>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-              exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
+        <span class="text-h6 font-weight-bold">Core fields</span>
+        <draggable v-model="coreFields" :item-key="'id'" tag="v-row" handle=".drag-handle" @end="onDragEnd">
+          <template #item="{ element: field }">
+            <v-col v-bind="getColsFromField(field)">
+              <field-list-item :field="mapFieldToComponent(field)" />
+            </v-col>
+          </template>
+        </draggable>
       </v-card-text>
     </v-card>
   </v-container>
 </v-main>
 
 {% endblock %} {% block outside %} {% endblock %} {% block js %}
+<script src="/static/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="/static/js/tinymce-vue.min.js"></script>
+
+<script src="/static/js/components/FieldListItem.js"></script>
 <script src="/static/js/components/FieldBuilderDrawer.js"></script>
+
+<script src="/static/js/Sortable.min.js"></script>
+<script src="/static/js/vuedraggable.umd.js"></script>
 
 <script>
   const { createApp } = Vue;
@@ -95,29 +65,159 @@
     delimiters: delimiters,
     mixins: [globalMixin],
     data: () => ({
+      tinyConfig: tinyConfig,
       drawer: drawer,
       isFieldBuilderDrawerOpen: false,
-      coreFields: [{name: 'one'}, { name: 'two' }],
-      customFields: [{ name: 'three' }, { name: 'four' }],
+      coreFields: [
+        {
+          id: 1,
+          name: 'title',
+          title: 'Original title',
+          entity_type: 'bulletin',
+          field_type: 'string',
+          ui_component: 'input',
+          schema_config: { required: true, max_length: 50 },
+          ui_config: { sort_order: 1, help_text: 'Select priority' },
+          validation_config: {},
+          active: true,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+        {
+          id: 2,
+          name: 'sjac_title',
+          title: 'Title',
+          entity_type: 'bulletin',
+          field_type: 'string',
+          ui_component: 'input',
+          schema_config: { required: true, max_length: 50 },
+          ui_config: { sort_order: 2, help_text: 'Select priority' },
+          validation_config: {},
+          active: true,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+        {
+          id: 3,
+          name: 'tags',
+          title: 'Tags',
+          entity_type: 'bulletin',
+          field_type: 'string',
+          ui_component: 'input',
+          schema_config: { required: true, max_length: 50 },
+          ui_config: { sort_order: 1, help_text: 'Select priority' },
+          validation_config: {},
+          active: true,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+        {
+          id: 4,
+          name: 'sources',
+          title: 'Sources',
+          entity_type: 'bulletin',
+          field_type: 'string',
+          ui_component: 'input',
+          schema_config: { required: true, max_length: 50 },
+          ui_config: { sort_order: 2, help_text: 'Select priority' },
+          validation_config: {},
+          active: true,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+        {
+          id: 5,
+          name: 'priority_level',
+          title: 'Priority Level',
+          entity_type: 'bulletin',
+          field_type: 'string',
+          ui_component: 'dropdown',
+          options: ['High', 'Medium', 'Low'],
+          schema_config: { required: true, max_length: 50 },
+          ui_config: { sort_order: 3, help_text: 'Select priority' },
+          validation_config: { allowed_values: ['High', 'Medium', 'Low'] },
+          active: true,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+        {
+          id: 6,
+          name: 'description',
+          title: 'Description',
+          entity_type: 'bulletin',
+          field_type: 'string',
+          ui_component: 'editor',
+          schema_config: { required: true, max_length: 50 },
+          ui_config: { sort_order: 3, help_text: 'Select priority' },
+          validation_config: { allowed_values: ['High', 'Medium', 'Low'] },
+          active: true,
+          created_at: '2025-01-01T00:00:00Z',
+        },
+      ],
+      // customFields: [{ name: 'three' }, { name: 'four' }],
       searchQuery: '',
-      loading: false
+      loading: false,
     }),
     mounted() {
       this.fetchDynamicFields();
     },
     methods: {
-      fetchDynamicFields() {
+      async fetchDynamicFields() {
         try {
-          axios.get('/admin/api/dynamic-fields');
+          return await axios.get('/admin/api/dynamic-fields');
         } catch (err) {
           console.err(err);
           this.showSnack(handleRequestError(err));
         }
       },
+      mapFieldToComponent(field) {
+        const baseProps = {
+          id: field.id.toString(),
+          label: field.title,
+          name: field.name,
+          variant: 'filled',
+          disabled: !field.active,
+        };
+
+        const componentMap = {
+          input: { component: 'v-text-field', props: { ...baseProps } },
+          dropdown: { component: 'v-select', props: { ...baseProps, items: field.options } },
+          textarea: { component: 'v-textarea', props: { ...baseProps } },
+          checkbox: { component: 'v-checkbox', props: { ...baseProps } },
+          switch: { component: 'v-switch', props: { ...baseProps } },
+          date: { component: 'v-date-picker', props: { ...baseProps } },
+          editor: { component: 'tinymce-editor', props: { init: tinyConfig, disabled: !field.active, } },
+        };
+
+        const config = componentMap[field.ui_component];
+        if (!config) return null;
+
+        return config;
+      },
+      getColsFromField(field) {
+        const baseProps = {
+          cols: 12,
+          lg: 4,
+          md: 6
+        };
+
+        const componentMap = {
+          editor: { cols: 12 },
+        };
+
+        const config = componentMap[field.ui_component];
+        if (config) return componentMap[field.ui_component];
+
+        return baseProps;
+      },
+      onDragEnd() {
+        this.reindexFields()
+      },
+      reindexFields() {
+        this.coreFields = this.coreFields.map((field, index) => ({ ...field, ui_config: { ...field.ui_config, sort_order: index+1 } }))
+      }
     },
   });
 
+  app.component('FieldListItem', FieldListItem);
   app.component('FieldBuilderDrawer', FieldBuilderDrawer);
+  app.component('draggable', vuedraggable);
+  app.component('tinymce-editor', Editor);
 
   app.use(router);
   app.use(vuetify).mount('#app');
