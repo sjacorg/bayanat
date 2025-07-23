@@ -55,7 +55,7 @@ class Bulletin(db.Model, BaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="user_bulletins", foreign_keys=[user_id])
 
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
     assigned_to = db.relationship(
         "User", backref="assigned_to_bulletins", foreign_keys=[assigned_to_id]
     )
@@ -63,8 +63,8 @@ class Bulletin(db.Model, BaseMixin):
 
     reliability_score = db.Column(db.Integer, default=0)
 
-    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
+    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
 
     first_peer_reviewer = db.relationship(
         "User", backref="first_rev_bulletins", foreign_keys=[first_peer_reviewer_id]
@@ -129,7 +129,7 @@ class Bulletin(db.Model, BaseMixin):
     publish_date = db.Column(db.DateTime, index=True)
     documentation_date = db.Column(db.DateTime, index=True)
 
-    status = db.Column(db.String(255))
+    status = db.Column(db.String(255), index=True)
     source_link = db.Column(db.String(255))
     source_link_type = db.Column(db.Boolean, default=False)
 
@@ -172,6 +172,16 @@ class Bulletin(db.Model, BaseMixin):
             "search",
             postgresql_using="gin",
             postgresql_ops={"search": "gin_trgm_ops"},
+        ),
+        db.Index(
+            "ix_bulletin_tags_gin",
+            "tags",
+            postgresql_using="gin",
+        ),
+        db.Index(
+            "ix_bulletin_status_assigned",
+            "status",
+            "assigned_to_id",
         ),
     )
 
