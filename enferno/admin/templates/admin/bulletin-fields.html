@@ -63,176 +63,283 @@
 
 <script src="/static/js/components/FieldListItem.js"></script>
 <script src="/static/js/components/FieldBuilderDrawer.js"></script>
+<script src="/static/js/components/PopDateField.js"></script>
+<script src="/static/js/components/PopDateTimeField.js"></script>
+<script src="/static/js/components/PopDateRangeField.js"></script>
 
 <script src="/static/js/Sortable.min.js"></script>
 <script src="/static/js/vuedraggable.umd.js"></script>
 
 <script>
-  const { createApp } = Vue;
-  const { createVuetify } = Vuetify;
-  const vuetify = createVuetify(vuetifyConfig);
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+    const vuetify = createVuetify(vuetifyConfig);
 
-  const app = createApp({
-    delimiters: delimiters,
-    mixins: [globalMixin],
-    data: () => ({
-      tinyConfig: tinyConfig,
-      drawer: drawer,
-      isFieldBuilderDrawerOpen: false,
-      coreFields: [
-        {
-          id: 1,
-          name: 'title',
-          title: 'Original title',
-          entity_type: 'bulletin',
-          field_type: 'string',
-          ui_component: 'input',
-          schema_config: { required: true, max_length: 50 },
-          ui_config: { sort_order: 1, help_text: 'Select priority' },
-          validation_config: {},
-          active: true,
-          created_at: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: 2,
-          name: 'sjac_title',
-          title: 'Title',
-          entity_type: 'bulletin',
-          field_type: 'string',
-          ui_component: 'input',
-          schema_config: { required: true, max_length: 50 },
-          ui_config: { sort_order: 2, help_text: 'Select priority' },
-          validation_config: {},
-          active: true,
-          created_at: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: 3,
-          name: 'tags',
-          title: 'Tags',
-          entity_type: 'bulletin',
-          field_type: 'string',
-          ui_component: 'input',
-          schema_config: { required: true, max_length: 50 },
-          ui_config: { sort_order: 1, help_text: 'Select priority' },
-          validation_config: {},
-          active: true,
-          created_at: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: 4,
-          name: 'sources',
-          title: 'Sources',
-          entity_type: 'bulletin',
-          field_type: 'string',
-          ui_component: 'input',
-          schema_config: { required: true, max_length: 50 },
-          ui_config: { sort_order: 2, help_text: 'Select priority' },
-          validation_config: {},
-          active: true,
-          created_at: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: 5,
-          name: 'priority_level',
-          title: 'Priority Level',
-          entity_type: 'bulletin',
-          field_type: 'string',
-          ui_component: 'dropdown',
-          options: ['High', 'Medium', 'Low'],
-          schema_config: { required: true, max_length: 50 },
-          ui_config: { sort_order: 3, help_text: 'Select priority' },
-          validation_config: { allowed_values: ['High', 'Medium', 'Low'] },
-          active: true,
-          created_at: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: 6,
-          name: 'description',
-          title: 'Description',
-          entity_type: 'bulletin',
-          field_type: 'string',
-          ui_component: 'editor',
-          schema_config: { required: true, max_length: 50 },
-          ui_config: { sort_order: 3, help_text: 'Select priority' },
-          validation_config: { allowed_values: ['High', 'Medium', 'Low'] },
-          active: true,
-          created_at: '2025-01-01T00:00:00Z',
-        },
-      ],
-      // customFields: [{ name: 'three' }, { name: 'four' }],
-      searchQuery: '',
-      loading: false,
-    }),
-    mounted() {
-      this.fetchDynamicFields();
-    },
-    methods: {
-      async fetchDynamicFields() {
-        try {
-          return await axios.get('/admin/api/dynamic-fields');
-        } catch (err) {
-          console.error(err);
-          this.showSnack(handleRequestError(err));
-        }
+    const app = createApp({
+      delimiters: delimiters,
+      mixins: [globalMixin],
+      data: () => ({
+        tinyConfig: tinyConfig,
+        drawer: drawer,
+        isFieldBuilderDrawerOpen: false,
+        coreFields: [
+          {
+            id: 101,
+            name: 'title',
+            title: 'Original Title',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input',
+            schema_config: { required: true, max_length: 255 },
+            ui_config: { sort_order: 1, help_text: 'Original title of the bulletin' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 102,
+            name: 'sjac_title',
+            title: 'Title',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input',
+            schema_config: { required: false, max_length: 255 },
+            ui_config: { sort_order: 2, help_text: 'Alternate or translated title' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 103,
+            name: 'tags',
+            title: 'Tags',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input', // v-combobox maps to input/multi input
+            schema_config: { required: false },
+            ui_config: { sort_order: 3, help_text: 'Tag the bulletin for search/filtering' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 104,
+            name: 'sources',
+            title: 'Sources',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input', // search-field mapped as custom input
+            schema_config: { required: false },
+            ui_config: { sort_order: 4, help_text: 'Linked sources for this bulletin' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 105,
+            name: 'labels',
+            title: 'Labels',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input',
+            schema_config: { required: false },
+            ui_config: { sort_order: 5, help_text: 'Tag with general labels' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 106,
+            name: 'verLabels',
+            title: 'Verified Labels',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input',
+            schema_config: { required: false },
+            ui_config: { sort_order: 6, help_text: 'Use labels verified by the team' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 107,
+            name: 'locations',
+            title: 'Locations',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input',
+            schema_config: { required: false },
+            ui_config: { sort_order: 7, help_text: 'Affected locations' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 108,
+            name: 'source_link',
+            title: 'Source Link',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'input',
+            schema_config: { required: false, max_length: 255 },
+            ui_config: { sort_order: 8, help_text: 'Link to original source' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 109,
+            name: 'source_link_na',
+            title: 'Source Not Available',
+            entity_type: 'bulletin',
+            field_type: 'boolean',
+            ui_component: 'checkbox',
+            schema_config: { required: false },
+            ui_config: { sort_order: 9, help_text: 'Check if source is not available' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 110,
+            name: 'source_link_type',
+            title: 'Source Link Private',
+            entity_type: 'bulletin',
+            field_type: 'boolean',
+            ui_component: 'switch',
+            schema_config: { required: false },
+            ui_config: { sort_order: 10, help_text: 'Toggle to keep source private' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 111,
+            name: 'publish_date',
+            title: 'Publish Date',
+            entity_type: 'bulletin',
+            field_type: 'datetime',
+            ui_component: 'date',
+            schema_config: { required: false },
+            ui_config: { sort_order: 11, help_text: 'When should this be published?' },
+            validation_config: { format: 'YYYY-MM-DD' },
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 112,
+            name: 'documentation_date',
+            title: 'Documentation Date',
+            entity_type: 'bulletin',
+            field_type: 'datetime',
+            ui_component: 'date',
+            schema_config: { required: false },
+            ui_config: { sort_order: 12, help_text: 'When was this documented?' },
+            validation_config: { format: 'YYYY-MM-DD' },
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 113,
+            name: 'comments',
+            title: 'Comments',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'textarea',
+            schema_config: { required: true },
+            ui_config: { sort_order: 13, help_text: 'Add reviewer or system comments' },
+            validation_config: {},
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          },
+          {
+            id: 114,
+            name: 'status',
+            title: 'Status',
+            entity_type: 'bulletin',
+            field_type: 'string',
+            ui_component: 'dropdown',
+            options: ['Draft', 'Published', 'Archived'],
+            schema_config: { required: false },
+            ui_config: { sort_order: 14, help_text: 'Bulletin status' },
+            validation_config: { allowed_values: ['Draft', 'Published', 'Archived'] },
+            active: true,
+            created_at: '2025-01-01T00:00:00Z'
+          }
+        ]
+  ,
+        searchQuery: '',
+        loading: false,
+      }),
+      mounted() {
+        this.fetchDynamicFields();
       },
-      mapFieldToComponent(field) {
-        const baseProps = {
-          id: field.id.toString(),
-          label: field.title,
-          name: field.name,
-          variant: 'filled',
-          disabled: !field.active,
-        };
-
-        const componentMap = {
-          input: { component: 'v-text-field', props: { ...baseProps } },
-          dropdown: { component: 'v-select', props: { ...baseProps, items: field.options } },
-          textarea: { component: 'v-textarea', props: { ...baseProps } },
-          checkbox: { component: 'v-checkbox', props: { ...baseProps } },
-          switch: { component: 'v-switch', props: { ...baseProps } },
-          date: { component: 'v-date-picker', props: { ...baseProps } },
-          editor: { component: 'tinymce-editor', props: { init: tinyConfig, disabled: !field.active, } },
-        };
-
-        const config = componentMap[field.ui_component];
-        if (!config) return null;
-
-        return config;
-      },
-      getColsFromField(field) {
-        const baseProps = {
-          cols: 12,
-          lg: 4,
-          md: 6
-        };
-
-        const componentMap = {
-          editor: { cols: 12 },
-        };
-
-        const config = componentMap[field.ui_component];
-        if (config) return componentMap[field.ui_component];
-
-        return baseProps;
-      },
-      onDragEnd() {
-        this.reindexFields()
-      },
-      reindexFields() {
-        this.coreFields = this.coreFields.map((field, index) => ({ ...field, ui_config: { ...field.ui_config, sort_order: index+1 } }))
-      },
-      async deleteField(field) {
-        if (confirm('{{ _('Are you sure?') }}')) {
+      methods: {
+        async fetchDynamicFields() {
           try {
-            return await axios.delete(`/admin/api/dynamic-fields/${field.props.id}`);
+            return await axios.get('/admin/api/dynamic-fields');
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
           }
-        }
-      },
-      async toggleFieldVisibility(field) {
+        },
+        mapFieldToComponent(field) {
+          const baseProps = {
+            id: field.id.toString(),
+            label: field.title,
+            name: field.name,
+            variant: 'filled',
+            disabled: !field.active,
+          };
+
+          const componentMap = {
+            input: { component: 'v-text-field', props: { ...baseProps } },
+            dropdown: { component: 'v-select', props: { ...baseProps, items: field.options } },
+            textarea: { component: 'v-textarea', props: { ...baseProps } },
+            checkbox: { component: 'v-checkbox', props: { ...baseProps } },
+            switch: { component: 'v-switch', props: { ...baseProps } },
+            date: { component: 'pop-date-time-field', props: {} },
+            editor: { component: 'tinymce-editor', props: { init: tinyConfig, disabled: !field.active, } },
+          };
+
+          const config = componentMap[field.ui_component];
+          if (!config) return null;
+
+          return config;
+        },
+        getColsFromField(field) {
+          const baseProps = {
+            cols: 12,
+            lg: 4,
+            md: 6
+          };
+
+          const componentMap = {
+            editor: { cols: 12 },
+          };
+
+          const config = componentMap[field.ui_component];
+          if (config) return componentMap[field.ui_component];
+
+          return baseProps;
+        },
+        onDragEnd() {
+          this.reindexFields()
+        },
+        reindexFields() {
+          this.coreFields = this.coreFields.map((field, index) => ({ ...field, ui_config: { ...field.ui_config, sort_order: index+1 } }))
+        },
+        async deleteField(field) {
+          if (confirm('{{ _('Are you sure?') }}')) {
+            try {
+              return await axios.delete(`/admin/api/dynamic-fields/${field.props.id}`);
+            } catch (err) {
+              console.error(err);
+              this.showSnack(handleRequestError(err));
+            }
+          }
+        },
+        async toggleFieldVisibility(field) {
           try {
             const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.props.id))
             return await axios.put(`/admin/api/dynamic-fields/${field.props.id}`, {
@@ -243,18 +350,21 @@
             console.error(err);
             this.showSnack(handleRequestError(err));
           }
-      }
-    },
-  });
+        }
+      },
+    });
 
-  app.component('FieldListItem', FieldListItem);
-  app.component('FieldBuilderDrawer', FieldBuilderDrawer);
-  app.component('draggable', vuedraggable);
-  app.component('tinymce-editor', Editor);
+    app.component('FieldListItem', FieldListItem);
+    app.component('FieldBuilderDrawer', FieldBuilderDrawer);
+    app.component('draggable', vuedraggable);
+    app.component('tinymce-editor', Editor);
+    app.component('PopDateField', PopDateField);
+    app.component('PopDateRangeField', PopDateRangeField);
+    app.component('PopDateTimeField', PopDateTimeField);
 
-  app.use(router);
-  app.use(vuetify).mount('#app');
+    app.use(router);
+    app.use(vuetify).mount('#app');
 
-  window.app = app;
+    window.app = app;
 </script>
 {% endblock %}
