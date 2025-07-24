@@ -633,33 +633,30 @@ class SheetImport:
         """
         Method to set idnumbers.
         """
-        idnumbers = []
+        id_number_types = [str(t.id) for t in IDNumberType.query.all()]
+
+        if self.actor.id_number is None:
+            self.actor.id_number = []
+
         for idnumber in map_item:
-            idn = {}
-            for attr in idnumber:
-                if attr == "type" and idnumber.get(attr):
-                    idn["type"] = idnumber.get(attr)
-                else:
-                    if idnumber.get(attr):
-                        idn[attr] = self.row.get(idnumber.get(attr)[0])
-            idnumbers.append(idn)
-        if idnumbers:
-            for idnumber in idnumbers:
-                if not idnumber or not idnumber.get("type") or not idnumber.get("number"):
-                    self.handle_mismatch("idnumber", idnumber)
-                    continue
-                idn_type = IDNumberType.query.get(int(idnumber["type"]))
-                if not idn_type:
-                    self.handle_mismatch("idnumber_type", idnumber["type"])
-                    idn_type = "1"
-                else:
-                    idn_type = str(idn_type.id)
-                idn = {
-                    "type": idn_type,
-                    "number": idnumber["number"],
-                }
-                self.actor.id_number.append(idn)
-                self.data_import.add_to_log(f"Processed idnumber")
+            idn_type = idnumber.get("type")
+            idn_number_col = idnumber.get("number")
+            idn_number = self.row.get(idn_number_col) if idn_number_col else None
+
+            # Skip if number is empty/null/whitespace
+            if not idn_number or not idn_number.strip():
+                continue
+
+            # Handle mismatch if type is not valid/missing
+            if not idn_type or idn_type not in id_number_types:
+                self.handle_mismatch("idnumber_type", idn_type)
+                continue
+
+            # Create valid ID number entry
+            idn = {"type": idn_type, "number": idn_number.strip()}
+
+            self.actor.id_number.append(idn)
+            self.data_import.add_to_log(f"Processed idnumber")
 
     def set_reporters(self, map_item: Any) -> None:
         """
