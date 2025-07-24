@@ -10,11 +10,20 @@ const FieldListItem = Vue.defineComponent({
         </div>
 
         <div v-if="!field?.readonly" class="flex-shrink-0 mt-2">
-          <v-btn icon @click="$emit('edit', field)" size="small"><v-icon>mdi-pencil</v-icon></v-btn>
-          <v-btn icon @click="$emit('delete', field)" size="small"><v-icon>mdi-delete</v-icon></v-btn>
-          <v-btn icon @click="$emit('toggle-visibility', field)" size="small">
-            <v-icon>{{ field.active ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
-          </v-btn>
+            <v-btn icon @click="$emit('edit', field)" size="small"><v-icon>mdi-pencil</v-icon></v-btn>
+            <v-menu>
+                <template v-slot:activator="{ props }">
+                    <v-btn v-bind="props" icon="mdi-dots-vertical" size="small"></v-btn>
+                </template>
+                <v-list>
+                    <v-list-item @click="$emit('toggle-visibility', field)">
+                        <v-list-item-title><v-icon class="mr-2">{{ field.active ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon> Show  / hide</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="$emit('delete', field)">
+                        <v-list-item-title><v-icon class="mr-2">mdi-delete</v-icon> Delete</v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
         </div>
       </div>
       <div v-else>Field data not provided</div>

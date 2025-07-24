@@ -34,10 +34,21 @@
 
       <v-card-text class="d-flex flex-column ga-4">
         <span class="text-h6 font-weight-bold">Core fields</span>
-        <draggable v-model="coreFields" :item-key="'id'" tag="v-row" handle=".drag-handle" @end="onDragEnd">
+        <draggable
+          v-model="coreFields"
+          :item-key="'id'"
+          tag="v-row"
+          handle=".drag-handle"
+          @end="onDragEnd"
+        >
           <template #item="{ element: field }">
             <v-col v-bind="getColsFromField(field)">
-              <field-list-item :field="mapFieldToComponent(field)" />
+              <field-list-item
+                :field="mapFieldToComponent(field)"
+                @edit=""
+                @toggle-visibility="toggleFieldVisibility"
+                @delete="deleteField"
+              />
             </v-col>
           </template>
         </draggable>
@@ -161,7 +172,7 @@
         try {
           return await axios.get('/admin/api/dynamic-fields');
         } catch (err) {
-          console.err(err);
+          console.error(err);
           this.showSnack(handleRequestError(err));
         }
       },
@@ -210,6 +221,28 @@
       },
       reindexFields() {
         this.coreFields = this.coreFields.map((field, index) => ({ ...field, ui_config: { ...field.ui_config, sort_order: index+1 } }))
+      },
+      async deleteField(field) {
+        if (confirm('{{ _('Are you sure?') }}')) {
+          try {
+            return await axios.delete(`/admin/api/dynamic-fields/${field.props.id}`);
+          } catch (err) {
+            console.error(err);
+            this.showSnack(handleRequestError(err));
+          }
+        }
+      },
+      async toggleFieldVisibility(field) {
+          try {
+            const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.props.id))
+            return await axios.put(`/admin/api/dynamic-fields/${field.props.id}`, {
+              ...matchingField,
+              active: !matchingField.active
+            });
+          } catch (err) {
+            console.error(err);
+            this.showSnack(handleRequestError(err));
+          }
       }
     },
   });
