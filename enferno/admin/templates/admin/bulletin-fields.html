@@ -32,7 +32,7 @@
         </template>
       </v-toolbar>
 
-      <v-card-text class="d-flex flex-column ga-4">
+      <v-card-text class="d-flex flex-column ga-4 overflow-y-scroll" style="height: calc(100vh - 165px);">
         <span class="text-h6 font-weight-bold">Core fields</span>
         <draggable
           v-model="coreFields"
@@ -42,13 +42,17 @@
           @end="onDragEnd"
         >
           <template #item="{ element: field }">
-            <v-col v-bind="getColsFromField(field)">
-              <field-list-item
-                :field="mapFieldToComponent(field)"
-                @edit=""
-                @toggle-visibility="toggleFieldVisibility"
-                @delete="deleteField"
-              />
+            <v-col cols="12">
+              <v-row>
+                <v-col cols="12" lg="6">
+                  <field-list-item
+                    :field="mapFieldToComponent(field)"
+                    @edit=""
+                    @toggle-visibility="toggleFieldVisibility"
+                    @delete="deleteField"
+                  />
+                </v-col>
+              </v-row>
             </v-col>
           </template>
         </draggable>
@@ -319,22 +323,6 @@
           if (!config) return null;
 
           return config;
-        },
-        getColsFromField(field) {
-          const baseProps = {
-            cols: 12,
-            lg: 4,
-            md: 6
-          };
-
-          const componentMap = {
-            editor: { cols: 12 },
-          };
-
-          const config = componentMap[field.ui_component];
-          if (config) return componentMap[field.ui_component];
-
-          return baseProps;
         },
         onDragEnd() {
           this.reindexFields()
