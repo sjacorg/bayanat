@@ -18,6 +18,7 @@ from enferno.admin.models import (
     Ethnography,
     Dialect,
     Activity,
+    IDNumberType,
 )
 from enferno.data_import.models import DataImport
 
@@ -628,6 +629,35 @@ class SheetImport:
                     self.data_import.add_to_log(f"Event: {event}")
                     self.handle_mismatch("event", event)
 
+    def set_idnumbers(self, map_item: Any) -> None:
+        """
+        Method to set idnumbers.
+        """
+        id_number_types = [str(t.id) for t in IDNumberType.query.all()]
+
+        if self.actor.id_number is None:
+            self.actor.id_number = []
+
+        for idnumber in map_item:
+            idn_type = idnumber.get("type")
+            idn_number_col = idnumber.get("number")
+            idn_number = self.row.get(idn_number_col) if idn_number_col else None
+
+            # Skip if number is empty/null/whitespace
+            if not idn_number or not idn_number.strip():
+                continue
+
+            # Handle mismatch if type is not valid/missing
+            if not idn_type or idn_type not in id_number_types:
+                self.handle_mismatch("idnumber_type", idn_type)
+                continue
+
+            # Create valid ID number entry
+            idn = {"type": idn_type, "number": idn_number.strip()}
+
+            self.actor.id_number.append(idn)
+            self.data_import.add_to_log(f"Processed idnumber")
+
     def set_reporters(self, map_item: Any) -> None:
         """
         Method to set location columns.
@@ -716,6 +746,10 @@ class SheetImport:
 
         elif field in details_list:
             self.set_details(field, value)
+            return
+
+        elif field == "id_number":
+            self.set_idnumbers(map_item)
             return
 
         # basic form : directly mapped value
