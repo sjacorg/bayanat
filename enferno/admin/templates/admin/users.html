@@ -392,7 +392,7 @@
 
             methods: {
                 showUser(user_id) {
-                    axios.get(`/admin/api/user/${user_id}`).then(response => {
+                    api.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
                         this.userDrawer = true;
                     }).catch(err => {
@@ -401,14 +401,14 @@
 
                 },
                 refreshUser(user_id) {
-                    axios.get(`/admin/api/user/${user_id}`).then(response => {
+                    api.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
                     })
                 },
 
                 revoke2fa(userId) {
                     if (confirm(`{{ _('Are you sure you want to revoke 2FA for this user?') }}`)) {
-                        axios.delete(`/admin/api/user/revoke_2fa`, {
+                        api.delete(`/admin/api/user/revoke_2fa`, {
                             params: {user_id: userId}
                         })
                             .then(response => {
@@ -436,7 +436,7 @@
 
                 forcePassReset(item) {
                     if (confirm(`{{ _('Are you sure you want to force password reset for user ')}}${item.username}?`)) {
-                        axios.post('/admin/api/user/force-reset',
+                        api.post('/admin/api/user/force-reset',
                             {item: item}
                         ).then(res => {
                             this.showSnack(res.data);
@@ -454,7 +454,7 @@
                 forceGlobalReset() {
                     if (confirm("{{_('Are you sure you want to force a password reset for all users?')}}")) {
                         this.loading = true;
-                        axios.post('/admin/api/user/force-reset-all').then(
+                        api.post('/admin/api/user/force-reset-all').then(
                             res => {
 
                                 this.showSnack(res.data);
@@ -514,7 +514,7 @@
 
                 checkUsername:
                     debounce(function (evt) {
-                        axios.post('/admin/api/checkuser/', {item: this.editedItem.username}).then(
+                        api.post('/admin/api/checkuser/', {item: this.editedItem.username}).then(
                             res => {
 
                             }
@@ -534,7 +534,7 @@
 
                 getRoles() {
 
-                    axios.get(`/admin/api/roles/`).then(response => {
+                    api.get(`/admin/api/roles/`).then(response => {
 
 
                         this.roles = response.data.items;
@@ -560,7 +560,7 @@
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
-                    axios.get(`/admin/api/users/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
+                    api.get(`/admin/api/users/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {search: this.search}).then(res => {
                         this.items = res.data.items;
                         this.itemsLength = res.data.total;
                     }).catch(err => {
@@ -601,7 +601,7 @@
                 save() {
                     // edit mode
                     if (this.editedItem.id) {
-                        axios.put(`/admin/api/user/`, {item: this.editedItem})
+                        api.put(`/admin/api/user/`, {item: this.editedItem})
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);

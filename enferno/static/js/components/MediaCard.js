@@ -51,7 +51,7 @@ const MediaCard = Vue.defineComponent({
   },
   methods: {
     init() {
-      axios.get(`/admin/api/media/${this.media.filename}`)
+      api.get(`/admin/api/media/${this.media.filename}`)
         .then(response => {
           this.s3url = response.data;
           this.media.s3url = response.data;

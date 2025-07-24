@@ -552,8 +552,8 @@
                 checkProgress() {
                     this.loading = true;
                     Promise.all([
-                        axios.get('/api/check-admin'),
-                        axios.get('/api/check-data-imported')
+                        api.get('/api/check-admin'),
+                        api.get('/api/check-data-imported')
                     ]).then(([adminResponse, dataResponse]) => {
                         this.adminCreated = adminResponse.data.status === 'exists';
                         this.dataImported = dataResponse.data.status === 'imported';
@@ -570,7 +570,7 @@
                 },
 
                 fetchDefaultSettings() {
-                    axios.get('/api/default-config')
+                    api.get('/api/default-config')
                         .then(response => {
                             this.defaultSettings = response.data;
                             this.cfg = {...this.cfg, ...this.defaultSettings};
@@ -582,7 +582,7 @@
 
                 importDefaultData() {
                     this.loading = true;
-                    axios.post('/api/import-data')
+                    api.post('/api/import-data')
                         .then(response => {
                             this.dataImported = true;
                             this.step = 5; // Move to the next step only if import is successful
@@ -604,7 +604,7 @@
                     this.loading = true;
                     this.error = '';
 
-                    axios.post('/api/create-admin', {
+                    api.post('/api/create-admin', {
                         username: this.username,
                         password: this.password
                     })
@@ -628,7 +628,7 @@
 
                 waitForReload() {
                     setTimeout(() => {
-                        axios.get('/').then(res => {
+                        api.get('/').then(res => {
                             this.showSnack("{{_('Bayanat reloaded successfully.')}}");
                             this.overlay = false;
                             this.step = 11;
@@ -640,13 +640,13 @@
 
                 reloadApp() {
                     this.overlay = true;
-                    axios.post('/admin/api/reload/')
+                    api.post('/admin/api/reload/')
                     this.waitForReload();
                 },
 
                 finishSetup() {
                     this.loading = true;
-                    axios.put('/api/complete-setup/', {
+                    api.put('/api/complete-setup/', {
                         conf: this.cfg
                     })
                     .then(response => {

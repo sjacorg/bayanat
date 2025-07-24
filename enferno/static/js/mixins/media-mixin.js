@@ -245,7 +245,7 @@ let mediaMixin = {
 
       data.append('file', blob, filename)
 
-      axios.post("/admin/api/media/upload", data, {
+      api.post("/admin/api/media/upload", data, {
           headers: {"content-type": false}
       }).then(response => {
 

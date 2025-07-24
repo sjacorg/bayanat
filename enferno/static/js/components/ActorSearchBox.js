@@ -80,7 +80,7 @@ const ActorSearchBox = Vue.defineComponent({
       if (this.idNumberTypes.length) return
 
       // Fetch and cache IDNumberType data for ID number display and editing
-      axios.get('/admin/api/idnumbertypes/').then(res => {
+      api.get('/admin/api/idnumbertypes/').then(res => {
           this.idNumberTypes = res.data.items || [];
       }).catch(err => {
           this.idNumberTypes = [];

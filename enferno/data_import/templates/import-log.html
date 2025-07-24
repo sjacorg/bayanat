@@ -220,7 +220,7 @@
         },
         methods: {
             fetchRelationInfo() {
-                axios.get('/admin/api/relation/info')
+                api.get('/admin/api/relation/info')
                     .then(response => {
                         this.itobInfo = response.data.itobInfo;
                         this.itoaInfo = response.data.itoaInfo;
@@ -241,7 +241,7 @@
                 this.loading = true;
                 let url = `/import/api/imports/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
 
-                axios.post(url, {
+                api.post(url, {
                     q: this.q,
                     options: this.options
                 }).then(response => {
@@ -268,7 +268,7 @@
 
                 this.logLoader = true;
                 this.logDialog = true;
-                axios.get(`/import/api/imports/${item.id}`).then(response => {
+                api.get(`/import/api/imports/${item.id}`).then(response => {
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
@@ -282,7 +282,7 @@
             showLog(id) {
                 this.logLoader = true;
                 this.logDialog = true;
-                axios.get(`/import/api/imports/${id}`).then(response => {
+                api.get(`/import/api/imports/${id}`).then(response => {
                     this.eitem = response.data;
                 }).catch(error => {
                     this.logDialog = false;
@@ -297,7 +297,7 @@
             },
 
             previewItem(endpoint) {
-                axios.get(endpoint).then(res => {
+                api.get(endpoint).then(res => {
                     this.pitem = res.data;
                     this.preview = true;
                 })

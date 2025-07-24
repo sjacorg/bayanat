@@ -332,7 +332,7 @@ def api_label_create(
             data={"item": label.to_dict(mode=mode)},
         )
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/label/<int:id>")
@@ -386,7 +386,7 @@ def api_label_delete(
         )
         return HTTPResponse.success(message=f"Deleted Label #{label.id}", status=200)
     else:
-        return HTTPResponse.error("Error deleting Label", status=417)
+        return HTTPResponse.error("Error deleting Label", status=500)
 
 
 @admin.post("/api/label/import/")
@@ -480,7 +480,7 @@ def api_eventtype_create(
             message=f"Created Event #{eventtype.id}", data={"item": eventtype.to_dict()}
         )
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/eventtype/<int:id>")
@@ -512,7 +512,7 @@ def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
         )
         return HTTPResponse.success(message=f"Saved Event #{eventtype.id}")
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/eventtype/<int:id>")
@@ -543,7 +543,7 @@ def api_eventtype_delete(
         )
         return HTTPResponse.success(message=f"Deleted Event Type #{eventtype.id}")
     else:
-        return HTTPResponse.error("Error deleting Event Type", status=417)
+        return HTTPResponse.error("Error deleting Event Type", status=500)
 
 
 @admin.post("/api/eventtype/import/")
@@ -622,7 +622,7 @@ def api_potentialviolation_create(
             data={"item": potentialviolation.to_dict()},
         )
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/potentialviolation/<int:id>")
@@ -653,7 +653,7 @@ def api_potentialviolation_update(id: t.id, validated_data: dict) -> Response:
         )
         return HTTPResponse.success(message=f"Saved Potential Violation #{potentialviolation.id}")
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/potentialviolation/<int:id>")
@@ -684,7 +684,7 @@ def api_potentialviolation_delete(
         )
         return HTTPResponse.success(message=f"Deleted Potential Violation #{potentialviolation.id}")
     else:
-        return HTTPResponse.error("Error deleting Potential Violation", status=417)
+        return HTTPResponse.error("Error deleting Potential Violation", status=500)
 
 
 @admin.post("/api/potentialviolation/import/")
@@ -763,7 +763,7 @@ def api_claimedviolation_create(
             data={"item": claimedviolation.to_dict()},
         )
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/claimedviolation/<int:id>")
@@ -795,7 +795,7 @@ def api_claimedviolation_update(id: t.id, validated_data: dict) -> Response:
         )
         return HTTPResponse.success(message=f"Saved Claimed Violation #{claimedviolation.id}")
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/claimedviolation/<int:id>")
@@ -826,7 +826,7 @@ def api_claimedviolation_delete(
         )
         return HTTPResponse.success(message=f"Deleted Claimed Violation #{claimedviolation.id}")
     else:
-        return HTTPResponse.error("Error deleting Claimed Violation", status=417)
+        return HTTPResponse.error("Error deleting Claimed Violation", status=500)
 
 
 @admin.post("/api/claimedviolation/import/")
@@ -923,7 +923,7 @@ def api_source_create(
             message=f"Created Source #{source.id}", data={"item": source.to_dict()}
         )
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/source/<int:id>")
@@ -955,7 +955,7 @@ def api_source_update(id: t.id, validated_data: dict) -> Response:
         )
         return HTTPResponse.success(message=f"Saved Source #{source.id}")
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/source/<int:id>")
@@ -986,7 +986,7 @@ def api_source_delete(
         )
         return HTTPResponse.success(message=f"Deleted Source #{source.id}")
     else:
-        return HTTPResponse.error("Error deleting Source", status=417)
+        return HTTPResponse.error("Error deleting Source", status=500)
 
 
 @admin.post("/api/source/import/")
@@ -1130,7 +1130,7 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message=f"Saved Location #{location.id}")
         else:
-            return HTTPResponse.error("Save Failed", status=417)
+            return HTTPResponse.error("Save Failed", status=500)
     else:
         return HTTPResponse.not_found("Location not found")
 
@@ -1162,7 +1162,7 @@ def api_location_delete(
         )
         return HTTPResponse.success(message=f"Deleted Location #{location.id}")
     else:
-        return HTTPResponse.error("Error deleting Location", status=417)
+        return HTTPResponse.error("Error deleting Location", status=500)
 
 
 @admin.post("/api/location/import/")
@@ -1279,7 +1279,7 @@ def api_location_admin_level_create(
         admin_level.code = max_code + 1
     elif admin_level.code != max_code + 1:
         return HTTPResponse.error(
-            "Code must be unique and one more than the highest code", status=417
+            "Code must be unique and one more than the highest code", status=400
         )
 
     if admin_level.save():
@@ -1295,7 +1295,7 @@ def api_location_admin_level_create(
             data={"item": admin_level.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/location-admin-level/<int:id>")
@@ -1315,7 +1315,7 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
     admin_level = LocationAdminLevel.query.get(id)
     if admin_level:
         if validated_data["item"]["code"] != admin_level.code:
-            return HTTPResponse.error("Cannot change the code of a level", status=417)
+            return HTTPResponse.error("Cannot change the code of a level", status=400)
         admin_level.from_json(validated_data["item"])
         if admin_level.save():
             Activity.create(
@@ -1327,7 +1327,7 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("Location Admin Level not found")
 
@@ -1345,16 +1345,16 @@ def api_location_admin_level_delete(id: t.id) -> Response:
         - success/error string based on the operation result.
     """
     if id in [1, 2, 3] or LocationAdminLevel.query.count() <= 3:
-        return HTTPResponse.error("Cannot delete the first 3 levels", status=417)
+        return HTTPResponse.error("Cannot delete the first 3 levels", status=400)
     admin_level = LocationAdminLevel.query.get(id)
     if admin_level is None:
         return HTTPResponse.not_found("Location Admin Level not found")
     if Location.query.filter(Location.admin_level_id == id).count() > 0:
-        return HTTPResponse.error("Cannot delete a level that is in use by a location", status=417)
+        return HTTPResponse.error("Cannot delete a level that is in use by a location", status=409)
 
     max_code = max([level.code for level in LocationAdminLevel.query.all()])
     if admin_level.code != max_code:
-        return HTTPResponse.error("Only the highest level can be deleted.", status=417)
+        return HTTPResponse.error("Only the highest level can be deleted.", status=400)
 
     if admin_level.delete():
         Activity.create(
@@ -1366,7 +1366,7 @@ def api_location_admin_level_delete(id: t.id) -> Response:
         )
         return HTTPResponse.success(message=f"Location Admin Level Deleted #{admin_level.id}")
     else:
-        return HTTPResponse.error("Error deleting Location Admin Level", status=417)
+        return HTTPResponse.error("Error deleting Location Admin Level", status=500)
 
 
 @admin.post("/api/location-admin-levels/reorder")
@@ -1380,7 +1380,7 @@ def api_location_admin_levels_reorder(validated_data: dict) -> Response:
     try:
         LocationAdminLevel.reorder(new_order)
     except Exception as e:
-        return HTTPResponse.error(str(e), status=417)
+        return HTTPResponse.error(str(e), status=500)
     return HTTPResponse.success(
         message="Updated, user should regenerate full locations from system settings"
     )
@@ -1449,7 +1449,7 @@ def api_location_type_create(
             data={"item": location_type.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/location-type/<int:id>")
@@ -1480,7 +1480,7 @@ def api_location_type_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("Location Type not found")
 
@@ -1513,7 +1513,7 @@ def api_location_type_delete(
         )
         return HTTPResponse.success(message=f"Location Type Deleted #{location_type.id}")
     else:
-        return HTTPResponse.error("Error deleting Location Type", status=417)
+        return HTTPResponse.error("Error deleting Location Type", status=500)
 
 
 @admin.route("/api/countries/", methods=["GET", "POST"])
@@ -1580,7 +1580,7 @@ def api_country_create(
             message=f"Item created successfully ID #{country.id}", data={"item": country.to_dict()}
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/country/<int:id>")
@@ -1611,7 +1611,7 @@ def api_country_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("Country not found")
 
@@ -1645,7 +1645,7 @@ def api_country_delete(
         )
         return HTTPResponse.success(message=f"Country Deleted #{country.id}")
     else:
-        return HTTPResponse.error("Error deleting Country", status=417)
+        return HTTPResponse.error("Error deleting Country", status=500)
 
 
 @admin.route("/api/ethnographies/", methods=["GET", "POST"])
@@ -1712,7 +1712,7 @@ def api_ethnography_create(
             data={"item": ethnography.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/ethnography/<int:id>")
@@ -1743,7 +1743,7 @@ def api_ethnography_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("Ethnography not found")
 
@@ -1777,7 +1777,7 @@ def api_ethnography_delete(
         )
         return HTTPResponse.success(message=f"Ethnography Deleted #{ethnography.id}")
     else:
-        return HTTPResponse.error("Error deleting Ethnography", status=417)
+        return HTTPResponse.error("Error deleting Ethnography", status=500)
 
 
 @admin.route("/api/dialects/", methods=["GET", "POST"])
@@ -1840,7 +1840,7 @@ def api_dialect_create(
             message=f"Item created successfully ID #{dialect.id}", data={"item": dialect.to_dict()}
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/dialect/<int:id>")
@@ -1871,7 +1871,7 @@ def api_dialect_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("Dialect not found")
 
@@ -1905,7 +1905,7 @@ def api_dialect_delete(
         )
         return HTTPResponse.success(message=f"Dialect Deleted #{dialect.id}")
     else:
-        return HTTPResponse.error("Error deleting Dialect", status=417)
+        return HTTPResponse.error("Error deleting Dialect", status=500)
 
 
 @admin.route("/api/idnumbertypes/", methods=["GET", "POST"])
@@ -1969,7 +1969,7 @@ def api_id_number_type_create(
             data={"item": id_number_type.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/idnumbertype/<int:id>")
@@ -2000,7 +2000,7 @@ def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("ID Number Type not found")
 
@@ -2043,7 +2043,7 @@ def api_id_number_type_delete(
         )
         return HTTPResponse.success(message=f"ID Number Type Deleted #{id_number_type.id}")
     else:
-        return HTTPResponse.error("Error deleting ID Number Type", status=417)
+        return HTTPResponse.error("Error deleting ID Number Type", status=500)
 
 
 @admin.route("/api/atoainfos/", methods=["GET", "POST"])
@@ -2085,7 +2085,7 @@ def api_atoainfo_create(
     atoainfo.from_json(validated_data["item"])
 
     if not (atoainfo.title and atoainfo.reverse_title):
-        return HTTPResponse.error("Title and Reverse Title are required.", status=417)
+        return HTTPResponse.error("Title and Reverse Title are required.", status=400)
 
     if atoainfo.save():
         Activity.create(
@@ -2100,7 +2100,7 @@ def api_atoainfo_create(
             data={"item": atoainfo.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/atoainfo/<int:id>")
@@ -2131,7 +2131,7 @@ def api_atoainfo_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("AtoaInfo not found")
 
@@ -2165,7 +2165,7 @@ def api_atoainfo_delete(
         )
         return HTTPResponse.success(message=f"AtoaInfo Deleted #{atoainfo.id}")
     else:
-        return HTTPResponse.error("Error deleting Atoa Info", status=417)
+        return HTTPResponse.error("Error deleting Atoa Info", status=500)
 
 
 @admin.route("/api/atobinfos/", methods=["GET", "POST"])
@@ -2219,7 +2219,7 @@ def api_atobinfo_create(
             data={"item": atobinfo.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/atobinfo/<int:id>")
@@ -2250,7 +2250,7 @@ def api_atobinfo_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("AtobInfo not found")
 
@@ -2284,7 +2284,7 @@ def api_atobinfo_delete(
         )
         return HTTPResponse.success(message=f"AtobInfo Deleted #{atobinfo.id}")
     else:
-        return HTTPResponse.error("Error deleting Atob Info", status=417)
+        return HTTPResponse.error("Error deleting Atob Info", status=500)
 
 
 @admin.route("/api/btobinfos/", methods=["GET", "POST"])
@@ -2338,7 +2338,7 @@ def api_btobinfo_create(
             data={"item": btobinfo.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/btobinfo/<int:id>")
@@ -2369,7 +2369,7 @@ def api_btobinfo_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("BtobInfo not found")
 
@@ -2403,7 +2403,7 @@ def api_btobinfo_delete(
         )
         return HTTPResponse.success(message=f"BtobInfo Deleted #{btobinfo.id}")
     else:
-        return HTTPResponse.error("Error deleting Btob Info", status=417)
+        return HTTPResponse.error("Error deleting Btob Info", status=500)
 
 
 @admin.route("/api/itoainfos/", methods=["GET", "POST"])
@@ -2457,7 +2457,7 @@ def api_itoainfo_create(
             data={"item": itoainfo.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/itoainfo/<int:id>")
@@ -2488,7 +2488,7 @@ def api_itoainfo_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("ItoaInfo not found")
 
@@ -2522,7 +2522,7 @@ def api_itoainfo_delete(
         )
         return HTTPResponse.success(message=f"ItoaInfo Deleted #{itoainfo.id}")
     else:
-        return HTTPResponse.error("Error deleting Itoa Info", status=417)
+        return HTTPResponse.error("Error deleting Itoa Info", status=500)
 
 
 @admin.route("/api/itobinfos/", methods=["GET", "POST"])
@@ -2576,7 +2576,7 @@ def api_itobinfo_create(
             data={"item": itobinfo.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/itobinfo/<int:id>")
@@ -2607,7 +2607,7 @@ def api_itobinfo_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("ItobInfo not found")
 
@@ -2637,7 +2637,7 @@ def api_itobinfo_delete(
         )
         return HTTPResponse.success(message=f"ItobInfo Deleted #{itobinfo.id}")
     else:
-        return HTTPResponse.error("Error deleting Itob Info", status=417)
+        return HTTPResponse.error("Error deleting Itob Info", status=500)
 
 
 @admin.route("/api/itoiinfos/", methods=["GET", "POST"])
@@ -2691,7 +2691,7 @@ def api_itoiinfo_create(
             data={"item": itoiinfo.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/itoiinfo/<int:id>")
@@ -2722,7 +2722,7 @@ def api_itoiinfo_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("ItoiInfo not found")
 
@@ -2756,7 +2756,7 @@ def api_itoiinfo_delete(
         )
         return HTTPResponse.success(message=f"ItoiInfo Deleted #{itoiinfo.id}")
     else:
-        return HTTPResponse.error("Error deleting Itoi Info", status=417)
+        return HTTPResponse.error("Error deleting Itoi Info", status=500)
 
 
 @admin.route("/api/mediacategories/", methods=["GET", "POST"])
@@ -2810,7 +2810,7 @@ def api_mediacategory_create(
             data={"item": mediacategory.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/mediacategory/<int:id>")
@@ -2841,7 +2841,7 @@ def api_mediacategory_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("MediaCategory not found")
 
@@ -2875,7 +2875,7 @@ def api_mediacategory_delete(
         )
         return HTTPResponse.success(message=f"MediaCategory Deleted #{mediacategory.id}")
     else:
-        return HTTPResponse.error("Error deleting Media Category", status=417)
+        return HTTPResponse.error("Error deleting Media Category", status=500)
 
 
 @admin.route("/api/geolocationtypes/", methods=["GET", "POST"])
@@ -2929,7 +2929,7 @@ def api_geolocationtype_create(
             data={"item": geolocationtype.to_dict()},
         )
     else:
-        return HTTPResponse.error("Creation failed.", status=417)
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/geolocationtype/<int:id>")
@@ -2960,7 +2960,7 @@ def api_geolocationtype_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message="Updated")
         else:
-            return HTTPResponse.error("Error saving item", status=417)
+            return HTTPResponse.error("Error saving item", status=500)
     else:
         return HTTPResponse.not_found("GeoLocationType not found")
 
@@ -2994,7 +2994,7 @@ def api_geolocationtype_delete(
         )
         return HTTPResponse.success(message=f"GeoLocationType Deleted #{geolocationtype.id}")
     else:
-        return HTTPResponse.error("Error deleting GeoLocation Type", status=417)
+        return HTTPResponse.error("Error deleting GeoLocation Type", status=500)
 
 
 @admin.route("/api/relation/info")
@@ -3130,7 +3130,7 @@ def api_bulletin_create(
             message=f"Created Bulletin #{bulletin.id}", data={"item": bulletin.to_dict(mode=mode)}
         )
     else:
-        return HTTPResponse.error("Error creating Bulletin", status=417)
+        return HTTPResponse.error("Error creating Bulletin", status=500)
 
 
 @admin.put("/api/bulletin/<int:id>")
@@ -3255,7 +3255,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message=f"Bulletin review updated #{bulletin.id}")
         else:
-            return HTTPResponse.error(f"Error saving Bulletin #{id}", status=417)
+            return HTTPResponse.error(f"Error saving Bulletin #{id}", status=500)
     else:
         return HTTPResponse.not_found("Bulletin not found")
 
@@ -3293,7 +3293,7 @@ def api_bulletin_bulk_update(
         rds.expire(key, 60 * 60 * 3)
         return HTTPResponse.success(message="Bulk update queued successfully")
     else:
-        return HTTPResponse.error("No items selected, or nothing to update", status=417)
+        return HTTPResponse.error("No items selected, or nothing to update", status=400)
 
 
 # get one bulletin
@@ -3719,7 +3719,7 @@ def api_medias_upload() -> Response:
     """
     file = request.files.get("file")
     if not file:
-        return HTTPResponse.error("Invalid request params", status=417)
+        return HTTPResponse.error("Invalid request params", status=400)
 
     # normal uploads by DA or Admin users
     allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
@@ -3924,7 +3924,7 @@ def api_inline_medias_upload() -> Response:
         return HTTPResponse.success(data=response)
     except Exception as e:
         logger.error(e, exc_info=True)
-        return HTTPResponse.error("Request Failed", status=417)
+        return HTTPResponse.error("Request Failed", status=500)
 
 
 @admin.route("/api/serve/inline/<filename>")
@@ -3984,7 +3984,7 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
         )
         return HTTPResponse.success(message=f"Media {id} updated")
     else:
-        return HTTPResponse.error("Error updating Media", status=417)
+        return HTTPResponse.error("Error updating Media", status=500)
 
 
 # Actor routes
@@ -4099,7 +4099,7 @@ def api_actor_create(
             data={"item": actor.to_dict(mode=mode)},
         )
     else:
-        return HTTPResponse.error("Error creating Actor", status=417)
+        return HTTPResponse.error("Error creating Actor", status=500)
 
 
 # update actor endpoint
@@ -4157,7 +4157,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message=f"Saved Actor #{actor.id}")
         else:
-            return HTTPResponse.error(f"Error saving Actor #{id}", status=417)
+            return HTTPResponse.error(f"Error saving Actor #{id}", status=500)
     else:
         return HTTPResponse.not_found("Actor not found")
 
@@ -4216,7 +4216,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message=f"Actor review updated #{id}")
         else:
-            return HTTPResponse.error(f"Error saving Actor #{id}'s Review", status=417)
+            return HTTPResponse.error(f"Error saving Actor #{id}'s Review", status=500)
     else:
         return HTTPResponse.not_found("Actor not found")
 
@@ -4255,7 +4255,7 @@ def api_actor_bulk_update(
         rds.expire(key, 60 * 60 * 3)
         return HTTPResponse.success(message="Bulk update queued successfully.")
     else:
-        return HTTPResponse.error("No items selected, or nothing to update", status=417)
+        return HTTPResponse.error("No items selected, or nothing to update", status=400)
 
 
 # get one actor
@@ -4628,7 +4628,7 @@ def api_user_sessions(id: int) -> Any:
         return HTTPResponse.success(data={"items": sessions_data, "more": more})
 
     except Exception as e:
-        return HTTPResponse.error("Expectation failed", status=417, errors=[str(e)])
+        return HTTPResponse.error("Server error", status=500, errors=[str(e)])
 
 
 @admin.delete("/api/session/logout")
@@ -4765,11 +4765,11 @@ def api_user_create(
 
     exists = User.query.filter(User.username == username).first()
     if len(username) < 4:
-        return HTTPResponse.error("Error, username too short", status=417)
+        return HTTPResponse.error("Error, username too short", status=400)
     if len(username) > 32:
-        return HTTPResponse.error("Error, username too long", status=417)
+        return HTTPResponse.error("Error, username too long", status=400)
     if exists:
-        return HTTPResponse.error("Error, username already exists", status=417)
+        return HTTPResponse.error("Error, username already exists", status=409)
     user = User()
     user.fs_uniquifier = uuid4().hex
     user.from_json(u)
@@ -4784,7 +4784,7 @@ def api_user_create(
             data={"item": user.to_dict()},
         )
     else:
-        return HTTPResponse.error("Error creating user", status=417)
+        return HTTPResponse.error("Error creating user", status=500)
 
 
 @admin.post("/api/checkuser/")
@@ -4804,21 +4804,21 @@ def api_user_check(
     """
     data = validated_data.get("item")
     if not data:
-        return HTTPResponse.error("Please select a username", status=417)
+        return HTTPResponse.error("Please select a username", status=400)
 
     # validate illegal charachters
     uclean = bleach.clean(data.strip(), strip=True)
     if uclean != data:
-        return HTTPResponse.error("Illegal characters detected", status=417)
+        return HTTPResponse.error("Illegal characters detected", status=400)
 
     # validate disallowed charachters
     cats = [unicodedata.category(c)[0] for c in data]
     if any([cat not in ["L", "N"] for cat in cats]):
-        return HTTPResponse.error("Disallowed characters detected", status=417)
+        return HTTPResponse.error("Disallowed characters detected", status=400)
 
     u = User.query.filter(User.username == data).first()
     if u:
-        return HTTPResponse.error("Username already exists", status=417)
+        return HTTPResponse.error("Username already exists", status=409)
     else:
         return HTTPResponse.success(message="Username ok")
 
@@ -4854,7 +4854,7 @@ def api_user_update(
             )
             return HTTPResponse.success(message=f"Saved User {user.id} {user.name}")
         else:
-            return HTTPResponse.error(f"Error saving User {user.id} {user.name}", status=417)
+            return HTTPResponse.error(f"Error saving User {user.id} {user.name}", status=500)
     else:
         return HTTPResponse.not_found("User not found")
 
@@ -4959,7 +4959,7 @@ def api_user_delete(
         )
         return HTTPResponse.success(message="Deleted")
     else:
-        return HTTPResponse.error("Error deleting User", status=417)
+        return HTTPResponse.error("Error deleting User", status=500)
 
 
 # Roles routes
@@ -5029,7 +5029,7 @@ def api_role_create(
         return HTTPResponse.created(message="Created", data={"item": role.to_dict()})
 
     else:
-        return HTTPResponse.error("Save Failed", status=417)
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/role/<int:id>")
@@ -5095,7 +5095,7 @@ def api_role_delete(
         )
         return HTTPResponse.success(message="Deleted")
     else:
-        return HTTPResponse.error("Error deleting Role", status=417)
+        return HTTPResponse.error("Error deleting Role", status=500)
 
 
 @admin.post("/api/role/import/")
@@ -5229,7 +5229,7 @@ def api_incident_create(
             data={"item": incident.to_dict(mode=mode)},
         )
     else:
-        return HTTPResponse.error("Error creating Incident", status=417)
+        return HTTPResponse.error("Error creating Incident", status=500)
 
 
 # update incident endpoint
@@ -5289,7 +5289,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message=f"Saved Incident #{id}")
         else:
-            return HTTPResponse.error(f"Error saving Incident {id}", status=417)
+            return HTTPResponse.error(f"Error saving Incident {id}", status=500)
     else:
         return HTTPResponse.not_found("Incident not found")
 
@@ -5347,7 +5347,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
             )
             return HTTPResponse.success(message=f"Bulletin review updated #{id}")
         else:
-            return HTTPResponse.error(f"Error saving Incident #{id}'s Review", status=417)
+            return HTTPResponse.error(f"Error saving Incident #{id}'s Review", status=500)
     else:
         return HTTPResponse.not_found("Incident not found")
 
@@ -5388,7 +5388,7 @@ def api_incident_bulk_update(
         rds.expire(key, 60 * 60 * 3)
         return HTTPResponse.success(message="Bulk update queued successfully")
     else:
-        return HTTPResponse.error("No items selected, or nothing to update", status=417)
+        return HTTPResponse.error("No items selected, or nothing to update", status=400)
 
 
 # get one incident
@@ -5499,7 +5499,7 @@ def api_incident_import() -> Response:
         Incident.import_csv(request.files.get("csv"))
         return HTTPResponse.success(message="Success")
     else:
-        return HTTPResponse.error("Error", status=417)
+        return HTTPResponse.error("Error", status=500)
 
 
 # Activity routes
@@ -5655,7 +5655,7 @@ def api_query_create() -> Response:
             message="Query successfully saved", data={"item": query.to_dict()}
         )
     else:
-        return HTTPResponse.error("Error parsing query data", status=417)
+        return HTTPResponse.error("Error parsing query data", status=400)
 
 
 @admin.put("/api/query/<int:id>")
@@ -5673,7 +5673,7 @@ def api_query_update(
         - success/error string based on the operation result.
     """
     if not (q := request.json.get("q")):
-        return HTTPResponse.error("q parameter not provided", status=417)
+        return HTTPResponse.error("q parameter not provided", status=400)
 
     query = Query.query.get(id)
 
@@ -5867,7 +5867,7 @@ def api_config_write(
     if ConfigManager.write_config(conf):
         return HTTPResponse.success(message="Configuration Saved Successfully")
     else:
-        return HTTPResponse.error("Unable to Save Configuration", status=417)
+        return HTTPResponse.error("Unable to Save Configuration", status=500)
 
 
 @admin.post("/api/reload/")
@@ -5990,7 +5990,7 @@ def api_logs() -> Response:
             return send_from_directory(os.path.abspath(log_dir), log_file)
         except Exception as e:
             logger.error(f"Error sending log file: {e}", exc_info=True)
-            return HTTPResponse.error("Error sending log file", status=417)
+            return HTTPResponse.error("Error sending log file", status=500)
     else:
         return HTTPResponse.not_found("Log file not found")
 

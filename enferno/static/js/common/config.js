@@ -168,10 +168,29 @@ const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 // Set axios defaults
 axios.defaults.headers.common['Accept'] = 'application/json';
 
-//global axios error handler - can be used to define global exception handling on ajax failures
+// Centralized API service - handles standardized responses transparently
+const api = {
+    get: axios.get.bind(axios),
+    post: axios.post.bind(axios), 
+    put: axios.put.bind(axios),
+    delete: axios.delete.bind(axios)
+};
+
+//global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
-        // Do something with response data
+        // Handle standardized JSON responses - flatten data.data to just data
+        if (response?.data && typeof response.data === 'object' && 'data' in response.data) {
+            // Create new response object with flattened data structure
+            const flattenedResponse = {
+                ...response,
+                data: {
+                    ...response.data.data, // Flatten data.items -> items, data.total -> total, etc.
+                    message: response.data.message // Keep message available if needed
+                }
+            };
+            return flattenedResponse;
+        }
         return response;
     },
     function (error) {
@@ -531,7 +550,7 @@ function getBulletinLocations(ids) {
     promises = [];
     ids.forEach((x) => {
         promises.push(
-            axios.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
+            api.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
                 return aggregateBulletinLocations(response.data);
             }),
         );

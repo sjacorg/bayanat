@@ -243,7 +243,7 @@
             },
 
             previewItem(endpoint) {
-                axios.get(endpoint).then(res => {
+                api.get(endpoint).then(res => {
                     this.pitem = res.data;
                     this.preview = true;
 
@@ -256,7 +256,7 @@
 
             process() {
                 this.loading = true;
-                axios.post('/deduplication/api/process').then(res => {
+                api.post('/deduplication/api/process').then(res => {
                     this.showSnack(res.data);
                     this.startTime = new Date();
                     this.processed = 0;
@@ -268,7 +268,7 @@
 
             stop() {
                 this.loading = true;
-                axios.post('/deduplication/api/stop').then(res => {
+                api.post('/deduplication/api/stop').then(res => {
                     this.showSnack(res.data);
                     }).finally(() => {
                         this.loading = false;
@@ -290,7 +290,7 @@
                 this.options = options || { ...this.options, page: 1 };
 
                 this.loading = true;
-                axios.get(`/deduplication/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
+                api.get(`/deduplication/api/deduplication/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`).then(res => {
                     this.items = res.data.items;
                     this.itemsLength = res.data.total;
                     if (this.pending) {

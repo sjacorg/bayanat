@@ -207,7 +207,7 @@
             },
             methods: {
                 fetchRelationInfo() {
-                    axios.get('/admin/api/relation/info')
+                    api.get('/admin/api/relation/info')
                         .then(response => {
                             this.itobInfo = response.data.itobInfo;
                             this.itoaInfo = response.data.itoaInfo;
@@ -243,7 +243,7 @@
                 showExport(id) {
                     this.exportLoader = true;
                     this.exportDrawer = true;
-                    axios.get(`/export/api/export/${id}`).then(response => {
+                    api.get(`/export/api/export/${id}`).then(response => {
                         this.eitem = response.data;
                     }).catch(error => {
                         this.exportDrawer = false;
@@ -264,7 +264,7 @@
                         action: 'approve'
                     }
 
-                    axios.put('/export/api/exports/status', data).then(res => {
+                    api.put('/export/api/exports/status', data).then(res => {
                         // close drawer
                         this.exportDrawer = false;
                         this.refresh();
@@ -283,7 +283,7 @@
                         action: 'reject'
                     }
 
-                    axios.put('/export/api/exports/status', data).then(res => {
+                    api.put('/export/api/exports/status', data).then(res => {
                         // close drawer
                         this.exportDrawer = false;
                         this.refresh();
@@ -305,7 +305,7 @@
                         expiry: utc_expiry
                     }
 
-                    axios.put('/export/api/exports/expiry', data).then(res => {
+                    api.put('/export/api/exports/expiry', data).then(res => {
                         // close drawer
                         this.exportDrawer = false;
                         this.refresh();
@@ -316,7 +316,7 @@
                 },
 
                 previewItem(endpoint) {
-                    axios.get(endpoint).then(res => {
+                    api.get(endpoint).then(res => {
                         this.pitem = res.data;
                         this.preview = true;
                     })
@@ -330,7 +330,7 @@
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
 
-                    axios.post('/export/api/exports/', {
+                    api.post('/export/api/exports/', {
                         page: this.options.page,
                         per_page: this.options.itemsPerPage
                     }).then(res => {

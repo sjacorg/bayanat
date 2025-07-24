@@ -699,7 +699,7 @@
 
                 // populate roles for advanced search for admins
                 {% if current_user.has_role('Admin') %}
-                    axios.get('/admin/api/roles/').then(res => {
+                    api.get('/admin/api/roles/').then(res => {
                         this.roles = res.data.items;
                     }).catch(e => {
                         this.roles = [];
@@ -767,7 +767,7 @@
 
             methods: {
                 fetchRelationInfo() {
-                    axios.get('/admin/api/relation/info')
+                    api.get('/admin/api/relation/info')
                         .then(response => {
                             this.itobInfo = response.data.itobInfo;
                             this.itoaInfo = response.data.itoaInfo;
@@ -794,7 +794,7 @@
                 },
 
                 checkGraphStatus: function () {
-                    axios.get('/admin/api/graph/status')
+                    api.get('/admin/api/graph/status')
                         .then(res => {
                             if (res.data.status == 'done') {
                                 clearInterval(this.graphTimer);
@@ -812,7 +812,7 @@
 
                 visualizeResults() {
                     this.visualizeLoading = true;
-                    axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                    api.post('/admin/api/graph/visualize', {q: this.search}, {
                         params: {
                             type: 'incident'
                         }
@@ -828,7 +828,7 @@
 
                 exportRequest() {
                     this.loading = true;
-                    axios.post(`/export/api/incident/export`, {
+                    api.post(`/export/api/incident/export`, {
                         items: this.selected,
                         config: this.exportConfig
                     }).then(response => {
@@ -865,7 +865,7 @@
                 selfAssign() {
 
 
-                    axios.put(`/admin/api/incident/assign/${this.assignIncident.id}`, {incident: this.assignIncident}).then(res => {
+                    api.put(`/admin/api/incident/assign/${this.assignIncident.id}`, {incident: this.assignIncident}).then(res => {
                         this.showSnack("{{_('Incident assigned successfully.')}}")
                         this.refresh()
 
@@ -897,7 +897,7 @@
 
                 previewItem(endpoint) {
 
-                    axios.get(endpoint).then(res => {
+                    api.get(endpoint).then(res => {
                         this.pitem = res.data;
                         this.preview = true;
 
@@ -907,7 +907,7 @@
 
                 bulkStatus() {
 
-                    axios.get('/admin/api/bulk/status/?type=incident').then(res => {
+                    api.get('/admin/api/bulk/status/?type=incident').then(res => {
                         this.jobs = res.data;
                         if (!this.jobs.length) {
                             clearInterval(this.bulkTimer);
@@ -926,7 +926,7 @@
 
                 bulk_update() {
                     this.loading = true;
-                    axios.put(`/admin/api/incident/bulk/`, {
+                    api.put(`/admin/api/incident/bulk/`, {
                         items: this.selected,
                         bulk: this.bulk
                     }).then(response => {
@@ -987,7 +987,7 @@
                     this.loading = true;
                     const startTime = new Date();
 
-                    axios.post(`/admin/api/incidents/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
+                    api.post(`/admin/api/incidents/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`, {q: this.search}).then(response => {
                         const endTime = new Date();
 
                         this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
@@ -1028,7 +1028,7 @@
 
 
                 loadSearchesFromAPI(selectLast = false) {
-                    axios.get('/admin/api/queries/', {
+                    api.get('/admin/api/queries/', {
                         params: {
                             type: 'incident'
                         }
@@ -1049,7 +1049,7 @@
                 saveSearch() {
                     const newSearch = {q: this.search, name: this.queryName, type: 'incident'};
 
-                    axios.post('/admin/api/query/', newSearch)
+                    api.post('/admin/api/query/', newSearch)
                         .then(res => {
                             this.showSnack(res.data);
                             this.saveQueryDialog = false;
@@ -1063,7 +1063,7 @@
 
 
                 updateSearch() {
-                    axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
+                    api.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                         .then(res => {
                             this.showSnack(res.data);
                         });
@@ -1071,7 +1071,7 @@
 
 
                 deleteSearch(id) {
-                    axios.delete('/admin/api/query/' + id)
+                    api.delete('/admin/api/query/' + id)
                         .then(res => {
                             this.showSnack(res.data);
                             this.searches = this.searches.filter(item => item.id !== id);
@@ -1135,7 +1135,7 @@
                 showIncident(id) {
                     this.incidentLoader = true;
                     this.incidentDrawer = true;
-                    axios.get(`/admin/api/incident/${id}?mode=3`).then(response => {
+                    api.get(`/admin/api/incident/${id}?mode=3`).then(response => {
                         this.incident = response.data;
                     }).catch(error => {
                         this.incidentDrawer = false;
@@ -1147,7 +1147,7 @@
                 searchUsers: debounce(function (evt) {
                     this.searchLoading[evt.target.dataset.loader] = true;
 
-                    axios.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
+                    api.get(`/admin/api/users/?q=${evt.target.value}`).then(response => {
                         this.users = response.data.items;
                         this.searchLoading[evt.target.dataset.loader] = false;
                     });
@@ -1274,7 +1274,7 @@
                 addReview(item) {
                     this.loading = true;
                     this.reviewDialog = true;
-                    axios.get(`/admin/api/incident/${item.id}`).then(response => {
+                    api.get(`/admin/api/incident/${item.id}`).then(response => {
                         this.loading = false;
                         this.$nextTick(() => {
                             this.reviewItem = response.data;
@@ -1290,7 +1290,7 @@
 
                 saveReview() {
 
-                    axios.put(`/admin/api/incident/review/${this.reviewItem.id}`, {
+                    api.put(`/admin/api/incident/review/${this.reviewItem.id}`, {
                         item: this.reviewItem
                     })
                         .then(response => {
@@ -1305,7 +1305,7 @@
                     // UI feedback
                     this.br_loading = true;
                     // pass page=0 to load all relations
-                    axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=bulletin&page=0`).then(res => {
+                    api.get(`/admin/api/incident/relations/${this.editedItem.id}?class=bulletin&page=0`).then(res => {
 
                         this.editedItem.bulletin_relations = res.data.items;
                         // update UI state / show related items
@@ -1326,7 +1326,7 @@
                     //UI feedback
                     this.ar_loading = true;
                     // pass page=0 to load all relations
-                    axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=actor&page=0`).then(res => {
+                    api.get(`/admin/api/incident/relations/${this.editedItem.id}?class=actor&page=0`).then(res => {
 
                         this.editedItem.actor_relations = res.data.items;
                         // update UI state / show related items
@@ -1347,7 +1347,7 @@
                     //UI Feedback
                     this.ir_loading = true;
                     // pass page=0 to load all relations
-                    axios.get(`/admin/api/incident/relations/${this.editedItem.id}?class=incident&page=0`).then(res => {
+                    api.get(`/admin/api/incident/relations/${this.editedItem.id}?class=incident&page=0`).then(res => {
 
                         this.editedItem.incident_relations = res.data.items;
                         // update UI state / show related items
@@ -1381,7 +1381,7 @@
                         this.handleStatus(item);
                     } else {
                         this.loading = true;
-                        axios.get(`/admin/api/incident/${item.id}?mode=3`).then(response => {
+                        api.get(`/admin/api/incident/${item.id}?mode=3`).then(response => {
                             this.dialog = true;
                             this.$nextTick(() => {
                                 this.loading = false
@@ -1412,7 +1412,7 @@
                         confirm("{{_('Are you sure you want to delete this item?')}}") &&
                         this.items.splice(index, 1);
                     if (cfm) {
-                        axios.delete(`/admin/api/incident/${item.id}`).then(response => {
+                        api.delete(`/admin/api/incident/${item.id}`).then(response => {
                             this.showSnack(response.data);
                             this.refresh();
                         });
@@ -1447,7 +1447,7 @@
                     this.saving = true;
                     if (this.editedItem.id) {
                         //update record
-                        axios.put(`/admin/api/incident/${this.editedItem.id}`, {
+                        api.put(`/admin/api/incident/${this.editedItem.id}`, {
                             item: this.editedItem
                         }).then(response => {
                             this.showSnack(response.data);
@@ -1459,7 +1459,7 @@
                         });
                     } else {
                         //create new record
-                        axios.post("/admin/api/incident/", {
+                        api.post("/admin/api/incident/", {
                             item: this.editedItem
                         }).then(response => {
                             this.items.unshift(response.data.item);

@@ -63,7 +63,7 @@ const globalMixin = {
 
     if (!window.__username__) return;
 
-    axios.get('/settings/load').then(res => {
+    api.get('/settings/load').then(res => {
       this.settings = res.data;
     });
   },
@@ -118,7 +118,7 @@ const globalMixin = {
         },
 
     saveSettings() {
-        axios.put('/settings/save', { settings: this.settings }).then(res => {
+        api.put('/settings/save', { settings: this.settings }).then(res => {
             this.$vuetify.theme.name = this.settings.dark ? 'dark' : 'light';
             this.showSnack('Settings have been saved!');
         }).catch(err => {
