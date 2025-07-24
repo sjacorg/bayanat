@@ -1,5 +1,5 @@
 // common validation rules
-
+let passwordCheckTimeout;
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
@@ -19,6 +19,31 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
+    matchesField: (otherValue, message) => {
+        const defaultMessage = window.translations.fieldsDoNotMatch_;
+        return v => v === otherValue || message || defaultMessage;
+    },
+    checkPassword: ({ onResponse }) => {
+        const defaultMessage = window.translations.passwordTooWeak_;
+        
+      
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(passwordCheckTimeout);
+      
+            passwordCheckTimeout = setTimeout(async () => {
+              try {
+                await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
+                onResponse(true);
+                resolve(true);
+            } catch (err) {
+                onResponse(false);
+                resolve(defaultMessage);
+              }
+            }, 350);
+          });
+        };
+    }
 };
 
 // Helper functions
@@ -184,8 +209,10 @@ axios.interceptors.response.use(
         return response;
     },
     function (error) {
-        const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
-        document.dispatchEvent(globalRequestErrorEvent);
+        if (!error.config?.suppressGlobalErrorHandler) {
+            const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
+            document.dispatchEvent(globalRequestErrorEvent);
+        }
         // Check for session expiration errors (401 Unauthorized)
         if ([401].includes(error?.response?.status)) {
             const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });

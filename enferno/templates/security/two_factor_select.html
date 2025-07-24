@@ -1,61 +1,97 @@
-{% extends 'login-layout.html' %}
-{% block navbar %}{% endblock %}
-{% from "security/_macros.html" import prop_next, render_field_with_errors, render_field %}
+{% extends 'login-layout.html' %} {% block navbar %}{% endblock %} {% from "security/_macros.html"
+import prop_next, render_field_with_errors, render_field %} {% block content %}
+<v-main class="d-flex flex-column align-center justify-center bg-background">
+  <v-card class="mx-auto pa-8 w-100" rounded="lg" style="max-width: 424px">
+    <v-card-title class="text-h4 text-center font-weight-bold px-0 pb-0"
+      >{{ _fsdomain('Select two-factor method') }}</v-card-title
+    >
+    <v-card-subtitle class="text-subtitle-2 text-pre-wrap text-center px-0 pb-4"
+      >{{ _('Available two-factor authentication methods') }}</v-card-subtitle
+    >
 
+    <form
+      action="{{ url_for_security('tf_select') }}{{ prop_next() }}"
+      method="post"
+      name="tf_select"
+      id="tfForm"
+      ref="tfSelectRef"
+    >
+      {{ two_factor_select_form.hidden_tag() }}
 
-{% block content %}
-<v-main class="d-flex flex-column align-center">
+      <v-card-text class="px-0">
+        <div class="d-flex flex-column ga-2">
+          {% for value in two_factor_select_form.which.choices %}
+          <v-btn
+            :variant="selected2fa === '{{ value }}' ? 'flat' : 'outlined'"
+            :color="selected2fa === '{{ value }}' ? 'primary' : 'grey'"
+            block
+            @click.prevent="selectMethod('{{ value }}')"
+            :prepend-icon="'{{ value }}' === 'authenticator' ? 'mdi-lock-check' : 'mdi-fingerprint'"
+          >
+            ${getButtonLabel('{{ value }}')}
+            <v-icon>mdi-chevron-right</v-icon>
+          </v-btn>
+          {% endfor %}
+        </div>
 
+        <!-- Hidden input that actually submits the selected option -->
+        <input type="hidden" name="{{ two_factor_select_form.which.name }}" :value="selected2fa" />
+      </v-card-text>
 
-    <v-card width="770" class="ma-auto">
-        <v-card-text>
-            {% include "security/_messages.html" %}
-        </v-card-text>
+      <v-card-text class="pt-0 pl-0 pr-0"> {% include "security/_messages.html" %}</v-card-text>
 
-        <v-toolbar title="{{ _fsdomain('Select a two factor authentication method') }}"></v-toolbar>
+      <v-card-actions class="pa-0 d-block">
+        <v-btn variant="outlined" block href="{{ url_for_security('mf_recovery') }}" prepend-icon="mdi-lifebuoy">{{ _('Recovery Code')}}</v-btn>
+      </v-card-actions>
+    </form>
+  </v-card>
 
-        <form action="{{ url_for_security('tf_select') }}{{ prop_next() }}" method="post" name="tf_select">
-            <v-card-text>
-            {{ two_factor_select_form.hidden_tag() }}
-            {{ render_field_with_errors(two_factor_select_form.which) }}
-            </v-card-text>
-            
-            <v-card-actions class="pa-4">
-                <v-btn type="submit" color="primary" variant="elevated">Select</v-btn>
-            </v-card-actions>
-        </form>
-        
-    </v-card>
+  <div class="mt-6 w-100" style="max-width: 424px">
+    <v-btn
+      href="{{ url_for_security('login') }}"
+      color="primary"
+      variant="outlined"
+      prepend-icon="mdi-chevron-left"
+      >{{ _('Back') }}</v-btn
+    >
+  </div>
 </v-main>
-{% endblock content %}
+{% endblock content %} {% block css %}
 
+<style></style>
+{% endblock %} {% block js %}
+<script>
+  const { createApp } = Vue;
+  const { createVuetify } = Vuetify;
 
-{% block css %}
+  const vuetify = createVuetify(vuetifyConfig);
 
-    <style>
-
-    </style>
-{% endblock %}
-
-
-{% block js %}
-    <script>
-         const {createApp} = Vue;
-        const {createVuetify} = Vuetify;
-
-        const vuetify = createVuetify(vuetifyConfig);
-
-        const app = createApp({
-
-            data() {
-                return {
-                    activeTab: null,
-                    selectedOption : ''
-                }
-
-            }
+  const app = createApp({
+    delimiters: delimiters,
+    data() {
+      return {
+        selected2fa: '{{ two_factor_select_form.which.data or "" }}',
+      };
+    },
+    methods: {
+      getButtonLabel(category) {
+        switch (category) {
+          case 'webauthn':
+            return "{{ _('Security Key/Passkey')}}";
+          case 'authenticator':
+            return "{{ _('Authenticator')}}";
+          default:
+            return category;
+        }
+      },
+      selectMethod(value) {
+        this.selected2fa = value;
+        this.$nextTick(() => {
+          this.$refs.tfSelectRef.submit();
         });
-        app.use(vuetify).mount('#app');
-    </script>
+      },
+    },
+  });
+  app.use(vuetify).mount('#app');
+</script>
 {% endblock %}
-
