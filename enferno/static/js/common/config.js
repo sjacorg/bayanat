@@ -180,7 +180,7 @@ const api = {
 axios.interceptors.response.use(
     function (response) {
         // Handle standardized JSON responses - flatten data.data to just data
-        if (response?.data && typeof response.data === 'object' && 'data' in response.data && !response?.config?.skipFlattening) {
+        if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data.data) && 'data' in response.data && !response?.config?.skipFlattening) {
             // Create new response object with flattened data structure
             const flattenedResponse = {
                 ...response,
