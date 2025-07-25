@@ -475,12 +475,10 @@
                 logoutAllUserSessions(userId) {
                     if (window.confirm(this.translations.logoutConfirmation_)) {
                         axios
-                            .delete(`/admin/api/user/${this.user.id}/sessions/logout`)
+                            .delete(`/admin/api/user/${userId}/sessions/logout`)
                             .then((response) => {
                                 console.log('All sessions logged out successfully for user ID:', userId);
                                 this.$root.showSnack(this.translations.allSessionsLoggedOut_);
-                                this.resetSessions();
-                                this.fetchSessions();
                             })
                             .catch((err) => {
                                 console.error('Error logging out all sessions for user ID:', userId, err);
