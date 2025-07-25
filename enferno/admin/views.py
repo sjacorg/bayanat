@@ -23,6 +23,8 @@ from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
 import shortuuid
 
+from enferno.admin.constants import Constants
+from enferno.admin.models.Notification import Notification
 import enferno.utils.typing as t
 from enferno.admin.models import (
     Bulletin,
@@ -380,6 +382,13 @@ def api_label_delete(
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Label Deleted",
+            f"Label {label.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Deleted Label #{label.id}", 200
     else:
         return "Error deleting Label", 417
@@ -535,6 +544,13 @@ def api_eventtype_delete(
             eventtype.to_mini(),
             "eventtype",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Event Type Deleted",
+            f"Event Type {eventtype.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Deleted Event Type #{eventtype.id}", 200
     else:
         return "Error deleting Event Type", 417
@@ -672,6 +688,13 @@ def api_potentialviolation_delete(
             Activity.STATUS_SUCCESS,
             potentialviolation.to_mini(),
             "potentialviolation",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Potential Violation Deleted",
+            f"Potential Violation {potentialviolation.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Potential Violation #{potentialviolation.id}", 200
     else:
@@ -811,6 +834,13 @@ def api_claimedviolation_delete(
             Activity.STATUS_SUCCESS,
             claimedviolation.to_mini(),
             "claimedviolation",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Claimed Violation Deleted",
+            f"Claimed Violation {claimedviolation.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Claimed Violation #{claimedviolation.id}", 200
     else:
@@ -969,6 +999,13 @@ def api_source_delete(
             Activity.STATUS_SUCCESS,
             source.to_mini(),
             "source",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Source Deleted",
+            f"Source {source.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Source #{source.id}", 200
     else:
@@ -1143,6 +1180,13 @@ def api_location_delete(
             Activity.STATUS_SUCCESS,
             location.to_mini(),
             "location",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Location Deleted",
+            f"Location {location.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Deleted Location #{location.id}", 200
     else:
@@ -1344,6 +1388,13 @@ def api_location_admin_level_delete(id: t.id) -> Response:
             admin_level.to_mini(),
             "adminlevel",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Location Admin Level Deleted",
+            f"Location Admin Level {admin_level.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Location Admin Level Deleted #{admin_level.id}", 200
     else:
         return "Error deleting Location Admin Level", 417
@@ -1486,6 +1537,13 @@ def api_location_type_delete(
             location_type.to_mini(),
             "locationtype",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Location Type Deleted",
+            f"Location Type {location_type.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Location Type Deleted #{location_type.id}", 200
     else:
         return "Error deleting Location Type", 417
@@ -1616,6 +1674,13 @@ def api_country_delete(
             country.to_mini(),
             "country",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Country Deleted",
+            f"Country {country.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Country Deleted #{country.id}", 200
     else:
         return "Error deleting Country", 417
@@ -1745,6 +1810,13 @@ def api_ethnography_delete(
             ethnography.to_mini(),
             "ethnography",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Ethnography Deleted",
+            f"Ethnography {ethnography.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"Ethnography Deleted #{ethnography.id}", 200
     else:
         return "Error deleting Ethnography", 417
@@ -1870,6 +1942,13 @@ def api_dialect_delete(
             Activity.STATUS_SUCCESS,
             dialect.to_mini(),
             "dialect",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Dialect Deleted",
+            f"Dialect {dialect.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"Dialect Deleted #{dialect.id}", 200
     else:
@@ -2006,6 +2085,13 @@ def api_id_number_type_delete(
             id_number_type.to_mini(),
             "idnumbertype",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ID Number Type Deleted",
+            f"ID Number Type {id_number_type.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"ID Number Type Deleted {id_number_type.id}", 200
     else:
         return "Error deleting ID Number Type", 417
@@ -2125,6 +2211,13 @@ def api_atoainfo_delete(
             atoainfo.to_mini(),
             "atoainfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "AtoaInfo Deleted",
+            f"AtoaInfo {atoainfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"AtoaInfo Deleted #{atoainfo.id}", 200
     else:
         return "Error deleting Atoa Info", 417
@@ -2240,6 +2333,13 @@ def api_atobinfo_delete(
             Activity.STATUS_SUCCESS,
             atobinfo.to_mini(),
             "atobinfo",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "AtobInfo Deleted",
+            f"AtobInfo {atobinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"AtobInfo Deleted #{atobinfo.id}", 200
     else:
@@ -2357,6 +2457,13 @@ def api_btobinfo_delete(
             btobinfo.to_mini(),
             "btobinfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "BtobInfo Deleted",
+            f"BtobInfo {btobinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"BtobInfo Deleted #{btobinfo.id}", 200
     else:
         return "Error deleting Btob Info", 417
@@ -2473,6 +2580,13 @@ def api_itoainfo_delete(
             itoainfo.to_mini(),
             "itoainfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ItoaInfo Deleted",
+            f"ItoaInfo {itoainfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"ItoaInfo Deleted #{itoainfo.id}", 200
     else:
         return "Error deleting Itoa Info", 417
@@ -2584,6 +2698,13 @@ def api_itobinfo_delete(
             Activity.STATUS_SUCCESS,
             itobinfo.to_mini(),
             "itobinfo",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ItobInfo Deleted",
+            f"ItobInfo {itobinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"ItobInfo Deleted #{itobinfo.id}", 200
     else:
@@ -2701,6 +2822,13 @@ def api_itoiinfo_delete(
             itoiinfo.to_mini(),
             "itoiinfo",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "ItoiInfo Deleted",
+            f"ItoiInfo {itoiinfo.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"ItoiInfo Deleted #{itoiinfo.id}", 200
     else:
         return "Error deleting Itoi Info", 417
@@ -2817,6 +2945,13 @@ def api_mediacategory_delete(
             mediacategory.to_mini(),
             "mediacategory",
         )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Media Category Deleted",
+            f"Media Category {mediacategory.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"MediaCategory Deleted #{mediacategory.id}", 200
     else:
         return "Error deleting Media Category", 417
@@ -2932,6 +3067,13 @@ def api_geolocationtype_delete(
             Activity.STATUS_SUCCESS,
             geolocationtype.to_mini(),
             "geolocationtype",
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "GeoLocation Type Deleted",
+            f"GeoLocation Type {geolocationtype.title} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return f"GeoLocationType Deleted #{geolocationtype.id}", 200
     else:
@@ -3065,6 +3207,7 @@ def api_bulletin_create(
             bulletin.to_mini(),
             "bulletin",
         )
+
         # Select json encoding type
         mode = request.args.get("mode", "1")
         return {
@@ -3101,6 +3244,14 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 "bulletin",
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
         if not current_user.has_role("Admin") and current_user != bulletin.assigned_to:
@@ -3111,6 +3262,14 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 request.json,
                 "bulletin",
                 details=f"Unauthorized attempt to update unassigned Bulletin {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update unassigned Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3155,6 +3314,14 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 validated_data,
                 "bulletin",
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3278,6 +3445,14 @@ def api_bulletin_get(
                 bulletin.to_mini(),
                 "bulletin",
                 details=f"Unauthorized attempt to view restricted Bulletin {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to view restricted Bulletin {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -3575,6 +3750,7 @@ def api_medias_chunk() -> Response:
                 details="User attempted to upload unallowed file type.",
             )
             return "This file type is not allowed", 415
+
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -4062,6 +4238,14 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 "actor",
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
         if not current_user.has_role("Admin") and current_user != actor.assigned_to:
@@ -4072,6 +4256,14 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 request.json,
                 "actor",
                 details=f"Unauthorized attempt to update unassigned Actor {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update unassigned Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
         actor = actor.from_json(validated_data["item"])
@@ -4120,6 +4312,14 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 validated_data,
                 "actor",
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -4231,6 +4431,14 @@ def api_actor_get(
                 "actor",
                 details="Unauthorized attempt to view restricted Actor.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to view restricted Actor {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
 
@@ -4257,6 +4465,14 @@ def api_actor_profiles(actor_id: t.id) -> Response:
             actor.to_mini(),
             "actor",
             details="Unauthorized attempt to view restricted Actor profiles.",
+        )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+            "Unauthorized Action",
+            f"Unauthorized attempt to view restricted Actor profiles. User: {current_user.username}",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return HTTPResponse.FORBIDDEN
 
@@ -4712,6 +4928,14 @@ def api_user_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.NEW_USER,
+            "New User Created",
+            f"User {username} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return f"User {username} has been created successfully", 200
     else:
         return "Error creating user", 417
@@ -4782,6 +5006,14 @@ def api_user_update(
                 user.to_mini(),
                 "user",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UPDATE_USER,
+                "User Updated",
+                f"User {user.username} has been updated by {current_user.username} successfully.",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return f"Saved User {user.id} {user.name}", 200
         else:
             return f"Error saving User {user.id} {user.name}", 417
@@ -4832,6 +5064,15 @@ def api_user_force_reset(validated_data: dict) -> Response:
         return Response(message, mimetype="text/plain")
     user.set_security_reset_key()
     message = f"Forced password reset has been set for user {user.username}"
+    # Notify user
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
+        user,
+        "Password Reset",
+        "Your password has been reset. Please change it to continue using the application.",
+        category=Notification.TYPE_SECURITY,
+        is_urgent=True,
+    )
     return Response(message, mimetype="text/plain")
 
 
@@ -4848,6 +5089,15 @@ def api_user_force_reset_all() -> Response:
         # check if user already has a password reset flag
         if not user.security_reset_key:
             user.set_security_reset_key()
+            # Notify user
+            Notification.send_notification_to_user_for_event(
+                Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
+                user,
+                "Password Reset",
+                "Your password has been reset. Please change it to continue using the application.",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
     return "Forced password reset has been set for all users", 200
 
 
@@ -4876,6 +5126,14 @@ def api_user_delete(
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
+        )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "User Deleted",
+            f"User {user.username} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return "Deleted", 200
     else:
@@ -4946,6 +5204,14 @@ def api_role_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.NEW_GROUP,
+            "New Group Created",
+            f"Group {role.name} has been created by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return "Created", 200
 
     else:
@@ -5012,6 +5278,13 @@ def api_role_delete(
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
+        )
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.ITEM_DELETED,
+            "Role Deleted",
+            f"Role {role.name} has been deleted by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
         )
         return "Deleted", 200
     else:
@@ -5179,6 +5452,14 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 "incident",
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
+            )
             return "Restricted Access", 403
 
         if not current_user.has_role("Admin") and current_user != incident.assigned_to:
@@ -5189,6 +5470,14 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 request.json,
                 "incident",
                 details=f"Unauthorized attempt to update unassigned Incident {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update unassigned Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5239,6 +5528,14 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 validated_data,
                 "incident",
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5348,6 +5645,14 @@ def api_incident_get(
                 incident.to_mini(),
                 "incident",
                 details=f"Unauthorized attempt to view restricted Incident {id}.",
+            )
+            # Notify admins
+            Notification.send_notification_to_admins_for_event(
+                Constants.NotificationEvent.UNAUTHORIZED_ACTION,
+                "Unauthorized Action",
+                f"Unauthorized attempt to view restricted Incident {id}. User: {current_user.username}",
+                category=Notification.TYPE_SECURITY,
+                is_urgent=True,
             )
             return "Restricted Access", 403
 
@@ -5784,6 +6089,14 @@ def api_config_write(
     conf = validated_data.get("conf")
 
     if ConfigManager.write_config(conf):
+        # Notify admins
+        Notification.send_notification_to_admins_for_event(
+            Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
+            "System Settings Changed",
+            f"System settings have been updated by {current_user.username} successfully.",
+            category=Notification.TYPE_SECURITY,
+            is_urgent=True,
+        )
         return "Configuration Saved Successfully", 200
     else:
         return "Unable to Save Configuration", 417
@@ -5912,6 +6225,133 @@ def api_logs() -> Response:
             return "Error sending log file", 417
     else:
         return "Log file not found", 404
+
+
+# Notifications
+@admin.route("/api/notifications")
+def api_notifications() -> Response:
+    """
+    Endpoint to return paginated notifications for the current user.
+    Accepts query parameters:
+    - page: page number (default: 1)
+    - per_page: number of notifications per page (default: 10)
+    - status: status of the notifications to filter by (default: all, can be "read" or "unread", any other value will return all notifications)
+
+    Returns:
+        - JSON response containing notifications and pagination info
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    status = request.args.get("status")
+    is_urgent = request.args.get("is_urgent")
+
+    # Query notifications for current user, ordered by creation date descending
+    notifications_query = (
+        db.session.query(Notification)
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+        )
+        .order_by(Notification.created_at.desc())
+    )
+
+    if status:
+        if status.lower() == Notification.STATUS_READ:
+            notifications_query = notifications_query.filter(Notification.read_status == True)
+        elif status.lower() == Notification.STATUS_UNREAD:
+            notifications_query = notifications_query.filter(Notification.read_status == False)
+
+    if is_urgent is not None:
+        is_urgent_bool = is_urgent.lower() == "true"
+        notifications_query = notifications_query.filter(Notification.is_urgent.is_(is_urgent_bool))
+
+    # Paginate the results
+    paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
+
+    # Optimize unread count calculation
+    if status and status.lower() == Notification.STATUS_UNREAD:
+        # When filtering by unread status, use the pagination total
+        unread_count = paginated_notifications.total
+        # For urgent notifications check, we need a separate optimized query
+        has_unread_urgent_notifications = (
+            db.session.query(Notification.id)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.is_urgent == True,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .first()
+            is not None
+        )
+    else:
+        # Use count() instead of all() for better performance
+        unread_count = (
+            db.session.query(Notification)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .count()
+        )
+        has_unread_urgent_notifications = (
+            db.session.query(Notification.id)
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.read_status == False,
+                Notification.is_urgent == True,
+                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
+            )
+            .first()
+            is not None
+        )
+
+    response = {
+        "items": [notification.to_dict() for notification in paginated_notifications.items],
+        "currentPage": page,
+        "perPage": per_page,
+        "total": paginated_notifications.total,
+        "hasMore": paginated_notifications.has_next,
+        "unreadCount": unread_count,
+        "hasUnreadUrgentNotifications": has_unread_urgent_notifications,
+    }
+
+    return jsonify(response)
+
+
+@admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
+def api_mark_notification_read(notification_id: int) -> Response:
+    """
+    Endpoint to mark a specific notification as read.
+
+    Args:
+        notification_id: ID of the notification to mark as read
+
+    Returns:
+        - Success response if notification is marked as read
+        - Error response if notification doesn't exist or user doesn't have permission
+    """
+    notification = db.session.get(Notification, notification_id)
+
+    if not notification:
+        return HTTPResponse.NOT_FOUND
+
+    # Verify the notification belongs to the current user
+    if notification.user_id != current_user.id:
+        return HTTPResponse.FORBIDDEN
+
+    try:
+        notification.mark_as_read()
+        return (
+            jsonify(
+                {"message": "Notification marked as read", "notification": notification.to_dict()}
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.error(f"Error marking notification as read: {str(e)}", exc_info=True)
+        return HTTPResponse.INTERNAL_SERVER_ERROR
 
 
 @admin.post("/api/bulletin/web")

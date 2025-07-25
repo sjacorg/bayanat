@@ -23,6 +23,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from yt_dlp.utils import DownloadError
 from werkzeug.utils import safe_join
 
+from enferno.admin.constants import Constants
 from enferno.admin.models import (
     Bulletin,
     Actor,
@@ -34,6 +35,7 @@ from enferno.admin.models import (
     Location,
     Media,
 )
+from enferno.admin.models.Notification import Notification
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
 from enferno.extensions import db, rds
@@ -122,6 +124,101 @@ def chunk_list(lst: list, n: int) -> Generator[list, Any, None]:
         yield lst[i : i + n]
 
 
+@celery.task(bind=True, max_retries=3)
+def send_email_notification(self, notification_id: int) -> bool:
+    """
+    Background task to send email notifications with retry logic and status tracking.
+
+    Args:
+        - notification_id: ID of the notification to send
+
+    Returns:
+        - bool: True if email was sent successfully, False otherwise
+    """
+    from enferno.utils.email_utils import EmailUtils
+
+    try:
+        # Get the notification record
+        notification = Notification.query.get(notification_id)
+        if not notification:
+            logger.error(f"Notification {notification_id} not found")
+            return False
+
+        # Check if notification is for email delivery
+        if notification.delivery_method != Notification.DELIVERY_METHOD_EMAIL:
+            logger.warning(f"Notification {notification_id} is not for email delivery")
+            return False
+
+        # Check if user has email
+        if not notification.user.email:
+            logger.warning(f"User {notification.user.id} has no email address")
+            notification.delivery_status = Notification.DELIVERY_STATUS_FAILED
+            notification.delivery_error = "User has no email address"
+            notification.save()
+            return False
+
+        # Update status to indicate we're processing
+        notification.delivery_status = Notification.DELIVERY_STATUS_PROCESSING
+        notification.save()
+
+        # Send the email
+        success = EmailUtils.send_email(
+            recipient=notification.user.email,
+            subject=notification.title,
+            body=f"{notification.title}\n\n{notification.message}",
+        )
+
+        if success:
+            # Update notification status on success
+            notification.delivery_status = Notification.DELIVERY_STATUS_SUCCESS
+            notification.delivery_error = None
+            notification.save()
+            logger.info(
+                f"Email notification {notification_id} sent successfully to {notification.user.email}"
+            )
+            return True
+        else:
+            notification.delivery_error = notification.delivery_error or ""
+            # Email sending failed, but we'll retry
+            error_msg = "Email sending failed (will retry)"
+            logger.warning(f"Email notification {notification_id} failed: {error_msg}")
+
+            # Update notification with error but keep status as processing for retry
+            notification.delivery_error += f"\nAttempt {self.request.retries + 1}: {error_msg}"
+            notification.save()
+
+            # Retry the task with exponential backoff
+            raise self.retry(countdown=60 * (2**self.request.retries))
+
+    except Exception as exc:
+        # Handle unexpected errors
+        error_msg = f"Unexpected error: {str(exc)}"
+        logger.error(
+            f"Email notification {notification_id} failed with error: {error_msg}", exc_info=True
+        )
+
+        try:
+            notification = Notification.query.get(notification_id)
+            if notification:
+                if self.request.retries < self.max_retries:
+                    # Still have retries left
+                    notification.delivery_error += (
+                        f"\nAttempt {self.request.retries + 1}: {error_msg}"
+                    )
+                    notification.save()
+                    # Retry with exponential backoff
+                    raise self.retry(countdown=60 * (2**self.request.retries), exc=exc)
+                else:
+                    # No more retries, mark as failed
+                    notification.delivery_status = Notification.DELIVERY_STATUS_FAILED
+                    notification.delivery_error += f"\nFinal attempt failed: {error_msg}"
+                    notification.save()
+        except Exception as save_exc:
+            logger.error(f"Failed to update notification {notification_id} status: {str(save_exc)}")
+
+        return False
+
+
 @celery.task
 def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     """
@@ -160,6 +257,15 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_assignee:
                 bulletin.assigned_to_id = None
             elif assigned_to_id:
+                if not bulletin.assigned_to_id or bulletin.assigned_to_id != assigned_to_id:
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.NEW_ASSIGNMENT,
+                        bulletin.assigned_to,
+                        "New Assignment",
+                        f"You have been assigned to Bulletin {bulletin.id}.",
+                        category=Notification.TYPE_UPDATE,
+                        is_urgent=True,
+                    )
                 bulletin.assigned_to_id = assigned_to_id
                 if not status:
                     bulletin.status = "Assigned"
@@ -170,6 +276,18 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_reviewer:
                 bulletin.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
+                if (
+                    not bulletin.first_peer_reviewer_id
+                    or bulletin.first_peer_reviewer_id != first_peer_reviewer_id
+                ):
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.REVIEW_NEEDED,
+                        bulletin.first_peer_reviewer,
+                        "Review Needed",
+                        f"Bulletin {bulletin.id} needs to be reviewed by you.",
+                        category=Notification.TYPE_SECURITY,
+                        is_urgent=True,
+                    )
                 bulletin.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     bulletin.status = "Peer Review Assigned"
@@ -234,6 +352,15 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.1)
 
     logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    # Notify admin
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        User.query.get(cur_user_id),
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} bulletins has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
+    )
 
 
 @celery.task
@@ -273,6 +400,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_assignee:
                 actor.assigned_to_id = None
             elif assigned_to_id:
+                if not actor.assigned_to_id or actor.assigned_to_id != assigned_to_id:
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.NEW_ASSIGNMENT,
+                        actor.assigned_to,
+                        "New Assignment",
+                        f"You have been assigned to Actor {actor.id}.",
+                        category=Notification.TYPE_UPDATE,
+                        is_urgent=True,
+                    )
                 actor.assigned_to_id = assigned_to_id
                 if not status:
                     actor.status = "Assigned"
@@ -283,6 +419,18 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_reviewer:
                 actor.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
+                if (
+                    not actor.first_peer_reviewer_id
+                    or actor.first_peer_reviewer_id != first_peer_reviewer_id
+                ):
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.REVIEW_NEEDED,
+                        actor.first_peer_reviewer,
+                        "Review Needed",
+                        f"Actor {actor.id} needs to be reviewed by you.",
+                        category=Notification.TYPE_SECURITY,
+                        is_urgent=True,
+                    )
                 actor.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     actor.status = "Peer Review Assigned"
@@ -347,6 +495,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.25)
 
     logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    # Notify admin
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        User.query.get(cur_user_id),
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} actors has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
+    )
 
 
 @celery.task
@@ -393,6 +550,15 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_assignee:
                 incident.assigned_to_id = None
             elif assigned_to_id:
+                if not incident.assigned_to_id or incident.assigned_to_id != assigned_to_id:
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.NEW_ASSIGNMENT,
+                        incident.assigned_to,
+                        "New Assignment",
+                        f"You have been assigned to Incident {incident.id}.",
+                        category=Notification.TYPE_UPDATE,
+                        is_urgent=True,
+                    )
                 incident.assigned_to_id = assigned_to_id
                 if not status:
                     incident.status = "Assigned"
@@ -403,6 +569,18 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             if clear_reviewer:
                 incident.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
+                if (
+                    not incident.first_peer_reviewer_id
+                    or incident.first_peer_reviewer_id != first_peer_reviewer_id
+                ):
+                    Notification.send_notification_to_user_for_event(
+                        Constants.NotificationEvent.REVIEW_NEEDED,
+                        incident.first_peer_reviewer,
+                        "Review Needed",
+                        f"Incident {incident.id} needs to be reviewed by you.",
+                        category=Notification.TYPE_SECURITY,
+                        is_urgent=True,
+                    )
                 incident.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     incident.status = "Peer Review Assigned"
@@ -487,6 +665,15 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.25)
 
     logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+    # Notify admin
+    Notification.send_notification_to_user_for_event(
+        Constants.NotificationEvent.BULK_OPERATION_STATUS,
+        User.query.get(cur_user_id),
+        "Bulk Operation Status",
+        f"Bulk update of {len(ids)} incidents has been completed successfully.",
+        category=Notification.TYPE_UPDATE,
+        is_urgent=True,
+    )
 
 
 @celery.task(rate_limit=10)
@@ -497,10 +684,28 @@ def etl_process_file(
     try:
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
+        # Notify admin
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            User.query.get(user_id),
+            "Batch Status",
+            f"Batch {batch_id} has been processed successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
         return "done"
     except Exception as e:
         log = DataImport.query.get(data_import_id)
         log.fail(e)
+        # Notify admin
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            User.query.get(user_id),
+            "Batch Status",
+            f"Batch {batch_id} has failed to process.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
 
 
 # this will publish a message to redis and will be captured by the front-end client
@@ -1303,16 +1508,44 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         # Start ETL process
         _start_etl_process(final_filename, url, batch_id, user_id, import_id)
 
+        # Notify user
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has been completed successfully.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
+
     except ValueError as e:
         # Handle specific error messages without traceback
         logger.error(f"Download failed: {str(e)}")
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
+        # Notify user
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has failed.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
     except Exception as e:
         # Handle other errors with traceback
         logger.error(f"Download failed: {str(e)}", exc_info=True)
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
+        # Notify user
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.WEB_IMPORT_STATUS,
+            User.query.get(user_id),
+            "Web Import Status",
+            f"Web import of {url} has failed.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
 
 
 def _get_ytdl_options(with_cookies: bool = False) -> dict:
