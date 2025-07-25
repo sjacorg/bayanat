@@ -529,10 +529,10 @@ function normalizeDropzoneResponse(dzFile) {
         uuid: dzFile.upload.uuid,
         type: dzFile.type,
         name: dzFile.name,
-        s3url: response.filename,
-        filename: response.filename,
-        etag: response.etag,
-        original_filename: response.original_filename,
+        s3url: response.data.filename,
+        filename: response.data.filename,
+        etag: response.data.etag,
+        original_filename: response.data.original_filename,
     };
 }
 

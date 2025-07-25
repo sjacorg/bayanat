@@ -1017,7 +1017,7 @@
                         );
                     } else if (ext === 'xls' || ext === 'xlsx') {
                         api.post('/import/api/xls/sheets', {file: file}).then(res => {
-                            this.sheets = res.data;
+                            this.sheets = res?.data?.data ?? [];
                         }).catch(
                             err => {
                                 console.log(err.response.data)
@@ -1178,7 +1178,7 @@
 
                     api.get('/import/api/mappings/').then(
                         res => {
-                            this.maps = res.data;
+                            this.maps = res?.data?.data ?? [];
                         }
                     ).catch(err => {
                         console.log(err.response.data);
