@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Click commands."""
 import os
+from datetime import datetime, timezone
 
 import click
 from flask.cli import AppGroup
@@ -20,6 +21,9 @@ from enferno.utils.data_helpers import (
 from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
+from enferno.admin.models import Bulletin
+from enferno.admin.models.DynamicField import DynamicField
+from enferno.utils.date_helper import DateHelper
 
 from enferno.utils.validation_utils import validate_password_policy
 
@@ -308,6 +312,309 @@ def check_db_alignment() -> None:
     checker = DBAlignmentChecker()
     checker.check_db_alignment()
     logger.info("Database schema alignment check completed.")
+
+
+@click.command()
+@click.option("--cleanup", is_flag=True, help="Clean up test data after running")
+@with_appcontext
+def test_dynamic_fields(cleanup: bool) -> None:
+    """Test dynamic fields functionality by creating test fields of each type."""
+    logger.info("Starting dynamic fields test")
+
+    # Clean up any existing test fields first
+    logger.info("Cleaning up existing test fields")
+    try:
+        fields_to_cleanup = DynamicField.query.filter(DynamicField.name.like("test_%")).all()
+        for field in fields_to_cleanup:
+            field.drop_column()
+            field.delete()
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"Error during initial cleanup: {str(e)}")
+        db.session.rollback()
+        return
+
+    test_fields = [
+        {
+            "name": "test_string_field",
+            "title": "Test String Field",
+            "field_type": DynamicField.STRING,
+            "ui_component": DynamicField.UIComponent.TEXT_INPUT,
+            "schema_config": {"required": True, "default": "Hello World"},
+            "ui_config": {
+                "label": "Test String Field",
+                "help_text": "A test string field",
+                "sort_order": 1,
+                "readonly": False,
+                "hidden": False,
+                "group": "main",
+                "width": "full",
+            },
+            "validation_config": {"max_length": 100},
+            "options": [],
+            "test_value": "Hello World",
+        },
+        {
+            "name": "test_dropdown_field",
+            "title": "Test Dropdown Field",
+            "field_type": DynamicField.STRING,
+            "ui_component": DynamicField.UIComponent.DROPDOWN,
+            "schema_config": {"required": False, "default": "Option 1"},
+            "ui_config": {
+                "label": "Test Dropdown Field",
+                "help_text": "A test dropdown field",
+                "sort_order": 2,
+                "readonly": False,
+                "hidden": False,
+                "group": "main",
+                "width": "half",
+            },
+            "validation_config": {},
+            "options": ["Option 1", "Option 2", "Option 3"],
+            "test_value": "Option 1",
+        },
+        {
+            "name": "test_integer_field",
+            "title": "Test Integer Field",
+            "field_type": DynamicField.INTEGER,
+            "ui_component": DynamicField.UIComponent.NUMBER,
+            "schema_config": {"required": False, "default": 42},
+            "ui_config": {
+                "label": "Test Integer Field",
+                "help_text": "A test integer field",
+                "sort_order": 3,
+                "readonly": False,
+                "hidden": False,
+                "group": "details",
+                "width": "half",
+            },
+            "validation_config": {"min": 0, "max": 100},
+            "options": [],
+            "test_value": 42,
+        },
+        {
+            "name": "test_datetime_field",
+            "title": "Test DateTime Field",
+            "field_type": DynamicField.DATETIME,
+            "ui_component": DynamicField.UIComponent.DATE_PICKER,
+            "schema_config": {
+                "required": False,
+                "default": DateHelper.serialize_datetime(datetime.now(timezone.utc)),
+            },
+            "ui_config": {
+                "label": "Test DateTime Field",
+                "help_text": "A test datetime field",
+                "sort_order": 4,
+                "readonly": False,
+                "hidden": False,
+                "group": "details",
+                "width": "full",
+            },
+            "validation_config": {"format": "YYYY-MM-DD"},
+            "options": [],
+            "test_value": DateHelper.serialize_datetime(datetime.now(timezone.utc)),
+        },
+        {
+            "name": "test_array_field",
+            "title": "Test Array Field",
+            "field_type": DynamicField.ARRAY,
+            "ui_component": DynamicField.UIComponent.MULTI_SELECT,
+            "schema_config": {"required": False, "default": ["Tag 1", "Tag 2"]},
+            "ui_config": {
+                "label": "Test Array Field",
+                "help_text": "A test array field",
+                "sort_order": 5,
+                "readonly": False,
+                "hidden": False,
+            },
+            "validation_config": {},
+            "options": ["Tag 1", "Tag 2", "Tag 3"],
+            "test_value": ["Tag 1", "Tag 2"],
+        },
+        {
+            "name": "test_text_field",
+            "title": "Test Text Field",
+            "field_type": DynamicField.TEXT,
+            "ui_component": DynamicField.UIComponent.TEXT_AREA,
+            "schema_config": {
+                "required": False,
+                "default": "This is a longer text field\nwith multiple lines",
+            },
+            "ui_config": {
+                "label": "Test Text Field",
+                "help_text": "A test text field",
+                "sort_order": 6,
+                "readonly": False,
+                "hidden": False,
+            },
+            "validation_config": {},
+            "options": [],
+            "test_value": "This is a longer text field\nwith multiple lines",
+        },
+        {
+            "name": "test_boolean_field",
+            "title": "Test Boolean Field",
+            "field_type": DynamicField.BOOLEAN,
+            "ui_component": DynamicField.UIComponent.CHECKBOX,
+            "schema_config": {"required": False, "default": True},
+            "ui_config": {
+                "label": "Test Boolean Field",
+                "help_text": "A test boolean field",
+                "sort_order": 7,
+                "readonly": False,
+                "hidden": False,
+            },
+            "validation_config": {},
+            "options": [],
+            "test_value": True,
+        },
+        {
+            "name": "test_float_field",
+            "title": "Test Float Field",
+            "field_type": DynamicField.FLOAT,
+            "ui_component": DynamicField.UIComponent.NUMBER,
+            "schema_config": {"required": False, "default": 3.14159},
+            "ui_config": {
+                "label": "Test Float Field",
+                "help_text": "A test float field",
+                "sort_order": 8,
+                "readonly": False,
+                "hidden": False,
+            },
+            "validation_config": {"precision": 8, "scale": 2},
+            "options": [],
+            "test_value": 3.14159,
+        },
+        {
+            "name": "test_json_field",
+            "title": "Test JSON Field",
+            "field_type": DynamicField.JSON,
+            "ui_component": DynamicField.UIComponent.TEXT_AREA,
+            "schema_config": {
+                "required": False,
+                "default": {"key": "value", "nested": {"data": "test"}},
+            },
+            "ui_config": {
+                "label": "Test JSON Field",
+                "help_text": "A test json field",
+                "sort_order": 9,
+                "readonly": False,
+                "hidden": False,
+            },
+            "validation_config": {},
+            "options": [],
+            "test_value": {"key": "value", "nested": {"data": "test"}},
+        },
+    ]
+
+    created_fields = []
+    try:
+        # Create fields
+        for field_data in test_fields:
+            try:
+                logger.info(f"Creating {field_data['name']}")
+                field = DynamicField(
+                    name=field_data["name"],
+                    title=field_data["title"],
+                    entity_type="bulletin",
+                    field_type=field_data["field_type"],
+                    ui_component=field_data["ui_component"],
+                    schema_config=field_data.get("schema_config", {}),
+                    ui_config=field_data.get("ui_config", {}),
+                    validation_config=field_data.get("validation_config", {}),
+                    options=field_data.get("options", []),
+                )
+                field.save()
+                field.create_column()
+                created_fields.append(field)
+                db.session.commit()
+                click.echo(f"Created {field_data['name']} successfully")
+            except Exception as e:
+                logger.error(f"Error creating field {field_data['name']}: {str(e)}")
+                db.session.rollback()
+                if cleanup:
+                    cleanup_test_data()
+                return
+
+        # Create and test bulletin
+        try:
+            logger.info("Creating test bulletin")
+            bulletin = Bulletin(title="Test Bulletin", description="Testing dynamic fields")
+            bulletin.save()
+
+            # Test setting values
+            for field_data in test_fields:
+                setattr(bulletin, field_data["name"], field_data["test_value"])
+
+            bulletin.save()
+            db.session.commit()
+            click.echo("\nTest bulletin created successfully!")
+
+            # Verify values
+            click.echo("\nField values:")
+            for field_data in test_fields:
+                value = getattr(bulletin, field_data["name"])
+                ui = field_data.get("ui_config", {})
+                schema = field_data.get("schema_config", {})
+                click.echo(
+                    f"{field_data['title']}: {value} (group: {ui.get('group')}, width: {ui.get('width')}, help_text: {ui.get('help_text')}, default: {schema.get('default')}, readonly: {ui.get('readonly')}, hidden: {ui.get('hidden')})"
+                )
+
+        except Exception as e:
+            logger.error(f"Error testing bulletin: {str(e)}")
+            db.session.rollback()
+            if cleanup:
+                cleanup_test_data()
+            return
+
+        # Refresh schema at the end
+        db.Model.metadata.clear()
+        db.session.remove()
+        db.create_all()
+
+        if cleanup:
+            cleanup_test_data()
+            click.echo("\nCleanup complete!")
+        else:
+            click.echo("\nTest data remains in database. Use --cleanup flag to remove test data.")
+
+    except Exception as e:
+        logger.error(f"Error in test_dynamic_fields: {str(e)}")
+        db.session.rollback()
+        if cleanup:
+            cleanup_test_data()
+
+
+def cleanup_test_data():
+    """Clean up test dynamic fields and bulletin."""
+    logger.info("Cleaning up test data")
+
+    try:
+        # Delete test bulletin first
+        test_bulletin = Bulletin.query.filter_by(title="Test Bulletin").first()
+        if test_bulletin:
+            test_bulletin.delete()
+            db.session.commit()
+
+        # Drop columns and delete dynamic fields
+        fields = DynamicField.query.filter(DynamicField.name.like("test_%")).all()
+        for field in fields:
+            try:
+                field.drop_column()
+                field.delete()
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Error cleaning up field {field.name}: {str(e)}")
+                db.session.rollback()
+
+        # Refresh SQLAlchemy models at the end
+        db.Model.metadata.clear()
+        db.session.remove()
+        db.create_all()
+
+    except Exception as e:
+        logger.error(f"Error in cleanup: {str(e)}")
+        db.session.rollback()
 
 
 @click.command()
