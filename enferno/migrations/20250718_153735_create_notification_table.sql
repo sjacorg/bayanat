@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS notification (
     delivery_method VARCHAR NOT NULL DEFAULT 'internal',
     read_at TIMESTAMP,
     is_urgent BOOLEAN DEFAULT FALSE,
+    delivery_status VARCHAR NOT NULL DEFAULT 'pending',
+    delivery_error TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE
@@ -20,6 +22,7 @@ CREATE TABLE IF NOT EXISTS notification (
 CREATE INDEX IF NOT EXISTS ix_notification_user_id ON notification (user_id);
 CREATE INDEX IF NOT EXISTS ix_notification_user_read ON notification (user_id, read_status);
 CREATE INDEX IF NOT EXISTS ix_notification_user_type ON notification (user_id, notification_type);
+CREATE INDEX IF NOT EXISTS ix_notification_user_delivery_status ON notification (user_id, delivery_status);
 
 -- Add foreign key constraint
 ALTER TABLE notification 

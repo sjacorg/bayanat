@@ -124,6 +124,101 @@ def chunk_list(lst: list, n: int) -> Generator[list, Any, None]:
         yield lst[i : i + n]
 
 
+@celery.task(bind=True, max_retries=3)
+def send_email_notification(self, notification_id: int) -> bool:
+    """
+    Background task to send email notifications with retry logic and status tracking.
+
+    Args:
+        - notification_id: ID of the notification to send
+
+    Returns:
+        - bool: True if email was sent successfully, False otherwise
+    """
+    from enferno.utils.email_utils import EmailUtils
+
+    try:
+        # Get the notification record
+        notification = Notification.query.get(notification_id)
+        if not notification:
+            logger.error(f"Notification {notification_id} not found")
+            return False
+
+        # Check if notification is for email delivery
+        if notification.delivery_method != Notification.DELIVERY_METHOD_EMAIL:
+            logger.warning(f"Notification {notification_id} is not for email delivery")
+            return False
+
+        # Check if user has email
+        if not notification.user.email:
+            logger.warning(f"User {notification.user.id} has no email address")
+            notification.delivery_status = Notification.DELIVERY_STATUS_FAILED
+            notification.delivery_error = "User has no email address"
+            notification.save()
+            return False
+
+        # Update status to indicate we're processing
+        notification.delivery_status = Notification.DELIVERY_STATUS_PROCESSING
+        notification.save()
+
+        # Send the email
+        success = EmailUtils.send_email(
+            recipient=notification.user.email,
+            subject=notification.title,
+            body=f"{notification.title}\n\n{notification.message}",
+        )
+
+        if success:
+            # Update notification status on success
+            notification.delivery_status = Notification.DELIVERY_STATUS_SUCCESS
+            notification.delivery_error = None
+            notification.save()
+            logger.info(
+                f"Email notification {notification_id} sent successfully to {notification.user.email}"
+            )
+            return True
+        else:
+            # Email sending failed, but we'll retry
+            error_msg = "Email sending failed (will retry)"
+            logger.warning(f"Email notification {notification_id} failed: {error_msg}")
+
+            # Update notification with error but keep status as processing for retry
+            notification.delivery_error = f"Attempt {self.request.retries + 1}: {error_msg}"
+            notification.save()
+
+            # Retry the task with exponential backoff
+            raise self.retry(countdown=60 * (2**self.request.retries))
+
+    except Exception as exc:
+        # Handle unexpected errors
+        error_msg = f"Unexpected error: {str(exc)}"
+        logger.error(
+            f"Email notification {notification_id} failed with error: {error_msg}", exc_info=True
+        )
+
+        try:
+            notification = Notification.query.get(notification_id)
+            notification.delivery_error = notification.delivery_error or ""
+            if notification:
+                if self.request.retries < self.max_retries:
+                    # Still have retries left
+                    notification.delivery_error += (
+                        f"\nAttempt {self.request.retries + 1}: {error_msg}"
+                    )
+                    notification.save()
+                    # Retry with exponential backoff
+                    raise self.retry(countdown=60 * (2**self.request.retries), exc=exc)
+                else:
+                    # No more retries, mark as failed
+                    notification.delivery_status = Notification.DELIVERY_STATUS_FAILED
+                    notification.delivery_error += f"\nFinal attempt failed: {error_msg}"
+                    notification.save()
+        except Exception as save_exc:
+            logger.error(f"Failed to update notification {notification_id} status: {str(save_exc)}")
+
+        return False
+
+
 @celery.task
 def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     """

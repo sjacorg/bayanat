@@ -26,6 +26,13 @@ class Notification(db.Model, BaseMixin):
     STATUS_READ = "read"
     STATUS_UNREAD = "unread"
 
+    # Delivery status constants
+    DELIVERY_STATUS_PENDING = "pending"
+    DELIVERY_STATUS_QUEUED = "queued"
+    DELIVERY_STATUS_PROCESSING = "processing"
+    DELIVERY_STATUS_SUCCESS = "success"
+    DELIVERY_STATUS_FAILED = "failed"
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     user = db.relationship("User", foreign_keys=[user_id], backref="user_notifications")
@@ -36,10 +43,13 @@ class Notification(db.Model, BaseMixin):
     delivery_method = db.Column(db.String, nullable=False, default=DELIVERY_METHOD_INTERNAL)
     read_at = db.Column(db.DateTime)
     is_urgent = db.Column(db.Boolean, default=False)
+    delivery_status = db.Column(db.String, nullable=False, default=DELIVERY_STATUS_PENDING)
+    delivery_error = db.Column(db.Text)
 
     __table_args__ = (
         db.Index("ix_notification_user_read", "user_id", "read_status"),
         db.Index("ix_notification_user_type", "user_id", "notification_type"),
+        db.Index("ix_notification_user_delivery_status", "user_id", "delivery_status"),
     )
 
     def mark_as_read(self):
@@ -73,16 +83,46 @@ class Notification(db.Model, BaseMixin):
 
     def send(self) -> bool:
         """Send notification via appropriate delivery method."""
-        if self.delivery_method == Notification.DELIVERY_METHOD_EMAIL and self.user.email:
-            return EmailUtils.send_email(
-                recipient=self.user.email,
-                subject=self.title,
-                body=f"{self.title}\n\n{self.message}",
-            )
+        if self.delivery_method == Notification.DELIVERY_METHOD_EMAIL:
+            if not self.user.email:
+                logger.warning(f"User {self.user.id} has no email address")
+                self.delivery_status = Notification.DELIVERY_STATUS_FAILED
+                self.delivery_error = "User has no email address"
+                self.save()
+                return False
+
+            # Queue the email for background processing
+            try:
+                from enferno.tasks import send_email_notification
+
+                # Update status to queued
+                self.delivery_status = Notification.DELIVERY_STATUS_QUEUED
+                self.save()
+
+                # Queue the background task
+                send_email_notification.delay(self.id)
+                logger.info(f"Email notification {self.id} queued for background processing")
+                return True
+
+            except Exception as e:
+                logger.error(
+                    f"Failed to queue email notification {self.id}: {str(e)}", exc_info=True
+                )
+                self.delivery_status = Notification.DELIVERY_STATUS_FAILED
+                self.delivery_error = f"Failed to queue email: {str(e)}"
+                self.save()
+                return False
+
         elif self.delivery_method == Notification.DELIVERY_METHOD_SMS:
             # TODO: Implement SMS delivery
+            self.delivery_status = Notification.DELIVERY_STATUS_FAILED
+            self.delivery_error = "SMS delivery not implemented"
+            self.save()
             return False
         else:  # internal
+            # Internal notifications are delivered immediately
+            self.delivery_status = Notification.DELIVERY_STATUS_SUCCESS
+            self.save()
             return True
 
     @staticmethod
