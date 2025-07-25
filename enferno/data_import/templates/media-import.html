@@ -604,7 +604,7 @@
 
                     api.post('/import/media/process', data).then(res => {
                         this.status = "{{ _('Files were added to queue successfully and will be imported in turn.') }}";
-                        this.batch_id = res.data;
+                        this.batch_id = res.data.data;
                     }).catch(err => {
                         console.log(err.response.data);
                         this.status = "{{ _('Error importing rows. Check logs for more information.') }}";
