@@ -1196,7 +1196,7 @@
                         }
                     }).then(
                         res => {
-                            this.searches = res.data;
+                            this.searches = res?.data?.data ?? [];
                             if (selectLast === true) {
 
                                 this.savedSearchSelection = this.searches.at(-1);
