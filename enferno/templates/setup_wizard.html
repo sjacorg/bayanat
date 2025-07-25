@@ -448,11 +448,20 @@
     </v-app>
 </div>
 
+<div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
+
 {% if config.DEBUG %}
     <script src="/static/js/vue.global.js"></script>
 {% else %}
     <script src="/static/js/vue.global.prod.js"></script>
 {% endif %}
+<script>
+    window.__settings__ = {};
+    window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
+</script>
+<script>
+    {% include 'admin/jsapi.jinja2' %}
+</script>
 
 <script src="/static/js/vuetify.min.js"></script>
 <script src="/static/js/axios.min.js"></script>
@@ -461,23 +470,12 @@
 <script src="/static/js/vue-router.global.js"></script>
 <script src="/static/js/leaflet.js"></script>
 <script src="/static/js/vue2-leaflet.min.js"></script>
+<script src="/static/js/common/config.js"></script>
 
 <script src="/static/leaflet-fullscreen/leaflet.fullscreen.min.js"></script>
 
 <script src="/static/js/components/GeoMap.js"></script>
 <script src="/static/js/components/EditableTable.js"></script>
-<script>
-    {%  include 'admin/jsapi.jinja2' %}
-</script>
-
-
-<div class="d-none" data-maps-api-endpoint='{{ config.MAPS_API_ENDPOINT }}'></div>
-<script>
-    window.__MAPS_API_ENDPOINT__ = document.querySelector('[data-maps-api-endpoint]').dataset.mapsApiEndpoint;
-    const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
-</script>
-
-
 
 {% block js %}
     <script type="module">
