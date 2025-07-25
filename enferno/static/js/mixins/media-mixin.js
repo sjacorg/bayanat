@@ -80,13 +80,12 @@ let mediaMixin = {
       // Add file to editedMedia.files here.
       // The 'file' object can be enhanced with the 'response' from the server as needed.
       // fix bug with file type is lose by spread operator
-
-      file.etag = response.etag;
-      file.filename = response.filename;
-      if(response.original_filename) {
-        file.original_filename = response.original_filename;
+      file.etag = response.data.etag;
+      file.filename = response.data.filename;
+      if(response.data.original_filename) {
+        file.original_filename = response.data.original_filename;
         if (this.editedMedia.title === ''){
-          this.editedMedia.title = response.original_filename;
+          this.editedMedia.title = response.data.original_filename;
         } 
       }
       if(this.editedItem.medias.some(m => m.etag === file.etag)) {
@@ -396,7 +395,7 @@ let mediaMixin = {
         item.title_ar = this.editedMedia.title_ar;
         item.category = this.editedMedia.category;
         item.fileType = file.type;
-        item.filename = response.filename;
+        item.filename = response.data.filename;
         item.uuid = file.upload.uuid;
         item.etag = file.etag;
         this.editedItem.medias.push(item);
