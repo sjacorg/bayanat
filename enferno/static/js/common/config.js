@@ -213,19 +213,21 @@ const api = {
 //global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
-        // Handle standardized JSON responses - flatten data.data to just data
-        if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data.data) && 'data' in response.data && !response?.config?.skipFlattening) {
-            // Create new response object with flattened data structure
-            const flattenedResponse = {
+        const shouldFlatten =
+            isPlainObject(response?.data?.data) &&
+            !response?.config?.skipFlattening;
+    
+        if (shouldFlatten) {
+            return {
                 ...response,
                 data: {
-                    ...response.data.data, // Flatten data.items -> items, data.total -> total, etc.
-                    ...(response.data?.message ? { message: response.data.message } : {}) // Keep message available if exists
+                    ...response.data.data,
+                    ...(response.data?.message ? { message: response.data.message } : {})
                 }
             };
-            return flattenedResponse;
         }
-        return response;
+    
+      return response;
     },
     function (error) {
         if (!error.config?.suppressGlobalErrorHandler) {
@@ -240,6 +242,10 @@ axios.interceptors.response.use(
         return Promise.reject(error);
     },
 );
+
+function isPlainObject(val) {
+    return val !== null && typeof val === 'object' && !Array.isArray(val);
+}
 
 function getInfraMessage(status) {
     switch (status) {
