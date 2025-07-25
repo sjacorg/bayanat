@@ -186,7 +186,7 @@ axios.interceptors.response.use(
                 ...response,
                 data: {
                     ...response.data.data, // Flatten data.items -> items, data.total -> total, etc.
-                    message: response.data.message // Keep message available if needed
+                    ...(response.data?.message ? { message: response.data.message } : {}) // Keep message available if exists
                 }
             };
             return flattenedResponse;
