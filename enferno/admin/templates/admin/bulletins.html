@@ -1021,7 +1021,7 @@
                     bulkStatus() {
 
                         api.get('/admin/api/bulk/status/?type=bulletin').then(res => {
-                            this.jobs = res.data;
+                            this.jobs = res?.data?.data ?? [];
 
                             if (!this.jobs.length) {
                                 clearInterval(this.bulkTimer);
