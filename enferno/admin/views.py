@@ -108,7 +108,7 @@ from enferno.admin.validation.models import (
     UserRequestModel,
     WebImportValidationModel,
 )
-from enferno.admin.validation.util import validate_with
+from enferno.utils.validation_utils import validate_with
 from enferno.extensions import rds, db
 from enferno.tasks import (
     bulk_update_bulletins,
@@ -4873,19 +4873,9 @@ def api_check_password(
     Returns:
         - success/error string based on the operation result.
     """
-    # Retrieve the password from the request's JSON body
-    password = validated_data.get("password")
-
-    # Check if the password is provided
-    if not password:
-        return HTTPResponse.error("No password provided")
-
-    result = zxcvbn(password)
-    score = result.get("score")
-    if score >= current_app.config.get("SECURITY_ZXCVBN_MINIMUM_SCORE"):
-        return HTTPResponse.success(message="Password is ok")
-    else:
-        return HTTPResponse.error("Weak Password Score", status=409)
+    # Password is validated in the UserPasswordCheckValidationModel
+    # If the request reached here, the password is valid
+    return "Password is ok", 200
 
 
 @admin.post("/api/user/force-reset")

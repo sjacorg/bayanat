@@ -1,33 +1,29 @@
-let mediaMixin = {
+const getDefaultMedia = () => ({
+  title: '',
+  files: [],
+  category: null,
+})
+
+const mediaMixin = {
   mixins: [reauthMixin],
   data: function () {
     return {
       mediaDialog: false,
+      snapshotDialog: false,
       media: null,
-      medias: [],
-      mediaCats: translations.mediaCats,
-      editedMediaIndex: -1,
       editedMedia: {
         title: '',
         files: [],
         category: '',
       },
-      defaultMedia: {
-        title: '',
-        files: [],
-        category: null,
-      },
-      mediaTitle__: true,
-      upMediaBtnDisabled: true,
-      videoDialog: false,
-      audioDialog: false,
+      expandedMedia: null,
+      expandedMediaType: null,
       mediaPlayer: null,
-      playerOptions: {},
       videoMeta: {},
-      audioMeta: {},
-      screenshots: [],
+      snapshot: null,
       cropper: {
-        canvas: null,
+        fullCanvas: null, // Full-resolution canvas for cropping
+        canvas: null, // Downscaled preview canvas
         tool: null,
         active: false,
       },
@@ -91,92 +87,79 @@ let mediaMixin = {
       if(this.editedItem.medias.some(m => m.etag === file.etag)) {
         this.showSnack(file.name + ' is already uploaded. Skipping...');
         this.$refs.dropzone.dz.removeFile(file);
-        this.upMediaBtnDisabled = false;
         return;
       }
       this.editedMedia.files.push(file);
-      this.upMediaBtnDisabled = false;
     },
 
-    viewImage(item) {
-      viewer.show(item);
+    openSnapshotDialog() {
+      this.snapshotDialog = true;
+    },
+    closeSnapshotDialog() {
+      this.snapshotDialog = false;
     },
 
-    crop() {
-      if (this.cropper.active) {
-        document.querySelector('.croppr-container').remove();
-        this.cropper.active = false;
-        return;
-      }
+    initCroppr() {
+      if (this.cropper.active) this.destroyCrop();
+      this.openSnapshotDialog();
+    
+      const videoElement = this.mediaPlayer.el().querySelector('video');
+      videoElement.pause();
+    
+      const originalWidth = this.videoMeta.width;
+      const originalHeight = this.videoMeta.height;
+      const maxPreviewWidth = 600;
+      const maxPreviewHeight = 600;
 
-      const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
-      video.pause();
+      // Calculate scale factor that keeps aspect ratio and fits within both limits
+      const scaleFactor = Math.min(
+        maxPreviewWidth / originalWidth,
+        maxPreviewHeight / originalHeight,
+        1 // Don't upscale if it's already smaller
+      );
 
-      this.cropper.canvas = document.createElement('canvas');
-      this.cropper.canvas.width = this.videoMeta.width;
-      this.cropper.canvas.height = this.videoMeta.height;
-      let context = this.cropper.canvas.getContext('2d');
-      context.fillRect(0, 0, this.cropper.canvas.width, this.cropper.canvas.height);
-      context.drawImage(video, 0, 0, this.cropper.canvas.width, this.cropper.canvas.height);
-      let img = document.querySelector('#cropImg');
-      if (!img) {
-        img = new Image();
-        img.id = 'cropImg';
-
-        document.querySelector('.crop').prepend(img);
-      }
-      img.src = this.cropper.canvas.toDataURL('image/jpeg');
-      (this.cropper.time = Math.round(video.currentTime * 10) / 10),
-        (this.cropper.tool = new Croppr(img));
-      this.cropper.active = true;
-    },
-
-    attachCrop() {
-      const crop = this.cropper.tool.getValue();
-      const img = document.querySelector('.croppr-image');
-
-      const id = this.screenshots.length;
-      const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
-
-      let media = {
-        width: crop.width,
-        height: crop.height,
-        time: this.cropper.time,
-        fileType: 'image/jpeg',
-        filename: video.src.getFilename(),
-        ready: false,
-        overlay: false,
-        sw: true,
-      };
-
-      this.screenshots.push(media);
-      // wait until data binding is in effect
+      const previewWidth = originalWidth * scaleFactor;
+      const previewHeight = originalHeight * scaleFactor;
+    
+      // Create full-resolution canvas
+      const fullCanvas = document.createElement('canvas');
+      fullCanvas.width = originalWidth;
+      fullCanvas.height = originalHeight;
+      fullCanvas.getContext('2d').drawImage(videoElement, 0, 0, originalWidth, originalHeight);
+      this.cropper.fullCanvas = fullCanvas;
+    
+      // Create scaled preview canvas
+      const previewCanvas = document.createElement('canvas');
+      previewCanvas.width = previewWidth;
+      previewCanvas.height = previewHeight;
+      previewCanvas.getContext('2d').drawImage(
+        videoElement,
+        0, 0, originalWidth, originalHeight,
+        0, 0, previewWidth, previewHeight
+      );
+      this.cropper.canvas = previewCanvas;
+      this.cropper.previewScale = scaleFactor;
+    
+      // Update image preview and initialize Croppr
       this.$nextTick(() => {
-
-        let canvas = document.querySelector('.canvas' + id);
-        canvas.width = media.width;
-        canvas.height = media.height;
-        // calculate ration based on widht/height
-
-        let context = canvas.getContext('2d');
-        context.fillRect(0, 0, media.width, media.height);
-        context.drawImage(
-          img,
-          crop.x,
-          crop.y,
-          media.width,
-          media.height,
-          0,
-          0,
-          media.width,
-          media.height,
-        );
-
-        //clear source image
-
-        document.querySelector('.croppr-container').remove();
-        this.cropper.active = false;
+        const previewImage = document.querySelector('#cropImg');
+        previewImage.src = previewCanvas.toDataURL('image/jpeg');
+    
+        this.cropper.time = Math.round(videoElement.currentTime * 10) / 10;
+        this.cropper.tool = new Croppr(previewImage);
+        this.cropper.active = true;
       });
+    
+      this.snapshot = {
+        ...this.videoMeta,
+        time: Math.round(videoElement.currentTime * 10) / 10,
+        fileType: 'image/jpeg',
+        ready: true,
+      };
+    },
+    destroyCrop() {
+      document.querySelector('.croppr-container')?.remove();
+      this.cropper.active = false;
     },
 
     getFileName(path) {
@@ -186,137 +169,85 @@ let mediaMixin = {
         .split(/[#?]/)[0]
         .replace(/\.[^/.]+$/, '');
     },
-
-    snapshot() {
-      let id = this.screenshots.length;
-      if (!this.mediaPlayer || !this.mediaPlayer.isReady_) {
-        this.showSnack('Error: Media player is not initialized or not ready.');
-        return;
-      }
-
-      const video = this.mediaPlayer.el().getElementsByTagName('video')[0];
-
-      video.pause();
-
-
-      let media = {
-        width: this.videoMeta.width,
-        height: this.videoMeta.height,
-        time: Math.round(video.currentTime * 10) / 10,
-        fileType: 'image/jpeg',
-        filename: this.videoMeta.filename,
-        ready: false,
-        overlay: false,
-        sw: true,
-      };
-
-      this.screenshots.push(media);
-      // wait until data binding is in effect
-      this.$nextTick(() => {
-
-        let canvas = document.querySelector('.canvas' + id);
-        canvas.width = media.width;
-        canvas.height = media.height;
-        let context = canvas.getContext('2d');
-        context.fillRect(0, 0, media.width, media.height);
-        context.drawImage(video, 0, 0, media.width, media.height);
-      });
-    },
-    removeSnapshot(e, index) {
-      debugger;
-      this.screenshots.splice(index,1);
-      //this.screenshots[index].deleted = true;
-      // force Vue to re-render the UI
-      this.$forceUpdate();
-    },
-    uploadSnapshot(e, index) {
-      let media = this.screenshots[index];
-      media.overlay = true;
-      let canvas = document.querySelector('#screenshots .canvas' + index);
-      let dataUrl = canvas.toDataURL("image/jpeg");
-      let blob = dataUriToBlob(dataUrl);
-      let data = new FormData();
-      let filename = media.filename;
-      if (!filename.endsWith('.jpg')) {
-        filename += '.jpg';
-      }
-
-
-      data.append('file', blob, filename)
-
-      api.post("/admin/api/media/upload", data, {
-          headers: {"content-type": false}
-      }).then(response => {
-
-          const serverId = response.data;
-          //this.showSnack(response.data);
-          media.filename = serverId.filename;
-          media.etag = serverId.etag;
-          media.overlay = false;
-          media.ready = true;
-
-
-          //this.refresh(this.options);
-      }).catch(err => {
-          console.error(err.response.data);
-          this.showSnack(err.response.data);
-
-          media.error = true;
-      }).finally(() => {
-          media.overlay = false;
-      });
-
-
-  },
-
-    // Prepares and filters snapshots for attachment
-    prepareSnapshotsForAttachment() {
-      return this.screenshots.filter((snapshot) => snapshot.ready && !snapshot.deleted);
-    },
-
-    // Attaches prepared snapshots to the edited item
-    attachPreparedSnapshots(preparedSnapshots) {
-      let skipped = [];
-
-      for (const snapshot of preparedSnapshots) {
-        if (this.editedItem.medias.some((media) => media.etag === snapshot.etag)) {
-          skipped.push(snapshot);
-        } else {
-          let mediaItem = {
-            title: snapshot.title,
-            title_ar: snapshot.title_ar,
-            fileType: snapshot.fileType,
-            filename: snapshot.filename,
-            etag: snapshot.etag,
-            time: snapshot.time,
-            category: snapshot.category,
-          };
-          this.editedItem.medias.push(mediaItem);
+    async attachSnapshot(form) {
+      try {
+        const blob = await this.getCroppedImageData();
+    
+        const formData = new FormData();
+        let filename = this.snapshot.filename;
+        if (!filename.endsWith('.jpg')) filename += '.jpg';
+        formData.append('file', blob, filename);
+    
+        const response = await axios.post("/admin/api/media/upload", formData, {
+          headers: { "content-type": false },
+        });
+    
+        const uploaded = response.data;
+        this.snapshot.filename = uploaded.filename;
+        this.snapshot.etag = uploaded.etag;
+        this.snapshot.ready = true;
+    
+        const isDuplicate = this.editedItem.medias.some(media => media.etag === uploaded.etag);
+        if (isDuplicate) {
+          this.showSnack(`1 duplicate item skipped.`);
+          return;
         }
-      }
+    
+        this.editedItem.medias.push({
+          title: form.title,
+          title_ar: form.title_ar,
+          fileType: this.snapshot.fileType,
+          filename: uploaded.filename,
+          etag: uploaded.etag,
+          time: this.snapshot.time,
+          category: form.category,
+        });
 
-      if (skipped.length) {
-        this.showSnack(`${skipped.length} duplicate items skipped.`);
+        this.closeSnapshotDialog();
+    
+      } catch (error) {
+        console.error(error?.response?.data || error);
+        this.showSnack(error?.response?.data || "Upload failed.");
       }
     },
-
-    attachSnapshots() {
-      let preparedSnapshots = this.prepareSnapshotsForAttachment();
-      this.attachPreparedSnapshots(preparedSnapshots);
-      this.disposeMediaPlayer();
+    getCroppedImageData() {
+      return new Promise(resolve => {
+        const cropBox = this.cropper.tool.getValue();
+        const fullCanvas = this.cropper.fullCanvas;
+        const scale = this.cropper.previewScale;
+    
+        const cropX = cropBox.x / scale;
+        const cropY = cropBox.y / scale;
+        const cropWidth = cropBox.width / scale;
+        const cropHeight = cropBox.height / scale;
+    
+        this.$nextTick(() => {
+          const croppedCanvas = document.createElement('canvas');
+          croppedCanvas.width = cropWidth;
+          croppedCanvas.height = cropHeight;
+    
+          croppedCanvas.getContext('2d').drawImage(
+            fullCanvas,
+            cropX, cropY, cropWidth, cropHeight,
+            0, 0, cropWidth, cropHeight
+          );
+    
+          croppedCanvas.toBlob(blob => resolve(blob), 'image/jpeg');
+        });
+      });
     },
 
-    viewMedia(media) {
+    viewMedia({ media, mediaType }) {
       // Cleanup existing player if it exists
       this.disposeMediaPlayer();
       this.media = media;
 
       const videoElement = buildVideoElement();
-      if (media.fileType.includes('audio')) {
+      if (mediaType === 'audio') {
         videoElement.poster = '/static/img/waveform.png';
       }
 
-      const playerContainer = this.$refs.playerContainer; // Ensure you have a ref="playerContainer" on the container element
+      const playerContainer = this.$refs.inlineMediaRendererRef.$refs.playerContainer || this.$refs.playerContainer; // Ensure you have a ref="playerContainer" on the container element
       playerContainer.prepend(videoElement);
 
       this.mediaPlayer = videojs(videoElement, DEFAULT_VIDEOJS_OPTIONS);
@@ -342,27 +273,11 @@ let mediaMixin = {
       this.mediaPlayer = null;
       this.media = null;
     },
-    
-    viewMediaPlayerDialog(media) {
-      if (media.fileType.includes('video')) {
-        this.videoDialog = true;
-      } else {
-        this.audioDialog = true;
-      }
-      this.screenshots = [];
-      this.$nextTick(() => {
-        this.viewMedia(media);
-      });
-    },
 
     addMedia(media, item, index) {
-      this.editedMedia = JSON.parse(JSON.stringify(this.defaultMedia));
-      //console.log(this.editedEvent);
-      //enable below to activate edit mode
-      //this.editedMediaIndex = index;
+      this.editedMedia = getDefaultMedia()
 
       //reset dual fields display to english
-      this.mediaTitle__ = true;
       this.mediaDialog = true;
       //this.locations = this.editedItem.locations;
     },
@@ -374,14 +289,11 @@ let mediaMixin = {
     },
 
     closeMediaDialog() {
+      this.destroyCrop();
       this.editedMedia.files = [];
-      this.videoDialog = false;
-      this.audioDialog = false;
       this.mediaDialog = false;
       setTimeout(() => {
-        this.editedMedia = Object.assign({}, this.defaultMedia);
-
-        this.editedMediaIndex = -1;
+        this.editedMedia = getDefaultMedia()
       }, 300);
     },
 
@@ -405,17 +317,47 @@ let mediaMixin = {
       this.closeMediaDialog();
     },
 
-    onFileUploaded(error, file) {
-      if (!error) {
-        this.upMediaBtnDisabled = false;
-      } else {
-        if (error.code == 409) {
-          this.showSnack('This file already exists in the system');
-        } else {
-          this.showSnack('Error uploading media. Please check your network connection.');
-        }
-        console.log(error);
+    handleExpandedMedia({media, mediaType}) {
+      const isSameContent = this.expandedMedia?.s3url === media?.s3url
+      if (isSameContent) {
+        return this.closeExpandedMedia();
       }
+
+      this.expandedMedia = media;
+      this.expandedMediaType = mediaType;
+
+      if (!media || !mediaType) return
+
+      this.$nextTick(() => {
+        if (['video', 'audio'].includes(mediaType)) {
+          this.viewMedia({ media, mediaType });
+        }
+        this.$refs.inlineMediaRendererRef?.$el?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+        })
+      })
+
     },
+    closeExpandedMedia() {
+      this.expandedMedia = null;
+      this.expandedMediaType = null;
+    },
+    handleFullscreen() {
+      switch (this.expandedMediaType) {
+        case 'audio':
+        case 'video':
+          this.mediaPlayer?.requestFullscreen()
+          break;
+        case 'image':
+          this.$refs.inlineMediaRendererRef?.$refs?.imageViewer?.requestFullscreen()
+          break;
+        case 'pdf':
+          this.$refs.inlineMediaRendererRef?.$refs?.pdfViewer?.requestFullscreen()
+          break;
+        default:
+          break;
+      }
+    }
   }
 };

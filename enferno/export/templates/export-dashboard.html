@@ -103,6 +103,7 @@
 {% block js %}
     <script src="/static/js/videojs/video.min.js"></script>
     <script src="/static/js/mixins/media-mixin.js"></script>
+    <script src="/static/js/mixins/relations-mixin.js"></script>
 
     <script src="/static/js/components/ExportCard.js"></script>
     <script src="/static/js/components/PreviewCard.js"></script>
@@ -120,7 +121,7 @@
     <script src="/static/js/components/RelatedIncidentsCard.js"></script>
     <script src="/static/js/components/RelatedActorsCard.js"></script>
     <script src="/static/js/components/RelatedBulletinsCard.js"></script>
-    <script src="/static/js/components/ImageGallery.js"></script>
+    <script src="/static/js/components/MediaGrid.js"></script>
     <script src="/static/js/components/EventCard.js"></script>
     <script src="/static/js/components/GlobalMap.js"></script>
     <script src="/static/js/components/UniField.js"></script>
@@ -133,18 +134,11 @@
         const app = createApp({
             delimiters: delimiters,
 
-            mixins: [globalMixin],
+            mixins: [globalMixin, relationsMixin],
 
             data: () => ({
 
                 translations: window.translations,
-
-                itobInfo: [],
-                itoaInfo: [],
-                itoiInfo: [],
-                atobInfo: [],
-                btobInfo: [],
-                atoaInfo: [],
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
@@ -202,26 +196,7 @@
                     }
                 })
             },
-            created() {
-                this.fetchRelationInfo();
-            },
             methods: {
-                fetchRelationInfo() {
-                    api.get('/admin/api/relation/info')
-                        .then(response => {
-                            this.itobInfo = response.data.itobInfo;
-                            this.itoaInfo = response.data.itoaInfo;
-                            this.atobInfo = response.data.atobInfo;
-                            this.atoaInfo = response.data.atoaInfo;
-                            this.btobInfo = response.data.btobInfo;
-                            this.itoiInfo = response.data.itoiInfo;
-                        })
-                        .catch(error => {
-                            console.error('Error fetching relation info:', error);
-                            this.showSnack('Error fetching relation info');
-                        });
-                },
-
                 localDate: function (dt) {
                     if (dt === null || dt === '') {
                         return '';
@@ -366,7 +341,7 @@
         app.component('related-actors-card', RelatedActorsCard);
         app.component('related-bulletins-card', RelatedBulletinsCard);
         app.component('media-card', MediaCard);
-        app.component('image-gallery', ImageGallery);
+        app.component('media-grid', MediaGrid);
         app.component('event-card', EventCard);
         app.component('global-map', GlobalMap);
 

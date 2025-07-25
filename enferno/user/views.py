@@ -219,7 +219,7 @@ def before_app_request() -> Optional[Response]:
         - redirects to the password change page if the user is authenticated and has a security reset key set.
     """
     if current_user.is_authenticated and current_user.security_reset_key:
-        if not any(request.path.startswith(p) for p in ("/change", "/static", "/logout")):
+        if not any(request.path.startswith(p) for p in ("/change", "/static", "/logout", "/admin/api/password")):
             return redirect("/change")
 
 

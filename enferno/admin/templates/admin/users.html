@@ -119,6 +119,7 @@
                     </v-data-table-server>
                     <v-dialog v-model="dialog" max-width="1200px">
                         <v-card>
+                        <v-form ref="form" v-model="valid">
                             <v-toolbar :title="formTitle">
                                 <template #append>
                                     <v-btn icon @click="close">
@@ -164,17 +165,22 @@
                                             <div class="d-flex align-center">
 
                                                 <v-text-field
-                                                        placeholder="{{ _('Password') }}"
+                                                        label="{{ _('Password') }}"
+                                                        :class="isStrongPassword ? 'text-success' : undefined"
+                                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                                         :type="showPassword ? 'text' : 'password'"
                                                         @click:append="showPassword = !showPassword"
-                                                ></v-text-field>
-
-                                                <span v-if="!disablePassword && editedItem.password?.length > 1 "
-                                                      class="green--text">{{ _('Strong Password') }}</span>
-
+                                                        :rules="disablePassword ? [] : [
+                                                            validationRules.required(),
+                                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                                        ]"
+                                                        @input="isStrongPassword = false"
+                                                >
+                                                </v-text-field>
 
                                                 <v-btn @click.stop="enablePassword"
                                                        v-if="editedItem.id" class="mb-3 mx-1"
@@ -277,10 +283,11 @@
                             <v-card-actions class="pa-4">
                                 <v-spacer></v-spacer>
                                 <v-btn @click="close" text>{{ _('Close') }}</v-btn>
-                                <v-btn @click="save" color="primary" variant="elevated">
+                                <v-btn @click="validateAndSave" color="primary" variant="elevated">
                                     {{ _('Save') }}
                                 </v-btn>
                             </v-card-actions>
+                        </v-form>
                         </v-card>
                     </v-dialog>
 
@@ -311,6 +318,7 @@
                 showPassword: false,
                 drawer: drawer,
                 translations: window.translations,
+                validationRules: validationRules,
                 options: {},
 
                 headers: [
@@ -338,7 +346,9 @@
                 isAdmin: false,
                 userDrawer: false,
                 user: null,
-                session_id: '{{ session.sid }}'
+                session_id: '{{ session.sid }}',
+                valid: false,
+                isStrongPassword: false,
             }),
 
             mixins: [globalMixin],
@@ -391,6 +401,21 @@
 
 
             methods: {
+                onPasswordCheckResponse(response) {
+                    this.isStrongPassword = response === true
+                },
+
+                validateAndSave() {
+                    this.$refs.form.validate().then(({ valid, errors }) => {
+                        if (valid) {
+                            this.save();
+                        } else {
+                            this.showSnack("{{ _('Please review the form for errors.')}}")
+                            scrollToFirstError(errors)
+                        }
+                    });
+                },
+
                 showUser(user_id) {
                     api.get(`/admin/api/user/${user_id}`).then(response => {
                         this.user = response.data;
@@ -486,17 +511,6 @@
                     }
                 },
 
-                passwordRules() {
-                    if (this.editedItem.id && this.disablePassword) {
-                        // edit mode
-                        return ''
-
-                    } else {
-
-                        return 'required|min:10|checkPassword'
-                    }
-                },
-
                 enableUsername() {
                     this.disableUsername = false;
                 },
@@ -512,7 +526,7 @@
 
                 checkUsername:
                     debounce(function (evt) {
-                        api.post('/admin/api/checkuser/', {item: this.editedItem.username}).then(
+                        api.post('/admin/api/checkuser/', {item: this.editedItem.username}, { suppressGlobalErrorHandler: true }).then(
                             res => {
 
                             }
@@ -599,30 +613,23 @@
                 save() {
                     // edit mode
                     if (this.editedItem.id) {
-                        api.put(`/admin/api/user/`, {item: this.editedItem})
+                        api.put(`/admin/api/user/`, {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            console.error(err);
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-                        });
+                            })
 
                     } else {
                         // create mode
 
                         axios
-                            .post("/admin/api/user/", {item: this.editedItem})
+                            .post("/admin/api/user/", {item: this.editedItem}, { suppressGlobalErrorHandler: true })
                             .then(response => {
                                 this.refresh();
                                 this.showSnack(response.data);
                                 this.close();
-                            }).catch(err => {
-                            this.showSnack(this.parseValidationError(err?.response?.data));
-
-
-                        });
+                            })
                     }
 
                 }
