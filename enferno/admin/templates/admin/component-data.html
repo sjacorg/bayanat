@@ -466,7 +466,7 @@
                 this.lalChips = items.map(item => ({ id: item.id, title: item.title, display_order: item.display_order })).sort((a, b) => a.display_order - b.display_order);
             },
             reorderLocationAdminLevels() {
-                axios.post("/admin/api/location-admin-levels/reorder", { order: this.lalChips.map(chip => chip.id) }).then(response => {
+                api.post("/admin/api/location-admin-levels/reorder", { order: this.lalChips.map(chip => chip.id) }).then(response => {
                     if (response.status === 200) {
                         this.updateCachedOrder();
                         this.showLalWarning = true;
@@ -475,7 +475,7 @@
                 });
             },
             regenerateLocations() {
-                axios.post("/admin/api/location/regenerate/").then(response => {
+                api.post("/admin/api/location/regenerate/").then(response => {
                     this.$root.showSnack(response.data);
                     this.showLalWarning = false;
                 });

@@ -1,12 +1,54 @@
+import json
+from typing import Any
 from flask import Response
 
 
 class HTTPResponse:
     """Utility class for HTTP responses."""
-    OK = Response("OK", status=200)
-    UNAUTHORIZED = Response("Unauthorized", status=401)
-    FORBIDDEN = Response("Forbidden", status=403)
-    NOT_FOUND = Response("Not Found", status=404)
-    REQUEST_EXPIRED = Response("Request Expired", 410)
-    BAD_REQUEST = Response("Bad Request", status=400)
-    INTERNAL_SERVER_ERROR = Response("Internal Server Error", status=500)
+
+    @staticmethod
+    def _json_response(
+        data: dict | None = None, message: str | None = None, status: int = 200
+    ) -> Response:
+        """Standard JSON response for success."""
+        response_data = {}
+        if data is not None:
+            response_data["data"] = data
+        if message is not None:
+            response_data["message"] = message
+        return Response(json.dumps(response_data), status=status, content_type="application/json")
+
+    @staticmethod
+    def _json_error(message: str, status: int = 400, errors: Any = None) -> Response:
+        """Standard JSON response for error."""
+        response_data = {"message": message}
+        if errors:
+            response_data["errors"] = errors
+        return Response(json.dumps(response_data), status=status, content_type="application/json")
+
+    @staticmethod
+    def success(
+        data: dict | None = None, message: str | None = None, status: int = 200
+    ) -> Response:
+        """200 OK response"""
+        return HTTPResponse._json_response(data, message, status)
+
+    @staticmethod
+    def created(data: dict | None = None, message: str | None = None) -> Response:
+        """201 Created response"""
+        return HTTPResponse._json_response(data, message, 201)
+
+    @staticmethod
+    def error(message: str, status: int = 400, errors: Any = None) -> Response:
+        """Error response with custom status"""
+        return HTTPResponse._json_error(message, status, errors)
+
+    @staticmethod
+    def not_found(message: str = "Not found") -> Response:
+        """404 Not Found"""
+        return HTTPResponse.error(message, 404)
+
+    @staticmethod
+    def forbidden(message: str = "Forbidden") -> Response:
+        """403 Forbidden"""
+        return HTTPResponse.error(message, 403)

@@ -13,12 +13,15 @@ from tests.test_utils import (
     conform_to_schema_or_fail,
     create_csv_for_entities,
     get_first_or_fail,
-    load_data,
 )
 
 ##### PYDANTIC MODELS #####
 
-from tests.models.admin import LocationItemModel, LocationResponseModel
+from tests.models.admin import (
+    LocationCreatedResponseModel,
+    LocationItemModel,
+    LocationResponseModel,
+)
 
 ##### FIXTURES #####
 
@@ -82,7 +85,7 @@ def test_locations_endpoint(create_location, request, client_fixture, expected_s
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        data = convert_empty_strings_to_none(load_data(response))
+        data = convert_empty_strings_to_none(response.json)
         conform_to_schema_or_fail(data, LocationResponseModel)
 
 
@@ -105,16 +108,16 @@ def test_location_endpoint(create_location, request, client_fixture, expected_st
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        data = convert_empty_strings_to_none(load_data(response))
+        data = convert_empty_strings_to_none(response.json)["data"]
         conform_to_schema_or_fail(data, LocationItemModel)
 
 
 ##### POST /admin/api/location #####
 
 post_location_endpoint_roles = [
-    ("admin_client", 200),
-    ("da_client", 400),
-    ("mod_client", 200),
+    ("admin_client", 201),
+    ("da_client", 403),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -136,7 +139,10 @@ def test_post_location_endpoint(
     )
     assert response.status_code == expected_status
     found_location = Location.query.filter(Location.title == location.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), LocationCreatedResponseModel
+        )
         assert found_location
     else:
         assert found_location is None
@@ -146,7 +152,7 @@ def test_post_location_endpoint(
 
 put_location_endpoint_roles = [
     ("admin_client", 200),
-    ("da_client", 400),
+    ("da_client", 403),
     ("mod_client", 200),
     ("anonymous_client", 401),
 ]

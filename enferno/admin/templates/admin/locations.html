@@ -309,7 +309,7 @@
 
                     const url = `/admin/api/locations/`;
 
-                    axios.post(url, {
+                    api.post(url, {
                         q: this.q,
                         options: this.options
                     }).then(response => {
@@ -343,7 +343,7 @@
                 showLocation(id) {
                     this.locationLoader = true;
                     this.locationDrawer = true;
-                    axios.get(`/admin/api/location/${id}`).then(response => {
+                    api.get(`/admin/api/location/${id}`).then(response => {
                         this.loading = false;
                         this.location = response.data;
                         this.locationLoader = false;
@@ -402,7 +402,7 @@
                 refresh(options) {
                     this.options = options || { ...this.options, page: 1 };
                     this.loading = true;
-                    axios.post(`/admin/api/locations/`, {
+                    api.post(`/admin/api/locations/`, {
                         q: this.q,
                         options: this.options
                     }).then(response => {
@@ -422,7 +422,7 @@
                 importCSV() {
                     const reqData = new FormData();
                     reqData.append('csv', this.csvFile)
-                    axios.post('/admin/api/location/import/', reqData).then(response => {
+                    api.post('/admin/api/location/import/', reqData).then(response => {
 
                         this.imDialog = false;
                         this.refresh();
@@ -458,7 +458,7 @@
                     const cfm = confirm("{{ _('Are you sure you want to delete this item?') }}") &&
                         this.items.splice(index, 1);
                     if (cfm) {
-                        axios.delete(`/admin/api/location/${item.id}`)
+                        api.delete(`/admin/api/location/${item.id}`)
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh()
@@ -493,7 +493,7 @@
                         this.editedItem.latlng = null;
                     }
                     if (this.editedItem.id) {
-                        axios.put(`/admin/api/location/${this.editedItem.id}`, {
+                        api.put(`/admin/api/location/${this.editedItem.id}`, {
                             item: this.editedItem
                         })
                             .then(response => {
@@ -505,7 +505,7 @@
                         })
                     } else {
                         //create new record
-                        axios.post("/admin/api/location/", {item: this.editedItem})
+                        api.post("/admin/api/location/", {item: this.editedItem})
                             .then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();

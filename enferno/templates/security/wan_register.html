@@ -207,7 +207,7 @@
 
                     if (confirm("{{ _('Are you sure you want to delete this device?')}}")) {
                         // Axios request to delete the device
-                        axios.post('{{ url_for_security('wan_delete') }}',
+                        api.post('{{ url_for_security('wan_delete') }}',
                             {
                                 name: cred,
                                 csrf_token: csrf_token

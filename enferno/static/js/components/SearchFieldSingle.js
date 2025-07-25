@@ -29,7 +29,7 @@ const SearchFieldSingle = Vue.defineComponent({
     },
     search: debounce(function (evt) {
       const qp = this.queryParams || '';
-      axios.get(`${this.api}?q=${evt.target.value}${qp}`).then((response) => {
+      api.get(`${this.api}?q=${evt.target.value}${qp}`).then((response) => {
         this.items = response.data.items;
       });
     }, 350),

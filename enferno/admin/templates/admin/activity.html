@@ -296,7 +296,7 @@
     mounted () {
       // populate roles for advanced search for admins
       // needed for search popup
-      axios.get('/admin/api/roles/').then(res => {
+      api.get('/admin/api/roles/').then(res => {
           this.roles = res.data.items;
       }).catch(e => {
           this.roles = [];
@@ -318,7 +318,7 @@
 
 
         previewItem(endpoint) {
-        axios.get(endpoint).then(res => {
+        api.get(endpoint).then(res => {
             this.pitem = res.data;
             this.preview = true;
           })
@@ -347,7 +347,7 @@
           }
 
           this.loading = true;
-                axios.post(`/admin/api/activities/`, {
+                api.post(`/admin/api/activities/`, {
                     q: this.q,
                     options: this.options,
                     model: this.model

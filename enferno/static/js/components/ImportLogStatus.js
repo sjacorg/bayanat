@@ -22,7 +22,7 @@ const ImportLogStatus = Vue.defineComponent({
 
       if (this.status === 'Processing' || this.status === 'Pending') {
         this.timer = setInterval(() => {
-          axios.get(`/import/api/imports/${this.item.id}`)
+          api.get(`/import/api/imports/${this.item.id}`)
             .then(response => {
               if (['Ready', 'Failed'].includes(response.data.status)) clearInterval(this.timer);
   

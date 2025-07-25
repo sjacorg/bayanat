@@ -23,7 +23,7 @@ const ActorProfiles = Vue.defineComponent({
       axios
         .get(`/admin/api/actor/${this.actorId}/profiles`)
         .then((response) => {
-          this.actorProfiles = response.data;
+          this.actorProfiles = response?.data?.data ?? [];
         })
         .catch((error) => {
           console.error('Error fetching profiles:', error);
