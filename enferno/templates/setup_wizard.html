@@ -568,9 +568,9 @@
                 },
 
                 fetchDefaultSettings() {
-                    api.get('/api/default-config')
+                    api.get('/api/default-config', { skipFlattening: true })
                         .then(response => {
-                            this.defaultSettings = response.data;
+                            this.defaultSettings = response?.data?.data || {};
                             this.cfg = {...this.cfg, ...this.defaultSettings};
                         })
                         .catch(error => {
