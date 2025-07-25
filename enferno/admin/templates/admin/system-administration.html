@@ -984,6 +984,14 @@
                                                     <v-text-field v-bind="inputProps" label="{{ _('Mail Default Sender') }}" persistent-hint
                                                         hint="{{ _('Default sender for emails.') }}" v-model="eitem.MAIL_DEFAULT_SENDER"></v-text-field>
                                                 </v-col>
+
+                                                <v-col cols="12" lg="6">
+                                                    <v-combobox v-bind="inputProps" class="mb-9" multiple chips :items="eitem.MAIL_ALLOWED_DOMAINS"
+                                                        v-model="eitem.MAIL_ALLOWED_DOMAINS" label="{{ _('Allowed Email Domains') }}" persistent-hint
+                                                        hint="{{ _('Only emails from the listed domains will be allowed (e.g., gmail.com, yahoo.com). Use * to allow all domains.') }}"
+                                                    ></v-combobox>
+                                                  
+                                                </v-col>
                                             </v-row>
                                         </v-sheet>
                                     </v-slide-y-transition>
