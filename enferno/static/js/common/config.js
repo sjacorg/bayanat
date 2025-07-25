@@ -255,6 +255,10 @@ function getInfraMessage(status) {
   
  function handleRequestError(error) {
     const response = error?.response;
+
+    if (response?.data?.message) {
+        return response.data.message;
+    }
   
     // Handle known API error format
     if (response?.data?.response?.errors) {
