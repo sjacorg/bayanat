@@ -178,12 +178,13 @@ def send_email_notification(self, notification_id: int) -> bool:
             )
             return True
         else:
+            notification.delivery_error = notification.delivery_error or ""
             # Email sending failed, but we'll retry
             error_msg = "Email sending failed (will retry)"
             logger.warning(f"Email notification {notification_id} failed: {error_msg}")
 
             # Update notification with error but keep status as processing for retry
-            notification.delivery_error = f"Attempt {self.request.retries + 1}: {error_msg}"
+            notification.delivery_error += f"\nAttempt {self.request.retries + 1}: {error_msg}"
             notification.save()
 
             # Retry the task with exponential backoff
@@ -198,7 +199,6 @@ def send_email_notification(self, notification_id: int) -> bool:
 
         try:
             notification = Notification.query.get(notification_id)
-            notification.delivery_error = notification.delivery_error or ""
             if notification:
                 if self.request.retries < self.max_retries:
                     # Still have retries left
