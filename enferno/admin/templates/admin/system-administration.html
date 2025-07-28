@@ -735,7 +735,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New user') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.NEW_USER.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.NEW_USER)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.NEW_USER)"
                                                 ></v-switch>
                                             </div>
@@ -746,7 +746,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Update user') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.UPDATE_USER.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.UPDATE_USER)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.UPDATE_USER)"
                                                 ></v-switch>
                                             </div>
@@ -757,7 +757,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New group') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.NEW_GROUP.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.NEW_GROUP)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.NEW_GROUP)"
                                                 ></v-switch>
                                             </div>
@@ -768,7 +768,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('System settings change') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.SYSTEM_SETTINGS_CHANGE)"
                                                 ></v-switch>
                                             </div>
@@ -779,7 +779,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Login by a user from new country') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.LOGIN_NEW_COUNTRY)"
                                                 ></v-switch>
                                             </div>
@@ -790,7 +790,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Unauthorized action') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.UNAUTHORIZED_ACTION)"
                                                 ></v-switch>
                                             </div>
@@ -802,7 +802,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Admin security credentials change') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.ADMIN_CREDENTIALS_CHANGE)"
                                                 ></v-switch>
                                             </div>
@@ -814,7 +814,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Deleted items') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.ITEM_DELETED.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.ITEM_DELETED)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.ITEM_DELETED)"
                                                 ></v-switch>
                                             </div>
@@ -831,7 +831,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New export') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.NEW_EXPORT.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.NEW_EXPORT)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.NEW_EXPORT)"
                                                 ></v-switch>
                                             </div>
@@ -842,7 +842,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Approved export') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.EXPORT_APPROVED.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.EXPORT_APPROVED)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.NEW_EXPORT)"
                                                 ></v-switch>
                                             </div>
@@ -858,7 +858,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New batch') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.NEW_BATCH.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.NEW_BATCH)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.NEW_BATCH)"
                                                 ></v-switch>
                                             </div>
@@ -875,7 +875,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Batch status (complete, fail)') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.BATCH_STATUS.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.BATCH_STATUS)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.BATCH_STATUS)"
                                                 ></v-switch>
                                             </div>
@@ -886,7 +886,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Bulk ops status') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.BULK_OPERATION_STATUS.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.BULK_OPERATION_STATUS)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.BULK_OPERATION_STATUS)"
                                                 ></v-switch>
                                             </div>
@@ -904,7 +904,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('New assignment') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.NEW_ASSIGNMENT.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.NEW_ASSIGNMENT)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.NEW_ASSIGNMENT)"
                                                 ></v-switch>
                                             </div>
@@ -916,7 +916,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Review needed') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.REVIEW_NEEDED.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.REVIEW_NEEDED)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.REVIEW_NEEDED)"
                                                 ></v-switch>
                                             </div>
@@ -928,7 +928,7 @@
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Web Import status') }}</h4>
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
-                                                    v-model="eitem.NOTIFICATIONS.WEB_IMPORT_STATUS.in_app_enabled"></v-switch>
+                                                    v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.WEB_IMPORT_STATUS)"></v-switch>
                                                 <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.WEB_IMPORT_STATUS)"
                                                 ></v-switch>
                                             </div>
@@ -1477,18 +1477,23 @@
                 },
 
                 getEmailSwitchProps(settings) {
-                    if (!settings.in_app_enabled) {
-                        return { 'model-value': false, disabled: true }
-                    }
-
-                    if (!this.eitem.MAIL_ENABLED) {
-                        return { 'model-value': settings.email_enabled, disabled: true }
-                    }
-
-                    // 
                     return {
-                        'model-value': settings.email_enabled,
-                        'update:model-value': (newValue) => settings.email_enabled = newValue
+                        'modelValue': settings.email_enabled,
+                        'onUpdate:modelValue': (newValue) => settings.email_enabled = newValue,
+                        disabled: !this.eitem.MAIL_ENABLED || !settings.in_app_enabled
+                    }
+                },
+
+                getInAppSwitchProps(settings) {
+                    return {
+                        'modelValue': settings.in_app_enabled,
+                        'onUpdate:modelValue': (enabled) => {
+                            settings.in_app_enabled = enabled
+
+                            if (!enabled) {
+                                settings.email_enabled = false
+                            }
+                        },
                     }
                 }
             }
