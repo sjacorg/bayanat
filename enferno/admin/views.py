@@ -387,7 +387,7 @@ def api_label_delete(
             "Label Deleted",
             f"Label {label.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Deleted Label #{label.id}", 200
     else:
@@ -549,7 +549,7 @@ def api_eventtype_delete(
             "Event Type Deleted",
             f"Event Type {eventtype.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Deleted Event Type #{eventtype.id}", 200
     else:
@@ -694,7 +694,7 @@ def api_potentialviolation_delete(
             "Potential Violation Deleted",
             f"Potential Violation {potentialviolation.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Deleted Potential Violation #{potentialviolation.id}", 200
     else:
@@ -840,7 +840,7 @@ def api_claimedviolation_delete(
             "Claimed Violation Deleted",
             f"Claimed Violation {claimedviolation.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Deleted Claimed Violation #{claimedviolation.id}", 200
     else:
@@ -1005,7 +1005,7 @@ def api_source_delete(
             "Source Deleted",
             f"Source {source.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Deleted Source #{source.id}", 200
     else:
@@ -1186,7 +1186,7 @@ def api_location_delete(
             "Location Deleted",
             f"Location {location.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Deleted Location #{location.id}", 200
     else:
@@ -1393,7 +1393,7 @@ def api_location_admin_level_delete(id: t.id) -> Response:
             "Location Admin Level Deleted",
             f"Location Admin Level {admin_level.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Location Admin Level Deleted #{admin_level.id}", 200
     else:
@@ -1542,7 +1542,7 @@ def api_location_type_delete(
             "Location Type Deleted",
             f"Location Type {location_type.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Location Type Deleted #{location_type.id}", 200
     else:
@@ -1679,7 +1679,7 @@ def api_country_delete(
             "Country Deleted",
             f"Country {country.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Country Deleted #{country.id}", 200
     else:
@@ -1815,7 +1815,7 @@ def api_ethnography_delete(
             "Ethnography Deleted",
             f"Ethnography {ethnography.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Ethnography Deleted #{ethnography.id}", 200
     else:
@@ -1948,7 +1948,7 @@ def api_dialect_delete(
             "Dialect Deleted",
             f"Dialect {dialect.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Dialect Deleted #{dialect.id}", 200
     else:
@@ -2090,7 +2090,7 @@ def api_id_number_type_delete(
             "ID Number Type Deleted",
             f"ID Number Type {id_number_type.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"ID Number Type Deleted {id_number_type.id}", 200
     else:
@@ -2216,7 +2216,7 @@ def api_atoainfo_delete(
             "AtoaInfo Deleted",
             f"AtoaInfo {atoainfo.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"AtoaInfo Deleted #{atoainfo.id}", 200
     else:
@@ -2339,7 +2339,7 @@ def api_atobinfo_delete(
             "AtobInfo Deleted",
             f"AtobInfo {atobinfo.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"AtobInfo Deleted #{atobinfo.id}", 200
     else:
@@ -2462,7 +2462,7 @@ def api_btobinfo_delete(
             "BtobInfo Deleted",
             f"BtobInfo {btobinfo.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"BtobInfo Deleted #{btobinfo.id}", 200
     else:
@@ -2585,7 +2585,7 @@ def api_itoainfo_delete(
             "ItoaInfo Deleted",
             f"ItoaInfo {itoainfo.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"ItoaInfo Deleted #{itoainfo.id}", 200
     else:
@@ -2704,7 +2704,7 @@ def api_itobinfo_delete(
             "ItobInfo Deleted",
             f"ItobInfo {itobinfo.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"ItobInfo Deleted #{itobinfo.id}", 200
     else:
@@ -2827,7 +2827,7 @@ def api_itoiinfo_delete(
             "ItoiInfo Deleted",
             f"ItoiInfo {itoiinfo.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"ItoiInfo Deleted #{itoiinfo.id}", 200
     else:
@@ -2950,7 +2950,7 @@ def api_mediacategory_delete(
             "Media Category Deleted",
             f"Media Category {mediacategory.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"MediaCategory Deleted #{mediacategory.id}", 200
     else:
@@ -3073,7 +3073,7 @@ def api_geolocationtype_delete(
             "GeoLocation Type Deleted",
             f"GeoLocation Type {geolocationtype.title} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"GeoLocationType Deleted #{geolocationtype.id}", 200
     else:
@@ -4934,7 +4934,7 @@ def api_user_create(
             "New User Created",
             f"User {username} has been created by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"User {username} has been created successfully", 200
     else:
@@ -5012,7 +5012,7 @@ def api_user_update(
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
                 category=Notification.TYPE_SECURITY,
-                is_urgent=True,
+                is_urgent=False,
             )
             return f"Saved User {user.id} {user.name}", 200
         else:
@@ -5115,7 +5115,7 @@ def api_user_delete(
             "User Deleted",
             f"User {user.username} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return "Deleted", 200
     else:
@@ -5192,7 +5192,7 @@ def api_role_create(
             "New Group Created",
             f"Group {role.name} has been created by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return "Created", 200
 
@@ -5266,7 +5266,7 @@ def api_role_delete(
             "Role Deleted",
             f"Role {role.name} has been deleted by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return "Deleted", 200
     else:
@@ -6077,7 +6077,7 @@ def api_config_write(
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
             category=Notification.TYPE_SECURITY,
-            is_urgent=True,
+            is_urgent=False,
         )
         return "Configuration Saved Successfully", 200
     else:

@@ -77,7 +77,7 @@ def export_bulletins() -> Response:
             "New Export Request",
             f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
             category=Notification.TYPE_UPDATE,
-            is_urgent=True,
+            is_urgent=False,
         )
 
         return f"Export request created successfully, id:  {export_request.id} ", 200
@@ -110,7 +110,7 @@ def export_actors() -> Response:
             "New Export Request",
             f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
             category=Notification.TYPE_UPDATE,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Export request created successfully, id:  {export_request.id} ", 200
     return "Error creating export request", 417
@@ -142,7 +142,7 @@ def export_incidents() -> Response:
             "New Export Request",
             f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
             category=Notification.TYPE_UPDATE,
-            is_urgent=True,
+            is_urgent=False,
         )
         return f"Export request created successfully, id:  {export_request.id} ", 200
     return "Error creating export request", 417
@@ -246,7 +246,7 @@ def change_export_status() -> Response:
                 "Export Request Approved",
                 f"Export request {export_request.id} has been approved by {current_user.username} successfully.",
                 category=Notification.TYPE_UPDATE,
-                is_urgent=True,
+                is_urgent=False,
             )
 
             return "Export request approval will be processed shortly.", 200
