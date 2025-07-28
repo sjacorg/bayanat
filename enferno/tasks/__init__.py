@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, date
 
 import boto3
 import pandas as pd
-from celery import Celery, chain
+from celery import Celery, chain, chord, group
 from celery.schedules import crontab
 from celery.signals import worker_ready, worker_process_init
 from sqlalchemy import and_
@@ -693,33 +693,15 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 def etl_process_file(
     batch_id: t.id, file: str, meta: Any, user_id: t.id, data_import_id: t.id
 ) -> Optional[Literal["done"]]:
-    """ETL process file task."""
+    """Process individual file for import. Part of coordinated batch operation."""
     try:
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
-        # NOtifications here will swamp the user with a notification for each file in a batch we should send this once
-        # Notify admin
-        # Notification.send_notification_to_user_for_event(
-        #     Constants.NotificationEvent.BATCH_STATUS,
-        #     User.query.get(user_id),
-        #     "Batch Status",
-        #     f"Batch {batch_id} has been processed successfully.",
-        #     category=Notification.TYPE_UPDATE,
-        #     is_urgent=True,
-        # )
         return "done"
     except Exception as e:
         log = DataImport.query.get(data_import_id)
         log.fail(e)
-        # # Notify admin
-        # Notification.send_notification_to_user_for_event(
-        #     Constants.NotificationEvent.BATCH_STATUS,
-        #     User.query.get(user_id),
-        #     "Batch Status",
-        #     f"Batch {batch_id} has failed to process.",
-        #     category=Notification.TYPE_UPDATE,
-        #     is_urgent=True,
-        # )
+        raise  # Re-raise for chord coordination
 
 
 # this will publish a message to redis and will be captured by the front-end client
@@ -850,43 +832,61 @@ def dedup_cron() -> None:
     update_stats()
 
 
-# @celery.task(bind=True, max_retries=30)
-# def notify_batch_status(self, user_id: t.id, batch_id: str):
-#     """
-#     Notify user about the batch status.
+@celery.task
+def batch_complete_notification(results: list, batch_id: str, user_id: int) -> None:
+    """Callback executed when all files in a batch are processed."""
+    from enferno.data_import.models import DataImport
 
-#     Args:
-#         - user_id: ID of the user.
-#         - batch_id: ID of the batch.
+    batch_imports = DataImport.query.filter_by(batch_id=batch_id).all()
+    successful = [imp for imp in batch_imports if imp.status == "Ready"]
+    failed = [imp for imp in batch_imports if imp.status == "Failed"]
 
-#     Returns:
-#         None
-#     """
-#     pass
+    user = User.query.get(user_id)
+    if not user:
+        logger.error(f"User {user_id} not found for batch completion notification")
+        return
+
+    if len(failed) == 0:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            user,
+            "Batch Import Complete",
+            f"Batch {batch_id} completed successfully. All {len(successful)} files processed.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
+    else:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            user,
+            "Batch Import Completed with Errors",
+            f"Batch {batch_id} completed. {len(successful)} succeeded, {len(failed)} failed.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=True,
+        )
+
+    logger.info(f"Batch {batch_id} complete: {len(successful)} success, {len(failed)} failed")
 
 
 @celery.task
 def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
+    """Process multiple files using Celery chord pattern for coordinated batch completion."""
+    file_tasks = []
+
     for file in files:
         f = file.get("path") or file.get("filename")
-        # logging every file early in the process to track progress
 
-        # Initialize log here, outside of the if condition
         data_import = DataImport(
             user_id=user_id, table="bulletin", file=f, batch_id=batch_id, data=meta
         )
 
         if meta.get("mode") == 2:
-            # getting hash of file for deduplication
-            # server-side import doesn't automatically
-            # retrieve files' hashes
+            # Server-side import: copy files and generate hashes
             allowed_path = Path(cfg.ETL_ALLOWED_PATH)
             full_path = safe_join(allowed_path, f)
-
             data_import.file_hash = file["etag"] = get_file_hash(full_path)
             data_import.save()
 
-            # checking for existing media or pending or processing imports
             if media_check_duplicates(file.get("etag"), data_import.id):
                 data_import.add_to_log(f"File already exists {f}.")
                 data_import.fail()
@@ -895,33 +895,23 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
             file["path"] = full_path
 
         data_import.add_to_log(f"Added file {file} to import queue.")
-        # make sure we have a log id
-        result = etl_process_file.delay(batch_id, file, meta, user_id, data_import.id)
 
-    # TODO: At this point, we need to check status of all files in the batch
-    # and notify the user about the batch status.
-    # This can be done by checking the DataImport logs or results.
+        file_tasks.append(etl_process_file.s(batch_id, file, meta, user_id, data_import.id))
 
-    # if all files were processed successfully:
-    #     # Notify admin
-    #     Notification.send_notification_to_user_for_event(
-    #         Constants.NotificationEvent.BATCH_STATUS,
-    #         User.query.get(user_id),
-    #         "Batch Status",
-    #         f"Batch {batch_id} has been processed successfully.",
-    #         category=Notification.TYPE_UPDATE,
-    #         is_urgent=False,
-    #     )
-    # else:
-    #     # Notify admin
-    #     Notification.send_notification_to_user_for_event(
-    #         Constants.NotificationEvent.BATCH_STATUS,
-    #         User.query.get(user_id),
-    #         "Batch Status",
-    #         f"Batch {batch_id} has completed processing, but {} file(s) could not be imported. Check the Import Log for details.",
-    #         category=Notification.TYPE_UPDATE,
-    #         is_urgent=True,
-    #     )
+    if not file_tasks:
+        # Edge case: all files were duplicates or invalid
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.BATCH_STATUS,
+            User.query.get(user_id),
+            "Batch Import Complete",
+            f"Batch {batch_id} had no valid files to process.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
+        return
+
+    # Execute all file tasks in parallel, with single callback when complete
+    chord(group(file_tasks), batch_complete_notification.s(batch_id, user_id)).apply_async()
 
 
 @celery.task
