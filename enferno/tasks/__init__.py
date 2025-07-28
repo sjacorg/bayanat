@@ -697,28 +697,29 @@ def etl_process_file(
     try:
         di = MediaImport(batch_id, meta, user_id=user_id, data_import_id=data_import_id)
         di.process(file)
+        # NOtifications here will swamp the user with a notification for each file in a batch we should send this once
         # Notify admin
-        Notification.send_notification_to_user_for_event(
-            Constants.NotificationEvent.BATCH_STATUS,
-            User.query.get(user_id),
-            "Batch Status",
-            f"Batch {batch_id} has been processed successfully.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=True,
-        )
+        # Notification.send_notification_to_user_for_event(
+        #     Constants.NotificationEvent.BATCH_STATUS,
+        #     User.query.get(user_id),
+        #     "Batch Status",
+        #     f"Batch {batch_id} has been processed successfully.",
+        #     category=Notification.TYPE_UPDATE,
+        #     is_urgent=True,
+        # )
         return "done"
     except Exception as e:
         log = DataImport.query.get(data_import_id)
         log.fail(e)
-        # Notify admin
-        Notification.send_notification_to_user_for_event(
-            Constants.NotificationEvent.BATCH_STATUS,
-            User.query.get(user_id),
-            "Batch Status",
-            f"Batch {batch_id} has failed to process.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=True,
-        )
+        # # Notify admin
+        # Notification.send_notification_to_user_for_event(
+        #     Constants.NotificationEvent.BATCH_STATUS,
+        #     User.query.get(user_id),
+        #     "Batch Status",
+        #     f"Batch {batch_id} has failed to process.",
+        #     category=Notification.TYPE_UPDATE,
+        #     is_urgent=True,
+        # )
 
 
 # this will publish a message to redis and will be captured by the front-end client
@@ -849,6 +850,21 @@ def dedup_cron() -> None:
     update_stats()
 
 
+# @celery.task(bind=True, max_retries=30)
+# def notify_batch_status(self, user_id: t.id, batch_id: str):
+#     """
+#     Notify user about the batch status.
+
+#     Args:
+#         - user_id: ID of the user.
+#         - batch_id: ID of the batch.
+
+#     Returns:
+#         None
+#     """
+#     pass
+
+
 @celery.task
 def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
     for file in files:
@@ -880,7 +896,32 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
 
         data_import.add_to_log(f"Added file {file} to import queue.")
         # make sure we have a log id
-        etl_process_file.delay(batch_id, file, meta, user_id, data_import.id)
+        result = etl_process_file.delay(batch_id, file, meta, user_id, data_import.id)
+
+    # TODO: At this point, we need to check status of all files in the batch
+    # and notify the user about the batch status.
+    # This can be done by checking the DataImport logs or results.
+
+    # if all files were processed successfully:
+    #     # Notify admin
+    #     Notification.send_notification_to_user_for_event(
+    #         Constants.NotificationEvent.BATCH_STATUS,
+    #         User.query.get(user_id),
+    #         "Batch Status",
+    #         f"Batch {batch_id} has been processed successfully.",
+    #         category=Notification.TYPE_UPDATE,
+    #         is_urgent=False,
+    #     )
+    # else:
+    #     # Notify admin
+    #     Notification.send_notification_to_user_for_event(
+    #         Constants.NotificationEvent.BATCH_STATUS,
+    #         User.query.get(user_id),
+    #         "Batch Status",
+    #         f"Batch {batch_id} has completed processing, but {} file(s) could not be imported. Check the Import Log for details.",
+    #         category=Notification.TYPE_UPDATE,
+    #         is_urgent=True,
+    #     )
 
 
 @celery.task
@@ -1528,7 +1569,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             "Web Import Status",
             f"Web import of {url} has been completed successfully.",
             category=Notification.TYPE_UPDATE,
-            is_urgent=True,
+            is_urgent=False,
         )
 
     except ValueError as e:
@@ -1545,6 +1586,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             category=Notification.TYPE_UPDATE,
             is_urgent=True,
         )
+
     except Exception as e:
         # Handle other errors with traceback
         logger.error(f"Download failed: {str(e)}", exc_info=True)
