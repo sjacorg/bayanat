@@ -239,6 +239,14 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     user = User.query.get(cur_user_id)
     chunks = chunk_list(ids, BULK_CHUNK_SIZE)
 
+    # Assigned user
+    assigned_to_id = bulk.get("assigned_to_id")
+    clear_assignee = bulk.get("assigneeClear")
+
+    # FPR user
+    first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
+    clear_reviewer = bulk.get("reviewerClear")
+
     for group in chunks:
         # Fetch bulletins
         bulletins = Bulletin.query.filter(Bulletin.id.in_(group))
@@ -251,43 +259,16 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # get Status initially
             status = bulk.get("status")
 
-            # Assigned user
-            assigned_to_id = bulk.get("assigned_to_id")
-            clear_assignee = bulk.get("assigneeClear")
             if clear_assignee:
                 bulletin.assigned_to_id = None
             elif assigned_to_id:
-                if not bulletin.assigned_to_id or bulletin.assigned_to_id != assigned_to_id:
-                    Notification.send_notification_to_user_for_event(
-                        Constants.NotificationEvent.NEW_ASSIGNMENT,
-                        bulletin.assigned_to,
-                        "New Assignment",
-                        f"You have been assigned to Bulletin {bulletin.id}.",
-                        category=Notification.TYPE_UPDATE,
-                        is_urgent=True,
-                    )
                 bulletin.assigned_to_id = assigned_to_id
                 if not status:
                     bulletin.status = "Assigned"
 
-            # FPR user
-            first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            clear_reviewer = bulk.get("reviewerClear")
             if clear_reviewer:
                 bulletin.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
-                if (
-                    not bulletin.first_peer_reviewer_id
-                    or bulletin.first_peer_reviewer_id != first_peer_reviewer_id
-                ):
-                    Notification.send_notification_to_user_for_event(
-                        Constants.NotificationEvent.REVIEW_NEEDED,
-                        bulletin.first_peer_reviewer,
-                        "Review Needed",
-                        f"Bulletin {bulletin.id} needs to be reviewed by you.",
-                        category=Notification.TYPE_SECURITY,
-                        is_urgent=True,
-                    )
                 bulletin.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     bulletin.status = "Peer Review Assigned"
@@ -352,15 +333,38 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.1)
 
     logger.info(f"Bulletin bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+
+    assigner = User.query.get(cur_user_id)
     # Notify admin
     Notification.send_notification_to_user_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
-        User.query.get(cur_user_id),
+        assigner,
         "Bulk Operation Status",
-        f"Bulk update of {len(ids)} bulletins has been completed successfully.",
+        f"Bulk update of {len(ids)} Bulletins has been completed successfully.",
         category=Notification.TYPE_UPDATE,
-        is_urgent=True,
+        is_urgent=False,
     )
+
+    # send notifications for assignments and reviews
+    if assigned_to_id:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.NEW_ASSIGNMENT,
+            User.query.get(assigned_to_id),
+            "New Assignment",
+            f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for analysis.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
+
+    if first_peer_reviewer_id:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.REVIEW_NEEDED,
+            User.query.get(first_peer_reviewer_id),
+            "Review Needed",
+            f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for review.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
 
 
 @celery.task
@@ -382,6 +386,15 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     cur_user = namedtuple("cur_user", u.keys())(*u.values())
     user = User.query.get(cur_user_id)
     chunks = chunk_list(ids, BULK_CHUNK_SIZE)
+
+    # Assigned user
+    assigned_to_id = bulk.get("assigned_to_id")
+    clear_assignee = bulk.get("assigneeClear")
+
+    # FPR user
+    first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
+    clear_reviewer = bulk.get("reviewerClear")
+
     for group in chunks:
         # Fetch bulletins
         actors = Actor.query.filter(Actor.id.in_(group))
@@ -394,43 +407,16 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # get Status initially
             status = bulk.get("status")
 
-            # Assigned user
-            assigned_to_id = bulk.get("assigned_to_id")
-            clear_assignee = bulk.get("assigneeClear")
             if clear_assignee:
                 actor.assigned_to_id = None
             elif assigned_to_id:
-                if not actor.assigned_to_id or actor.assigned_to_id != assigned_to_id:
-                    Notification.send_notification_to_user_for_event(
-                        Constants.NotificationEvent.NEW_ASSIGNMENT,
-                        actor.assigned_to,
-                        "New Assignment",
-                        f"You have been assigned to Actor {actor.id}.",
-                        category=Notification.TYPE_UPDATE,
-                        is_urgent=True,
-                    )
                 actor.assigned_to_id = assigned_to_id
                 if not status:
                     actor.status = "Assigned"
 
-            # FPR user
-            first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            clear_reviewer = bulk.get("reviewerClear")
             if clear_reviewer:
                 actor.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
-                if (
-                    not actor.first_peer_reviewer_id
-                    or actor.first_peer_reviewer_id != first_peer_reviewer_id
-                ):
-                    Notification.send_notification_to_user_for_event(
-                        Constants.NotificationEvent.REVIEW_NEEDED,
-                        actor.first_peer_reviewer,
-                        "Review Needed",
-                        f"Actor {actor.id} needs to be reviewed by you.",
-                        category=Notification.TYPE_SECURITY,
-                        is_urgent=True,
-                    )
                 actor.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     actor.status = "Peer Review Assigned"
@@ -495,15 +481,38 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.25)
 
     logger.info(f"Actors bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+
+    assigner = User.query.get(cur_user_id)
     # Notify admin
     Notification.send_notification_to_user_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
-        User.query.get(cur_user_id),
+        assigner,
         "Bulk Operation Status",
-        f"Bulk update of {len(ids)} actors has been completed successfully.",
+        f"Bulk update of {len(ids)} Actors has been completed successfully.",
         category=Notification.TYPE_UPDATE,
-        is_urgent=True,
+        is_urgent=False,
     )
+
+    # send notifications for assignments and reviews
+    if assigned_to_id:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.NEW_ASSIGNMENT,
+            User.query.get(assigned_to_id),
+            "New Assignment",
+            f"{len(ids)} Actors have been assigned to you by {assigner.username} for analysis.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
+
+    if first_peer_reviewer_id:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.REVIEW_NEEDED,
+            User.query.get(first_peer_reviewer_id),
+            "Review Needed",
+            f"{len(ids)} Actors have been assigned to you by {assigner.username} for review.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
 
 
 @celery.task
@@ -532,6 +541,14 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
     actors = []
     bulletins = []
 
+    # Assigned user
+    assigned_to_id = bulk.get("assigned_to_id")
+    clear_assignee = bulk.get("assigneeClear")
+
+    # FPR user
+    first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
+    clear_reviewer = bulk.get("reviewerClear")
+
     for group in chunks:
         # Fetch bulletins
         incidents = Incident.query.filter(Incident.id.in_(group))
@@ -544,43 +561,16 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             # get Status initially
             status = bulk.get("status")
 
-            # Assigned user
-            assigned_to_id = bulk.get("assigned_to_id")
-            clear_assignee = bulk.get("assigneeClear")
             if clear_assignee:
                 incident.assigned_to_id = None
             elif assigned_to_id:
-                if not incident.assigned_to_id or incident.assigned_to_id != assigned_to_id:
-                    Notification.send_notification_to_user_for_event(
-                        Constants.NotificationEvent.NEW_ASSIGNMENT,
-                        incident.assigned_to,
-                        "New Assignment",
-                        f"You have been assigned to Incident {incident.id}.",
-                        category=Notification.TYPE_UPDATE,
-                        is_urgent=True,
-                    )
                 incident.assigned_to_id = assigned_to_id
                 if not status:
                     incident.status = "Assigned"
 
-            # FPR user
-            first_peer_reviewer_id = bulk.get("first_peer_reviewer_id")
-            clear_reviewer = bulk.get("reviewerClear")
             if clear_reviewer:
                 incident.first_peer_reviewer_id = None
             elif first_peer_reviewer_id:
-                if (
-                    not incident.first_peer_reviewer_id
-                    or incident.first_peer_reviewer_id != first_peer_reviewer_id
-                ):
-                    Notification.send_notification_to_user_for_event(
-                        Constants.NotificationEvent.REVIEW_NEEDED,
-                        incident.first_peer_reviewer,
-                        "Review Needed",
-                        f"Incident {incident.id} needs to be reviewed by you.",
-                        category=Notification.TYPE_SECURITY,
-                        is_urgent=True,
-                    )
                 incident.first_peer_reviewer_id = first_peer_reviewer_id
                 if not status:
                     incident.status = "Peer Review Assigned"
@@ -665,15 +655,38 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         time.sleep(0.25)
 
     logger.info(f"Incidents bulk-update successful. User ID: {cur_user_id} Total: {len(ids)}")
+
+    assigner = User.query.get(cur_user_id)
     # Notify admin
     Notification.send_notification_to_user_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
-        User.query.get(cur_user_id),
+        assigner,
         "Bulk Operation Status",
-        f"Bulk update of {len(ids)} incidents has been completed successfully.",
+        f"Bulk update of {len(ids)} Incidents has been completed successfully.",
         category=Notification.TYPE_UPDATE,
-        is_urgent=True,
+        is_urgent=False,
     )
+
+    # send notifications for assignments and reviews
+    if assigned_to_id:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.NEW_ASSIGNMENT,
+            User.query.get(assigned_to_id),
+            "New Assignment",
+            f"{len(ids)} Incidents have been assigned to you by {assigner.username} for analysis.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
+
+    if first_peer_reviewer_id:
+        Notification.send_notification_to_user_for_event(
+            Constants.NotificationEvent.REVIEW_NEEDED,
+            User.query.get(first_peer_reviewer_id),
+            "Review Needed",
+            f"{len(ids)} Incidents have been assigned to you by {assigner.username} for review.",
+            category=Notification.TYPE_UPDATE,
+            is_urgent=False,
+        )
 
 
 @celery.task(rate_limit=10)
