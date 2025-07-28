@@ -5064,15 +5064,6 @@ def api_user_force_reset(validated_data: dict) -> Response:
         return Response(message, mimetype="text/plain")
     user.set_security_reset_key()
     message = f"Forced password reset has been set for user {user.username}"
-    # Notify user
-    Notification.send_notification_to_user_for_event(
-        Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
-        user,
-        "Password Reset",
-        "Your password has been reset. Please change it to continue using the application.",
-        category=Notification.TYPE_SECURITY,
-        is_urgent=True,
-    )
     return Response(message, mimetype="text/plain")
 
 
@@ -5089,15 +5080,6 @@ def api_user_force_reset_all() -> Response:
         # check if user already has a password reset flag
         if not user.security_reset_key:
             user.set_security_reset_key()
-            # Notify user
-            Notification.send_notification_to_user_for_event(
-                Constants.NotificationEvent.FORCE_PASSWORD_CHANGE,
-                user,
-                "Password Reset",
-                "Your password has been reset. Please change it to continue using the application.",
-                category=Notification.TYPE_SECURITY,
-                is_urgent=True,
-            )
     return "Forced password reset has been set for all users", 200
 
 
