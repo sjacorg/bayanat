@@ -1,10 +1,12 @@
 import re
 import time
+from functools import cached_property
 from typing import Any, Iterable, Optional, Union
 
 import pandas as pd
 import gettext
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy import select
 
 from enferno.admin.models import (
     Actor,
@@ -21,6 +23,7 @@ from enferno.admin.models import (
     IDNumberType,
 )
 from enferno.data_import.models import DataImport
+from enferno.extensions import db
 
 from enferno.utils.base import DatabaseException
 from enferno.utils.date_helper import DateHelper
@@ -116,6 +119,18 @@ class SheetImport:
             self.translator.install()
         else:
             self.translator = None
+
+    @cached_property
+    def id_number_types(self) -> set[str]:
+        """
+        Get all ID number type IDs from the database once per import.
+
+        Returns:
+            set[str]: Set of ID number type IDs as strings
+        """
+        stmt = select(IDNumberType.id)
+        result = db.session.execute(stmt)
+        return {str(row[0]) for row in result}
 
     @staticmethod
     def parse_csv(filepath: str) -> dict:
@@ -633,8 +648,6 @@ class SheetImport:
         """
         Method to set idnumbers.
         """
-        id_number_types = [str(t.id) for t in IDNumberType.query.all()]
-
         if self.actor.id_number is None:
             self.actor.id_number = []
 
@@ -648,7 +661,7 @@ class SheetImport:
                 continue
 
             # Handle mismatch if type is not valid/missing
-            if not idn_type or idn_type not in id_number_types:
+            if not idn_type or idn_type not in self.id_number_types:
                 self.handle_mismatch("idnumber_type", idn_type)
                 continue
 
