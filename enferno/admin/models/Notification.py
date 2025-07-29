@@ -8,6 +8,7 @@ from enferno.utils.base import BaseMixin
 from flask import current_app
 from sqlalchemy import select, func, case, and_
 from sqlalchemy.orm import selectinload
+from enferno.utils.notification_config import NOTIFICATIONS_CONFIG, ALWAYS_ON_SECURITY_EVENTS
 
 NotificationEvent = Constants.NotificationEvent
 logger = get_logger()
@@ -203,41 +204,24 @@ class Notification(db.Model, BaseMixin):
         )
 
 
-# Simple notification configuration - replaces complex lookup logic
-NOTIFICATION_CONFIGS = {
-    # Security events (always email + urgent)
-    NotificationEvent.LOGIN_NEW_IP.value: {"email": True, "urgent": True},
-    NotificationEvent.PASSWORD_CHANGE.value: {"email": True, "urgent": True},
-    NotificationEvent.TWO_FACTOR_CHANGE.value: {"email": True, "urgent": True},
-    NotificationEvent.RECOVERY_CODES_CHANGE.value: {"email": True, "urgent": True},
-    NotificationEvent.FORCE_PASSWORD_CHANGE.value: {"email": True, "urgent": True},
-    # Admin security events (email enabled)
-    NotificationEvent.NEW_USER.value: {"email": True, "urgent": False},
-    NotificationEvent.UPDATE_USER.value: {"email": True, "urgent": False},
-    NotificationEvent.NEW_GROUP.value: {"email": True, "urgent": False},
-    NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {"email": True, "urgent": True},
-    NotificationEvent.LOGIN_NEW_COUNTRY.value: {"email": True, "urgent": True},
-    NotificationEvent.UNAUTHORIZED_ACTION.value: {"email": True, "urgent": True},
-    NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {"email": True, "urgent": True},
-    NotificationEvent.ITEM_DELETED.value: {"email": False, "urgent": False},
-    # Export notifications (app only)
-    NotificationEvent.NEW_EXPORT.value: {"email": False, "urgent": False},
-    NotificationEvent.EXPORT_APPROVED.value: {"email": False, "urgent": False},
-    # Import/batch operations (app only)
-    NotificationEvent.NEW_BATCH.value: {"email": False, "urgent": False},
-    NotificationEvent.BATCH_STATUS.value: {"email": False, "urgent": False},
-    NotificationEvent.BULK_OPERATION_STATUS.value: {"email": False, "urgent": False},
-    NotificationEvent.WEB_IMPORT_STATUS.value: {"email": False, "urgent": False},
-    NotificationEvent.NEW_ASSIGNMENT.value: {"email": False, "urgent": False},
-    NotificationEvent.REVIEW_NEEDED.value: {"email": False, "urgent": False},
-}
-
-
 def get_notification_config(event):
-    """Simple notification configuration lookup"""
+    """
+    Adapter function that converts centralized config format to expected format.
+    Checks both configurable events and always-on security events.
+    Converts: email_enabled -> email, category -> urgent (security=True, others=False)
+    """
     if hasattr(event, "value"):
         event = event.value
     elif isinstance(event, str):
         event = event.upper()
 
-    return NOTIFICATION_CONFIGS.get(event, {"email": False, "urgent": False})
+    # Check always-on security events first, then configurable events
+    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or NOTIFICATIONS_CONFIG.get(
+        event, {"email_enabled": False, "category": "general"}
+    )
+
+    # Convert to expected format
+    return {
+        "email": config.get("email_enabled", False),
+        "urgent": config.get("category") == "security",
+    }
