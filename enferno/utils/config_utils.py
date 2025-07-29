@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 from enferno.admin.constants import Constants
+from enferno.utils.notification_config import NOTIFICATIONS_CONFIG
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -160,86 +161,7 @@ class ConfigManager:
                 "twitter.com",
             ],
             "YTDLP_COOKIES": "",
-            "NOTIFICATIONS": {
-                # Configurable events
-                NotificationEvent.NEW_USER.value: {
-                    "email_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.UPDATE_USER.value: {
-                    "email_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.NEW_GROUP.value: {
-                    "email_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {
-                    "email_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.LOGIN_NEW_COUNTRY.value: {
-                    "email_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.UNAUTHORIZED_ACTION.value: {
-                    "email_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {
-                    "email_enabled": True,
-                    "in_app_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.ITEM_DELETED.value: {
-                    "email_enabled": False,
-                    "in_app_enabled": True,
-                    "category": "security",
-                },
-                NotificationEvent.NEW_EXPORT.value: {
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.EXPORT_APPROVED.value: {
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.NEW_BATCH.value: {
-                    "in_app_enabled": False,
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.BATCH_STATUS.value: {
-                    "in_app_enabled": True,
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.BULK_OPERATION_STATUS.value: {
-                    "in_app_enabled": True,
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.WEB_IMPORT_STATUS.value: {
-                    "in_app_enabled": True,
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.NEW_ASSIGNMENT.value: {
-                    "in_app_enabled": True,
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.REVIEW_NEEDED.value: {
-                    "in_app_enabled": True,
-                    "email_enabled": False,
-                    "category": "update",
-                },
-                NotificationEvent.WEB_IMPORT_STATUS.value: {
-                    "in_app_enabled": True,
-                    "email_enabled": False,
-                    "category": "update",
-                },
-            },
+            "NOTIFICATIONS": NOTIFICATIONS_CONFIG,  # Import from notification_config.py
         }
     )
 
@@ -414,7 +336,7 @@ class ConfigManager:
             "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
             "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
             "YTDLP_COOKIES": cfg.YTDLP_COOKIES or "",
-            "NOTIFICATIONS": cfg.NOTIFICATIONS,
+            "NOTIFICATIONS": NOTIFICATIONS_CONFIG,  # Use centralized config
         }
         return conf
 
