@@ -127,15 +127,17 @@ def chunk_list(lst: list, n: int) -> Generator[list, Any, None]:
 @celery.task(bind=True, max_retries=3)
 def send_email_notification(self, notification_id: int) -> bool:
     """
-    Background task to send email notifications with retry logic and status tracking.
+    Send email notification with retry logic - simplified status tracking.
 
     Args:
-        - notification_id: ID of the notification to send
+        notification_id: ID of the notification to send
 
     Returns:
-        - bool: True if email was sent successfully, False otherwise
+        bool: True if email was sent successfully, False otherwise
     """
     from enferno.utils.email_utils import EmailUtils
+    from enferno.admin.models.Notification import Notification
+    from datetime import datetime
 
     try:
         # Get the notification record
@@ -144,22 +146,17 @@ def send_email_notification(self, notification_id: int) -> bool:
             logger.error(f"Notification {notification_id} not found")
             return False
 
-        # Check if notification is for email delivery
-        if notification.delivery_method != Notification.DELIVERY_METHOD_EMAIL:
-            logger.warning(f"Notification {notification_id} is not for email delivery")
+        # Check if email is enabled for this notification
+        if not notification.email_enabled:
+            logger.warning(f"Notification {notification_id} does not have email enabled")
             return False
 
-        # Check if user has email
+        # Check if user has email (should be validated already, but double-check)
         if not notification.user.email:
             logger.warning(f"User {notification.user.id} has no email address")
-            notification.delivery_status = Notification.DELIVERY_STATUS_FAILED
-            notification.delivery_error = "User has no email address"
+            notification.email_error = "User has no email address"
             notification.save()
             return False
-
-        # Update status to indicate we're processing
-        notification.delivery_status = Notification.DELIVERY_STATUS_PROCESSING
-        notification.save()
 
         # Send the email
         success = EmailUtils.send_email(
@@ -169,52 +166,60 @@ def send_email_notification(self, notification_id: int) -> bool:
         )
 
         if success:
-            # Update notification status on success
-            notification.delivery_status = Notification.DELIVERY_STATUS_SUCCESS
-            notification.delivery_error = None
+            # Update notification on success
+            notification.email_sent = True
+            notification.email_sent_at = datetime.now()
+            notification.email_error = None
             notification.save()
             logger.info(
                 f"Email notification {notification_id} sent successfully to {notification.user.email}"
             )
             return True
         else:
-            notification.delivery_error = notification.delivery_error or ""
-            # Email sending failed, but we'll retry
-            error_msg = "Email sending failed (will retry)"
-            logger.warning(f"Email notification {notification_id} failed: {error_msg}")
+            # Email sending failed, prepare for retry
+            error_msg = f"Email delivery failed (attempt {self.request.retries + 1})"
+            logger.warning(f"Email notification {notification_id}: {error_msg}")
 
-            # Update notification with error but keep status as processing for retry
-            notification.delivery_error += f"\nAttempt {self.request.retries + 1}: {error_msg}"
+            # Update error message
+            if notification.email_error:
+                notification.email_error += f"\n{error_msg}"
+            else:
+                notification.email_error = error_msg
             notification.save()
 
-            # Retry the task with exponential backoff
-            raise self.retry(countdown=60 * (2**self.request.retries))
+            # Retry with exponential backoff if retries remaining
+            if self.request.retries < self.max_retries:
+                raise self.retry(countdown=60 * (2**self.request.retries))
+            else:
+                # Final failure
+                notification.email_error += "\nFinal attempt failed - no more retries"
+                notification.save()
+                return False
 
     except Exception as exc:
         # Handle unexpected errors
         error_msg = f"Unexpected error: {str(exc)}"
-        logger.error(
-            f"Email notification {notification_id} failed with error: {error_msg}", exc_info=True
-        )
+        logger.error(f"Email notification {notification_id} failed: {error_msg}", exc_info=True)
 
         try:
             notification = Notification.query.get(notification_id)
             if notification:
+                if notification.email_error:
+                    notification.email_error += f"\n{error_msg}"
+                else:
+                    notification.email_error = error_msg
+                notification.save()
+
+                # Retry if retries remaining
                 if self.request.retries < self.max_retries:
-                    # Still have retries left
-                    notification.delivery_error += (
-                        f"\nAttempt {self.request.retries + 1}: {error_msg}"
-                    )
-                    notification.save()
-                    # Retry with exponential backoff
                     raise self.retry(countdown=60 * (2**self.request.retries), exc=exc)
                 else:
-                    # No more retries, mark as failed
-                    notification.delivery_status = Notification.DELIVERY_STATUS_FAILED
-                    notification.delivery_error += f"\nFinal attempt failed: {error_msg}"
+                    notification.email_error += "\nFinal attempt failed due to exception"
                     notification.save()
         except Exception as save_exc:
-            logger.error(f"Failed to update notification {notification_id} status: {str(save_exc)}")
+            logger.error(
+                f"Failed to update notification {notification_id} error status: {str(save_exc)}"
+            )
 
         return False
 
@@ -336,7 +341,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     assigner = User.query.get(cur_user_id)
     # Notify admin
-    Notification.send_notification_to_user_for_event(
+    Notification.send_notification_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         assigner,
         "Bulk Operation Status",
@@ -347,7 +352,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     # send notifications for assignments and reviews
     if assigned_to_id:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.NEW_ASSIGNMENT,
             User.query.get(assigned_to_id),
             "New Assignment",
@@ -357,7 +362,7 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         )
 
     if first_peer_reviewer_id:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.REVIEW_NEEDED,
             User.query.get(first_peer_reviewer_id),
             "Review Needed",
@@ -484,7 +489,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     assigner = User.query.get(cur_user_id)
     # Notify admin
-    Notification.send_notification_to_user_for_event(
+    Notification.send_notification_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         assigner,
         "Bulk Operation Status",
@@ -495,7 +500,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     # send notifications for assignments and reviews
     if assigned_to_id:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.NEW_ASSIGNMENT,
             User.query.get(assigned_to_id),
             "New Assignment",
@@ -505,7 +510,7 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         )
 
     if first_peer_reviewer_id:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.REVIEW_NEEDED,
             User.query.get(first_peer_reviewer_id),
             "Review Needed",
@@ -658,7 +663,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     assigner = User.query.get(cur_user_id)
     # Notify admin
-    Notification.send_notification_to_user_for_event(
+    Notification.send_notification_for_event(
         Constants.NotificationEvent.BULK_OPERATION_STATUS,
         assigner,
         "Bulk Operation Status",
@@ -669,7 +674,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
 
     # send notifications for assignments and reviews
     if assigned_to_id:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.NEW_ASSIGNMENT,
             User.query.get(assigned_to_id),
             "New Assignment",
@@ -679,7 +684,7 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         )
 
     if first_peer_reviewer_id:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.REVIEW_NEEDED,
             User.query.get(first_peer_reviewer_id),
             "Review Needed",
@@ -847,7 +852,7 @@ def batch_complete_notification(results: list, batch_id: str, user_id: int) -> N
         return
 
     if len(failed) == 0:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.BATCH_STATUS,
             user,
             "Batch Import Complete",
@@ -856,7 +861,7 @@ def batch_complete_notification(results: list, batch_id: str, user_id: int) -> N
             is_urgent=False,
         )
     else:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.BATCH_STATUS,
             user,
             "Batch Import Completed with Errors",
@@ -900,7 +905,7 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
 
     if not file_tasks:
         # Edge case: all files were duplicates or invalid
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.BATCH_STATUS,
             User.query.get(user_id),
             "Batch Import Complete",
@@ -1553,7 +1558,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         _start_etl_process(final_filename, url, batch_id, user_id, import_id)
 
         # Notify user
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             User.query.get(user_id),
             "Web Import Status",
@@ -1568,7 +1573,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
         # Notify user
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             User.query.get(user_id),
             "Web Import Status",
@@ -1583,7 +1588,7 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
         data_import.add_to_log(f"Download failed: {str(e)}")
         data_import.fail()
         # Notify user
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.WEB_IMPORT_STATUS,
             User.query.get(user_id),
             "Web Import Status",
