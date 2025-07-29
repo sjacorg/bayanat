@@ -26,7 +26,7 @@
             @click="isFieldBuilderDrawerOpen = true"
             >{{ _('Add new field') }}</v-btn
           >
-          <v-btn prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat"
+          <v-btn @click="save()" prepend-icon="mdi-check" class="mr-4" color="primary" variant="flat" :loading="loading"
             >{{ _('Save changes') }}</v-btn
           >
         </template>
@@ -292,6 +292,12 @@
         this.fetchDynamicFields();
       },
       methods: {
+        save() {
+          this.loading = true;
+          setTimeout(() => {
+            this.loading = false;
+          }, 1000);
+        },
         async fetchDynamicFields() {
           try {
             return await axios.get('/admin/api/dynamic-fields');
@@ -333,7 +339,7 @@
         async deleteField(field) {
           if (confirm('{{ _('Are you sure?') }}')) {
             try {
-              this.coreFields = this.coreFields.filter(f => f.id !== field.id)
+              this.coreFields = this.coreFields.filter(coreField => Number(coreField.id) !== Number(field.props.id))
               // return await axios.delete(`/admin/api/dynamic-fields/${field.props.id}`);
             } catch (err) {
               console.error(err);
@@ -344,10 +350,11 @@
         async toggleFieldVisibility(field) {
           try {
             const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.props.id))
-            return await axios.put(`/admin/api/dynamic-fields/${field.props.id}`, {
-              ...matchingField,
-              active: !matchingField.active
-            });
+            matchingField.active = !matchingField.active
+            // return await axios.put(`/admin/api/dynamic-fields/${field.props.id}`, {
+            //   ...matchingField,
+            //   active: !matchingField.active
+            // });
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
