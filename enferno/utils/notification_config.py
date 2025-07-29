@@ -70,10 +70,12 @@ NOTIFICATIONS_CONFIG = {
     },
     NotificationEvent.NEW_EXPORT.value: {
         "email_enabled": False,
+        "in_app_enabled": True,
         "category": "update",
     },
     NotificationEvent.EXPORT_APPROVED.value: {
         "email_enabled": False,
+        "in_app_enabled": True,
         "category": "update",
     },
     NotificationEvent.NEW_BATCH.value: {
