@@ -7,9 +7,33 @@ from enferno.admin.constants import Constants
 
 NotificationEvent = Constants.NotificationEvent
 
-# Notification configuration - centralized and reusable
+# Always-on security events (not configurable by admins)
+ALWAYS_ON_SECURITY_EVENTS = {
+    NotificationEvent.LOGIN_NEW_IP.value: {
+        "email_enabled": True,
+        "category": "security",
+    },
+    NotificationEvent.PASSWORD_CHANGE.value: {
+        "email_enabled": True,
+        "category": "security",
+    },
+    NotificationEvent.TWO_FACTOR_CHANGE.value: {
+        "email_enabled": True,
+        "category": "security",
+    },
+    NotificationEvent.RECOVERY_CODES_CHANGE.value: {
+        "email_enabled": True,
+        "category": "security",
+    },
+    NotificationEvent.FORCE_PASSWORD_CHANGE.value: {
+        "email_enabled": True,
+        "category": "security",
+    },
+}
+
+# Configurable notification events
 NOTIFICATIONS_CONFIG = {
-    # Configurable events
+    # Admin security events
     NotificationEvent.NEW_USER.value: {
         "email_enabled": True,
         "category": "security",
