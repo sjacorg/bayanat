@@ -1,55 +1,48 @@
 from datetime import datetime
-from typing import Any
 from enferno.user.models import Role, User
 from enferno.admin.constants import Constants
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
-import json
-from enferno.utils.email_utils import EmailUtils
+from flask import current_app
 
 NotificationEvent = Constants.NotificationEvent
 logger = get_logger()
 
 
 class Notification(db.Model, BaseMixin):
+    """Simplified notification model - single object with delivery method tracking"""
+
+    # Notification types
     TYPE_GENERAL = "general"
     TYPE_UPDATE = "update"
     TYPE_SECURITY = "security"
 
-    DELIVERY_METHOD_EMAIL = "email"
-    DELIVERY_METHOD_SMS = "sms"
-    DELIVERY_METHOD_INTERNAL = "internal"
-
-    # Status constants for API filtering
-    STATUS_READ = "read"
-    STATUS_UNREAD = "unread"
-
-    # Delivery status constants
-    DELIVERY_STATUS_PENDING = "pending"
-    DELIVERY_STATUS_QUEUED = "queued"
-    DELIVERY_STATUS_PROCESSING = "processing"
-    DELIVERY_STATUS_SUCCESS = "success"
-    DELIVERY_STATUS_FAILED = "failed"
-
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
-    user = db.relationship("User", foreign_keys=[user_id], backref="user_notifications")
+    user = db.relationship("User", foreign_keys=[user_id], backref="notifications")
     title = db.Column(db.String, nullable=False)
     message = db.Column(db.Text, nullable=False)
     notification_type = db.Column(db.String, nullable=False, default=TYPE_GENERAL)
     read_status = db.Column(db.Boolean, default=False)
-    delivery_method = db.Column(db.String, nullable=False, default=DELIVERY_METHOD_INTERNAL)
     read_at = db.Column(db.DateTime)
     is_urgent = db.Column(db.Boolean, default=False)
-    delivery_status = db.Column(db.String, nullable=False, default=DELIVERY_STATUS_PENDING)
-    delivery_error = db.Column(db.Text)
+
+    # Email delivery tracking
+    email_enabled = db.Column(db.Boolean, default=False)
+    email_sent = db.Column(db.Boolean, default=False)
+    email_error = db.Column(db.Text)
+    email_sent_at = db.Column(db.DateTime)
+
+    # SMS delivery tracking (future use)
+    sms_enabled = db.Column(db.Boolean, default=False)
+    sms_sent = db.Column(db.Boolean, default=False)
+    sms_error = db.Column(db.Text)
 
     __table_args__ = (
         db.Index("ix_notification_user_read", "user_id", "read_status"),
         db.Index("ix_notification_user_type", "user_id", "notification_type"),
-        db.Index("ix_notification_user_delivery_status", "user_id", "delivery_status"),
     )
 
     def mark_as_read(self):
@@ -59,7 +52,7 @@ class Notification(db.Model, BaseMixin):
             self.read_at = datetime.now()
             self.save()
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self):
         """Converts notification object to a dictionary representation."""
         return {
             "id": self.id,
@@ -77,260 +70,116 @@ class Notification(db.Model, BaseMixin):
             ),
         }
 
-    def to_json(self) -> str:
-        """Converts notification object to a JSON string."""
-        return json.dumps(self.to_dict())
-
-    def send(self) -> bool:
-        """Send notification via appropriate delivery method."""
-        if self.delivery_method == Notification.DELIVERY_METHOD_EMAIL:
-            if not self.user.email:
-                logger.warning(f"User {self.user.id} has no email address")
-                self.delivery_status = Notification.DELIVERY_STATUS_FAILED
-                self.delivery_error = "User has no email address"
-                self.save()
-                return False
-
-            # Queue the email for background processing
-            try:
-                from enferno.tasks import send_email_notification
-
-                # Update status to queued
-                self.delivery_status = Notification.DELIVERY_STATUS_QUEUED
-                self.save()
-
-                # Queue the background task
-                send_email_notification.delay(self.id)
-                logger.info(f"Email notification {self.id} queued for background processing")
-                return True
-
-            except Exception as e:
-                logger.error(
-                    f"Failed to queue email notification {self.id}: {str(e)}", exc_info=True
-                )
-                self.delivery_status = Notification.DELIVERY_STATUS_FAILED
-                self.delivery_error = f"Failed to queue email: {str(e)}"
-                self.save()
-                return False
-
-        elif self.delivery_method == Notification.DELIVERY_METHOD_SMS:
-            # TODO: Implement SMS delivery
-            self.delivery_status = Notification.DELIVERY_STATUS_FAILED
-            self.delivery_error = "SMS delivery not implemented"
-            self.save()
-            return False
-        else:  # internal
-            # Internal notifications are delivered immediately
-            self.delivery_status = Notification.DELIVERY_STATUS_SUCCESS
-            self.save()
-            return True
-
     @staticmethod
-    def create(
-        user: User,
-        title: str,
-        message: str,
-        type: str = TYPE_GENERAL,
-        delivery_method: str = DELIVERY_METHOD_INTERNAL,
-        is_urgent: bool = False,
-    ) -> "Notification":
-        # Simple validation
-        valid_types = [
-            Notification.TYPE_GENERAL,
-            Notification.TYPE_UPDATE,
-            Notification.TYPE_SECURITY,
-        ]
+    def create_for_user(
+        user, title, message, category=TYPE_GENERAL, is_urgent=False, send_email=False
+    ):
+        """Create notification for a specific user"""
+        # Determine if email should be enabled
+        email_enabled = (
+            send_email and bool(user.email) and current_app.config.get("MAIL_ENABLED", False)
+        )
 
-        delivery_method = delivery_method.lower()
-        type = type.lower()
-
-        if type not in valid_types:
-            raise ValueError(f"Invalid notification type. Must be one of {valid_types}")
-
-        valid_delivery_methods = [
-            Notification.DELIVERY_METHOD_EMAIL,
-            Notification.DELIVERY_METHOD_SMS,
-            Notification.DELIVERY_METHOD_INTERNAL,
-        ]
-        if delivery_method not in valid_delivery_methods:
-            raise ValueError(f"Invalid delivery method. Must be one of {valid_delivery_methods}")
-
-        # Create notification object
         notification = Notification(
             user=user,
             title=title,
             message=message,
-            notification_type=type,
-            delivery_method=delivery_method,
+            notification_type=category,
             is_urgent=is_urgent,
+            email_enabled=email_enabled,
         )
         db.session.add(notification)
         db.session.commit()
+
+        # Queue email if enabled
+        if email_enabled:
+            from enferno.tasks import send_email_notification
+
+            send_email_notification.delay(notification.id)
+
         return notification
 
     @staticmethod
-    def send_notification_to_user_for_event(
-        event: str | NotificationEvent,
-        user: User,
-        title: str,
-        message: str,
-        category: str = TYPE_GENERAL,
-        is_urgent: bool = False,
-    ) -> bool:
-        """Send notification to user for event.
-
-        Args:
-            event: str | NotificationEvent
-            user: User
-            title: str
-            message: str
-            category: str
-            is_urgent: bool
-
-        Returns:
-            bool: True if notification was sent, False otherwise
-        """
-        from enferno.settings import Config as cfg
-
-        # get config
-        event_config = Notification._get_notification_config(event)
-
-        # get delivery methods
-        delivery_methods = []
-        if cfg.MAIL_ENABLED and "email_enabled" in event_config and event_config["email_enabled"]:
-            delivery_methods.append(Notification.DELIVERY_METHOD_EMAIL)
-        if "in_app_enabled" in event_config and event_config["in_app_enabled"]:
-            delivery_methods.append(Notification.DELIVERY_METHOD_INTERNAL)
-        if "sms_enabled" in event_config and event_config["sms_enabled"]:
-            delivery_methods.append(Notification.DELIVERY_METHOD_SMS)
-
-        # send notification
-        results = []
-        for method in delivery_methods:
-            notification = Notification.create(
-                user=user,
-                title=title,
-                message=message,
-                type=category,
-                delivery_method=method,
-                is_urgent=is_urgent,
-            )
-            if result := notification.send():
-                results.append(result)
-            else:
-                logger.warning(
-                    f"Failed to send notification for event {event} to user {user.id} using method {method}"
-                )
-        if not any(results):
-            logger.error(
-                f"Failed to send notification for event {event} to user {user.id} using any method"
-            )
-        return any(results)
-
-    @staticmethod
-    def _get_notification_config(event: str | NotificationEvent) -> dict:
-        if isinstance(event, str):
-            event = event.upper()
-        else:
-            event = event.value
-
-        # BOTH IN APP AND EMAIL ALWAYS-ON SECURITY EVENTS
-        if event in [
-            NotificationEvent.LOGIN_NEW_IP.value,
-            NotificationEvent.PASSWORD_CHANGE.value,
-            NotificationEvent.TWO_FACTOR_CHANGE.value,
-            NotificationEvent.RECOVERY_CODES_CHANGE.value,
-            NotificationEvent.FORCE_PASSWORD_CHANGE.value,
-        ]:
-            return {"in_app_enabled": True, "email_enabled": True, "category": "security"}
-        from enferno.settings import Config as cfg
-
-        if not (event_config := cfg.NOTIFICATIONS.get(event)):
-            raise ValueError(f"Event {event} not found in config")
-
-        # Create a copy to avoid mutating the original config
-        event_config = event_config.copy()
-
-        # IN APP ALWAYS-ON EVENTS
-        if event in [
-            # SECURITY
-            NotificationEvent.NEW_USER.value,
-            NotificationEvent.UPDATE_USER.value,
-            NotificationEvent.NEW_GROUP.value,
-            NotificationEvent.SYSTEM_SETTINGS_CHANGE.value,
-            NotificationEvent.LOGIN_NEW_COUNTRY.value,
-            NotificationEvent.UNAUTHORIZED_ACTION.value,
-            # EXPORTS
-            NotificationEvent.EXPORT_APPROVED.value,
-            NotificationEvent.NEW_EXPORT.value,
-        ]:
-            event_config["in_app_enabled"] = True
-        return event_config
-
-    @staticmethod
-    def send_notification_to_admins_for_event(
-        event: str | NotificationEvent,
-        title: str,
-        message: str,
-        category: str = TYPE_GENERAL,
-        is_urgent: bool = False,
-    ) -> bool:
-        """Send notification to admins for event.
-
-        Args:
-            event: str | NotificationEvent
-            title: str
-            message: str
-            category: str
-            is_urgent: bool
-
-        Returns:
-            bool: True if notifications were sent to all admins, False otherwise
-        """
-        # get config
-        from enferno.settings import Config as cfg
-
-        event_config = Notification._get_notification_config(event)
-
-        # get delivery methods
-        delivery_methods = []
-        if cfg.MAIL_ENABLED and "email_enabled" in event_config and event_config["email_enabled"]:
-            delivery_methods.append(Notification.DELIVERY_METHOD_EMAIL)
-        if "in_app_enabled" in event_config and event_config["in_app_enabled"]:
-            delivery_methods.append(Notification.DELIVERY_METHOD_INTERNAL)
-        if "sms_enabled" in event_config and event_config["sms_enabled"]:
-            delivery_methods.append(Notification.DELIVERY_METHOD_SMS)
-
-        # admins
+    def create_for_admins(title, message, category=TYPE_SECURITY, is_urgent=False, send_email=True):
+        """Create notifications for all admins"""
         admins = User.query.filter(User.roles.any(Role.name == "Admin")).all()
+        notifications = []
 
-        # send notification
-        results = []
         for admin in admins:
-            admin_results = []
-            for method in delivery_methods:
-                notification = Notification.create(
-                    user=admin,
-                    title=title,
-                    message=message,
-                    type=category,
-                    delivery_method=method,
-                    is_urgent=is_urgent,
-                )
-                if result := notification.send():
-                    admin_results.append(result)
-                else:
-                    logger.warning(
-                        f"Failed to send notification for event {event} to admin {admin.id} using method {method}"
-                    )
-            # consider success if at least one method was successful
-            results.append(any(admin_results))
-
-        if not any(results):
-            logger.error(
-                f"Failed to send notification for event {event} to admins using any method"
+            notification = Notification.create_for_user(
+                admin, title, message, category, is_urgent, send_email
             )
-            return False
-        elif not all(results):
-            logger.warning(f"Failed to send notification for event {event} to some admins")
-        return any(results)
+            notifications.append(notification)
+
+        return notifications
+
+    @staticmethod
+    def send_notification_for_event(
+        event, user, title, message, category=TYPE_GENERAL, is_urgent=False
+    ):
+        """Send notification to user based on event configuration"""
+        config = get_notification_config(event)
+
+        return Notification.create_for_user(
+            user=user,
+            title=title,
+            message=message,
+            category=category,
+            is_urgent=is_urgent or config.get("urgent", False),
+            send_email=config.get("email", False),
+        )
+
+    @staticmethod
+    def send_admin_notification_for_event(
+        event, title, message, category=TYPE_SECURITY, is_urgent=False
+    ):
+        """Send notification to all admins based on event configuration"""
+        config = get_notification_config(event)
+
+        return Notification.create_for_admins(
+            title=title,
+            message=message,
+            category=category,
+            is_urgent=is_urgent or config.get("urgent", False),
+            send_email=config.get("email", True),  # Default to email for admin notifications
+        )
+
+
+# Simple notification configuration - replaces complex lookup logic
+NOTIFICATION_CONFIGS = {
+    # Security events (always email + urgent)
+    NotificationEvent.LOGIN_NEW_IP.value: {"email": True, "urgent": True},
+    NotificationEvent.PASSWORD_CHANGE.value: {"email": True, "urgent": True},
+    NotificationEvent.TWO_FACTOR_CHANGE.value: {"email": True, "urgent": True},
+    NotificationEvent.RECOVERY_CODES_CHANGE.value: {"email": True, "urgent": True},
+    NotificationEvent.FORCE_PASSWORD_CHANGE.value: {"email": True, "urgent": True},
+    # Admin security events (email enabled)
+    NotificationEvent.NEW_USER.value: {"email": True, "urgent": False},
+    NotificationEvent.UPDATE_USER.value: {"email": True, "urgent": False},
+    NotificationEvent.NEW_GROUP.value: {"email": True, "urgent": False},
+    NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {"email": True, "urgent": True},
+    NotificationEvent.LOGIN_NEW_COUNTRY.value: {"email": True, "urgent": True},
+    NotificationEvent.UNAUTHORIZED_ACTION.value: {"email": True, "urgent": True},
+    NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {"email": True, "urgent": True},
+    NotificationEvent.ITEM_DELETED.value: {"email": False, "urgent": False},
+    # Export notifications (app only)
+    NotificationEvent.NEW_EXPORT.value: {"email": False, "urgent": False},
+    NotificationEvent.EXPORT_APPROVED.value: {"email": False, "urgent": False},
+    # Import/batch operations (app only)
+    NotificationEvent.NEW_BATCH.value: {"email": False, "urgent": False},
+    NotificationEvent.BATCH_STATUS.value: {"email": False, "urgent": False},
+    NotificationEvent.BULK_OPERATION_STATUS.value: {"email": False, "urgent": False},
+    NotificationEvent.WEB_IMPORT_STATUS.value: {"email": False, "urgent": False},
+    NotificationEvent.NEW_ASSIGNMENT.value: {"email": False, "urgent": False},
+    NotificationEvent.REVIEW_NEEDED.value: {"email": False, "urgent": False},
+}
+
+
+def get_notification_config(event):
+    """Simple notification configuration lookup"""
+    if hasattr(event, "value"):
+        event = event.value
+    elif isinstance(event, str):
+        event = event.upper()
+
+    return NOTIFICATION_CONFIGS.get(event, {"email": False, "urgent": False})
