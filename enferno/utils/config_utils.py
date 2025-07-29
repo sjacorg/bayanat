@@ -336,7 +336,7 @@ class ConfigManager:
             "YTDLP_PROXY": cfg.YTDLP_PROXY or "",
             "YTDLP_ALLOWED_DOMAINS": cfg.YTDLP_ALLOWED_DOMAINS,
             "YTDLP_COOKIES": cfg.YTDLP_COOKIES or "",
-            "NOTIFICATIONS": cfg.NOTIFICATIONS,  # Read actual stored config
+            "NOTIFICATIONS": cfg.NOTIFICATIONS,
         }
         return conf
 
