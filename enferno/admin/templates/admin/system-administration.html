@@ -843,7 +843,7 @@
                                             <div class="d-flex ga-10">
                                                 <v-switch color="primary" hide-details label="{{ _('In-app') }}"
                                                     v-bind="getInAppSwitchProps(eitem.NOTIFICATIONS.EXPORT_APPROVED)"></v-switch>
-                                                <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.NEW_EXPORT)"
+                                                <v-switch color="primary" hide-details label="{{ _('Email') }}" v-bind="getEmailSwitchProps(eitem.NOTIFICATIONS.EXPORT_APPROVED)"
                                                 ></v-switch>
                                             </div>
                                             <p class="text-caption text-medium-emphasis mt-n1">{{ _('Notify when an export is approved.') }}</p>
