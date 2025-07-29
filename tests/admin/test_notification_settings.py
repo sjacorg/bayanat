@@ -1,6 +1,6 @@
 import pytest
 from enferno.admin.constants import Constants
-from enferno.admin.models.Notification import Notification
+from enferno.admin.models.Notification import Notification, get_notification_config
 from tests.test_utils import load_data
 
 NotificationEvent = Constants.NotificationEvent
@@ -11,8 +11,6 @@ NotificationEvent = Constants.NotificationEvent
 
 def test_notification_settings_get_config():
     """Test that get_config returns configuration with security events enforced."""
-    from enferno.settings import Config as cfg
-
     # Verify that security events are always enabled
     security_events = [
         "LOGIN_NEW_IP",
@@ -23,10 +21,9 @@ def test_notification_settings_get_config():
     ]
 
     for event in security_events:
-        config = Notification._get_notification_config(event)
-        assert config["in_app_enabled"] is True
-        assert config["email_enabled"] is True
-        assert config["category"] == "security"
+        config = get_notification_config(event)
+        assert config["email"] is True
+        assert config["urgent"] is True
 
 
 #### INTEGRATION TESTS ####
