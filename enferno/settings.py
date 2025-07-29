@@ -9,6 +9,7 @@ from dotenv import load_dotenv, find_dotenv
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.dep_utils import dep_utils
 from enferno.admin.constants import Constants
+from enferno.utils.notification_config import NOTIFICATIONS_CONFIG
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -296,7 +297,7 @@ class Config(object):
     YTDLP_ALLOWED_DOMAINS = manager.get_config("YTDLP_ALLOWED_DOMAINS")
     YTDLP_COOKIES = manager.get_config("YTDLP_COOKIES")
 
-    NOTIFICATIONS = manager.get_config("NOTIFICATIONS")
+    NOTIFICATIONS = NOTIFICATIONS_CONFIG
     # Dependency Flags
     HAS_WHISPER = dep_utils.has_whisper
     HAS_TESSERACT = dep_utils.has_tesseract
@@ -453,83 +454,4 @@ class TestConfig(Config):
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
     YTDLP_PROXY = ""
-    NOTIFICATIONS = {
-        # Configurable events
-        NotificationEvent.NEW_USER.value: {
-            "email_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.UPDATE_USER.value: {
-            "email_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.NEW_GROUP.value: {
-            "email_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.SYSTEM_SETTINGS_CHANGE.value: {
-            "email_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.LOGIN_NEW_COUNTRY.value: {
-            "email_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.UNAUTHORIZED_ACTION.value: {
-            "email_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.ADMIN_CREDENTIALS_CHANGE.value: {
-            "email_enabled": True,
-            "in_app_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.ITEM_DELETED.value: {
-            "email_enabled": False,
-            "in_app_enabled": True,
-            "category": "security",
-        },
-        NotificationEvent.NEW_EXPORT.value: {
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.EXPORT_APPROVED.value: {
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.NEW_BATCH.value: {
-            "in_app_enabled": False,
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.BATCH_STATUS.value: {
-            "in_app_enabled": True,
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.BULK_OPERATION_STATUS.value: {
-            "in_app_enabled": True,
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.WEB_IMPORT_STATUS.value: {
-            "in_app_enabled": True,
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.NEW_ASSIGNMENT.value: {
-            "in_app_enabled": True,
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.REVIEW_NEEDED.value: {
-            "in_app_enabled": True,
-            "email_enabled": False,
-            "category": "update",
-        },
-        NotificationEvent.WEB_IMPORT_STATUS.value: {
-            "in_app_enabled": True,
-            "email_enabled": False,
-            "category": "update",
-        },
-    }
+    NOTIFICATIONS = NOTIFICATIONS_CONFIG
