@@ -382,7 +382,7 @@ def api_label_delete(
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Label Deleted",
             f"Label {label.title} has been deleted by {current_user.username} successfully.",
@@ -544,7 +544,7 @@ def api_eventtype_delete(
             eventtype.to_mini(),
             "eventtype",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Event Type Deleted",
             f"Event Type {eventtype.title} has been deleted by {current_user.username} successfully.",
@@ -689,7 +689,7 @@ def api_potentialviolation_delete(
             potentialviolation.to_mini(),
             "potentialviolation",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Potential Violation Deleted",
             f"Potential Violation {potentialviolation.title} has been deleted by {current_user.username} successfully.",
@@ -835,7 +835,7 @@ def api_claimedviolation_delete(
             claimedviolation.to_mini(),
             "claimedviolation",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Claimed Violation Deleted",
             f"Claimed Violation {claimedviolation.title} has been deleted by {current_user.username} successfully.",
@@ -1000,7 +1000,7 @@ def api_source_delete(
             source.to_mini(),
             "source",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Source Deleted",
             f"Source {source.title} has been deleted by {current_user.username} successfully.",
@@ -1181,7 +1181,7 @@ def api_location_delete(
             location.to_mini(),
             "location",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Location Deleted",
             f"Location {location.title} has been deleted by {current_user.username} successfully.",
@@ -1388,7 +1388,7 @@ def api_location_admin_level_delete(id: t.id) -> Response:
             admin_level.to_mini(),
             "adminlevel",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Location Admin Level Deleted",
             f"Location Admin Level {admin_level.title} has been deleted by {current_user.username} successfully.",
@@ -1537,7 +1537,7 @@ def api_location_type_delete(
             location_type.to_mini(),
             "locationtype",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Location Type Deleted",
             f"Location Type {location_type.title} has been deleted by {current_user.username} successfully.",
@@ -1674,7 +1674,7 @@ def api_country_delete(
             country.to_mini(),
             "country",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Country Deleted",
             f"Country {country.title} has been deleted by {current_user.username} successfully.",
@@ -1810,7 +1810,7 @@ def api_ethnography_delete(
             ethnography.to_mini(),
             "ethnography",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Ethnography Deleted",
             f"Ethnography {ethnography.title} has been deleted by {current_user.username} successfully.",
@@ -1943,7 +1943,7 @@ def api_dialect_delete(
             dialect.to_mini(),
             "dialect",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Dialect Deleted",
             f"Dialect {dialect.title} has been deleted by {current_user.username} successfully.",
@@ -2085,7 +2085,7 @@ def api_id_number_type_delete(
             id_number_type.to_mini(),
             "idnumbertype",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "ID Number Type Deleted",
             f"ID Number Type {id_number_type.title} has been deleted by {current_user.username} successfully.",
@@ -2211,7 +2211,7 @@ def api_atoainfo_delete(
             atoainfo.to_mini(),
             "atoainfo",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "AtoaInfo Deleted",
             f"AtoaInfo {atoainfo.title} has been deleted by {current_user.username} successfully.",
@@ -2334,7 +2334,7 @@ def api_atobinfo_delete(
             atobinfo.to_mini(),
             "atobinfo",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "AtobInfo Deleted",
             f"AtobInfo {atobinfo.title} has been deleted by {current_user.username} successfully.",
@@ -2457,7 +2457,7 @@ def api_btobinfo_delete(
             btobinfo.to_mini(),
             "btobinfo",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "BtobInfo Deleted",
             f"BtobInfo {btobinfo.title} has been deleted by {current_user.username} successfully.",
@@ -2580,7 +2580,7 @@ def api_itoainfo_delete(
             itoainfo.to_mini(),
             "itoainfo",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "ItoaInfo Deleted",
             f"ItoaInfo {itoainfo.title} has been deleted by {current_user.username} successfully.",
@@ -2699,7 +2699,7 @@ def api_itobinfo_delete(
             itobinfo.to_mini(),
             "itobinfo",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "ItobInfo Deleted",
             f"ItobInfo {itobinfo.title} has been deleted by {current_user.username} successfully.",
@@ -2822,7 +2822,7 @@ def api_itoiinfo_delete(
             itoiinfo.to_mini(),
             "itoiinfo",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "ItoiInfo Deleted",
             f"ItoiInfo {itoiinfo.title} has been deleted by {current_user.username} successfully.",
@@ -2945,7 +2945,7 @@ def api_mediacategory_delete(
             mediacategory.to_mini(),
             "mediacategory",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Media Category Deleted",
             f"Media Category {mediacategory.title} has been deleted by {current_user.username} successfully.",
@@ -3068,7 +3068,7 @@ def api_geolocationtype_delete(
             geolocationtype.to_mini(),
             "geolocationtype",
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "GeoLocation Type Deleted",
             f"GeoLocation Type {geolocationtype.title} has been deleted by {current_user.username} successfully.",
@@ -3245,7 +3245,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
@@ -3264,7 +3264,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update unassigned Bulletin {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Bulletin {id}. User: {current_user.username}",
@@ -3316,7 +3316,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
@@ -3447,7 +3447,7 @@ def api_bulletin_get(
                 details=f"Unauthorized attempt to view restricted Bulletin {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Bulletin {id}. User: {current_user.username}",
@@ -4239,7 +4239,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
@@ -4258,7 +4258,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update unassigned Actor {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Actor {id}. User: {current_user.username}",
@@ -4314,7 +4314,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
@@ -4432,7 +4432,7 @@ def api_actor_get(
                 details="Unauthorized attempt to view restricted Actor.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Actor {id}. User: {current_user.username}",
@@ -4467,7 +4467,7 @@ def api_actor_profiles(actor_id: t.id) -> Response:
             details="Unauthorized attempt to view restricted Actor profiles.",
         )
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.UNAUTHORIZED_ACTION,
             "Unauthorized Action",
             f"Unauthorized attempt to view restricted Actor profiles. User: {current_user.username}",
@@ -4929,7 +4929,7 @@ def api_user_create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.NEW_USER,
             "New User Created",
             f"User {username} has been created by {current_user.username} successfully.",
@@ -5007,7 +5007,7 @@ def api_user_update(
                 "user",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UPDATE_USER,
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
@@ -5110,7 +5110,7 @@ def api_user_delete(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "User Deleted",
             f"User {user.username} has been deleted by {current_user.username} successfully.",
@@ -5187,7 +5187,7 @@ def api_role_create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.NEW_GROUP,
             "New Group Created",
             f"Group {role.name} has been created by {current_user.username} successfully.",
@@ -5261,7 +5261,7 @@ def api_role_delete(
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.ITEM_DELETED,
             "Role Deleted",
             f"Role {role.name} has been deleted by {current_user.username} successfully.",
@@ -5435,7 +5435,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
@@ -5454,7 +5454,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update unassigned Incident {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Incident {id}. User: {current_user.username}",
@@ -5512,7 +5512,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
@@ -5629,7 +5629,7 @@ def api_incident_get(
                 details=f"Unauthorized attempt to view restricted Incident {id}.",
             )
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Incident {id}. User: {current_user.username}",
@@ -6072,7 +6072,7 @@ def api_config_write(
 
     if ConfigManager.write_config(conf):
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
@@ -6211,38 +6211,38 @@ def api_logs() -> Response:
 
 # Notifications
 @admin.route("/api/notifications")
-def api_notifications() -> Response:
+def api_notifications():
     """
     Endpoint to return paginated notifications for the current user.
     Accepts query parameters:
     - page: page number (default: 1)
-    - per_page: number of notifications per page (default: 10)
-    - status: status of the notifications to filter by (default: all, can be "read" or "unread", any other value will return all notifications)
+    - per_page: number of notifications per page (default: 10, max: 50)
+    - status: filter by read status ("read" or "unread", default: all)
+    - is_urgent: filter by urgent status (true/false, default: all)
 
     Returns:
-        - JSON response containing notifications and pagination info
+        JSON response containing notifications and pagination info
     """
     page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 10, type=int)
+    per_page = min(request.args.get("per_page", 10, type=int), 50)  # Cap at 50
     status = request.args.get("status")
     is_urgent = request.args.get("is_urgent")
 
     # Query notifications for current user, ordered by creation date descending
     notifications_query = (
         db.session.query(Notification)
-        .filter(
-            Notification.user_id == current_user.id,
-            Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
-        )
+        .filter(Notification.user_id == current_user.id)
         .order_by(Notification.created_at.desc())
     )
 
+    # Apply status filter if provided
     if status:
-        if status.lower() == Notification.STATUS_READ:
+        if status.lower() == "read":
             notifications_query = notifications_query.filter(Notification.read_status == True)
-        elif status.lower() == Notification.STATUS_UNREAD:
+        elif status.lower() == "unread":
             notifications_query = notifications_query.filter(Notification.read_status == False)
 
+    # Apply urgent filter if provided
     if is_urgent is not None:
         is_urgent_bool = is_urgent.lower() == "true"
         notifications_query = notifications_query.filter(Notification.is_urgent.is_(is_urgent_bool))
@@ -6250,44 +6250,32 @@ def api_notifications() -> Response:
     # Paginate the results
     paginated_notifications = notifications_query.paginate(page=page, per_page=per_page, count=True)
 
-    # Optimize unread count calculation
-    if status and status.lower() == Notification.STATUS_UNREAD:
+    # Calculate unread count efficiently
+    if status and status.lower() == "unread":
         # When filtering by unread status, use the pagination total
         unread_count = paginated_notifications.total
-        # For urgent notifications check, we need a separate optimized query
-        has_unread_urgent_notifications = (
-            db.session.query(Notification.id)
-            .filter(
-                Notification.user_id == current_user.id,
-                Notification.read_status == False,
-                Notification.is_urgent == True,
-                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
-            )
-            .first()
-            is not None
-        )
     else:
-        # Use count() instead of all() for better performance
+        # Use count() for better performance
         unread_count = (
             db.session.query(Notification)
             .filter(
                 Notification.user_id == current_user.id,
                 Notification.read_status == False,
-                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
             )
             .count()
         )
-        has_unread_urgent_notifications = (
-            db.session.query(Notification.id)
-            .filter(
-                Notification.user_id == current_user.id,
-                Notification.read_status == False,
-                Notification.is_urgent == True,
-                Notification.delivery_method == Notification.DELIVERY_METHOD_INTERNAL,
-            )
-            .first()
-            is not None
+
+    # Check for unread urgent notifications
+    has_unread_urgent_notifications = (
+        db.session.query(Notification.id)
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.read_status == False,
+            Notification.is_urgent == True,
         )
+        .first()
+        is not None
+    )
 
     response = {
         "items": [notification.to_dict() for notification in paginated_notifications.items],
@@ -6303,7 +6291,7 @@ def api_notifications() -> Response:
 
 
 @admin.route("/api/notifications/<int:notification_id>/read", methods=["POST"])
-def api_mark_notification_read(notification_id: int) -> Response:
+def api_mark_notification_read(notification_id):
     """
     Endpoint to mark a specific notification as read.
 
@@ -6311,8 +6299,8 @@ def api_mark_notification_read(notification_id: int) -> Response:
         notification_id: ID of the notification to mark as read
 
     Returns:
-        - Success response if notification is marked as read
-        - Error response if notification doesn't exist or user doesn't have permission
+        Success response if notification is marked as read
+        Error response if notification doesn't exist or user doesn't have permission
     """
     notification = db.session.get(Notification, notification_id)
 
