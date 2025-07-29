@@ -207,13 +207,13 @@ def after_password_change(sender, user) -> None:
     """Reset the security reset key after password change, send notification to user"""
     user.unset_security_reset_key()
     if user.has_role("Admin"):
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.PASSWORD_CHANGE,
             "An Admin Changed Their Password",
             f"An admin {user.username} has changed their password.",
         )
     else:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.PASSWORD_CHANGE,
             user,
             "Password Changed",
@@ -257,7 +257,7 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
 
     # Check if logged in from a different IP address
     if current_user.current_login_ip != current_user.last_login_ip:
-        Notification.send_notification_to_user_for_event(
+        Notification.send_notification_for_event(
             Constants.NotificationEvent.LOGIN_NEW_IP,
             current_user,
             "Login from Different IP",
@@ -273,7 +273,7 @@ def user_authenticated_handler(app, user, authn_via, **extra_args) -> None:
 @tf_profile_changed.connect
 def after_tf_profile_change(sender, user, **extra_args) -> None:
     if user.has_role("Admin"):
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.TWO_FACTOR_CHANGE,
             "An Admin Changed Their Two-Factor Profile",
             f"{user.username} has changed their two-factor authentication options.",
@@ -281,7 +281,7 @@ def after_tf_profile_change(sender, user, **extra_args) -> None:
             is_urgent=False,
         )
 
-    Notification.send_notification_to_user_for_event(
+    Notification.send_notification_for_event(
         Constants.NotificationEvent.TWO_FACTOR_CHANGE,
         user,
         "Two-Factor Profile Changed",

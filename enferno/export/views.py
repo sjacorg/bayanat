@@ -72,7 +72,7 @@ def export_bulletins() -> Response:
             Export.__table__.name,
         )
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
@@ -105,7 +105,7 @@ def export_actors() -> Response:
             Export.__table__.name,
         )
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
@@ -137,7 +137,7 @@ def export_incidents() -> Response:
             Export.__table__.name,
         )
         # Notify admins
-        Notification.send_notification_to_admins_for_event(
+        Notification.send_admin_notification_for_event(
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
@@ -241,7 +241,7 @@ def change_export_status() -> Response:
             export_request.save()
 
             # Notify admins
-            Notification.send_notification_to_admins_for_event(
+            Notification.send_admin_notification_for_event(
                 Constants.NotificationEvent.APPROVE_EXPORT,
                 "Export Request Approved",
                 f"Export request {export_request.id} has been approved by {current_user.username} successfully.",

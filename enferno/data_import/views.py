@@ -186,7 +186,7 @@ def etl_process() -> Response:
     process_files.delay(files=files, meta=meta, user_id=current_user.id, batch_id=batch_id)
 
     # Notify admins
-    Notification.send_notification_to_admins_for_event(
+    Notification.send_admin_notification_for_event(
         Constants.NotificationEvent.NEW_BATCH,
         "New Import Request",
         f"Import batch {batch_id} has been created by {current_user.username} successfully.",
@@ -432,7 +432,7 @@ def api_process_sheet() -> Response:
             )
 
     # Notify admins
-    Notification.send_notification_to_admins_for_event(
+    Notification.send_admin_notification_for_event(
         Constants.NotificationEvent.NEW_BATCH,
         "New Import Request",
         f"Import batch {batch_id} has been created by {current_user.username} successfully.",

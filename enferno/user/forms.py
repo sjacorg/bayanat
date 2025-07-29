@@ -40,7 +40,7 @@ class UserInfoForm:
 class ExtendedMfRecoveryCodesForm(MfRecoveryCodesForm):
     def validate(self, **kwargs):
         if super().validate(**kwargs):
-            Notification.send_notification_to_user_for_event(
+            Notification.send_notification_for_event(
                 user=current_user,
                 event=Constants.NotificationEvent.RECOVERY_CODES_CHANGE,
                 title="Multi-Factor Recovery Codes Changed",
