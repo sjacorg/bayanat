@@ -6,6 +6,8 @@ from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from flask import current_app
+from sqlalchemy import select, func, case, and_
+from sqlalchemy.orm import selectinload
 
 NotificationEvent = Constants.NotificationEvent
 logger = get_logger()
@@ -69,6 +71,62 @@ class Notification(db.Model, BaseMixin):
                 DateHelper.serialize_datetime(self.updated_at) if self.updated_at else None
             ),
         }
+
+    @classmethod
+    def get_paginated_with_stats(cls, user_id, page=1, per_page=10, status=None, is_urgent=None):
+        """
+        Efficient query that combines pagination + stats in a single database call.
+        Returns tuple: (paginated_results, unread_count, has_urgent_unread)
+        """
+        # Build base query with select() syntax
+        stmt = select(cls).where(cls.user_id == user_id).order_by(cls.created_at.desc())
+
+        # Apply filters efficiently
+        filters = []
+        if status == "read":
+            filters.append(cls.read_status == True)
+        elif status == "unread":
+            filters.append(cls.read_status == False)
+
+        if is_urgent is not None:
+            filters.append(cls.is_urgent == (is_urgent.lower() == "true"))
+
+        if filters:
+            stmt = stmt.where(and_(*filters))
+
+        # Execute paginated query
+        paginated = db.paginate(stmt, page=page, per_page=per_page, count=True)
+
+        # Get stats in single optimized query using aggregate functions
+        stats_stmt = select(
+            func.count(case((cls.read_status == False, 1))).label("unread_count"),
+            func.count(case((and_(cls.read_status == False, cls.is_urgent == True), 1))).label(
+                "urgent_unread_count"
+            ),
+        ).where(cls.user_id == user_id)
+
+        stats = db.session.execute(stats_stmt).one()
+
+        return paginated, stats.unread_count, stats.urgent_unread_count > 0
+
+    @classmethod
+    def mark_all_read_for_user(cls, user_id):
+        """Efficiently mark all notifications as read for a user."""
+        from sqlalchemy import update
+
+        stmt = (
+            update(cls)
+            .where(and_(cls.user_id == user_id, cls.read_status == False))
+            .values(read_status=True, read_at=datetime.now())
+        )
+        db.session.execute(stmt)
+        db.session.commit()
+
+    @classmethod
+    def get_unread_count(cls, user_id):
+        """Fast unread count using scalar query."""
+        stmt = select(func.count()).where(and_(cls.user_id == user_id, cls.read_status == False))
+        return db.session.scalar(stmt)
 
     @staticmethod
     def create_for_user(
