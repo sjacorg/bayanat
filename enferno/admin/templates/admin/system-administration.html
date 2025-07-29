@@ -1490,7 +1490,7 @@
                         'onUpdate:modelValue': (enabled) => {
                             settings.in_app_enabled = enabled
 
-                            if (!enabled) {
+                            if (!enabled && this.eitem.MAIL_ENABLED) {
                                 settings.email_enabled = false
                             }
                         },
