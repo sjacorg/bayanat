@@ -215,13 +215,20 @@ def get_notification_config(event):
     elif isinstance(event, str):
         event = event.upper()
 
+    # Get dynamic notifications config from Flask Config (includes config.json values)
+    notifications_config = current_app.config.get("NOTIFICATIONS", {})
+
     # Check always-on security events first, then configurable events
-    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or NOTIFICATIONS_CONFIG.get(
+    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(
         event, {"email_enabled": False, "category": "general"}
     )
 
-    # Convert to expected format
-    return {
+    result = {
         "email": config.get("email_enabled", False),
         "urgent": config.get("category") == "security",
     }
+
+    logger.info(f"get_notification_config({event}) -> config: {config}, result: {result}")
+
+    # Convert to expected format
+    return result
