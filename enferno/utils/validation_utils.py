@@ -2,6 +2,7 @@ import re
 import unicodedata
 from html import unescape
 from email_validator import validate_email, EmailNotValidError
+from zxcvbn import zxcvbn
 from functools import wraps
 from typing import Any, Type, Annotated
 from flask import request
@@ -111,6 +112,36 @@ def validate_email_format(email: str) -> str:
         return validated_email.normalized
     except EmailNotValidError as e:
         raise WTFormsValidationError(f"Invalid email format: {str(e)}")
+
+
+def validate_password_zxcvbn(password: str, minimum_score: int = 3) -> tuple[bool, int]:
+    """
+    Validates a password using zxcvbn.
+    """
+    result = zxcvbn(password)
+    score = result.get("score")
+    return score >= minimum_score, score
+
+
+def validate_password_policy(p: str) -> str:
+    from enferno.settings import Config as cfg
+
+    if not (p := p.strip()):
+        raise ValueError("Password cannot be empty!")
+    # validate length
+    min_length = getattr(cfg, "SECURITY_PASSWORD_LENGTH_MIN")
+    if len(p) < min_length:
+        raise ValueError(f"Password should be at least {min_length} characters long!")
+
+    if getattr(cfg, "SECURITY_PASSWORD_COMPLEXITY_CHECKER", "zxcvbn").lower() == "zxcvbn":
+        # validate complexity using zxcvbn
+        min_score = getattr(cfg, "SECURITY_ZXCVBN_MINIMUM_SCORE", 3)
+        valid, score = validate_password_zxcvbn(p, min_score)
+        if not valid:
+            raise ValueError(
+                f"Password is too weak (score: {score} < {min_score}). Please use a stronger password."
+            )
+    return p
 
 
 # =============================================================================

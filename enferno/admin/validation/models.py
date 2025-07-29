@@ -16,7 +16,11 @@ import re
 from enferno.admin.constants import Constants
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
-from enferno.utils.validation_utils import validate_plain_text_field, validate_email_format
+from enferno.utils.validation_utils import (
+    validate_plain_text_field,
+    validate_email_format,
+    validate_password_policy,
+)
 from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
@@ -1433,6 +1437,12 @@ class UserValidationModel(StrictValidationModel):
         except ValidationError as e:
             raise ValueError("Invalid email format")
 
+    @field_validator("password")
+    def validate_password(cls, v):
+        if not v:
+            return v
+        return validate_password_policy(v)
+
 
 class UserRequestModel(BaseValidationModel):
     item: UserValidationModel
@@ -1468,7 +1478,11 @@ class UserNameCheckValidationModel(BaseValidationModel):
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: str = Field(min_length=1)
+    password: str  # no assumptions about password policy here, let field validator do the job
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        return validate_password_policy(v)
 
 
 class UserForceResetRequestModel(BaseValidationModel):
