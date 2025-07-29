@@ -14,12 +14,13 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
 from enferno.utils.validation_utils import (
-    validate_plain_text_field,
+    SanitizedField,
+    one_must_exist,
     validate_email_format,
     validate_password_policy,
+    validate_username,
 )
 from wtforms.validators import ValidationError
 
@@ -1389,7 +1390,7 @@ class UserValidationModel(StrictValidationModel):
 
     @field_validator("username", mode="before")  # mode="before" to run before str_strip_whitespace
     @classmethod
-    def validate_username(cls, v: str) -> str:
+    def validate_username_check(cls, v: str) -> str:
         """
         Validates the username format and returns the validated username.
 
@@ -1408,7 +1409,7 @@ class UserValidationModel(StrictValidationModel):
         if v != v.strip():
             raise ValueError("Username cannot contain leading or trailing whitespace")
         try:
-            validate_plain_text_field(v, "Username", 32)
+            validate_username(v)
             return v
         except ValidationError as e:
             raise ValueError(str(e))
@@ -1471,7 +1472,7 @@ class UserNameCheckValidationModel(BaseValidationModel):
         if v != v.strip():
             raise ValueError("Username cannot contain leading or trailing whitespace")
         try:
-            validate_plain_text_field(v, "Username", 32)
+            validate_username(v)
             return v
         except ValidationError as e:
             raise ValueError(str(e))

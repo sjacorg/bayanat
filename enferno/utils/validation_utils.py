@@ -25,69 +25,58 @@ from wtforms.validators import ValidationError as WTFormsValidationError
 # =============================================================================
 
 
-def validate_plain_text_field(
-    field_data: str,
-    field_name: str = "Field",
-    max_length: int = 64,
-    allow_unicode: bool = False,
-    allow_whitespace: bool = False,
-    allowed_unciode_categories: set[chr] = {"L", "N"},
-    other_allowed_chars: set[chr] = {"_", "-"},
-) -> None:
-    """
-    Validates that a field contains only plain text and rejects any HTML content.
-
-    This function explicitly rejects HTML tags, HTML entities, and overly long strings
-    instead of silently sanitizing them, providing clear feedback to users.
-
-    If check_unicode is True, the function will also validate that the field contains only Unicode characters
-    in the allowed_unciode_categories or other_allowed_chars set.
-
-    Args:
-        field_data: The field data to validate
-        field_name: The name of the field for error messages (default: "Field")
-        max_length: Maximum allowed length for the field (default: 64)
-        allow_unicode: Whether to allow Unicode characters (default: False)
-        allow_whitespace: Whether to allow whitespace characters when `allow_unicode` is `False`. Use `allowed_unicode_categories` or `other_allowed_chars` to allow whitespace characters when allow_unicode is `True`. (only used if allow_unicode is False) (default: False)
-        allowed_unciode_categories: Set of Unicode categories to allow (default: {'L', 'N'}) (only used if allow_unicode is True)
-        other_allowed_chars: Set of other characters to allow (default: {'_', '-'}) (only used if allow_unicode is True)
-
-    Raises:
-        ValidationError: If the field contains HTML, entities, is too long, or contains invalid Unicode characters
-    """
-    if not field_data or not field_data.strip():
-        raise WTFormsValidationError(f"{field_name} cannot be empty.")
-
+def validate_no_html(data: str) -> None:
+    if not data.strip():
+        return data
     # Reject HTML tags
-    if re.search(r"<[^>]*>", field_data):
-        raise WTFormsValidationError(
-            f"{field_name} cannot contain HTML tags. Please enter plain text only."
-        )
+    if re.search(r"<[^>]*>", data):
+        raise WTFormsValidationError(f"HTML tags are not allowed.")
 
     # Reject HTML entities
-    if unescape(field_data) != field_data:
-        raise WTFormsValidationError(
-            f"{field_name} cannot contain HTML entities. Please enter plain text only."
-        )
+    if unescape(data) != data:
+        raise WTFormsValidationError(f"HTML entities are not allowed.")
 
-    # Normalize whitespace and validate length
-    clean_name = " ".join(field_data.split())
-    if len(clean_name) > max_length:
-        raise WTFormsValidationError(f"{field_name} is too long (maximum {max_length} characters).")
 
-    if not allow_unicode:
-        search_string = r"[^a-zA-Z0-9]" if not allow_whitespace else r"[^a-zA-Z0-9\s]"
-        if re.search(search_string, clean_name):
+def validate_username(username: str) -> None:
+    """
+    Validates a username.
+    """
+    # validate length
+    if not username or not username.strip():
+        raise WTFormsValidationError(f"Username cannot be empty.")
+    if len(username) > 32:
+        raise WTFormsValidationError(f"Username is too long (maximum 32 characters).")
+    # validate no html
+    validate_no_html(username)
+    # validate no whitespace
+    if username != username.strip():
+        raise WTFormsValidationError(f"Username cannot contain leading or trailing whitespace.")
+    # validate no special characters
+    if not re.match(r"^[a-zA-Z0-9]+$", username):
+        raise WTFormsValidationError(f"Username can only contain letters and numbers.")
+
+
+def validate_webauthn_device_name(name: str) -> str:
+    """
+    Validates a webauthn device name and returns a normalized version of it.
+    """
+    if not name or not name.strip():
+        raise WTFormsValidationError(f"Webauthn device name cannot be empty.")
+    # validate no html
+    validate_no_html(name)
+
+    # normalize whitespace
+    name = " ".join(name.split())
+    # validate length
+    if len(name) > 64:
+        raise WTFormsValidationError(f"Webauthn device name is too long (maximum 64 characters).")
+    # allow unicode L, N, whitespace, _ and -
+    for char in name:
+        if char not in {"-", "_", " "} and unicodedata.category(char)[0] not in {"L", "N"}:
             raise WTFormsValidationError(
-                f"{field_name} contains invalid characters. Please enter plain text/numbers only."
+                f"Webauthn device name can only contain letters, numbers, underscores, and hyphens."
             )
-
-    elif allow_unicode and (allowed_unciode_categories or other_allowed_chars):
-        for char in clean_name:
-            if other_allowed_chars and char in other_allowed_chars:
-                continue
-            if unicodedata.category(char)[0] not in allowed_unciode_categories:
-                raise WTFormsValidationError(f"{field_name} contains invalid character: {char}")
+    return name
 
 
 def validate_email_format(email: str) -> str:

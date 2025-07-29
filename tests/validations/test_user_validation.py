@@ -1,6 +1,6 @@
 import pytest
 from wtforms.validators import ValidationError
-from enferno.utils.validation_utils import validate_plain_text_field, validate_email_format
+from enferno.utils.validation_utils import validate_email_format, validate_username
 
 
 @pytest.fixture(scope="function")
@@ -23,41 +23,42 @@ def ensure_setup_complete(app):
 class TestUsernameValidation:
     """Test cases for username validation."""
 
-    def test_valid_plaintext_with_unicode(self):
-        """Test that valid usernames pass validation."""
-        valid_usernames = [
-            "user123",
-            "test_user",
-            "my-username",
-            "user_name-123",
-            "a1b2c3",
-            "test",
-            "用户123",  # Chinese characters
-            "пользователь",  # Cyrillic characters
-            "مستخدم",  # Arabic characters
-            "user_كلمة-123",  # Mixed Unicode
-        ]
-
-        for username in valid_usernames:
-            # Should not raise any exception
-            validate_plain_text_field(username, "Username", 32, allow_unicode=True)
-
-    def test_valid_plaintext_without_unicode(self):
+    def test_valid_usernames(self):
         """Test that valid usernames pass validation."""
         valid_usernames = [
             "user123",
             "testuser",
             "myusername",
-            "00user",
+            "username123",
+            "a1b2c3",
+            "test",
+            "USER123",  # uppercase
+            "TestUser123",  # mixed case
         ]
 
         for username in valid_usernames:
             # Should not raise any exception
-            validate_plain_text_field(username, "Username", 32, allow_unicode=False)
+            validate_username(username)
+
+    def test_invalid_usernames_with_unicode(self):
+        """Test that usernames with unicode characters are rejected."""
+        invalid_usernames = [
+            "用户123",  # Chinese characters
+            "пользователь",  # Cyrillic characters
+            "مستخدم",  # Arabic characters
+            "user_كلمة123",  # Mixed Unicode
+            "üser123",  # German umlaut
+        ]
+
+        for username in invalid_usernames:
+            with pytest.raises(
+                ValidationError, match="Username can only contain letters and numbers"
+            ):
+                validate_username(username)
 
     def test_invalid_usernames_with_special_chars(self):
         """Test that usernames with disallowed special characters are rejected."""
-        invalid_usernames = [
+        invalid_usernames_with_special_chars = [
             "user@example",
             "test.user",
             "user+name",
@@ -73,37 +74,55 @@ class TestUsernameValidation:
             "user\\name",
             "user/test",
             "user?name",
-            "user<>name",
             "user,name",
             "user;name",
             "user:name",
             'user"name',
             "user'name",
             "user name",  # space not allowed
+            "user_name",  # underscore not allowed
+            "user-name",  # hyphen not allowed
         ]
 
-        for username in invalid_usernames:
-            with pytest.raises(ValidationError):
-                validate_plain_text_field(username, "Username", 32, allow_unicode=True)
-
-    def test_invalid_usernames_with_unicode(self):
-        """Test that usernames with unicode characters are rejected."""
-        invalid_usernames = [
-            "üser123",
-            "test_user",
-            "my-username",
+        # These contain HTML-like characters and will be caught by HTML validation
+        invalid_usernames_with_html_chars = [
+            "user<>name",
         ]
-        for username in invalid_usernames:
-            with pytest.raises(ValidationError):
-                validate_plain_text_field(username, "Username", 32, allow_unicode=False)
+
+        for username in invalid_usernames_with_special_chars:
+            with pytest.raises(
+                ValidationError, match="Username can only contain letters and numbers"
+            ):
+                validate_username(username)
+
+        for username in invalid_usernames_with_html_chars:
+            with pytest.raises(ValidationError, match="HTML tags are not allowed"):
+                validate_username(username)
 
     def test_empty_username(self):
         """Test that empty usernames are rejected."""
         with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_plain_text_field("", "Username", 32, allow_unicode=True)
+            validate_username("")
 
         with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_plain_text_field("   ", "Username", 32, allow_unicode=True)
+            validate_username("   ")
+
+    def test_username_with_whitespace(self):
+        """Test that usernames with leading/trailing whitespace are rejected."""
+        with pytest.raises(
+            ValidationError, match="Username cannot contain leading or trailing whitespace"
+        ):
+            validate_username(" user123")
+
+        with pytest.raises(
+            ValidationError, match="Username cannot contain leading or trailing whitespace"
+        ):
+            validate_username("user123 ")
+
+        with pytest.raises(
+            ValidationError, match="Username cannot contain leading or trailing whitespace"
+        ):
+            validate_username(" user123 ")
 
     @pytest.mark.parametrize(
         "url,username,error_message,field,is_checkuser",
