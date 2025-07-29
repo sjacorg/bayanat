@@ -1,7 +1,7 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
 <!-- Field Creation Modal -->
-<field-builder-drawer v-model="isFieldBuilderDrawerOpen"></field-builder-drawer>
+<field-builder-drawer v-model="isFieldBuilderDrawerOpen" @create-field="coreFields.push($event)"></field-builder-drawer>
 
 <v-main>
   <v-container fluid>
@@ -333,7 +333,8 @@
         async deleteField(field) {
           if (confirm('{{ _('Are you sure?') }}')) {
             try {
-              return await axios.delete(`/admin/api/dynamic-fields/${field.props.id}`);
+              this.coreFields = this.coreFields.filter(f => f.id !== field.id)
+              // return await axios.delete(`/admin/api/dynamic-fields/${field.props.id}`);
             } catch (err) {
               console.error(err);
               this.showSnack(handleRequestError(err));

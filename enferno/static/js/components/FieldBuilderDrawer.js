@@ -5,7 +5,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
       default: false,
     },
   },
-  emits: ['update:modelValue'],
+  emits: ['update:modelValue', 'createField'],
   data() {
     return {
       translations: window.translations,
@@ -50,31 +50,31 @@ const FieldBuilderDrawer = Vue.defineComponent({
           value: 'string', 
           label: 'Text Input',
           description: 'Short text field',
-          interfaces: ['text_input', 'dropdown']
+          interfaces: ['input', 'dropdown']
         },
         {
           value: 'text', 
           label: 'Text Area',
           description: 'Long text content',
-          interfaces: ['text_area']
+          interfaces: ['textarea']
         },
         {
           value: 'integer', 
           label: 'Integer',
           description: 'Whole numbers',
-          interfaces: ['number']
+          interfaces: ['input']
         },
         {
           value: 'float', 
           label: 'Float',
           description: 'Decimal numbers',
-          interfaces: ['number']
+          interfaces: ['input']
         },
         {
           value: 'datetime', 
           label: 'Date & Time',
           description: 'Date and time values',
-          interfaces: ['date_picker']
+          interfaces: ['date']
         },
         {
           value: 'boolean', 
@@ -86,7 +86,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
           value: 'array', 
           label: 'Multi Select',
           description: 'Multiple choice values',
-          interfaces: ['multi_select']
+          interfaces: ['textarea']
         },
         {
           value: 'json', 
@@ -121,9 +121,39 @@ const FieldBuilderDrawer = Vue.defineComponent({
     },
     async saveField() {
       try {
-        axios.post('/admin/api/dynamic-fields', this.form).response(response => {
-          console.log('Field saved successfully:', response.data);
-        })
+        const field = {
+          id: this.editField?.id ?? Date.now(), // or let server assign
+          name: this.form.name,
+          title: this.form.title,
+          entity_type: this.entityType,
+          field_type: this.form.field_type,
+          ui_component: this.form.ui_component,
+          options: this.form.options.length ? this.form.options : undefined,
+          schema_config: {
+            required: this.form.schema_config.required,
+            max_length: this.form.schema_config.max_length ?? undefined,
+            default: this.form.schema_config.default ?? undefined
+          },
+          ui_config: {
+            sort_order: this.form.ui_config.sort_order,
+            help_text: this.form.ui_config.help_text,
+            label: this.form.ui_config.label,
+            readonly: this.form.ui_config.readonly,
+            hidden: this.form.ui_config.hidden
+          },
+          validation_config: {
+            ...this.form.validation_config
+          },
+          active: true,
+          created_at: this.editField?.created_at ?? new Date().toISOString()
+        };
+
+        this.$emit('createField', field)
+        this.$emit('update:modelValue', false)
+
+        // axios.post('/admin/api/dynamic-fields', this.form).response(response => {
+        //   console.log('Field saved successfully:', response.data);
+        // })
       } catch (err) {
         console.error('Error saving field:', err);
         this.showSnack(handleRequestError(err))
