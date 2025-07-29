@@ -1,7 +1,7 @@
 {% extends 'layout.html' %} {% block css %} {% endblock %} {% block content %}
 
 <!-- Field Creation Modal -->
-<field-builder-drawer v-model="isFieldBuilderDrawerOpen" @create-field="coreFields.push($event)"></field-builder-drawer>
+<field-builder-drawer :model-value="isFieldBuilderDrawerOpen" @update:model-value="closeDrawer" @save="saveField" :item="editedItem" entityType="bulletin"></field-builder-drawer>
 
 <v-main>
   <v-container fluid>
@@ -47,7 +47,7 @@
                 <v-col cols="12" lg="6">
                   <field-list-item
                     :field="mapFieldToComponent(field)"
-                    @edit=""
+                    @edit="edit"
                     @toggle-visibility="toggleFieldVisibility"
                     @delete="deleteField"
                   />
@@ -86,6 +86,7 @@
         tinyConfig: tinyConfig,
         drawer: drawer,
         isFieldBuilderDrawerOpen: false,
+        editedItem: {},
         coreFields: [
           {
             id: 101,
@@ -292,6 +293,22 @@
         this.fetchDynamicFields();
       },
       methods: {
+        edit(field) {
+          const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.props.id))
+          this.editedItem = matchingField;
+          this.isFieldBuilderDrawerOpen = true;
+        },
+        saveField(evt) {
+          const index = this.coreFields.findIndex(coreField => coreField.id === evt.id)
+
+          if (index !== -1) {
+            // Update existing field
+            this.coreFields[index] = { ...evt } // or use Object.assign if you want to preserve the reference
+          } else {
+            // Add new field
+            this.coreFields.push(evt)
+          }
+        },
         save() {
           this.loading = true;
           setTimeout(() => {
@@ -358,6 +375,13 @@
           } catch (err) {
             console.error(err);
             this.showSnack(handleRequestError(err));
+          }
+        },
+        closeDrawer(open) {
+          this.isFieldBuilderDrawerOpen = open;
+
+          if (!open) {
+            this.editedItem = {}
           }
         }
       },

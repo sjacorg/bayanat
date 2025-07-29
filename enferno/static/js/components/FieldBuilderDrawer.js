@@ -4,8 +4,16 @@ const FieldBuilderDrawer = Vue.defineComponent({
       type: Boolean,
       default: false,
     },
+    item: {
+      type: Object,
+      default: null,
+    },
+    entityType: {
+      type: String,
+      default: '',
+    }
   },
-  emits: ['update:modelValue', 'createField'],
+  emits: ['update:modelValue', 'save'],
   data() {
     return {
       translations: window.translations,
@@ -40,62 +48,62 @@ const FieldBuilderDrawer = Vue.defineComponent({
         }
       },
       tabs: [
-        {id: 'details', label: 'Field Details', icon: 'mdi-form-textbox'},
-        {id: 'schema', label: 'Schema', icon: 'mdi-database'},
-        {id: 'interface', label: 'Interface', icon: 'mdi-palette'},
-        {id: 'validation', label: 'Validation', icon: 'mdi-check-circle'}
+        { id: 'details', label: 'Field Details', icon: 'mdi-form-textbox' },
+        { id: 'schema', label: 'Schema', icon: 'mdi-database' },
+        { id: 'interface', label: 'Interface', icon: 'mdi-palette' },
+        { id: 'validation', label: 'Validation', icon: 'mdi-check-circle' }
       ],
       fieldTypes: [
         {
-          value: 'string', 
+          value: 'string',
           label: 'Text Input',
           description: 'Short text field',
           interfaces: ['input', 'dropdown']
         },
         {
-          value: 'text', 
+          value: 'text',
           label: 'Text Area',
           description: 'Long text content',
           interfaces: ['textarea']
         },
         {
-          value: 'integer', 
+          value: 'integer',
           label: 'Integer',
           description: 'Whole numbers',
           interfaces: ['input']
         },
         {
-          value: 'float', 
+          value: 'float',
           label: 'Float',
           description: 'Decimal numbers',
           interfaces: ['input']
         },
         {
-          value: 'datetime', 
+          value: 'datetime',
           label: 'Date & Time',
           description: 'Date and time values',
           interfaces: ['date']
         },
         {
-          value: 'boolean', 
+          value: 'boolean',
           label: 'Boolean',
           description: 'True/false values',
-          interfaces: ['checkbox']
+          interfaces: ['checkbox', 'switch']
         },
         {
-          value: 'array', 
+          value: 'array',
           label: 'Multi Select',
           description: 'Multiple choice values',
           interfaces: ['textarea']
         },
         {
-          value: 'json', 
+          value: 'json',
           label: 'JSON',
           description: 'Structured data',
-          interfaces: ['text_area']
+          interfaces: ['textarea']
         }
       ]
-    }
+    };
   },
   computed: {
     availableInterfaces() {
@@ -115,22 +123,50 @@ const FieldBuilderDrawer = Vue.defineComponent({
         this.form.ui_component = this.availableInterfaces[0];
       }
     },
-    validateForm() {
-      // Validate current tab before allowing navigation
-      return true;
+    populateForm(item) {
+      this.form = {
+        name: item.name || '',
+        title: item.title || '',
+        description: item.description || '',
+        field_type: item.field_type || '',
+        ui_component: item.ui_component || '',
+        options: item.options?.length ? item.options : [{ label: null, value: null }],
+        schema_config: {
+          required: item.schema_config?.required ?? false,
+          searchable: item.schema_config?.searchable ?? false,
+          default: item.schema_config?.default ?? null,
+          max_length: item.schema_config?.max_length ?? null
+        },
+        ui_config: {
+          label: item.ui_config?.label || '',
+          help_text: item.ui_config?.help_text || '',
+          sort_order: item.ui_config?.sort_order ?? 1,
+          readonly: item.ui_config?.readonly ?? false,
+          hidden: item.ui_config?.hidden ?? false
+        },
+        validation_config: {
+          max_length: item.validation_config?.max_length ?? null,
+          min: item.validation_config?.min ?? null,
+          max: item.validation_config?.max ?? null,
+          precision: item.validation_config?.precision ?? null,
+          scale: item.validation_config?.scale ?? null,
+          format: item.validation_config?.format ?? ''
+        }
+      };
     },
     async saveField() {
       try {
         const field = {
-          id: this.editField?.id ?? Date.now(), // or let server assign
+          id: this.item?.id ?? Date.now(),
           name: this.form.name,
           title: this.form.title,
           entity_type: this.entityType,
           field_type: this.form.field_type,
           ui_component: this.form.ui_component,
-          options: this.form.options.length ? this.form.options : undefined,
+          options: this.form.options?.length ? this.form.options : undefined,
           schema_config: {
             required: this.form.schema_config.required,
+            searchable: this.form.schema_config.searchable,
             max_length: this.form.schema_config.max_length ?? undefined,
             default: this.form.schema_config.default ?? undefined
           },
@@ -141,28 +177,30 @@ const FieldBuilderDrawer = Vue.defineComponent({
             readonly: this.form.ui_config.readonly,
             hidden: this.form.ui_config.hidden
           },
-          validation_config: {
-            ...this.form.validation_config
-          },
+          validation_config: { ...this.form.validation_config },
           active: true,
-          created_at: this.editField?.created_at ?? new Date().toISOString()
+          created_at: this.item?.created_at ?? new Date().toISOString()
         };
 
-        this.$emit('createField', field)
-        this.$emit('update:modelValue', false)
-
-        // axios.post('/admin/api/dynamic-fields', this.form).response(response => {
-        //   console.log('Field saved successfully:', response.data);
-        // })
+        this.$emit('save', field);
+        this.$emit('update:modelValue', false);
       } catch (err) {
         console.error('Error saving field:', err);
-        this.showSnack(handleRequestError(err))
       }
     }
   },
   watch: {
     'form.field_type'() {
       this.autoSelectInterface();
+    },
+    modelValue(newVal) {
+      if (newVal) {
+        if (this.item) {
+          this.populateForm(this.item);
+        } else {
+          this.populateForm({}); // clear form
+        }
+      }
     }
   },
   template: `
