@@ -161,7 +161,7 @@ class Notification(db.Model, BaseMixin):
     @staticmethod
     def create_for_admins(title, message, category=TYPE_SECURITY, is_urgent=False, send_email=True):
         """Create notifications for all admins"""
-        admins = User.query.filter(User.roles.any(Role.name == "Admin")).all()
+        admins = db.session.scalars(select(User).where(User.roles.any(Role.name == "Admin"))).all()
         notifications = []
 
         for admin in admins:
