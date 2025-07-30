@@ -10,7 +10,8 @@ const NotificationsList = Vue.defineComponent({
             default: () => ({
                 maxTitleLines: 1,
                 maxSubtitleLines: 2,
-                hideScrollFeedback: false
+                hideScrollFeedback: false,
+                hideMarkAsReadButton: false
             })
         }
     },
@@ -41,6 +42,25 @@ const NotificationsList = Vue.defineComponent({
             if (!lines) return 'white-space: normal;'
 
             return `overflow: hidden; display: -webkit-box; -webkit-line-clamp: ${lines}; -webkit-box-orient: vertical; white-space: normal;`
+        },
+        getListItemColorProps(notification) {
+            if (!notification) return
+            const urgentUnreadProps = { variant: "flat", 'base-color': "error", class: 'text-white' }
+            const urgentReadProps = { variant: "tonal", 'base-color': "error" }
+            const unreadProps = { variant: "tonal", 'base-color': "primary" }
+            const readProps = {}
+            
+            if (notification.is_urgent) {
+                if (notification.read_status) {
+                    return urgentReadProps
+                }
+                return urgentUnreadProps
+            }
+
+            if (notification.read_status) {
+                return readProps
+            }
+            return unreadProps
         }
     },
     template: `
@@ -91,50 +111,64 @@ const NotificationsList = Vue.defineComponent({
                 </v-empty-state>
             </v-container>
 
-            <v-container v-else class="pa-0">
-                <v-card
+            <v-list v-else density="default" lines="three" class="py-0">
+                <v-list-item
                     v-for="(notification, index) in notifications"
                     :key="index"
-                    density="compact"
-                    :variant="notification?.read_status ? 'flat' : 'tonal'"
-                    :color="notification?.read_status ? '' : 'primary'"
-                    class="mb-2"
-                    :rounded="0"
-                    @click="$emit('readNotification', notification)"
+                    class="py-3 mb-2 rounded-0"
+                    slim
+                    v-bind="getListItemColorProps(notification)"
                 >
-                    <v-card-title class="pb-1 d-flex justify-space-between align-center">
-                        <div 
-                            :class="['text-body-1', { 'font-weight-bold': !notification?.read_status }]" 
-                            :style="getLineClampStyles(config.maxTitleLines)"
-                            v-html="notification?.title"
-                        ></div>
+                    <template #prepend>
                         <v-tooltip location="bottom">
-                            <template v-slot:activator="{ props }">
-                                <v-icon v-bind="props" class="ml-2" size="x-small">{{ getIconFromNotification(notification) }}</v-icon>
+                            <template #activator="{ props }">
+                                <v-icon v-bind="props" size="small">
+                                    {{ getIconFromNotification(notification) }}
+                                </v-icon>
                             </template>
                             {{ notification?.type }}
                         </v-tooltip>
-                    </v-card-title>
-                    <v-card-subtitle>
-                        <div 
+                    </template>
+
+                    <v-list-item-content>
+                        <v-list-item-title
+                            :class="{ 'font-weight-bold': !notification?.read_status }"
+                            class="text-body-1"
+                            :style="getLineClampStyles(config.maxTitleLines)"
+                            v-html="notification?.title"
+                        />
+                        <v-list-item-subtitle class="mt-1">
+                            <div
+                            class="text-caption"
                             :style="getLineClampStyles(config.maxSubtitleLines)"
                             v-html="notification?.message"
-                        ></div>
-                        <div class="d-flex justify-space-between align-center my-2">
-                            <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
-                            <v-chip 
-                                v-if="notification?.is_urgent" 
-                                color="error" 
-                                size="x-small" 
-                                density="compact" 
-                                variant="flat"
-                            >
-                                {{ translations.URGENT_ }}
-                            </v-chip>
+                            />
+                            <div class="d-flex justify-space-between align-center mt-2">
+                                <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
+                            </div>
+                        </v-list-item-subtitle>
+                    </v-list-item-content>
+
+                    <template v-if="!notification?.read_status && !config.hideMarkAsReadButton" #append>
+                        <div class="d-flex align-center ga-2">
+                            <v-tooltip location="bottom">
+                                <template #activator="{ props }">
+                                    <v-btn
+                                        v-bind="props"
+                                        icon
+                                        variant="text"
+                                        size="small"
+                                        @click="$emit('readNotification', notification)"
+                                    >
+                                        <v-icon size="16">mdi-email-check-outline</v-icon>
+                                    </v-btn>
+                                </template>
+                                {{ translations.markAsRead_ }}
+                            </v-tooltip>
                         </div>
-                    </v-card-subtitle>
-                </v-card>
-            </v-container>
+                    </template>
+                </v-list-item>
+            </v-list>
 
             <v-alert
                 v-if="loadError && notifications?.length"
