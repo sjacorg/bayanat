@@ -18,16 +18,16 @@ class Notification(db.Model, BaseMixin):
     """Simplified notification model - single object with delivery method tracking"""
 
     # Notification types
-    TYPE_GENERAL = "general"
-    TYPE_UPDATE = "update"
-    TYPE_SECURITY = "security"
+    TYPE_ANNOUNCEMENT = "Announcement"
+    TYPE_UPDATE = "Update"
+    TYPE_SECURITY = "Security"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     user = db.relationship("User", foreign_keys=[user_id], backref="notifications")
     title = db.Column(db.String, nullable=False)
     message = db.Column(db.Text, nullable=False)
-    notification_type = db.Column(db.String, nullable=False, default=TYPE_GENERAL)
+    notification_type = db.Column(db.String, nullable=False, default=TYPE_UPDATE)
     read_status = db.Column(db.Boolean, default=False)
     read_at = db.Column(db.DateTime)
     is_urgent = db.Column(db.Boolean, default=False)
@@ -131,7 +131,7 @@ class Notification(db.Model, BaseMixin):
 
     @staticmethod
     def create_for_user(
-        user, title, message, category=TYPE_GENERAL, is_urgent=False, send_email=False
+        user, title, message, category=TYPE_UPDATE, is_urgent=False, send_email=False
     ):
         """Create notification for a specific user"""
         # Determine if email should be enabled
@@ -174,7 +174,7 @@ class Notification(db.Model, BaseMixin):
 
     @staticmethod
     def send_notification_for_event(
-        event, user, title, message, category=TYPE_GENERAL, is_urgent=False
+        event, user, title, message, category=TYPE_UPDATE, is_urgent=False
     ):
         """Send notification to user based on event configuration"""
         config = get_notification_config(event)

@@ -27,9 +27,11 @@ const NotificationsList = Vue.defineComponent({
 
             switch (type) {
                 case 'update':
-                    return 'mdi-update';
+                    return 'mdi-information-outline';
                 case 'security':
                     return 'mdi-security';
+                case 'announcement':
+                    return 'mdi-bullhorn';
                 default:
                     return 'mdi-bell';
             }
@@ -120,14 +122,9 @@ const NotificationsList = Vue.defineComponent({
                     v-bind="getListItemColorProps(notification)"
                 >
                     <template #prepend>
-                        <v-tooltip location="bottom">
-                            <template #activator="{ props }">
-                                <v-icon v-bind="props" size="small">
-                                    {{ getIconFromNotification(notification) }}
-                                </v-icon>
-                            </template>
-                            {{ notification?.type }}
-                        </v-tooltip>
+                        <v-icon size="small">
+                            {{ getIconFromNotification(notification) }}
+                        </v-icon>
                     </template>
 
                     <v-list-item-content>
@@ -160,7 +157,7 @@ const NotificationsList = Vue.defineComponent({
                                         size="small"
                                         @click="$emit('readNotification', notification)"
                                     >
-                                        <v-icon size="16">mdi-email-check-outline</v-icon>
+                                        <v-icon size="16">mdi-email-open-outline</v-icon>
                                     </v-btn>
                                 </template>
                                 {{ translations.markAsRead_ }}
