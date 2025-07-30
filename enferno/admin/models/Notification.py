@@ -224,7 +224,7 @@ def get_notification_config(event):
     )
 
     result = {
-        "email": config.get("email_enabled", False),
+        "email": config.get("email_enabled", False) and config.get("in_app_enabled", True),
         "urgent": config.get("category") == "security",
     }
 
