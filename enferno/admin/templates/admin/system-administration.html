@@ -677,8 +677,11 @@
                             <!-- Notifications tab -->
                             <div v-if="tab === 'notifications'">
                                 <v-card v-if="eitem.NOTIFICATIONS" flat :disabled="loading" :loading="loading" class="px-6 py-8">
-                                    <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for users') }}</h4>
+                                    <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notifications for users') }}</h4>
                                     <p class="text-caption mb-1">{{ _('These notifications are sent to users in the system.') }}</p>
+                                    <v-alert v-if="!eitem.MAIL_ENABLED" type="info" class="my-6" icon="mdi-information">
+                                        {{ _('Email is not configured, and email notifications are currently disabled. To enable them, set up the email service in the Mail tab.') }}
+                                    </v-alert>
                                     <v-row class="ml-n5">
                                         <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
                                             <h4 class="text-subtitle-2 font-weight-bold">{{ _('Login from new IP') }}</h4>
@@ -756,7 +759,7 @@
                                 
                                     <v-divider class="my-7"></v-divider>
                                 
-                                    <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for all administrators') }}</h4>
+                                    <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notifications for all administrators') }}</h4>
                                     <p class="text-caption mb-1">{{ _('Notifications sent to all administrators about important events.') }}</p>
                                     <h4 class="text-subtitle-1 font-weight-bold mb-1 mt-6">{{ _('Security') }}</h4>
                                     <v-row class="ml-n5">
@@ -880,7 +883,7 @@
                                 
                                     <v-divider class="my-7"></v-divider>
                                 
-                                    <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notification for administrators') }}</h4>
+                                    <h4 class="text-h6 font-weight-bold mb-1">{{ _('Notifications for administrators') }}</h4>
                                     <p class="text-caption mb-1">{{ _('Notifications sent to individual administrators about the results of actions they initiated.') }}</p>
                                     <v-row class="ml-n5">
                                         <v-col cols="12" lg="4" md="6" sm="12" class="pl-5 pr-5 pt-4 pb-4">
