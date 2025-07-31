@@ -111,6 +111,7 @@
                                 item-title="name"
                                 item-value="id"
                                 return-object
+                                :model-value="mapid"
                                 @update:model-value="loadMap"
                                 clearable
                         >
@@ -194,12 +195,12 @@
 
                                         </v-text-field>
                                         <v-spacer></v-spacer>
-                                        <v-btn v-if="mapid" @click="updateMap" primary small
+                                        <v-btn v-if="mapid" @click="updateMap" color="primary" variant="outlined"
                                                class="mx-2">{{ _('Update map') }}</v-btn>
-                                        <v-btn @click="createMap" primary small
+                                        <v-btn @click="createMap" color="primary" variant="outlined"
                                                class="mx-2">{{ _('Create a new map') }}
                                         </v-btn>
-                                        <v-btn v-if="mapid" x-small
+                                        <v-btn v-if="mapid" @click="deleteMap" color="error" variant="outlined"
                                                class="mx-2">{{ _('Delete') }}</v-btn>
                                     </div>
 
@@ -1216,10 +1217,10 @@
 
                 loadMap(m) {
                     if (m) {
-                        this.map = m.data.map;
+                        this.map = deepClone(m.data.map);
                         this.mapid = m.id;
                         this.mapName = m.name;
-                        this.vmap = m.data.vmap;
+                        this.vmap = deepClone(m.data.vmap);
                     }
 
 
@@ -1287,53 +1288,70 @@
                     let field = this.fields.splice(i, 1);
                 },
 
-                updateMap() {
+                deleteMap() {
+                    if (!this.mapid) return
+                    if (!confirm("{{ _('Are you sure you want to delete this mapping?')}}")) return
 
-                    if (this.mapid) {
-                        // update existing map
-                        axios.put(`/import/api/mapping/${this.mapid}`, {
-                            name: this.mapName,
-                            data:
-                                {
-                                    map: this.map,
-                                    vmap: this.vmap
-                                }
-                        }).then(res => {
-                            this.showSnack(res.data.message);
+                    const backupMaps = [...this.maps]; // Backup
+                    const backupMapId = this.mapid; // Backup
+                    const backupSelectedMap = this.maps.find(map => map.id === this.mapid); // Backup
+                    // const mapIndex = this.maps.findIndex(map => map.id === this.mapid);
 
+                    // // Optimistic update
+                    this.maps = this.maps.filter(map => map.id !== this.mapid);
+                    this.resetFields();
+                    this.selectedMap = null;
+                    this.mapid = null
+
+                    axios.delete(`/import/api/mapping/${this.mapid}`)
+                        .then(res => {
+                            this.showSnack(res.data);
                         }).catch(err => {
+                            // Revert on error
+                            this.maps = backupMaps;
+                            this.mapid = backupMapId;
+                            this.loadMap(backupSelectedMap)
+                            this.showSnack('Delete mapping failed');
                             console.log(err.response);
-                        }).finally(
-                            () => {
-
-                            }
-                        );
-
-
-                    }
-
-
-                }
-                ,
-
-                createMap() {
-                    //create new
-                    axios.post('/import/api/mapping/', {
+                        });
+                },
+                updateMap() {
+                    const payload = {
                         name: this.mapName,
                         data: {
                             map: this.map,
                             vmap: this.vmap
                         }
-                    }).then(res => {
+                    }
+                    if (!this.mapid) return
+                    // update existing map
+                    axios.put(`/import/api/mapping/${this.mapid}`, payload).then(res => {
                         this.showSnack(res.data.message);
-                        this.mapid = res.data.id;
+                        const updatedMap = deepClone({ ...payload, id: res.data.id })
+                        const map = this.maps.find(map => map.id === updatedMap.id);
+                        if (map) Object.assign(map, updatedMap);
                     }).catch(err => {
                         console.log(err.response);
-                    }).finally(
-                        () => {
-
+                    });
+                },
+                createMap() {
+                    const payload = {
+                        name: this.mapName,
+                        data: {
+                            map: this.map,
+                            vmap: this.vmap
                         }
-                    );
+                    }
+                    //create new
+                    axios.post('/import/api/mapping/', payload).then(res => {
+                        this.showSnack(res.data.message);
+                        this.mapid = res.data.id;
+                        const nextMap = deepClone({ ...payload, id: res.data.id })
+                        this.maps.push(nextMap);
+                        this.selectMap(nextMap);
+                    }).catch(err => {
+                        console.log(err.response);
+                    });
                 },
 
                 processStarted() {
