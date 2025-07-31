@@ -334,10 +334,46 @@
                                                     caption="{{ _('Nationalities') }}"></drop-field>
                                         <drop-field v-model="map.dialects"
                                                     caption="{{ _('Spoken Dialects') }}"></drop-field>
-                                        <drop-field v-model="map.id_number"
-                                                    caption="{{ _('ID Number') }}"></drop-field>
                                         <drop-field v-model="map.tags"
                                                     caption="{{ _('Tags') }}"></drop-field>
+                                        <v-card class="w-100">
+                                            <v-card-item>
+                                                <v-card-title>
+                                                    {{ _('ID Numbers') }}
+                                                </v-card-title>
+                                            </v-card-item>
+                                        
+                                            <v-card-text>
+                                                <div v-for="(idNumber,i) in map.id_number" :key="i">
+                                                    <v-sheet class="d-flex align-center" elevation="0">
+                                                        <h5 class="text-caption mr-1">{{ _('ID Type') }}</h5>
+                                                        <v-select
+                                                            max-width="300px"
+                                                            density="compact"
+                                                            :items="idNumberTypes"
+                                                            item-title="title"
+                                                            item-value="id"
+                                                            :model-value="idNumber.type || null"
+                                                            @update:model-value="idNumber.type = $event"
+                                                            hide-details
+                                                        ></v-select>
+                                        
+                                                        <drop-field
+                                                            caption="{{ _('Number') }}"
+                                                            :model-value="[idNumber.number].filter(Boolean)"
+                                                            @update:model-value="idNumber.number = $event[0] || ''"
+                                                            @change="setIdEntityOnDrop($event, idNumber)"
+                                                        ></drop-field>
+                                        
+                                                        <v-btn icon="mdi-plus" color="success" size="small" v-if="i==map.id_number.length-1" variant="text"
+                                                            @click="map.id_number.push({})">
+                                                        </v-btn>
+                                                        <v-btn variant="text" icon="mdi-minus" color="error" size="small"
+                                                            v-if="i==map.id_number.length-1 && map.id_number.length !=1" @click="map.id_number.splice(i,1)">
+                                                        </v-btn>
+                                                </div>
+                                            </v-card-text>
+                                        </v-card>
                                     </v-row>
 
                                     <!-- Actor Profile -->
@@ -883,17 +919,20 @@
                 dynamicAtype: true,
 
                 eventtypes: [],
+                idNumberTypes: [],
                 dynamicEtype: true,
 
 
                 maps: null,
                 map: {
                     events: [{}],
+                    id_number: [{}],
                     reporters: [{}],
                     description: [{}]
                 },
                 defaultMap: {
                     events: [{}],
+                    id_number: [{}],
                     reporters: [{}],
                     description: [{}]
                 },
@@ -941,6 +980,7 @@
             mounted() {
                 this.loadMaps();
                 this.loadEtypes();
+                this.fetchIdNumberTypes();
 
 
             },
@@ -968,6 +1008,13 @@
 
 
             methods: {
+                setIdEntityOnDrop(evt, idNumber) {
+                    // If drop field has no value exit
+                    if (!evt.length) return
+                    if (idNumber?.type) return
+
+                    idNumber.type = this.idNumberTypes.find(Boolean).id.toString()
+                },
 
                 showError(err, message) {
                     this.showSnack(message);
@@ -1136,9 +1183,13 @@
                     // add countries to actor config
                     let config = translations;
 
+                    const nextMap = {
+                        ...this.map,
+                        id_number: this.map.id_number.filter(idEntry => idEntry.type && idEntry.number) 
+                    }
 
                     axios.post('/import/api/process-sheet', {
-                        map: this.map,
+                        map: nextMap,
                         vmap: this.vmap,
                         sheet: this.selectedSheet,
                         roles: this.roles,
@@ -1194,6 +1245,20 @@
                     axios.get('/admin/api/eventtypes/').then(res => {
 
                         this.eventtypes = res.data.items.filter(x => x.title);
+                    })
+                },
+
+                fetchIdNumberTypes() {
+                    axios.get('/admin/api/idnumbertypes/').then(res => {
+                        // normalize id to be string
+                        const numberTypes = res.data.items || []
+                        const normalizedNumberTypes = numberTypes.map(numberType => ({ ...numberType, id: numberType.id.toString() }))
+
+                        this.idNumberTypes = normalizedNumberTypes;
+                    }).catch(err => {
+                        this.idNumberTypes = [];
+                        console.error('Error fetching id number types:', err);
+                        this.showSnack(handleRequestError(err));
                     })
                 },
 
