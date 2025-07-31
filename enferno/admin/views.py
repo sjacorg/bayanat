@@ -4817,19 +4817,9 @@ def api_check_password(
     Returns:
         - success/error string based on the operation result.
     """
-    # Retrieve the password from the request's JSON body
-    password = validated_data.get("password")
-
-    # Check if the password is provided
-    if not password:
-        return "No password provided", 400
-
-    result = zxcvbn(password)
-    score = result.get("score")
-    if score >= current_app.config.get("SECURITY_ZXCVBN_MINIMUM_SCORE"):
-        return "Password is ok", 200
-    else:
-        return "Weak Password Score", 409
+    # Password is validated in the UserPasswordCheckValidationModel
+    # If the request reached here, the password is valid
+    return "Password is ok", 200
 
 
 @admin.post("/api/user/force-reset")

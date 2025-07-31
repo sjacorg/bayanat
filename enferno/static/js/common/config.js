@@ -1,8 +1,10 @@
 // Common validation rules
 // Each rule returns `true` if valid, or a string error message if invalid
 let checkUsernameTimeout;
+let passwordCheckTimeout;
 
 const validationRules = {
+
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
     },
@@ -50,7 +52,32 @@ const validationRules = {
             }
           }, 350);
         });
-      }      
+    },    
+    matchesField: (otherValue, message) => {
+        const defaultMessage = window.translations.fieldsDoNotMatch_;
+        return v => v === otherValue || message || defaultMessage;
+    },
+    checkPassword: ({ onResponse }) => {
+        const defaultMessage = window.translations.passwordTooWeak_;
+        
+      
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(passwordCheckTimeout);
+      
+            passwordCheckTimeout = setTimeout(async () => {
+              try {
+                await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
+                onResponse(true);
+                resolve(true);
+            } catch (err) {
+                onResponse(false);
+                resolve(defaultMessage);
+              }
+            }, 350);
+          });
+        };
+    }
 };
 
 // Helper functions

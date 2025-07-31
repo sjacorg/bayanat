@@ -169,16 +169,22 @@
                                             <div class="d-flex align-center">
 
                                                 <v-text-field
-                                                        placeholder="{{ _('Password') }}"
+                                                        label="{{ _('Password') }}"
+                                                        :class="isStrongPassword ? 'text-success' : undefined"
+                                                        :hint="isStrongPassword ? '{{ _('Strong password') }}' : undefined"
                                                         :disabled="disablePassword"
                                                         v-model="editedItem.password"
                                                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                                         :type="showPassword ? 'text' : 'password'"
                                                         @click:append="showPassword = !showPassword"
-                                                ></v-text-field>
-
-                                                <span v-if="!disablePassword && editedItem.password?.length > 1 "
-                                                      class="green--text">{{ _('Strong Password') }}</span>
+                                                        :rules="disablePassword ? [] : [
+                                                            validationRules.required(),
+                                                            validationRules.minLength({{ config.SECURITY_PASSWORD_LENGTH_MIN }}),
+                                                            validationRules.checkPassword({ onResponse: onPasswordCheckResponse })
+                                                        ]"
+                                                        @input="isStrongPassword = false"
+                                                >
+                                                </v-text-field>
 
                                                 <v-btn @click.stop="enablePassword"
                                                        v-if="editedItem.id" class="mb-3 mx-1"
@@ -357,6 +363,7 @@
                 errorsMap: {},
                 initialUsername: null,
                 isUsernameAvailable: false,
+                isStrongPassword: false,
             }),
 
             mixins: [globalMixin],
@@ -420,6 +427,10 @@
                     if (!this.errorsMap) return
                     if (key in this.errorsMap) this.errorsMap[key] = null
                 },
+                onPasswordCheckResponse(response) {
+                    this.isStrongPassword = response === true
+                },
+
                 validateAndSave() {
                     this.$refs.form.validate().then(({ valid, errors }) => {
                         if (valid) {
@@ -525,17 +536,6 @@
                             .catch((err) => {
                                 console.error('Error logging out all sessions for user ID:', userId, err);
                             });
-                    }
-                },
-
-                passwordRules() {
-                    if (this.editedItem.id && this.disablePassword) {
-                        // edit mode
-                        return ''
-
-                    } else {
-
-                        return 'required|min:10|checkPassword'
                     }
                 },
 

@@ -14,9 +14,14 @@ from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
-from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
-from enferno.utils.validation_utils import validate_plain_text_field, validate_email_format
+from enferno.utils.validation_utils import (
+    SanitizedField,
+    one_must_exist,
+    validate_email_format,
+    validate_password_policy,
+    validate_username,
+)
 from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
@@ -1385,7 +1390,7 @@ class UserValidationModel(StrictValidationModel):
 
     @field_validator("username", mode="before")  # mode="before" to run before str_strip_whitespace
     @classmethod
-    def validate_username(cls, v: str) -> str:
+    def validate_username_check(cls, v: str) -> str:
         """
         Validates the username format and returns the validated username.
 
@@ -1404,7 +1409,7 @@ class UserValidationModel(StrictValidationModel):
         if v != v.strip():
             raise ValueError("Username cannot contain leading or trailing whitespace")
         try:
-            validate_plain_text_field(v, "Username", 32)
+            validate_username(v)
             return v
         except ValidationError as e:
             raise ValueError(str(e))
@@ -1432,6 +1437,12 @@ class UserValidationModel(StrictValidationModel):
             return v
         except ValidationError as e:
             raise ValueError("Invalid email format")
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        if not v:
+            return v
+        return validate_password_policy(v)
 
 
 class UserRequestModel(BaseValidationModel):
@@ -1461,14 +1472,18 @@ class UserNameCheckValidationModel(BaseValidationModel):
         if v != v.strip():
             raise ValueError("Username cannot contain leading or trailing whitespace")
         try:
-            validate_plain_text_field(v, "Username", 32)
+            validate_username(v)
             return v
         except ValidationError as e:
             raise ValueError(str(e))
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: str = Field(min_length=1)
+    password: str  # no assumptions about password policy here, let field validator do the job
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        return validate_password_policy(v)
 
 
 class UserForceResetRequestModel(BaseValidationModel):
