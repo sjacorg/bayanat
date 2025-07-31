@@ -18,6 +18,7 @@
             max-width="300px"
             width="200px"
             hide-details
+            v-model="search"
           ></v-text-field>
           <v-btn
             prepend-icon="mdi-plus"
@@ -40,9 +41,10 @@
           tag="v-row"
           handle=".drag-handle"
           @end="onDragEnd"
+          class="flex-0-0"
         >
           <template #item="{ element: field }">
-            <v-col cols="12">
+            <v-col v-if="matchesSearch(field)" cols="12">
               <v-row>
                 <v-col cols="12" lg="6">
                   <field-list-item
@@ -87,6 +89,7 @@
         drawer: drawer,
         isFieldBuilderDrawerOpen: false,
         editedItem: {},
+        search: '',
         coreFields: [
           {
             id: 101,
@@ -293,6 +296,12 @@
         this.fetchDynamicFields();
       },
       methods: {
+        sortCoreFields() {
+          this.coreFields = this.coreFields.sort((a, b) => a?.ui_config?.sort_order - b?.ui_config?.sort_order)
+        },
+        matchesSearch(field) {
+          return !this.search || field.title?.toLowerCase().includes(this.search.toLowerCase());
+        },
         edit(field) {
           const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.fieldId))
           this.editedItem = matchingField;
@@ -308,6 +317,8 @@
             // Add new field
             this.coreFields.push(evt)
           }
+
+          this.sortCoreFields()
         },
         save() {
           this.loading = true;
