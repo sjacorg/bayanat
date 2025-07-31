@@ -249,15 +249,15 @@ function isPlainObject(val) {
 
 function getInfraMessage(status) {
     switch (status) {
-      case 502:
-      case 503:
-        return 'Service temporarily unavailable, please try again shortly.';
-      case 500:
-        return 'Server error, please try again or contact support.';
-      default:
-        return 'Unexpected error, please contact support if the issue persists.';
+        case 502:
+        case 503:
+            return 'The service is currently unavailable. Please try again in a few moments.';
+        case 500:
+            return 'A server error occurred. Please try again or reach out to support.';
+        default:
+            return 'An unexpected error occurred. If this continues, please contact support.';
     }
-  }
+}
   
  function handleRequestError(error) {
     const response = error?.response;
