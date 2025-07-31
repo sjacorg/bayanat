@@ -11,114 +11,130 @@ const FieldBuilderDrawer = Vue.defineComponent({
     entityType: {
       type: String,
       default: '',
-    }
+    },
   },
   emits: ['update:modelValue', 'save'],
   data() {
     return {
+      validationRules: validationRules,
       translations: window.translations,
       currentTab: 'details',
+      valid: false,
       form: {
         name: '',
         title: '',
         description: '',
         field_type: '',
         ui_component: '',
-        options: [{ label: null, value: null }],
+        options: [{ label: '', value: '' }],
         schema_config: {
           required: false,
           searchable: false,
           default: null,
-          max_length: null
+          max_length: null,
         },
         ui_config: {
-          label: '',
           help_text: '',
           sort_order: 1,
           readonly: false,
-          hidden: false
+          hidden: false,
         },
         validation_config: {
-          max_length: null,
-          min: null,
-          max: null,
-          precision: null,
-          scale: null,
-          format: ''
-        }
+          max_length: '',
+          min: '',
+          max: '',
+          precision: '',
+          scale: '',
+          format: '',
+        },
       },
       tabs: [
         { id: 'details', label: 'Field Details', icon: 'mdi-form-textbox' },
         { id: 'schema', label: 'Schema', icon: 'mdi-database' },
-        { id: 'interface', label: 'Interface', icon: 'mdi-palette' },
-        { id: 'validation', label: 'Validation', icon: 'mdi-check-circle' }
+        { id: 'validation', label: 'Validation', icon: 'mdi-check-circle' },
       ],
       fieldTypes: [
         {
           value: 'string',
-          label: 'Text Input',
-          description: 'Short text field',
-          interfaces: ['input', 'dropdown']
+          label: 'Short Text',
+          description: 'Single-line text input',
+          interfaces: ['input', 'dropdown'],
         },
         {
           value: 'text',
-          label: 'Text Area',
-          description: 'Long text content',
-          interfaces: ['textarea']
+          label: 'Long Text',
+          description: 'Multi-line text or rich content',
+          interfaces: ['textarea', 'editor'],
         },
         {
           value: 'integer',
-          label: 'Integer',
-          description: 'Whole numbers',
-          interfaces: ['input']
+          label: 'Integer Number',
+          description: 'Whole number values',
+          interfaces: ['input'],
         },
         {
           value: 'float',
-          label: 'Float',
-          description: 'Decimal numbers',
-          interfaces: ['input']
+          label: 'Decimal Number',
+          description: 'Numbers with decimals',
+          interfaces: ['input'],
         },
         {
           value: 'datetime',
           label: 'Date & Time',
-          description: 'Date and time values',
-          interfaces: ['date']
+          description: 'Select date and time',
+          interfaces: ['date'],
         },
         {
           value: 'boolean',
           label: 'Boolean',
-          description: 'True/false values',
-          interfaces: ['checkbox', 'switch']
+          description: 'True or false',
+          interfaces: ['checkbox', 'switch'],
         },
         {
           value: 'array',
-          label: 'Multi Select',
-          description: 'Multiple choice values',
-          interfaces: ['textarea']
+          label: 'Multiple Choice',
+          description: 'Select one or more options',
+          interfaces: ['dropdown'],
         },
         {
           value: 'json',
-          label: 'JSON',
-          description: 'Structured data',
-          interfaces: ['textarea']
-        }
-      ]
+          label: 'JSON Data',
+          description: 'Structured JSON content',
+          interfaces: ['textarea'],
+        },
+      ],
     };
   },
   computed: {
+    selectedFieldType() {
+      const type = this.fieldTypes.find((t) => t.value === this.form.field_type);
+      return type;
+    },
     availableInterfaces() {
-      const type = this.fieldTypes.find(t => t.value === this.form.field_type);
+      const type = this.fieldTypes.find((t) => t.value === this.form.field_type);
       return type?.interfaces || [];
     },
     currentFieldType() {
-      return this.fieldTypes.find(t => t.value === this.form.field_type);
-    }
+      return this.fieldTypes.find((t) => t.value === this.form.field_type);
+    },
   },
   methods: {
+    validateForm() {
+      this.$refs.form.validate().then(({ valid, errors }) => {
+        if (valid) {
+          this.saveField();
+        } else {
+          this.$root.showSnack(translations.pleaseReviewFormForErrors_);
+          scrollToFirstError(errors);
+        }
+      });
+    },
     switchTab(tabId) {
       this.currentTab = tabId;
     },
     autoSelectInterface() {
+      if (this.selectedFieldType?.interfaces?.includes(this.form.ui_component)) return;
+
       if (this.availableInterfaces.length > 0) {
         this.form.ui_component = this.availableInterfaces[0];
       }
@@ -135,14 +151,13 @@ const FieldBuilderDrawer = Vue.defineComponent({
           required: item.schema_config?.required ?? false,
           searchable: item.schema_config?.searchable ?? false,
           default: item.schema_config?.default ?? null,
-          max_length: item.schema_config?.max_length ?? null
+          max_length: item.schema_config?.max_length ?? null,
         },
         ui_config: {
-          label: item.ui_config?.label || '',
           help_text: item.ui_config?.help_text || '',
           sort_order: item.ui_config?.sort_order ?? 1,
           readonly: item.ui_config?.readonly ?? false,
-          hidden: item.ui_config?.hidden ?? false
+          hidden: item.ui_config?.hidden ?? false,
         },
         validation_config: {
           max_length: item.validation_config?.max_length ?? null,
@@ -150,8 +165,8 @@ const FieldBuilderDrawer = Vue.defineComponent({
           max: item.validation_config?.max ?? null,
           precision: item.validation_config?.precision ?? null,
           scale: item.validation_config?.scale ?? null,
-          format: item.validation_config?.format ?? ''
-        }
+          format: item.validation_config?.format ?? '',
+        },
       };
     },
     async saveField() {
@@ -168,18 +183,17 @@ const FieldBuilderDrawer = Vue.defineComponent({
             required: this.form.schema_config.required,
             searchable: this.form.schema_config.searchable,
             max_length: this.form.schema_config.max_length ?? undefined,
-            default: this.form.schema_config.default ?? undefined
+            default: this.form.schema_config.default ?? undefined,
           },
           ui_config: {
             sort_order: this.form.ui_config.sort_order,
             help_text: this.form.ui_config.help_text,
-            label: this.form.ui_config.label,
             readonly: this.form.ui_config.readonly,
-            hidden: this.form.ui_config.hidden
+            hidden: this.form.ui_config.hidden,
           },
           validation_config: { ...this.form.validation_config },
           active: true,
-          created_at: this.item?.created_at ?? new Date().toISOString()
+          created_at: this.item?.created_at ?? new Date().toISOString(),
         };
 
         this.$emit('save', field);
@@ -187,7 +201,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
       } catch (err) {
         console.error('Error saving field:', err);
       }
-    }
+    },
   },
   watch: {
     'form.field_type'() {
@@ -195,13 +209,14 @@ const FieldBuilderDrawer = Vue.defineComponent({
     },
     modelValue(newVal) {
       if (newVal) {
+        this.currentTab = 'details';
         if (this.item) {
           this.populateForm(this.item);
         } else {
           this.populateForm({}); // clear form
         }
       }
-    }
+    },
   },
   template: `
         <v-navigation-drawer
@@ -215,6 +230,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
           app
           disable-route-watcher
         >
+          <v-form ref="form" v-model="valid">
           <v-card
             prepend-icon="mdi-account"
             title="Field builder"
@@ -241,6 +257,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                         v-model="form.title"
                         label="Field title*"
                         required
+                        :rules="[validationRules.required()]"
                       ></v-text-field>
                     </v-col>
                     <v-col
@@ -251,15 +268,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                         v-model="form.name"
                         label="Field name*"
                         required
-                      ></v-text-field>
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                    >
-                      <v-text-field
-                        v-model="form.description"
-                        label="Help text/description"
+                        :rules="[validationRules.required()]"
                       ></v-text-field>
                     </v-col>
                     <v-col
@@ -272,7 +281,52 @@ const FieldBuilderDrawer = Vue.defineComponent({
                         :items="fieldTypes"
                         item-title="label"
                         item-value="value"
+                        :hint="selectedFieldType?.description"
+                        :rules="[validationRules.required()]"
                       ></v-select>
+                    </v-col>
+                    <v-col
+                      cols="12"
+                      md="6"
+                    >
+                      <v-select
+                        v-model="form.ui_component"
+                        label="UI Component*"
+                        :disabled="availableInterfaces.length <= 1"
+                        :items="availableInterfaces"
+                        :rules="[validationRules.required()]"
+                      ></v-select>
+                    </v-col>
+                    <v-col
+                      cols="12"
+                      md="6"
+                    >
+                      <v-text-field
+                        v-model="form.ui_config.help_text"
+                        label="Help text"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col
+                      cols="12"
+                      md="6"
+                    >
+                      <v-text-field
+                        v-model="form.ui_config.sort_order"
+                        label="Sort order"
+                        type="number"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col
+                      cols="12"
+                      md="6"
+                    >
+                      <v-switch v-model="form.ui_config.readonly" color="primary" label="Readonly"></v-switch>
+                    </v-col>
+                    <v-col
+                      cols="12"
+                      md="6"
+                    >
+                      <v-switch v-model="form.ui_config.hidden" color="primary" label="Hidden"></v-switch>
                     </v-col>
                   </v-row>
                 </v-card-text>
@@ -316,68 +370,11 @@ const FieldBuilderDrawer = Vue.defineComponent({
                 </v-card-text>
               </v-tabs-window-item>
 
-              <v-tabs-window-item value="interface">
-                <v-card-text>
-                  <v-row dense>
-                    <v-col
-                      cols="12"
-                      md="6"
-                    >
-                      <v-text-field
-                        v-model="form.ui_component"
-                        label="UI Component*"
-                        disabled
-                      ></v-text-field>
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                    >
-                      <v-text-field
-                        v-model="form.ui_config.label"
-                        label="Label*"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                    >
-                      <v-text-field
-                        v-model="form.ui_config.help_text"
-                        label="Help text"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                    >
-                      <v-text-field
-                        v-model="form.ui_config.sort_order"
-                        label="Sort order"
-                        type="number"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                    >
-                      <v-switch v-model="form.ui_config.readonly" color="primary" label="Readonly"></v-switch>
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                    >
-                      <v-switch v-model="form.ui_config.hidden" color="primary" label="Hidden"></v-switch>
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-              </v-tabs-window-item>
-
               <v-tabs-window-item value="validation">
                 <v-card-text>
                   <v-row dense>
                     <v-col
-                      v-if="form.field_type === 'string' || form.field_type === 'text'"
+                      v-if="['input', 'editor', 'textarea'].includes(form.ui_component)"
                       cols="12"
                       md="6"
                     >
@@ -437,7 +434,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                       ></v-text-field>
                     </v-col>
                     <v-col
-                      v-else-if="form.field_type === 'array'"
+                      v-else-if="form.ui_component === 'dropdown'"
                       cols="12"
                     >
                       <v-card>
@@ -447,6 +444,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
                           <v-btn
                             color="primary"
                             icon="mdi-plus-circle"
+                            @click="form.options.push({ label: '', value: '' })"
                           ></v-btn>
                         </v-toolbar>
                         <v-card-text v-for="(option, index) in form.options" :key="index" class="pt-0">
@@ -499,10 +497,11 @@ const FieldBuilderDrawer = Vue.defineComponent({
                 color="primary"
                 variant="flat"
                 prepend-icon="mdi-check"
-                @click="saveField()"
+                @click="validateForm()"
               >{{ translations.save_ }}</v-btn>
             </v-card-actions>
           </v-card>
+          </v-form>
         </v-navigation-drawer>
   `,
 });
