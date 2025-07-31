@@ -6,7 +6,7 @@ const FieldListItem = Vue.defineComponent({
         <v-icon class="drag-handle cursor-grab mt-4" size="large">mdi-drag</v-icon>
                 
         <div class="w-100">
-            <component :is="field.component" v-bind="field.props" />
+            <component :is="field.component" v-bind="field" />
         </div>
 
         <div v-if="!field?.readonly" class="flex-shrink-0 mt-2">
@@ -17,9 +17,9 @@ const FieldListItem = Vue.defineComponent({
                 </template>
                 <v-list>
                     <v-list-item @click="$emit('toggle-visibility', field)">
-                        <v-list-item-title><v-icon class="mr-2">{{ field.active ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon> Show  / hide</v-list-item-title>
+                        <v-list-item-title><v-icon class="mr-2">{{ field.disabled ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon> {{ field.disabled ? 'Show' : 'Hide' }}</v-list-item-title>
                     </v-list-item>
-                    <v-list-item @click="$emit('delete', field)">
+                    <v-list-item @click="$emit('delete', field)" disabled>
                         <v-list-item-title><v-icon class="mr-2">mdi-delete</v-icon> Delete</v-list-item-title>
                     </v-list-item>
                 </v-list>

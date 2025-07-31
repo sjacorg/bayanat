@@ -277,7 +277,7 @@
             entity_type: 'bulletin',
             field_type: 'string',
             ui_component: 'dropdown',
-            options: ['Draft', 'Published', 'Archived'],
+            options: [{label: 'Draft', value: 'draft'}, { label: 'Published', value: 'published' }, {label: 'Archived', value: 'archived'}],
             schema_config: { required: false },
             ui_config: { sort_order: 14, help_text: 'Bulletin status' },
             validation_config: { allowed_values: ['Draft', 'Published', 'Archived'] },
@@ -294,7 +294,7 @@
       },
       methods: {
         edit(field) {
-          const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.props.id))
+          const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.fieldId))
           this.editedItem = matchingField;
           this.isFieldBuilderDrawerOpen = true;
         },
@@ -323,26 +323,27 @@
             this.showSnack(handleRequestError(err));
           }
         },
-        mapFieldToComponent(field) {
+        mapFieldToComponent(coreField) {
           const baseProps = {
-            id: field.id.toString(),
-            label: field.title,
-            name: field.name,
+            fieldId: coreField.id.toString(),
+            label: coreField.title,
+            name: coreField.name,
             variant: 'filled',
-            disabled: !field.active,
+            disabled: !coreField.active,
+            hint: coreField?.ui_config?.help_text,
           };
 
           const componentMap = {
-            input: { component: 'v-text-field', props: { ...baseProps } },
-            dropdown: { component: 'v-select', props: { ...baseProps, items: field.options } },
-            textarea: { component: 'v-textarea', props: { ...baseProps } },
-            checkbox: { component: 'v-checkbox', props: { ...baseProps } },
-            switch: { component: 'v-switch', props: { ...baseProps } },
-            date: { component: 'pop-date-time-field', props: {} },
-            editor: { component: 'tinymce-editor', props: { init: tinyConfig, disabled: !field.active, } },
+            input: { component: 'v-text-field', ...baseProps },
+            dropdown: { component: 'v-select', ...baseProps, items: coreField.options, multiple: coreField.field_type === 'array' },
+            textarea: { component: 'v-textarea', ...baseProps },
+            checkbox: { component: 'v-checkbox', ...baseProps },
+            switch: { component: 'v-switch', ...baseProps },
+            date: { component: 'pop-date-time-field' },
+            editor: { component: 'tinymce-editor', init: tinyConfig, disabled: !coreField.active, fieldId: coreField.id.toString() },
           };
 
-          const config = componentMap[field.ui_component];
+          const config = componentMap[coreField.ui_component];
           if (!config) return null;
 
           return config;
@@ -356,8 +357,8 @@
         async deleteField(field) {
           if (confirm('{{ _('Are you sure?') }}')) {
             try {
-              this.coreFields = this.coreFields.filter(coreField => Number(coreField.id) !== Number(field.props.id))
-              // return await axios.delete(`/admin/api/dynamic-fields/${field.props.id}`);
+              this.coreFields = this.coreFields.filter(coreField => Number(coreField.id) !== Number(field.fieldId))
+              // return await axios.delete(`/admin/api/dynamic-fields/${field.fieldId}`);
             } catch (err) {
               console.error(err);
               this.showSnack(handleRequestError(err));
@@ -366,9 +367,9 @@
         },
         async toggleFieldVisibility(field) {
           try {
-            const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.props.id))
+            const matchingField = this.coreFields.find(coreField => coreField.id === Number(field.fieldId))
             matchingField.active = !matchingField.active
-            // return await axios.put(`/admin/api/dynamic-fields/${field.props.id}`, {
+            // return await axios.put(`/admin/api/dynamic-fields/${field.fieldId}`, {
             //   ...matchingField,
             //   active: !matchingField.active
             // });
