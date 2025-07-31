@@ -172,20 +172,19 @@ class SearchUtils:
             if word_conditions:
                 conditions.extend(word_conditions)
 
-        # exclude  filter - OPTIMIZED APPROACH
+        # exclude  filter - DIRECT NOT CONDITIONS APPROACH
         extsv = q.get("extsv")
         if extsv:
             words = extsv.split(" ")
-            # Use individual indexed searches instead of notilike(all_())
-            # This allows each term to potentially use the GIN trigram index
+            # Use direct NOT conditions to avoid subquery performance issues
+            # This is much faster than NOT IN or NOT EXISTS with large result sets
             exclude_conditions = []
             for word in words:
-                exclude_conditions.append(Bulletin.search.ilike(f"%{word}%"))
+                exclude_conditions.append(~Bulletin.search.ilike(f"%{word}%"))
 
-            # Create subquery of IDs to exclude using individual indexed searches
+            # Apply all NOT conditions with AND logic
             if exclude_conditions:
-                exclude_subquery = select(Bulletin.id).where(or_(*exclude_conditions))
-                conditions.append(~Bulletin.id.in_(exclude_subquery))
+                conditions.append(and_(*exclude_conditions))
 
         # Tags
         if ref := q.get("tags"):
