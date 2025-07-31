@@ -172,26 +172,20 @@ class SearchUtils:
             if word_conditions:
                 conditions.extend(word_conditions)
 
-        # Exclude text search
-        if extsv := q.get("extsv"):
-            cleaned_extsv = extsv.strip()
-            if cleaned_extsv:
-                # Check if it's a quoted phrase for exact matching
-                if (
-                    cleaned_extsv.startswith('"')
-                    and cleaned_extsv.endswith('"')
-                    and len(cleaned_extsv) > 2
-                ):
-                    # Remove quotes and treat as exact phrase
-                    phrase = cleaned_extsv[1:-1].strip()
-                    if phrase:
-                        conditions.append(Bulletin.search.notilike(f"%{phrase}%"))
-                else:
-                    # Split on spaces and exclude records containing ALL of these words
-                    words = [word.strip() for word in cleaned_extsv.split() if word.strip()]
-                    if words:
-                        word_conditions = [Bulletin.search.notilike(f"%{word}%") for word in words]
-                        conditions.append(and_(*word_conditions))
+        # exclude  filter - OPTIMIZED APPROACH
+        extsv = q.get("extsv")
+        if extsv:
+            words = extsv.split(" ")
+            # Use individual indexed searches instead of notilike(all_())
+            # This allows each term to potentially use the GIN trigram index
+            exclude_conditions = []
+            for word in words:
+                exclude_conditions.append(Bulletin.search.ilike(f"%{word}%"))
+
+            # Create subquery of IDs to exclude using individual indexed searches
+            if exclude_conditions:
+                exclude_subquery = select(Bulletin.id).where(or_(*exclude_conditions))
+                conditions.append(~Bulletin.id.in_(exclude_subquery))
 
         # Tags
         if ref := q.get("tags"):
@@ -953,26 +947,19 @@ class SearchUtils:
             if word_conditions:
                 conditions.extend(word_conditions)
 
-        # Exclude text search
-        if extsv := q.get("extsv"):
-            cleaned_extsv = extsv.strip()
-            if cleaned_extsv:
-                # Check if it's a quoted phrase for exact matching
-                if (
-                    cleaned_extsv.startswith('"')
-                    and cleaned_extsv.endswith('"')
-                    and len(cleaned_extsv) > 2
-                ):
-                    # Remove quotes and treat as exact phrase
-                    phrase = cleaned_extsv[1:-1].strip()
-                    if phrase:
-                        conditions.append(Incident.search.notilike(f"%{phrase}%"))
-                else:
-                    # Split on spaces and exclude records containing ALL of these words
-                    words = [word.strip() for word in cleaned_extsv.split() if word.strip()]
-                    if words:
-                        word_conditions = [Incident.search.notilike(f"%{word}%") for word in words]
-                        conditions.append(and_(*word_conditions))
+        # exclude  filter - OPTIMIZED APPROACH
+        extsv = q.get("extsv")
+        if extsv:
+            words = extsv.split(" ")
+            # Use individual indexed searches instead of notilike(all_())
+            exclude_conditions = []
+            for word in words:
+                exclude_conditions.append(Incident.search.ilike(f"%{word}%"))
+
+            # Create subquery of IDs to exclude using individual indexed searches
+            if exclude_conditions:
+                exclude_subquery = select(Incident.id).where(or_(*exclude_conditions))
+                conditions.append(~Incident.id.in_(exclude_subquery))
 
         # Labels
         if labels := q.get("labels", []):
