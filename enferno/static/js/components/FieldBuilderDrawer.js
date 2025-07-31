@@ -220,6 +220,7 @@ const FieldBuilderDrawer = Vue.defineComponent({
   },
   template: `
         <v-navigation-drawer
+          v-if="modelValue"
           :model-value="modelValue"
           @update:model-value="$emit('update:modelValue', $event)"
           clipped
