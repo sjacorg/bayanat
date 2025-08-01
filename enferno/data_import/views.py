@@ -379,13 +379,13 @@ def api_mapping_delete(id: t.id) -> Response:
     mapping = db.session.get(Mapping, id)
     if mapping:
         if not mapping.user_id == current_user.id:
-            return HTTPResponse.FORBIDDEN
+            return HTTPResponse.forbidden()
         if mapping.delete():
             return f"Mapping #{id} deleted successfully", 200
         else:
             return "Error deleting Mapping", 417
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found()
 
 
 @imports.post("/api/process-sheet")

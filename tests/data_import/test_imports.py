@@ -4,7 +4,7 @@ from sqlalchemy import select
 from flask import current_app
 import pytest
 from unittest.mock import patch
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import TestConfig as cfg
 from enferno.data_import.models import DataImport, Mapping
 from enferno.user.models import Role, User
@@ -20,7 +20,6 @@ from tests.test_utils import (
     create_csv_for_entities,
     create_xls_file,
     get_first_or_fail,
-    load_data,
 )
 
 ##### FIXTURES #####
