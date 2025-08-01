@@ -14,6 +14,7 @@ from sqlalchemy.ext.mutable import Mutable
 from enferno.extensions import db, rds
 from enferno.settings import Config as cfg
 from enferno.utils.base import BaseMixin
+from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 
 # Redis key namespace to set flag for forcing password reset
@@ -469,8 +470,8 @@ class Session(db.Model, BaseMixin):
     user = db.relationship("User", backref=db.backref("sessions", lazy=True))
 
     session_token = db.Column(db.String(255), unique=True, nullable=False)
-    last_active = db.Column(db.DateTime)
-    expires_at = db.Column(db.DateTime)
+    last_active = db.Column(db.DateTime())
+    expires_at = db.Column(db.DateTime())
     ip_address = db.Column(db.String(255))
 
     # Combined metadata field for location, browser, and operating system details
@@ -482,11 +483,11 @@ class Session(db.Model, BaseMixin):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "last_active": self.last_active,
-            "expires_at": self.expires_at,
+            "last_active": DateHelper.serialize_datetime(self.last_active),
+            "expires_at": DateHelper.serialize_datetime(self.expires_at),
             "ip_address": self.ip_address,
             "meta": self.meta,
             "is_active": self.is_active,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
+            "created_at": DateHelper.serialize_datetime(self.created_at),
+            "updated_at": DateHelper.serialize_datetime(self.updated_at),
         }
