@@ -26,9 +26,9 @@ class Event(db.Model, BaseMixin):
     comments = db.Column(db.String)
     comments_ar = db.Column(db.String)
 
-    location_id = db.Column(db.Integer, db.ForeignKey("location.id"))
+    location_id = db.Column(db.Integer, db.ForeignKey("location.id"), index=True)
     location = db.relationship("Location", backref="location_events", foreign_keys=[location_id])
-    eventtype_id = db.Column(db.Integer, db.ForeignKey("eventtype.id"))
+    eventtype_id = db.Column(db.Integer, db.ForeignKey("eventtype.id"), index=True)
     eventtype = db.relationship(
         "Eventtype", backref="eventtype_events", foreign_keys=[eventtype_id]
     )

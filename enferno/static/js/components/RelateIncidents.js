@@ -40,7 +40,7 @@ const RelateIncidents = Vue.defineComponent({
       this.loading = true;
       axios
         .post(`/admin/api/incidents/?page=${this.page}&per_page=${this.perPage}&mode=2`, {
-          q: this.q,
+          q: [this.q],
         })
         .then((response) => {
           this.loading = false;
