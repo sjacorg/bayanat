@@ -16,6 +16,7 @@ import re
 from enferno.admin.constants import Constants
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
+from enferno.utils.validation_utils import validate_password_policy
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
@@ -1381,6 +1382,12 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
+    @field_validator("password")
+    def validate_password(cls, v):
+        if not v:
+            return v
+        return validate_password_policy(v)
+
 
 class UserRequestModel(BaseValidationModel):
     item: UserValidationModel
@@ -1391,7 +1398,11 @@ class UserNameCheckValidationModel(BaseValidationModel):
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
-    password: str = Field(min_length=1)
+    password: str  # no assumptions about password policy here, let field validator do the job
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        return validate_password_policy(v)
 
 
 class UserForceResetRequestModel(BaseValidationModel):
