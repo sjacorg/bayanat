@@ -1,6 +1,6 @@
 import pytest
 
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.user.models import Role
 from tests.factories import RoleFactory
 

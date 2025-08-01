@@ -1,7 +1,7 @@
 import pytest
 from pydantic import parse_obj_as
 
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.admin.test_atoa_infos import clean_slate_atoa_infos, create_atoa_info
 from tests.admin.test_atob_infos import clean_slate_atob_infos, create_atob_info
 from tests.admin.test_btob_infos import clean_slate_btob_infos, create_btob_info
