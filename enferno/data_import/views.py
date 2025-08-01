@@ -11,6 +11,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from unidecode import unidecode
 from werkzeug.utils import safe_join
 
+from enferno.extensions import db
 from enferno.admin.constants import Constants
 from enferno.admin.models import Media
 from enferno.data_import.models import DataImport, Mapping
@@ -367,6 +368,24 @@ def api_mapping_update(id: t.id) -> Response:
 
     else:
         return HTTPResponse.not_found("Mapping not found")
+
+
+@imports.delete("/api/mapping/<int:id>")
+@roles_accepted("Admin")
+def api_mapping_delete(id: t.id) -> Response:
+    """
+    API Endpoint delete a mapping object.
+    """
+    mapping = db.session.get(Mapping, id)
+    if mapping:
+        if not mapping.user_id == current_user.id:
+            return HTTPResponse.FORBIDDEN
+        if mapping.delete():
+            return f"Mapping #{id} deleted successfully", 200
+        else:
+            return "Error deleting Mapping", 417
+    else:
+        return HTTPResponse.NOT_FOUND
 
 
 @imports.post("/api/process-sheet")
