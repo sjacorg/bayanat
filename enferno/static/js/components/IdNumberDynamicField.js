@@ -1,4 +1,4 @@
-const getEmptyIdEntry = () => ({ type: null, number: null });
+const getEmptyIdEntry = () => ({ id: Date.now(), type: null, number: null });
 
 const IdNumberDynamicField = Vue.defineComponent({
     props: {
@@ -33,7 +33,11 @@ const IdNumberDynamicField = Vue.defineComponent({
         const hasData = Boolean(record?.type || record?.number);
     
         if (!hasData || confirm(this.translations.areYouSureYouWantToDeleteThisRecord_)) {
-          this.items.splice(index, 1);
+          if (this.items.length === 1) {
+            this.items.splice(index, 1, getEmptyIdEntry());
+          } else {
+            this.items.splice(index, 1);
+          }
           this.emitAndFilterEmptyItems();
         }
       },
@@ -57,6 +61,9 @@ const IdNumberDynamicField = Vue.defineComponent({
       hasOnlyEmptyRow() {
         const [row] = this.items;
         return this.items.length === 1 && row?.type === null && row?.number === null;
+      },
+      isDirty() {
+        return Boolean(this.items?.some(item => item?.type !== null || item?.number !== null))
       }
     },  
     template: /*html*/`
@@ -73,7 +80,7 @@ const IdNumberDynamicField = Vue.defineComponent({
             
             <!-- Display and edit existing ID numbers -->
             <v-card-text class="pb-0">
-                <div v-for="(idEntry, index) in items" :key="index" class="d-flex align-center ga-4 mb-2">
+                <div v-for="(idEntry, index) in items" :key="idEntry?.id ?? index" class="d-flex align-center ga-4 mb-2">
                     <v-select
                         :model-value="Number(idEntry.type) || null"
                         :items="idNumberTypes"
@@ -95,7 +102,7 @@ const IdNumberDynamicField = Vue.defineComponent({
                     ></v-text-field>
                     
                     <v-btn
-                        v-if="(items?.length || 0) > 1"
+                        v-if="isDirty"
                         @click="removeIdNumber(index)"
                         icon="mdi-delete"
                         color="red"
