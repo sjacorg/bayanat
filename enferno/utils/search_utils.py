@@ -172,18 +172,23 @@ class SearchUtils:
             if word_conditions:
                 conditions.extend(word_conditions)
 
-        # exclude  filter - SIMPLE FAST APPROACH
+        # exclude  filter - OPTIMIZED APPROACH using raw SQL
         extsv = q.get("extsv")
         if extsv:
-            words = extsv.split(" ")
+            words = [word.strip() for word in extsv.split(" ") if word.strip()]
+            if words:
+                # Use raw SQL with NOT ILIKE ALL for optimal performance
+                # This leverages the GIN trigram index efficiently
+                exclude_patterns = [f"%{word}%" for word in words]
+                placeholders = [f":exclude_{i}" for i in range(len(exclude_patterns))]
+                array_sql = "ARRAY[" + ", ".join(placeholders) + "]"
+                raw_condition = text(f"search NOT ILIKE ALL ({array_sql})")
 
-            exclude_conditions = []
-            for word in words:
-                exclude_conditions.append(Bulletin.search.ilike(f"%{word}%"))
+                # Bind the parameters
+                params = {f"exclude_{i}": pattern for i, pattern in enumerate(exclude_patterns)}
+                raw_condition = raw_condition.bindparams(**params)
 
-            if exclude_conditions:
-                exclude_subquery = select(Bulletin.id).where(or_(*exclude_conditions))
-                conditions.append(~Bulletin.id.in_(exclude_subquery))
+                conditions.append(raw_condition)
 
         # Tags
         if ref := q.get("tags"):
