@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import GeoLocationTypesResponseModel
+from tests.models.admin import GeoLocationTypeCreatedResponseModel, GeoLocationTypesResponseModel
 
 ##### FIXTURES #####
 
@@ -63,7 +63,7 @@ def test_geolocationtypes_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) > 0
+        assert len(response.json["data"]["items"]) > 0
         conform_to_schema_or_fail(
             convert_empty_strings_to_none(response.json), GeoLocationTypesResponseModel
         )
@@ -72,7 +72,7 @@ def test_geolocationtypes_endpoint(
 ##### POST /admin/api/geolocationtype #####
 
 post_geolocationtype_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -92,7 +92,10 @@ def test_post_geolocationtype_endpoint(
     )
     assert response.status_code == expected_status
     found_type = GeoLocationType.query.filter(GeoLocationType.title == typ.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), GeoLocationTypeCreatedResponseModel
+        )
         assert found_type
     else:
         assert found_type is None

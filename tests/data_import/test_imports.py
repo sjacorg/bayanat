@@ -4,6 +4,7 @@ from sqlalchemy import select
 from flask import current_app
 import pytest
 from unittest.mock import patch
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.settings import TestConfig as cfg
 from enferno.data_import.models import DataImport, Mapping
 from enferno.user.models import Role, User
@@ -18,7 +19,7 @@ from tests.test_utils import (
     conform_to_schema_or_fail,
     create_csv_for_entities,
     create_xls_file,
-    load_data,
+    get_first_or_fail,
 )
 
 ##### FIXTURES #####
@@ -131,7 +132,9 @@ def test_get_import_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        conform_to_schema_or_fail(load_data(response), DataImportItemModel)
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json["data"]), DataImportItemModel
+        )
 
 
 ##### POST /import/api/imports #####
@@ -149,9 +152,9 @@ def test_post_imports_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        data = load_data(response)
-        assert data["total"] == 1
-        assert len(data["items"]) == 1
+        data = convert_empty_strings_to_none(response.json)
+        assert data["data"]["total"] == 1
+        assert len(data["data"]["items"]) == 1
         conform_to_schema_or_fail(data, DataImportResponseModel)
 
 
@@ -171,7 +174,9 @@ def test_post_media_path_endpoint(
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            conform_to_schema_or_fail(load_data(response)[0], MediaPathItemModel)
+            conform_to_schema_or_fail(
+                convert_empty_strings_to_none(response.json)["data"][0], MediaPathItemModel
+            )
 
 
 ##### POST /import/media/process #####
@@ -220,7 +225,9 @@ def test_post_csv_upload_endpoint(
         )
         assert response.status_code == expected_status
         if expected_status == 200:
-            conform_to_schema_or_fail(load_data(response), CsvImportResponseModel)
+            conform_to_schema_or_fail(
+                convert_empty_strings_to_none(response.json), CsvImportResponseModel
+            )
 
 
 ##### POST /import/api/csv/analyze #####

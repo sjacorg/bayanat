@@ -1,7 +1,12 @@
 from typing import Any, ForwardRef, Optional, Union
 from pydantic import BaseModel, Field
 from tests.models.user import UserCompactModel, RoleModel, UserItemModel
-from tests.models.common import StrictModel, BaseResponseModel
+from tests.models.common import (
+    BaseCreatedResponseDataModel,
+    BaseResponseModel,
+    StrictModel,
+    BaseResponseDataModel,
+)
 
 ## PYDANTIC MODELS ##
 
@@ -49,10 +54,22 @@ class LocationItemModel(BaseModel):
 LocationItemModel.model_rebuild()
 
 
-class LocationResponseModel(BaseModel):
+class LocationResponseDataModel(BaseResponseDataModel):
     items: list[LocationItemModel] = Field(default_factory=list)
     perPage: int
     total: int
+
+
+class LocationResponseModel(BaseResponseModel):
+    data: LocationResponseDataModel
+
+
+class LocationCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: LocationItemModel
+
+
+class LocationCreatedResponseModel(BaseResponseModel):
+    data: LocationCreatedResponseDataModel
 
 
 class LocationRequestModel(BaseModel):
@@ -338,7 +355,7 @@ class ResponseMetaModel(BaseModel):
     isFirstPage: bool
 
 
-class ActorsResponseModel(BaseResponseModel):
+class ActorsResponseDataModel(BaseResponseDataModel):
     items: list[
         Union[ActorItemMinModel, ActorItemMode2Model, ActorItemMode3Model, ActorItemMode3PlusModel]
     ]
@@ -346,6 +363,20 @@ class ActorsResponseModel(BaseResponseModel):
     meta: ResponseMetaModel
     total: Optional[int] = None
     totalType: Optional[str] = None
+
+
+class ActorsResponseModel(BaseResponseModel):
+    data: ActorsResponseDataModel
+
+
+class ActorCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[
+        ActorItemMinModel, ActorItemMode2Model, ActorItemMode3Model, ActorItemMode3PlusModel
+    ]
+
+
+class ActorCreatedResponseModel(BaseResponseModel):
+    data: ActorCreatedResponseDataModel
 
 
 class ActorRequestModel(BaseModel):
@@ -471,7 +502,7 @@ class BulletinItemRestrictedModel(StrictModel):
     restricted: bool = True
 
 
-class BulletinsResponseModel(BaseResponseModel):
+class BulletinsResponseDataModel(BaseResponseDataModel):
     items: list[
         Union[
             BulletinItemMinModel,
@@ -484,6 +515,23 @@ class BulletinsResponseModel(BaseResponseModel):
     meta: ResponseMetaModel
     total: Optional[int] = None
     totalType: Optional[str] = None
+
+
+class BulletinsResponseModel(BaseResponseModel):
+    data: BulletinsResponseDataModel
+
+
+class BulletinCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[
+        BulletinItemMinModel,
+        BulletinItemMode2Model,
+        BulletinItemMode3Model,
+        BulletinItemMode3PlusModel,
+    ]
+
+
+class BulletinCreatedResponseModel(BaseResponseModel):
+    data: BulletinCreatedResponseDataModel
 
 
 class BulletinRequestModel(BaseModel):
@@ -572,7 +620,7 @@ class IncidentItemMode3PlusModel(IncidentItemMode3Model):
     incident_relations: list[ItoiModel] = Field(default_factory=list)
 
 
-class IncidentsResponseModel(BaseResponseModel):
+class IncidentsResponseDataModel(BaseResponseDataModel):
     items: list[
         Union[
             IncidentItemMinModel,
@@ -585,6 +633,23 @@ class IncidentsResponseModel(BaseResponseModel):
     meta: ResponseMetaModel
     total: Optional[int] = None
     totalType: Optional[str] = None
+
+
+class IncidentsResponseModel(BaseResponseModel):
+    data: IncidentsResponseDataModel
+
+
+class IncidentCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[
+        IncidentItemMinModel,
+        IncidentItemMode2Model,
+        IncidentItemMode3Model,
+        IncidentItemMode3PlusModel,
+    ]
+
+
+class IncidentCreatedResponseModel(BaseResponseModel):
+    data: IncidentCreatedResponseDataModel
 
 
 class IncidentRequestModel(BaseModel):
@@ -610,10 +675,22 @@ class LabelModel(LabelMode2Model):
     updated_at: Optional[str] = None
 
 
-class LabelsResponseModel(BaseModel):
-    items: list[LabelMode2Model | LabelModel]
+class LabelsResponseDataModel(BaseResponseDataModel):
+    items: list[Union[LabelMode2Model, LabelModel]]
     perPage: int
     total: int
+
+
+class LabelsResponseModel(BaseResponseModel):
+    data: LabelsResponseDataModel
+
+
+class LabelCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[LabelMode2Model, LabelModel]
+
+
+class LabelCreatedResponseModel(BaseResponseModel):
+    data: LabelCreatedResponseDataModel
 
 
 class EventTypeItemModel(BaseModel):
@@ -626,10 +703,22 @@ class EventTypeItemModel(BaseModel):
     updated_at: Optional[str] = None
 
 
-class EventtypesResponseModel(BaseModel):
+class EventtypesResponseDataModel(BaseResponseDataModel):
     items: list[EventTypeItemModel]
     perPage: int
     total: int
+
+
+class EventtypesResponseModel(BaseResponseModel):
+    data: EventtypesResponseDataModel
+
+
+class EventtypeCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: EventTypeItemModel
+
+
+class EventtypeCreatedResponseModel(BaseResponseModel):
+    data: EventtypeCreatedResponseDataModel
 
 
 class PotentialViolationItemModel(BaseModel):
@@ -637,10 +726,22 @@ class PotentialViolationItemModel(BaseModel):
     title: Optional[str] = None
 
 
-class PotentialViolationsResponseModel(BaseModel):
+class PotentialViolationsResponseDataModel(BaseResponseDataModel):
     items: list[PotentialViolationItemModel]
     perPage: int
     total: int
+
+
+class PotentialViolationsResponseModel(BaseResponseModel):
+    data: PotentialViolationsResponseDataModel
+
+
+class PotentialViolationCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: PotentialViolationItemModel
+
+
+class PotentialViolationCreatedResponseModel(BaseResponseModel):
+    data: PotentialViolationCreatedResponseDataModel
 
 
 class ClaimedViolationItemModel(BaseModel):
@@ -648,10 +749,22 @@ class ClaimedViolationItemModel(BaseModel):
     title: Optional[str] = None
 
 
-class ClaimedViolationsResponseModel(BaseModel):
+class ClaimedViolationsResponseDataModel(BaseResponseDataModel):
     items: list[ClaimedViolationItemModel]
     perPage: int
     total: int
+
+
+class ClaimedViolationsResponseModel(BaseResponseModel):
+    data: ClaimedViolationsResponseDataModel
+
+
+class ClaimedViolationCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ClaimedViolationItemModel
+
+
+class ClaimedViolationCreatedResponseModel(BaseResponseModel):
+    data: ClaimedViolationCreatedResponseDataModel
 
 
 class SourceItemModel(BaseModel):
@@ -663,10 +776,22 @@ class SourceItemModel(BaseModel):
     updated_at: Optional[str] = None
 
 
-class SourcesResponseModel(BaseModel):
+class SourcesResponseDataModel(BaseResponseDataModel):
     items: list[SourceItemModel]
     perPage: int
     total: int
+
+
+class SourcesResponseModel(BaseResponseModel):
+    data: SourcesResponseDataModel
+
+
+class SourceCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: SourceItemModel
+
+
+class SourceCreatedResponseModel(BaseResponseModel):
+    data: SourceCreatedResponseDataModel
 
 
 class LocationAdminLevelItemModel(BaseModel):
@@ -675,28 +800,76 @@ class LocationAdminLevelItemModel(BaseModel):
     title: Optional[str] = None
 
 
-class LocationAdminLevelsResponseModel(BaseModel):
+class LocationAdminLevelsResponseDataModel(BaseResponseDataModel):
     items: list[LocationAdminLevelItemModel]
     perPage: int
     total: int
 
 
-class LocationTypesResponseModel(BaseModel):
+class LocationAdminLevelsResponseModel(BaseResponseModel):
+    data: LocationAdminLevelsResponseDataModel
+
+
+class LocationAdminLevelCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: LocationAdminLevelItemModel
+
+
+class LocationAdminLevelCreatedResponseModel(BaseResponseModel):
+    data: LocationAdminLevelCreatedResponseDataModel
+
+
+class LocationTypesResponseDataModel(BaseResponseDataModel):
     items: list[LocationTypeModel]
     perPage: int
     total: int
 
 
-class CountriesResponseModel(BaseModel):
+class LocationTypesResponseModel(BaseResponseModel):
+    data: LocationTypesResponseDataModel
+
+
+class LocationTypeCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: LocationTypeModel
+
+
+class LocationTypeCreatedResponseModel(BaseResponseModel):
+    data: LocationTypeCreatedResponseDataModel
+
+
+class CountriesResponseDataModel(BaseResponseDataModel):
     items: list[CountryModel]
     perPage: int
     total: int
 
 
-class EthnographiesResponseModel(BaseModel):
+class CountriesResponseModel(BaseResponseModel):
+    data: CountriesResponseDataModel
+
+
+class CountryCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: CountryModel
+
+
+class CountryCreatedResponseModel(BaseResponseModel):
+    data: CountryCreatedResponseDataModel
+
+
+class EthnographiesResponseDataModel(BaseResponseDataModel):
     items: list[EthnographyModel]
     perPage: int
     total: int
+
+
+class EthnographiesResponseModel(BaseResponseModel):
+    data: EthnographiesResponseDataModel
+
+
+class EthnographyCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: EthnographyModel
+
+
+class EthnographyCreatedResponseModel(BaseResponseModel):
+    data: EthnographyCreatedResponseDataModel
 
 
 class AtoaInfoItemModel(BaseModel):
@@ -707,10 +880,22 @@ class AtoaInfoItemModel(BaseModel):
     reverse_title_tr: Optional[str] = None
 
 
-class AtoaInfosResponseModel(BaseModel):
+class AtoaInfosResponseDataModel(BaseResponseDataModel):
     items: list[AtoaInfoItemModel]
     perPage: int
     total: int
+
+
+class AtoaInfosResponseModel(BaseResponseModel):
+    data: AtoaInfosResponseDataModel
+
+
+class AtoaInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: AtoaInfoItemModel
+
+
+class AtoaInfoCreatedResponseModel(BaseResponseModel):
+    data: AtoaInfoCreatedResponseDataModel
 
 
 class AtobInfoItemModel(BaseModel):
@@ -721,10 +906,22 @@ class AtobInfoItemModel(BaseModel):
     reverse_title_tr: Optional[str] = None
 
 
-class AtobInfosResponseModel(BaseModel):
+class AtobInfosResponseDataModel(BaseResponseDataModel):
     items: list[AtobInfoItemModel]
     perPage: int
     total: int
+
+
+class AtobInfosResponseModel(BaseResponseModel):
+    data: AtobInfosResponseDataModel
+
+
+class AtobInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: AtobInfoItemModel
+
+
+class AtobInfoCreatedResponseModel(BaseResponseModel):
+    data: AtobInfoCreatedResponseDataModel
 
 
 class BtobInfoItemModel(BaseModel):
@@ -735,10 +932,22 @@ class BtobInfoItemModel(BaseModel):
     reverse_title_tr: Optional[str] = None
 
 
-class BtobInfosResponseModel(BaseModel):
+class BtobInfosResponseDataModel(BaseResponseDataModel):
     items: list[BtobInfoItemModel]
     perPage: int
     total: int
+
+
+class BtobInfosResponseModel(BaseResponseModel):
+    data: BtobInfosResponseDataModel
+
+
+class BtobInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: BtobInfoItemModel
+
+
+class BtobInfoCreatedResponseModel(BaseResponseModel):
+    data: BtobInfoCreatedResponseDataModel
 
 
 class ItoaInfoItemModel(BaseModel):
@@ -749,10 +958,22 @@ class ItoaInfoItemModel(BaseModel):
     reverse_title_tr: Optional[str] = None
 
 
-class ItoaInfosResponseModel(BaseModel):
+class ItoaInfosResponseDataModel(BaseResponseDataModel):
     items: list[ItoaInfoItemModel]
     perPage: int
     total: int
+
+
+class ItoaInfosResponseModel(BaseResponseModel):
+    data: ItoaInfosResponseDataModel
+
+
+class ItoaInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ItoaInfoItemModel
+
+
+class ItoaInfoCreatedResponseModel(BaseResponseModel):
+    data: ItoaInfoCreatedResponseDataModel
 
 
 class ItobInfoItemModel(BaseModel):
@@ -763,10 +984,22 @@ class ItobInfoItemModel(BaseModel):
     reverse_title_tr: Optional[str] = None
 
 
-class ItobInfosResponseModel(BaseModel):
+class ItobInfosResponseDataModel(BaseResponseDataModel):
     items: list[ItobInfoItemModel]
     perPage: int
     total: int
+
+
+class ItobInfosResponseModel(BaseResponseModel):
+    data: ItobInfosResponseDataModel
+
+
+class ItobInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ItobInfoItemModel
+
+
+class ItobInfoCreatedResponseModel(BaseResponseModel):
+    data: ItobInfoCreatedResponseDataModel
 
 
 class ItoiInfoItemModel(BaseModel):
@@ -777,10 +1010,22 @@ class ItoiInfoItemModel(BaseModel):
     reverse_title_tr: Optional[str] = None
 
 
-class ItoiInfosResponseModel(BaseModel):
+class ItoiInfosResponseDataModel(BaseResponseDataModel):
     items: list[ItoiInfoItemModel]
     perPage: int
     total: int
+
+
+class ItoiInfosResponseModel(BaseResponseModel):
+    data: ItoiInfosResponseDataModel
+
+
+class ItoiInfoCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: ItoiInfoItemModel
+
+
+class ItoiInfoCreatedResponseModel(BaseResponseModel):
+    data: ItoiInfoCreatedResponseDataModel
 
 
 class MediaCategoryItemModel(BaseModel):
@@ -791,16 +1036,40 @@ class MediaCategoryItemModel(BaseModel):
     updated_at: Optional[str] = None
 
 
-class MediaCategoriesResponseModel(BaseModel):
+class MediaCategoriesResponseDataModel(BaseResponseDataModel):
     items: list[MediaCategoryItemModel]
     perPage: int
     total: int
 
 
-class GeoLocationTypesResponseModel(BaseModel):
+class MediaCategoriesResponseModel(BaseResponseModel):
+    data: MediaCategoriesResponseDataModel
+
+
+class MediaCategoryCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: MediaCategoryItemModel
+
+
+class MediaCategoryCreatedResponseModel(BaseResponseModel):
+    data: MediaCategoryCreatedResponseDataModel
+
+
+class GeoLocationTypesResponseDataModel(BaseResponseDataModel):
     items: list[MediaCategoryItemModel]
     perPage: int
     total: int
+
+
+class GeoLocationTypesResponseModel(BaseResponseModel):
+    data: GeoLocationTypesResponseDataModel
+
+
+class GeoLocationTypeCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: MediaCategoryItemModel
+
+
+class GeoLocationTypeCreatedResponseModel(BaseResponseModel):
+    data: GeoLocationTypeCreatedResponseDataModel
 
 
 class HistoryHelperItemModel(BaseModel):
@@ -811,20 +1080,48 @@ class HistoryHelperItemModel(BaseModel):
     user: Optional[UserCompactModel] = None
 
 
-class HistoryHelpersResponseModel(BaseModel):
+class HistoryHelpersResponseDataModel(BaseResponseDataModel):
     items: list[HistoryHelperItemModel]
 
 
-class UsersResponseModel(BaseModel):
-    items: list[UserCompactModel | UserItemModel]
+class HistoryHelpersResponseModel(BaseResponseModel):
+    data: HistoryHelpersResponseDataModel
+
+
+class UsersResponseDataModel(BaseResponseDataModel):
+    items: list[Union[UserCompactModel, UserItemModel]]
     perPage: int
     total: int
 
 
-class RolesResponseModel(BaseModel):
+class UsersResponseModel(BaseResponseModel):
+    data: UsersResponseDataModel
+
+
+class UserCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: Union[UserCompactModel, UserItemModel]
+
+
+class UserCreatedResponseModel(BaseResponseModel):
+    data: UserCreatedResponseDataModel
+
+
+class RolesResponseDataModel(BaseResponseDataModel):
     items: list[RoleModel]
     perPage: int
     total: int
+
+
+class RolesResponseModel(BaseResponseModel):
+    data: RolesResponseDataModel
+
+
+class RoleCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: RoleModel
+
+
+class RoleCreatedResponseModel(BaseResponseModel):
+    data: RoleCreatedResponseDataModel
 
 
 class ActivityItemModel(BaseModel):
@@ -837,10 +1134,14 @@ class ActivityItemModel(BaseModel):
     created_at: str
 
 
-class ActivitiesResponseModel(BaseModel):
+class ActivitiesResponseDataModel(BaseResponseDataModel):
     items: list[ActivityItemModel]
     perPage: int
     total: int
+
+
+class ActivitiesResponseModel(BaseResponseModel):
+    data: ActivitiesResponseDataModel
 
 
 class QueryItemModel(BaseModel):
@@ -854,6 +1155,14 @@ class QueriesResponseModel(BaseModel):
     queries: list[QueryItemModel]
 
 
+class QueryCreatedResponseDataModel(BaseCreatedResponseDataModel):
+    item: QueryItemModel
+
+
+class QueryCreatedResponseModel(BaseResponseModel):
+    data: QueryCreatedResponseDataModel
+
+
 class AppConfigItemModel(BaseModel):
     id: int
     config: dict
@@ -861,10 +1170,14 @@ class AppConfigItemModel(BaseModel):
     user: Optional[UserItemModel] = None
 
 
-class AppConfigsResponseModel(BaseModel):
+class AppConfigsResponseDataModel(BaseResponseDataModel):
     items: list[AppConfigItemModel]
     perPage: int
     total: int
+
+
+class AppConfigsResponseModel(BaseResponseModel):
+    data: AppConfigsResponseDataModel
 
 
 class UserSessionItemModel(BaseModel):
@@ -880,6 +1193,10 @@ class UserSessionItemModel(BaseModel):
     updated_at: str
 
 
-class UserSessionsResponseModel(BaseModel):
+class UserSessionsResponseDataModel(BaseResponseDataModel):
     items: list[UserSessionItemModel]
     more: bool
+
+
+class UserSessionsResponseModel(BaseResponseModel):
+    data: UserSessionsResponseDataModel

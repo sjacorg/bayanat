@@ -202,11 +202,32 @@ const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 // Set axios defaults
 axios.defaults.headers.common['Accept'] = 'application/json';
 
-//global axios error handler - can be used to define global exception handling on ajax failures
+// Centralized API service - handles standardized responses transparently
+const api = {
+    get: axios.get.bind(axios),
+    post: axios.post.bind(axios), 
+    put: axios.put.bind(axios),
+    delete: axios.delete.bind(axios)
+};
+
+//global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
-        // Do something with response data
-        return response;
+        const shouldFlatten =
+            isPlainObject(response?.data?.data) &&
+            !response?.config?.skipFlattening;
+    
+        if (shouldFlatten) {
+            return {
+                ...response,
+                data: {
+                    ...response.data.data,
+                    ...(response.data?.message ? { message: response.data.message } : {})
+                }
+            };
+        }
+    
+      return response;
     },
     function (error) {
         if (!error.config?.suppressGlobalErrorHandler) {
@@ -222,20 +243,28 @@ axios.interceptors.response.use(
     },
 );
 
+function isPlainObject(val) {
+    return val !== null && typeof val === 'object' && !Array.isArray(val);
+}
+
 function getInfraMessage(status) {
     switch (status) {
-      case 502:
-      case 503:
-        return 'Service temporarily unavailable, please try again shortly.';
-      case 500:
-        return 'Server error, please try again or contact support.';
-      default:
-        return 'Unexpected error, please contact support if the issue persists.';
+        case 502:
+        case 503:
+            return 'The service is currently unavailable. Please try again in a few moments.';
+        case 500:
+            return 'A server error occurred. Please try again or reach out to support.';
+        default:
+            return 'An unexpected error occurred. If this continues, please contact support.';
     }
-  }
+}
   
  function handleRequestError(error) {
     const response = error?.response;
+
+    if (response?.data?.message) {
+        return response.data.message;
+    }
   
     // Handle known API error format
     if (response?.data?.response?.errors) {
@@ -506,10 +535,10 @@ function normalizeDropzoneResponse(dzFile) {
         uuid: dzFile.upload.uuid,
         type: dzFile.type,
         name: dzFile.name,
-        s3url: response.filename,
-        filename: response.filename,
-        etag: response.etag,
-        original_filename: response.original_filename,
+        s3url: response.data.filename,
+        filename: response.data.filename,
+        etag: response.data.etag,
+        original_filename: response.data.original_filename,
     };
 }
 
@@ -517,7 +546,7 @@ function getBulletinLocations(ids) {
     promises = [];
     ids.forEach((x) => {
         promises.push(
-            axios.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
+            api.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
                 return aggregateBulletinLocations(response.data);
             }),
         );

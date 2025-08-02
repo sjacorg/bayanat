@@ -842,7 +842,7 @@
 
                     // populate roles for advanced search for admins
                     {% if current_user.has_role('Admin') %}
-                        axios.get('/admin/api/roles/').then(res => {
+                        api.get('/admin/api/roles/').then(res => {
                             this.roles = res.data.items;
                         }).catch(e => {
                             this.roles = [];
@@ -923,7 +923,7 @@
 
 
                     checkGraphStatus: function () {
-                        axios.get('/admin/api/graph/status', {
+                        api.get('/admin/api/graph/status', {
                             params: {
                                 type: 'bulletin'
                             }
@@ -946,7 +946,7 @@
 
                     visualizeResults() {
                         this.visualizeLoading = true;
-                        axios.post('/admin/api/graph/visualize', {q: this.search}, {
+                        api.post('/admin/api/graph/visualize', {q: this.search}, {
                             params: {
                                 type: 'bulletin'
                             }
@@ -964,7 +964,7 @@
                     exportRequest() {
 
                         this.loading = true;
-                        axios.post(`/export/api/bulletin/export`, {
+                        api.post(`/export/api/bulletin/export`, {
                             items: this.selected,
                             config: this.exportConfig
                         }).then(response => {
@@ -1000,7 +1000,7 @@
                     selfAssign() {
 
 
-                        axios.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
+                        api.put(`/admin/api/bulletin/assign/${this.assignBulletin.id}`, {bulletin: this.assignBulletin}).then(res => {
                             this.showSnack("{{ _('Bulletin assigned successfully.')}}")
                             this.refresh();
 
@@ -1032,7 +1032,7 @@
 
                     previewItem(endpoint) {
 
-                        axios.get(endpoint).then(res => {
+                        api.get(endpoint).then(res => {
                             this.pitem = res.data;
                             this.preview = true;
 
@@ -1052,8 +1052,8 @@
 
                     bulkStatus() {
 
-                        axios.get('/admin/api/bulk/status/?type=bulletin').then(res => {
-                            this.jobs = res.data;
+                        api.get('/admin/api/bulk/status/?type=bulletin').then(res => {
+                            this.jobs = res?.data?.data ?? [];
 
                             if (!this.jobs.length) {
                                 clearInterval(this.bulkTimer);
@@ -1077,7 +1077,7 @@
 
                     bulk_update() {
                         this.loading = true;
-                        axios.put(`/admin/api/bulletin/bulk/`, {
+                        api.put(`/admin/api/bulletin/bulk/`, {
                             items: this.selected,
                             bulk: this.bulk
                         }).then(response => {
@@ -1234,12 +1234,12 @@
 
 
                     loadSearchesFromAPI(selectLast = false) {
-                        axios.get('/admin/api/queries/', {
+                        api.get('/admin/api/queries/', {
                             params: {
                                 type: 'bulletin'
                             }
                         }).then(res => {
-                            this.searches = res.data;
+                            this.searches = res?.data?.data ?? [];
                             if (selectLast === true) {
                                 this.savedSearchSelection = this.searches.at(-1);
                             }
@@ -1250,7 +1250,7 @@
                     saveSearch() {
                         const newSearch = {q: this.search, name: this.queryName, type: 'bulletin'};
 
-                        axios.post('/admin/api/query/', newSearch)
+                        api.post('/admin/api/query/', newSearch)
                             .then(res => {
                                 this.showSnack(res.data);
                                 this.saveQueryDialog = false;
@@ -1264,14 +1264,14 @@
 
 
                     updateSearch() {
-                        axios.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
+                        api.put('/admin/api/query/' + this.savedSearchSelection.id, {q: this.search})
                             .then(res => {
                                 this.showSnack(res.data);
                             });
                     },
 
                     deleteSearch(id) {
-                        axios.delete('/admin/api/query/' + id)
+                        api.delete('/admin/api/query/' + id)
                             .then(res => {
                                 this.showSnack(res.data);
                                 this.searches = this.searches.filter(item => item.id !== id);
@@ -1332,7 +1332,7 @@
                     showBulletin(id) {
                         this.bulletinLoader = true
                         this.bulletinDrawer = true;
-                        axios.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
+                        api.get(`/admin/api/bulletin/${id}?mode=3`).then(response => {
                             this.bulletin = response.data;
                         }).catch(error => {
                             this.bulletinDrawer = false;
@@ -1474,7 +1474,7 @@
                         this.reviewDialog = true;
 
 
-                        axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                        api.get(`/admin/api/bulletin/${item.id}`).then(response => {
                             this.loading = false;
                             this.$nextTick(() => {
                                 this.reviewItem = response.data;
@@ -1497,7 +1497,7 @@
 
                     saveReview() {
 
-                        axios.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
+                        api.put(`/admin/api/bulletin/review/${this.reviewItem.id}`, {
                             item: this.reviewItem
                         })
                             .then(response => {
@@ -1538,7 +1538,7 @@
                         } else {
                             // load item from db
                             this.loading = true;
-                            axios.get(`/admin/api/bulletin/${item.id}`).then(response => {
+                            api.get(`/admin/api/bulletin/${item.id}`).then(response => {
                                 this.dialog = true;
 
                                 this.$nextTick(() => {
@@ -1574,7 +1574,7 @@
                             confirm("{{ _('Are you sure you want to delete this item?')}}") &&
                             this.items.splice(index, 1);
                         if (cfm) {
-                            axios.delete(`/admin/api/bulletin/${item.id}`).then(response => {
+                            api.delete(`/admin/api/bulletin/${item.id}`).then(response => {
                                 this.showSnack(response.data);
                                 this.refresh();
                             });
@@ -1611,7 +1611,7 @@
                         this.saving = true;
                         if (this.editedItem.id) {
                             //update record
-                            axios.put(`/admin/api/bulletin/${this.editedItem.id}`, {
+                            api.put(`/admin/api/bulletin/${this.editedItem.id}`, {
                                 item: this.editedItem
                             }).then(response => {
                                 this.showSnack(response.data);
@@ -1624,7 +1624,7 @@
                             });
                         } else {
                             //create new record
-                            axios.post("/admin/api/bulletin/", {
+                            api.post("/admin/api/bulletin/", {
                                 item: this.editedItem
                             }).then(response => {
                                 this.items.unshift(response.data.item);
@@ -1712,7 +1712,7 @@
 
                         this.webImportLoading = true;
                         
-                        axios.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
+                        api.post('/admin/api/bulletin/web', { url: this.webUrl.trim() })
                             .then(res => {
                                 this.webUrl = ''; // Clear the input
                                 this.webImportDlg = false;

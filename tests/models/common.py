@@ -1,4 +1,4 @@
-from typing import Union, get_args, get_origin
+from typing import Optional, Union, get_args, get_origin
 from pydantic import BaseModel, ConfigDict, model_validator
 
 
@@ -6,7 +6,7 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class BaseResponseModel(StrictModel):
+class BaseResponseDataModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_items(cls, values):
@@ -52,3 +52,36 @@ class BaseResponseModel(StrictModel):
 
         values["items"] = validated_items  # Replace the original list with validated items
         return values
+
+
+class BaseResponseModel(StrictModel):
+    message: Optional[str] = None
+
+
+class BaseCreatedResponseDataModel(BaseModel):
+    @model_validator(mode="before")
+    @classmethod
+    def validate_item(cls, values):
+        item_type = cls.model_fields.get("item")
+        if not item_type:
+            raise ValueError("The 'item' field is not defined in the subclass.")
+
+        item_type = item_type.annotation
+        if get_origin(item_type) is Union:
+            models = get_args(item_type)
+        else:
+            models = [item_type]
+
+        item = values.get("item")
+        if not item:
+            raise ValueError("The 'item' field is not defined in the subclass.")
+
+        for model in models:
+            try:
+                validated_item = model.model_validate(item)
+                values["item"] = validated_item
+                return values
+            except ValueError:
+                continue
+
+        raise ValueError(f"None of the models match for item: {item}")

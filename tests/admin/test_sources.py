@@ -11,7 +11,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import SourcesResponseModel
+from tests.models.admin import SourceCreatedResponseModel, SourcesResponseModel
 
 ##### FIXTURES #####
 
@@ -53,7 +53,7 @@ def test_sources_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) > 0
+        assert len(response.json["data"]["items"]) > 0
         conform_to_schema_or_fail(
             convert_empty_strings_to_none(response.json), SourcesResponseModel
         )
@@ -62,9 +62,9 @@ def test_sources_endpoint(
 ##### POST /admin/api/source #####
 
 post_source_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
-    ("mod_client", 200),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -81,7 +81,10 @@ def test_post_source_endpoint(clean_slate_sources, request, client_fixture, expe
     )
     assert response.status_code == expected_status
     found_source = Source.query.filter(Source.title == source.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), SourceCreatedResponseModel
+        )
         assert found_source
     else:
         assert found_source is None
