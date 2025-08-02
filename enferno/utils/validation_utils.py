@@ -56,6 +56,53 @@ def validate_username(username: str) -> None:
         raise WTFormsValidationError(f"Username can only contain letters and numbers.")
 
 
+def validate_username_constraints(username: str) -> str:
+    """
+    Centralized username validation logic - equivalent to original validation but simplified.
+
+    Args:
+        username: The username to validate
+
+    Returns:
+        str: The validated username
+
+    Raises:
+        ValueError: If username format is invalid
+    """
+    # Handle empty/None - equivalent to original
+    if not username or not username.strip():
+        raise ValueError("Username cannot be empty")
+
+    # Length validation (centralized constants) - equivalent to original Field(min_length=4, max_length=32)
+    MIN_LENGTH = 4  # From Field(min_length=4)
+    MAX_LENGTH = 32
+
+    if len(username) < MIN_LENGTH:
+        raise ValueError("String should have at least 4 characters")
+
+    if len(username) > MAX_LENGTH:
+        raise ValueError("Username is too long (maximum 32 characters)")
+
+    # HTML validation - equivalent to original validate_no_html()
+    if re.search(r"<[^>]*>", username):
+        raise ValueError("HTML tags are not allowed")
+
+    from html import unescape
+
+    if unescape(username) != username:
+        raise ValueError("HTML entities are not allowed")
+
+    # Whitespace validation - equivalent to original
+    if username != username.strip():
+        raise ValueError("Username cannot contain leading or trailing whitespace")
+
+    # Character validation - equivalent to original ^[a-zA-Z0-9]+$ (no underscore/hyphen)
+    if not re.match(r"^[a-zA-Z0-9]+$", username):
+        raise ValueError("Username can only contain letters and numbers")
+
+    return username
+
+
 def validate_webauthn_device_name(name: str) -> str:
     """
     Validates a webauthn device name and returns a normalized version of it.

@@ -1,6 +1,10 @@
 import pytest
 from wtforms.validators import ValidationError
-from enferno.utils.validation_utils import validate_email_format, validate_username
+from enferno.utils.validation_utils import (
+    validate_email_format,
+    validate_username,
+    validate_username_constraints,
+)
 
 
 @pytest.fixture(scope="function")
@@ -38,7 +42,7 @@ class TestUsernameValidation:
 
         for username in valid_usernames:
             # Should not raise any exception
-            validate_username(username)
+            validate_username_constraints(username)
 
     def test_invalid_usernames_with_unicode(self):
         """Test that usernames with unicode characters are rejected."""
@@ -51,10 +55,8 @@ class TestUsernameValidation:
         ]
 
         for username in invalid_usernames:
-            with pytest.raises(
-                ValidationError, match="Username can only contain letters and numbers"
-            ):
-                validate_username(username)
+            with pytest.raises(ValueError, match="Username can only contain letters and numbers"):
+                validate_username_constraints(username)
 
     def test_invalid_usernames_with_special_chars(self):
         """Test that usernames with disallowed special characters are rejected."""
@@ -90,39 +92,37 @@ class TestUsernameValidation:
         ]
 
         for username in invalid_usernames_with_special_chars:
-            with pytest.raises(
-                ValidationError, match="Username can only contain letters and numbers"
-            ):
-                validate_username(username)
+            with pytest.raises(ValueError, match="Username can only contain letters and numbers"):
+                validate_username_constraints(username)
 
         for username in invalid_usernames_with_html_chars:
-            with pytest.raises(ValidationError, match="HTML tags are not allowed"):
-                validate_username(username)
+            with pytest.raises(ValueError, match="HTML tags are not allowed"):
+                validate_username_constraints(username)
 
     def test_empty_username(self):
         """Test that empty usernames are rejected."""
-        with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_username("")
+        with pytest.raises(ValueError, match="Username cannot be empty"):
+            validate_username_constraints("")
 
-        with pytest.raises(ValidationError, match="Username cannot be empty"):
-            validate_username("   ")
+        with pytest.raises(ValueError, match="Username cannot be empty"):
+            validate_username_constraints("   ")
 
     def test_username_with_whitespace(self):
         """Test that usernames with leading/trailing whitespace are rejected."""
         with pytest.raises(
-            ValidationError, match="Username cannot contain leading or trailing whitespace"
+            ValueError, match="Username cannot contain leading or trailing whitespace"
         ):
-            validate_username(" user123")
+            validate_username_constraints(" user123")
 
         with pytest.raises(
-            ValidationError, match="Username cannot contain leading or trailing whitespace"
+            ValueError, match="Username cannot contain leading or trailing whitespace"
         ):
-            validate_username("user123 ")
+            validate_username_constraints("user123 ")
 
         with pytest.raises(
-            ValidationError, match="Username cannot contain leading or trailing whitespace"
+            ValueError, match="Username cannot contain leading or trailing whitespace"
         ):
-            validate_username(" user123 ")
+            validate_username_constraints(" user123 ")
 
     @pytest.mark.parametrize(
         "url,username,error_message,field,is_checkuser",
@@ -144,14 +144,14 @@ class TestUsernameValidation:
             (
                 "/admin/api/checkuser/",
                 "a" * 256,
-                "Username is too long (maximum 32 characters).",
+                "Username is too long (maximum 32 characters)",
                 "item",
                 True,
             ),
             (
                 "/admin/api/user/",
                 "a" * 256,
-                "Username is too long (maximum 32 characters).",
+                "Username is too long (maximum 32 characters)",
                 "item.username",
                 False,
             ),

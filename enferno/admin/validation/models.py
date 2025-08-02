@@ -21,6 +21,7 @@ from enferno.utils.validation_utils import (
     validate_email_format,
     validate_password_policy,
     validate_username,
+    validate_username_constraints,
 )
 from wtforms.validators import ValidationError
 
@@ -1388,31 +1389,10 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
-    @field_validator("username", mode="before")  # mode="before" to run before str_strip_whitespace
+    @field_validator("username", mode="before")
     @classmethod
-    def validate_username_check(cls, v: str) -> str:
-        """
-        Validates the username format and returns the validated username.
-
-        Args:
-            v: The username to validate
-
-        Returns:
-            str: The validated username
-
-        Raises:
-            ValueError: If the username format is invalid
-        """
-        if not v:
-            return v
-
-        if v != v.strip():
-            raise ValueError("Username cannot contain leading or trailing whitespace")
-        try:
-            validate_username(v)
-            return v
-        except ValidationError as e:
-            raise ValueError(str(e))
+    def validate_username(cls, v: str) -> str:
+        return validate_username_constraints(v)
 
     @field_validator("email")
     @classmethod
@@ -1452,30 +1432,12 @@ class UserRequestModel(BaseValidationModel):
 class UserNameCheckValidationModel(BaseValidationModel):
     item: str = Field(min_length=4, max_length=32)
 
-    @field_validator("item", mode="before")  # mode="before" to run before str_strip_whitespace
+    @field_validator("item", mode="before")
     @classmethod
     def validate_username_check(cls, v: str) -> str:
-        """
-        Validates the username format for the username check endpoint.
-
-        Args:
-            v: The username to validate
-
-        Returns:
-            str: The validated username
-
-        Raises:
-            ValueError: If the username format is invalid
-        """
         if not v:
             raise ValueError("Username cannot be empty")
-        if v != v.strip():
-            raise ValueError("Username cannot contain leading or trailing whitespace")
-        try:
-            validate_username(v)
-            return v
-        except ValidationError as e:
-            raise ValueError(str(e))
+        return validate_username_constraints(v)
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
