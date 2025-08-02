@@ -190,18 +190,20 @@ class SearchUtils:
 
                 conditions.append(raw_condition)
 
-        # Tags
+        # Tags - HYBRID OPTIMIZED APPROACH
         if ref := q.get("tags"):
             exact = q.get("inExact")
-            if exact:
-                tag_conditions = [
-                    func.array_to_string(Bulletin.tags, " ").op("~*")(f"\\y{re.escape(r)}\\y")
-                    for r in ref
-                ]
-            else:
-                tag_conditions = [
-                    func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref
-                ]
+            tag_conditions = []
+
+            for r in ref:
+                # Check if this looks like an exact tag (no wildcards and exact mode OR no wildcard chars)
+                if exact or (not any(char in r for char in ["%", "_", "*", "?"])):
+                    # Use fast array containment for exact matches (millisecond performance)
+                    raw_condition = text("tags @> ARRAY[:tag]::varchar[]").bindparams(tag=r)
+                    tag_conditions.append(raw_condition)
+                else:
+                    # Use slower but necessary ILIKE for wildcard searches
+                    tag_conditions.append(func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%"))
 
             # any operator
             if q.get("opTags", False):
