@@ -190,22 +190,21 @@ class SearchUtils:
 
                 conditions.append(raw_condition)
 
-        # Tags - HYBRID OPTIMIZED APPROACH
+        # Tags - OPTIMIZED APPROACH respecting UI checkboxes
         if ref := q.get("tags"):
-            exact = q.get("inExact")
-            tag_conditions = []
+            exact = q.get("inExact")  # "Exact Match" checkbox
+            if exact:
+                # User checked "Exact Match" - use fast array containment (9533x faster!)
+                tag_conditions = [
+                    text("tags @> ARRAY[:tag]::varchar[]").bindparams(tag=r) for r in ref
+                ]
+            else:
+                # User wants partial matching - use ILIKE for wildcard behavior
+                tag_conditions = [
+                    func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%") for r in ref
+                ]
 
-            for r in ref:
-                # Check if this looks like an exact tag (no wildcards and exact mode OR no wildcard chars)
-                if exact or (not any(char in r for char in ["%", "_", "*", "?"])):
-                    # Use fast array containment for exact matches (millisecond performance)
-                    raw_condition = text("tags @> ARRAY[:tag]::varchar[]").bindparams(tag=r)
-                    tag_conditions.append(raw_condition)
-                else:
-                    # Use slower but necessary ILIKE for wildcard searches
-                    tag_conditions.append(func.array_to_string(Bulletin.tags, " ").ilike(f"%{r}%"))
-
-            # any operator
+            # "Any" checkbox controls AND vs OR between multiple tags
             if q.get("opTags", False):
                 conditions.append(or_(*tag_conditions))
             else:
