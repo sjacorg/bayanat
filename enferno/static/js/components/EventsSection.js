@@ -160,7 +160,6 @@ const EventsSection = Vue.defineComponent({
                                             :label-original="translations.title_"
                                             :label-translation="translations.titleAr_"
                                             :rules="[
-                                                validationRules.required(translations.titleOrTitleArRequired_),
                                                 validationRules.maxLength(255),
                                             ]">
                                 </dual-field>

@@ -15,7 +15,11 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import UserSessionsResponseModel, UsersResponseModel
+from tests.models.admin import (
+    UserCreatedResponseModel,
+    UserSessionsResponseModel,
+    UsersResponseModel,
+)
 
 ##### FIXTURES #####
 
@@ -129,7 +133,7 @@ def test_get_users_endpoint(request, client_fixture, expected_status):
 ##### POST /admin/api/user #####
 
 post_user_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -147,7 +151,10 @@ def test_post_user_endpoint(clean_slate_users, request, client_fixture, expected
     )
     assert response.status_code == expected_status
     found_user = User.query.filter(User.username == user.username).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), UserCreatedResponseModel
+        )
         assert found_user
     else:
         assert found_user is None
@@ -446,6 +453,7 @@ def test_user_sessions(
         f"/admin/api/user/{u.id}/sessions",
         headers={"Content-Type": "application/json"},
     )
+    print(response.json)
     assert response.status_code == expected_status
     if expected_status == 200:
         conform_to_schema_or_fail(

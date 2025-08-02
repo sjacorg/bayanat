@@ -21,13 +21,13 @@ from tests.factories import (
 from tests.test_utils import (
     conform_to_schema_or_fail,
     get_first_or_fail,
-    load_data,
     get_uid_from_client,
 )
 
 ##### PYDANTIC MODELS #####
 
 from tests.models.admin import (
+    ActorCreatedResponseModel,
     ActorsResponseModel,
     ActorItemMinModel,
     ActorItemMode2Model,
@@ -85,6 +85,7 @@ def test_actors_endpoint(
         assert response.status_code == expected_status
         # If expected response is 200, assert that the response conforms to schema
         if expected_status == 200:
+            print(response.json)
             conform_to_schema_or_fail(
                 convert_empty_strings_to_none(response.json), ActorsResponseModel
             )
@@ -110,16 +111,16 @@ def test_actor_endpoint(
         # Perform additional checks
         if expected_status == 200:
             # Mode 1
-            data = convert_empty_strings_to_none(load_data(response))
-            conform_to_schema_or_fail(data, ActorItemMinModel)
+            data = response.json["data"]
+            conform_to_schema_or_fail(convert_empty_strings_to_none(data), ActorItemMinModel)
             assert "comments" not in dict.keys(data)
             # Mode 2
             response = client_.get(
                 f"/admin/api/actor/{actor.id}?mode=2", headers={"Content-Type": "application/json"}
             )
             assert response.status_code == 200
-            data = convert_empty_strings_to_none(load_data(response))
-            conform_to_schema_or_fail(data, ActorItemMode2Model)
+            data = response.json["data"]
+            conform_to_schema_or_fail(convert_empty_strings_to_none(data), ActorItemMode2Model)
             assert "comments" in dict.keys(data)
             assert "bulletin_relations" not in dict.keys(data)
             # Mode 3
@@ -127,8 +128,8 @@ def test_actor_endpoint(
                 f"/admin/api/actor/{actor.id}?mode=3", headers={"Content-Type": "application/json"}
             )
             assert response.status_code == 200
-            data = convert_empty_strings_to_none(load_data(response))
-            conform_to_schema_or_fail(data, ActorItemMode3Model)
+            data = response.json["data"]
+            conform_to_schema_or_fail(convert_empty_strings_to_none(data), ActorItemMode3Model)
             assert "actor_profiles" in dict.keys(data)
             assert "comments" in dict.keys(data)
             # Mode 3+/unspecified
@@ -136,8 +137,8 @@ def test_actor_endpoint(
                 f"/admin/api/actor/{actor.id}", headers={"Content-Type": "application/json"}
             )
             assert response.status_code == 200
-            data = convert_empty_strings_to_none(load_data(response))
-            conform_to_schema_or_fail(data, ActorItemMode3PlusModel)
+            data = response.json["data"]
+            conform_to_schema_or_fail(convert_empty_strings_to_none(data), ActorItemMode3PlusModel)
             assert "bulletin_relations" in dict.keys(data)
 
 
@@ -273,6 +274,9 @@ def test_post_actor_endpoint(clean_slate_actors, request, client_fixture, expect
     # If expected status 200, assert that actor was created,
     # Else assert it was not created
     if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), ActorCreatedResponseModel
+        )
         assert found_actor
     else:
         assert found_actor is None
@@ -503,4 +507,9 @@ def test_get_actor_relations_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert all([x["actor"]["id"] in [a2.id, a3.id] for x in load_data(response)["items"]])
+        assert all(
+            [
+                x["actor"]["id"] in [a2.id, a3.id]
+                for x in convert_empty_strings_to_none(response.json)["data"]["items"]
+            ]
+        )
