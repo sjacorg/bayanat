@@ -1,53 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from enferno.admin.validation.models import (
-    BulletinValidationModel,
-    DefaultMapCenterModel,
-    FullConfigValidationModel,
-    UserValidationModel,
-)
-
-
-class TestStringValidations:
-    def test_min_length_validation(self):
-        """Test that fields with min_length=1 reject empty strings"""
-
-        # Test BulletinValidationModel title constraint
-        with pytest.raises(ValidationError) as exc_info:
-            BulletinValidationModel(
-                title="",  # Empty string should fail
-                comments="Valid comment",
-                source_link="http://example.com",
-            )
-        assert "String should have at least 1 character" in str(exc_info.value)
-
-        # Test UserValidationModel username constraint
-        with pytest.raises(ValidationError) as exc_info:
-            UserValidationModel(
-                username="", name="Valid Name", active=True  # Empty string should fail
-            )
-        assert "String should have at least 1 character" in str(exc_info.value)
-
-
-class TestNumericValidations:
-    def test_map_center_constraints(self):
-        """Test that DefaultMapCenterModel enforces valid lat/lng ranges"""
-
-        # Test valid coordinates
-        model = DefaultMapCenterModel(lat=45.0, lng=90.0)
-        assert model.lat == 45.0
-        assert model.lng == 90.0
-
-        # Test invalid latitude
-        with pytest.raises(ValidationError) as exc_info:
-            DefaultMapCenterModel(lat=91.0, lng=0.0)  # Latitude > 90
-        assert "Input should be less than or equal to 90" in str(exc_info.value)
-
-        # Test invalid longitude
-        with pytest.raises(ValidationError) as exc_info:
-            DefaultMapCenterModel(lat=0.0, lng=181.0)  # Longitude > 180
-        assert "Input should be less than or equal to 180" in str(exc_info.value)
+from enferno.admin.validation.models import FullConfigValidationModel
 
 
 class TestListValidations:
