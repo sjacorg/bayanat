@@ -5187,7 +5187,7 @@ def api_user_delete(
             category=Notification.TYPE_SECURITY,
             is_urgent=False,
         )
-        return HTTPResponse.success(message="Deleted"
+        return HTTPResponse.success(message="Deleted")
     else:
         return HTTPResponse.error("Error deleting User", status=500)
 
