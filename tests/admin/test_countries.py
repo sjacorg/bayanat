@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import Country
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import CountryFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import CountriesResponseModel
+from tests.models.admin import CountriesResponseModel, CountryCreatedResponseModel
 
 ##### FIXTURES #####
 
@@ -63,7 +63,7 @@ def test_countries_endpoint(
 ##### POST /admin/api/country #####
 
 post_country_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -81,7 +81,10 @@ def test_post_country(clean_slate_countries, request, client_fixture, expected_s
     )
     assert response.status_code == expected_status
     found_country = Country.query.filter(Country.title == country.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), CountryCreatedResponseModel
+        )
         assert found_country
     else:
         assert found_country is None

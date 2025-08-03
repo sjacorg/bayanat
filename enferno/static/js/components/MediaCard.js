@@ -172,10 +172,10 @@ const MediaCard = Vue.defineComponent({
   },
   methods: {
     init() {
-      axios.get(`/admin/api/media/${this.media.filename}`)
+      api.get(`/admin/api/media/${this.media.filename}`)
         .then(response => {
-          this.s3url = response.data;
-          this.media.s3url = response.data;
+          this.s3url = response.data.url;
+          this.media.s3url = response.data.url;
           if (this.mediaType === 'video') {
             this.getVideoDuration();
             this.generateVideoThumbnail();

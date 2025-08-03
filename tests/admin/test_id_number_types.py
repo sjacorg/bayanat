@@ -2,7 +2,7 @@ import pytest
 
 from enferno.admin.models.Actor import Actor
 from enferno.admin.models.IDNumberType import IDNumberType
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import IDNumberTypeFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -12,7 +12,10 @@ from tests.factories import create_simple_actor
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import EthnographiesResponseModel  # Reusing the same response model
+from tests.models.admin import (
+    EthnographiesResponseModel,
+    EthnographyCreatedResponseModel,
+)  # Reusing the same response model
 
 ##### FIXTURES #####
 
@@ -69,7 +72,7 @@ def test_id_number_types_endpoint(
 ##### POST /admin/api/idnumbertype #####
 
 post_id_number_type_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -89,7 +92,10 @@ def test_post_id_number_type(clean_slate_id_number_types, request, client_fixtur
     found_id_number_type = IDNumberType.query.filter(
         IDNumberType.title == id_number_type.title
     ).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), EthnographyCreatedResponseModel
+        )
         assert found_id_number_type
     else:
         assert found_id_number_type is None

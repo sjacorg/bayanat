@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import ItobInfo
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import ItobInfoFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import ItobInfosResponseModel
+from tests.models.admin import ItobInfoCreatedResponseModel, ItobInfosResponseModel
 
 ##### FIXTURES #####
 
@@ -67,7 +67,7 @@ def test_itobinfos_endpoint(
 ##### POST /admin/api/itobinfo #####
 
 post_itobinfo_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -87,7 +87,10 @@ def test_post_itobinfo_endpoint(clean_slate_itob_infos, request, client_fixture,
     found_itob_info = ItobInfo.query.filter(
         ItobInfo.title == itob_info.title and ItobInfo.reverse_title == itob_info.reverse_title
     ).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), ItobInfoCreatedResponseModel
+        )
         assert found_itob_info
     else:
         assert found_itob_info is None

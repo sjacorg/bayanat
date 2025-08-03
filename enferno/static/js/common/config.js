@@ -1,5 +1,5 @@
 // common validation rules
-
+let passwordCheckTimeout;
 const validationRules = {
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
@@ -19,6 +19,31 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
+    matchesField: (otherValue, message) => {
+        const defaultMessage = window.translations.fieldsDoNotMatch_;
+        return v => v === otherValue || message || defaultMessage;
+    },
+    checkPassword: ({ onResponse }) => {
+        const defaultMessage = window.translations.passwordTooWeak_;
+        
+      
+        return (v) => {
+          return new Promise((resolve) => {
+            clearTimeout(passwordCheckTimeout);
+      
+            passwordCheckTimeout = setTimeout(async () => {
+              try {
+                await axios.post('/admin/api/password/', { password: v }, { suppressGlobalErrorHandler: true });
+                onResponse(true);
+                resolve(true);
+            } catch (err) {
+                onResponse(false);
+                resolve(defaultMessage);
+              }
+            }, 350);
+          });
+        };
+    }
 };
 
 // Helper functions
@@ -177,15 +202,38 @@ const mapsApiEndpoint = window.__MAPS_API_ENDPOINT__;
 // Set axios defaults
 axios.defaults.headers.common['Accept'] = 'application/json';
 
-//global axios error handler - can be used to define global exception handling on ajax failures
+// Centralized API service - handles standardized responses transparently
+const api = {
+    get: axios.get.bind(axios),
+    post: axios.post.bind(axios), 
+    put: axios.put.bind(axios),
+    delete: axios.delete.bind(axios)
+};
+
+//global axios response interceptor - handles standardized API responses and global error handling  
 axios.interceptors.response.use(
     function (response) {
-        // Do something with response data
-        return response;
+        const shouldFlatten =
+            isPlainObject(response?.data?.data) &&
+            !response?.config?.skipFlattening;
+    
+        if (shouldFlatten) {
+            return {
+                ...response,
+                data: {
+                    ...response.data.data,
+                    ...(response.data?.message ? { message: response.data.message } : {})
+                }
+            };
+        }
+    
+      return response;
     },
     function (error) {
-        const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
-        document.dispatchEvent(globalRequestErrorEvent);
+        if (!error.config?.suppressGlobalErrorHandler) {
+            const globalRequestErrorEvent = new CustomEvent('global-axios-error', { detail: error });
+            document.dispatchEvent(globalRequestErrorEvent);
+        }
         // Check for session expiration errors (401 Unauthorized)
         if ([401].includes(error?.response?.status)) {
             const authenticationRequiredEvent = new CustomEvent('authentication-required', { detail: error });
@@ -195,20 +243,28 @@ axios.interceptors.response.use(
     },
 );
 
+function isPlainObject(val) {
+    return val !== null && typeof val === 'object' && !Array.isArray(val);
+}
+
 function getInfraMessage(status) {
     switch (status) {
-      case 502:
-      case 503:
-        return 'Service temporarily unavailable, please try again shortly.';
-      case 500:
-        return 'Server error, please try again or contact support.';
-      default:
-        return 'Unexpected error, please contact support if the issue persists.';
+        case 502:
+        case 503:
+            return 'The service is currently unavailable. Please try again in a few moments.';
+        case 500:
+            return 'A server error occurred. Please try again or reach out to support.';
+        default:
+            return 'An unexpected error occurred. If this continues, please contact support.';
     }
-  }
+}
   
  function handleRequestError(error) {
     const response = error?.response;
+
+    if (response?.data?.message) {
+        return response.data.message;
+    }
   
     // Handle known API error format
     if (response?.data?.response?.errors) {
@@ -479,10 +535,10 @@ function normalizeDropzoneResponse(dzFile) {
         uuid: dzFile.upload.uuid,
         type: dzFile.type,
         name: dzFile.name,
-        s3url: response.filename,
-        filename: response.filename,
-        etag: response.etag,
-        original_filename: response.original_filename,
+        s3url: response.data.filename,
+        filename: response.data.filename,
+        etag: response.data.etag,
+        original_filename: response.data.original_filename,
     };
 }
 
@@ -490,7 +546,7 @@ function getBulletinLocations(ids) {
     promises = [];
     ids.forEach((x) => {
         promises.push(
-            axios.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
+            api.get(`/admin/api/bulletin/${x}?mode=3`).then((response) => {
                 return aggregateBulletinLocations(response.data);
             }),
         );
@@ -567,4 +623,13 @@ function buildVideoElement() {
     videoElement.setAttribute('height', '348');
 
     return videoElement;
+}
+
+// Deep clone utility for nested refs or reactive data
+function deepClone(value) {
+    try {
+        return structuredClone(value);
+    } catch (error) {
+        return JSON.parse(JSON.stringify(value));
+    }
 }

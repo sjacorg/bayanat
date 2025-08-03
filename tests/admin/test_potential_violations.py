@@ -1,7 +1,7 @@
 import pytest
 
 from enferno.admin.models import PotentialViolation
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from tests.factories import PotentialViolationFactory
 from tests.test_utils import (
     conform_to_schema_or_fail,
@@ -11,7 +11,10 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import PotentialViolationsResponseModel
+from tests.models.admin import (
+    PotentialViolationCreatedResponseModel,
+    PotentialViolationsResponseModel,
+)
 
 ##### FIXTURES #####
 
@@ -66,7 +69,7 @@ def test_pvs_endpoint(clean_slate_pvs, create_pv, request, client_fixture, expec
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) > 0
+        assert len(response.json["data"]["items"]) > 0
         conform_to_schema_or_fail(
             convert_empty_strings_to_none(response.json), PotentialViolationsResponseModel
         )
@@ -75,9 +78,9 @@ def test_pvs_endpoint(clean_slate_pvs, create_pv, request, client_fixture, expec
 ##### POST /admin/api/potentialviolation #####
 
 post_pv_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
-    ("mod_client", 200),
+    ("mod_client", 201),
     ("anonymous_client", 401),
 ]
 
@@ -94,7 +97,10 @@ def test_post_pv_endpoint(clean_slate_pvs, request, client_fixture, expected_sta
     )
     assert response.status_code == expected_status
     found_pv = PotentialViolation.query.filter(PotentialViolation.title == pv.title).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), PotentialViolationCreatedResponseModel
+        )
         assert found_pv
     else:
         assert found_pv is None

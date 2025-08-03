@@ -24,6 +24,8 @@ from enferno.utils.db_alignment_helpers import DBAlignmentChecker
 from enferno.utils.logging_utils import get_logger
 from sqlalchemy import text
 
+from enferno.utils.validation_utils import validate_password_policy
+
 logger = get_logger()
 
 
@@ -101,8 +103,13 @@ def install() -> None:
             click.echo("Username already exists.")
         else:
             break
-
-    p = click.prompt("Admin Password?", hide_input=True)
+    while True:
+        p = click.prompt("Admin Password?", hide_input=True)
+        try:
+            p = validate_password_policy(p)
+            break
+        except ValueError as e:
+            click.echo(str(e))
     user = User(username=u, password=hash_password(p), active=1)
     user.name = "Admin"
     user.roles.append(admin_role)
@@ -139,9 +146,10 @@ def create(username: str, password: str) -> None:
         click.echo("User already exists!")
         logger.error("User already exists!")
         return
-    if len(password) < 8:
-        click.echo("Password should be at least 8 characters long!")
-        logger.error("Password should be at least 8 characters long!")
+    try:
+        password = validate_password_policy(password)
+    except ValueError as e:
+        click.echo(str(e))
         return
     user = User(username=username, password=hash_password(password), active=1)
     if user.save():
@@ -211,9 +219,10 @@ def reset(username: str, password: str) -> None:
         click.echo("Specified user does not exist!")
         logger.error("Specified user does not exist!")
     else:
-        if len(password) < 8:
-            click.echo("Password should be at least 8 characters long!")
-            logger.error("Password should be at least 8 characters long!")
+        try:
+            password = validate_password_policy(password)
+        except ValueError as e:
+            click.echo(str(e))
             return
         user.password = hash_password(password)
         user.save()

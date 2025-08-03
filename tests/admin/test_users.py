@@ -4,7 +4,7 @@ import uuid
 import pytest
 from flask import current_app
 from enferno.admin.models import Activity
-from enferno.admin.validation.util import convert_empty_strings_to_none
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.user.models import User, Session, WebAuthn
 
 from tests.factories import UserFactory, create_webauthn_for
@@ -15,7 +15,11 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import UserSessionsResponseModel, UsersResponseModel
+from tests.models.admin import (
+    UserCreatedResponseModel,
+    UserSessionsResponseModel,
+    UsersResponseModel,
+)
 
 ##### FIXTURES #####
 
@@ -129,7 +133,7 @@ def test_get_users_endpoint(request, client_fixture, expected_status):
 ##### POST /admin/api/user #####
 
 post_user_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -147,7 +151,10 @@ def test_post_user_endpoint(clean_slate_users, request, client_fixture, expected
     )
     assert response.status_code == expected_status
     found_user = User.query.filter(User.username == user.username).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), UserCreatedResponseModel
+        )
         assert found_user
     else:
         assert found_user is None
@@ -176,7 +183,7 @@ def test_post_checkuser_endpoint(
             headers={"Content-Type": "application/json"},
             json={"item": u.username},
         )
-        assert response.status_code == 417
+        assert response.status_code == 409
         # Check for a fresh username
     u = UserFactory()
     response = client_.post(
@@ -234,15 +241,30 @@ post_password_endpoint_roles = [
 @pytest.mark.parametrize("client_fixture, expected_status", post_password_endpoint_roles)
 def test_post_password_endpoint(request, client_fixture, expected_status):
     client_ = request.getfixturevalue(client_fixture)
-    WEAK_PASSWORD = "123456"
+    WEAK_PASSWORD = "1234567890"
+    SHORT_PASSWORD = "12345"
     STRONG_PASSWORD = "On3Tw0Thr33!"
     if expected_status == 200:
         response = client_.post(
             "/admin/api/password/",
             headers={"Content-Type": "application/json"},
+            json={"password": SHORT_PASSWORD},
+        )
+        assert response.status_code == 400
+        assert "password" in response.json["errors"]
+        assert "Password should be at least " in response.json["errors"]["password"]
+        assert "characters long!" in response.json["errors"]["password"]
+        response = client_.post(
+            "/admin/api/password/",
+            headers={"Content-Type": "application/json"},
             json={"password": WEAK_PASSWORD},
         )
-        assert response.status_code == 409
+        assert response.status_code == 400
+        assert "password" in response.json["errors"]
+        assert (
+            "Password is too weak (score: 0 < 3). Please use a stronger password"
+            in response.json["errors"]["password"]
+        )
     response = client_.post(
         "/admin/api/password/",
         headers={"Content-Type": "application/json"},
@@ -349,6 +371,7 @@ def test_user_sessions(
         f"/admin/api/user/{u.id}/sessions",
         headers={"Content-Type": "application/json"},
     )
+    print(response.json)
     assert response.status_code == expected_status
     if expected_status == 200:
         conform_to_schema_or_fail(
