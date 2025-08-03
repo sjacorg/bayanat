@@ -1253,7 +1253,7 @@
 
             methods: {
                 loadWhisperModels(){
-                    axios.get('/import/api/whisper/models/').then(res => {
+                    api.get('/import/api/whisper/models/').then(res => {
                         this.whisperModels = res.data.models;
                     }).catch(err => {
                         this.showSnack(err?.response?.data);
@@ -1262,7 +1262,7 @@
                 },
 
                 loadDefaults() {
-                    axios.get('/admin/api/configuration/defaults/').then(res => {
+                    api.get('/admin/api/configuration/defaults/').then(res => {
                         this.configLabels = res.data.labels;
                         this.$root.showSnack(this.translations.defaultsLoaded_);
                         this.defaultConfig = res.data;
@@ -1334,23 +1334,18 @@
 
                 loadConfiguration() {
                     this.loading = true;
-                    axios.get('/admin/api/configuration/').then(res => {
+                  
+                    api.get('/admin/api/configuration/').then(res => {
                         this.eitem = res?.data?.config;
                         this.configLabels = res.data.labels;
                         // also store the configuration in a persistent var
                         this.exconfig = JSON.parse(JSON.stringify(this.eitem));
-
-
                     }).catch(e => {
-
-
                         this.showSnack(e.response?.data)
                         console.log(e)
                     }).finally(() => {
                         this.loading = false;
                     })
-
-
                 },
 
                 loadRevisions(options) {
@@ -1363,7 +1358,7 @@
                     };
                     
                     this.revisionsState.loading = true;
-                    axios.get(`/admin/api/appconfig/`, { params }).then(response => {
+                    api.get(`/admin/api/appconfig/`, { params }).then(response => {
                         this.revisionsState.itemsLength = response.data.total;
                         if (params.page === 1) {
                             this.revisionsState.items = response.data.items;
@@ -1389,7 +1384,7 @@
 
                 waitForReload() {
                     setTimeout(() => {
-                        axios.get('/').then(res => {
+                        api.get('/').then(res => {
                             this.overlay = false;
                             this.loadConfiguration();
                             this.resetRevisions();
@@ -1403,7 +1398,7 @@
 
                 reloadApp() {
                     this.overlay = true;
-                    axios.post('/admin/api/reload/')
+                    api.post('/admin/api/reload/')
                     this.waitForReload();
                 },
 
@@ -1416,7 +1411,7 @@
                     }
 
                     this.preprocessConfig();
-                    axios.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
+                    api.put('/admin/api/configuration/', {conf: this.eitem}).then(res => {
                         this.reloadApp();
                     }).catch(e => {
                         console.error(e);

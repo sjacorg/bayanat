@@ -78,7 +78,7 @@ def api_deduplication() -> Response:
         "total": data.total,
         "pending": pending,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @deduplication.route("/api/process", methods=["POST"])
@@ -88,7 +88,7 @@ def api_process() -> Response:
     Endpoint used to process all deduplication data.
     """
     start_dedup.delay(current_user.id)
-    return "Processing will start shortly.", 200
+    return HTTPResponse.success(message="Processing will start shortly.")
 
 
 @deduplication.route("/api/stop", methods=["POST"])
@@ -100,7 +100,7 @@ def api_process_stop() -> Response:
     # just remove the redis flag
     rds.set("dedup", 0)
 
-    return "Processing will stop shortly.", 200
+    return HTTPResponse.success(message="Processing will stop shortly.")
 
 
 @deduplication.cli.command()
@@ -200,6 +200,6 @@ def status() -> Response:
     """
     if status := rds.get("dedup"):
         response = {"status": status.decode()}
-        return Response(json.dumps(response), content_type="application/json"), 200
+        return HTTPResponse.success(data=response)
 
-    return "Background tasks are not running correctly", 503
+    return HTTPResponse.error("Background tasks are not running correctly", status=503)

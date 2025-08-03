@@ -17,6 +17,8 @@ from enferno.user.models import User, Session
 from enferno.admin.models.Notification import Notification
 from flask_security.signals import password_changed, user_authenticated, tf_profile_changed
 
+from enferno.utils.http_response import HTTPResponse
+
 bp_user = Blueprint("users", __name__, static_folder="../static")
 
 client = WebApplicationClient(cfg.GOOGLE_CLIENT_ID)
@@ -67,7 +69,7 @@ def auth() -> Response:
         - redirects to Google's authorization endpoint, if Google Auth is enabled and configured properly.
     """
     if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
-        return "Google Auth is not enabled or configured properly", 417
+        return HTTPResponse.error("Google Auth is not enabled or configured properly", status=417)
 
     google_provider_cfg = get_google_provider_cfg()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
@@ -88,7 +90,7 @@ def auth_callback() -> Response:
     Open ID callback endpoint.
     """
     if not cfg.GOOGLE_OAUTH_ENABLED or not cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
-        return "Google Auth is not enabled or configured properly", 417
+        return HTTPResponse.error("Google Auth is not enabled or configured properly", status=417)
 
     code = request.args.get("code")
     # Find out what URL to hit to get tokens that allow you to ask for
@@ -129,18 +131,20 @@ def auth_callback() -> Response:
         # picture = userinfo_response.json()["picture"]
         users_name = userinfo_response.json()["name"]
     else:
-        return "User email not available or not verified by Google.", 400
+        return HTTPResponse.error("User email not available or not verified by Google.")
 
     # check if email belongs to the allowed domain
     if not users_email.split("@")[-1] == cfg.GOOGLE_CLIENT_ALLOWED_DOMAIN:
-        return "User email rejected!", 403
+        return HTTPResponse.forbidden("User email rejected!")
 
     # secure login by restricting access to only matching users who already have an account
     # Check if the user with the provided email exists in the database
     u = User.query.filter(User.email == users_email).first()
     if u is None:
         # User with the provided email does not exist
-        return "User not found. Ask an administrator to create an account for you.", 404
+        return HTTPResponse.not_found(
+            "User not found. Ask an administrator to create an account for you."
+        )
 
     # Update the user's Google ID if it doesn't exist
     if u.google_id is None:
@@ -176,14 +180,14 @@ def save_settings() -> Response:
     user_id = current_user.id
     user = User.query.get(user_id)
     if not user:
-        return "Problem loading user", 417
+        return HTTPResponse.error("Problem loading user", status=417)
     user.settings = {"dark": dark}
     lang = json.get("language")
     user.settings["language"] = lang
     user.settings["setupCompleted"] = json.get("setupCompleted")
     flag_modified(user, "settings")
     user.save()
-    return "Settings Saved", 200
+    return HTTPResponse.success(message="Settings Saved")
 
 
 @bp_user.route("/settings/load", methods=["GET"])
@@ -195,11 +199,11 @@ def load_settings() -> Response:
     user = User.query.get(user_id)
 
     if not user:
-        return "Problem loading user ", 417
+        return HTTPResponse.error("Problem loading user ", status=417)
 
     settings = user.settings or {}
 
-    return Response(json.dumps(settings), content_type="Application/json"), 200
+    return HTTPResponse.success(data=settings)
 
 
 @password_changed.connect

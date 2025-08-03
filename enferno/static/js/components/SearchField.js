@@ -99,7 +99,7 @@ const SearchField = Vue.defineComponent({
     },
     search: debounce(function () {
       this.loading = true;
-      axios
+      api
         .get(this.api, {
           params: {
             q: this.searchInput,
@@ -181,7 +181,7 @@ const LocationSearchField = Vue.defineComponent({
   extends: SearchField,
   methods: {
     search: debounce(function (evt) {
-      axios
+      api
         .post(this.api, {
           q: {
             ...this.queryParams,

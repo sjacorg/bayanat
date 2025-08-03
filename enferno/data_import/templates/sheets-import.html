@@ -1047,7 +1047,7 @@
 
                     if (ext === 'csv') {
 
-                        axios.post('/import/api/csv/analyze', {file: file}).then(res => {
+                        api.post('/import/api/csv/analyze', {file: file}).then(res => {
                             this.structure = res.data;
                             this.fields = this.structure.columns;
                             this.backup = this.fields.slice();
@@ -1064,8 +1064,8 @@
                             }
                         );
                     } else if (ext === 'xls' || ext === 'xlsx') {
-                        axios.post('/import/api/xls/sheets', {file: file}).then(res => {
-                            this.sheets = res.data;
+                        api.post('/import/api/xls/sheets', {file: file}).then(res => {
+                            this.sheets = res?.data?.data ?? [];
                         }).catch(
                             err => {
                                 console.log(err.response.data)
@@ -1091,7 +1091,7 @@
                 },
 
                 sheetSelected() {
-                    axios.post('/import/api/xls/analyze', {
+                    api.post('/import/api/xls/analyze', {
                         file: this.files[0],
                         sheet: this.selectedSheet
                     }).then(res => {
@@ -1189,8 +1189,8 @@
                         id_number: this.map.id_number.filter(idEntry => idEntry.type && idEntry.number) 
                     }
 
-                    axios.post('/import/api/process-sheet', {
-                        map: nextMap,
+                    api.post('/import/api/process-sheet', {
+                        map: this.map,
                         vmap: this.vmap,
                         sheet: this.selectedSheet,
                         roles: this.roles,
@@ -1228,9 +1228,9 @@
 
                 loadMaps() {
 
-                    axios.get('/import/api/mappings/').then(
+                    api.get('/import/api/mappings/').then(
                         res => {
-                            this.maps = res.data;
+                            this.maps = res?.data?.data ?? [];
                         }
                     ).catch(err => {
                         console.log(err.response.data);
@@ -1243,7 +1243,7 @@
                 },
 
                 loadEtypes() {
-                    axios.get('/admin/api/eventtypes/').then(res => {
+                    api.get('/admin/api/eventtypes/').then(res => {
 
                         this.eventtypes = res.data.items.filter(x => x.title);
                     })
@@ -1295,17 +1295,17 @@
                     const backupMaps = [...this.maps]; // Backup
                     const backupMapId = this.mapid; // Backup
                     const backupSelectedMap = this.maps.find(map => map.id === this.mapid); // Backup
-                    // const mapIndex = this.maps.findIndex(map => map.id === this.mapid);
 
-                    // // Optimistic update
+                    // Optimistic update
                     this.maps = this.maps.filter(map => map.id !== this.mapid);
                     this.resetFields();
                     this.selectedMap = null;
+                    const deleteMapId = this.mapid;
                     this.mapid = null
 
-                    axios.delete(`/import/api/mapping/${this.mapid}`)
+                    api.delete(`/import/api/mapping/${deleteMapId}`)
                         .then(res => {
-                            this.showSnack(res.data);
+                            this.showSnack(res.data.message || res.data);
                         }).catch(err => {
                             // Revert on error
                             this.maps = backupMaps;
@@ -1325,7 +1325,7 @@
                     }
                     if (!this.mapid) return
                     // update existing map
-                    axios.put(`/import/api/mapping/${this.mapid}`, payload).then(res => {
+                    api.put(`/import/api/mapping/${this.mapid}`, payload).then(res => {
                         this.showSnack(res.data.message);
                         const updatedMap = deepClone({ ...payload, id: res.data.id })
                         const map = this.maps.find(map => map.id === updatedMap.id);
@@ -1343,7 +1343,7 @@
                         }
                     }
                     //create new
-                    axios.post('/import/api/mapping/', payload).then(res => {
+                    api.post('/import/api/mapping/', payload).then(res => {
                         this.showSnack(res.data.message);
                         this.mapid = res.data.id;
                         const nextMap = deepClone({ ...payload, id: res.data.id })
@@ -1377,7 +1377,7 @@
                         const ext = this.files[0].fileExtension;
                         if (ext == 'csv') {
 
-                            axios.post('/import/api/csv/analyze', {file: JSON.parse(this.files[0].serverId)}).then(res => {
+                            api.post('/import/api/csv/analyze', {file: JSON.parse(this.files[0].serverId)}).then(res => {
                                 this.structure = res.data;
                                 this.fields = this.structure.columns;
                                 this.backup = this.fields.slice();
@@ -1394,7 +1394,7 @@
                                 }
                             );
                         } else if (ext == 'xls' || ext == 'xlsx') {
-                            axios.post('/import/api/xls/sheets', {file: JSON.parse(this.files[0].serverId)}).then(res => {
+                            api.post('/import/api/xls/sheets', {file: JSON.parse(this.files[0].serverId)}).then(res => {
                                 this.sheets = res.data;
                             }).catch(
                                 err => {
