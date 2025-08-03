@@ -86,6 +86,7 @@ class ActorItemMinModel(StrictModel):
     status: Optional[str] = Field(default=None, max_length=255)
     u_status: Optional[str] = Field(alias="_status", default=None)  # since status field is optional
     roles: Optional[list["RoleModel"]] = Field(default_factory=list)
+    review_action: Optional[str] = None
 
 
 class SourcesJSONModel(BaseModel):
@@ -348,12 +349,20 @@ class ActorItemRestrictedModel(StrictModel):
     restricted: bool = True
 
 
+class ResponseMetaModel(BaseModel):
+    currentPageSize: int
+    hasMore: bool
+    isFirstPage: bool
+
+
 class ActorsResponseDataModel(BaseResponseDataModel):
     items: list[
         Union[ActorItemMinModel, ActorItemMode2Model, ActorItemMode3Model, ActorItemMode3PlusModel]
     ]
-    perPage: int
-    total: int
+    nextCursor: Optional[str] = None
+    meta: ResponseMetaModel
+    total: Optional[int] = None
+    totalType: Optional[str] = None
 
 
 class ActorsResponseModel(BaseResponseModel):
@@ -502,8 +511,10 @@ class BulletinsResponseDataModel(BaseResponseDataModel):
             BulletinItemMode3PlusModel,
         ]
     ]
-    perPage: int
-    total: int
+    nextCursor: Optional[str] = None
+    meta: ResponseMetaModel
+    total: Optional[int] = None
+    totalType: Optional[str] = None
 
 
 class BulletinsResponseModel(BaseResponseModel):
@@ -618,8 +629,10 @@ class IncidentsResponseDataModel(BaseResponseDataModel):
             IncidentItemMode3PlusModel,
         ]
     ]
-    perPage: int
-    total: int
+    nextCursor: Optional[str] = None
+    meta: ResponseMetaModel
+    total: Optional[int] = None
+    totalType: Optional[str] = None
 
 
 class IncidentsResponseModel(BaseResponseModel):

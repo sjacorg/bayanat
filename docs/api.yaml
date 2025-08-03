@@ -4583,41 +4583,15 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundJsonResponse'
   /admin/api/actors:
-    get:
-      operationId: getActors
-      tags:
-        - Protected
-        - Actor Management
-      summary: Get a paginated list of all Actors
-      description: |
-        Returns a paginated list of all actors.
-        
-        Roles accepted:
-        - Admin
-        - Mod
-        - DA
-      security:
-        - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActorsResponse'
-        '401':
-          $ref: '#/components/responses/UnauthenticatedJsonResponse'
     post:
       operationId: getActorsQuery
       tags:
         - Protected
         - Actor Management
-      summary: Get a paginated list of all Actors with optional advanced search
+      summary: Get a cursor-paginated list of Actors with optional advanced search
       description: |
-        Returns a paginated list of all actors, (optionally) satisfying search queries.
+        Returns a cursor-paginated list of all actors, (optionally) satisfying search queries.
+        Uses cursor-based pagination for better performance with large datasets.
         
         Roles accepted:
         - Admin
@@ -4625,21 +4599,13 @@ paths:
         - DA
       security:
         - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
       requestBody:
-        required: false
-        description: Search query object.
+        required: true
+        description: Cursor-based pagination and search query object.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                q:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/QueryActorObject'              
+              $ref: '#/components/schemas/ActorQueryRequest'              
       responses:
         '200':
           description: OK
@@ -5745,48 +5711,15 @@ paths:
         '403':
           $ref: '#/components/responses/UnauthorizedJsonResponse'
   /admin/api/incidents:
-    get:
-      operationId: getIncidents
-      tags:
-        - Protected
-        - Incident Management
-      summary: Get a paginated list of all Incidents
-      description: |
-        Returns a paginated list of all incidents.
-        
-        Roles accepted:
-        - Admin
-        - Mod
-        - DA
-      security:
-        - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
-        - in: query
-          name: mode
-          required: false
-          description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
-          schema:
-            type: integer
-            default: 1
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IncidentsResponse'
-        '401':
-          $ref: '#/components/responses/UnauthenticatedJsonResponse'
     post:
       operationId: getIncidentsQuery
       tags:
         - Protected
         - Incident Management
-      summary: Get a paginated list of all Incidents satisfying a search query
+      summary: Get a cursor-paginated list of Incidents with optional advanced search
       description: |
-        Returns a paginated list of all incidents satisfying the search query.
+        Returns a cursor-paginated list of all incidents, (optionally) satisfying search queries.
+        Uses cursor-based pagination for better performance with large datasets.
         
         Roles accepted:
         - Admin
@@ -5794,25 +5727,13 @@ paths:
         - DA
       security:
         - SessionCookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/per_page'
-        - in: query
-          name: mode
-          required: false
-          description: JSON encoding type. 1 for min, 2 for compact, 3 for normal (no-relation), other for normal with relations.
-          schema:
-            type: integer
-            default: 1
       requestBody:
-        required: false
+        required: true
+        description: Cursor-based pagination and search query object.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                q:
-                  $ref: '#/components/schemas/QueryIncidentObject'
+              $ref: '#/components/schemas/IncidentQueryRequest'
       responses:
         '200':
           description: OK
@@ -7435,6 +7356,81 @@ components:
         total:
           type: integer
           description: Total number of items.
+    CursorPaginationResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+          description: Entity-specific items will be defined in the actual endpoint.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for the next page of results. Null if no more results.
+        meta:
+          type: object
+          properties:
+            currentPageSize:
+              type: integer
+              description: Number of items in the current page.
+            hasMore:
+              type: boolean
+              description: Whether there are more items available.
+            isFirstPage:
+              type: boolean
+              description: Whether this is the first page of results.
+        total:
+          type: integer
+          nullable: true
+          description: Total number of items (only included when include_count is true).
+        totalType:
+          type: string
+          nullable: true
+          description: Type of total count calculation (e.g., "approximate", "exact").
+    ActorQueryRequest:
+      type: object
+      properties:
+        q:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryActorObject'
+          description: Array of search query objects.
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of items per page.
+        cursor:
+          type: string
+          nullable: true
+          description: Cursor for pagination (ID of the last item in the previous page).
+        include_count:
+          type: boolean
+          default: false
+          description: Whether to include total count in the response.
+    IncidentQueryRequest:
+      type: object
+      properties:
+        q:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryIncidentObject'
+          description: Array of search query objects.
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of items per page.
+        cursor:
+          type: string
+          nullable: true
+          description: Cursor for pagination (ID of the last item in the previous page).
+        include_count:
+          type: boolean
+          default: false
+          description: Whether to include total count in the response.
     LoginRequest:
       type: object
       required: 
@@ -8490,14 +8486,45 @@ components:
           format: date-time
         comments:
           type: string
+    BulletinResponseMeta:
+      type: object
+      required:
+        - currentPageSize
+        - hasMore
+        - isFirstPage
+      properties:
+        currentPageSize:
+          type: integer
+          description: Number of items in the current page
+        hasMore:
+          type: boolean
+          description: Whether there are more items available
+        isFirstPage:
+          type: boolean
+          description: Whether this is the first page of results
     BulletinsResponse:
-      allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
-        - properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/BulletinItem'
+      type: object
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulletinItem'
+          description: List of bulletin items
+        nextCursor:
+          type: string
+          description: Next cursor for pagination (optional)
+        meta:
+          $ref: '#/components/schemas/BulletinResponseMeta'
+          description: Metadata about the current page
+        total:
+          type: integer
+          description: Total number of items (optional)
+        totalType:
+          type: string
+          description: Type of total count (optional)
     BaseMinItem:
       type: object
       properties:
@@ -9231,7 +9258,7 @@ components:
         - $ref: '#/components/schemas/ActorMode4Item'
     ActorsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/CursorPaginationResponse'
         - properties:
             items:
               type: array
@@ -9833,7 +9860,7 @@ components:
               $ref: '#/components/schemas/NewIncident'
     IncidentsResponse:
       allOf:
-        - $ref: '#/components/schemas/GenericListResponse'
+        - $ref: '#/components/schemas/CursorPaginationResponse'
         - properties:
             items:
               type: array
