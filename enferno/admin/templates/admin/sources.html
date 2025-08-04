@@ -171,7 +171,7 @@
                                             </v-toolbar>
                                         </template>
                                         <template #['item.comments']="{ item }">
-                                            <read-more :preview-lines="3">${item.comments}</read-more>
+                                            <read-more class="my-2" :preview-lines="3">${item.comments}</read-more>
                                         </template>
                                         <template v-slot:item.action="{ item }">
                                             <v-icon small class="mr-2" @click="editItem(item)">
