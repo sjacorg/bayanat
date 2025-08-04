@@ -170,6 +170,9 @@
 
                                             </v-toolbar>
                                         </template>
+                                        <template #['item.comments']="{ item }">
+                                            <read-more :preview-lines="3">${item.comments}</read-more>
+                                        </template>
                                         <template v-slot:item.action="{ item }">
                                             <v-icon small class="mr-2" @click="editItem(item)">
                                                 mdi-pencil
@@ -190,6 +193,7 @@
 
 {% endblock %} {% block js %}
     <script src="/static/js/components/SearchField.js"></script>
+    <script src="/static/js/components/ReadMore.js"></script>
     <script>
 
 
@@ -348,6 +352,7 @@
         });
 
         app.component('search-field', SearchField)
+        app.component('ReadMore', ReadMore)
 
         app.use(vuetify).mount("#app")
     </script>
