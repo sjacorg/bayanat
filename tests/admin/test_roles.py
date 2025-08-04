@@ -1,10 +1,11 @@
 import pytest
 
+from enferno.utils.validation_utils import convert_empty_strings_to_none
 from enferno.user.models import Role
 from tests.factories import RoleFactory
 
-from tests.models.admin import RolesResponseModel
-from tests.test_utils import create_csv_for_entities
+from tests.models.admin import RoleCreatedResponseModel, RolesResponseModel
+from tests.test_utils import conform_to_schema_or_fail, create_csv_for_entities
 from sqlalchemy import not_
 
 
@@ -55,13 +56,13 @@ def test_roles_endpoint(request, client_fixture, expected_status):
     response = client_.get("/admin/api/roles/", headers={"Content-Type": "application/json"})
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert len(response.json["items"]) == len(Role.query.all())
+        assert len(response.json["data"]["items"]) == len(Role.query.all())
 
 
 ##### POST /admin/api/role/ #####
 
 post_role_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -77,7 +78,10 @@ def test_post_role_endpoint(request, client_fixture, expected_status):
     )
     assert response.status_code == expected_status
     found_role = Role.query.filter(Role.name == r.name).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), RoleCreatedResponseModel
+        )
         assert found_role
         # Clean up
         Role.query.filter(Role.id == found_role.id).delete()

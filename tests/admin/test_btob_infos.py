@@ -10,7 +10,7 @@ from tests.test_utils import (
 
 #### PYDANTIC MODELS #####
 
-from tests.models.admin import BtobInfosResponseModel
+from tests.models.admin import BtobInfoCreatedResponseModel, BtobInfosResponseModel
 
 ##### FIXTURES #####
 
@@ -67,7 +67,7 @@ def test_btobinfos_endpoint(
 ##### POST /admin/api/btobinfo #####
 
 post_btobinfo_endpoint_roles = [
-    ("admin_client", 200),
+    ("admin_client", 201),
     ("da_client", 403),
     ("mod_client", 403),
     ("anonymous_client", 401),
@@ -87,7 +87,10 @@ def test_post_btobinfo_endpoint(clean_slate_btob_infos, request, client_fixture,
     found_btob_info = BtobInfo.query.filter(
         BtobInfo.title == btob_info.title and BtobInfo.reverse_title == btob_info.reverse_title
     ).first()
-    if expected_status == 200:
+    if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), BtobInfoCreatedResponseModel
+        )
         assert found_btob_info
     else:
         assert found_btob_info is None

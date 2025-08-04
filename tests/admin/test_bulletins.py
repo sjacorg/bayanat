@@ -24,13 +24,13 @@ from tests.admin.data.generators import (
 from tests.test_utils import (
     conform_to_schema_or_fail,
     get_first_or_fail,
-    load_data,
     get_uid_from_client,
 )
 
 ##### PYDANTIC MODELS #####
 
 from tests.models.admin import (
+    BulletinCreatedResponseModel,
     BulletinsResponseModel,
     BulletinItemMode3PlusModel,
     BulletinItemMode3Model,
@@ -74,7 +74,7 @@ def test_bulletins_endpoint(
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
         client_ = request.getfixturevalue(client_fixture)
         response = client_.get(
-            "/admin/api/bulletins?page=1&per_page=10",
+            "/admin/api/bulletins",
             json={"q": [{}]},
             headers={"Content-Type": "application/json"},
             follow_redirects=True,
@@ -111,21 +111,21 @@ def test_bulletin_endpoint(
         assert response.status_code == expected_status
         # Additional checks
         if expected_status == 200:
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             conform_to_schema_or_fail(data, BulletinItemMode3PlusModel)
             # Mode 1
             response = client_.get(f"/admin/api/bulletin/{bulletin.id}?mode=1")
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             assert "tags" not in dict.keys(data)
             conform_to_schema_or_fail(data, BulletinItemMinModel)
             # Mode 2
             response = client_.get(f"/admin/api/bulletin/{bulletin.id}?mode=2")
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             assert "tags" not in dict.keys(data)
             conform_to_schema_or_fail(data, BulletinItemMode2Model)
             # Mode 3
             response = client_.get(f"/admin/api/bulletin/{bulletin.id}?mode=3")
-            data = convert_empty_strings_to_none(load_data(response))
+            data = convert_empty_strings_to_none(response.json)["data"]
             assert "tags" in dict.keys(data)
             conform_to_schema_or_fail(data, BulletinItemMode3Model)
 
@@ -258,6 +258,9 @@ def test_post_bulletin_endpoint(clean_slate_bulletins, request, client_fixture, 
     assert response.status_code == expected_status
     found_bulletin = Bulletin.query.filter(Bulletin.title == bulletin.title).first()
     if expected_status == 201:
+        conform_to_schema_or_fail(
+            convert_empty_strings_to_none(response.json), BulletinCreatedResponseModel
+        )
         assert found_bulletin
     else:
         assert found_bulletin is None
@@ -436,7 +439,12 @@ def test_get_bulletin_relations_endpoint(
     )
     assert response.status_code == expected_status
     if expected_status == 200:
-        assert all([x["bulletin"]["id"] in [b2.id, b3.id] for x in load_data(response)["items"]])
+        assert all(
+            [
+                x["bulletin"]["id"] in [b2.id, b3.id]
+                for x in convert_empty_strings_to_none(response.json)["data"]["items"]
+            ]
+        )
 
 
 ##### PUT /admin/api/bulletin/assign/<int:id> #####

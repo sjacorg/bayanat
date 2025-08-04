@@ -18,6 +18,7 @@ from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
 from sqlalchemy import desc, or_, asc, text, select, func
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
 from flask_security.twofactor import tf_disable
@@ -127,6 +128,7 @@ from enferno.utils.logging_utils import get_log_filenames, get_logger
 from enferno.utils.search_utils import SearchUtils
 from enferno.admin.models.DynamicField import DynamicField
 
+
 root = os.path.abspath(os.path.dirname(__file__))
 admin = Blueprint(
     "admin",
@@ -160,7 +162,7 @@ def require_view_history(f):
             or current_user.view_simple_history
             or current_user.view_full_history
         ):
-            return HTTPResponse.FORBIDDEN
+            return HTTPResponse.forbidden()
         return f(*args, **kwargs)
 
     return decorated_function
@@ -184,7 +186,7 @@ def can_assign_roles(func):
                     "bulletin",
                     details="Unauthorized attempt to assign roles.",
                 )
-                return HTTPResponse.UNAUTHORIZED
+                return HTTPResponse.forbidden("Unauthorized")
         return func(*args, **kwargs)
 
     return decorated_function
@@ -277,7 +279,8 @@ def api_labels() -> Response:
     elif fltr == "all":
         pass
     else:
-        query.append(Label.verified == False)
+        # Include both False and NULL values for unverified labels
+        query.append(or_(Label.verified == False, Label.verified == None))
 
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", PER_PAGE, int)
@@ -303,7 +306,7 @@ def api_labels() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/label/")
@@ -327,9 +330,13 @@ def api_label_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
-        return f"Created Label #{label.id}", 200
+        mode = request.args.get("mode", "1")
+        return HTTPResponse.created(
+            message=f"Created Label #{label.id}",
+            data={"item": label.to_dict(mode=mode)},
+        )
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/label/<int:id>")
@@ -354,9 +361,9 @@ def api_label_update(id: t.id, validated_data: dict) -> Response:
         Activity.create(
             current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
-        return f"Saved Label #{label.id}", 200
+        return HTTPResponse.success(message=f"Saved Label #{label.id}", status=200)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Label not found")
 
 
 @admin.delete("/api/label/<int:id>")
@@ -375,15 +382,15 @@ def api_label_delete(
     """
     label = Label.query.get(id)
     if label is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Label not found")
 
     if label.delete():
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, label.to_mini(), "label"
         )
-        return f"Deleted Label #{label.id}", 200
+        return HTTPResponse.success(message=f"Deleted Label #{label.id}", status=200)
     else:
-        return "Error deleting Label", 417
+        return HTTPResponse.error("Error deleting Label", status=500)
 
 
 @admin.post("/api/label/import/")
@@ -397,9 +404,9 @@ def api_label_import() -> str:
     """
     if "csv" in request.files:
         Label.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error", status=400)
 
 
 # EventType routes
@@ -444,7 +451,7 @@ def api_eventtypes() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/eventtype/")
@@ -473,9 +480,11 @@ def api_eventtype_create(
             eventtype.to_mini(),
             "eventtype",
         )
-        return f"Created Event #{eventtype.id}", 200
+        return HTTPResponse.created(
+            message=f"Created Event #{eventtype.id}", data={"item": eventtype.to_dict()}
+        )
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/eventtype/<int:id>")
@@ -494,7 +503,7 @@ def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Event type not found")
 
     eventtype = eventtype.from_json(validated_data["item"])
     if eventtype.save():
@@ -505,9 +514,9 @@ def api_eventtype_update(id: t.id, validated_data: dict) -> Response:
             eventtype.to_mini(),
             "eventtype",
         )
-        return f"Saved Event #{eventtype.id}", 200
+        return HTTPResponse.success(message=f"Saved Event #{eventtype.id}")
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/eventtype/<int:id>")
@@ -526,7 +535,7 @@ def api_eventtype_delete(
     """
     eventtype = Eventtype.query.get(id)
     if eventtype is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Event type not found")
 
     if eventtype.delete():
         Activity.create(
@@ -536,9 +545,9 @@ def api_eventtype_delete(
             eventtype.to_mini(),
             "eventtype",
         )
-        return f"Deleted Event Type #{eventtype.id}", 200
+        return HTTPResponse.success(message=f"Deleted Event Type #{eventtype.id}")
     else:
-        return "Error deleting Event Type", 417
+        return HTTPResponse.error("Error deleting Event Type", status=500)
 
 
 @admin.post("/api/eventtype/import/")
@@ -552,9 +561,9 @@ def api_eventtype_import() -> Response:
     """
     if "csv" in request.files:
         Eventtype.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error", status=400)
 
 
 @admin.route("/api/potentialviolation/", defaults={"page": 1})
@@ -584,7 +593,7 @@ def api_potentialviolations(page: int) -> Response:
         "perPage": PER_PAGE,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/potentialviolation/")
@@ -612,9 +621,12 @@ def api_potentialviolation_create(
             potentialviolation.to_mini(),
             "potentialviolation",
         )
-        return f"Created Potential Violation #{potentialviolation.id}", 200
+        return HTTPResponse.created(
+            message=f"Created Potential Violation #{potentialviolation.id}",
+            data={"item": potentialviolation.to_dict()},
+        )
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/potentialviolation/<int:id>")
@@ -632,7 +644,7 @@ def api_potentialviolation_update(id: t.id, validated_data: dict) -> Response:
     """
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Potential Violation not found")
 
     potentialviolation = potentialviolation.from_json(validated_data["item"])
     if potentialviolation.save():
@@ -643,9 +655,9 @@ def api_potentialviolation_update(id: t.id, validated_data: dict) -> Response:
             potentialviolation.to_mini(),
             "potentialviolation",
         )
-        return f"Saved Potential Violation #{potentialviolation.id}", 200
+        return HTTPResponse.success(message=f"Saved Potential Violation #{potentialviolation.id}")
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/potentialviolation/<int:id>")
@@ -664,7 +676,7 @@ def api_potentialviolation_delete(
     """
     potentialviolation = PotentialViolation.query.get(id)
     if potentialviolation is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Potential Violation not found")
 
     if potentialviolation.delete():
         Activity.create(
@@ -674,9 +686,9 @@ def api_potentialviolation_delete(
             potentialviolation.to_mini(),
             "potentialviolation",
         )
-        return f"Deleted Potential Violation #{potentialviolation.id}", 200
+        return HTTPResponse.success(message=f"Deleted Potential Violation #{potentialviolation.id}")
     else:
-        return "Error deleting Potential Violation", 417
+        return HTTPResponse.error("Error deleting Potential Violation", status=500)
 
 
 @admin.post("/api/potentialviolation/import/")
@@ -690,9 +702,9 @@ def api_potentialviolation_import() -> Response:
     """
     if "csv" in request.files:
         PotentialViolation.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error", status=400)
 
 
 @admin.route("/api/claimedviolation/", defaults={"page": 1})
@@ -722,7 +734,7 @@ def api_claimedviolations(page: int) -> Response:
         "perPage": PER_PAGE,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/claimedviolation/")
@@ -750,9 +762,12 @@ def api_claimedviolation_create(
             claimedviolation.to_mini(),
             "claimedviolation",
         )
-        return f"Created Claimed Violation #{claimedviolation.id}", 200
+        return HTTPResponse.created(
+            message=f"Created Claimed Violation #{claimedviolation.id}",
+            data={"item": claimedviolation.to_dict()},
+        )
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/claimedviolation/<int:id>")
@@ -771,7 +786,7 @@ def api_claimedviolation_update(id: t.id, validated_data: dict) -> Response:
     """
     claimedviolation = ClaimedViolation.query.get(id)
     if claimedviolation is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Claimed Violation not found")
 
     claimedviolation = claimedviolation.from_json(validated_data["item"])
     if claimedviolation.save():
@@ -782,9 +797,9 @@ def api_claimedviolation_update(id: t.id, validated_data: dict) -> Response:
             claimedviolation.to_mini(),
             "claimedviolation",
         )
-        return f"Saved Claimed Violation #{claimedviolation.id}", 200
+        return HTTPResponse.success(message=f"Saved Claimed Violation #{claimedviolation.id}")
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/claimedviolation/<int:id>")
@@ -803,7 +818,7 @@ def api_claimedviolation_delete(
     """
     claimedviolation = ClaimedViolation.query.get(id)
     if claimedviolation is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Claimed Violation not found")
 
     if claimedviolation.delete():
         Activity.create(
@@ -813,9 +828,9 @@ def api_claimedviolation_delete(
             claimedviolation.to_mini(),
             "claimedviolation",
         )
-        return f"Deleted Claimed Violation #{claimedviolation.id}", 200
+        return HTTPResponse.success(message=f"Deleted Claimed Violation #{claimedviolation.id}")
     else:
-        return "Error deleting Claimed Violation", 417
+        return HTTPResponse.error("Error deleting Claimed Violation", status=500)
 
 
 @admin.post("/api/claimedviolation/import/")
@@ -829,9 +844,9 @@ def api_claimedviolation_import() -> Response:
     """
     if "csv" in request.files:
         ClaimedViolation.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error")
 
 
 # Sources routes
@@ -880,7 +895,7 @@ def api_sources() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/source/")
@@ -908,9 +923,11 @@ def api_source_create(
             source.to_mini(),
             "source",
         )
-        return f"Created Source #{source.id}", 200
+        return HTTPResponse.created(
+            message=f"Created Source #{source.id}", data={"item": source.to_dict()}
+        )
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/source/<int:id>")
@@ -929,7 +946,7 @@ def api_source_update(id: t.id, validated_data: dict) -> Response:
     """
     source = Source.query.get(id)
     if source is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Source not found")
 
     source = source.from_json(validated_data["item"])
     if source.save():
@@ -940,9 +957,9 @@ def api_source_update(id: t.id, validated_data: dict) -> Response:
             source.to_mini(),
             "source",
         )
-        return f"Saved Source #{source.id}", 200
+        return HTTPResponse.success(message=f"Saved Source #{source.id}")
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.delete("/api/source/<int:id>")
@@ -961,7 +978,7 @@ def api_source_delete(
     """
     source = Source.query.get(id)
     if source is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Source not found")
 
     if source.delete():
         Activity.create(
@@ -971,9 +988,9 @@ def api_source_delete(
             source.to_mini(),
             "source",
         )
-        return f"Deleted Source #{source.id}", 200
+        return HTTPResponse.success(message=f"Deleted Source #{source.id}")
     else:
-        return "Error deleting Source", 417
+        return HTTPResponse.error("Error deleting Source", status=500)
 
 
 @admin.post("/api/source/import/")
@@ -987,9 +1004,9 @@ def api_source_import() -> Response:
     """
     if "csv" in request.files:
         Source.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error")
 
 
 # locations routes
@@ -1042,7 +1059,7 @@ def api_locations(validated_data: dict) -> Response:
         "total": result.total,
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/location/")
@@ -1061,7 +1078,7 @@ def api_location_create(
         - success/error string based on the operation result.
     """
     if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
-        return "User not allowed to create Locations", 400
+        return HTTPResponse.forbidden("User not allowed to create Locations")
 
     location = Location()
     location = location.from_json(validated_data["item"])
@@ -1077,7 +1094,9 @@ def api_location_create(
             location.to_mini(),
             "location",
         )
-        return f"Created Location #{location.id}", 200
+        return HTTPResponse.created(
+            message=f"Created Location #{location.id}", data={"item": location.to_dict()}
+        )
 
 
 @admin.put("/api/location/<int:id>")
@@ -1095,7 +1114,7 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
         - success/error string based on the operation result.
     """
     if not current_user.roles_in(["Admin", "Mod"]) and not current_user.can_edit_locations:
-        return "User not allowed to create Locations", 400
+        return HTTPResponse.forbidden("User not allowed to create Locations")
 
     location = Location.query.get(id)
     if location is not None:
@@ -1113,11 +1132,11 @@ def api_location_update(id: t.id, validated_data: dict) -> Response:
                 location.to_mini(),
                 "location",
             )
-            return f"Saved Location #{location.id}", 200
+            return HTTPResponse.success(message=f"Saved Location #{location.id}")
         else:
-            return "Save Failed", 417
+            return HTTPResponse.error("Save Failed", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Location not found")
 
 
 @admin.delete("/api/location/<int:id>")
@@ -1135,7 +1154,7 @@ def api_location_delete(
     """
     location = Location.query.get(id)
     if location is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Location not found")
 
     if location.delete():
         Activity.create(
@@ -1145,9 +1164,9 @@ def api_location_delete(
             location.to_mini(),
             "location",
         )
-        return f"Deleted Location #{location.id}", 200
+        return HTTPResponse.success(message=f"Deleted Location #{location.id}")
     else:
-        return "Error deleting Location", 417
+        return HTTPResponse.error("Error deleting Location", status=500)
 
 
 @admin.post("/api/location/import/")
@@ -1160,9 +1179,9 @@ def api_location_import() -> Response:
     """
     if "csv" in request.files:
         Location.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error")
 
 
 # get one location
@@ -1180,7 +1199,7 @@ def api_location_get(id: t.id) -> Response:
     location = Location.query.get(id)
 
     if location is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Location not found")
     else:
         Activity.create(
             current_user,
@@ -1189,7 +1208,7 @@ def api_location_get(id: t.id) -> Response:
             location.to_mini(),
             "location",
         )
-        return json.dumps(location.to_dict()), 200
+        return HTTPResponse.success(data=location.to_dict())
 
 
 @admin.post("/api/location/regenerate/")
@@ -1197,14 +1216,13 @@ def api_location_get(id: t.id) -> Response:
 def api_location_regenerate() -> Response:
     """Endpoint for regenerating locations."""
     if rds.get(Location.CELERY_FLAG):
-        return (
+        return HTTPResponse.error(
             "Full Location texts regeneration already in progress, try again in a few moments.",
-            429,
+            status=429,
         )
     regenerate_locations.delay()
-    return (
-        "Full Location texts regeneration is queued successfully. This task will need a few moments to complete.",
-        200,
+    return HTTPResponse.success(
+        message="Full Location texts regeneration is queued successfully. This task will need a few moments to complete."
     )
 
 
@@ -1238,7 +1256,7 @@ def api_location_admin_levels() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/location-admin-level")
@@ -1264,7 +1282,9 @@ def api_location_admin_level_create(
     if admin_level.code is None:
         admin_level.code = max_code + 1
     elif admin_level.code != max_code + 1:
-        return "Code must be unique and one more than the highest code", 417
+        return HTTPResponse.error(
+            "Code must be unique and one more than the highest code", status=400
+        )
 
     if admin_level.save():
         Activity.create(
@@ -1274,9 +1294,12 @@ def api_location_admin_level_create(
             admin_level.to_mini(),
             "adminlevel",
         )
-        return f"Item created successfully ID ${admin_level.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{admin_level.id}",
+            data={"item": admin_level.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/location-admin-level/<int:id>")
@@ -1296,7 +1319,7 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
     admin_level = LocationAdminLevel.query.get(id)
     if admin_level:
         if validated_data["item"]["code"] != admin_level.code:
-            return "Cannot change the code of a level", 417
+            return HTTPResponse.error("Cannot change the code of a level", status=400)
         admin_level.from_json(validated_data["item"])
         if admin_level.save():
             Activity.create(
@@ -1306,11 +1329,11 @@ def api_location_admin_level_update(id: t.id, validated_data: dict) -> Response:
                 admin_level.to_mini(),
                 "adminlevel",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Location Admin Level not found")
 
 
 @admin.delete("/api/location-admin-level/<int:id>")
@@ -1326,16 +1349,16 @@ def api_location_admin_level_delete(id: t.id) -> Response:
         - success/error string based on the operation result.
     """
     if id in [1, 2, 3] or LocationAdminLevel.query.count() <= 3:
-        return "Cannot delete the first 3 levels", 417
+        return HTTPResponse.error("Cannot delete the first 3 levels", status=400)
     admin_level = LocationAdminLevel.query.get(id)
     if admin_level is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Location Admin Level not found")
     if Location.query.filter(Location.admin_level_id == id).count() > 0:
-        return "Cannot delete a level that is in use by a location", 417
+        return HTTPResponse.error("Cannot delete a level that is in use by a location", status=409)
 
     max_code = max([level.code for level in LocationAdminLevel.query.all()])
     if admin_level.code != max_code:
-        return "Only the highest level can be deleted.", 417
+        return HTTPResponse.error("Only the highest level can be deleted.", status=400)
 
     if admin_level.delete():
         Activity.create(
@@ -1345,9 +1368,9 @@ def api_location_admin_level_delete(id: t.id) -> Response:
             admin_level.to_mini(),
             "adminlevel",
         )
-        return f"Location Admin Level Deleted #{admin_level.id}", 200
+        return HTTPResponse.success(message=f"Location Admin Level Deleted #{admin_level.id}")
     else:
-        return "Error deleting Location Admin Level", 417
+        return HTTPResponse.error("Error deleting Location Admin Level", status=500)
 
 
 @admin.post("/api/location-admin-levels/reorder")
@@ -1361,8 +1384,10 @@ def api_location_admin_levels_reorder(validated_data: dict) -> Response:
     try:
         LocationAdminLevel.reorder(new_order)
     except Exception as e:
-        return str(e), 417
-    return "Updated, user should regenerate full locations from system settings", 200
+        return HTTPResponse.error(str(e), status=500)
+    return HTTPResponse.success(
+        message="Updated, user should regenerate full locations from system settings"
+    )
 
 
 # location type endpoints
@@ -1394,7 +1419,7 @@ def api_location_types() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/location-type")
@@ -1423,9 +1448,12 @@ def api_location_type_create(
             location_type.to_mini(),
             "locationtype",
         )
-        return f"Item created successfully ID ${location_type.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{location_type.id}",
+            data={"item": location_type.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/location-type/<int:id>")
@@ -1454,11 +1482,11 @@ def api_location_type_update(id: t.id, validated_data: dict) -> Response:
                 location_type.to_mini(),
                 "locationtype",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Location Type not found")
 
 
 @admin.delete("/api/location-type/<int:id>")
@@ -1477,7 +1505,7 @@ def api_location_type_delete(
     """
     location_type = LocationType.query.get(id)
     if location_type is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Location Type not found")
 
     if location_type.delete():
         Activity.create(
@@ -1487,9 +1515,9 @@ def api_location_type_delete(
             location_type.to_mini(),
             "locationtype",
         )
-        return f"Location Type Deleted #{location_type.id}", 200
+        return HTTPResponse.success(message=f"Location Type Deleted #{location_type.id}")
     else:
-        return "Error deleting Location Type", 417
+        return HTTPResponse.error("Error deleting Location Type", status=500)
 
 
 @admin.route("/api/countries/", methods=["GET", "POST"])
@@ -1522,7 +1550,7 @@ def api_countries() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/country")
@@ -1552,9 +1580,11 @@ def api_country_create(
             country.to_mini(),
             "country",
         )
-        return f"Item created successfully ID ${country.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{country.id}", data={"item": country.to_dict()}
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/country/<int:id>")
@@ -1583,11 +1613,11 @@ def api_country_update(id: t.id, validated_data: dict) -> Response:
                 country.to_mini(),
                 "country",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Country not found")
 
 
 @admin.delete("/api/country/<int:id>")
@@ -1606,7 +1636,7 @@ def api_country_delete(
     """
     country = Country.query.get(id)
     if country is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Country not found")
 
     if country.delete():
         # Record Activity
@@ -1617,9 +1647,9 @@ def api_country_delete(
             country.to_mini(),
             "country",
         )
-        return f"Country Deleted #{country.id}", 200
+        return HTTPResponse.success(message=f"Country Deleted #{country.id}")
     else:
-        return "Error deleting Country", 417
+        return HTTPResponse.error("Error deleting Country", status=500)
 
 
 @admin.route("/api/ethnographies/", methods=["GET", "POST"])
@@ -1652,7 +1682,7 @@ def api_ethnographies() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/ethnography")
@@ -1681,9 +1711,12 @@ def api_ethnography_create(
             ethnography.to_mini(),
             "ethnography",
         )
-        return f"Item created successfully ID ${ethnography.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{ethnography.id}",
+            data={"item": ethnography.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/ethnography/<int:id>")
@@ -1712,11 +1745,11 @@ def api_ethnography_update(id: t.id, validated_data: dict) -> Response:
                 ethnography.to_mini(),
                 "ethnography",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Ethnography not found")
 
 
 @admin.delete("/api/ethnography/<int:id>")
@@ -1735,7 +1768,7 @@ def api_ethnography_delete(
     """
     ethnography = Ethnography.query.get(id)
     if ethnography is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Ethnography not found")
 
     if ethnography.delete():
         # Record Activity
@@ -1746,9 +1779,9 @@ def api_ethnography_delete(
             ethnography.to_mini(),
             "ethnography",
         )
-        return f"Ethnography Deleted #{ethnography.id}", 200
+        return HTTPResponse.success(message=f"Ethnography Deleted #{ethnography.id}")
     else:
-        return "Error deleting Ethnography", 417
+        return HTTPResponse.error("Error deleting Ethnography", status=500)
 
 
 @admin.route("/api/dialects/", methods=["GET", "POST"])
@@ -1778,7 +1811,7 @@ def api_dialects() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/dialect")
@@ -1807,9 +1840,11 @@ def api_dialect_create(
             dialect.to_mini(),
             "dialect",
         )
-        return f"Item created successfully ID ${dialect.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{dialect.id}", data={"item": dialect.to_dict()}
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/dialect/<int:id>")
@@ -1838,11 +1873,11 @@ def api_dialect_update(id: t.id, validated_data: dict) -> Response:
                 dialect.to_mini(),
                 "dialect",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Dialect not found")
 
 
 @admin.delete("/api/dialect/<int:id>")
@@ -1861,7 +1896,7 @@ def api_dialect_delete(
     """
     dialect = Dialect.query.get(id)
     if dialect is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Dialect not found")
 
     if dialect.delete():
         # Record Activity
@@ -1872,9 +1907,9 @@ def api_dialect_delete(
             dialect.to_mini(),
             "dialect",
         )
-        return f"Dialect Deleted #{dialect.id}", 200
+        return HTTPResponse.success(message=f"Dialect Deleted #{dialect.id}")
     else:
-        return "Error deleting Dialect", 417
+        return HTTPResponse.error("Error deleting Dialect", status=500)
 
 
 @admin.route("/api/idnumbertypes/", methods=["GET", "POST"])
@@ -1904,7 +1939,7 @@ def api_id_number_types() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/idnumbertype")
@@ -1933,9 +1968,12 @@ def api_id_number_type_create(
             id_number_type.to_mini(),
             "idnumbertype",
         )
-        return f"Item created successfully ID {id_number_type.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{id_number_type.id}",
+            data={"item": id_number_type.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/idnumbertype/<int:id>")
@@ -1964,11 +2002,11 @@ def api_id_number_type_update(id: t.id, validated_data: dict) -> Response:
                 id_number_type.to_mini(),
                 "idnumbertype",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ID Number Type not found")
 
 
 @admin.delete("/api/idnumbertype/<int:id>")
@@ -1987,15 +2025,15 @@ def api_id_number_type_delete(
     """
     id_number_type = IDNumberType.query.get(id)
     if id_number_type is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ID Number Type not found")
 
     # Check if this ID number type is referenced by any actor.id_number[].type
     referenced_count = id_number_type.get_ref_count()
 
     if referenced_count > 0:
-        return (
+        return HTTPResponse.error(
             f"Cannot delete ID Number Type #{id_number_type.id}. It is referenced by {referenced_count} actor(s).",
-            409,
+            status=409,
         )
 
     if id_number_type.delete():
@@ -2007,9 +2045,9 @@ def api_id_number_type_delete(
             id_number_type.to_mini(),
             "idnumbertype",
         )
-        return f"ID Number Type Deleted {id_number_type.id}", 200
+        return HTTPResponse.success(message=f"ID Number Type Deleted #{id_number_type.id}")
     else:
-        return "Error deleting ID Number Type", 417
+        return HTTPResponse.error("Error deleting ID Number Type", status=500)
 
 
 @admin.route("/api/atoainfos/", methods=["GET", "POST"])
@@ -2029,7 +2067,7 @@ def api_atoainfos() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/atoainfo")
@@ -2051,7 +2089,7 @@ def api_atoainfo_create(
     atoainfo.from_json(validated_data["item"])
 
     if not (atoainfo.title and atoainfo.reverse_title):
-        return "Title and Reverse Title are required.", 417
+        return HTTPResponse.error("Title and Reverse Title are required.", status=400)
 
     if atoainfo.save():
         Activity.create(
@@ -2061,9 +2099,12 @@ def api_atoainfo_create(
             atoainfo.to_mini(),
             "atoainfo",
         )
-        return f"Item created successfully ID ${atoainfo.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{atoainfo.id}",
+            data={"item": atoainfo.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/atoainfo/<int:id>")
@@ -2092,11 +2133,11 @@ def api_atoainfo_update(id: t.id, validated_data: dict) -> Response:
                 atoainfo.to_mini(),
                 "atoainfo",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("AtoaInfo not found")
 
 
 @admin.delete("/api/atoainfo/<int:id>")
@@ -2115,7 +2156,7 @@ def api_atoainfo_delete(
     """
     atoainfo = AtoaInfo.query.get(id)
     if atoainfo is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("AtoaInfo not found")
 
     if atoainfo.delete():
         # Record Activity
@@ -2126,9 +2167,9 @@ def api_atoainfo_delete(
             atoainfo.to_mini(),
             "atoainfo",
         )
-        return f"AtoaInfo Deleted #{atoainfo.id}", 200
+        return HTTPResponse.success(message=f"AtoaInfo Deleted #{atoainfo.id}")
     else:
-        return "Error deleting Atoa Info", 417
+        return HTTPResponse.error("Error deleting Atoa Info", status=500)
 
 
 @admin.route("/api/atobinfos/", methods=["GET", "POST"])
@@ -2148,7 +2189,7 @@ def api_atobinfos() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/atobinfo")
@@ -2177,9 +2218,12 @@ def api_atobinfo_create(
             atobinfo.to_mini(),
             "atobinfo",
         )
-        return f"Item created successfully ID ${atobinfo.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{atobinfo.id}",
+            data={"item": atobinfo.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/atobinfo/<int:id>")
@@ -2208,11 +2252,11 @@ def api_atobinfo_update(id: t.id, validated_data: dict) -> Response:
                 atobinfo.to_mini(),
                 "atobinfo",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("AtobInfo not found")
 
 
 @admin.delete("/api/atobinfo/<int:id>")
@@ -2231,7 +2275,7 @@ def api_atobinfo_delete(
     """
     atobinfo = AtobInfo.query.get(id)
     if atobinfo is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("AtobInfo not found")
 
     if atobinfo.delete():
         # Record Activity
@@ -2242,9 +2286,9 @@ def api_atobinfo_delete(
             atobinfo.to_mini(),
             "atobinfo",
         )
-        return f"AtobInfo Deleted #{atobinfo.id}", 200
+        return HTTPResponse.success(message=f"AtobInfo Deleted #{atobinfo.id}")
     else:
-        return "Error deleting Atob Info", 417
+        return HTTPResponse.error("Error deleting Atob Info", status=500)
 
 
 @admin.route("/api/btobinfos/", methods=["GET", "POST"])
@@ -2264,7 +2308,7 @@ def api_btobinfos() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/btobinfo")
@@ -2293,9 +2337,12 @@ def api_btobinfo_create(
             btobinfo.to_mini(),
             "btobinfo",
         )
-        return f"Item created successfully ID ${btobinfo.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{btobinfo.id}",
+            data={"item": btobinfo.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/btobinfo/<int:id>")
@@ -2324,11 +2371,11 @@ def api_btobinfo_update(id: t.id, validated_data: dict) -> Response:
                 btobinfo.to_mini(),
                 "btobinfo",
             )
-            return "Item created successfully ID ${btobinfo.id}", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("BtobInfo not found")
 
 
 @admin.delete("/api/btobinfo/<int:id>")
@@ -2347,7 +2394,7 @@ def api_btobinfo_delete(
     """
     btobinfo = BtobInfo.query.get(id)
     if btobinfo is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("BtobInfo not found")
 
     if btobinfo.delete():
         # Record Activity
@@ -2358,9 +2405,9 @@ def api_btobinfo_delete(
             btobinfo.to_mini(),
             "btobinfo",
         )
-        return f"BtobInfo Deleted #{btobinfo.id}", 200
+        return HTTPResponse.success(message=f"BtobInfo Deleted #{btobinfo.id}")
     else:
-        return "Error deleting Btob Info", 417
+        return HTTPResponse.error("Error deleting Btob Info", status=500)
 
 
 @admin.route("/api/itoainfos/", methods=["GET", "POST"])
@@ -2380,7 +2427,7 @@ def api_itoainfos() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/itoainfo")
@@ -2409,9 +2456,12 @@ def api_itoainfo_create(
             itoainfo.to_mini(),
             "itoainfo",
         )
-        return f"Item created successfully ID ${itoainfo.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{itoainfo.id}",
+            data={"item": itoainfo.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/itoainfo/<int:id>")
@@ -2440,11 +2490,11 @@ def api_itoainfo_update(id: t.id, validated_data: dict) -> Response:
                 itoainfo.to_mini(),
                 "itoainfo",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ItoaInfo not found")
 
 
 @admin.delete("/api/itoainfo/<int:id>")
@@ -2463,7 +2513,7 @@ def api_itoainfo_delete(
     """
     itoainfo = ItoaInfo.query.get(id)
     if itoainfo is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ItoaInfo not found")
 
     if itoainfo.delete():
         # Record Activity
@@ -2474,9 +2524,9 @@ def api_itoainfo_delete(
             itoainfo.to_mini(),
             "itoainfo",
         )
-        return f"ItoaInfo Deleted #{itoainfo.id}", 200
+        return HTTPResponse.success(message=f"ItoaInfo Deleted #{itoainfo.id}")
     else:
-        return "Error deleting Itoa Info", 417
+        return HTTPResponse.error("Error deleting Itoa Info", status=500)
 
 
 @admin.route("/api/itobinfos/", methods=["GET", "POST"])
@@ -2496,7 +2546,7 @@ def api_itobinfos() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/itobinfo")
@@ -2525,9 +2575,12 @@ def api_itobinfo_create(
             itobinfo.to_mini(),
             "itobinfo",
         )
-        return f"Item created successfully ID ${itobinfo.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{itobinfo.id}",
+            data={"item": itobinfo.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/itobinfo/<int:id>")
@@ -2556,11 +2609,11 @@ def api_itobinfo_update(id: t.id, validated_data: dict) -> Response:
                 itobinfo.to_mini(),
                 "itobinfo",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ItobInfo not found")
 
 
 @admin.delete("/api/itobinfo/<int:id>")
@@ -2575,7 +2628,7 @@ def api_itobinfo_delete(
     """
     itobinfo = ItobInfo.query.get(id)
     if itobinfo is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ItobInfo not found")
 
     if itobinfo.delete():
         # Record Activity
@@ -2586,9 +2639,9 @@ def api_itobinfo_delete(
             itobinfo.to_mini(),
             "itobinfo",
         )
-        return f"ItobInfo Deleted #{itobinfo.id}", 200
+        return HTTPResponse.success(message=f"ItobInfo Deleted #{itobinfo.id}")
     else:
-        return "Error deleting Itob Info", 417
+        return HTTPResponse.error("Error deleting Itob Info", status=500)
 
 
 @admin.route("/api/itoiinfos/", methods=["GET", "POST"])
@@ -2608,7 +2661,7 @@ def api_itoiinfos() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/itoiinfo")
@@ -2637,9 +2690,12 @@ def api_itoiinfo_create(
             itoiinfo.to_mini(),
             "itoiinfo",
         )
-        return f"Item created successfully ID ${itoiinfo.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{itoiinfo.id}",
+            data={"item": itoiinfo.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/itoiinfo/<int:id>")
@@ -2668,11 +2724,11 @@ def api_itoiinfo_update(id: t.id, validated_data: dict) -> Response:
                 itoiinfo.to_mini(),
                 "itoiinfo",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ItoiInfo not found")
 
 
 @admin.delete("/api/itoiinfo/<int:id>")
@@ -2691,7 +2747,7 @@ def api_itoiinfo_delete(
     """
     itoiinfo = ItoiInfo.query.get(id)
     if itoiinfo is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("ItoiInfo not found")
 
     if itoiinfo.delete():
         # Record Activity
@@ -2702,9 +2758,9 @@ def api_itoiinfo_delete(
             itoiinfo.to_mini(),
             "itoiinfo",
         )
-        return f"ItoiInfo Deleted #{itoiinfo.id}", 200
+        return HTTPResponse.success(message=f"ItoiInfo Deleted #{itoiinfo.id}")
     else:
-        return "Error deleting Itoi Info", 417
+        return HTTPResponse.error("Error deleting Itoi Info", status=500)
 
 
 @admin.route("/api/mediacategories/", methods=["GET", "POST"])
@@ -2724,7 +2780,7 @@ def api_mediacategories() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/mediacategory")
@@ -2753,9 +2809,12 @@ def api_mediacategory_create(
             mediacategory.to_mini(),
             "mediacategory",
         )
-        return f"Item created successfully ID {mediacategory.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{mediacategory.id}",
+            data={"item": mediacategory.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/mediacategory/<int:id>")
@@ -2764,7 +2823,6 @@ def api_mediacategory_create(
 def api_mediacategory_update(id: t.id, validated_data: dict) -> Response:
     """
     Endpoint to update a MediaCategory.
-
     Args:
         - id: id of the MediaCategory
         - validated_data: validated data from the request.
@@ -2784,11 +2842,11 @@ def api_mediacategory_update(id: t.id, validated_data: dict) -> Response:
                 mediacategory.to_mini(),
                 "mediacategory",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("MediaCategory not found")
 
 
 @admin.delete("/api/mediacategory/<int:id>")
@@ -2807,7 +2865,7 @@ def api_mediacategory_delete(
     """
     mediacategory = MediaCategory.query.get(id)
     if mediacategory is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("MediaCategory not found")
 
     if mediacategory.delete():
         # Record Activity
@@ -2818,9 +2876,9 @@ def api_mediacategory_delete(
             mediacategory.to_mini(),
             "mediacategory",
         )
-        return f"MediaCategory Deleted #{mediacategory.id}", 200
+        return HTTPResponse.success(message=f"MediaCategory Deleted #{mediacategory.id}")
     else:
-        return "Error deleting Media Category", 417
+        return HTTPResponse.error("Error deleting Media Category", status=500)
 
 
 @admin.route("/api/geolocationtypes/", methods=["GET", "POST"])
@@ -2840,7 +2898,7 @@ def api_geolocationtypes() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/geolocationtype")
@@ -2869,9 +2927,12 @@ def api_geolocationtype_create(
             geolocationtype.to_mini(),
             "geolocationtype",
         )
-        return f"Item created successfully ID {geolocationtype.id}", 200
+        return HTTPResponse.created(
+            message=f"Item created successfully ID #{geolocationtype.id}",
+            data={"item": geolocationtype.to_dict()},
+        )
     else:
-        return "Creation failed.", 417
+        return HTTPResponse.error("Creation failed.", status=500)
 
 
 @admin.put("/api/geolocationtype/<int:id>")
@@ -2900,11 +2961,11 @@ def api_geolocationtype_update(id: t.id, validated_data: dict) -> Response:
                 geolocationtype.to_mini(),
                 "geolocationtype",
             )
-            return "Updated", 200
+            return HTTPResponse.success(message="Updated")
         else:
-            return "Error saving item", 417
+            return HTTPResponse.error("Error saving item", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("GeoLocationType not found")
 
 
 @admin.delete("/api/geolocationtype/<int:id>")
@@ -2923,7 +2984,7 @@ def api_geolocationtype_delete(
     """
     geolocationtype = GeoLocationType.query.get(id)
     if geolocationtype is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("GeoLocationType not found")
 
     if geolocationtype.delete():
         # Record Activity
@@ -2934,9 +2995,9 @@ def api_geolocationtype_delete(
             geolocationtype.to_mini(),
             "geolocationtype",
         )
-        return f"GeoLocationType Deleted #{geolocationtype.id}", 200
+        return HTTPResponse.success(message=f"GeoLocationType Deleted #{geolocationtype.id}")
     else:
-        return "Error deleting GeoLocation Type", 417
+        return HTTPResponse.error("Error deleting GeoLocation Type", status=500)
 
 
 @admin.route("/api/relation/info")
@@ -2949,15 +3010,15 @@ def relationship_info() -> Response:
     itoaInfo = [item.to_dict() for item in ItoaInfo.query.all()]
     itoiInfo = [item.to_dict() for item in ItoiInfo.query.all()]
 
-    return jsonify(
-        {
+    return HTTPResponse.success(
+        data={
             "atobInfo": atobInfo,
             "itobInfo": itobInfo,
             "btobInfo": btobInfo,
             "atoaInfo": atoaInfo,
             "itoaInfo": itoaInfo,
             "itoiInfo": itoiInfo,
-        }
+        },
     )
 
 
@@ -2966,6 +3027,7 @@ def relationship_info() -> Response:
 def bulletin_fields(id: Optional[t.id]) -> str:
     """Endpoint for bulletin fields configuration."""
     return render_template("admin/bulletin-fields.html")
+
 
 # Bulletin routes
 @admin.route("/bulletins/", defaults={"id": None})
@@ -2983,17 +3045,7 @@ def bulletins(id: Optional[t.id]) -> str:
 @admin.route("/api/bulletins/", methods=["POST", "GET"])
 @validate_with(BulletinQueryRequestModel)
 def api_bulletins(validated_data: dict) -> Response:
-    """
-    Returns bulletins in JSON format, allows search and paging.
-
-    Args:
-        - validated_data: validated data from the request.
-
-    Returns:
-        - response: Response object
-        - status code: 200
-    """
-    # log search query
+    # Log search query
     q = validated_data.get("q", None)
     if q and q != [{}]:
         Activity.create(
@@ -3004,35 +3056,117 @@ def api_bulletins(validated_data: dict) -> Response:
             "bulletin",
         )
 
-    su = SearchUtils(validated_data, cls="bulletin")
-    queries, ops = su.get_query()
-    result = Bulletin.query.filter(*queries.pop(0))
+    q = validated_data.get("q", [{}])
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", PER_PAGE)
+    include_count = validated_data.get("include_count", False)
 
-    # nested queries
-    if len(queries) > 0:
-        while queries:
-            nextOp = ops.pop(0)
-            nextQuery = queries.pop(0)
-            if nextOp == "union":
-                result = result.union(Bulletin.query.filter(*nextQuery))
-            elif nextOp == "intersect":
-                result = result.intersect(Bulletin.query.filter(*nextQuery))
+    search = SearchUtils({"q": q}, "bulletin")
+    base_query = search.get_query()
 
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
-    result = result.order_by(Bulletin.updated_at.desc()).paginate(
-        page=page, per_page=per_page, count=True
-    )
+    if include_count and cursor is None:
+        # Check if this is a simple listing query (no search filters)
+        is_simple_listing = q == [{}] or not any(
+            bool(filter_dict) for filter_dict in q if filter_dict
+        )
 
-    # Select json encoding type
-    mode = request.args.get("mode", "1")
+        if is_simple_listing:
+            # For simple listing: use fast COUNT(*) directly on table (~50ms)
+            total_count = db.session.execute(select(func.count(Bulletin.id))).scalar()
+
+            # Fast data query without window function overhead
+            main_query = base_query.order_by(Bulletin.id.desc()).limit(per_page + 1)
+            result = db.session.execute(main_query)
+            items = result.scalars().unique().all()
+        else:
+            # For search queries: keep original window function approach
+            count_subquery = (
+                base_query.add_columns(func.count().over().label("total_count"))
+                .order_by(Bulletin.id.desc())
+                .limit(per_page + 1)
+            )
+
+            result = db.session.execute(count_subquery)
+            rows = result.all()
+
+            if rows:
+                items = [row[0] for row in rows]  # Extract Bulletin objects
+                total_count = rows[0].total_count if rows else 0
+            else:
+                items = []
+                total_count = 0
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+    else:
+        # Fast pagination approach: no counting overhead
+        main_query = base_query.order_by(Bulletin.id.desc())
+        if cursor:
+            main_query = main_query.where(Bulletin.id < int(cursor))
+
+        paginated_query = main_query.limit(per_page + 1)
+        result = db.session.execute(paginated_query)
+        items = result.scalars().unique().all()
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+        total_count = None
+
+    # Minimal serialization for list view with permission checks
+    serialized_items = []
+    for item in items:
+        if current_user and current_user.can_access(item):
+            # User has access - return full details
+            serialized_items.append(
+                {
+                    "id": item.id,
+                    "title": item.title,
+                    "status": item.status,
+                    "assigned_to": (
+                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                        if item.assigned_to
+                        else None
+                    ),
+                    "roles": (
+                        [
+                            {"id": role.id, "name": role.name, "color": role.color}
+                            for role in item.roles
+                        ]
+                        if item.roles
+                        else []
+                    ),
+                    "_status": item.status,
+                    "review_action": item.review_action,
+                }
+            )
+        else:
+            # User doesn't have access - return restricted info only
+            serialized_items.append({"id": item.id, "restricted": True})
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": per_page,
-        "total": result.total,
+        "items": serialized_items,
+        "nextCursor": next_cursor,
+        "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    # Add count if it was calculated
+    if include_count and cursor is None and total_count is not None:
+        response["total"] = total_count
+        response["totalType"] = "exact"
+
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/bulletin/")
@@ -3074,12 +3208,11 @@ def api_bulletin_create(
         )
         # Select json encoding type
         mode = request.args.get("mode", "1")
-        return {
-            "message": f"Created Bulletin #{bulletin.id}",
-            "item": bulletin.to_dict(mode=mode),
-        }, 201
+        return HTTPResponse.created(
+            message=f"Created Bulletin #{bulletin.id}", data={"item": bulletin.to_dict(mode=mode)}
+        )
     else:
-        return {"message": "Error creating Bulletin"}, 417
+        return HTTPResponse.error("Error creating Bulletin", status=500)
 
 
 @admin.put("/api/bulletin/<int:id>")
@@ -3108,7 +3241,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 "bulletin",
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         if not current_user.has_role("Admin") and current_user != bulletin.assigned_to:
             Activity.create(
@@ -3119,7 +3252,7 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 "bulletin",
                 details=f"Unauthorized attempt to update unassigned Bulletin {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         bulletin = bulletin.from_json(validated_data["item"])
 
@@ -3132,9 +3265,9 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
             bulletin.to_mini(),
             "bulletin",
         )
-        return f"Saved Bulletin #{bulletin.id}", 200
+        return HTTPResponse.success(message=f"Saved Bulletin #{bulletin.id}")
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Bulletin not found")
 
 
 # Add/Update review bulletin endpoint
@@ -3163,7 +3296,7 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 "bulletin",
                 details=f"Unauthorized attempt to update restricted Bulletin {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         bulletin.review = (
             validated_data["item"]["review"] if "review" in validated_data["item"] else ""
@@ -3202,11 +3335,11 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 bulletin.to_mini(),
                 "bulletin",
             )
-            return f"Bulletin review updated #{bulletin.id}", 200
+            return HTTPResponse.success(message=f"Bulletin review updated #{bulletin.id}")
         else:
-            return f"Error saving Bulletin #{id}", 417
+            return HTTPResponse.error(f"Error saving Bulletin #{id}", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Bulletin not found")
 
 
 # bulk update bulletin endpoint
@@ -3240,9 +3373,9 @@ def api_bulletin_bulk_update(
         rds.set(key, job.id)
         # expire in 3 hours
         rds.expire(key, 60 * 60 * 3)
-        return "Bulk update queued successfully", 200
+        return HTTPResponse.success(message="Bulk update queued successfully")
     else:
-        return "No items selected, or nothing to update", 417
+        return HTTPResponse.error("No items selected, or nothing to update", status=400)
 
 
 # get one bulletin
@@ -3262,7 +3395,7 @@ def api_bulletin_get(
     bulletin = Bulletin.query.get(id)
     mode = request.args.get("mode", None)
     if not bulletin:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Bulletin not found")
     else:
         # hide review from view-only users
         if not current_user.roles:
@@ -3275,7 +3408,7 @@ def api_bulletin_get(
                 bulletin.to_mini(),
                 "bulletin",
             )
-            return json.dumps(bulletin.to_dict(mode)), 200
+            return HTTPResponse.success(data=bulletin.to_dict(mode))
         else:
             # block access altogether here, doesn't make sense to send only the id
             Activity.create(
@@ -3286,7 +3419,7 @@ def api_bulletin_get(
                 "bulletin",
                 details=f"Unauthorized attempt to view restricted Bulletin {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
 
 # get bulletin relations
@@ -3305,10 +3438,10 @@ def bulletin_relations(id: t.id) -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.error("Invalid class", status=400)
     bulletin = Bulletin.query.get(id)
     if not bulletin:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Bulletin not found")
     items = []
 
     if cls == "bulletin":
@@ -3329,7 +3462,7 @@ def bulletin_relations(id: t.id) -> Response:
         else:
             data = [item.to_dict() for item in data]
 
-    return json.dumps({"items": data, "more": load_more}), 200
+    return HTTPResponse.success(data={"items": data, "more": load_more})
 
 
 @admin.post("/api/bulletin/import/")
@@ -3343,9 +3476,9 @@ def api_bulletin_import() -> Response:
     """
     if "csv" in request.files:
         Bulletin.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error", status=400)
 
 
 # ----- self assign endpoints -----
@@ -3368,7 +3501,7 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
 
     # permission check
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
-        return "User not allowed to self assign", 403
+        return HTTPResponse.forbidden("User not allowed to self assign")
 
     bulletin = Bulletin.query.get(id)
 
@@ -3381,13 +3514,13 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
             "bulletin",
             details=f"Unauthorized attempt to self-assign restricted Bulletin {id}.",
         )
-        return "Restricted Access", 403
+        return HTTPResponse.forbidden("Restricted Access")
 
     if bulletin:
         b = validated_data.get("bulletin")
         # workflow check
         if bulletin.assigned_to_id and bulletin.assigned_to.active:
-            return "Item already assigned to an active user", 400
+            return HTTPResponse.error("Item already assigned to an active user", status=400)
 
         # update bulletin assignement
         bulletin.assigned_to_id = current_user.id
@@ -3412,9 +3545,9 @@ def api_bulletin_self_assign(id: t.id, validated_data: dict) -> Response:
             bulletin.to_mini(),
             "bulletin",
         )
-        return f"Saved Bulletin #{bulletin.id}", 200
+        return HTTPResponse.success(message=f"Saved Bulletin #{bulletin.id}")
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Bulletin not found")
 
 
 @admin.put("/api/actor/assign/<int:id>")
@@ -3434,7 +3567,7 @@ def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
 
     # permission check
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
-        return "User not allowed to self assign", 403
+        return HTTPResponse.forbidden("User not allowed to self assign")
 
     actor = Actor.query.get(id)
 
@@ -3447,13 +3580,13 @@ def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
             "actor",
             details=f"Unauthorized attempt to self-assign restricted Actor {id}.",
         )
-        return "Restricted Access", 403
+        return HTTPResponse.forbidden("Restricted Access")
 
     if actor:
         a = validated_data.get("actor")
         # workflow check
         if actor.assigned_to_id and actor.assigned_to.active:
-            return "Item already assigned to an active user", 400
+            return HTTPResponse.error("Item already assigned to an active user")
 
         # update bulletin assignement
         actor.assigned_to_id = current_user.id
@@ -3469,9 +3602,9 @@ def api_actor_self_assign(id: t.id, validated_data: dict) -> Response:
         Activity.create(
             current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, actor.to_mini(), "actor"
         )
-        return f"Saved Actor #{actor.id}", 200
+        return HTTPResponse.success(message=f"Saved Actor #{actor.id}")
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Actor not found")
 
 
 @admin.put("/api/incident/assign/<int:id>")
@@ -3491,7 +3624,7 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
 
     # permission check
     if not (current_user.has_role("Admin") or current_user.can_self_assign):
-        return "User not allowed to self assign", 403
+        return HTTPResponse.forbidden("User not allowed to self assign")
 
     incident = Incident.query.get(id)
 
@@ -3504,13 +3637,13 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
             "incident",
             details=f"Unauthorized attempt to self-assign restricted Incident {id}.",
         )
-        return "Restricted Access", 403
+        return HTTPResponse.forbidden("Restricted Access")
 
     if incident:
         i = validated_data.get("incident")
         # workflow check
         if incident.assigned_to_id and incident.assigned_to.active:
-            return "Item already assigned to an active user", 400
+            return HTTPResponse.error("Item already assigned to an active user")
 
         # update bulletin assignement
         incident.assigned_to_id = current_user.id
@@ -3530,9 +3663,9 @@ def api_incident_self_assign(id: t.id, validated_data: dict) -> Response:
             incident.to_mini(),
             "incident",
         )
-        return f"Saved Incident #{incident.id}", 200
+        return HTTPResponse.success(message=f"Saved Incident #{incident.id}")
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Incident not found")
 
 
 # Media special endpoints
@@ -3558,7 +3691,7 @@ def api_medias_chunk() -> Response:
         if current_user.has_role("Admin"):
             allowed_extensions = current_app.config["ETL_VID_EXT"]
             if not Media.validate_file_extension(file.filename, allowed_extensions):
-                return "This file type is not allowed", 415
+                return HTTPResponse.error("This file type is not allowed", status=415)
         else:
             Activity.create(
                 current_user,
@@ -3568,7 +3701,7 @@ def api_medias_chunk() -> Response:
                 "media",
                 details="Non-admin user attempted to upload media file using import endpoint.",
             )
-            return HTTPResponse.UNAUTHORIZED
+            return HTTPResponse.forbidden("Unauthorized")
     else:
         # normal uploads by DA or Admin users
         allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
@@ -3581,8 +3714,7 @@ def api_medias_chunk() -> Response:
                 "media",
                 details="User attempted to upload unallowed file type.",
             )
-            return "This file type is not allowed", 415
-
+            return HTTPResponse.error("This file type is not allowed", status=415)
     filename = Media.generate_file_name(file.filename)
     filepath = (Media.media_dir / filename).as_posix()
 
@@ -3600,13 +3732,13 @@ def api_medias_chunk() -> Response:
 
     # validate dz_uuid
     if not safe_join(str(Media.media_file), dz_uuid):
-        return "Invalid Request", 425
+        return HTTPResponse.error("Invalid Request", status=425)
 
     save_dir = Media.media_dir / secure_filename(dz_uuid)
 
     # validate current chunk
     if not safe_join(str(save_dir), str(current_chunk)) or current_chunk.__class__ != int:
-        return "Invalid Request", 425
+        return HTTPResponse.error("Invalid Request", status=425)
 
     if not save_dir.exists():
         save_dir.mkdir(exist_ok=True, parents=True)
@@ -3625,7 +3757,7 @@ def api_medias_chunk() -> Response:
                 f.write((save_dir / str(file_number)).read_bytes())
 
         if os.stat(filepath).st_size != total_size:
-            raise abort(400, body=f"Error uploading the file")
+            return HTTPResponse.error(f"Error uploading the file")
 
         shutil.rmtree(save_dir)
         # get md5 hash
@@ -3633,7 +3765,7 @@ def api_medias_chunk() -> Response:
 
         # validate etag here // if it exists // reject the upload and send an error code
         if Media.query.filter(Media.etag == etag, Media.deleted.is_not(True)).first():
-            return "Error, file already exists", 409
+            return HTTPResponse.error("Error, file already exists", status=409)
 
         if not current_app.config["FILESYSTEM_LOCAL"] and not import_upload:
             s3 = boto3.resource(
@@ -3653,9 +3785,9 @@ def api_medias_chunk() -> Response:
         Activity.create(
             current_user, Activity.ACTION_UPLOAD, Activity.STATUS_SUCCESS, response, "media"
         )
-        return Response(json.dumps(response), content_type="application/json"), 200
+        return HTTPResponse.success(data=response)
 
-    return "Chunk upload successful", 200
+    return HTTPResponse.success(message="Chunk upload successful")
 
 
 @admin.post("/api/media/upload/")
@@ -3669,7 +3801,7 @@ def api_medias_upload() -> Response:
     """
     file = request.files.get("file")
     if not file:
-        return "Invalid request params", 417
+        return HTTPResponse.error("Invalid request params", status=400)
 
     # normal uploads by DA or Admin users
     allowed_extensions = current_app.config["MEDIA_ALLOWED_EXTENSIONS"]
@@ -3682,7 +3814,7 @@ def api_medias_upload() -> Response:
             "media",
             details="User attempted to upload unallowed file type.",
         )
-        return "This file type is not allowed", 415
+        return HTTPResponse.error("This file type is not allowed", status=415)
 
     if current_app.config["FILESYSTEM_LOCAL"]:
         file = request.files.get("file")
@@ -3696,11 +3828,11 @@ def api_medias_upload() -> Response:
         etag = get_file_hash(filepath)
         # check if file already exists
         if Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
-            return "Error: File already exists", 409
+            return HTTPResponse.error("Error: File already exists", status=409)
 
         response = {"etag": etag, "filename": filename}
 
-        return Response(json.dumps(response), content_type="application/json"), 200
+        return HTTPResponse.success(data=response)
     else:
         s3 = boto3.resource(
             "s3",
@@ -3718,9 +3850,9 @@ def api_medias_upload() -> Response:
 
         # check if file already exists
         if Media.query.filter(Media.etag == etag, Media.deleted is not True).first():
-            return "Error: File already exists", 409
+            return HTTPResponse.error("Error: File already exists", status=409)
 
-        return json.dumps({"filename": filename, "etag": etag}), 200
+        return HTTPResponse.success(data={"filename": filename, "etag": etag})
 
 
 GRACE_PERIOD = timedelta(hours=2)  # 2 hours
@@ -3745,9 +3877,9 @@ def serve_media(
     if current_app.config["FILESYSTEM_LOCAL"]:
         file_path = safe_join("/admin/api/serve/media", filename)
         if file_path:
-            return file_path, 200
+            return HTTPResponse.success(data={"url": file_path})
         else:
-            return "Invalid Request", 425
+            return HTTPResponse.error("Invalid Request", status=425)
     else:
         # validate access control
         media = Media.query.filter(Media.media_file == filename).first()
@@ -3775,7 +3907,7 @@ def serve_media(
                 if datetime.utcnow() - last_modified.replace(tzinfo=None) <= GRACE_PERIOD:
                     params = {"Bucket": current_app.config["S3_BUCKET"], "Key": filename}
                     url = s3.generate_presigned_url("get_object", Params=params, ExpiresIn=36000)
-                    return url, 200
+                    return HTTPResponse.success(data={"url": url})
                 else:
                     Activity.create(
                         current_user,
@@ -3785,11 +3917,11 @@ def serve_media(
                         "media",
                         details="Unauthorized attempt to access restricted media file.",
                     )
-                    return HTTPResponse.FORBIDDEN
+                    return HTTPResponse.forbidden("Restricted Access")
             except s3.exceptions.NoSuchKey:
-                return HTTPResponse.NOT_FOUND
+                return HTTPResponse.not_found("File not found")
             except Exception as e:
-                return HTTPResponse.INTERNAL_SERVER_ERROR
+                return HTTPResponse.error("Internal Server Error", status=500)
         else:
             # media exists in the database, check access control restrictions
             if not current_user.can_access(media):
@@ -3801,12 +3933,18 @@ def serve_media(
                     "media",
                     details="Unauthorized attempt to access restricted media file.",
                 )
-                return "Restricted Access", 403
+                return HTTPResponse.forbidden("Restricted Access")
 
             params = {"Bucket": current_app.config["S3_BUCKET"], "Key": filename}
             if filename.lower().endswith("pdf"):
                 params["ResponseContentType"] = "application/pdf"
-            return s3.generate_presigned_url("get_object", Params=params, ExpiresIn=S3_URL_EXPIRY)
+            return HTTPResponse.success(
+                data={
+                    "url": s3.generate_presigned_url(
+                        "get_object", Params=params, ExpiresIn=S3_URL_EXPIRY
+                    )
+                },
+            )
 
 
 @admin.route("/api/serve/media/<filename>")
@@ -3834,7 +3972,7 @@ def api_local_serve_media(
             "media",
             details="Unauthorized attempt to access restricted media file.",
         )
-        return "Restricted Access", 403
+        return HTTPResponse.forbidden("Restricted Access")
     else:
         if media:
             Activity.create(
@@ -3865,10 +4003,10 @@ def api_inline_medias_upload() -> Response:
         f.save(filepath)
         response = {"location": filename}
 
-        return Response(json.dumps(response), content_type="application/json"), 200
+        return HTTPResponse.success(data=response)
     except Exception as e:
         logger.error(e, exc_info=True)
-        return "Request Failed", 417
+        return HTTPResponse.error("Request Failed", status=500)
 
 
 @admin.route("/api/serve/inline/<filename>")
@@ -3904,7 +4042,7 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
     """
     media = Media.query.get(id)
     if media is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Media not found")
 
     if not current_user.can_access(media):
         Activity.create(
@@ -3915,7 +4053,7 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
             "media",
             details="Unauthorized attempt to update restricted media.",
         )
-        return "Restricted Access", 403
+        return HTTPResponse.forbidden("Restricted Access")
 
     media = media.from_json(validated_data["item"])
     if media.save():
@@ -3926,9 +4064,9 @@ def api_media_update(id: t.id, validated_data: dict) -> Response:
             validated_data,
             "media",
         )
-        return "Media {id} updated", 200
+        return HTTPResponse.success(message=f"Media {id} updated")
     else:
-        return "Error updating Media", 417
+        return HTTPResponse.error("Error updating Media", status=500)
 
 
 # Actor routes
@@ -3957,10 +4095,7 @@ def api_actors(validated_data: dict) -> Response:
         - actors in json format / success or error
     """
     # log search query
-    if request.method == "POST":
-        q = validated_data.get("q", [{}])
-    else:
-        q = request.args.get("q", [{}])
+    q = validated_data.get("q", [{}])
     if q and q != [{}]:
         Activity.create(
             current_user,
@@ -3970,34 +4105,116 @@ def api_actors(validated_data: dict) -> Response:
             "actor",
         )
 
-    su = SearchUtils({"q": q}, cls="actor")
-    queries, ops = su.get_query()
-    result = Actor.query.filter(*queries.pop(0))
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", PER_PAGE)
+    include_count = validated_data.get("include_count", False)
 
-    # nested queries
-    if len(queries) > 0:
-        while queries:
-            nextOp = ops.pop(0)
-            nextQuery = queries.pop(0)
-            if nextOp == "union":
-                result = result.union(Actor.query.filter(*nextQuery))
-            elif nextOp == "intersect":
-                result = result.intersect(Actor.query.filter(*nextQuery))
+    search = SearchUtils({"q": q}, "actor")
+    base_query = search.get_query()
 
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
-    result = result.order_by(Actor.updated_at.desc()).paginate(
-        page=page, per_page=per_page, count=True
-    )
-    # Select json encoding type
-    mode = request.args.get("mode", "1")
+    if include_count and cursor is None:
+        # Check if this is a simple listing query (no search filters)
+        is_simple_listing = q == [{}] or not any(
+            bool(filter_dict) for filter_dict in q if filter_dict
+        )
+
+        if is_simple_listing:
+            # For simple listing: use fast COUNT(*) directly on table (~50ms)
+            total_count = db.session.execute(select(func.count(Actor.id))).scalar()
+
+            # Fast data query without window function overhead
+            main_query = base_query.order_by(Actor.id.desc()).limit(per_page + 1)
+            result = db.session.execute(main_query)
+            items = result.scalars().unique().all()
+        else:
+            # For search queries: keep original window function approach
+            count_subquery = (
+                base_query.add_columns(func.count().over().label("total_count"))
+                .order_by(Actor.id.desc())
+                .limit(per_page + 1)
+            )
+
+            result = db.session.execute(count_subquery)
+            rows = result.all()
+
+            if rows:
+                items = [row[0] for row in rows]  # Extract Actor objects
+                total_count = rows[0].total_count if rows else 0
+            else:
+                items = []
+                total_count = 0
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+    else:
+        # Fast pagination approach: no counting overhead
+        main_query = base_query.order_by(Actor.id.desc())
+        if cursor:
+            main_query = main_query.where(Actor.id < int(cursor))
+
+        paginated_query = main_query.limit(per_page + 1)
+        result = db.session.execute(paginated_query)
+        items = result.scalars().unique().all()
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+        total_count = None
+
+    # Minimal serialization for list view with permission checks
+    serialized_items = []
+    for item in items:
+        if current_user and current_user.can_access(item):
+            # User has access - return full details
+            serialized_items.append(
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "status": item.status,
+                    "assigned_to": (
+                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                        if item.assigned_to
+                        else None
+                    ),
+                    "roles": (
+                        [
+                            {"id": role.id, "name": role.name, "color": role.color}
+                            for role in item.roles
+                        ]
+                        if item.roles
+                        else []
+                    ),
+                    "_status": item.status,
+                    "review_action": item.review_action,
+                }
+            )
+        else:
+            # User doesn't have access - return restricted info only
+            serialized_items.append({"id": item.id, "restricted": True})
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": per_page,
-        "total": result.total,
+        "items": serialized_items,
+        "nextCursor": next_cursor,
+        "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    # Add count if it was calculated
+    if include_count and cursor is None and total_count is not None:
+        response["total"] = total_count
+        response["totalType"] = "exact"
+
+    return HTTPResponse.success(data=response)
 
 
 # create actor endpoint
@@ -4038,9 +4255,12 @@ def api_actor_create(
         )
         # Select json encoding type
         mode = request.args.get("mode", "1")
-        return {"message": f"Created Actor #{actor.id}", "item": actor.to_dict(mode=mode)}, 201
+        return HTTPResponse.created(
+            message=f"Created Actor #{actor.id}",
+            data={"item": actor.to_dict(mode=mode)},
+        )
     else:
-        return {"message": "Error creating Actor"}, 417
+        return HTTPResponse.error("Error creating Actor", status=500)
 
 
 # update actor endpoint
@@ -4070,7 +4290,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 "actor",
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         if not current_user.has_role("Admin") and current_user != actor.assigned_to:
             Activity.create(
@@ -4081,7 +4301,7 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 "actor",
                 details=f"Unauthorized attempt to update unassigned Actor {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
         actor = actor.from_json(validated_data["item"])
         # Create a revision using latest values
         # this method automatically commits
@@ -4096,11 +4316,11 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 actor.to_mini(),
                 "actor",
             )
-            return f"Saved Actor #{actor.id}", 200
+            return HTTPResponse.success(message=f"Saved Actor #{actor.id}")
         else:
-            return f"Error saving Actor #{id}", 417
+            return HTTPResponse.error(f"Error saving Actor #{id}", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Actor not found")
 
 
 # Add/Update review actor endpoint
@@ -4129,7 +4349,7 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 "actor",
                 details=f"Unauthorized attempt to update restricted Actor {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         actor.review = (
             validated_data["item"]["review"] if "review" in validated_data["item"] else ""
@@ -4155,11 +4375,11 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 actor.to_mini(),
                 "actor",
             )
-            return f"Actor review updated #{id}", 200
+            return HTTPResponse.success(message=f"Actor review updated #{id}")
         else:
-            return f"Error saving Actor #{id}'s Review", 417
+            return HTTPResponse.error(f"Error saving Actor #{id}'s Review", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Actor not found")
 
 
 # bulk update actor endpoint
@@ -4194,9 +4414,9 @@ def api_actor_bulk_update(
         rds.set(key, job.id)
         # expire in 3 hour
         rds.expire(key, 60 * 60 * 3)
-        return "Bulk update queued successfully.", 200
+        return HTTPResponse.success(message="Bulk update queued successfully.")
     else:
-        return "No items selected, or nothing to update", 417
+        return HTTPResponse.error("No items selected, or nothing to update", status=400)
 
 
 # get one actor
@@ -4217,7 +4437,7 @@ def api_actor_get(
     """
     actor = Actor.query.get(id)
     if not actor:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Actor not found")
     else:
         mode = request.args.get("mode", None)
         if current_user.can_access(actor):
@@ -4228,7 +4448,7 @@ def api_actor_get(
                 actor.to_mini(),
                 "actor",
             )
-            return json.dumps(actor.to_dict(mode)), 200
+            return HTTPResponse.success(data=actor.to_dict(mode))
         else:
             # block access altogether here, doesn't make sense to send only the id
             Activity.create(
@@ -4239,7 +4459,7 @@ def api_actor_get(
                 "actor",
                 details="Unauthorized attempt to view restricted Actor.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
 
 @admin.get("/api/actor/<int:actor_id>/profiles")
@@ -4255,7 +4475,7 @@ def api_actor_profiles(actor_id: t.id) -> Response:
     """
     actor = Actor.query.get(actor_id)
     if not actor:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Actor not found")
 
     if not current_user.can_access(actor):
         Activity.create(
@@ -4266,11 +4486,11 @@ def api_actor_profiles(actor_id: t.id) -> Response:
             "actor",
             details="Unauthorized attempt to view restricted Actor profiles.",
         )
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.forbidden("Restricted Access")
 
     profiles = actor.actor_profiles
     profiles_data = [profile.to_dict() for profile in profiles]
-    return json.dumps(profiles_data), 200
+    return HTTPResponse.success(data=profiles_data)
 
 
 # get actor relations
@@ -4289,10 +4509,10 @@ def actor_relations(id: t.id) -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.error("Invalid class")
     actor = Actor.query.get(id)
     if not actor:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Actor not found")
     items = []
 
     if cls == "bulletin":
@@ -4315,7 +4535,7 @@ def actor_relations(id: t.id) -> Response:
         else:
             data = [item.to_dict() for item in data]
 
-    return json.dumps({"items": data, "more": load_more}), 200
+    return HTTPResponse.success(data={"items": data, "more": load_more})
 
 
 @admin.get("/api/actormp/<int:id>")
@@ -4331,7 +4551,7 @@ def api_actor_mp_get(id: t.id) -> Response:
     """
     profile = ActorProfile.query.get(id)
     if not profile:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Actor profile not found")
 
     if not current_user.can_access(profile.actor):
         Activity.create(
@@ -4342,9 +4562,9 @@ def api_actor_mp_get(id: t.id) -> Response:
             "actor",
             details="Unauthorized attempt to view restricted Actor.",
         )
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.forbidden("Restricted Access")
 
-    return json.dumps(profile.mp_json()), 200
+    return HTTPResponse.success(data=profile.mp_json())
 
 
 # Bulletin History Helpers
@@ -4370,7 +4590,7 @@ def api_bulletinhistory(bulletinid: t.id) -> Response:
 
     # For standardization
     response = {"items": [item.to_dict() for item in result]}
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 # Actor History Helpers
@@ -4393,7 +4613,7 @@ def api_actorhistory(actorid: t.id) -> Response:
     )
     # For standardization
     response = {"items": [item.to_dict() for item in result]}
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 # Incident History Helpers
@@ -4418,7 +4638,7 @@ def api_incidenthistory(incidentid: t.id) -> Response:
     )
     # For standardization
     response = {"items": [item.to_dict() for item in result]}
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 # Location History Helpers
@@ -4443,7 +4663,7 @@ def api_locationhistory(locationid: t.id) -> Response:
     )
     # For standardization
     response = {"items": [item.to_dict() for item in result]}
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 # user management routes
@@ -4479,7 +4699,7 @@ def api_users() -> Response:
         "total": result.total,
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.get("/users/", defaults={"id": None})
@@ -4506,9 +4726,9 @@ def api_user_get(id) -> Response:
     """
     user = User.query.get(id)
     if not user:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("User not found")
     else:
-        return user.to_dict()
+        return HTTPResponse.success(data=user.to_dict())
 
 
 @admin.get("/api/user/<int:id>/sessions")
@@ -4533,7 +4753,7 @@ def api_user_sessions(id: int) -> Any:
         # Fetch the user to ensure they exist and to collect their session tokens
         user = User.query.get(id)
         if not user:
-            return HTTPResponse.NOT_FOUND
+            return HTTPResponse.not_found("User not found")
         sessions_paginated = (
             Session.query.filter(Session.user_id == id).order_by(Session.created_at.desc())
         ).paginate(page=page, per_page=per_page, error_out=False)
@@ -4566,10 +4786,10 @@ def api_user_sessions(id: int) -> Any:
         # Determine if there are more items left
         more = sessions_paginated.has_next
 
-        return {"items": sessions_data, "more": more}
+        return HTTPResponse.success(data={"items": sessions_data, "more": more})
 
     except Exception as e:
-        return {"error": "Expectation failed", "message": str(e)}, 417
+        return HTTPResponse.error("Server error", status=500, errors=[str(e)])
 
 
 @admin.delete("/api/session/logout")
@@ -4584,20 +4804,20 @@ def logout_session() -> Response:
     # get the sessid from the JSON payload
     sessid = request.json.get("sessid", None)
     if not sessid:
-        return "Invalid request. Please provide a session ID.", 400
+        return HTTPResponse.error("Invalid request. Please provide a session ID.")
     try:
         # Query the database to get the session token using the sessid
         session_ = Session.query.get(sessid)
 
         if not session_:
-            return f"Session ID {sessid} not found.", 404
+            return HTTPResponse.not_found(f"Session ID {sessid} not found.")
 
         token = session_.session_token
 
         if token == session.sid:
             logout_user()
             # Use a custom JSON response with a specific field to signal a redirect to the front-end
-            return {"logout": "successful", "redirect": True}
+            return HTTPResponse.success(data={"logout": "successful", "redirect": True})
 
         rds = current_app.config["SESSION_REDIS"]
         session_key = f"session:{token}"
@@ -4606,12 +4826,12 @@ def logout_session() -> Response:
         if rds.exists(session_key):
             # Delete the session key from Redis
             rds.delete(session_key)
-            return f"Session {sessid} logged out successfully."
+            return HTTPResponse.success(message=f"Session {sessid} logged out successfully.")
         else:
-            return f"Session {sessid} not found in Redis.", 404
+            return HTTPResponse.not_found(f"Session {sessid} not found in Redis.")
 
     except Exception as e:
-        return f"Error while logging out session: {str(e)}", 500
+        return HTTPResponse.error(f"Error while logging out session: {str(e)}", status=500)
 
 
 @admin.delete("/api/user/<int:user_id>/sessions/logout")
@@ -4629,7 +4849,7 @@ def logout_all_sessions(user_id: int) -> Any:
     # Fetch the user to ensure they exist
     user = User.query.get(user_id)
     if not user:
-        return "User not found", 404
+        return HTTPResponse.not_found("User not found")
 
     rds = current_app.config["SESSION_REDIS"]
     errors = []
@@ -4654,8 +4874,8 @@ def logout_all_sessions(user_id: int) -> Any:
 
     # Build response
     if errors:
-        return {"errors": errors}, 500
-    return f"All sessions for user {user_id} logged out successfully", 200
+        return HTTPResponse.error("Error while logging out sessions", status=500, errors=errors)
+    return HTTPResponse.success(message=f"All sessions for user {user_id} logged out successfully")
 
 
 @admin.delete("/api/user/revoke_2fa")
@@ -4670,11 +4890,11 @@ def revoke_2fa() -> Response:
     user_id: int = request.args.get("user_id", default=None, type=int)
 
     if not user_id:
-        return HTTPResponse.BAD_REQUEST
+        return HTTPResponse.error("User ID is required")
 
     user = User.query.get(user_id)
     if not user:
-        return HTTPResponse.BAD_REQUEST
+        return HTTPResponse.not_found("User not found")
 
     tf_disable(user)
     # also clear all webauthn credentials
@@ -4682,7 +4902,7 @@ def revoke_2fa() -> Response:
         db.session.delete(cred)
     user.save()
 
-    return f"2FA revoked for user {user_id} successfully", 200
+    return HTTPResponse.success(message=f"2FA revoked for user {user_id} successfully")
 
 
 @admin.post("/api/user/")
@@ -4706,11 +4926,11 @@ def api_user_create(
 
     exists = User.query.filter(User.username == username).first()
     if len(username) < 4:
-        return "Error, username too short", 417
+        return HTTPResponse.error("Error, username too short", status=400)
     if len(username) > 32:
-        return "Error, username too long", 417
+        return HTTPResponse.error("Error, username too long", status=400)
     if exists:
-        return "Error, username already exists", 417
+        return HTTPResponse.error("Error, username already exists", status=409)
     user = User()
     user.fs_uniquifier = uuid4().hex
     user.from_json(u)
@@ -4720,9 +4940,12 @@ def api_user_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
-        return f"User {username} has been created successfully", 200
+        return HTTPResponse.created(
+            message=f"User {username} has been created successfully",
+            data={"item": user.to_dict()},
+        )
     else:
-        return "Error creating user", 417
+        return HTTPResponse.error("Error creating user", status=500)
 
 
 @admin.post("/api/checkuser/")
@@ -4742,23 +4965,23 @@ def api_user_check(
     """
     data = validated_data.get("item")
     if not data:
-        return "Please select a username", 417
+        return HTTPResponse.error("Please select a username", status=400)
 
     # validate illegal charachters
     uclean = bleach.clean(data.strip(), strip=True)
     if uclean != data:
-        return "Illegal characters detected", 417
+        return HTTPResponse.error("Illegal characters detected", status=400)
 
     # validate disallowed charachters
     cats = [unicodedata.category(c)[0] for c in data]
     if any([cat not in ["L", "N"] for cat in cats]):
-        return "Disallowed characters detected", 417
+        return HTTPResponse.error("Disallowed characters detected", status=400)
 
     u = User.query.filter(User.username == data).first()
     if u:
-        return "Username already exists", 417
+        return HTTPResponse.error("Username already exists", status=409)
     else:
-        return "Username ok", 200
+        return HTTPResponse.success(message="Username ok")
 
 
 @admin.put("/api/user/")
@@ -4790,11 +5013,11 @@ def api_user_update(
                 user.to_mini(),
                 "user",
             )
-            return f"Saved User {user.id} {user.name}", 200
+            return HTTPResponse.success(message=f"Saved User {user.id} {user.name}")
         else:
-            return f"Error saving User {user.id} {user.name}", 417
+            return HTTPResponse.error(f"Error saving User {user.id} {user.name}", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("User not found")
 
 
 @admin.post("/api/password/")
@@ -4830,17 +5053,17 @@ def api_user_force_reset(validated_data: dict) -> Response:
         - success/error string based on the operation result.
     """
     item = validated_data.get("item")
-    if not item:
-        abort(400)
-    user = User.query.get(item.get("id"))
+    if not item or not (id := item.get("id")):
+        return HTTPResponse.error("Bad Request")
+    user = User.query.get(id)
     if not user:
-        abort(400)
+        return HTTPResponse.not_found("User not found")
     if reset_key := user.security_reset_key:
         message = f"Forced password reset already requested: {reset_key}"
-        return Response(message, mimetype="text/plain")
+        return HTTPResponse.error(message)
     user.set_security_reset_key()
     message = f"Forced password reset has been set for user {user.username}"
-    return Response(message, mimetype="text/plain")
+    return HTTPResponse.success(message=message)
 
 
 @admin.post("/api/user/force-reset-all")
@@ -4856,7 +5079,7 @@ def api_user_force_reset_all() -> Response:
         # check if user already has a password reset flag
         if not user.security_reset_key:
             user.set_security_reset_key()
-    return "Forced password reset has been set for all users", 200
+    return HTTPResponse.success(message="Forced password reset has been set for all users")
 
 
 @admin.delete("/api/user/<int:id>")
@@ -4875,19 +5098,19 @@ def api_user_delete(
     """
     user = User.query.get(id)
     if user is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("User not found")
 
     if user.active:
-        return "User is active, make inactive before deleting", 403
+        return HTTPResponse.forbidden("User is active, make inactive before deleting")
 
     if user.delete():
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, user.to_mini(), "user"
         )
-        return "Deleted", 200
+        return HTTPResponse.success(message="Deleted")
     else:
-        return "Error deleting User", 417
+        return HTTPResponse.error("Error deleting User", status=500)
 
 
 # Roles routes
@@ -4929,7 +5152,7 @@ def api_roles() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/role/")
@@ -4954,10 +5177,10 @@ def api_role_create(
         Activity.create(
             current_user, Activity.ACTION_CREATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
-        return "Created", 200
+        return HTTPResponse.created(message="Created", data={"item": role.to_dict()})
 
     else:
-        return "Save Failed", 417
+        return HTTPResponse.error("Save Failed", status=500)
 
 
 @admin.put("/api/role/<int:id>")
@@ -4976,10 +5199,10 @@ def api_role_update(id: t.id, validated_data: dict) -> Response:
     """
     role = Role.query.get(id)
     if role is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Role not found")
 
     if role.name in ["Admin", "Mod", "DA"]:
-        return "Cannot edit System Roles", 403
+        return HTTPResponse.forbidden("Cannot edit System Roles")
 
     role = role.from_json(validated_data["item"])
     role.save()
@@ -4987,7 +5210,7 @@ def api_role_update(id: t.id, validated_data: dict) -> Response:
     Activity.create(
         current_user, Activity.ACTION_UPDATE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
     )
-    return f"Role {id} Updated", 200
+    return HTTPResponse.success(message=f"Role {id} Updated")
 
 
 @admin.delete("/api/role/<int:id>")
@@ -5007,23 +5230,23 @@ def api_role_delete(
     role = Role.query.get(id)
 
     if role is None:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Role not found")
 
     # forbid deleting system roles
     if role.name in ["Admin", "Mod", "DA"]:
-        return "Cannot delete System Roles", 403
+        return HTTPResponse.forbidden("Cannot delete System Roles")
     # forbid delete roles assigned to restricted items
     if role.bulletins.first() or role.actors.first() or role.incidents.first():
-        return "Role assigned to restricted items", 403
+        return HTTPResponse.forbidden("Role assigned to restricted items")
 
     if role.delete():
         # Record activity
         Activity.create(
             current_user, Activity.ACTION_DELETE, Activity.STATUS_SUCCESS, role.to_mini(), "role"
         )
-        return "Deleted", 200
+        return HTTPResponse.success(message="Deleted")
     else:
-        return "Error deleting Role", 417
+        return HTTPResponse.error("Error deleting Role", status=500)
 
 
 @admin.post("/api/role/import/")
@@ -5037,9 +5260,9 @@ def api_role_import() -> Response:
     """
     if "csv" in request.files:
         Role.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 400
+        return HTTPResponse.error("Error")
 
 
 # Incident routes
@@ -5086,29 +5309,117 @@ def api_incidents(validated_data: dict) -> Response:
             "incident",
         )
 
-    query = []
+    q = validated_data.get("q", [{}])
+    cursor = validated_data.get("cursor")
+    per_page = validated_data.get("per_page", PER_PAGE)
+    include_count = validated_data.get("include_count", False)
 
-    su = SearchUtils(validated_data, cls="incident")
+    search = SearchUtils(validated_data, cls="incident")
+    base_query = search.get_query()
 
-    query = su.get_query()
+    if include_count and cursor is None:
+        # Check if this is a simple listing query (no search filters)
+        is_simple_listing = q == [{}] or not any(
+            bool(filter_dict) for filter_dict in q if filter_dict
+        )
 
-    page = request.args.get("page", 1, int)
-    per_page = request.args.get("per_page", PER_PAGE, int)
+        if is_simple_listing:
+            # For simple listing: use fast COUNT(*) directly on table (~50ms)
+            total_count = db.session.execute(select(func.count(Incident.id))).scalar()
 
-    result = (
-        Incident.query.filter(*query)
-        .order_by(Incident.updated_at.desc())
-        .paginate(page=page, per_page=per_page, count=True)
-    )
-    # Select json encoding type
-    mode = request.args.get("mode", "1")
+            # Fast data query without window function overhead
+            main_query = base_query.order_by(Incident.id.desc()).limit(per_page + 1)
+            result = db.session.execute(main_query)
+            items = result.scalars().unique().all()
+        else:
+            # For search queries: keep original window function approach
+            count_subquery = (
+                base_query.add_columns(func.count().over().label("total_count"))
+                .order_by(Incident.id.desc())
+                .limit(per_page + 1)
+            )
+
+            result = db.session.execute(count_subquery)
+            rows = result.all()
+
+            if rows:
+                items = [row[0] for row in rows]  # Extract Incident objects
+                total_count = rows[0].total_count if rows else 0
+            else:
+                items = []
+                total_count = 0
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+    else:
+        # Fast pagination approach: no counting overhead
+        main_query = base_query.order_by(Incident.id.desc())
+        if cursor:
+            main_query = main_query.where(Incident.id < int(cursor))
+
+        paginated_query = main_query.limit(per_page + 1)
+        result = db.session.execute(paginated_query)
+        items = result.scalars().unique().all()
+
+        # Determine if there are more pages
+        has_more = len(items) > per_page
+        if has_more:
+            items = items[:per_page]
+            next_cursor = str(items[-1].id) if items else None
+        else:
+            next_cursor = None
+
+        total_count = None
+
+    # Minimal serialization for list view with permission checks
+    serialized_items = []
+    for item in items:
+        if current_user and current_user.can_access(item):
+            # User has access - return full details
+            serialized_items.append(
+                {
+                    "id": item.id,
+                    "title": item.title,
+                    "status": item.status,
+                    "assigned_to": (
+                        {"id": item.assigned_to.id, "name": item.assigned_to.name}
+                        if item.assigned_to
+                        else None
+                    ),
+                    "roles": (
+                        [
+                            {"id": role.id, "name": role.name, "color": role.color}
+                            for role in item.roles
+                        ]
+                        if item.roles
+                        else []
+                    ),
+                    "_status": item.status,
+                    "review_action": item.review_action,
+                }
+            )
+        else:
+            # User doesn't have access - return restricted info only
+            serialized_items.append({"id": item.id, "restricted": True})
+
     response = {
-        "items": [item.to_dict(mode=mode) for item in result.items],
-        "perPage": per_page,
-        "total": result.total,
+        "items": serialized_items,
+        "nextCursor": next_cursor,
+        "meta": {"currentPageSize": len(items), "hasMore": has_more, "isFirstPage": cursor is None},
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    # Add count if it was calculated
+    if include_count and cursor is None and total_count is not None:
+        response["total"] = total_count
+        response["totalType"] = "exact"
+
+    return HTTPResponse.success(data=response)
 
 
 @admin.post("/api/incident/")
@@ -5152,12 +5463,12 @@ def api_incident_create(
         )
         # Select json encoding type
         mode = request.args.get("mode", "1")
-        return {
-            "message": f"Created Incident #{incident.id}",
-            "item": incident.to_dict(mode=mode),
-        }, 201
+        return HTTPResponse.created(
+            message=f"Created Incident #{incident.id}",
+            data={"item": incident.to_dict(mode=mode)},
+        )
     else:
-        return {"message": "Error creating Incident"}, 417
+        return HTTPResponse.error("Error creating Incident", status=500)
 
 
 # update incident endpoint
@@ -5187,7 +5498,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 "incident",
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         if not current_user.has_role("Admin") and current_user != incident.assigned_to:
             Activity.create(
@@ -5198,7 +5509,7 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 "incident",
                 details=f"Unauthorized attempt to update unassigned Incident {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         incident = incident.from_json(validated_data["item"])
 
@@ -5215,11 +5526,11 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 incident.to_mini(),
                 "incident",
             )
-            return f"Saved Incident #{id}", 200
+            return HTTPResponse.success(message=f"Saved Incident #{id}")
         else:
-            return f"Error saving Incident {id}", 417
+            return HTTPResponse.error(f"Error saving Incident {id}", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Incident not found")
 
 
 # Add/Update review incident endpoint
@@ -5248,7 +5559,7 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 "incident",
                 details=f"Unauthorized attempt to update restricted Incident {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
         incident.review = (
             validated_data["item"]["review"] if "review" in validated_data["item"] else ""
@@ -5273,11 +5584,11 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 incident.to_mini(),
                 "incident",
             )
-            return f"Bulletin review updated #{id}", 200
+            return HTTPResponse.success(message=f"Bulletin review updated #{id}")
         else:
-            return f"Error saving Incident #{id}'s Review", 417
+            return HTTPResponse.error(f"Error saving Incident #{id}'s Review", status=500)
     else:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Incident not found")
 
 
 # bulk update incident endpoint
@@ -5314,9 +5625,9 @@ def api_incident_bulk_update(
         rds.set(key, job.id)
         # expire in 3 hour
         rds.expire(key, 60 * 60 * 3)
-        return "Bulk update queued successfully", 200
+        return HTTPResponse.success(message="Bulk update queued successfully")
     else:
-        return "No items selected, or nothing to update", 417
+        return HTTPResponse.error("No items selected, or nothing to update", status=400)
 
 
 # get one incident
@@ -5335,7 +5646,7 @@ def api_incident_get(
     """
     incident = Incident.query.get(id)
     if not incident:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Incident not found")
     else:
         mode = request.args.get("mode", None)
         if current_user.can_access(incident):
@@ -5346,7 +5657,7 @@ def api_incident_get(
                 incident.to_mini(),
                 "incident",
             )
-            return json.dumps(incident.to_dict(mode)), 200
+            return HTTPResponse.success(data=incident.to_dict(mode))
         else:
             # block access altogether here, doesn't make sense to send only the id
             Activity.create(
@@ -5357,7 +5668,7 @@ def api_incident_get(
                 "incident",
                 details=f"Unauthorized attempt to view restricted Incident {id}.",
             )
-            return "Restricted Access", 403
+            return HTTPResponse.forbidden("Restricted Access")
 
 
 # get incident relations
@@ -5376,10 +5687,10 @@ def incident_relations(id: t.id) -> Response:
     page = request.args.get("page", 1, int)
     per_page = request.args.get("per_page", REL_PER_PAGE, int)
     if not cls or cls not in ["bulletin", "actor", "incident"]:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.error("Invalid class")
     incident = Incident.query.get(id)
     if not incident:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Incident not found")
     items = []
 
     if cls == "bulletin":
@@ -5396,7 +5707,7 @@ def incident_relations(id: t.id) -> Response:
         else:
             data = [item.to_dict() for item in items]
 
-        return json.dumps({"items": data, "more": False}), 200
+        return HTTPResponse.success(data={"items": data, "more": False})
 
     # pagination
     start = (page - 1) * per_page
@@ -5411,7 +5722,7 @@ def incident_relations(id: t.id) -> Response:
         else:
             data = [item.to_dict() for item in data]
 
-    return json.dumps({"items": data, "more": load_more}), 200
+    return HTTPResponse.success(data={"items": data, "more": load_more})
 
 
 @admin.post("/api/incident/import/")
@@ -5425,9 +5736,9 @@ def api_incident_import() -> Response:
     """
     if "csv" in request.files:
         Incident.import_csv(request.files.get("csv"))
-        return "Success", 200
+        return HTTPResponse.success(message="Success")
     else:
-        return "Error", 417
+        return HTTPResponse.error("Error", status=500)
 
 
 # Activity routes
@@ -5484,7 +5795,7 @@ def api_activities() -> Response:
         "total": result.total,
     }
 
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.route("/api/bulk/status/")
@@ -5506,7 +5817,7 @@ def bulk_status() -> Response:
         elif type == "incident":
             status = bulk_update_actors.AsyncResult(id).status
         else:
-            return HTTPResponse.NOT_FOUND
+            return HTTPResponse.error("Invalid type")
 
         # handle job failure
         if status == "FAILURE":
@@ -5518,7 +5829,7 @@ def bulk_status() -> Response:
 
         else:
             rds.delete(key)
-    return json.dumps(tasks)
+    return HTTPResponse.success(data=tasks)
 
 
 # Saved Searches
@@ -5533,9 +5844,9 @@ def api_queries() -> Response:
     user_id = current_user.id
     query_type = request.args.get("type")
     if query_type not in Query.TYPES:
-        return "Invalid query type", 400
+        return HTTPResponse.error("Invalid query type")
     queries = Query.query.filter(Query.user_id == user_id, Query.query_type == query_type)
-    return json.dumps([query.to_dict() for query in queries]), 200
+    return HTTPResponse.success(data=[query.to_dict() for query in queries])
 
 
 @admin.get("/api/query/<string:name>/exists")
@@ -5553,9 +5864,9 @@ def api_query_check_name_exists(
         - success/error string based on the operation result.
     """
     if Query.query.filter_by(name=name, user_id=current_user.id).first():
-        return "Query name already exists", 409
+        return HTTPResponse.error("Query name already exists", status=409)
 
-    return "Query name is available", 200
+    return HTTPResponse.success(message="Query name is available")
 
 
 @admin.post("/api/query/")
@@ -5571,7 +5882,7 @@ def api_query_create() -> Response:
     query_type = request.json.get("type")
     # current saved searches types
     if query_type not in Query.TYPES:
-        return "Invalid Request", 400
+        return HTTPResponse.error("Invalid Request")
     if q and name:
         query = Query()
         query.name = name
@@ -5579,9 +5890,11 @@ def api_query_create() -> Response:
         query.query_type = query_type
         query.user_id = current_user.id
         query.save()
-        return "Query successfully saved", 200
+        return HTTPResponse.created(
+            message="Query successfully saved", data={"item": query.to_dict()}
+        )
     else:
-        return "Error parsing query data", 417
+        return HTTPResponse.error("Error parsing query data", status=400)
 
 
 @admin.put("/api/query/<int:id>")
@@ -5599,21 +5912,21 @@ def api_query_update(
         - success/error string based on the operation result.
     """
     if not (q := request.json.get("q")):
-        return "q parameter not provided", 417
+        return HTTPResponse.error("q parameter not provided", status=400)
 
     query = Query.query.get(id)
 
     if not query:
-        return "Query not found", 404
+        return HTTPResponse.not_found("Query not found")
 
     if query.user_id != current_user.id:
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.forbidden("Restricted Access")
 
     query.data = q
     if query.save():
-        return f"Query {query.name} updated", 200
+        return HTTPResponse.success(message=f"Query {query.name} updated")
 
-    return "Query update failed", 409
+    return HTTPResponse.error("Query update failed", status=409)
 
 
 @admin.delete("/api/query/<int:id>")
@@ -5633,15 +5946,15 @@ def api_query_delete(
     query = Query.query.get(id)
 
     if not query:
-        return "Query not found", 404
+        return HTTPResponse.not_found("Query not found")
 
     if query.user_id != current_user.id:
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.forbidden("Restricted Access")
 
     if query.delete():
-        return f"Query {query.name} deleted", 200
+        return HTTPResponse.success(message=f"Query {query.name} deleted")
 
-    return "Query delete failed", 409
+    return HTTPResponse.error("Query delete failed", status=409)
 
 
 @admin.get("/api/graph/json")
@@ -5657,9 +5970,9 @@ def graph_json() -> Optional[str]:
     expanded = request.args.get("expanded")
     graph_utils = GraphUtils(current_user)
     if expanded == "false":
-        return graph_utils.get_graph_json(entity_type, id)
+        return HTTPResponse.success(data=json.loads(graph_utils.get_graph_json(entity_type, id)))
     else:
-        return graph_utils.expanded_graph(entity_type, id)
+        return HTTPResponse.success(data=json.loads(graph_utils.expanded_graph(entity_type, id)))
 
 
 @admin.post("/api/graph/visualize")
@@ -5680,10 +5993,10 @@ def graph_visualize(validated_data: dict) -> Response:
 
     # Check if the type is valid
     if graph_type not in ["actor", "bulletin", "incident"]:
-        return abort(400, description="Invalid type provided")
+        return HTTPResponse.error("Invalid type provided")
 
     task_id = generate_graph.delay(validated_data, graph_type, user_id)
-    return jsonify({"task_id": task_id.id})
+    return HTTPResponse.success(data={"task_id": task_id.id})
 
 
 @admin.get("/api/graph/data")
@@ -5704,10 +6017,10 @@ def get_graph_data() -> Response:
 
     if graph_data:
         # Return the graph data as a JSON response
-        return Response(graph_data, mimetype="application/json")
+        return HTTPResponse.success(data=json.loads(graph_data))
     else:
         # If data is not found in Redis
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Graph data not found")
 
 
 @admin.get("/api/graph/status")
@@ -5719,10 +6032,9 @@ def check_graph_status() -> Response:
     status = rds.get(status_key)
 
     if not status:
-        return HTTPResponse.NOT_FOUND
+        return HTTPResponse.not_found("Graph status not found")
 
-    response_body = json.dumps({"status": status.decode("utf-8")})
-    return Response(response_body, status=200, content_type="application/json")
+    return HTTPResponse.success(data={"status": status.decode("utf-8")})
 
 
 @admin.get("/system-administration/")
@@ -5752,7 +6064,7 @@ def api_app_config() -> Response:
         "perPage": per_page,
         "total": result.total,
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.get("/api/configuration/defaults/")
@@ -5763,7 +6075,7 @@ def api_config_defaults() -> Response:
         "config": ConfigManager.get_all_default_configs(),
         "labels": dict(ConfigManager.CONFIG_LABELS),
     }
-    return Response(json.dumps(response), content_type="application/json"), 200
+    return HTTPResponse.success(data=response)
 
 
 @admin.get("/api/configuration/")
@@ -5771,7 +6083,7 @@ def api_config_defaults() -> Response:
 def api_config() -> str:
     """Returns serialized app configurations."""
     response = {"config": ConfigManager.serialize(), "labels": dict(ConfigManager.CONFIG_LABELS)}
-    return json.dumps(response)
+    return HTTPResponse.success(data=response)
 
 
 @admin.put("/api/configuration/")
@@ -5792,9 +6104,9 @@ def api_config_write(
     conf = validated_data.get("conf")
 
     if ConfigManager.write_config(conf):
-        return "Configuration Saved Successfully", 200
+        return HTTPResponse.success(message="Configuration Saved Successfully")
     else:
-        return "Unable to Save Configuration", 417
+        return HTTPResponse.error("Unable to Save Configuration", status=500)
 
 
 @admin.post("/api/reload/")
@@ -5807,7 +6119,7 @@ def api_app_reload() -> Response:
 
     reload_app()
     reload_celery.delay()
-    return "Reloaded Bayanat", 200
+    return HTTPResponse.success(message="Reloaded Bayanat")
 
 
 @admin.app_template_filter("to_config")
@@ -5902,7 +6214,7 @@ def api_logfiles() -> str:
         with open(log_path, "r") as f:
             timestamp = json.loads(f.readline().strip())["timestamp"]
             date = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-    return json.dumps({"files": files, "date": date})
+    return HTTPResponse.success(data={"files": files, "date": date})
 
 
 @admin.route("/api/logs/")
@@ -5917,9 +6229,9 @@ def api_logs() -> Response:
             return send_from_directory(os.path.abspath(log_dir), log_file)
         except Exception as e:
             logger.error(f"Error sending log file: {e}", exc_info=True)
-            return "Error sending log file", 417
+            return HTTPResponse.error("Error sending log file", status=500)
     else:
-        return "Log file not found", 404
+        return HTTPResponse.not_found("Log file not found")
 
 
 @admin.post("/api/bulletin/web")
@@ -5929,25 +6241,19 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
     """Import bulletin from web URL"""
 
     if not current_app.config.get("WEB_IMPORT"):
-        return "Web import is disabled", 403
+        return HTTPResponse.forbidden("Web import is disabled")
 
     if not (current_user.has_role("Admin") or current_user.can_import_web):
-        return HTTPResponse.FORBIDDEN
+        return HTTPResponse.forbidden("Restricted Access")
 
     url = validated_data["url"]
 
     # Check for duplicate URL
     existing_bulletin = Bulletin.query.filter(Bulletin.source_link == url).first()
     if existing_bulletin:
-        return (
-            jsonify(
-                {
-                    "error": "Duplicate URL",
-                    "message": f"This URL has already been imported in bulletin #{existing_bulletin.id}",
-                    "bulletin_id": existing_bulletin.id,
-                }
-            ),
-            409,
+        return HTTPResponse.error(
+            f"Duplicate URL: This URL has already been imported in bulletin #{existing_bulletin.id}",
+            status=409,
         )
 
     # Create import log
@@ -5975,7 +6281,7 @@ def api_bulletin_web_import(validated_data: dict) -> Response:
         url=url, user_id=current_user.id, batch_id=data_import.batch_id, import_id=data_import.id
     )
 
-    return jsonify({"batch_id": data_import.batch_id}), 202
+    return HTTPResponse.success(data={"batch_id": data_import.batch_id}, status=202)
 
 
 def parse_filters(args):
