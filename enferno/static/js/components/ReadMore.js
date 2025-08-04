@@ -10,6 +10,7 @@ const ReadMore = Vue.defineComponent({
       translations: window.translations,
       expanded: false,
       isTruncated: false,
+      mutationObserver: null,
     };
   },
   computed: {
@@ -31,9 +32,15 @@ const ReadMore = Vue.defineComponent({
   mounted() {
     this.checkTruncation();
     window.addEventListener('resize', this.checkTruncation);
+    this.mutationObserver = new MutationObserver(() => {
+      this.checkTruncation();
+    });
+    this.mutationObserver.observe(this.$refs.content, { childList: true, subtree: true, characterData: true });
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkTruncation);
+    this.mutationObserver.disconnect();
+    this.mutationObserver = null;
   },
   methods: {
     toggle() {
