@@ -158,6 +158,7 @@
     <script src="/static/js/components/GlobalMap.js"></script>
     <script src="/static/js/components/DualField.js"></script>
     <script src="/static/js/components/LocationSearchBox.js"></script>
+    <script src="/static/js/jsondiffpatch/jsondiffpatch.umd.slim.js"></script>
 
     {% if config.GOOGLE_MAPS_API_KEY %}
         {{ '<script src="https://maps.googleapis.com/maps/api/js?key='|safe + config.GOOGLE_MAPS_API_KEY + '&loading=async" async defer></script>'|safe }}

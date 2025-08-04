@@ -169,7 +169,7 @@ const LocationCard = Vue.defineComponent({
           </template>
         </v-card-text>
       </v-card>
-      <v-dialog v-model="diffDialog" class="log-dialog">
+      <v-dialog v-model="diffDialog" max-width="770px">
         <v-card class="pa-5">
           <v-card-text>
             <div v-html="diffResult">
