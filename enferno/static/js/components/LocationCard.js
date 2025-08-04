@@ -143,7 +143,7 @@ const LocationCard = Vue.defineComponent({
       <!-- Description -->
       <v-card variant="flat"  v-if="location.description" class="my-2 px-4">
         <div>{{ translations.location_ }}</div>
-        <div class="rich-description" v-html="location.description"></div>
+        <read-more><div class="rich-description" v-html="location.description"></div></read-more>
       </v-card>
       <!-- Log -->
       <v-card v-if="log" outline elevation="0" class="ma-2">
