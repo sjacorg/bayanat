@@ -1,7 +1,6 @@
 import pytest
 from enferno.admin.constants import Constants
 from enferno.admin.models.Notification import Notification, get_notification_config
-from tests.test_utils import load_data
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -9,21 +8,22 @@ NotificationEvent = Constants.NotificationEvent
 #### UNIT TESTS ####
 
 
-def test_notification_settings_get_config():
+def test_notification_settings_get_config(app):
     """Test that get_config returns configuration with security events enforced."""
-    # Verify that security events are always enabled
-    security_events = [
-        "LOGIN_NEW_IP",
-        "PASSWORD_CHANGE",
-        "TWO_FACTOR_CHANGE",
-        "RECOVERY_CODES_CHANGE",
-        "FORCE_PASSWORD_CHANGE",
-    ]
+    with app.app_context():
+        # Verify that security events are always enabled
+        security_events = [
+            "LOGIN_NEW_IP",
+            "PASSWORD_CHANGE",
+            "TWO_FACTOR_CHANGE",
+            "RECOVERY_CODES_CHANGE",
+            "FORCE_PASSWORD_CHANGE",
+        ]
 
-    for event in security_events:
-        config = get_notification_config(event)
-        assert config["email"] is True
-        assert config["urgent"] is True
+        for event in security_events:
+            config = get_notification_config(event)
+            assert config["email"] is True
+            assert config["urgent"] is True
 
 
 #### INTEGRATION TESTS ####
@@ -32,7 +32,7 @@ def test_notification_settings_get_config():
 def test_notification_settings_get_config_includes_security_events(admin_client):
     """Test that the config endpoint includes security events."""
     response = admin_client.get("/admin/api/configuration/")
-    current_configuration = load_data(response)["config"]
+    current_configuration = response.json["data"]["config"]
 
     # Verify that ALWAYS-ON security events are NOT present in the config
     notifications = current_configuration["NOTIFICATIONS"]
@@ -65,7 +65,7 @@ def test_put_config_basic_functionality(admin_client):
         with patch("enferno.utils.config_utils.ConfigManager.CONFIG_FILE_PATH", temp.name):
             # Get the current config
             response = admin_client.get("/admin/api/configuration/")
-            current_config = load_data(response)["config"]
+            current_config = response.json["data"]["config"]
 
             # Modify only configurable notification settings
             current_config["NOTIFICATIONS"]["NEW_BATCH"] = {
