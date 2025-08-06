@@ -6453,3 +6453,125 @@ def api_dynamic_field_create() -> Response:
         logger.error(f"Error creating dynamic field: {str(e)}")
         db.session.rollback()
         return HTTPResponse.error("An error occurred while creating the field", status=500)
+
+
+@admin.put("/api/dynamic-fields/<int:field_id>")
+@roles_required("Admin")
+def api_dynamic_field_update(field_id: int) -> Response:
+    """
+    Update an existing dynamic field.
+
+    Args:
+        field_id: ID of the field to update
+
+    Returns:
+        Response with updated field data or error message
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return HTTPResponse.error("No JSON data provided", status=400)
+
+        field_data = data.get("item", data)  # Support both wrapped and unwrapped
+
+        # Get the existing field
+        stmt = select(DynamicField).where(DynamicField.id == field_id)
+        field = db.session.execute(stmt).scalars().first()
+
+        if not field:
+            return HTTPResponse.error("Field not found", status=404)
+
+        # Store original values for rollback if needed
+        original_name = field.name
+        original_field_type = field.field_type
+
+        # Check for duplicate name if name is being changed
+        if field_data["name"] != original_name:
+            existing_field = (
+                DynamicField.query.filter_by(
+                    name=field_data["name"], entity_type=field_data["entity_type"]
+                )
+                .filter(DynamicField.id != field_id)
+                .first()
+            )
+
+            if existing_field:
+                return HTTPResponse.error(
+                    f"Field with name '{field_data['name']}' already exists for {field_data['entity_type']}",
+                    status=409,
+                )
+
+        # Check if field type is changing (not allowed for existing fields with data)
+        if field_data["field_type"] != original_field_type:
+            return HTTPResponse.error(
+                "Cannot change field type of existing field. Create a new field instead.",
+                status=400,
+            )
+
+        # Update field properties
+        field.name = field_data["name"]
+        field.title = field_data["title"]
+        field.entity_type = field_data["entity_type"]
+        field.ui_component = field_data.get("ui_component")
+        field.schema_config = field_data.get("schema_config", {})
+        field.ui_config = field_data.get("ui_config", {})
+        field.validation_config = field_data.get("validation_config", {})
+        field.options = field_data.get("options", [])
+        field.active = field_data.get("active", True)
+        field.searchable = field_data.get("searchable", False)
+
+        # Handle column rename if name changed
+        if field_data["name"] != original_name:
+            try:
+                model_class = field.get_entity_model()
+                table_name = model_class.__tablename__
+
+                # Rename the database column
+                db.session.execute(
+                    text(f"ALTER TABLE {table_name} RENAME COLUMN {original_name} TO {field.name}")
+                )
+
+                # Update SQLAlchemy model attribute
+                if hasattr(model_class, original_name):
+                    delattr(model_class, original_name)
+
+                column_type = field._column_types[field.field_type]
+                if field.field_type == DynamicField.STRING and field.schema_config.get(
+                    "max_length"
+                ):
+                    column_type = String(field.schema_config["max_length"])
+
+                column_args = {"nullable": not field.schema_config.get("required", False)}
+                setattr(model_class, field.name, Column(field.name, column_type, **column_args))
+
+            except Exception as e:
+                logger.error(
+                    f"Failed to rename column from {original_name} to {field.name}: {str(e)}"
+                )
+                db.session.rollback()
+                return HTTPResponse.error("Failed to rename database column", status=500)
+
+        # Save the updated field
+        if not field.save():
+            db.session.rollback()
+            return HTTPResponse.error("Failed to update field", status=500)
+
+        db.session.commit()
+
+        # Log activity
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            {"id": field.id, "name": field.name, "entity_type": field.entity_type},
+            "dynamic_field",
+        )
+
+        return HTTPResponse.success(
+            message=f"Updated dynamic field '{field.name}'", data={"item": field.to_dict()}
+        )
+
+    except Exception as e:
+        logger.error(f"Error updating dynamic field: {str(e)}")
+        db.session.rollback()
+        return HTTPResponse.error("An error occurred while updating the field", status=500)
