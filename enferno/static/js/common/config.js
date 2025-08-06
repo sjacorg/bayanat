@@ -638,13 +638,11 @@ function deepClone(value) {
 function formatDate(date, options = {
     hideTime: false,
     forceZ: false,
-    timeIfToday: false,
-    iso: false,
-    includeSeconds: false
+    timeIfToday: false
 }) {
     if (!date) return '';
 
-    const { includeSeconds, iso, hideTime, forceZ, timeIfToday } = options;
+    const { hideTime = false, forceZ = false, timeIfToday = false } = options;
 
     let dateString = date;
     if (forceZ && !dateString.includes('Z')) {
@@ -654,22 +652,13 @@ function formatDate(date, options = {
     const dayjsDate = dayjs(dateString);
     if (!dayjsDate.isValid()) return '';
 
-    let timeFormat = includeSeconds ? 'h:mm:ss A' : 'h:mm A';
-
-    if (iso) {
-        // hideTime just shows the date part in ISO
-        return hideTime
-            ? dayjsDate.format('YYYY-MM-DD')
-            : dayjsDate.format(includeSeconds ? 'YYYY-MM-DDTHH:mm:ss' : 'YYYY-MM-DDTHH:mm');
-    }
-
     const today = dayjs();
 
     if (timeIfToday && !hideTime && dayjsDate.isSame(today, 'day')) {
-        return dayjsDate.format(timeFormat);
+        return dayjsDate.format('hh:mm A');
     }
 
     return hideTime
         ? dayjsDate.format('MM/DD/YYYY')
-        : dayjsDate.format(`MM/DD/YYYY ${timeFormat}`);
+        : dayjsDate.format('MM/DD/YYYY h:mm A');
 }

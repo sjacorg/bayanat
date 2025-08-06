@@ -3,7 +3,7 @@ const IncidentCard = Vue.defineComponent({
   emits: ['edit', 'close'],
 
   methods: {
-    formatDate: formatDate,
+    
     loadGeoMap() {
       this.geoMapLoading = true;
       //load again all bulletin relations without paging (soft limit is 1000 bulletin)
@@ -281,7 +281,7 @@ const IncidentCard = Vue.defineComponent({
             <template v-for="(revision,index) in revisions">
               <v-card color="grey lighten-4" flat class="my-1 pa-2 d-flex align-center">
                             <span class="caption">{{ revision.data['comments'] }} - <v-chip label
-                            >{{ translate_status(revision.data.status) }}</v-chip> - {{ formatDate(revision.created_at, { forceZ: true }) }}
+                            >{{ translate_status(revision.data.status) }}</v-chip> - {{ revision.created_at }}
                               - By {{ revision.user.username }}</span>
                 <v-spacer></v-spacer>
 

@@ -157,7 +157,6 @@
             },
 
             methods: {
-                formatDate: formatDate,
                 getLevelString(level){
                     return this.translations.levels[level.toLowerCase()];
                 },
@@ -274,7 +273,7 @@
                         if (!item) return null;
 
                         item = JSON.parse(item);
-                        item.timestampFmt = formatDate(item.timestamp * 1000, { includeSeconds: true });
+                        item.timestampFmt = dayjs(item.timestamp * 1000).format('MM/DD/YYYY HH:mm:ss');
 
                         if (item.message.includes("endpoint:")) {
                             const parts = item.message.split(" ");

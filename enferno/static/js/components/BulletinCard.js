@@ -16,7 +16,6 @@ const BulletinCard = Vue.defineComponent({
   },
 
   methods: {
-    formatDate: formatDate,
     translate_status(status) {
       return translate_status(status);
     },
@@ -392,7 +391,7 @@ const BulletinCard = Vue.defineComponent({
               <span class="caption">{{ revision.data['comments'] }} - 
                 <v-chip label size="small"
                 >{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ formatDate(revision.created_at, { forceZ: true }) }}
+                {{ revision.created_at }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
               <v-spacer></v-spacer>
 
