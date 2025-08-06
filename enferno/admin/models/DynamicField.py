@@ -149,6 +149,7 @@ class DynamicField(db.Model, BaseMixin):
     options = db.Column(JSONB, default=list)  # Allowed values for select/multi fields
 
     active = db.Column(db.Boolean, default=True)  # Whether the field is active
+    sort_order = db.Column(db.Integer, default=0)  # Field display order within entity
 
     __table_args__ = (db.UniqueConstraint("name", "entity_type", name="uq_field_name_entity"),)
 
@@ -228,7 +229,7 @@ class DynamicField(db.Model, BaseMixin):
 
     def save(self):
         """Save the field after validating if not already validated"""
-        if not self._validated:
+        if not getattr(self, "_validated", False):
             self.validate_field()
             self._validated = True
         return super().save()
