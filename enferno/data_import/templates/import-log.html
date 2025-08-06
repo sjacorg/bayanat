@@ -144,7 +144,7 @@
             data: () => ({
 
                 translations: translations,
-                formatDateOptions: { forceZ: true },
+                formatDateOptions: { local: true },
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
                 drawer: drawer,
                 q: {},

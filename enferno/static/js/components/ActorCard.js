@@ -393,7 +393,7 @@ const ActorCard = Vue.defineComponent({
               <v-card color="grey" dense flat class="my-1 pa-2 d-flex align-center">
               <span class="caption">{{ revision.data['comments'] }} - <v-chip size="small" label
                                                                               color="gv">{{ translate_status(revision.data.status) }}</v-chip> -
-                {{ formatDate(revision.created_at, { forceZ: true }) }}
+                {{ formatDate(revision.created_at, { local: true }) }}
                 - {{ translations.by_ }} {{ revision.user.username }}</span>
                 <v-spacer></v-spacer>
 

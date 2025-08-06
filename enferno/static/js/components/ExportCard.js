@@ -13,7 +13,7 @@ const ExportCard = Vue.defineComponent({
   },
 
   mounted() {
-    this.exp.expires_on = this.formatDate(this.exp.expires_on, { iso: true, forceZ: true });
+    this.exp.expires_on = this.formatDate(this.exp.expires_on, { iso: true, local: true });
 
     this.loadExportItems();
   },
@@ -51,7 +51,7 @@ const ExportCard = Vue.defineComponent({
 
   data: function () {
     return {
-      formatDateOptions: { forceZ: true },
+      formatDateOptions: { local: true },
       translations: window.translations,
       expiryFieldDisabled: true,
       showLoadMore: false,

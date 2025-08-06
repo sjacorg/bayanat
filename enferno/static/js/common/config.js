@@ -637,17 +637,17 @@ function deepClone(value) {
 // Standarize date formatting
 function formatDate(date, options = {
     hideTime: false,
-    forceZ: false,
+    local: false,
     timeIfToday: false,
     iso: false,
     includeSeconds: false
 }) {
     if (!date) return '';
 
-    const { includeSeconds, iso, hideTime, forceZ, timeIfToday } = options;
+    const { includeSeconds, iso, hideTime, local, timeIfToday } = options;
 
     let dateString = date;
-    if (forceZ && !dateString.includes('Z')) {
+    if (local && !dateString.includes('Z')) {
         dateString += 'Z';
     }
 

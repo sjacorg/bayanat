@@ -137,7 +137,7 @@
             mixins: [globalMixin, relationsMixin],
 
             data: () => ({
-                formatDateOptions: { forceZ: true },
+                formatDateOptions: { local: true },
                 translations: window.translations,
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
