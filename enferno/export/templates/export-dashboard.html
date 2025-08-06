@@ -34,12 +34,12 @@
                         </template>
 
                         <template v-slot:item.expires_on="{item}">
-                            ${ localDate(item.expires_on) }
+                            ${ formatDate(item.expires_on, formatDateOptions) }
 
                         </template>
 
                         <template v-slot:item.created_at="{item}">
-                            ${ localDate(item.created_at) }
+                            ${ formatDate(item.created_at, formatDateOptions) }
 
                         </template>
 
@@ -137,7 +137,7 @@
             mixins: [globalMixin, relationsMixin],
 
             data: () => ({
-
+                formatDateOptions: { forceZ: true },
                 translations: window.translations,
 
                 currentUser: JSON.parse(`{{ current_user.to_dict()|tojson }}`),
@@ -197,16 +197,7 @@
                 })
             },
             methods: {
-                localDate: function (dt) {
-                    if (dt === null || dt === '') {
-                        return '';
-                    }
-                    // Z tells it's a UTC time
-                    const utcDate = new Date(`${dt}Z`);
-                    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                    return utcDate.toLocaleString('en-US', {timeZone: userTimezone});
-                },
-
+                formatDate: formatDate,
                 rowClick(e, row) {
                     const item = row.item;
                     const path = `/export/dashboard/${item.id}`;
