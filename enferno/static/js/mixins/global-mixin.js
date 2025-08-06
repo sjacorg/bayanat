@@ -55,15 +55,6 @@ const globalMixin = {
     document.removeEventListener('global-axios-error', this.showSnack);
   },
   methods: {
-    localDate: function (dt) {
-      if (dt === null || dt === '') {
-        return '';
-      }
-      // Z tells it's a UTC time
-      const utcDate = new Date(`${dt}Z`);
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return utcDate.toLocaleString('en-US', { timeZone: userTimezone });
-    },
     // Snack Bar
     showSnack(message) {
       if (typeof message === 'string') {

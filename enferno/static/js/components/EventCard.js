@@ -3,6 +3,9 @@ const EventCard = Vue.defineComponent({
   data: () => ({
     translations: window.translations,
   }),
+  methods: {
+    formatDate: formatDate
+  },
   template: `
 
     <v-card hover min-width="300px" height="100%" class="event-card pa-3 mb-2 mt-1">
@@ -42,11 +45,11 @@ const EventCard = Vue.defineComponent({
 
         <div v-if="event.from_date || event.to_date">
           <v-chip prepend-icon="mdi-calendar" label variant="text"  class="text-caption" v-if="event.from_date">
-            {{ event.from_date }}
+            {{ formatDate(event.from_date) }}
           </v-chip>
-          <span class="caption" v-if="event.to_date">
+          <span class="text-caption" v-if="event.to_date">
             <v-icon icon="mdi-arrow-right" class="mr-1"></v-icon>
-            {{ event.to_date }}
+            {{ formatDate(event.to_date) }}
           </span>
         </div>
         
