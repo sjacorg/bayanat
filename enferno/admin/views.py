@@ -6342,7 +6342,7 @@ def api_dynamic_fields():
     Returns a JSON response with 'data' (list of fields) and 'meta' (pagination info).
     """
     try:
-        from enferno.admin.core_fields_config import BULLETIN_CORE_FIELDS
+        from enferno.admin.models.core_fields import BULLETIN_CORE_FIELDS
 
         filters = parse_filters(request.args)
         sort_clause = parse_sort(request.args)
