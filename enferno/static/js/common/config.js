@@ -633,3 +633,32 @@ function deepClone(value) {
         return JSON.parse(JSON.stringify(value));
     }
 }
+
+// Standarize date formatting
+function formatDate(date, options = {
+    hideTime: false,
+    forceZ: false,
+    timeIfToday: false
+}) {
+    if (!date) return '';
+
+    const { hideTime = false, forceZ = false, timeIfToday = false } = options;
+
+    let dateString = date;
+    if (forceZ && !dateString.includes('Z')) {
+        dateString += 'Z';
+    }
+
+    const dayjsDate = dayjs(dateString);
+    if (!dayjsDate.isValid()) return '';
+
+    const today = dayjs();
+
+    if (timeIfToday && !hideTime && dayjsDate.isSame(today, 'day')) {
+        return dayjsDate.format('hh:mm A');
+    }
+
+    return hideTime
+        ? dayjsDate.format('MM/DD/YYYY')
+        : dayjsDate.format('MM/DD/YYYY h:mm A');
+}
