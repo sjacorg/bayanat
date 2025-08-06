@@ -6334,6 +6334,7 @@ def parse_sort(args):
 def api_dynamic_fields():
     """
     List dynamic fields with optional filtering, sorting, and pagination.
+    Also includes core fields for bulletin entity type.
     Query params:
       filter[field][_eq]=value   (e.g. ?filter[entity_type][_eq]=bulletin)
       sort=field or sort=-field (e.g. ?sort=ui_config.sort_order)
@@ -6341,6 +6342,8 @@ def api_dynamic_fields():
     Returns a JSON response with 'data' (list of fields) and 'meta' (pagination info).
     """
     try:
+        from enferno.admin.core_fields_config import BULLETIN_CORE_FIELDS
+
         filters = parse_filters(request.args)
         sort_clause = parse_sort(request.args)
         try:
@@ -6355,6 +6358,35 @@ def api_dynamic_fields():
         total = db.session.execute(count_stmt).scalar_one()
         items = db.session.execute(stmt).scalars().all()
         data = [item.to_dict() for item in items]
+
+        # Add core fields if filtering for bulletin entity type
+        entity_type_filter = None
+        for key, value in request.args.items():
+            if "entity_type" in key and "bulletin" in str(value):
+                entity_type_filter = "bulletin"
+                break
+
+        if entity_type_filter == "bulletin":
+            # Add core fields to the response
+            for field_name, field_config in BULLETIN_CORE_FIELDS.items():
+                core_field = {
+                    "id": f"core_{field_name}",  # Prefix to avoid ID conflicts
+                    "name": field_name,
+                    "title": field_config["title"],
+                    "entity_type": "bulletin",
+                    "field_type": field_config["field_type"],
+                    "ui_component": field_config["ui_component"],
+                    "required": False,
+                    "searchable": False,
+                    "schema_config": {},
+                    "ui_config": {"sort_order": field_config["sort_order"]},
+                    "validation_config": {},
+                    "options": field_config.get("options", []),
+                    "active": field_config["visible"],
+                    "core": True,  # Mark as core field
+                }
+                data.append(core_field)
+
         meta = {"total": total, "limit": limit, "offset": offset}
         return jsonify({"data": data, "meta": meta})
     except Exception as e:
@@ -6393,7 +6425,17 @@ def api_dynamic_field_create() -> Response:
         if not data:
             return HTTPResponse.error("No JSON data provided", status=400)
 
-        field_data = data.get("item", data)  # Support both wrapped and unwrapped
+        field_data = data["item"]
+
+        # Simple fix: Remove None values to avoid conversion issues
+        def clean_dict(d):
+            if isinstance(d, dict):
+                return {k: clean_dict(v) for k, v in d.items() if v is not None}
+            elif isinstance(d, list):
+                return [clean_dict(item) for item in d if item is not None]
+            return d
+
+        field_data = clean_dict(field_data)
 
         # Check for duplicate field name within entity type
         existing_field = DynamicField.query.filter_by(
@@ -6419,6 +6461,7 @@ def api_dynamic_field_create() -> Response:
             options=field_data.get("options", []),
             active=field_data.get("active", True),
             searchable=field_data.get("searchable", False),
+            sort_order=field_data.get("sort_order") or 0,
         )
 
         # Save the field first
@@ -6427,14 +6470,19 @@ def api_dynamic_field_create() -> Response:
 
         # Create the database column
         try:
+            logger.info(
+                f"Creating column for field: {field.name}, entity_type: {field.entity_type}, field_type: {field.field_type}"
+            )
             field.create_column()
             db.session.commit()
         except Exception as e:
             # Rollback field creation if column creation fails
             field.delete()
             db.session.rollback()
-            logger.error(f"Failed to create column for field {field.name}: {str(e)}")
-            return HTTPResponse.error("Failed to create database column", status=500)
+            logger.error(
+                f"Failed to create column for field {field.name} (entity: {field.entity_type}): {str(e)}"
+            )
+            return HTTPResponse.error(f"Failed to create database column: {str(e)}", status=500)
 
         # Log activity
         Activity.create(
@@ -6472,7 +6520,7 @@ def api_dynamic_field_update(field_id: int) -> Response:
         if not data:
             return HTTPResponse.error("No JSON data provided", status=400)
 
-        field_data = data.get("item", data)  # Support both wrapped and unwrapped
+        field_data = data["item"]
 
         # Get the existing field
         stmt = select(DynamicField).where(DynamicField.id == field_id)
@@ -6485,21 +6533,12 @@ def api_dynamic_field_update(field_id: int) -> Response:
         original_name = field.name
         original_field_type = field.field_type
 
-        # Check for duplicate name if name is being changed
+        # Disable field name changes for safety
         if field_data["name"] != original_name:
-            existing_field = (
-                DynamicField.query.filter_by(
-                    name=field_data["name"], entity_type=field_data["entity_type"]
-                )
-                .filter(DynamicField.id != field_id)
-                .first()
+            return HTTPResponse.error(
+                "Field name cannot be changed. Create a new field instead.",
+                status=400,
             )
-
-            if existing_field:
-                return HTTPResponse.error(
-                    f"Field with name '{field_data['name']}' already exists for {field_data['entity_type']}",
-                    status=409,
-                )
 
         # Check if field type is changing (not allowed for existing fields with data)
         if field_data["field_type"] != original_field_type:
@@ -6520,36 +6559,7 @@ def api_dynamic_field_update(field_id: int) -> Response:
         field.active = field_data.get("active", True)
         field.searchable = field_data.get("searchable", False)
 
-        # Handle column rename if name changed
-        if field_data["name"] != original_name:
-            try:
-                model_class = field.get_entity_model()
-                table_name = model_class.__tablename__
-
-                # Rename the database column
-                db.session.execute(
-                    text(f"ALTER TABLE {table_name} RENAME COLUMN {original_name} TO {field.name}")
-                )
-
-                # Update SQLAlchemy model attribute
-                if hasattr(model_class, original_name):
-                    delattr(model_class, original_name)
-
-                column_type = field._column_types[field.field_type]
-                if field.field_type == DynamicField.STRING and field.schema_config.get(
-                    "max_length"
-                ):
-                    column_type = String(field.schema_config["max_length"])
-
-                column_args = {"nullable": not field.schema_config.get("required", False)}
-                setattr(model_class, field.name, Column(field.name, column_type, **column_args))
-
-            except Exception as e:
-                logger.error(
-                    f"Failed to rename column from {original_name} to {field.name}: {str(e)}"
-                )
-                db.session.rollback()
-                return HTTPResponse.error("Failed to rename database column", status=500)
+        # Field name changes are disabled, so no column rename needed
 
         # Save the updated field
         if not field.save():
@@ -6657,3 +6667,119 @@ def api_dynamic_field_delete(field_id: int) -> Response:
         logger.error(f"Error deleting dynamic field: {str(e)}")
         db.session.rollback()
         return HTTPResponse.error("An error occurred while deleting the field", status=500)
+
+
+@admin.put("/api/dynamic-fields/entity/<entity_type>")
+@roles_required("Admin")
+def api_dynamic_fields_bulk_save(entity_type: str) -> Response:
+    """
+    Simplified bulk save for UI layout changes only.
+    Used by the "Save changes" button for drag-and-drop reordering and visibility toggles.
+
+    Expected payload:
+    {
+        "fields": [
+            {
+                "id": 123,
+                "sort_order": 1,
+                "active": true,
+                "title": "Company Name"  // optional: simple title updates
+            },
+            {
+                "id": 124,
+                "sort_order": 2,
+                "active": false,
+                "title": "Lead Owner"
+            }
+            // missing field IDs will be soft deleted (removed from UI)
+        ]
+    }
+
+    Note: Complex field configuration (schema_config, validation_config, options, etc.)
+    should be handled via individual PUT /api/dynamic-fields/<id> endpoints.
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return HTTPResponse.error("No JSON data provided", status=400)
+
+        submitted_fields = data.get("fields", [])
+
+        # Get existing active fields for this entity
+        existing_fields = DynamicField.query.filter_by(entity_type=entity_type, active=True).all()
+        existing_field_ids = {f.id for f in existing_fields}
+        submitted_field_ids = {
+            f.get("id")
+            for f in submitted_fields
+            if f.get("id") and isinstance(f.get("id"), int) and f.get("id") in existing_field_ids
+        }
+
+        updated_count = 0
+        deleted_count = 0
+
+        # Update existing fields with simple UI changes
+        for field_data in submitted_fields:
+            field_id = field_data.get("id")
+
+            if not field_id or field_id not in existing_field_ids:
+                logger.info(
+                    f"Skipping non-existing field ID: {field_id} (existing: {existing_field_ids})"
+                )
+                continue  # Skip invalid field IDs
+
+            field = DynamicField.query.get(field_id)
+            if not field:
+                continue
+
+            # Update only simple UI properties
+            if "sort_order" in field_data:
+                field.sort_order = field_data["sort_order"]
+
+            if "active" in field_data:
+                field.active = bool(field_data["active"])
+
+            if "title" in field_data and field_data["title"].strip():
+                field.title = field_data["title"].strip()
+
+            field.save()
+            updated_count += 1
+
+        # Soft delete fields that were removed from UI
+        fields_to_delete = existing_field_ids - submitted_field_ids
+        for field_id in fields_to_delete:
+            field = DynamicField.query.get(field_id)
+            if field and field.active:
+                field.active = False
+                field.save()
+                deleted_count += 1
+
+        # Commit all changes
+        db.session.commit()
+
+        # Log activity for bulk operation
+        Activity.create(
+            current_user,
+            Activity.ACTION_UPDATE,
+            Activity.STATUS_SUCCESS,
+            {
+                "entity_type": entity_type,
+                "updated_fields": updated_count,
+                "deleted_fields": deleted_count,
+                "action": "bulk_ui_update",
+            },
+            "dynamic_field",
+        )
+
+        return HTTPResponse.success(
+            message=f"Updated field layout for {entity_type}",
+            data={
+                "updated": updated_count,
+                "deleted": deleted_count,
+                "total_processed": len(submitted_fields),
+            },
+        )
+
+    except Exception as e:
+        logger.error(f"Error in bulk UI save: {str(e)}")
+        db.session.rollback()
+        return HTTPResponse.error("An error occurred while updating field layout", status=500)
