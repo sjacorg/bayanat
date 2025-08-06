@@ -364,8 +364,8 @@ const ActorCard = Vue.defineComponent({
                                 :relationInfo="$root.itoaInfo"></related-incidents-card>
 
         <div class="d-flex">
-          <uni-field :caption="translations.publishDate_" :english="actor.publish_date"></uni-field>
-          <uni-field :caption="translations.documentationDate_" :english="actor.documentation_date"></uni-field>
+          <uni-field :caption="translations.publishDate_" :english="formatDate(actor.publish_date)"></uni-field>
+          <uni-field :caption="translations.documentationDate_" :english="formatDate(actor.documentation_date)"></uni-field>
         </div>
         <uni-field :caption="translations.sourceLink_" :english="actor.source_link"></uni-field>
 

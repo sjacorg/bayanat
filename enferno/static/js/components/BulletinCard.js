@@ -357,8 +357,8 @@ const BulletinCard = Vue.defineComponent({
 
       <!-- Pub/Doc Dates -->
       <v-sheet class="d-flex">
-        <uni-field :caption="translations.publishDate_" :english="bulletin.publish_date"></uni-field>
-        <uni-field :caption="translations.documentationDate_" :english="bulletin.documentation_date"></uni-field>
+        <uni-field :caption="translations.publishDate_" :english="formatDate(bulletin.publish_date)"></uni-field>
+        <uni-field :caption="translations.documentationDate_" :english="formatDate(bulletin.documentation_date)"></uni-field>
       </v-sheet>
 
       <!-- Review -->
