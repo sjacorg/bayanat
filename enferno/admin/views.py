@@ -6575,3 +6575,85 @@ def api_dynamic_field_update(field_id: int) -> Response:
         logger.error(f"Error updating dynamic field: {str(e)}")
         db.session.rollback()
         return HTTPResponse.error("An error occurred while updating the field", status=500)
+
+
+@admin.delete("/api/dynamic-fields/<int:field_id>")
+@roles_required("Admin")
+def api_dynamic_field_delete(field_id: int) -> Response:
+    """
+    Delete a dynamic field (soft delete by default).
+
+    Args:
+        field_id: ID of the field to delete
+
+    Returns:
+        Response confirming deletion or error message
+    """
+    try:
+        # Get the existing field
+        stmt = select(DynamicField).where(DynamicField.id == field_id)
+        field = db.session.execute(stmt).scalars().first()
+
+        if not field:
+            return HTTPResponse.error("Field not found", status=404)
+
+        field_name = field.name
+        field_entity = field.entity_type
+
+        # Check for force delete parameter
+        force_delete = request.args.get("force", "false").lower() == "true"
+
+        if force_delete:
+            # Hard delete: remove column and field record
+            try:
+                field.drop_column()
+                field.delete()
+                db.session.commit()
+
+                # Log activity
+                Activity.create(
+                    current_user,
+                    Activity.ACTION_DELETE,
+                    Activity.STATUS_SUCCESS,
+                    {"id": field_id, "name": field_name, "entity_type": field_entity},
+                    "dynamic_field",
+                )
+
+                return HTTPResponse.success(
+                    message=f"Permanently deleted dynamic field '{field_name}'"
+                )
+
+            except Exception as e:
+                logger.error(f"Failed to delete field {field_name}: {str(e)}")
+                db.session.rollback()
+                return HTTPResponse.error("Failed to delete field and column", status=500)
+        else:
+            # Soft delete: mark as inactive
+            field.active = False
+
+            if not field.save():
+                db.session.rollback()
+                return HTTPResponse.error("Failed to deactivate field", status=500)
+
+            db.session.commit()
+
+            # Log activity
+            Activity.create(
+                current_user,
+                Activity.ACTION_UPDATE,
+                Activity.STATUS_SUCCESS,
+                {
+                    "id": field.id,
+                    "name": field.name,
+                    "entity_type": field.entity_type,
+                    "action": "deactivated",
+                },
+                "dynamic_field",
+            )
+
+            return HTTPResponse.success(message=f"Deactivated dynamic field '{field_name}'")
+
+    except Exception as e:
+        logger.error(f"Error deleting dynamic field: {str(e)}")
+        db.session.rollback()
+        return HTTPResponse.error("An error occurred while deleting the field", status=500)
