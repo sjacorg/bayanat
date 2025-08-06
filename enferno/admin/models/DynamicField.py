@@ -182,12 +182,13 @@ class DynamicField(db.Model, BaseMixin):
         # Get model class for entity type
         model_class = self.get_entity_model()
 
-        # Check reserved names
-        reserved_names = {"id", "created_at", "updated_at", "deleted"} | set(
-            model_class.__table__.columns.keys()
-        )
-        if self.name in reserved_names:
-            raise ValueError(f"Field name '{self.name}' is reserved")
+        # Check reserved names only for new fields (not updates)
+        if not self.id:  # Only validate reserved names for new fields
+            reserved_names = {"id", "created_at", "updated_at", "deleted"} | set(
+                model_class.__table__.columns.keys()
+            )
+            if self.name in reserved_names:
+                raise ValueError(f"Field name '{self.name}' is reserved")
 
         if not self.field_type:
             return  # Skip validation if field_type not set yet
