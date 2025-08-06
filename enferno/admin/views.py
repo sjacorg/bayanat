@@ -17,7 +17,7 @@ from flask.templating import render_template
 from flask_babel import gettext
 from flask_security import logout_user
 from flask_security.decorators import auth_required, current_user, roles_accepted, roles_required
-from sqlalchemy import desc, or_, asc, text, select, func
+from sqlalchemy import desc, or_, asc, text, select, func, String
 from sqlalchemy.orm import joinedload
 from werkzeug.utils import safe_join, secure_filename
 from zxcvbn import zxcvbn
@@ -6330,7 +6330,7 @@ def parse_sort(args):
     return DynamicField.id.asc()
 
 
-@admin.route("/api/dynamic-fields", methods=["GET"])
+@admin.get("/api/dynamic-fields/")
 def api_dynamic_fields():
     """
     List dynamic fields with optional filtering, sorting, and pagination.
@@ -6362,7 +6362,7 @@ def api_dynamic_fields():
         return jsonify({"errors": [{"message": str(e)}]}), 500
 
 
-@admin.route("/api/dynamic-fields/<int:field_id>", methods=["GET"])
+@admin.get("/api/dynamic-fields/<int:field_id>")
 def api_dynamic_field(field_id):
     """
     Retrieve a single dynamic field by its ID.
@@ -6377,3 +6377,79 @@ def api_dynamic_field(field_id):
     except Exception as e:
         # Log the error and return a generic server error response
         return jsonify({"errors": [{"message": str(e)}]}), 500
+
+
+@admin.post("/api/dynamic-fields/")
+@roles_required("Admin")
+def api_dynamic_field_create() -> Response:
+    """
+    Create a new dynamic field.
+
+    Returns:
+        Response with created field data or error message
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return HTTPResponse.error("No JSON data provided", status=400)
+
+        field_data = data.get("item", data)  # Support both wrapped and unwrapped
+
+        # Check for duplicate field name within entity type
+        existing_field = DynamicField.query.filter_by(
+            name=field_data["name"], entity_type=field_data["entity_type"]
+        ).first()
+
+        if existing_field:
+            return HTTPResponse.error(
+                f"Field with name '{field_data['name']}' already exists for {field_data['entity_type']}",
+                status=409,
+            )
+
+        # Create the dynamic field
+        field = DynamicField(
+            name=field_data["name"],
+            title=field_data["title"],
+            entity_type=field_data["entity_type"],
+            field_type=field_data["field_type"],
+            ui_component=field_data.get("ui_component"),
+            schema_config=field_data.get("schema_config", {}),
+            ui_config=field_data.get("ui_config", {}),
+            validation_config=field_data.get("validation_config", {}),
+            options=field_data.get("options", []),
+            active=field_data.get("active", True),
+            searchable=field_data.get("searchable", False),
+        )
+
+        # Save the field first
+        if not field.save():
+            return HTTPResponse.error("Failed to save field", status=500)
+
+        # Create the database column
+        try:
+            field.create_column()
+            db.session.commit()
+        except Exception as e:
+            # Rollback field creation if column creation fails
+            field.delete()
+            db.session.rollback()
+            logger.error(f"Failed to create column for field {field.name}: {str(e)}")
+            return HTTPResponse.error("Failed to create database column", status=500)
+
+        # Log activity
+        Activity.create(
+            current_user,
+            Activity.ACTION_CREATE,
+            Activity.STATUS_SUCCESS,
+            {"id": field.id, "name": field.name, "entity_type": field.entity_type},
+            "dynamic_field",
+        )
+
+        return HTTPResponse.created(
+            message=f"Created dynamic field '{field.name}'", data={"item": field.to_dict()}
+        )
+
+    except Exception as e:
+        logger.error(f"Error creating dynamic field: {str(e)}")
+        db.session.rollback()
+        return HTTPResponse.error("An error occurred while creating the field", status=500)
