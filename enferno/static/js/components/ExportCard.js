@@ -13,13 +13,13 @@ const ExportCard = Vue.defineComponent({
   },
 
   mounted() {
-    //convert expiry to localized date
-    this.exp.expires_on = this.localDate(this.exp.expires_on, (format = false));
+    this.exp.expires_on = this.formatDate(this.exp.expires_on, { iso: true, forceZ: true });
 
     this.loadExportItems();
   },
 
   methods: {
+    formatDate: formatDate,
     loadExportItems() {
       const q = [{ ids: this.exp.items }];
 
@@ -47,28 +47,11 @@ const ExportCard = Vue.defineComponent({
     changeExpiry() {
       this.expiryFieldDisabled = false;
     },
-
-    localDate: function (dt, format = true) {
-      if (dt === null || dt === '') {
-        return '';
-      }
-      // Z tells it's a UTC time
-      const utcDate = new Date(`${dt}Z`);
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      const localDate = utcDate.toLocaleString('en-US', { timeZone: userTimezone });
-
-      if (!format) {
-        //console.log((dateFns.format(localDate, 'YYYY-MM-DDTHH:m')));
-        return dateFns.format(localDate, 'YYYY-MM-DDTHH:mm');
-      } else {
-        return localDate;
-      }
-    },
   },
 
   data: function () {
     return {
+      formatDateOptions: { forceZ: true },
       translations: window.translations,
       expiryFieldDisabled: true,
       showLoadMore: false,
@@ -138,8 +121,8 @@ const ExportCard = Vue.defineComponent({
 
       <!-- Dates fields -->
       <div class="d-flex">
-        <uni-field :caption="translations.requestedOn_" :english="localDate(exp.created_at)"></uni-field>
-        <uni-field :caption="translations.expiresOn_" :english="localDate(exp.expires_on)"></uni-field>
+        <uni-field :caption="translations.requestedOn_" :english="formatDate(exp.created_at, formatDateOptions)"></uni-field>
+        <uni-field :caption="translations.expiresOn_" :english="formatDate(exp.expires_on, formatDateOptions)"></uni-field>
       </div>
 
       <!-- Admin actions cards -->

@@ -11,16 +11,14 @@ const PopDateField = {
         if (value === '') {
           this.$emit('update:modelValue', null);
         } else {
-          this.$emit('update:modelValue', this.formatDate(value));
+          this.$emit('update:modelValue', this.formatDate(value, { iso: true }));
         }
       }
     }
   },
 
   methods: {
-    formatDate(date) {
-      return date ? dayjs(date).format('YYYY-MM-DDTHH:mm') : '';
-    }
+    formatDate: formatDate
   },
 
   template: `
