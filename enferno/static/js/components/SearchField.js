@@ -71,30 +71,54 @@ const SearchField = Vue.defineComponent({
     },
   },
   methods: {
+    clearValue() {
+      this.searchInput = '';
+      this.$emit('update:model-value', this.multiple ? [] : null);
+    },
     updateValue(val) {
+      // Check value against items list from api
+      const isValid = (v) =>
+        this.items.some(item =>
+          this.returnObject
+            ? item[this.itemValue] === v?.[this.itemValue]
+            : item[this.itemValue] === v
+        );
+
       if (this.multiple) {
-        // Handle multiple values: emit an array of either full objects or specific item values
+        const current = this.modelValue || [];
+
+        // Filter valid new values
+        const validNew = (val || []).filter(v => isValid(v));
+
+        if (validNew.length === 0) {
+          // No valid new items, keep current selection
+          this.$emit('update:model-value', current);
+          return;
+        }
+
+        // Add only new items that aren't already selected
+        const combined = [...current];
+        for (const v of validNew) {
+          const exists = combined.some(c =>
+            this.returnObject
+              ? c[this.itemValue] === v[this.itemValue]
+              : c === v
+          );
+          if (!exists) combined.push(v);
+        }
+
         this.$emit(
           'update:model-value',
-          this.returnObject ? val.filter((x) => x.id) : val.map((item) => item[this.itemValue]),
+          this.returnObject ? combined : combined.map(v => v[this.itemValue])
         );
+        return;
+      }
+
+      // Single mode: emit if valid or null, else keep current
+      if (val === null || isValid(val)) {
+        this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue]);
       } else {
-        // Handle single value: emit the object or a specific item value
-        if (this.returnObject) {
-          if (val === null) {
-            // If the value is cleared (null), emit null instead of resetting the field
-            this.$emit('update:model-value', null);
-          } else if (typeof val === 'object' && !val.hasOwnProperty(this.itemValue)) {
-            this.$refs.fld.reset();
-          } else {
-            this.$emit('update:model-value', val);
-          }
-        } else {
-          if (val !== this.modelValue) {
-            // Emit the value directly if returnObject is false
-            this.$emit('update:model-value', val);
-          }
-        }
+        this.$emit('update:model-value', this.modelValue);
       }
     },
     search: debounce(function () {
@@ -162,7 +186,7 @@ const SearchField = Vue.defineComponent({
       @click:input="search"
       @update:focused="search"
       :return-object="returnObject"
-      @click:clear="search"
+      @click:clear="clearValue"
       v-model:search="searchInput"
       @update:search="search"
       v-bind="$attrs"
