@@ -21,7 +21,7 @@ class Notification(db.Model, BaseMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
-    user = db.relationship("User", foreign_keys=[user_id], backref="category")
+    user = db.relationship("User", foreign_keys=[user_id], backref="notifications")
     title = db.Column(db.String, nullable=False)
     message = db.Column(db.Text, nullable=False)
     category = db.Column(db.String, nullable=False, default=NotificationCategories.UPDATE.value)
