@@ -127,24 +127,22 @@ const NotificationsList = Vue.defineComponent({
                         </v-icon>
                     </template>
 
-                    <v-list-item-content>
-                        <v-list-item-title
-                            :class="{ 'font-weight-bold': !notification?.read_status }"
-                            class="text-body-1"
-                            :style="getLineClampStyles(config.maxTitleLines)"
-                            v-html="notification?.title"
+                    <v-list-item-title
+                        :class="{ 'font-weight-bold': !notification?.read_status }"
+                        class="text-body-1"
+                        :style="getLineClampStyles(config.maxTitleLines)"
+                        v-html="notification?.title"
+                    />
+                    <v-list-item-subtitle class="mt-1">
+                        <div
+                        class="text-caption"
+                        :style="getLineClampStyles(config.maxSubtitleLines)"
+                        v-html="notification?.message"
                         />
-                        <v-list-item-subtitle class="mt-1">
-                            <div
-                            class="text-caption"
-                            :style="getLineClampStyles(config.maxSubtitleLines)"
-                            v-html="notification?.message"
-                            />
-                            <div class="d-flex justify-space-between align-center mt-2">
-                                <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
-                            </div>
-                        </v-list-item-subtitle>
-                    </v-list-item-content>
+                        <div class="d-flex justify-space-between align-center mt-2">
+                            <span class="text-caption">{{ getDateFromNotification(notification) }}</span>
+                        </div>
+                    </v-list-item-subtitle>
 
                     <template v-if="!notification?.read_status && !config.hideMarkAsReadButton" #append>
                         <div class="d-flex align-center ga-2">
