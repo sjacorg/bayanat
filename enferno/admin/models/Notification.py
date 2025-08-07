@@ -219,13 +219,8 @@ def get_notification_config(event):
     # Check always-on security events first, then configurable events
     config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(event)
 
-    result = {
+    return {
         "enabled": config.get("in_app_enabled", True),
         "email": config.get("email_enabled", False),
         "category": config.get("category", NotificationCategories.UPDATE.value),
     }
-
-    logger.info(f"get_notification_config({event}) -> config: {config}, result: {result}")
-
-    # Convert to expected format
-    return result
