@@ -1383,7 +1383,10 @@ def api_location_admin_levels_reorder(validated_data: dict) -> Response:
     try:
         LocationAdminLevel.reorder(new_order)
     except Exception as e:
-        return HTTPResponse.error(str(e), status=500)
+        logger.error(f"Failed to reorder location admin levels: {str(e)}", exc_info=True)
+        return HTTPResponse.error(
+            "An internal error occurred while reordering location admin levels", status=500
+        )
     return HTTPResponse.success(
         message="Updated, user should regenerate full locations from system settings"
     )
@@ -4781,7 +4784,8 @@ def api_user_sessions(id: int) -> Any:
         return HTTPResponse.success(data={"items": sessions_data, "more": more})
 
     except Exception as e:
-        return HTTPResponse.error("Server error", status=500, errors=[str(e)])
+        logger.error(f"Failed to get sessions: {str(e)}", exc_info=True)
+        return HTTPResponse.error("Server error", status=500)
 
 
 @admin.delete("/api/session/logout")
@@ -4823,7 +4827,8 @@ def logout_session() -> Response:
             return HTTPResponse.not_found(f"Session {sessid} not found in Redis.")
 
     except Exception as e:
-        return HTTPResponse.error(f"Error while logging out session: {str(e)}", status=500)
+        logger.error(f"Error while logging out session: {str(e)}", exc_info=True)
+        return HTTPResponse.error("Error while logging out session", status=500)
 
 
 @admin.delete("/api/user/<int:user_id>/sessions/logout")
@@ -4858,7 +4863,8 @@ def logout_all_sessions(user_id: int) -> Any:
             if rds.exists(session_key):
                 rds.delete(session_key)
         except Exception as e:
-            errors.append(f"Failed to delete session {s.session_token}: {str(e)}")
+            logger.error(f"Failed to delete session {s.session_token}: {str(e)}", exc_info=True)
+            errors.append(f"Failed to delete session {s.session_token}")
 
     # Logout current session last if needed
     if current_session_logout_needed:
