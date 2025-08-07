@@ -75,47 +75,47 @@ const SearchField = Vue.defineComponent({
       this.searchInput = '';
       this.$emit('update:model-value', this.multiple ? [] : null);
     },
+    isValid(v) {
+      return this.items.some(item =>
+        this.returnObject
+          ? item[this.itemValue] === v?.[this.itemValue]
+          : item[this.itemValue] === v
+      );
+    },
     updateValue(val) {
-      // Check value against items list from api
-      const isValid = (v) =>
-        this.items.some(item =>
-          this.returnObject
-            ? item[this.itemValue] === v?.[this.itemValue]
-            : item[this.itemValue] === v
-        );
-
       if (this.multiple) {
-        const current = this.modelValue || [];
+        this.handleMultipleUpdate(val);
+      } else {
+        this.handleSingleUpdate(val);
+      }
+    },
+    handleMultipleUpdate(val) {
+      const current = this.modelValue || [];
 
-        // Filter valid new values
-        const validNew = (val || []).filter(v => isValid(v));
+      const validNew = (val || []).filter(v => this.isValid(v));
 
-        if (validNew.length === 0) {
-          // No valid new items, keep current selection
-          this.$emit('update:model-value', current);
-          return;
-        }
-
-        // Add only new items that aren't already selected
-        const combined = [...current];
-        for (const v of validNew) {
-          const exists = combined.some(c =>
-            this.returnObject
-              ? c[this.itemValue] === v[this.itemValue]
-              : c === v
-          );
-          if (!exists) combined.push(v);
-        }
-
-        this.$emit(
-          'update:model-value',
-          this.returnObject ? combined : combined.map(v => v[this.itemValue])
-        );
+      if (validNew.length === 0) {
+        this.$emit('update:model-value', current);
         return;
       }
 
-      // Single mode: emit if valid or null, else keep current
-      if (val === null || isValid(val)) {
+      const combined = [...current];
+      for (const v of validNew) {
+        const exists = combined.some(c =>
+          this.returnObject
+            ? c[this.itemValue] === v[this.itemValue]
+            : c === v
+        );
+        if (!exists) combined.push(v);
+      }
+
+      this.$emit(
+        'update:model-value',
+        this.returnObject ? combined : combined.map(v => v[this.itemValue])
+      );
+    },
+    handleSingleUpdate(val) {
+      if (val === null || this.isValid(val)) {
         this.$emit('update:model-value', this.returnObject ? val : val?.[this.itemValue]);
       } else {
         this.$emit('update:model-value', this.modelValue);
