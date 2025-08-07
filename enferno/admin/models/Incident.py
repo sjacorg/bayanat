@@ -42,13 +42,13 @@ class Incident(db.Model, BaseMixin):
 
     description = db.Column(db.Text)
 
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
     assigned_to = db.relationship(
         "User", backref="assigned_to_incidents", foreign_keys=[assigned_to_id]
     )
 
-    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    first_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
+    second_peer_reviewer_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
 
     first_peer_reviewer = db.relationship(
         "User", backref="first_rev_incidents", foreign_keys=[first_peer_reviewer_id]

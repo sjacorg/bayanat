@@ -74,7 +74,7 @@ def test_bulletins_endpoint(
     with patch.object(cfg, "ACCESS_CONTROL_RESTRICTIVE", False):
         client_ = request.getfixturevalue(client_fixture)
         response = client_.get(
-            "/admin/api/bulletins?page=1&per_page=10",
+            "/admin/api/bulletins",
             json={"q": [{}]},
             headers={"Content-Type": "application/json"},
             follow_redirects=True,
