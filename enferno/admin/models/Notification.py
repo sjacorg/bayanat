@@ -32,13 +32,7 @@ class Notification(db.Model, BaseMixin):
     # Email delivery tracking
     email_enabled = db.Column(db.Boolean, default=False)
     email_sent = db.Column(db.Boolean, default=False)
-    email_error = db.Column(db.Text)
     email_sent_at = db.Column(db.DateTime)
-
-    # SMS delivery tracking (future use)
-    sms_enabled = db.Column(db.Boolean, default=False)
-    sms_sent = db.Column(db.Boolean, default=False)
-    sms_error = db.Column(db.Text)
 
     __table_args__ = (
         db.Index("ix_notification_user_read", "user_id", "read_status"),
