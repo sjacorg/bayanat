@@ -23,9 +23,9 @@ const NotificationsList = Vue.defineComponent({
     },
     methods: {
         getIconFromNotification(notification) {
-            const type = (notification?.type || '').toLowerCase();
+            const category = (notification?.category || '').toLowerCase();
 
-            switch (type) {
+            switch (category) {
                 case 'update':
                     return 'mdi-information-outline';
                 case 'security':
