@@ -128,16 +128,9 @@ class BaseMixin(object):
 
     def to_dict(self, mode=None):
         """Base implementation of to_dict that includes dynamic fields"""
-        # Get basic fields from table columns
-        data = {
-            "id": self.id,
-            "created_at": DateHelper.serialize_datetime(self.created_at),
-            "updated_at": DateHelper.serialize_datetime(self.updated_at),
-        }
-
-        # Add dynamic fields
+        data = {}
+        # Add dynamic fields only - system fields handled by child classes
         data.update(self.get_dynamic_fields())
-
         return data
 
 
