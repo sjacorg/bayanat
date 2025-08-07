@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS notification (
     user_id INTEGER NOT NULL,
     title VARCHAR NOT NULL,
     message TEXT NOT NULL,
-    notification_type VARCHAR NOT NULL DEFAULT 'general',
+    category VARCHAR NOT NULL DEFAULT 'general',
     read_status BOOLEAN DEFAULT FALSE,
     delivery_method VARCHAR NOT NULL DEFAULT 'internal',
     read_at TIMESTAMP,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS notification (
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS ix_notification_user_id ON notification (user_id);
 CREATE INDEX IF NOT EXISTS ix_notification_user_read ON notification (user_id, read_status);
-CREATE INDEX IF NOT EXISTS ix_notification_user_type ON notification (user_id, notification_type);
+CREATE INDEX IF NOT EXISTS ix_notification_user_type ON notification (user_id, category);
 CREATE INDEX IF NOT EXISTS ix_notification_user_delivery_status ON notification (user_id, delivery_status);
 
 -- Add foreign key constraint
