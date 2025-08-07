@@ -22,8 +22,8 @@ def test_notification_settings_get_config(app):
 
         for event in security_events:
             config = get_notification_config(event)
+            assert config["enabled"] is True
             assert config["email"] is True
-            assert config["urgent"] is True
 
 
 #### INTEGRATION TESTS ####
