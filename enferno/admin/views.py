@@ -6336,14 +6336,12 @@ def api_dynamic_fields():
     List dynamic fields with optional filtering, sorting, and pagination.
     Also includes core fields for bulletin entity type.
     Query params:
-      filter[field][_eq]=value   (e.g. ?filter[entity_type][_eq]=bulletin)
-      sort=field or sort=-field (e.g. ?sort=ui_config.sort_order)
+      entity_type=value         (e.g. ?entity_type=bulletin)
+      sort=field or sort=-field (e.g. ?sort=sort_order)
       limit, offset             (e.g. ?limit=10&offset=0)
     Returns a JSON response with 'data' (list of fields) and 'meta' (pagination info).
     """
     try:
-        from enferno.admin.models.core_fields import BULLETIN_CORE_FIELDS
-
         filters = parse_filters(request.args)
         sort_clause = parse_sort(request.args)
         try:
@@ -6359,33 +6357,11 @@ def api_dynamic_fields():
         items = db.session.execute(stmt).scalars().all()
         data = [item.to_dict() for item in items]
 
-        # Add core fields if filtering for bulletin entity type
-        entity_type_filter = None
-        for key, value in request.args.items():
-            if "entity_type" in key and "bulletin" in str(value):
-                entity_type_filter = "bulletin"
-                break
+        # Simple entity_type filtering
+        entity_type_filter = request.args.get("entity_type")
 
-        if entity_type_filter == "bulletin":
-            # Add core fields to the response
-            for field_name, field_config in BULLETIN_CORE_FIELDS.items():
-                core_field = {
-                    "id": f"core_{field_name}",  # Prefix to avoid ID conflicts
-                    "name": field_name,
-                    "title": field_config["title"],
-                    "entity_type": "bulletin",
-                    "field_type": field_config["field_type"],
-                    "ui_component": field_config["ui_component"],
-                    "required": False,
-                    "searchable": False,
-                    "schema_config": {},
-                    "ui_config": {"sort_order": field_config["sort_order"]},
-                    "validation_config": {},
-                    "options": field_config.get("options", []),
-                    "active": field_config["visible"],
-                    "core": True,  # Mark as core field
-                }
-                data.append(core_field)
+        # Core fields are now stored in the database like regular dynamic fields
+        # No special handling needed - they're included in the main query
 
         meta = {"total": total, "limit": limit, "offset": offset}
         return jsonify({"data": data, "meta": meta})
@@ -6547,17 +6523,24 @@ def api_dynamic_field_update(field_id: int) -> Response:
                 status=400,
             )
 
-        # Update field properties
-        field.name = field_data["name"]
-        field.title = field_data["title"]
-        field.entity_type = field_data["entity_type"]
-        field.ui_component = field_data.get("ui_component")
-        field.schema_config = field_data.get("schema_config", {})
-        field.ui_config = field_data.get("ui_config", {})
-        field.validation_config = field_data.get("validation_config", {})
-        field.options = field_data.get("options", [])
-        field.active = field_data.get("active", True)
-        field.searchable = field_data.get("searchable", False)
+        # Core fields can only update: title, active, sort_order
+        if field.core:
+            field.title = field_data.get("title", field.title)
+            field.active = field_data.get("active", field.active)
+            field.sort_order = field_data.get("sort_order", field.sort_order)
+        else:
+            # Dynamic fields can update everything
+            field.name = field_data["name"]
+            field.title = field_data["title"]
+            field.entity_type = field_data["entity_type"]
+            field.ui_component = field_data.get("ui_component")
+            field.schema_config = field_data.get("schema_config", {})
+            field.ui_config = field_data.get("ui_config", {})
+            field.validation_config = field_data.get("validation_config", {})
+            field.options = field_data.get("options", [])
+            field.active = field_data.get("active", True)
+            field.searchable = field_data.get("searchable", False)
+            field.sort_order = field_data.get("sort_order", field.sort_order)
 
         # Field name changes are disabled, so no column rename needed
 

@@ -150,6 +150,7 @@ class DynamicField(db.Model, BaseMixin):
 
     active = db.Column(db.Boolean, default=True)  # Whether the field is active
     sort_order = db.Column(db.Integer, default=0)  # Field display order within entity
+    core = db.Column(db.Boolean, default=False)  # Whether this is a core (built-in) field
 
     __table_args__ = (db.UniqueConstraint("name", "entity_type", name="uq_field_name_entity"),)
 
@@ -182,8 +183,8 @@ class DynamicField(db.Model, BaseMixin):
         # Get model class for entity type
         model_class = self.get_entity_model()
 
-        # Check reserved names only for new fields (not updates)
-        if not self.id:  # Only validate reserved names for new fields
+        # Check reserved names only for new non-core fields
+        if not self.id and not self.core:  # Skip validation for core fields
             reserved_names = {"id", "created_at", "updated_at", "deleted"} | set(
                 model_class.__table__.columns.keys()
             )
@@ -204,10 +205,11 @@ class DynamicField(db.Model, BaseMixin):
                 f"Invalid UI component {self.ui_component} for field type {self.field_type}"
             )
 
-        # Validate options if dropdown/multi-select
+        # Validate options if dropdown/multi-select (skip for core fields)
         if (
             self.ui_component in [self.UIComponent.DROPDOWN, self.UIComponent.MULTI_SELECT]
             and not self.options
+            and not self.core  # Skip validation for core fields
         ):
             raise ValueError(f"Options are required for {self.ui_component}")
 
@@ -384,4 +386,6 @@ class DynamicField(db.Model, BaseMixin):
             "validation_config": self.validation_config,
             "options": self.options,
             "active": self.active,
+            "sort_order": self.sort_order,
+            "core": self.core,
         }

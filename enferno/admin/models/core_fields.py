@@ -33,38 +33,43 @@ BULLETIN_CORE_FIELDS = {
         "sort_order": 4,
         "visible": True,
         "core": True,
+        "options": [],  # Dynamic options from database
     },
     "sources": {
         "title": "Sources",
-        "field_type": "relationship",
+        "field_type": "array",
         "ui_component": "multi_select",
         "sort_order": 5,
         "visible": True,
         "core": True,
+        "options": [],  # Dynamic options from database
     },
     "locations": {
         "title": "Locations",
-        "field_type": "relationship",
+        "field_type": "array",
         "ui_component": "multi_select",
         "sort_order": 6,
         "visible": True,
         "core": True,
+        "options": [],  # Dynamic options from database
     },
     "labels": {
         "title": "Labels",
-        "field_type": "relationship",
+        "field_type": "array",
         "ui_component": "multi_select",
         "sort_order": 7,
         "visible": True,
         "core": True,
+        "options": [],  # Dynamic options from database
     },
     "ver_labels": {
         "title": "Verified Labels",
-        "field_type": "relationship",
+        "field_type": "array",
         "ui_component": "multi_select",
         "sort_order": 8,
         "visible": True,
         "core": True,
+        "options": [],  # Dynamic options from database
     },
     "publish_date": {
         "title": "Publish Date",
