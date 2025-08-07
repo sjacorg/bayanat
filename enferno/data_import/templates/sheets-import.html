@@ -1086,9 +1086,13 @@
                 },
 
                 removedFile(dzfile) {
+                    this.resetFields();
                     this.sheets = [];
+                    this.backup = [];
                     this.structure = null;
                     this.fields = null;
+                    this.selectedMap = null;
+                    this.selectedSheet = null;
                 },
 
 
@@ -1122,11 +1126,6 @@
 
                         }
                     );
-                },
-
-                fileRemoved() {
-                    this.selectedSheet = null;
-                    this.sheets = [];
                 },
 
                 returnToStack(item) {
