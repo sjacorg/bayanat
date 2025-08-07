@@ -6,7 +6,7 @@ import logging
 import os
 import shutil
 from enferno.admin.constants import Constants
-from enferno.utils.notification_config import NOTIFICATIONS_CONFIG
+from enferno.utils.notification_config import NOTIFICATIONS_DEFAULT_CONFIG
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -161,7 +161,7 @@ class ConfigManager:
                 "twitter.com",
             ],
             "YTDLP_COOKIES": "",
-            "NOTIFICATIONS": NOTIFICATIONS_CONFIG,  # Import from notification_config.py
+            "NOTIFICATIONS": NOTIFICATIONS_DEFAULT_CONFIG,  # Import from notification_config.py
         }
     )
 

@@ -1,33 +1,30 @@
 from datetime import datetime
 from enferno.user.models import Role, User
 from enferno.admin.constants import Constants
+from enferno.settings import Config as cfg
 from enferno.utils.date_helper import DateHelper
 from enferno.utils.logging_utils import get_logger
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
 from flask import current_app
 from sqlalchemy import select, func, case, and_
-from sqlalchemy.orm import selectinload
-from enferno.utils.notification_config import NOTIFICATIONS_CONFIG, ALWAYS_ON_SECURITY_EVENTS
+from enferno.utils.notification_config import ALWAYS_ON_SECURITY_EVENTS
 
 NotificationEvent = Constants.NotificationEvent
+NotificationCategories = Constants.NotificationCategories
+
 logger = get_logger()
 
 
 class Notification(db.Model, BaseMixin):
     """Simplified notification model - single object with delivery method tracking"""
 
-    # Notification types
-    TYPE_ANNOUNCEMENT = "Announcement"
-    TYPE_UPDATE = "Update"
-    TYPE_SECURITY = "Security"
-
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
-    user = db.relationship("User", foreign_keys=[user_id], backref="notifications")
+    user = db.relationship("User", foreign_keys=[user_id], backref="category")
     title = db.Column(db.String, nullable=False)
     message = db.Column(db.Text, nullable=False)
-    notification_type = db.Column(db.String, nullable=False, default=TYPE_UPDATE)
+    category = db.Column(db.String, nullable=False, default=NotificationCategories.UPDATE.value)
     read_status = db.Column(db.Boolean, default=False)
     read_at = db.Column(db.DateTime)
     is_urgent = db.Column(db.Boolean, default=False)
@@ -45,7 +42,7 @@ class Notification(db.Model, BaseMixin):
 
     __table_args__ = (
         db.Index("ix_notification_user_read", "user_id", "read_status"),
-        db.Index("ix_notification_user_type", "user_id", "notification_type"),
+        db.Index("ix_notification_user_type", "user_id", "category"),
     )
 
     def mark_as_read(self):
@@ -61,7 +58,7 @@ class Notification(db.Model, BaseMixin):
             "id": self.id,
             "title": self.title,
             "message": self.message,
-            "type": self.notification_type,
+            "category": self.category,
             "read_status": self.read_status,
             "read_at": DateHelper.serialize_datetime(self.read_at) if self.read_at else None,
             "is_urgent": self.is_urgent,
@@ -131,19 +128,22 @@ class Notification(db.Model, BaseMixin):
 
     @staticmethod
     def create_for_user(
-        user, title, message, category=TYPE_UPDATE, is_urgent=False, send_email=False
+        user,
+        title,
+        message,
+        category=NotificationCategories.UPDATE.value,
+        is_urgent=False,
+        send_email=False,
     ):
         """Create notification for a specific user"""
         # Determine if email should be enabled
-        email_enabled = (
-            send_email and bool(user.email) and current_app.config.get("MAIL_ENABLED", False)
-        )
+        email_enabled = send_email and bool(user.email) and cfg.MAIL_ENABLED
 
         notification = Notification(
             user=user,
             title=title,
             message=message,
-            notification_type=category,
+            category=category,
             is_urgent=is_urgent,
             email_enabled=email_enabled,
         )
@@ -159,7 +159,13 @@ class Notification(db.Model, BaseMixin):
         return notification
 
     @staticmethod
-    def create_for_admins(title, message, category=TYPE_SECURITY, is_urgent=False, send_email=True):
+    def create_for_admins(
+        title,
+        message,
+        category=NotificationCategories.SECURITY.value,
+        is_urgent=False,
+        send_email=True,
+    ):
         """Create notifications for all admins"""
         admins = db.session.scalars(select(User).where(User.roles.any(Role.name == "Admin"))).all()
         notifications = []
@@ -173,35 +179,33 @@ class Notification(db.Model, BaseMixin):
         return notifications
 
     @staticmethod
-    def send_notification_for_event(
-        event, user, title, message, category=TYPE_UPDATE, is_urgent=False
-    ):
+    def send_notification_for_event(event, user, title, message, category=None, is_urgent=False):
         """Send notification to user based on event configuration"""
         config = get_notification_config(event)
 
-        return Notification.create_for_user(
-            user=user,
-            title=title,
-            message=message,
-            category=category,
-            is_urgent=is_urgent or config.get("urgent", False),
-            send_email=config.get("email", False),
-        )
+        if config.get("enabled", True):  # Default to True if not specified
+            return Notification.create_for_user(
+                user=user,
+                title=title,
+                message=message,
+                category=category or config.get("category", NotificationCategories.UPDATE.value),
+                is_urgent=is_urgent,
+                send_email=config.get("email", False),
+            )
 
     @staticmethod
-    def send_admin_notification_for_event(
-        event, title, message, category=TYPE_SECURITY, is_urgent=False
-    ):
+    def send_admin_notification_for_event(event, title, message, category=None, is_urgent=False):
         """Send notification to all admins based on event configuration"""
         config = get_notification_config(event)
 
-        return Notification.create_for_admins(
-            title=title,
-            message=message,
-            category=category,
-            is_urgent=is_urgent or config.get("urgent", False),
-            send_email=config.get("email", True),  # Default to email for admin notifications
-        )
+        if config.get("enabled", True):
+            return Notification.create_for_admins(
+                title=title,
+                message=message,
+                category=category or config.get("category", NotificationCategories.SECURITY.value),
+                is_urgent=is_urgent,
+                send_email=config.get("email", True),  # Default to email for admin notifications
+            )
 
 
 def get_notification_config(event):
@@ -216,16 +220,15 @@ def get_notification_config(event):
         event = event.upper()
 
     # Get dynamic notifications config from Flask Config (includes config.json values)
-    notifications_config = current_app.config.get("NOTIFICATIONS", {})
+    notifications_config = cfg.NOTIFICATIONS
 
     # Check always-on security events first, then configurable events
-    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(
-        event, {"email_enabled": False, "category": "general"}
-    )
+    config = ALWAYS_ON_SECURITY_EVENTS.get(event) or notifications_config.get(event)
 
     result = {
-        "email": config.get("email_enabled", False) and config.get("in_app_enabled", True),
-        "urgent": config.get("category") == "security",
+        "enabled": config.get("in_app_enabled", True),
+        "email": config.get("email_enabled", False),
+        "category": config.get("category", NotificationCategories.UPDATE.value),
     }
 
     logger.info(f"get_notification_config({event}) -> config: {config}, result: {result}")

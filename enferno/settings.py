@@ -9,7 +9,7 @@ from dotenv import load_dotenv, find_dotenv
 from enferno.utils.config_utils import ConfigManager
 from enferno.utils.dep_utils import dep_utils
 from enferno.admin.constants import Constants
-from enferno.utils.notification_config import NOTIFICATIONS_CONFIG
+from enferno.utils.notification_config import NOTIFICATIONS_DEFAULT_CONFIG
 
 NotificationEvent = Constants.NotificationEvent
 
@@ -454,4 +454,4 @@ class TestConfig(Config):
     YTDLP_ALLOWED_DOMAINS = ["youtube.com", "facebook.com", "instagram.com", "twitter.com"]
     YTDLP_COOKIES = ""
     YTDLP_PROXY = ""
-    NOTIFICATIONS = NOTIFICATIONS_CONFIG
+    NOTIFICATIONS = NOTIFICATIONS_DEFAULT_CONFIG

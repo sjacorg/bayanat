@@ -99,3 +99,12 @@ class Constants:
         WEB_IMPORT_STATUS = "WEB_IMPORT_STATUS"
         NEW_ASSIGNMENT = "NEW_ASSIGNMENT"
         REVIEW_NEEDED = "REVIEW_NEEDED"
+
+    class NotificationCategories(Enum):
+        """
+        Notification categories that are used in the app.
+        """
+
+        ANNOUNCEMENT = "Announcement"
+        UPDATE = "Update"
+        SECURITY = "Security"
