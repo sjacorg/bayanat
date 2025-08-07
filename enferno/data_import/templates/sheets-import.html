@@ -53,9 +53,15 @@
 
                         </v-card>
 
-                        <vue-dropzone ref="dropzone" id="dropzone" class="ma-auto" :options="dzOpts"
-                                      @vdropzone-error="showError"
-                                      @vdropzone-success="uploadSuccess"></vue-dropzone>
+                        <vue-dropzone
+                            ref="dropzone"
+                            id="dropzone"
+                            class="ma-auto"
+                            :options="dzOpts"
+                            @vdropzone-error="showError"
+                            @vdropzone-success="uploadSuccess"
+                            @vdropzone-removed-file="removedFile"
+                        ></vue-dropzone>
 
                         <v-select label="{{ _('Select Sheet to continue') }}" v-model="selectedSheet"
                                   @update:model-value="sheetSelected" v-if="sheets.length && files.length"
@@ -1077,6 +1083,12 @@
                         );
                     }
 
+                },
+
+                removedFile(dzfile) {
+                    this.sheets = [];
+                    this.structure = null;
+                    this.fields = null;
                 },
 
 
