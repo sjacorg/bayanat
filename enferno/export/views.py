@@ -76,8 +76,6 @@ def export_bulletins() -> Response:
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (bulletin) request {export_request.id} has been created by {current_user.username} successfully.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
         return HTTPResponse.created(
@@ -112,8 +110,6 @@ def export_actors() -> Response:
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (actor) request {export_request.id} has been created by {current_user.username} successfully.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
         return HTTPResponse.created(
@@ -148,8 +144,6 @@ def export_incidents() -> Response:
             Constants.NotificationEvent.NEW_EXPORT,
             "New Export Request",
             f"Export (incident) request {export_request.id} has been created by {current_user.username} successfully.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
         return HTTPResponse.created(
             message=f"Export request created successfully, id:  {export_request.id} ",
@@ -255,8 +249,6 @@ def change_export_status() -> Response:
                 Constants.NotificationEvent.APPROVE_EXPORT,
                 "Export Request Approved",
                 f"Export request {export_request.id} has been approved by {current_user.username} successfully.",
-                category=Notification.TYPE_UPDATE,
-                is_urgent=False,
             )
 
             return HTTPResponse.success(

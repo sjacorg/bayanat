@@ -191,8 +191,6 @@ def etl_process() -> Response:
         Constants.NotificationEvent.NEW_BATCH,
         "New Import Request",
         f"Import batch {batch_id} has been created by {current_user.username} successfully.",
-        category=Notification.TYPE_UPDATE,
-        is_urgent=True,
     )
 
     return HTTPResponse.success(data=batch_id)
@@ -460,8 +458,6 @@ def api_process_sheet() -> Response:
         Constants.NotificationEvent.NEW_BATCH,
         "New Import Request",
         f"Import batch {batch_id} has been created by {current_user.username} successfully.",
-        category=Notification.TYPE_UPDATE,
-        is_urgent=True,
     )
 
     return HTTPResponse.success(data=batch_id)

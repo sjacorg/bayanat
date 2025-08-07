@@ -393,8 +393,6 @@ def api_label_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Label Deleted",
             f"Label {label.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Deleted Label #{label.id}", status=200)
     else:
@@ -557,8 +555,6 @@ def api_eventtype_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Event Type Deleted",
             f"Event Type {eventtype.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Deleted Event Type #{eventtype.id}")
     else:
@@ -705,8 +701,6 @@ def api_potentialviolation_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Potential Violation Deleted",
             f"Potential Violation {potentialviolation.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Deleted Potential Violation #{potentialviolation.id}")
     else:
@@ -854,8 +848,6 @@ def api_claimedviolation_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Claimed Violation Deleted",
             f"Claimed Violation {claimedviolation.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Deleted Claimed Violation #{claimedviolation.id}")
     else:
@@ -1021,8 +1013,6 @@ def api_source_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Source Deleted",
             f"Source {source.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Deleted Source #{source.id}")
     else:
@@ -1204,8 +1194,6 @@ def api_location_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Location Deleted",
             f"Location {location.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Deleted Location #{location.id}")
     else:
@@ -1415,8 +1403,6 @@ def api_location_admin_level_delete(id: t.id) -> Response:
             Constants.NotificationEvent.ITEM_DELETED,
             "Location Admin Level Deleted",
             f"Location Admin Level {admin_level.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Location Admin Level Deleted #{admin_level.id}")
     else:
@@ -1569,8 +1555,6 @@ def api_location_type_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Location Type Deleted",
             f"Location Type {location_type.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Location Type Deleted #{location_type.id}")
     else:
@@ -1708,8 +1692,6 @@ def api_country_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Country Deleted",
             f"Country {country.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Country Deleted #{country.id}")
     else:
@@ -1847,8 +1829,6 @@ def api_ethnography_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Ethnography Deleted",
             f"Ethnography {ethnography.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Ethnography Deleted #{ethnography.id}")
     else:
@@ -1982,8 +1962,6 @@ def api_dialect_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Dialect Deleted",
             f"Dialect {dialect.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"Dialect Deleted #{dialect.id}")
     else:
@@ -2127,8 +2105,6 @@ def api_id_number_type_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "ID Number Type Deleted",
             f"ID Number Type {id_number_type.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"ID Number Type Deleted #{id_number_type.id}")
     else:
@@ -2256,8 +2232,6 @@ def api_atoainfo_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "AtoaInfo Deleted",
             f"AtoaInfo {atoainfo.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"AtoaInfo Deleted #{atoainfo.id}")
     else:
@@ -2382,8 +2356,6 @@ def api_atobinfo_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "AtobInfo Deleted",
             f"AtobInfo {atobinfo.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"AtobInfo Deleted #{atobinfo.id}")
     else:
@@ -2508,8 +2480,6 @@ def api_btobinfo_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "BtobInfo Deleted",
             f"BtobInfo {btobinfo.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"BtobInfo Deleted #{btobinfo.id}")
     else:
@@ -2634,8 +2604,6 @@ def api_itoainfo_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "ItoaInfo Deleted",
             f"ItoaInfo {itoainfo.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"ItoaInfo Deleted #{itoainfo.id}")
     else:
@@ -2756,8 +2724,6 @@ def api_itobinfo_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "ItobInfo Deleted",
             f"ItobInfo {itobinfo.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"ItobInfo Deleted #{itobinfo.id}")
     else:
@@ -2882,8 +2848,6 @@ def api_itoiinfo_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "ItoiInfo Deleted",
             f"ItoiInfo {itoiinfo.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"ItoiInfo Deleted #{itoiinfo.id}")
     else:
@@ -3007,8 +2971,6 @@ def api_mediacategory_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Media Category Deleted",
             f"Media Category {mediacategory.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"MediaCategory Deleted #{mediacategory.id}")
     else:
@@ -3133,8 +3095,6 @@ def api_geolocationtype_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "GeoLocation Type Deleted",
             f"GeoLocation Type {geolocationtype.title} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message=f"GeoLocationType Deleted #{geolocationtype.id}")
     else:
@@ -3381,7 +3341,6 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -3400,7 +3359,6 @@ def api_bulletin_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Bulletin {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -3452,7 +3410,6 @@ def api_bulletin_review_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Bulletin {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -3583,7 +3540,6 @@ def api_bulletin_get(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Bulletin {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -4463,7 +4419,6 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -4482,7 +4437,6 @@ def api_actor_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Actor {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -4538,7 +4492,6 @@ def api_actor_review_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Actor {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -4656,7 +4609,6 @@ def api_actor_get(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Actor {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -4691,7 +4643,6 @@ def api_actor_profiles(actor_id: t.id) -> Response:
             Constants.NotificationEvent.UNAUTHORIZED_ACTION,
             "Unauthorized Action",
             f"Unauthorized attempt to view restricted Actor profiles. User: {current_user.username}",
-            category=Notification.TYPE_SECURITY,
             is_urgent=True,
         )
         return HTTPResponse.forbidden("Restricted Access")
@@ -5153,8 +5104,6 @@ def api_user_create(
             Constants.NotificationEvent.NEW_USER,
             "New User Created",
             f"User {username} has been created by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.created(
             message=f"User {username} has been created successfully",
@@ -5234,8 +5183,6 @@ def api_user_update(
                 Constants.NotificationEvent.UPDATE_USER,
                 "User Updated",
                 f"User {user.username} has been updated by {current_user.username} successfully.",
-                category=Notification.TYPE_SECURITY,
-                is_urgent=False,
             )
             return HTTPResponse.success(message=f"Saved User {user.id} {user.name}")
         else:
@@ -5337,8 +5284,6 @@ def api_user_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "User Deleted",
             f"User {user.username} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message="Deleted")
     else:
@@ -5414,8 +5359,6 @@ def api_role_create(
             Constants.NotificationEvent.NEW_GROUP,
             "New Group Created",
             f"Group {role.name} has been created by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.created(message="Created", data={"item": role.to_dict()})
 
@@ -5488,8 +5431,6 @@ def api_role_delete(
             Constants.NotificationEvent.ITEM_DELETED,
             "Role Deleted",
             f"Role {role.name} has been deleted by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message="Deleted")
     else:
@@ -5750,7 +5691,6 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -5769,7 +5709,6 @@ def api_incident_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update unassigned Incident {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -5827,7 +5766,6 @@ def api_incident_review_update(id: t.id, validated_data: dict) -> Response:
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to update restricted Incident {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -5944,7 +5882,6 @@ def api_incident_get(
                 Constants.NotificationEvent.UNAUTHORIZED_ACTION,
                 "Unauthorized Action",
                 f"Unauthorized attempt to view restricted Incident {id}. User: {current_user.username}",
-                category=Notification.TYPE_SECURITY,
                 is_urgent=True,
             )
             return HTTPResponse.forbidden("Restricted Access")
@@ -6388,8 +6325,6 @@ def api_config_write(
             Constants.NotificationEvent.SYSTEM_SETTINGS_CHANGE,
             "System Settings Changed",
             f"System settings have been updated by {current_user.username} successfully.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
         return HTTPResponse.success(message="Configuration Saved Successfully")
     else:
