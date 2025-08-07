@@ -30,6 +30,46 @@ from enferno.utils.validation_utils import validate_password_policy
 logger = get_logger()
 
 
+def generate_core_fields():
+    """Generate core fields as DynamicField records in the database."""
+    from enferno.admin.models.core_fields import BULLETIN_CORE_FIELDS
+
+    # Check if core fields already exist
+    existing_core_fields = DynamicField.query.filter_by(core=True, entity_type="bulletin").count()
+    if existing_core_fields > 0:
+        logger.info("Core fields already exist, skipping generation")
+        return
+
+    logger.info("Generating core fields as DynamicField records")
+
+    for field_name, field_config in BULLETIN_CORE_FIELDS.items():
+        try:
+            core_field = DynamicField(
+                name=field_name,
+                title=field_config["title"],
+                entity_type="bulletin",
+                field_type=field_config["field_type"],
+                ui_component=field_config["ui_component"],
+                schema_config={},
+                ui_config={},
+                validation_config={},
+                options=field_config.get("options", []),
+                active=field_config["visible"],
+                searchable=False,
+                sort_order=field_config["sort_order"],
+                core=True,  # Mark as core field
+            )
+            core_field.save()
+            logger.info(f"Created core field: {field_name}")
+
+        except Exception as e:
+            logger.error(f"Error creating core field {field_name}: {str(e)}")
+            continue
+
+    db.session.commit()
+    logger.info("Core fields generation completed")
+
+
 @click.command()
 @click.option("--create-exts", is_flag=True)
 @with_appcontext
@@ -65,6 +105,9 @@ def create_db(create_exts: bool) -> None:
     create_default_location_data()
     click.echo("Generated location metadata successfully.")
     logger.info("Generated location metadata successfully.")
+    generate_core_fields()
+    click.echo("Generated core fields successfully.")
+    logger.info("Generated core fields successfully.")
 
 
 @click.command()
@@ -370,7 +413,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
                 "width": "half",
             },
             "validation_config": {},
-            "options": ["Option 1", "Option 2", "Option 3"],
+            "options": [
+                {"label": "Option 1", "value": "option1"},
+                {"label": "Option 2", "value": "option2"},
+                {"label": "Option 3", "value": "option3"},
+            ],
             "test_value": "Option 1",
         },
         {
@@ -428,7 +475,11 @@ def test_dynamic_fields(cleanup: bool) -> None:
                 "hidden": False,
             },
             "validation_config": {},
-            "options": ["Tag 1", "Tag 2", "Tag 3"],
+            "options": [
+                {"label": "Tag 1", "value": "tag1"},
+                {"label": "Tag 2", "value": "tag2"},
+                {"label": "Tag 3", "value": "tag3"},
+            ],
             "test_value": ["Tag 1", "Tag 2"],
         },
         {
