@@ -139,30 +139,25 @@ def send_email_notification(self, notification_id: int) -> bool:
     from enferno.admin.models.Notification import Notification
     from datetime import datetime
 
+    # Get the notification record
+    notification = Notification.query.get(notification_id)
+    if not notification:
+        logger.error(f"Notification {notification_id} not found")
+        return False
+
+    # Check if user has email (should be validated already, but double-check)
+    if not notification.user.email:
+        logger.warning(f"User {notification.user.id} has no email address")
+        notification.email_error = "User has no email address"
+        notification.save()
+        return False
+
     try:
-        # Get the notification record
-        notification = Notification.query.get(notification_id)
-        if not notification:
-            logger.error(f"Notification {notification_id} not found")
-            return False
-
-        # Check if email is enabled for this notification
-        if not notification.email_enabled:
-            logger.warning(f"Notification {notification_id} does not have email enabled")
-            return False
-
-        # Check if user has email (should be validated already, but double-check)
-        if not notification.user.email:
-            logger.warning(f"User {notification.user.id} has no email address")
-            notification.email_error = "User has no email address"
-            notification.save()
-            return False
-
         # Send the email
         success = EmailUtils.send_email(
             recipient=notification.user.email,
             subject=notification.title,
-            body=f"{notification.title}\n\n{notification.message}",
+            body=f"{notification.message}",
         )
 
         if success:
@@ -212,7 +207,7 @@ def send_email_notification(self, notification_id: int) -> bool:
 
                 # Retry if retries remaining
                 if self.request.retries < self.max_retries:
-                    raise self.retry(countdown=60 * (2**self.request.retries), exc=exc)
+                    self.retry(countdown=60 * (2**self.request.retries), exc=exc)
                 else:
                     notification.email_error += "\nFinal attempt failed due to exception"
                     notification.save()
@@ -346,8 +341,6 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         assigner,
         "Bulk Operation Status",
         f"Bulk update of {len(ids)} Bulletins has been completed successfully.",
-        category=Notification.TYPE_UPDATE,
-        is_urgent=False,
     )
 
     # send notifications for assignments and reviews
@@ -357,8 +350,6 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             User.query.get(assigned_to_id),
             "New Assignment",
             f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for analysis.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
     if first_peer_reviewer_id:
@@ -367,8 +358,6 @@ def bulk_update_bulletins(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             User.query.get(first_peer_reviewer_id),
             "Review Needed",
             f"{len(ids)} Bulletins have been assigned to you by {assigner.username} for review.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
 
@@ -494,8 +483,6 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         assigner,
         "Bulk Operation Status",
         f"Bulk update of {len(ids)} Actors has been completed successfully.",
-        category=Notification.TYPE_UPDATE,
-        is_urgent=False,
     )
 
     # send notifications for assignments and reviews
@@ -505,8 +492,6 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             User.query.get(assigned_to_id),
             "New Assignment",
             f"{len(ids)} Actors have been assigned to you by {assigner.username} for analysis.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
     if first_peer_reviewer_id:
@@ -515,8 +500,6 @@ def bulk_update_actors(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             User.query.get(first_peer_reviewer_id),
             "Review Needed",
             f"{len(ids)} Actors have been assigned to you by {assigner.username} for review.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
 
@@ -668,8 +651,6 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
         assigner,
         "Bulk Operation Status",
         f"Bulk update of {len(ids)} Incidents has been completed successfully.",
-        category=Notification.TYPE_UPDATE,
-        is_urgent=False,
     )
 
     # send notifications for assignments and reviews
@@ -679,8 +660,6 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             User.query.get(assigned_to_id),
             "New Assignment",
             f"{len(ids)} Incidents have been assigned to you by {assigner.username} for analysis.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
     if first_peer_reviewer_id:
@@ -689,8 +668,6 @@ def bulk_update_incidents(ids: list, bulk: dict, cur_user_id: t.id) -> None:
             User.query.get(first_peer_reviewer_id),
             "Review Needed",
             f"{len(ids)} Incidents have been assigned to you by {assigner.username} for review.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
 
@@ -857,8 +834,6 @@ def batch_complete_notification(results: list, batch_id: str, user_id: int) -> N
             user,
             "Batch Import Complete",
             f"Batch {batch_id} completed successfully. All {len(successful)} files processed.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
     else:
         Notification.send_notification_for_event(
@@ -866,8 +841,6 @@ def batch_complete_notification(results: list, batch_id: str, user_id: int) -> N
             user,
             "Batch Import Completed with Errors",
             f"Batch {batch_id} completed. {len(successful)} succeeded, {len(failed)} failed.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=True,
         )
 
     logger.info(f"Batch {batch_id} complete: {len(successful)} success, {len(failed)} failed")
@@ -910,8 +883,6 @@ def process_files(files: list, meta: dict, user_id: int, batch_id: str) -> None:
             User.query.get(user_id),
             "Batch Import Complete",
             f"Batch {batch_id} had no valid files to process.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
         return
 
@@ -1563,8 +1534,6 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             User.query.get(user_id),
             "Web Import Status",
             f"Web import of {url} has been completed successfully.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=False,
         )
 
     except ValueError as e:
@@ -1578,8 +1547,6 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             User.query.get(user_id),
             "Web Import Status",
             f"Web import of {url} has failed.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=True,
         )
 
     except Exception as e:
@@ -1593,8 +1560,6 @@ def download_media_from_web(url: str, user_id: int, batch_id: str, import_id: in
             User.query.get(user_id),
             "Web Import Status",
             f"Web import of {url} has failed.",
-            category=Notification.TYPE_UPDATE,
-            is_urgent=True,
         )
 
 
