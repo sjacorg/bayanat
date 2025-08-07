@@ -31,7 +31,7 @@
                     </v-sheet>
 
                     <v-sheet max-width="800" class="mx-auto fp-wrap">
-                        <v-card elevation="1" class="text-center my-3">
+                        <v-card class="text-center my-3">
                             <v-card-title class="subtitle-1">{{ _('Select Sheet Language') }}</v-card-title>
                             <v-card-text>
                                 <v-chip-group class="mx-auto"
@@ -102,12 +102,8 @@
 
                 </v-stepper-window-item>
 
-                <v-stepper-window-item value="2">
+                <v-stepper-window-item value="2" class="h-100">
                     <v-sheet class=" pa-3 align-center d-flex">
-                        <v-btn small @click="step='one'"
-                        >
-                            {{ _('Back') }}
-                        </v-btn>
                         <v-spacer></v-spacer>
                         <v-select density="compact"
                                 @click:clear="resetFields"
@@ -122,22 +118,13 @@
                                 clearable
                         >
                         </v-select>
-
-                        <v-btn
-                                class="mx-2"
-                                color="success"
-                                @click="toStepThree"
-                        >
-                            {{ _('Next') }}
-                        </v-btn>
                     </v-sheet>
 
-                    <v-card class="pa-3">
+                    <v-card class="pa-3" style="height: calc(100% - 90px);">
+                        <v-row class="align-stretch h-100">
+                            <v-col cols="12" md="3" class="h-100">
 
-                        <v-row class="align-stretch">
-                            <v-col cols="12" md="3">
-
-                                <v-card class="csv-panel ">
+                                <v-card class="overflow-y-auto h-100">
                                     <v-toolbar>
                                         <v-toolbar-title class="d-flex">
                                             {{ _('Sheet Fields') }}
@@ -185,8 +172,8 @@
 
                             </v-col>
 
-                            <v-col cols="12" md="9">
-                                <v-sheet class="csv-panel pa-5">
+                            <v-col cols="12" md="9" class="h-100">
+                                <v-sheet class="overflow-y-auto h-100 pa-5">
                                     <div class="d-flex align-center">
                                         <h3 class="my-3">
                                             {{ _('Actor Fields') }}
@@ -810,14 +797,9 @@
                                     :multiple="true"
                                     label="{{ _('Access Roles') }}"
                                     v-model="roles"
+                                    class="mt-4"
                             ></search-field>
                         </v-card-text>
-                        <v-card-actions class="d-flex justify-center">
-                            <v-btn variant="elevated" @click="toStepFour" :disabled="processDisabled" color="primary">
-                                {{ _('Process File(s)') }}
-                            </v-btn>
-
-                        </v-card-actions>
                     </v-card>
                 </v-stepper-window-item>
 
@@ -827,24 +809,16 @@
                         <v-card-text>
                             ${ status }
                         </v-card-text>
-                        <v-btn
-                                v-if="batch_id"
-                                color="primary"
-                                dark
-                                class="ma-2"
-                                :href="'/import/log/?batch_id='+batch_id">
-                            {{ _('Check Import Progress') }}
-                        </v-btn>
                     </v-card>
                 </v-stepper-window-item>
             </v-stepper-window>
 
             <v-stepper-actions>
                 <template #next>
-                    <v-btn>Next</v-btn>
+                    <v-btn v-bind="nextButtonProps"></v-btn>
                 </template>
                 <template #prev>
-                    <v-btn>Previous</v-btn>
+                    <v-btn v-bind="prevButtonProps"></v-btn>
                 </template>
             </v-stepper-actions>
         </v-stepper>
@@ -894,6 +868,7 @@
                 drawer: drawer,
                 mode: null,
                 loading: false,
+                isProcessSheetSuccess: false,
                 status: '',
                 batch_id: '',
                 firstAction: 0,
@@ -1000,7 +975,37 @@
             computed: {
                 allFiles() {
                     return this.files.concat(this.extra);
-                }
+                },
+                nextButtonProps() {
+                    const commonProps = { text: 'Next', 'append-icon': 'mdi-chevron-right', color: 'primary' }
+                    switch (this.step) {
+                        case '1':
+                            return { ...commonProps, disabled: !this.files.length || !this.selectedSheet, onclick: () => this.step = '2' }
+                        case '2':
+                            return { ...commonProps, onclick: () => { this.selectedMap = this.map; this.step = '3'; } }
+                        case '3':
+                            return { ...commonProps, disabled: this.processDisabled, text: 'Process File(s)', onclick: () => {this.step = '4'; this.process();} }
+                        case '4':
+                            return { ...commonProps, text: 'Check import progress', disabled: !this.isProcessSheetSuccess, href: `/import/log/?batch_id=${this.batch_id}` }
+                        default:
+                            return commonProps
+                    }
+                },
+                prevButtonProps() {
+                    const commonProps = { text: 'Previous', 'prepend-icon': 'mdi-chevron-left', variant: 'tonal' }
+                    switch (this.step) {
+                        case '1':
+                            return { ...commonProps, disabled: true }
+                        case '2':
+                            return { ...commonProps, onclick: () => this.step = '1' }
+                        case '3':
+                            return { ...commonProps, onclick: () => this.step = '2' }
+                        case '4':
+                            return { ...commonProps, onclick: () => this.step = '3' }
+                        default:
+                            return commonProps
+                    }
+                },
             },
 
 
@@ -1220,11 +1225,13 @@
                         actorConfig: config
                     }).then(
                         res => {
+                            this.isProcessSheetSuccess = true;
                             this.status = "{{ _('Rows from file were added to queue successfully and will be imported in turn.') }}"
-                            this.batch_id = res.data
+                            this.batch_id = res.data.data
                         }
                     ).catch(err => {
                         console.log(err.response.data);
+                        this.isProcessSheetSuccess = false;
                         this.status = "{{ _('Error importing rows. Check logs for more information.') }}"
                     }).finally(
                         () => {
@@ -1281,19 +1288,6 @@
                         console.error('Error fetching id number types:', err);
                         this.showSnack(handleRequestError(err));
                     })
-                },
-
-                toStepThree() {
-
-                    this.selectedMap = this.map;
-                    this.step = "3";
-
-
-                },
-
-                toStepFour() {
-                    this.step = "4";
-                    this.process();
                 },
 
                 selectMap(m) {
