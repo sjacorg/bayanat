@@ -222,7 +222,6 @@ def after_password_change(sender, user) -> None:
             user,
             "Password Changed",
             "Your password has been changed. If you didn't make this change, please contact your system administrator immediately.",
-            category=Notification.TYPE_SECURITY,
         )
 
 
@@ -281,8 +280,6 @@ def after_tf_profile_change(sender, user, **extra_args) -> None:
             Constants.NotificationEvent.TWO_FACTOR_CHANGE,
             "An Admin Changed Their Two-Factor Profile",
             f"{user.username} has changed their two-factor authentication options.",
-            category=Notification.TYPE_SECURITY,
-            is_urgent=False,
         )
 
     Notification.send_notification_for_event(
@@ -290,5 +287,4 @@ def after_tf_profile_change(sender, user, **extra_args) -> None:
         user,
         "Two-Factor Profile Changed",
         "Your two-factor profile has been changed. If you didn't make this change, please contact an administrator immediately.",
-        category=Notification.TYPE_SECURITY,
     )
