@@ -1086,13 +1086,17 @@
                 },
 
                 removedFile(dzfile) {
-                    this.resetFields();
                     this.sheets = [];
                     this.backup = [];
                     this.structure = null;
                     this.fields = null;
                     this.selectedMap = null;
                     this.selectedSheet = null;
+                    this.map = deepClone(this.defaultMap);
+                    this.mapName = "{{ _('New Map')}}";
+                    this.mapid = null;
+                    this.vmap = {};
+                    this.files = [];
                 },
 
 
@@ -1168,7 +1172,7 @@
                     if (confirm("{{ _('Are you sure you want to reset this mapping?')}}")) {
                         this.fields = this.backup;
                         // hack to bypass js passing vars by reference
-                        this.map = JSON.parse(JSON.stringify(this.defaultMap));
+                        this.map = deepClone(this.defaultMap);
                         this.mapName = "{{ _('New Map')}}";
                         this.mapid = null;
                         this.vmap = {};
