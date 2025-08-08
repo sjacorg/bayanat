@@ -146,7 +146,7 @@ def send_email_notification(self, notification_id: int) -> bool:
         return False
 
     if notification.email_sent:
-        logger.info(f"Notification {notification_id} already sent; skipping send.")
+        logger.info(f"Notification {notification_id} already sent; skipping send")
         return True
 
     # Check if user has email (should be validated already, but double-check)
@@ -154,42 +154,34 @@ def send_email_notification(self, notification_id: int) -> bool:
         logger.error(f"User {notification.user.id} has no email address")
         return False
 
-    try:
-        # Send the email
-        success = EmailUtils.send_email(
-            recipient=notification.user.email,
-            subject=notification.title,
-            body=f"{notification.message}",
+    success = EmailUtils.send_email(
+        recipient=notification.user.email,
+        subject=notification.title,
+        body=f"{notification.message}",
+    )
+
+    if success:
+        notification.email_sent = True
+        notification.email_sent_at = datetime.now()
+        notification.save()
+        logger.info(
+            f"Email notification {notification_id} sent successfully to {notification.user.id}"
         )
+        return True
 
-    except Exception as e:
-        # Handle unexpected errors
-        logger.error(f"Email notification {notification_id} failed: {str(e)}", exc_info=True)
-        success = False
-
-    finally:
-        if success:
-            # record successful email send
-            notification.email_sent = True
-            notification.email_sent_at = datetime.now()
-            notification.save()
+    else:
+        # Retry if retries remaining
+        if self.request.retries < self.max_retries:
             logger.info(
-                f"Email notification {notification_id} sent successfully to {notification.user.email}"
+                f"Retrying email notification {notification_id}... (attempt {self.request.retries + 1})"
             )
-            return True
-        else:
-            # Retry if retries remaining
-            if self.request.retries < self.max_retries:
-                logger.info(
-                    f"Retrying email notification {notification_id}... (attempt {self.request.retries + 1})"
-                )
-                return self.retry(countdown=60 * (2**self.request.retries))
+            raise self.retry(countdown=60 * (2**self.request.retries))
 
-            # Log failure after retries exhausted
-            logger.error(
-                f"Failed to send email notification {notification_id} after {self.max_retries} retries"
-            )
-            return False
+        # Log failure after retries exhausted
+        logger.error(
+            f"Failed to send email notification {notification_id} after {self.max_retries} retries"
+        )
+        return False
 
 
 @celery.task
