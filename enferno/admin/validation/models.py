@@ -8,12 +8,14 @@ from pydantic import (
     HttpUrl,
     ValidationInfo,
 )
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 from urllib.parse import urlparse
 from dateutil.parser import parse
 import re
 
 from enferno.admin.constants import Constants
+from enferno.settings import Config as cfg
+from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
 from enferno.utils.validation_utils import (
     SanitizedField,
@@ -29,6 +31,8 @@ DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
 BASE_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True)
 STRICT_MODEL_CONFIG = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+PER_PAGE = int(cfg.ITEMS_PER_PAGE_OPTIONS[0])
 
 
 class BaseValidationModel(BaseModel):
@@ -1217,6 +1221,16 @@ class BulletinQueryValidationModel(QueryBaseModel):
 
 class BulletinQueryRequestModel(BaseValidationModel):
     q: list[BulletinQueryValidationModel] = Field(default_factory=list)
+    per_page: int = Field(ge=1, default=PER_PAGE)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class EntityReviewValidationModel(BaseValidationModel):
@@ -1364,6 +1378,16 @@ class ActorQueryModel(QueryBaseModel):
 
 class ActorQueryRequestModel(BaseValidationModel):
     q: list[ActorQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=PER_PAGE, ge=1)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class ActorReviewRequestModel(BaseValidationModel):
@@ -1469,7 +1493,17 @@ class IncidentQueryModel(QueryBaseModel):
 
 
 class IncidentQueryRequestModel(BaseValidationModel):
-    q: Optional[IncidentQueryModel] = None
+    q: list[IncidentQueryModel] = Field(default_factory=list)
+    per_page: int = Field(default=PER_PAGE, ge=1)
+    cursor: Optional[str] = None
+    include_count: Optional[bool] = False
+
+    @field_validator("per_page")
+    def validate_per_page(cls, v):
+        valid_values = [int(x) for x in cfg.ITEMS_PER_PAGE_OPTIONS]
+        if v not in valid_values:
+            raise ValueError(f"Invalid per_page value: {v}. Valid values are: {valid_values}")
+        return v
 
 
 class IncidentReviewRequestModel(BaseValidationModel):
@@ -1892,8 +1926,6 @@ class WebImportValidationModel(StrictValidationModel):
         domain = v._url.host
         if domain.startswith("www."):
             domain = domain[4:]
-        from enferno.settings import Config as cfg
-
         allowed_domains = cfg.YTDLP_ALLOWED_DOMAINS
         if not any(domain.endswith(allowed) for allowed in allowed_domains):
             raise ValueError(f"Imports not allowed from {domain}")

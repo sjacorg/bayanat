@@ -13,7 +13,7 @@
     <v-main>
         {% include 'admin/partials/actor_advsearch.html' %}
         <v-container fluid>
-            <v-tooltip text="{{ _('Visualize Results') }}">
+            <!-- <v-tooltip text="{{ _('Visualize Results') }}">
                 <template v-slot:activator="{ props }">
                     <v-btn
                             color="primary"
@@ -30,7 +30,7 @@
 
                     </v-btn>
                 </template>
-            </v-tooltip>
+            </v-tooltip> -->
 
             <v-card>
                 <v-card-title>
@@ -46,16 +46,15 @@
                             :headers="headers"
                             @click:row="rowClick"
                             :items="items"
-                            @update:options="refresh"
-                            :page="options.page"
                             :loading="loading"
-                            :items-length="itemsLength"
                             :row-props="rowClass"
+                            :items-length="totalCount"
                             show-select
                             item-value="id"
                             select-strategy="page"
                             item-selectable="selectable"
                             class="elevation-1"
+                            hide-default-footer
                     >
 
                         <template v-slot:top>
@@ -154,9 +153,33 @@
 
                         </template>
 
-                        <template #footer.prepend>
-                            <div class="ma-2 d-flex me-auto">{{ _('Search time: ') }} ${searchTime} {{ _('seconds') }}</div>
+                        <template #bottom>
+                            <div class="d-flex align-center justify-space-between w-100 border-t px-3" style="height: 61px">
+                                <div>{{ _('Search time: ') }}
+                                    ${searchTime} {{ _('seconds') }}</div>
+                                <div>
+                        
+                                    <div class="d-flex flex-row align-center ga-2">
+                                        <div class="d-flex flex-row align-center ga-2">
+                                            {{ _('Items per page:') }}
+                                            <v-select :model-value="perPage" @update:model-value="setNextPerPageValue" hide-details
+                                                density="compact" :items="itemsPerPageOptions" variant="outlined"></v-select>
+                        
+                                        </div>
+                                        <div>
+                                            <span>${rangeStart.toLocaleString('en-US')}-${rangeEnd.toLocaleString('en-US')} of ${totalCount.toLocaleString('en-US')}</span>
+                                            <v-btn :disabled="loading || cursorPage === 1" @click="goToFirstPage()" variant="text"
+                                                icon="mdi-page-first"></v-btn>
+                                            <v-btn :disabled="loading || cursorPage === 1" @click="goToPrevPage()" variant="text"
+                                                icon="mdi-chevron-left"></v-btn>
+                                            <v-btn :disabled="loading || !nextCursor" @click="goToNextPage()" variant="text"
+                                                icon="mdi-chevron-right"></v-btn>
+                                        </div>
+                                    </div>
+                                </div>
                         </template>
+                        
+                        <template v-if="fetchingRecordsError" v-slot:no-data></template>
 
                         <template v-slot:item.type="{item}">
                             <v-tooltip :text="item.type">
@@ -384,6 +407,7 @@
             mixins: [mediaMixin, globalMixin, relationsMixin],
 
             data: () => ({
+                itemsPerPageOptions: window.itemsPerPageOptions,
                 valid: false,
                 leftDialogProps: null,
                 rightDialogProps: null,
@@ -392,6 +416,14 @@
                 advFeatures: ('{{ config.ADV_ANALYSIS }}' === 'True'),
 
                 helper: {}, // helper object for review items
+
+                cursorPage: 1,
+                currentCursor: null,          // the current request's cursor
+                nextCursor: null,             // the next cursor from the API
+                cursorHistory: [null],        // page 1 starts at null
+                perPage: window.itemsPerPageOptions?.[0] ?? 20,
+                items: [],
+                selected: [],
 
                 assignActor: {},
                 selfAssignDialog: false,
@@ -443,7 +475,7 @@
                 searches: [],
                 savedSearchSelection: null,
 
-                fsloading: true,
+                fsloading: false,
 
                 // Load actor config
 
@@ -512,7 +544,7 @@
                 //rich text config
                 tinyConfig: tinyConfig,
 
-                loading: true,
+                loading: false,
                 parentLoading: false,
                 csvFile: null,
                 options: {},
@@ -598,13 +630,27 @@
                 actor: {},
                 actorLoader: false,
 
+                fetchingRecordsError: false,
+
+                // Count functionality  
+                totalCount: 0,
                 idNumberTypes: [],
             }),
 
             computed: {
+                rangeStart() {
+                    return this.totalCount === 0 ? 0 : (this.cursorPage - 1) * this.perPage + 1;
+                },
+                rangeEnd() {
+                    return this.totalCount === 0 ? 0 : this.rangeStart + this.items.length - 1;
+                },
+                showingItemsOfText() {
+                    return "{{ _('Showing {items} of') }}".replace('{items}', this.items.length)
+                },
                 simpleIdNumberValue() {
                     return this.editedItem.id_number?.map(idNumber => ({ type: idNumber.type.id.toString(), number: idNumber.number.toString() }));
                 },
+
                 searchEmpty() {
                     return this.search.every(search =>
                         Object.values(search).every(value => !value)
@@ -704,6 +750,9 @@
                         console.log(e.message);
                     });
                 {% endif  %}
+
+                // Load initial data
+                this.refresh();
 
                 // display confirmation alert if edit dialog is open.
                 let self = this;
@@ -949,19 +998,19 @@
                 filter_related_to_bulletin(id) {
                     this.bulletinDrawer = false;
                     this.search = [{rel_to_bulletin: id}];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 filter_related_to_actor(id) {
                     this.bulletinDrawer = false;
                     this.search = [{rel_to_actor: id}];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 filter_related_to_incident(id) {
                     this.bulletinDrawer = false;
                     this.search = [{rel_to_incident: id}];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 previewItem(endpoint) {
@@ -983,7 +1032,7 @@
                         if (!this.jobs.length) {
                             clearInterval(this.bulkTimer);
                             this.options.page = 1;
-                            this.refresh();
+                            this.goToFirstPage();
                             this.showSnack("{{ _('Bulk Update is finished!')}}")
                         }
                     });
@@ -1028,43 +1077,83 @@
                 },
 
                 doSearch() {
-                    this.options.page = 1;
+                    this.advSearchExpand = this.advSearchExpand && false;
+                    this.goToFirstPage();
+                },
 
-                    // some good UX
-                    if (this.advSearchExpand) {
-                        this.advSearchExpand = false;
-                    } else {
-                        //this.search = Object.assign({},{tsv:this.search.tsv})
-                    }
+                setNextPerPageValue(nextPerPage) {
+                    this.perPage = nextPerPage;
+                    this.goToFirstPage();
+                },
+
+                refresh() {
+                    if (this.loading) return;
+
+                    this.loading = true;
+                    const startTime = new Date()
+
+                    const requestData = {
+                        q: this.search,
+                        per_page: this.perPage,
+                        cursor: this.currentCursor,
+                        include_count: true,
+                    };
+
+                    axios.post('/admin/api/actors/', requestData)
+                        .then((response) => {
+                            const endTime = new Date()
+                            const duration = endTime - startTime
+                            this.searchTime = ((endTime - startTime) / 1000).toFixed(2);
+                            console.log(`API call took ${duration}ms`)
+
+                            this.items = response.data.items;
+                            this.showVisualize = !(
+                                this.search.length === 1 &&
+                                Object.keys(this.search[0]).length === 0
+                            );
+                            if ('total' in response.data) {
+                                this.totalCount = response.data.total
+                                this.countType = response.data.totalType
+                            }
+                            this.nextCursor = response.data.nextCursor || null;
+                        })
+                        .catch((error) => {
+                            console.error('Error loading data:', error);
+                            this.showSnack('Error loading data');
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+
+                goToFirstPage() {
+                    if (this.loading) return;
+
+                    this.currentCursor = null;
+                    this.cursorPage = 1
 
                     this.refresh();
                 },
 
+                goToNextPage() {
+                    if (this.loading || !this.nextCursor) return;
 
-                refresh(options) {
-                    this.options = options || { ...this.options, page: 1 };
-                    this.loading = true;
-                    const startTime = new Date();
+                    this.currentCursor = this.nextCursor;
+                    this.cursorPage++;
 
-                    let url = `/admin/api/actors/?page=${this.options.page}&per_page=${this.options.itemsPerPage}`;
+                    // Save currentCursor before moving to next page
+                    this.cursorHistory[this.cursorPage - 1] = this.currentCursor;
 
-                    api.post(url, {
-                        q: this.search,
-                        options: this.options
-                    }).then(response => {
-                        const endTime = new Date();
-                        this.searchTime = ((endTime - startTime) / 1000).toFixed(1);
-                        this.itemsLength = response.data.total;
-                        this.items = response.data.items;
-                        this.showVisualize = !(
-                            this.search.length === 1 &&
-                            Object.keys(this.search[0]).length === 0
-                        );
-                    }).finally(() => {
-                        this.loading = false;
-                    });
+                    this.refresh();
+                },
 
+                goToPrevPage() {
+                    if (this.loading || this.cursorPage <= 1) return;
 
+                    this.cursorPage--;
+
+                    this.currentCursor = this.cursorHistory[this.cursorPage - 1] || null;
+                    this.refresh();
                 },
 
                 removeQueryAt(i) {
@@ -1087,7 +1176,7 @@
 
                 resetSearch() {
                     this.resetQuery();
-                    this.doSearch();
+                    this.goToFirstPage();
                 },
 
                 openSaveQueryDialog() {
@@ -1172,25 +1261,23 @@
 
                 allActors() {
                     this.search = [{}];
-                    this.doSearch();
+                    this.goToFirstPage();
 
                 },
                 myAssigned() {
-                    q = {};
-                    this.options.page = 1;
+                    let q = {};
                     q.assigned = [this.currentUser.id];
                     q.statuses = ["Assigned"];
                     this.search = [q];
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
                 myReview() {
-                    q = {};
-                    this.options.page = 1;
+                    let q = {};
                     q.reviewer = [this.currentUser.id];
                     q.statuses = ["Peer Review Assigned"];
                     this.search = [q]
-                    this.refresh();
+                    this.goToFirstPage();
                 },
 
 
@@ -1507,7 +1594,8 @@
                         api.post("/admin/api/actor/", {
                             item: payload
                         }).then(response => {
-                            this.items.unshift(response.data.item)
+                            this.items.unshift(response.data.item);
+                            this.totalCount += 1;
                             this.showSnack(response.data.message);
                             this.close();
                         }).catch(err => {
