@@ -140,7 +140,7 @@ def send_email_notification(self, notification_id: int) -> bool:
     from datetime import datetime
 
     # Get the notification record
-    notification = Notification.query.get(notification_id)
+    notification = db.session.get(Notification, notification_id)
     if not notification:
         logger.error(f"Notification {notification_id} not found")
         return False
