@@ -145,6 +145,10 @@ def send_email_notification(self, notification_id: int) -> bool:
         logger.error(f"Notification {notification_id} not found")
         return False
 
+    if notification.email_sent:
+        logger.info(f"Notification {notification_id} already sent; skipping send.")
+        return True
+
     # Check if user has email (should be validated already, but double-check)
     if not notification.user.email:
         logger.error(f"User {notification.user.id} has no email address")
