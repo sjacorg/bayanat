@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enferno.user.models import Role, User
 from enferno.admin.constants import Constants
 from enferno.settings import Config as cfg
@@ -43,7 +43,7 @@ class Notification(db.Model, BaseMixin):
         """Marks the notification as read and sets the read timestamp."""
         if not self.read_status:
             self.read_status = True
-            self.read_at = datetime.now()
+            self.read_at = datetime.now(timezone.utc)
             self.save()
 
     def to_dict(self):
@@ -109,7 +109,7 @@ class Notification(db.Model, BaseMixin):
         stmt = (
             update(cls)
             .where(and_(cls.user_id == user_id, cls.read_status == False))
-            .values(read_status=True, read_at=datetime.now())
+            .values(read_status=True, read_at=datetime.now(timezone.utc))
         )
         db.session.execute(stmt)
         db.session.commit()

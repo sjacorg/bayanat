@@ -9,7 +9,7 @@ from collections import namedtuple
 from pathlib import Path
 
 from typing import Any, Generator, Literal, Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 
 import boto3
 import pandas as pd
@@ -35,6 +35,7 @@ from enferno.admin.models import (
     Location,
     Media,
 )
+from enferno.utils.email_utils import EmailUtils
 from enferno.admin.models.Notification import Notification
 from enferno.deduplication.models import DedupRelation
 from enferno.export.models import Export
@@ -135,9 +136,6 @@ def send_email_notification(self, notification_id: int) -> bool:
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
-    from enferno.utils.email_utils import EmailUtils
-    from enferno.admin.models.Notification import Notification
-    from datetime import datetime
 
     # Get the notification record
     notification = db.session.get(Notification, notification_id)
@@ -162,7 +160,7 @@ def send_email_notification(self, notification_id: int) -> bool:
 
     if success:
         notification.email_sent = True
-        notification.email_sent_at = datetime.now()
+        notification.email_sent_at = datetime.now(timezone.utc)
         notification.save()
         logger.info(
             f"Email notification {notification_id} sent successfully to {notification.user.id}"
