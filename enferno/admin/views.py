@@ -4863,8 +4863,8 @@ def logout_all_sessions(user_id: int) -> Any:
             if rds.exists(session_key):
                 rds.delete(session_key)
         except Exception as e:
-            logger.error(f"Failed to delete session {s.session_token}: {str(e)}", exc_info=True)
-            errors.append(f"Failed to delete session {s.session_token}")
+            logger.error(f"Failed to delete session {s.id}: {str(e)}", exc_info=True)
+            errors.append(f"Failed to delete session {s.id}")
 
     # Logout current session last if needed
     if current_session_logout_needed:
