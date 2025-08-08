@@ -17,7 +17,15 @@ from enferno.admin.constants import Constants
 from enferno.settings import Config as cfg
 from enferno.utils.validation_utils import SanitizedField, one_must_exist
 from enferno.utils.typing import typ as t
-from enferno.utils.validation_utils import validate_password_policy
+from enferno.utils.validation_utils import (
+    SanitizedField,
+    one_must_exist,
+    validate_email_format,
+    validate_password_policy,
+    validate_username,
+    validate_username_constraints,
+)
+from wtforms.validators import ValidationError
 
 DEFAULT_STRING_FIELD = Field(default=None, max_length=255)
 
@@ -1388,7 +1396,7 @@ class ActorReviewRequestModel(BaseValidationModel):
 
 class UserValidationModel(StrictValidationModel):
     email: Optional[str] = None
-    username: str = Field(min_length=1)
+    username: str = Field(min_length=4, max_length=32)
     password: Optional[str] = None  # Optional on PUT, required on POST
     name: str = Field(min_length=1)
     roles: list[PartialRoleModel] = Field(default_factory=list)
@@ -1405,24 +1413,41 @@ class UserValidationModel(StrictValidationModel):
     id: Optional[int] = None
     two_factor_devices: Optional[Any] = None
 
-    @model_validator(mode="before")
+    @field_validator("username", mode="before")
     @classmethod
-    def validate_email(cls, v):
-        from enferno.settings import Config as cfg
+    def validate_username(cls, v: str) -> str:
+        return validate_username_constraints(v)
 
-        if cfg.MAIL_ENABLED:
-            if email := v.get("email"):
-                try:
-                    domain = email.split("@")[-1]
-                except Exception:
-                    raise ValueError("Error, invalid email format")
-                if "*" in cfg.MAIL_ALLOWED_DOMAINS:
-                    return v
-                if domain.lower() not in cfg.MAIL_ALLOWED_DOMAINS:
-                    raise ValueError("Error, email domain not allowed")
-            else:
-                raise ValueError("Error, email is required")
-        return v
+    @field_validator("email")
+    @classmethod
+    def validate_email_field(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validates the email format and returns the validated email.
+
+        Args:
+            v: The email to validate
+
+        Returns:
+            Optional[str]: The validated email or None
+
+        Raises:
+            ValueError: If the email format is invalid
+        """
+        if not v:
+            return v
+
+        try:
+            v = validate_email_format(v)
+        except ValidationError as e:
+            raise ValueError("Invalid email format")
+
+        if cfg.MAIL_ALLOWED_DOMAINS and "*" not in cfg.MAIL_ALLOWED_DOMAINS:
+            if v.domain not in cfg.MAIL_ALLOWED_DOMAINS:
+                raise ValueError(
+                    f"Email domain is not allowed. Allowed domains are: {', '.join(cfg.MAIL_ALLOWED_DOMAINS)}"
+                )
+
+        return v.normalized
 
     @field_validator("password")
     def validate_password(cls, v):
@@ -1436,7 +1461,14 @@ class UserRequestModel(BaseValidationModel):
 
 
 class UserNameCheckValidationModel(BaseValidationModel):
-    item: str = Field(min_length=1)
+    item: str = Field(min_length=4, max_length=32)
+
+    @field_validator("item", mode="before")
+    @classmethod
+    def validate_username_check(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Username cannot be empty")
+        return validate_username_constraints(v)
 
 
 class UserPasswordCheckValidationModel(BaseValidationModel):
