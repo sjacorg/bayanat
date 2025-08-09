@@ -670,6 +670,6 @@ function formatDate(date, options = {
     }
 
     return hideTime
-        ? dayjsDate.format('MM/DD/YYYY')
-        : dayjsDate.format(`MM/DD/YYYY ${timeFormat}`);
+        ? dayjsDate.format('DD/MM/YYYY')
+        : dayjsDate.format(`DD/MM/YYYY ${timeFormat}`);
 }
