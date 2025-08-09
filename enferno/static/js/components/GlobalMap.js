@@ -330,19 +330,22 @@ const GlobalMap = Vue.defineComponent({
                 </div>
               </div>
 
-              <v-spacer></v-spacer>
-
               <v-menu v-if="uniqueEventTypes.length > 1">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-dots-vertical"
-                    variant="outlined"
-                    size="small"
-                    class="mb-2"
-                  >
-                  </v-btn>
+                <template v-slot:activator="{ props: menuProps }">
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props: tooltipProps }">
+                      <v-btn
+                        v-bind="{ ...menuProps, ...tooltipProps }"
+                        icon="mdi-dots-vertical"
+                        variant="outlined"
+                        density="compact"
+                        class="ml-2 mb-4"
+                      />
+                    </template>
+                    {{ translations.showOrHideEventTypes_ }}
+                  </v-tooltip>
                 </template>
+
                 <v-list
                   v-model:selected="selectedLocations"
                   select-strategy="leaf"
@@ -355,7 +358,10 @@ const GlobalMap = Vue.defineComponent({
                   >
                     <template v-slot:prepend="{ isSelected, select }">
                       <v-list-item-action start>
-                        <v-checkbox-btn :model-value="isSelected" @update:model-value="select"></v-checkbox-btn>
+                        <v-checkbox-btn
+                          :model-value="isSelected"
+                          @update:model-value="select"
+                        />
                       </v-list-item-action>
                     </template>
                   </v-list-item>
