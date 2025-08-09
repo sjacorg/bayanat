@@ -257,7 +257,8 @@ class User(UserMixin, db.Model, BaseMixin):
                 if rds.exists(session_key):
                     rds.delete(session_key)
             except Exception as e:
-                errors.append(f"Failed to delete session {s.session_token}: {str(e)}")
+                logger.error(f"Failed to delete session {s.id}: {str(e)}", exc_info=True)
+                errors.append(f"Failed to delete session {s.id}")
         if errors:
             logger.error("Failed to delete some sessions: %s", errors)
 
