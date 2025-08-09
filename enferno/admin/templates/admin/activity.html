@@ -32,7 +32,7 @@
             </template>
 
             <template v-slot:item.created_at="{ item }">
-              ${ formatDate(item.created_at, formatDateOptions) }
+              ${ formatDate(item.created_at) }
             </template>
 
             <template v-slot:item.user_id="{ item }">
@@ -224,7 +224,6 @@
     mixins: [globalMixin],
     data: () => ({
       translations: window.translations,
-      formatDateOptions: {  },
       itobInfo: JSON.parse(document.querySelector('[data-itob]').dataset.itob),
         itoaInfo: JSON.parse(document.querySelector('[data-itoa]').dataset.itoa),
         itoiInfo: JSON.parse(document.querySelector('[data-itoi]').dataset.itoi),
