@@ -1,6 +1,10 @@
-// common validation rules
+// Common validation rules
+// Each rule returns `true` if valid, or a string error message if invalid
+let checkUsernameTimeout;
 let passwordCheckTimeout;
+
 const validationRules = {
+
     required: (message = window.translations.thisFieldIsRequired_) => {
         return v => hasValue(v) || message;
     },
@@ -19,6 +23,36 @@ const validationRules = {
         const defaultMessage = window.translations.pleaseEnterAValidNumber_;
         return v => !v || /^\d+$/.test(v) || message || defaultMessage;
     },
+    externalError(error) {
+        return () => {
+          if (!error) return true;
+          return Array.isArray(error) ? error[0] : error;
+        };
+    },
+    checkUsername: ({ initialUsername, onResponse }) => {
+        const defaultMsg = window.translations.usernameInvalidOrAlreadyTaken_;
+      
+        return v => new Promise(resolve => {
+          clearTimeout(checkUsernameTimeout);
+          checkUsernameTimeout = setTimeout(async () => {
+            try {
+              if (v === initialUsername) return onResponse(true), resolve(true);
+      
+              await axios.post('/admin/api/checkuser/', { item: v }, { suppressGlobalErrorHandler: true });
+              onResponse(true);
+              resolve(true);
+            } catch (err) {
+              onResponse(false);
+              const status = err?.response?.status;
+              resolve(
+                status === 409 ? window.translations.usernameAlreadyTaken_ :
+                status === 400 ? window.translations.usernameInvalid_ :
+                defaultMsg
+              );
+            }
+          }, 350);
+        });
+    },    
     matchesField: (otherValue, message) => {
         const defaultMessage = window.translations.fieldsDoNotMatch_;
         return v => v === otherValue || message || defaultMessage;

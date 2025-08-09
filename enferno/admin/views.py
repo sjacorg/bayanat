@@ -4915,14 +4915,18 @@ def api_user_create(
     # validate existing
     u = validated_data.get("item")
     username = u.get("username")
+    if email := u.get("email"):
+        query = User.query.filter(or_(User.username == username, User.email == email))
+    else:
+        query = User.query.filter(User.username == username)
 
-    exists = User.query.filter(User.username == username).first()
-    if len(username) < 4:
-        return HTTPResponse.error("Error, username too short", status=400)
-    if len(username) > 32:
-        return HTTPResponse.error("Error, username too long", status=400)
-    if exists:
-        return HTTPResponse.error("Error, username already exists", status=409)
+    existing_user = query.first()
+
+    if existing_user:
+        if existing_user.username == username:
+            return "Error, username already exists", 409
+        elif existing_user.email == email:
+            return "Error, email already exists", 409
     user = User()
     user.fs_uniquifier = uuid4().hex
     user.from_json(u)
@@ -4959,19 +4963,10 @@ def api_user_check(
     if not data:
         return HTTPResponse.error("Please select a username", status=400)
 
-    # validate illegal charachters
-    uclean = bleach.clean(data.strip(), strip=True)
-    if uclean != data:
-        return HTTPResponse.error("Illegal characters detected", status=400)
-
-    # validate disallowed charachters
-    cats = [unicodedata.category(c)[0] for c in data]
-    if any([cat not in ["L", "N"] for cat in cats]):
-        return HTTPResponse.error("Disallowed characters detected", status=400)
-
+    # Check if username already exists
     u = User.query.filter(User.username == data).first()
     if u:
-        return HTTPResponse.error("Username already exists", status=409)
+        return "Username already exists", 409
     else:
         return HTTPResponse.success(message="Username ok")
 
@@ -4995,6 +4990,24 @@ def api_user_update(
     user = User.query.get(item.get("id"))
     if user is not None:
         u = validated_data.get("item")
+        username = u.get("username")
+
+        # Check if username or email already exists (excluding current user)
+        if email := u.get("email"):
+            query = User.query.filter(
+                or_(User.username == username, User.email == email), User.id != user.id
+            )
+        else:
+            query = User.query.filter(User.username == username, User.id != user.id)
+
+        existing_user = query.first()
+
+        if existing_user:
+            if existing_user.username == username:
+                return "Error, username already exists", 409
+            elif existing_user.email == email:
+                return "Error, email already exists", 409
+
         user = user.from_json(u)
         if user.save():
             # Record activity
